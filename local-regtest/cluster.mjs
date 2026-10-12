@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const crate = resolve(here, 'cluster');
+const runner = resolve(crate, 'target', 'release', 'glow-regtest');
 
 export const CONFIG_PATH = '/tmp/spark-regtest.json';
 export const LOG_PATH = resolve(here, 'cluster.log');
@@ -30,6 +31,45 @@ const reachable = async url => {
 
 export const isClusterUp = () => reachable(FUND_URL);
 
+/**
+ * Builds the two images the operators run, from the docker files of the sdk
+ * revision the crate pins, unless they are already there. The fixtures run each
+ * under a tag derived from those files, which the cluster runner prints.
+ */
+function buildOperatorImages() {
+  const metadata = JSON.parse(
+    execFileSync('cargo', ['metadata', '--format-version', '1'], {
+      cwd: crate,
+      maxBuffer: 256 * 1024 * 1024,
+    }),
+  );
+  const fixtures = metadata.packages.find(pkg => pkg.name === 'spark-itest');
+  const docker = resolve(dirname(fixtures.manifest_path), 'docker');
+  const references = JSON.parse(execFileSync(runner, ['image-tags']));
+  for (const [image, file] of [
+    ['spark-migrations', 'migrations-private.dockerfile'],
+    ['spark-so', 'spark-so-private.dockerfile'],
+  ]) {
+    const reference = references[image];
+    try {
+      execFileSync('docker', ['image', 'inspect', reference], { stdio: 'ignore' });
+      continue;
+    } catch {
+      // Not built yet.
+    }
+    try {
+      execFileSync('docker', ['build', '-t', reference, '-f', resolve(docker, file), docker], {
+        stdio: 'inherit',
+      });
+    } catch {
+      throw new Error(
+        `Could not build ${reference}. It starts from ghcr.io/breez/spark-operator, which is private: ` +
+          'run `docker login ghcr.io` with an account that can read it, then try again.',
+      );
+    }
+  }
+}
+
 export async function startCluster() {
   if (await isClusterUp()) {
     console.log('Cluster already up.');
@@ -40,10 +80,12 @@ export async function startCluster() {
   // worth seeing rather than hiding in the log.
   console.log('Building the cluster runner...');
   execFileSync('cargo', ['build', '--release'], { stdio: 'inherit', cwd: crate });
+  console.log('Building the operator images...');
+  buildOperatorImages();
 
   rmSync(CONFIG_PATH, { force: true });
   const log = openSync(LOG_PATH, 'w');
-  const child = spawn(resolve(crate, 'target', 'release', 'glow-regtest'), [], {
+  const child = spawn(runner, [], {
     cwd: crate,
     detached: true,
     stdio: ['ignore', log, log],

@@ -19,7 +19,7 @@ services:
     restart: on-failure
     command:
       - --network=regtest
-      - --daemon-dir=/bitcoin
+      - --daemon-dir=/home/bitcoin/.bitcoin
       - --daemon-rpc-addr=${BITCOIND_HOST:-host.docker.internal}:${BITCOIND_RPC_PORT:?set by regtest-wire}
       - --cookie=${BITCOIND_RPC_USER:-rpcuser}:${BITCOIND_RPC_PASSWORD:-rpcpassword}
       - --http-addr=0.0.0.0:3002
@@ -27,8 +27,10 @@ services:
       - --db-dir=/data
       - --cors=*
       - -vv
+    # The node's block files, from the directory the cluster mounts into bitcoind.
+    volumes_from:
+      - container:${BITCOIND_CONTAINER:?set by regtest-wire}:ro
     volumes:
-      - bitcoind_data:/bitcoin:ro
       - spark_electrs_db:/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -109,9 +111,6 @@ services:
       - "${MEMPOOL_WEB_PORT:-3001}:80"
 
 volumes:
-  bitcoind_data:
-    external: true
-    name: ${BITCOIND_DATA_VOLUME:?set by regtest-wire}
   spark_electrs_db:
   spark_mempool_db:
   spark_mempool_cache:

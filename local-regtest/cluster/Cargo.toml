@@ -5,15 +5,19 @@ edition = "2024"
 publish = false
 
 # Pinned: `spark-itest` is the sdk's internal fixture crate, so its surface can
-# change on any commit. Bump this deliberately, and keep it on a rev whose
-# `crates/spark-itest/docker` still builds the images the fixtures expect.
+# change on any commit. Bump this deliberately. `regtest:up` builds the operator
+# images from this rev's `crates/spark-itest/docker`. They start from a private
+# image of Lightspark's current operator: Lightspark stopped publishing its
+# source, so an operator built from the public code is an old one.
 [dependencies]
-spark-itest = { git = "https://github.com/breez/spark-sdk", rev = "efc1f419b5fe2213af51ce88f936e1638f2d3a4a" }
-spark-wallet = { git = "https://github.com/breez/spark-sdk", rev = "efc1f419b5fe2213af51ce88f936e1638f2d3a4a" }
+spark-itest = { git = "https://github.com/breez/spark-sdk", rev = "d5eb73816983ec4ad61b2dd92f08647072fe4acb" }
+spark-wallet = { git = "https://github.com/breez/spark-sdk", rev = "d5eb73816983ec4ad61b2dd92f08647072fe4acb" }
 
 anyhow = "1.0.98"
 bip39 = "2.2.0"
+bitcoin = "0.32.6"
 hex = "0.4.3"
 serde_json = "1.0.140"
 tokio = { version = "1.45.1", features = ["full"] }
+tokio-postgres = "0.7.10"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }

@@ -132,16 +132,14 @@ writeFileSync(
 
 // The mempool stack reaches bitcoind over the host, so it needs the mapped
 // port rather than the cluster's internal one.
-// electrs indexes from the node's own block files, so it needs the volume the
-// cluster gave bitcoind. The name is regenerated per run, hence the lookup.
-const bitcoindDataVolume = () =>
-  execSync(
-    `docker ps --format '{{.Names}}' | grep -m1 '^bitcoind-' | ` +
-      `xargs -I{} docker inspect {} --format '{{range .Mounts}}{{.Name}}{{end}}'`,
-    { shell: '/bin/bash' },
-  )
+// electrs indexes from the node's own block files, so it mounts what the
+// cluster's bitcoind container mounts. The name is new every run, hence the
+// lookup, and by its port: another cluster may be running on this machine.
+const bitcoindContainer = () =>
+  execSync(`docker ps --filter publish=${rpc.port} --format '{{.Names}}'`)
     .toString()
-    .trim();
+    .trim()
+    .split('\n')[0];
 
 // Docker gives host-gateway both an A and an AAAA record, and electrs picks the
 // AAAA, which bitcoind's IPv4-only forwarder never answers. Falls back to the
@@ -170,7 +168,7 @@ writeFileSync(
     `BITCOIND_RPC_PASSWORD=${cluster.bitcoind.rpcPassword}`,
     `MEMPOOL_API_PORT=${MEMPOOL_API_PORT}`,
     `ELECTRS_HTTP_PORT=${ELECTRS_HTTP_PORT}`,
-    `BITCOIND_DATA_VOLUME=${bitcoindDataVolume()}`,
+    `BITCOIND_CONTAINER=${bitcoindContainer()}`,
     '',
   ].join('\n'),
 );

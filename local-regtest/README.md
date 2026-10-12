@@ -20,6 +20,12 @@ The first run builds `cluster/`, a small Rust binary that stands the cluster up
 from the sdk's own test fixtures. That takes a few minutes and needs a Rust
 toolchain; later runs reuse it. Nothing else here needs Rust.
 
+`regtest:up` also builds the two images the operators run, from the docker files
+of the sdk revision `cluster/Cargo.toml` pins. They start from
+`ghcr.io/breez/spark-operator`, a private image of Lightspark's current
+operator, so the first run needs `docker login ghcr.io` with an account that can
+read it. Later runs find the images already built.
+
 Restart `npm run dev` after `regtest:up`: Vite reads `.env.local` once, and the
 cluster's ports just changed.
 
@@ -87,6 +93,87 @@ npm run regtest:balance -- <destination address>
 
 Expect a little less than you started with: mining fees came out on the way.
 
+## Exit a leaf's parent from outside
+
+A wallet renews a leaf when its refund timelock has nearly run out. On each
+renewal here the operators put a split node above the leaf, holding the
+transactions the leaf had until then. Below the root, every node then has two
+transactions for the same output: its own, and a direct one that is valid once
+the node above has been on-chain for 50 blocks.
+
+Anyone who ever held the leaf can confirm the root of its tree. The operators
+then mark every node below the root `PARENT_EXITED`, and the wallet has 50
+blocks to confirm the next node's own transaction. If nobody has by then, the
+operators' watchtower publishes that node's direct transaction. From then on
+nobody can confirm any transaction below that node, and the operators mark every
+node below it `WATCHTOWER_EXITED`. The sats sit on-chain where only the wallet
+and the operators together can move them.
+
+**1. Give the wallet a leaf that has renewed twice.**
+
+```
+npm run regtest:renewed-leaf -- 200000
+```
+
+Two wallets inside the cluster send a 200,000 sat leaf back and forth until they
+have renewed it twice, which takes 38 transfers. The cluster then sends the leaf
+to the wallet with the phrase above. Open the app and wait for the balance: the
+next command refuses a leaf the wallet has not claimed.
+
+For a different wallet, pass the number of renewals and then its phrase or its
+Spark address: `-- 200000 2 "<phrase>"`.
+
+**2. Exit the leaf's parent.**
+
+```
+npm run regtest:parent-exit
+```
+
+The cluster confirms the root of the leaf's tree and nothing below it. The
+command prints the status the operators give each node:
+
+```
+nodes, root first:
+  01a12fb2-b239-7f29-a035-14f456f85ec4  ON_CHAIN
+  01a12fb2-ce58-7537-a09e-bb37df7e90ad  PARENT_EXITED
+  01a12fb2-8b78-7ce1-8018-b3612e943d9d  PARENT_EXITED
+```
+
+The wallet can no longer send the leaf, and the watchtower steps in once 50 more
+blocks are mined. To test a wallet that gets there first, exit from the app now
+and mine one block at a time until the next node's own transaction has
+confirmed. Mining 50 blocks in one go hands the leaf to the watchtower.
+
+**3. Let the watchtower cut the leaf off.**
+
+```
+npm run regtest:watchtower-exit
+```
+
+The cluster mines the rest of the 50 blocks, waits for the watchtower to publish
+the second split node's direct transaction, and mines one more block:
+
+```
+nodes, root first:
+  01a12fb2-b239-7f29-a035-14f456f85ec4  ON_CHAIN
+  01a12fb2-ce58-7537-a09e-bb37df7e90ad  ON_CHAIN
+  01a12fb2-8b78-7ce1-8018-b3612e943d9d  WATCHTOWER_EXITED
+```
+
+Run without step 2, the command exits the leaf's parent first.
+
+The operators here co-sign a recovery of such a leaf. A wallet builds a
+transaction for the output the watchtower's transaction left, and asks them to
+sign it with `recover_watchtower_exited_leaf`. They mark the leaf
+`WATCHTOWER_EXIT_RECOVERED` when they do.
+
+Two renewals are the fewest that end in `WATCHTOWER_EXITED` here. After the
+first renewal the split node is the root of the tree, and the watchtower only
+publishes for a node whose parent is on-chain. With one renewal that node is the
+leaf itself: the watchtower publishes the leaf's direct transaction and the
+operators mark the leaf `ON_CHAIN`. Pass `1` as the number of renewals to see
+that.
+
 ## Commands
 
 | | |
@@ -94,6 +181,9 @@ Expect a little less than you started with: mining fees came out on the way.
 | `npm run regtest:up` | start everything |
 | `npm run regtest:down` | stop everything |
 | `npm run regtest:fund -- <sats> <count>` | give the wallet `count` leaves |
+| `npm run regtest:renewed-leaf -- <sats> [renewals]` | give the wallet a leaf renewed twice, or `renewals` times |
+| `npm run regtest:parent-exit -- [leaf id]` | confirm the root above that leaf, or above the one made last |
+| `npm run regtest:watchtower-exit -- [leaf id]` | mine until the watchtower has cut that leaf off |
 | `npm run regtest:address` | a fresh address to receive at |
 | `npm run regtest:send -- <addr> <sats>` | send coins and confirm them |
 | `npm run regtest:mine -- <blocks>` | mine blocks |
