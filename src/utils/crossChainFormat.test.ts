@@ -64,6 +64,12 @@ describe('getCrossChainDestination', () => {
     quoteId: 'q1',
   };
 
+  // Amounts are bigints, so a zero is falsy where its string form was not.
+  it('keeps a delivered amount of zero', () => {
+    const dest = getCrossChainDestination(crossChainPayment({ ...orchestra, deliveredAmount: 0n }));
+    expect(dest.deliveredAmount).toBe(0n);
+  });
+
   it('surfaces the external tx hash', () => {
     const dest = getCrossChainDestination(crossChainPayment({ ...orchestra, externalTxHash: '5jQ8f' }));
     expect(dest.externalTxHash).toBe('5jQ8f');

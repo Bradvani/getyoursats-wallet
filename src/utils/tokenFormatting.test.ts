@@ -162,12 +162,12 @@ const crossChainSendFromBtc = {
     conversions: [{
       provider: 'orchestra',
       status: 'completed',
-      from: { chain: { type: 'spark' }, asset: { ticker: 'BTC', decimals: 0 }, amount: '3915', fee: '0' },
+      from: { chain: { type: 'spark' }, asset: { ticker: 'BTC', decimals: 0 }, amount: 3_915n, fee: 0n },
       to: {
         chain: { type: 'external', name: 'bsc' },
         asset: { ticker: 'USDT', decimals: 18 },
-        amount: '3010850000000000000',
-        fee: '26097715000000000',
+        amount: 3_010_850_000_000_000_000n,
+        fee: 26_097_715_000_000_000n,
       },
     }],
   },

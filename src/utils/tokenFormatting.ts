@@ -241,11 +241,11 @@ function crossChainInfoAmount(payment: Payment): TokenPaymentInfo | null {
 
   const delivered = info.deliveredAmount ?? info.estimatedOut;
   // Without a ticker the amount can't be labelled, or told apart from a BTC leg.
-  if (!delivered || !info.asset || info.asset === 'BTC') return null;
+  if (delivered === undefined || !info.asset || info.asset === 'BTC') return null;
 
-  const fee = info.feeAmount ? BigInt(info.feeAmount) : 0n;
+  const fee = info.feeAmount ?? 0n;
   return {
-    amount: BigInt(delivered) + fee,
+    amount: delivered + fee,
     fee,
     metadata: {
       ticker: info.asset,
