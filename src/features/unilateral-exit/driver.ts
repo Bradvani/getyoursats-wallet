@@ -249,9 +249,23 @@ export function quotedSweepFeeSat(
   return Math.max(quote.sweepFeeSats, resuming?.quotedSweepFeeSat ?? 0);
 }
 
+/** The fees besides the sweep's that come off the leaves' own value: the cooperative recoveries' and the refunds'. */
+export const leafFeesSat = (exit: { cooperativeFeeSats: number; refundFeeSats: number }): number =>
+  exit.cooperativeFeeSats + exit.refundFeeSats;
+
+const isConfirmed = (tx: RecoveryTransaction): boolean => tx.status.type === 'confirmed';
+
 /**
- * What the destination address ends up with: the balance less the sweep's fee,
- * until the sweep confirms and the figure is read off the sweep itself.
+ * What pays the destination: the sweep of the unilateral leaves, and one
+ * transaction per cooperative leaf. An exit can have either part alone.
+ */
+const deliveries = (transactions: RecoveryTransaction[]): RecoveryTransaction[] =>
+  transactions.filter(tx => tx.kind === 'sweep' || tx.kind === 'cooperative');
+
+/**
+ * What the destination address ends up with: the balance less the fees taken
+ * from it, until everything paying the destination confirms and the figure is
+ * read off those transactions.
  *
  * The funding is not counted. It pays the other fees, and what it has left
  * comes back only if the sweep glow built is the one that lands.
@@ -261,11 +275,14 @@ export function willReceiveSat(
   resuming: UnilateralExitPlan | null = null,
 ): number {
   if (!('exit' in exit)) {
-    return Math.max(0, exit.recoverableValueSats - quotedSweepFeeSat(exit, resuming));
+    return Math.max(0, exit.recoverableValueSats - quotedSweepFeeSat(exit, resuming) - leafFeesSat(exit));
   }
-  const sweep = exit.exit.transactions.find(tx => tx.kind === 'sweep');
-  const swept = sweep?.status.type === 'confirmed' ? outputTotalSat(sweep.txHex) : null;
-  return swept ?? Math.max(0, exit.exit.recoverableValueSats - exit.quotedSweepFeeSat);
+  const paying = deliveries(exit.exit.transactions);
+  const paid = paying.map(tx => (isConfirmed(tx) ? outputTotalSat(tx.txHex) : null));
+  if (paid.length > 0 && paid.every(sat => sat !== null)) {
+    return paid.reduce<number>((sum, sat) => sum + (sat ?? 0), 0);
+  }
+  return Math.max(0, exit.exit.recoverableValueSats - exit.quotedSweepFeeSat - leafFeesSat(exit.exit));
 }
 
 /** Whether a quote moves anything worth more than it costs to move. */
@@ -277,7 +294,8 @@ export const isWorthExiting = (
 /**
  * Where the money is. A leaf sits in Spark until its refund is on-chain, then
  * in an output only the owner can spend, and reaches the destination when the
- * sweep confirms.
+ * sweep confirms. A cooperative leaf is on-chain from the start, the operators
+ * having moved it, and reaches the destination when its own recovery confirms.
  */
 export interface ExitStages {
   inSpark: number;
@@ -289,16 +307,31 @@ export interface ExitStages {
 export function exitStages(plan: UnilateralExitPlan): ExitStages {
   const willReceive = willReceiveSat(plan);
   const { transactions, leaves } = plan.exit;
-  if (transactions.find(tx => tx.kind === 'sweep')?.status.type === 'confirmed') {
+  const paying = deliveries(transactions);
+  if (paying.length > 0 && paying.every(isConfirmed)) {
     return { inSpark: 0, onChain: 0, delivered: willReceive, willReceive };
   }
 
-  const refunded = new Set(
-    transactions.filter(tx => tx.kind === 'refund' && tx.status.type === 'confirmed').map(tx => tx.nodeId),
+  const sweep = transactions.find(tx => tx.kind === 'sweep');
+  const swept = sweep !== undefined && isConfirmed(sweep);
+  const recovered = new Map(
+    transactions.filter(tx => tx.kind === 'cooperative' && isConfirmed(tx)).map(tx => [tx.nodeId, tx]),
   );
-  const total = leaves.reduce((sum, leaf) => sum + leaf.valueSats, 0);
-  const onChain = leaves.filter(leaf => refunded.has(leaf.leafId)).reduce((sum, leaf) => sum + leaf.valueSats, 0);
-  return { inSpark: total - onChain, onChain, delivered: 0, willReceive };
+  const refunded = new Set(
+    transactions.filter(tx => tx.kind === 'refund' && isConfirmed(tx)).map(tx => tx.nodeId),
+  );
+  const stages = { inSpark: 0, onChain: 0, delivered: swept ? (outputTotalSat(sweep.txHex) ?? 0) : 0, willReceive };
+  for (const leaf of leaves) {
+    if (leaf.method === 'cooperative') {
+      const recovery = recovered.get(leaf.leafId);
+      if (recovery) stages.delivered += outputTotalSat(recovery.txHex) ?? 0;
+      else stages.onChain += leaf.valueSats;
+    } else if (!swept) {
+      if (refunded.has(leaf.leafId)) stages.onChain += leaf.valueSats;
+      else stages.inSpark += leaf.valueSats;
+    }
+  }
+  return stages;
 }
 
 /**

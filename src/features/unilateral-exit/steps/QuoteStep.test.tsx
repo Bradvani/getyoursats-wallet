@@ -52,6 +52,15 @@ describe('QuoteStep', () => {
     expect(within(row).getByText(/200/)).toBeInTheDocument();
   });
 
+  it('shows the cooperative and refund fees the leaves pay, only when there are any', () => {
+    renderStep();
+    expect(screen.queryByText('Recovery fee')).not.toBeInTheDocument();
+
+    renderStep({ quote: quote({ cooperativeFeeSats: 1_000, refundFeeSats: 300 }) });
+    const row = screen.getByText('Recovery fee').parentElement as HTMLElement;
+    expect(within(row).getByText(/1 300/)).toBeInTheDocument();
+  });
+
   it('says what the exit fee pays for, and that it does not come back', () => {
     renderStep();
     expect(screen.getByText('Exit fee')).toBeInTheDocument();

@@ -40,6 +40,13 @@ export const locked = (spendableAtHeight?: number): ExitTransactionStatus => ({
   spendableAtHeight,
 });
 
+/** A transaction with one input and one output of `sat`, for what a confirmed delivery paid. */
+export const paying = (sat: number): string => {
+  const value = BigInt(sat).toString(16).padStart(16, '0').match(/../g)!.reverse().join('');
+  return '0200000001' + '00'.repeat(32) + '00000000' + '00' + 'ffffffff' +
+    '01' + value + '160014' + 'ab'.repeat(20) + '00000000';
+};
+
 export const tx = (
   over: Partial<RecoveryTransaction> & { txid: string },
 ): RecoveryTransaction => ({

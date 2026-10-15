@@ -27,6 +27,7 @@ import {
   confirmed,
   locked,
   MNEMONIC,
+  paying,
   pendingExit,
   plan,
   prepared,
@@ -159,6 +160,33 @@ const sweepHex =
   '0200000001' + '00'.repeat(32) + '00000000' + '00' + 'ffffffff' +
   '01' + '2c1a090000000000' + '160014' + 'ab'.repeat(20) + '00000000';
 
+/** A unilateral leaf and one the operators' watchtower already moved on-chain, recovered cooperatively. */
+const mixed = (transactions: Parameters<typeof plan>[0]) =>
+  plan(transactions, {
+    quotedSweepFeeSat: 215,
+    exit: {
+      leaves: [
+        { leafId: 'leaf-1', valueSats: 180_000, method: 'unilateral' },
+        { leafId: 'leaf-2', valueSats: 420_000, method: 'cooperative' },
+      ],
+      recoverableValueSats: 600_000,
+      cooperativeFeeSats: 1_000,
+      refundFeeSats: 300,
+      sweepFeeSats: 0,
+    },
+  });
+
+const cooperativeOnly = (status: ReturnType<typeof confirmed> = ready) =>
+  plan([tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000), status })], {
+    quotedSweepFeeSat: 0,
+    exit: {
+      leaves: [{ leafId: 'leaf-2', valueSats: 420_000, method: 'cooperative' }],
+      recoverableValueSats: 420_000,
+      cooperativeFeeSats: 2_000,
+      sweepFeeSats: 0,
+    },
+  });
+
 const twoLeaves = (transactions: Parameters<typeof plan>[0], over: Parameters<typeof plan>[1] = {}) =>
   plan(transactions, {
     quotedSweepFeeSat: 215,
@@ -214,6 +242,40 @@ describe('willReceiveSat', () => {
   it('ignores an unconfirmed sweep, which may still be rebuilt', () => {
     expect(willReceiveSat(twoLeaves([tx({ txid: 's', kind: 'sweep', txHex: sweepHex })]))).toBe(599_785);
   });
+
+  // Like the sweep's, these come off the leaves' own value; CPFP and fan-out come out of the funding.
+  it('takes the cooperative and refund fees off the balance too', () => {
+    const quote = prepared({
+      recoverableValueSats: 600_000,
+      sweepFeeSats: 215,
+      cooperativeFeeSats: 1_000,
+      refundFeeSats: 300,
+    });
+    expect(willReceiveSat(quote)).toBe(598_485);
+    const built = planFromExitResponse(
+      checked([{ txid: 'r', kind: 'refund' }], { recoverableValueSats: 600_000, cooperativeFeeSats: 1_000, refundFeeSats: 300 }),
+      { ...meta, quotedSweepFeeSat: quotedSweepFeeSat(quote, null) },
+    );
+    expect(willReceiveSat(built)).toBe(598_485);
+  });
+
+  it('adds up the sweep and every cooperative recovery once all of them confirm', () => {
+    expect(willReceiveSat(mixed([
+      tx({ txid: 's', kind: 'sweep', txHex: paying(178_000), status: confirmed(1) }),
+      tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000), status: confirmed(1) }),
+    ]))).toBe(596_000);
+  });
+
+  it('keeps estimating while a cooperative recovery is unconfirmed, sweep or not', () => {
+    expect(willReceiveSat(mixed([
+      tx({ txid: 's', kind: 'sweep', txHex: paying(178_000), status: confirmed(1) }),
+      tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000) }),
+    ]))).toBe(598_485);
+  });
+
+  it('reads an exit without a sweep off its cooperative recoveries', () => {
+    expect(willReceiveSat(cooperativeOnly(confirmed(1)))).toBe(418_000);
+  });
 });
 
 describe('exitStages', () => {
@@ -246,6 +308,35 @@ describe('exitStages', () => {
       ]),
     );
     expect(stages).toEqual({ inSpark: 0, onChain: 0, delivered: 596_524, willReceive: 596_524 });
+  });
+
+  it('holds a cooperative leaf on-chain, the operators having moved it there', () => {
+    const stages = exitStages(mixed([
+      tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000) }),
+      tx({ txid: 's', kind: 'sweep', txHex: paying(178_000) }),
+    ]));
+    expect(stages).toMatchObject({ inSpark: 180_000, onChain: 420_000, delivered: 0 });
+  });
+
+  it('delivers a cooperative leaf once its recovery confirms, ahead of the sweep', () => {
+    const stages = exitStages(mixed([
+      tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000), status: confirmed(900) }),
+      tx({ txid: 's', kind: 'sweep', txHex: paying(178_000) }),
+    ]));
+    expect(stages).toMatchObject({ inSpark: 180_000, onChain: 0, delivered: 418_000 });
+  });
+
+  it('delivers the unilateral leaves with the sweep while a cooperative recovery waits', () => {
+    const stages = exitStages(mixed([
+      tx({ txid: 's', kind: 'sweep', txHex: paying(178_000), status: confirmed(900) }),
+      tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000) }),
+    ]));
+    expect(stages).toMatchObject({ inSpark: 0, onChain: 420_000, delivered: 178_000 });
+  });
+
+  it('finishes an exit without a sweep once its cooperative recoveries confirm', () => {
+    expect(exitStages(cooperativeOnly(confirmed(900))))
+      .toEqual({ inSpark: 0, onChain: 0, delivered: 418_000, willReceive: 418_000 });
   });
 });
 

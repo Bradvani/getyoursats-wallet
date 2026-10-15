@@ -5,6 +5,7 @@ import { FeeBreakdownCard } from '@/components/FeeBreakdownCard';
 import { SatAmount } from '@/components/SatAmount';
 import { truncateAddress } from '@/utils/crossChainFormat';
 import type { QuoteFields } from '../hooks/useUnilateralExitFlow';
+import { leafFeesSat } from '../driver';
 
 export const QuoteStep: React.FC<QuoteFields> = ({
   quote,
@@ -56,6 +57,8 @@ export const QuoteStep: React.FC<QuoteFields> = ({
     );
   }
 
+  const leafFeeSat = leafFeesSat(quote);
+
   return (
     <div className="space-y-4">
       <div className="text-center py-2">
@@ -80,6 +83,7 @@ export const QuoteStep: React.FC<QuoteFields> = ({
         items={[
           { label: 'Balance', value: quote.recoverableValueSats },
           { label: 'Sweep fee', value: sweepFeeSat, approximate: true },
+          ...(leafFeeSat > 0 ? [{ label: 'Recovery fee', value: leafFeeSat, approximate: true }] : []),
           { label: 'Exit fee', value: quote.funding?.singleUtxoSats ?? 0, highlight: true },
         ]}
       />

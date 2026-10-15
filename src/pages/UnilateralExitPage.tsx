@@ -18,7 +18,7 @@ import { FeeStep } from '@/features/unilateral-exit/steps/FeeStep';
 import { QuoteStep } from '@/features/unilateral-exit/steps/QuoteStep';
 import { FundStep, FundingStatus, PendingExitStep } from '@/features/unilateral-exit/steps/FundStep';
 import { TrackerView } from '@/features/unilateral-exit/TrackerView';
-import { sweepTxid } from '@/features/unilateral-exit/archive';
+import { exitTxid } from '@/features/unilateral-exit/archive';
 import { cancelPendingExit, startPendingExit } from '@/features/unilateral-exit/engine';
 import { isPendingFunded } from '@/features/unilateral-exit/driver';
 
@@ -54,15 +54,15 @@ const UnilateralExitPage: React.FC<UnilateralExitPageProps> = ({ network, onBack
   }, [flow.phase, unlock]);
 
   // Once the exit lands the wallet list carries it, so the sheet closes,
-  // whatever the step. The signal is the exit's sweep reaching the archive.
+  // whatever the step. The signal is the exit's txid reaching the archive.
   // The phase cannot serve: a tracker opened from the list is derived from the
   // plan, and without one it reads as the intro. Nor can a missing plan, which
   // is also what a stopped engine reports while the SDK reconnects.
   const { plan, archive } = flow.engine;
-  const shownSweep = useRef<string | null>(null);
+  const shownExit = useRef<string | null>(null);
   useEffect(() => {
-    if (plan) shownSweep.current = sweepTxid(plan);
-    if (archive.some(exit => exit.id === shownSweep.current)) onFinished();
+    if (plan) shownExit.current = exitTxid(plan);
+    if (archive.some(exit => exit.id === shownExit.current)) onFinished();
   }, [plan, archive, onFinished]);
 
   // One call to action per step, in the bar the rest of the app puts it in.

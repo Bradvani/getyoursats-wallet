@@ -1,6 +1,6 @@
-import { archiveExit, loadArchive } from './archive';
+import { archiveExit, exitTxid, loadArchive } from './archive';
 import { deriveFundingKey } from './funding';
-import { confirmed, plan, tx } from './testFixtures';
+import { confirmed, paying, plan, tx } from './testFixtures';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 const wallet = { identityPubkey: 'pubkey-0000000000000000', network: 'regtest' };
@@ -32,6 +32,25 @@ describe('archiveExit', () => {
     expect(loadArchive(wallet)).toMatchObject([
       { id: 'sweep-a', destination: 'bcrt1-sweep-a', deliveredSat: 50_000 },
     ]);
+  });
+
+  // A recovery of leaves the operators' watchtower already moved builds no sweep.
+  it('archives an exit without a sweep under its cooperative recovery', () => {
+    const recovered = plan(
+      [tx({ txid: 'coop-a', kind: 'cooperative', nodeId: 'leaf-1', txHex: paying(418_000), status: confirmed(10) })],
+      { phase: 'complete', quotedSweepFeeSat: 0, exit: { recoverableValueSats: 420_000, cooperativeFeeSats: 2_000 } },
+    );
+    expect(exitTxid(recovered)).toBe('coop-a');
+    archiveExit(wallet, recovered);
+
+    expect(loadArchive(wallet)).toMatchObject([{ id: 'coop-a', deliveredSat: 418_000 }]);
+  });
+
+  it('keys an exit with a sweep on the sweep, not on a cooperative recovery', () => {
+    expect(exitTxid(plan([
+      tx({ txid: 'coop-a', kind: 'cooperative', nodeId: 'leaf-1' }),
+      tx({ txid: 'sweep-a', kind: 'sweep' }),
+    ]))).toBe('sweep-a');
   });
 
   it('records what the sweep paid out, not what the balance was', () => {
