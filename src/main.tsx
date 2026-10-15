@@ -395,8 +395,8 @@ async function mountClaimTest(delayMs: number) {
   const quote = {
     amountSats: 100_000,
     confirmations: 1,
-    instant: { confirmationsRequired: 1, creditAmountSats: 96_800, feeSats: 3_200, feeRateSatPerVbyte: 4, isEstimate: false },
-    mature: { confirmationsRequired: 3, creditAmountSats: 99_802, feeSats: 198, feeRateSatPerVbyte: 2, isEstimate: true },
+    instant: { confirmationsRequired: 1, creditAmountSats: 96_800, feeSats: 3_200, isEstimate: false },
+    mature: { confirmationsRequired: 3, creditAmountSats: 99_802, feeSats: 198, isEstimate: true },
   };
   const client = {
     fetchClaimDepositQuote: () => new Promise(resolve => setTimeout(() => resolve(quote), delayMs)),

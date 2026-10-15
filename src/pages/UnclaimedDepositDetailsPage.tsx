@@ -70,6 +70,9 @@ function deriveClaimState(deposit: DepositInfo | null): ClaimState {
   if (claimErrorData.type === 'generic') {
     return { claimError: claimErrorData.message || 'Automatic claim failed', requiredFeeSats: null };
   }
+  if (claimErrorData.type === 'depositTooSmall') {
+    return { claimError: 'This transfer is too small to cover the fee to claim it.', requiredFeeSats: null };
+  }
   // missingUtxo or other error - can only reject
   return { claimError: 'Automatic claim failed', requiredFeeSats: null };
 }

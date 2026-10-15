@@ -107,7 +107,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
     // `amount` is denominated in the route's source asset (`route.decimals`),
     // matching prepare_payment_link. Source assets are USD stablecoins, so the
     // typed dollar value carries over at parity across differing precisions.
-    const amount = parseCrossChainAmount(usdInput, route.decimals).toString();
+    const amount = parseCrossChainAmount(usdInput, route.decimals);
     try {
       const res = await wallet.receivePayment({
         paymentMethod: { type: 'crossChain', route, amount },

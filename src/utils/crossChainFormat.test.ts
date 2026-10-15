@@ -57,7 +57,7 @@ describe('getCrossChainDestination', () => {
     type: 'orchestra',
     chain: 'Solana',
     recipientAddress: '8kBoWYZadELjg8dgS2c5DXyapr8y8fsGY2HZWsaagguz',
-    estimatedOut: '1030000',
+    estimatedOut: 1_030_000n,
     assetDecimals: 6,
     status: 'completed',
     orderId: 'o1',

@@ -31,10 +31,10 @@ describe('USD receive deposit address', () => {
             fee: 0n,
             crossChainInfo: {
               depositAddress: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
-              depositAmount: '10050000',
-              expectedReceivedAmount: '12298',
+              depositAmount: 10_050_000n,
+              expectedReceivedAmount: 12_298n,
               destinationAsset: 'BTC',
-              serviceFeeAmount: '10000',
+              serviceFeeAmount: 10_000n,
               serviceFeeAsset: 'USDC',
               expiresAt: 1_900_000_000,
             },
