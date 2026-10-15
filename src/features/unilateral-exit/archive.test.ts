@@ -16,7 +16,7 @@ const finished = (txid: string, deliveredSat: number) =>
     phase: 'complete',
     destination: `bcrt1-${txid}`,
     quotedSweepFeeSat: 0,
-    exit: { recoverableValueSat: deliveredSat },
+    exit: { recoverableValueSats: deliveredSat },
   });
 
 describe('archiveExit', () => {
@@ -39,7 +39,7 @@ describe('archiveExit', () => {
       wallet,
       plan([tx({ txid: 'sweep-real', kind: 'sweep', txHex: sweepHex, status: confirmed(10) })], {
         phase: 'complete',
-        exit: { recoverableValueSat: 600_000 },
+        exit: { recoverableValueSats: 600_000 },
       }),
     );
 
@@ -66,17 +66,17 @@ describe('archiveExit', () => {
       'regtest',
       0,
     );
-    const input = { txid: 'fund', vout: 0, value: 12_000, pubkey: key.publicKeyHex };
+    const input = { txid: 'fund', vout: 0, valueSats: 12_000, pubkey: key.publicKeyHex };
     archiveExit(
       wallet,
       plan([tx({ txid: 'sweep-a', kind: 'sweep', txHex: '00', status: confirmed(10) })], {
         phase: 'complete',
         network: 'regtest',
         exit: {
-          recoverableValueSat: 600_000,
+          recoverableValueSats: 600_000,
           fundingInputs: [
             { type: 'p2wpkh', ...input },
-            { type: 'p2wpkh', ...input, txid: 'fund-2', value: 8_000 },
+            { type: 'p2wpkh', ...input, txid: 'fund-2', valueSats: 8_000 },
           ],
         },
       }),
@@ -100,7 +100,7 @@ describe('archiveExit', () => {
       type: 'p2wpkh' as const,
       txid,
       vout: 0,
-      value,
+      valueSats: value,
       pubkey: key.publicKeyHex,
     });
     archiveExit(
@@ -110,7 +110,7 @@ describe('archiveExit', () => {
         network: 'regtest',
         quotedExitFeeSat: 58_534,
         exit: {
-          recoverableValueSat: 600_000,
+          recoverableValueSats: 600_000,
           // The fee, the top-up, and change the exit's own transactions
           // returned to the address: summing these counts sats twice.
           fundingInputs: [coin('fee', 3_122), coin('top-up', 55_412), coin('change', 31_939)],

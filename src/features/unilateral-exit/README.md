@@ -10,9 +10,9 @@ This folder is a working implementation. Read it alongside the
 
 | call | you get | when |
 |---|---|---|
-| `prepareUnilateralExit` | a quote: which leaves, what it costs, how much to fund | once, to decide |
-| `unilateralExit` | the signed transactions | once, after funding |
-| `checkUnilateralExit` | where it got to, and what to send next | every few seconds, for days |
+| `prepareRecoverFunds` | a quote: which leaves, what it costs, how much to fund | once, to decide |
+| `recoverFunds` | the signed transactions | once, after funding |
+| `checkRecoverFunds` | where it got to, and what to send next | every few seconds, for days |
 
 ## The flow
 
@@ -24,7 +24,7 @@ This folder is a working implementation. Read it alongside the
 each is bumped by a child paid from a Bitcoin UTXO you supply. It must be native
 SegWit. The quote tells you the amount.
 
-**Store the response.** Both `unilateralExit` and `checkUnilateralExit` return
+**Store the response.** Both `recoverFunds` and `checkRecoverFunds` return
 the exit; keep the latest. Lose it and you cannot finish, even though the money
 is still recoverable.
 

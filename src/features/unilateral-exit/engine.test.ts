@@ -136,8 +136,8 @@ describe('a pass that outlives its plan', () => {
 describe('an exit waiting on its fee', () => {
   const holding = (coins: ChainUtxo[]): ChainClient => ({ ...chain, addressUtxos: async () => coins });
   const building = () => {
-    const unilateralExit = vi.fn(async () => checked([{ txid: 'fan', kind: 'fanOut' }]));
-    return { unilateralExit, driver: sdk({ prepareUnilateralExit: async () => prepared(), unilateralExit }) };
+    const recoverFunds = vi.fn(async () => checked([{ txid: 'fan', kind: 'fanOut' }]));
+    return { recoverFunds, driver: sdk({ prepareRecoverFunds: async () => prepared(), recoverFunds }) };
   };
 
   beforeEach(() => {
@@ -151,13 +151,13 @@ describe('an exit waiting on its fee', () => {
   });
 
   it('does not start when its fee confirms, only when the user taps', async () => {
-    const { unilateralExit, driver } = building();
+    const { recoverFunds, driver } = building();
     startUnilateralExitEngine(wallet, holding([coin(5_898)]), driver);
     setPendingExit(wallet, pendingExit());
 
     await vi.waitFor(() => expect(getUnilateralExitState().pendingCoins).toHaveLength(1));
     await advanceNow();
-    expect(unilateralExit).not.toHaveBeenCalled();
+    expect(recoverFunds).not.toHaveBeenCalled();
 
     await startPendingExit();
     expect(getUnilateralExitState().plan?.exit.transactions[0].txid).toBe('fan');
@@ -166,20 +166,20 @@ describe('an exit waiting on its fee', () => {
   });
 
   it('ignores a tap before the fee has confirmed', async () => {
-    const { unilateralExit, driver } = building();
+    const { recoverFunds, driver } = building();
     startUnilateralExitEngine(wallet, holding([coin(5_898, false)]), driver);
     setPendingExit(wallet, pendingExit());
 
     await vi.waitFor(() => expect(getUnilateralExitState().pendingCoins).toHaveLength(1));
     await startPendingExit();
-    expect(unilateralExit).not.toHaveBeenCalled();
+    expect(recoverFunds).not.toHaveBeenCalled();
   });
 
   it('asks for what the build says it still needs', async () => {
-    const unilateralExit = vi.fn(async () => {
+    const recoverFunds = vi.fn(async () => {
       throw new Error('Insufficient CPFP funding: need at least 6400 sats');
     });
-    startUnilateralExitEngine(wallet, holding([coin(5_898)]), sdk({ prepareUnilateralExit: async () => prepared(), unilateralExit }));
+    startUnilateralExitEngine(wallet, holding([coin(5_898)]), sdk({ prepareRecoverFunds: async () => prepared(), recoverFunds }));
     setPendingExit(wallet, pendingExit());
 
     await vi.waitFor(() => expect(getUnilateralExitState().pendingCoins).toHaveLength(1));
@@ -191,8 +191,8 @@ describe('an exit waiting on its fee', () => {
 
   it('keeps why a start failed, so the user can try again', async () => {
     const driver = sdk({
-      prepareUnilateralExit: async () => prepared(),
-      unilateralExit: async () => {
+      prepareRecoverFunds: async () => prepared(),
+      recoverFunds: async () => {
         throw new Error('chain service unreachable');
       },
     });

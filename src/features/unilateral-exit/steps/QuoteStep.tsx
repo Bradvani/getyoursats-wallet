@@ -43,7 +43,7 @@ export const QuoteStep: React.FC<QuoteFields> = ({
     );
   }
 
-  if (quote.totalFeeSat >= quote.recoverableValueSat || willReceiveSat <= 0) {
+  if (quote.totalFeeSats >= quote.recoverableValueSats || willReceiveSat <= 0) {
     return (
       <div className="space-y-6">
         <AlertCard variant="warning" title="Nothing is worth exiting right now">
@@ -78,9 +78,9 @@ export const QuoteStep: React.FC<QuoteFields> = ({
 
       <FeeBreakdownCard
         items={[
-          { label: 'Balance', value: quote.recoverableValueSat },
+          { label: 'Balance', value: quote.recoverableValueSats },
           { label: 'Sweep fee', value: sweepFeeSat, approximate: true },
-          { label: 'Exit fee', value: quote.singleUtxoFundingSat, highlight: true },
+          { label: 'Exit fee', value: quote.funding?.singleUtxoSats ?? 0, highlight: true },
         ]}
       />
 
