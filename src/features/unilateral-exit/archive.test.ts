@@ -1,6 +1,6 @@
-import { archiveExit, loadArchive } from './archive';
+import { archiveExit, exitTxid, loadArchive } from './archive';
 import { deriveFundingKey } from './funding';
-import { confirmed, plan, tx } from './testFixtures';
+import { confirmed, paying, plan, tx } from './testFixtures';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 const wallet = { identityPubkey: 'pubkey-0000000000000000', network: 'regtest' };
@@ -16,7 +16,7 @@ const finished = (txid: string, deliveredSat: number) =>
     phase: 'complete',
     destination: `bcrt1-${txid}`,
     quotedSweepFeeSat: 0,
-    exit: { recoverableValueSat: deliveredSat },
+    exit: { recoverableValueSats: deliveredSat },
   });
 
 describe('archiveExit', () => {
@@ -34,12 +34,31 @@ describe('archiveExit', () => {
     ]);
   });
 
+  // A recovery of leaves the operators' watchtower already moved builds no sweep.
+  it('archives an exit without a sweep under its cooperative recovery', () => {
+    const recovered = plan(
+      [tx({ txid: 'coop-a', kind: 'cooperative', nodeId: 'leaf-1', txHex: paying(418_000), status: confirmed(10) })],
+      { phase: 'complete', quotedSweepFeeSat: 0, exit: { recoverableValueSats: 420_000, cooperativeFeeSats: 2_000 } },
+    );
+    expect(exitTxid(recovered)).toBe('coop-a');
+    archiveExit(wallet, recovered);
+
+    expect(loadArchive(wallet)).toMatchObject([{ id: 'coop-a', deliveredSat: 418_000 }]);
+  });
+
+  it('keys an exit with a sweep on the sweep, not on a cooperative recovery', () => {
+    expect(exitTxid(plan([
+      tx({ txid: 'coop-a', kind: 'cooperative', nodeId: 'leaf-1' }),
+      tx({ txid: 'sweep-a', kind: 'sweep' }),
+    ]))).toBe('sweep-a');
+  });
+
   it('records what the sweep paid out, not what the balance was', () => {
     archiveExit(
       wallet,
       plan([tx({ txid: 'sweep-real', kind: 'sweep', txHex: sweepHex, status: confirmed(10) })], {
         phase: 'complete',
-        exit: { recoverableValueSat: 600_000 },
+        exit: { recoverableValueSats: 600_000 },
       }),
     );
 
@@ -66,17 +85,17 @@ describe('archiveExit', () => {
       'regtest',
       0,
     );
-    const input = { txid: 'fund', vout: 0, value: 12_000, pubkey: key.publicKeyHex };
+    const input = { txid: 'fund', vout: 0, valueSats: 12_000, pubkey: key.publicKeyHex };
     archiveExit(
       wallet,
       plan([tx({ txid: 'sweep-a', kind: 'sweep', txHex: '00', status: confirmed(10) })], {
         phase: 'complete',
         network: 'regtest',
         exit: {
-          recoverableValueSat: 600_000,
+          recoverableValueSats: 600_000,
           fundingInputs: [
             { type: 'p2wpkh', ...input },
-            { type: 'p2wpkh', ...input, txid: 'fund-2', value: 8_000 },
+            { type: 'p2wpkh', ...input, txid: 'fund-2', valueSats: 8_000 },
           ],
         },
       }),
@@ -100,7 +119,7 @@ describe('archiveExit', () => {
       type: 'p2wpkh' as const,
       txid,
       vout: 0,
-      value,
+      valueSats: value,
       pubkey: key.publicKeyHex,
     });
     archiveExit(
@@ -110,7 +129,7 @@ describe('archiveExit', () => {
         network: 'regtest',
         quotedExitFeeSat: 58_534,
         exit: {
-          recoverableValueSat: 600_000,
+          recoverableValueSats: 600_000,
           // The fee, the top-up, and change the exit's own transactions
           // returned to the address: summing these counts sats twice.
           fundingInputs: [coin('fee', 3_122), coin('top-up', 55_412), coin('change', 31_939)],

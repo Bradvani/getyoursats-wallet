@@ -96,7 +96,7 @@ export function getCrossChainDestination(payment: Payment): CrossChainDestinatio
     dest.assetContract = convInfo.assetContract;
     dest.assetDecimals = convInfo.assetDecimals;
     const delivered = convInfo.deliveredAmount ?? convInfo.estimatedOut;
-    if (delivered) dest.deliveredAmount = BigInt(delivered);
+    if (delivered !== undefined) dest.deliveredAmount = delivered;
     if (convInfo.type === 'orchestra') dest.externalTxHash = convInfo.externalTxHash;
   }
 

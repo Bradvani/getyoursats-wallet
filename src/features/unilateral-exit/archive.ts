@@ -9,7 +9,10 @@ import type { UnilateralExitPlan, WalletKey } from './driver';
  * record of the first.
  */
 export interface ArchivedExit {
-  /** The sweep that delivered the money, which is what makes an exit unique. */
+  /**
+   * The sweep that delivered the money, which is what makes an exit unique, or
+   * the first cooperative recovery of an exit that had no unilateral part.
+   */
   id: string;
   destination: string;
   deliveredSat: number;
@@ -30,9 +33,10 @@ export interface ArchivedExit {
 const key = ({ identityPubkey, network }: WalletKey): string =>
   `unilateral-exit-archive:${identityPubkey.slice(0, 16)}:${network}`;
 
-/** The sweep's txid, or null for a plan that never built one. */
-export const sweepTxid = (plan: UnilateralExitPlan): string | null =>
-  plan.exit.transactions.find(tx => tx.kind === 'sweep')?.txid ?? null;
+/** The sweep's txid, else the first cooperative recovery's, or null for a plan that built neither. */
+export const exitTxid = (plan: UnilateralExitPlan): string | null =>
+  (plan.exit.transactions.find(tx => tx.kind === 'sweep') ??
+    plan.exit.transactions.find(tx => tx.kind === 'cooperative'))?.txid ?? null;
 
 export function loadArchive(wallet: WalletKey): ArchivedExit[] {
   const raw = localStorage.getItem(key(wallet));
@@ -50,7 +54,7 @@ export function loadArchive(wallet: WalletKey): ArchivedExit[] {
  * reports the same completion on every pass does not stack up duplicates.
  */
 export function archiveExit(wallet: WalletKey, plan: UnilateralExitPlan): ArchivedExit[] {
-  const id = sweepTxid(plan);
+  const id = exitTxid(plan);
   if (id === null) return loadArchive(wallet);
 
   const existing = loadArchive(wallet);
@@ -65,11 +69,11 @@ export function archiveExit(wallet: WalletKey, plan: UnilateralExitPlan): Archiv
       deliveredSat: willReceiveSat(plan),
       completedAt: Date.now(),
       network: plan.network,
-      exitedSat: plan.exit.recoverableValueSat,
+      exitedSat: plan.exit.recoverableValueSats,
       // What the exit was quoted to need, not what the address holds: a rebuild
       // takes in every confirmed coin there, the exit's own change included, so
       // summing those counts the same sats twice.
-      exitFeePaidSat: plan.quotedExitFeeSat ?? funding.reduce((sum, input) => sum + input.value, 0),
+      exitFeePaidSat: plan.quotedExitFeeSat ?? funding.reduce((sum, input) => sum + input.valueSats, 0),
       exitFeeAddress: keyed ? fundingAddressOf(keyed.pubkey, plan.network) : undefined,
     },
     ...existing,

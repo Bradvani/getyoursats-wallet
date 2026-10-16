@@ -173,13 +173,28 @@ describe('predicting the automatic early claim', () => {
     expect(autoClaimsEarly(null, { type: 'fixed', amount: 500 })).toBe(false);
   });
 
-  // A rate is sat-per-vbyte and means nothing without the size of a claim
-  // transaction that has not been built. Guessing would be worse than the
-  // unchanged screen, which offers the choice rather than pre-empting it.
-  it('declines to predict against a limit that is not in sats', () => {
+  // A rate limit is sat-per-vbyte, and only the SDK can price it for this
+  // deposit. The quote carries that figure; without it, guessing would be worse
+  // than the unchanged screen, which offers the choice rather than pre-empting it.
+  it('reads a rate limit through the ceiling the SDK priced for the deposit', () => {
+    const priced = (maxFeeSats: number) =>
+      quoteOf({ ...option(1, 300), maxFeeSats }, option(3, 198), 0);
+    expect(autoClaimsEarly(priced(400), { type: 'rate', satPerVbyte: 1 })).toBe(true);
+    expect(autoClaimsEarly(priced(250), { type: 'networkRecommended', leewaySatPerVbyte: 0 }))
+      .toBe(false);
+  });
+
+  it('declines to predict against a rate limit the quote does not price', () => {
     expect(autoClaimsEarly(covered(), { type: 'rate', satPerVbyte: 1 })).toBe(false);
     expect(autoClaimsEarly(covered(), { type: 'networkRecommended', leewaySatPerVbyte: 0 }))
       .toBe(false);
+  });
+
+  // The sheet records a fixed ceiling before the quote is fetched again, so the
+  // quote's figure can still be the one it replaced.
+  it('holds a fixed limit over the ceiling the quote was priced at', () => {
+    const stale = quoteOf({ ...option(1, 300), maxFeeSats: 500 }, option(3, 198), 0);
+    expect(autoClaimsEarly(stale, { type: 'fixed', amount: 200 })).toBe(false);
   });
 });
 

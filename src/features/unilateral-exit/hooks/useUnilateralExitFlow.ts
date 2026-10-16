@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { singleKeyCpfpSigner } from '@breeztech/breez-sdk-spark';
-import type { CpfpInput, InputType, PrepareUnilateralExitResponse } from '@breeztech/breez-sdk-spark';
+import type { CpfpInput, InputType, PrepareRecoverFundsResponse } from '@breeztech/breez-sdk-spark';
 import { useWallet, useWalletInfo } from '@/contexts/WalletContext';
 import { holdIdleLock } from '@/services/appLock';
 import { createChainClient } from '@/services/chain';
@@ -80,7 +80,7 @@ export interface FeeFields {
 }
 
 export interface QuoteFields {
-  quote: PrepareUnilateralExitResponse | null;
+  quote: PrepareRecoverFundsResponse | null;
   /** The one fee that comes off the balance, and what the destination gets after it. */
   sweepFeeSat: number;
   willReceiveSat: number;
@@ -172,7 +172,7 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
   const [destinationError, setDestinationError] = useState<string | null>(null);
   const [feeRates, setFeeRates] = useState<FeeRates | null>(null);
   const [feeChoice, setFeeChoice] = useState<FeeChoice>('medium');
-  const [quote, setQuote] = useState<PrepareUnilateralExitResponse | null>(null);
+  const [quote, setQuote] = useState<PrepareRecoverFundsResponse | null>(null);
   const [isQuoting, setIsQuoting] = useState(false);
   const quoteRequest = useRef(0);
   const [quoteError, setQuoteError] = useState<string | null>(null);
@@ -186,7 +186,7 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
   const [quotedAt, setQuotedAt] = useState<number | null>(null);
   // A resumed exit tries its build once per quote before asking for anything.
   /** The last build attempt: its quote and the money that was at the address. */
-  const tried = useRef<{ quote: PrepareUnilateralExitResponse; sat: number; inputs: number } | null>(
+  const tried = useRef<{ quote: PrepareRecoverFundsResponse; sat: number; inputs: number } | null>(
     null,
   );
   const mnemonicRef = useRef<string | null>(null);
@@ -262,14 +262,14 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
       if (walletKey) {
         await restoreExitState(wallet, plan, await loadExitState(walletKey.identityPubkey));
       }
-      const prepared = await wallet.prepareUnilateralExit({
+      const prepared = await wallet.prepareRecoverFunds({
         feeRateSatPerVbyte: effectiveFeeRate,
         fundingKind: { type: 'p2wpkh' },
         destination: destination.trim(),
-        // A resumed exit names its leaves: `auto` reselects, and can drop one part-way out.
+        // A resumed exit names its leaves: `all` reselects, and can drop one part-way out.
         selection: plan
           ? { type: 'specific', leafIds: plan.exit.leaves.map(leaf => leaf.leafId) }
-          : { type: 'auto' },
+          : { type: 'all' },
       });
       if (request !== quoteRequest.current) return;
       setQuote(prepared);
@@ -317,7 +317,7 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
           feeRateSatPerVbyte: quote.feeRateSatPerVbyte,
           fundingAddressIndex: index,
           fundingAddress: key.address,
-          required: { sat: quote.singleUtxoFundingSat, inputs: 1 },
+          required: { sat: quote.funding?.singleUtxoSats ?? 0, inputs: 1 },
           willReceiveSat: willReceiveSat(quote),
         },
         key,
@@ -349,12 +349,12 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
         type: 'p2wpkh',
         txid: utxo.txid,
         vout: utxo.vout,
-        value: utxo.value,
+        valueSats: utxo.value,
         pubkey: fundingKey.publicKeyHex,
       }));
       const fundingInputs = mergeFunding(plan.exit.fundingInputs, fresh);
       await restoreExitState(wallet, plan, await loadExitState(walletKey.identityPubkey));
-      const response = await wallet.unilateralExit(
+      const response = await wallet.recoverFunds(
         { prepared: quote, fundingInputs },
         singleKeyCpfpSigner(fundingKey.secretKey),
       );
@@ -373,7 +373,7 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
         feeRateSatPerVbyte: quote.feeRateSatPerVbyte,
         fundingAddressIndex: plan.fundingAddressIndex,
         quotedSweepFeeSat: quotedSweepFeeSat(quote, plan),
-        quotedExitFeeSat: quote.singleUtxoFundingSat,
+        quotedExitFeeSat: quote.funding?.singleUtxoSats,
       });
       setUnilateralExitPlan(walletKey, { ...built, exitStateSnapshot });
       mnemonicRef.current = null;
@@ -461,7 +461,7 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
       willReceiveSat: quote ? willReceiveSat(quote, plan) : 0,
       isQuoting,
       error: quoteError,
-      leftBehindSat: quote ? Math.max(0, balanceSat - quote.recoverableValueSat) : 0,
+      leftBehindSat: quote ? Math.max(0, balanceSat - quote.recoverableValueSats) : 0,
     },
     funding: fundingKey && {
       address: fundingKey.address,

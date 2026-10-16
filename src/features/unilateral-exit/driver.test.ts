@@ -27,6 +27,7 @@ import {
   confirmed,
   locked,
   MNEMONIC,
+  paying,
   pendingExit,
   plan,
   prepared,
@@ -35,7 +36,7 @@ import {
   tx,
 } from './testFixtures';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { CheckUnilateralExitRequest, UnilateralExitVerdict } from '@breeztech/breez-sdk-spark';
+import type { CheckRecoverFundsRequest, RecoveryVerdict } from '@breeztech/breez-sdk-spark';
 import type { ChainClient } from '@/services/chain';
 
 const meta = {
@@ -49,7 +50,7 @@ const meta = {
 describe('planFromExitResponse', () => {
   it('keeps the sdk response whole, for the check to read back', () => {
     const exit = checked([{ txid: 'node-1' }], {
-      fundingInputs: [{ type: 'p2wpkh', txid: 'fund', vout: 0, value: 50_000, pubkey: '02ab' }],
+      fundingInputs: [{ type: 'p2wpkh', txid: 'fund', vout: 0, valueSats: 50_000, pubkey: '02ab' }],
     });
     const built = planFromExitResponse(exit, meta);
     expect(built.exit).toBe(exit);
@@ -59,7 +60,7 @@ describe('planFromExitResponse', () => {
 
 describe('applyExitCheck', () => {
   it('takes the sdk word on the whole exit', () => {
-    const exit = checked([{ txid: 'a', status: confirmed(812_345) }], { sweepFeeSat: 250 });
+    const exit = checked([{ txid: 'a', status: confirmed(812_345) }], { sweepFeeSats: 250 });
     expect(applyExitCheck(plan([tx({ txid: 'a' })]), exit, 'active').exit).toBe(exit);
   });
 
@@ -103,6 +104,34 @@ describe('storing a plan', () => {
     expect(loadPlan(wallet)).toEqual(built);
   });
 
+  // A plan saved under SDK 0.26 holds an exit this SDK no longer parses.
+  it('reads a plan saved under the previous SDK in the current shape', () => {
+    const transactions = [tx({ txid: 'a', kind: 'refund' })];
+    const { exit, ...rest } = plan(transactions);
+    localStorage.setItem(key, JSON.stringify({
+      ...rest,
+      version: 4,
+      exit: {
+        recoverableValueSat: 100_000,
+        totalFeeSat: 2_000,
+        cpfpFeeSat: 1_800,
+        fanoutFeeSat: 0,
+        sweepFeeSat: 200,
+        leaves: [{ leafId: 'leaf-1', value: 100_000 }],
+        transactions,
+        fundingInputs: [{ type: 'p2wpkh', txid: 'fund', vout: 0, value: 50_000, pubkey: '02ab' }],
+      },
+    }));
+
+    expect(loadPlan(wallet)).toEqual({
+      ...rest,
+      exit: {
+        ...exit,
+        fundingInputs: [{ type: 'p2wpkh', txid: 'fund', vout: 0, valueSats: 50_000, pubkey: '02ab' }],
+      },
+    });
+  });
+
   it('keeps plans of different wallets and networks apart', () => {
     savePlan(wallet, plan([tx({ txid: 'a' })]));
     expect(loadPlan({ identityPubkey: '03999999', network: 'mainnet' })).toBeNull();
@@ -131,34 +160,61 @@ const sweepHex =
   '0200000001' + '00'.repeat(32) + '00000000' + '00' + 'ffffffff' +
   '01' + '2c1a090000000000' + '160014' + 'ab'.repeat(20) + '00000000';
 
+/** A unilateral leaf and one the operators' watchtower already moved on-chain, recovered cooperatively. */
+const mixed = (transactions: Parameters<typeof plan>[0]) =>
+  plan(transactions, {
+    quotedSweepFeeSat: 215,
+    exit: {
+      leaves: [
+        { leafId: 'leaf-1', valueSats: 180_000, method: 'unilateral' },
+        { leafId: 'leaf-2', valueSats: 420_000, method: 'cooperative' },
+      ],
+      recoverableValueSats: 600_000,
+      cooperativeFeeSats: 1_000,
+      refundFeeSats: 300,
+      sweepFeeSats: 0,
+    },
+  });
+
+const cooperativeOnly = (status: ReturnType<typeof confirmed> = ready) =>
+  plan([tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000), status })], {
+    quotedSweepFeeSat: 0,
+    exit: {
+      leaves: [{ leafId: 'leaf-2', valueSats: 420_000, method: 'cooperative' }],
+      recoverableValueSats: 420_000,
+      cooperativeFeeSats: 2_000,
+      sweepFeeSats: 0,
+    },
+  });
+
 const twoLeaves = (transactions: Parameters<typeof plan>[0], over: Parameters<typeof plan>[1] = {}) =>
   plan(transactions, {
     quotedSweepFeeSat: 215,
     ...over,
     exit: {
       leaves: [
-        { leafId: 'leaf-1', value: 180_000 },
-        { leafId: 'leaf-2', value: 420_000 },
+        { leafId: 'leaf-1', valueSats: 180_000, method: 'unilateral' },
+        { leafId: 'leaf-2', valueSats: 420_000, method: 'unilateral' },
       ],
-      recoverableValueSat: 600_000,
-      totalFeeSat: 3_122,
-      cpfpFeeSat: 2_907,
-      sweepFeeSat: 0,
+      recoverableValueSats: 600_000,
+      totalFeeSats: 3_122,
+      cpfpFeeSats: 2_907,
+      sweepFeeSats: 0,
       ...over.exit,
     },
   });
 
 describe('willReceiveSat', () => {
   it('is the balance less the sweep fee: the other fees come out of the funding', () => {
-    const quote = prepared({ recoverableValueSat: 600_000, totalFeeSat: 3_122, cpfpFeeSat: 2_907, sweepFeeSat: 215 });
+    const quote = prepared({ recoverableValueSats: 600_000, totalFeeSats: 3_122, cpfpFeeSats: 2_907, sweepFeeSats: 215 });
     expect(willReceiveSat(quote)).toBe(599_785);
   });
 
   it('says the same thing on the quote and on the exit built from it', () => {
-    const quote = prepared({ recoverableValueSat: 600_000, totalFeeSat: 3_122, cpfpFeeSat: 2_907, sweepFeeSat: 215 });
+    const quote = prepared({ recoverableValueSats: 600_000, totalFeeSats: 3_122, cpfpFeeSats: 2_907, sweepFeeSats: 215 });
     // A fresh build carries no sweep yet, so the sdk reports its fee as zero there.
     const built = planFromExitResponse(
-      checked([{ txid: 'r', kind: 'refund' }], { recoverableValueSat: 600_000, sweepFeeSat: 0 }),
+      checked([{ txid: 'r', kind: 'refund' }], { recoverableValueSats: 600_000, sweepFeeSats: 0 }),
       { ...meta, quotedSweepFeeSat: quotedSweepFeeSat(quote, null) },
     );
     expect(willReceiveSat(built)).toBe(willReceiveSat(quote));
@@ -166,17 +222,17 @@ describe('willReceiveSat', () => {
   });
 
   it('does not move when a check or rebuild reprices the exit', () => {
-    expect(willReceiveSat(twoLeaves([tx({ txid: 'r', kind: 'refund' })], { exit: { totalFeeSat: 214, sweepFeeSat: 214 } }))).toBe(599_785);
+    expect(willReceiveSat(twoLeaves([tx({ txid: 'r', kind: 'refund' })], { exit: { totalFeeSats: 214, sweepFeeSats: 214 } }))).toBe(599_785);
   });
 
   it('holds a resumed quote to the sweep fee the exit was first quoted at', () => {
     const resuming = twoLeaves([]);
-    expect(quotedSweepFeeSat(prepared({ sweepFeeSat: 180 }), resuming)).toBe(215);
-    expect(willReceiveSat(prepared({ recoverableValueSat: 600_000, sweepFeeSat: 180 }), resuming)).toBe(599_785);
+    expect(quotedSweepFeeSat(prepared({ sweepFeeSats: 180 }), resuming)).toBe(215);
+    expect(willReceiveSat(prepared({ recoverableValueSats: 600_000, sweepFeeSats: 180 }), resuming)).toBe(599_785);
   });
 
   it('lets a quote at a higher rate cost more', () => {
-    expect(quotedSweepFeeSat(prepared({ sweepFeeSat: 900 }), twoLeaves([]))).toBe(900);
+    expect(quotedSweepFeeSat(prepared({ sweepFeeSats: 900 }), twoLeaves([]))).toBe(900);
   });
 
   it('reports what a confirmed sweep actually paid', () => {
@@ -185,6 +241,40 @@ describe('willReceiveSat', () => {
 
   it('ignores an unconfirmed sweep, which may still be rebuilt', () => {
     expect(willReceiveSat(twoLeaves([tx({ txid: 's', kind: 'sweep', txHex: sweepHex })]))).toBe(599_785);
+  });
+
+  // Like the sweep's, these come off the leaves' own value; CPFP and fan-out come out of the funding.
+  it('takes the cooperative and refund fees off the balance too', () => {
+    const quote = prepared({
+      recoverableValueSats: 600_000,
+      sweepFeeSats: 215,
+      cooperativeFeeSats: 1_000,
+      refundFeeSats: 300,
+    });
+    expect(willReceiveSat(quote)).toBe(598_485);
+    const built = planFromExitResponse(
+      checked([{ txid: 'r', kind: 'refund' }], { recoverableValueSats: 600_000, cooperativeFeeSats: 1_000, refundFeeSats: 300 }),
+      { ...meta, quotedSweepFeeSat: quotedSweepFeeSat(quote, null) },
+    );
+    expect(willReceiveSat(built)).toBe(598_485);
+  });
+
+  it('adds up the sweep and every cooperative recovery once all of them confirm', () => {
+    expect(willReceiveSat(mixed([
+      tx({ txid: 's', kind: 'sweep', txHex: paying(178_000), status: confirmed(1) }),
+      tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000), status: confirmed(1) }),
+    ]))).toBe(596_000);
+  });
+
+  it('keeps estimating while a cooperative recovery is unconfirmed, sweep or not', () => {
+    expect(willReceiveSat(mixed([
+      tx({ txid: 's', kind: 'sweep', txHex: paying(178_000), status: confirmed(1) }),
+      tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000) }),
+    ]))).toBe(598_485);
+  });
+
+  it('reads an exit without a sweep off its cooperative recoveries', () => {
+    expect(willReceiveSat(cooperativeOnly(confirmed(1)))).toBe(418_000);
   });
 });
 
@@ -218,6 +308,35 @@ describe('exitStages', () => {
       ]),
     );
     expect(stages).toEqual({ inSpark: 0, onChain: 0, delivered: 596_524, willReceive: 596_524 });
+  });
+
+  it('holds a cooperative leaf on-chain, the operators having moved it there', () => {
+    const stages = exitStages(mixed([
+      tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000) }),
+      tx({ txid: 's', kind: 'sweep', txHex: paying(178_000) }),
+    ]));
+    expect(stages).toMatchObject({ inSpark: 180_000, onChain: 420_000, delivered: 0 });
+  });
+
+  it('delivers a cooperative leaf once its recovery confirms, ahead of the sweep', () => {
+    const stages = exitStages(mixed([
+      tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000), status: confirmed(900) }),
+      tx({ txid: 's', kind: 'sweep', txHex: paying(178_000) }),
+    ]));
+    expect(stages).toMatchObject({ inSpark: 180_000, onChain: 0, delivered: 418_000 });
+  });
+
+  it('delivers the unilateral leaves with the sweep while a cooperative recovery waits', () => {
+    const stages = exitStages(mixed([
+      tx({ txid: 's', kind: 'sweep', txHex: paying(178_000), status: confirmed(900) }),
+      tx({ txid: 'c', kind: 'cooperative', nodeId: 'leaf-2', txHex: paying(418_000) }),
+    ]));
+    expect(stages).toMatchObject({ inSpark: 0, onChain: 420_000, delivered: 178_000 });
+  });
+
+  it('finishes an exit without a sweep once its cooperative recoveries confirm', () => {
+    expect(exitStages(cooperativeOnly(confirmed(900))))
+      .toEqual({ inSpark: 0, onChain: 0, delivered: 418_000, willReceive: 418_000 });
   });
 });
 
@@ -266,10 +385,10 @@ const chain = (over: Partial<ChainClient> = {}): ChainClient => ({
   ...over,
 });
 
-const redo: UnilateralExitVerdict = { type: 'redo', reason: 'onChainStateDiverged' };
+const redo: RecoveryVerdict = { type: 'redo', reason: 'onChainStateDiverged' };
 
-const checking = (exit: ReturnType<typeof checked>, verdict: UnilateralExitVerdict = { type: 'valid' }) =>
-  sdk({ checkUnilateralExit: async () => ({ exit, verdict }) });
+const checking = (exit: ReturnType<typeof checked>, verdict: RecoveryVerdict = { type: 'valid' }) =>
+  sdk({ checkRecoverFunds: async () => ({ recovery: exit, verdict }) });
 
 describe('broadcastReadyTransactions', () => {
   it('sends a package when the step has a cpfp child', async () => {
@@ -350,9 +469,9 @@ describe('advanceUnilateralExit', () => {
 
   it('rebuilds itself when the chain diverges, rather than waiting on the user', async () => {
     const driver = sdk({
-      checkUnilateralExit: async () => ({ exit: checked([{ txid: 'a' }]), verdict: redo }),
-      prepareUnilateralExit: async () => prepared(),
-      unilateralExit: async () => checked([{ txid: 'fresh', status: ready }]),
+      checkRecoverFunds: async () => ({ recovery: checked([{ txid: 'a' }]), verdict: redo }),
+      prepareRecoverFunds: async () => prepared(),
+      recoverFunds: async () => checked([{ txid: 'fresh', status: ready }]),
     });
     const { plan: next } = await advanceUnilateralExit(plan([tx({ txid: 'a' })]), chain(), driver, '02abc');
     expect(next.phase).toBe('active');
@@ -360,39 +479,39 @@ describe('advanceUnilateralExit', () => {
   });
 
   it('names the leaves it is rebuilding rather than letting them be reselected', async () => {
-    const prepareUnilateralExit = vi.fn(async () => prepared());
+    const prepareRecoverFunds = vi.fn(async () => prepared());
     const driver = sdk({
-      checkUnilateralExit: async () => ({ exit: checked([{ txid: 'a' }]), verdict: redo }),
-      prepareUnilateralExit,
-      unilateralExit: async () => checked([{ txid: 'fresh', status: ready }]),
+      checkRecoverFunds: async () => ({ recovery: checked([{ txid: 'a' }]), verdict: redo }),
+      prepareRecoverFunds,
+      recoverFunds: async () => checked([{ txid: 'fresh', status: ready }]),
     });
     await advanceUnilateralExit(plan([tx({ txid: 'a' })]), chain(), driver, '02abc');
-    expect(prepareUnilateralExit).toHaveBeenCalledWith(
+    expect(prepareRecoverFunds).toHaveBeenCalledWith(
       expect.objectContaining({ selection: { type: 'specific', leafIds: ['leaf-1'] } }),
     );
   });
 
   it('hands the funding it was built from back, for the sdk to follow', async () => {
-    const unilateralExit = vi.fn(async () => checked([{ txid: 'fresh', status: ready }]));
-    const funding = [{ type: 'p2wpkh' as const, txid: 'f', vout: 0, value: 40_000, pubkey: '02ab' }];
+    const recoverFunds = vi.fn(async () => checked([{ txid: 'fresh', status: ready }]));
+    const funding = [{ type: 'p2wpkh' as const, txid: 'f', vout: 0, valueSats: 40_000, pubkey: '02ab' }];
     const driver = sdk({
-      checkUnilateralExit: async () => ({ exit: checked([{ txid: 'a' }], { fundingInputs: funding }), verdict: redo }),
-      prepareUnilateralExit: async () => prepared(),
-      unilateralExit,
+      checkRecoverFunds: async () => ({ recovery: checked([{ txid: 'a' }], { fundingInputs: funding }), verdict: redo }),
+      prepareRecoverFunds: async () => prepared(),
+      recoverFunds,
     });
     await advanceUnilateralExit(plan([tx({ txid: 'a' })]), chain(), driver, '02abc');
-    expect(unilateralExit).toHaveBeenCalledWith(expect.objectContaining({ fundingInputs: funding }), expect.anything());
+    expect(recoverFunds).toHaveBeenCalledWith(expect.objectContaining({ fundingInputs: funding }), expect.anything());
   });
 
   it('keeps the sweep fee the exit was first quoted at across a rebuild', async () => {
     const driver = sdk({
-      checkUnilateralExit: async () => ({ exit: checked([{ txid: 'a' }]), verdict: redo }),
-      prepareUnilateralExit: async () => prepared({ sweepFeeSat: 180 }),
-      unilateralExit: async () => checked([{ txid: 'fresh', status: ready }], { sweepFeeSat: 180 }),
+      checkRecoverFunds: async () => ({ recovery: checked([{ txid: 'a' }]), verdict: redo }),
+      prepareRecoverFunds: async () => prepared({ sweepFeeSats: 180 }),
+      recoverFunds: async () => checked([{ txid: 'fresh', status: ready }], { sweepFeeSats: 180 }),
     });
     const { plan: next } = await advanceUnilateralExit(plan([tx({ txid: 'a' })], { quotedSweepFeeSat: 215 }), chain(), driver, '02abc');
     expect(next.quotedSweepFeeSat).toBe(215);
-    expect(next.exit.sweepFeeSat).toBe(180);
+    expect(next.exit.sweepFeeSats).toBe(180);
   });
 
   it('waits for the user rather than prompting for a passkey in the background', async () => {
@@ -412,8 +531,8 @@ describe('advanceUnilateralExit', () => {
 
   it('leaves the exit for the user to rebuild when it cannot do it unattended', async () => {
     const driver = sdk({
-      checkUnilateralExit: async () => ({ exit: checked([{ txid: 'a' }]), verdict: redo }),
-      prepareUnilateralExit: async () => {
+      checkRecoverFunds: async () => ({ recovery: checked([{ txid: 'a' }]), verdict: redo }),
+      prepareRecoverFunds: async () => {
         throw new Error('no recovery phrase on this device');
       },
     });
@@ -423,7 +542,7 @@ describe('advanceUnilateralExit', () => {
 
   it('keeps going on the set it holds when the check fails', async () => {
     const failing = sdk({
-      checkUnilateralExit: async () => {
+      checkRecoverFunds: async () => {
         throw new Error('sdk unavailable');
       },
     });
@@ -444,12 +563,12 @@ describe('advanceUnilateralExit', () => {
 describe('checkExit', () => {
   it('hands the sdk the exit it stored, untouched', async () => {
     const stored = plan([tx({ txid: 'a', cpfpTxHex: 'bb', dependsOn: ['x'] })], { refusals: { a: 'refused' } });
-    const checkUnilateralExit = vi.fn(async (_request: CheckUnilateralExitRequest) => ({
-      exit: checked([{ txid: 'a' }]),
+    const checkRecoverFunds = vi.fn(async (_request: CheckRecoverFundsRequest) => ({
+      recovery: checked([{ txid: 'a' }]),
       verdict: { type: 'valid' as const },
     }));
-    await checkExit(stored, sdk({ checkUnilateralExit }));
-    expect(checkUnilateralExit.mock.calls[0][0].exit).toBe(stored.exit);
+    await checkExit(stored, sdk({ checkRecoverFunds }));
+    expect(checkRecoverFunds.mock.calls[0][0].recovery).toBe(stored.exit);
   });
 
   it.each([
@@ -576,7 +695,7 @@ describe('requiredFundingOf', () => {
 });
 
 describe('sentFunding', () => {
-  const own = [{ type: 'p2wpkh' as const, txid: 'fund', vout: 0, value: 5_361, pubkey: '02' }];
+  const own = [{ type: 'p2wpkh' as const, txid: 'fund', vout: 0, valueSats: 5_361, pubkey: '02' }];
   const coin = (txid: string, value: number) => ({ txid, vout: 0, value });
 
   it("counts the exit's own funding while its first transaction is unconfirmed", () => {
@@ -630,19 +749,19 @@ describe('startExit', () => {
   });
 
   it('quotes what the wallet holds now and builds it from the confirmed fee coins', async () => {
-    const prepareUnilateralExit = vi.fn(async () => prepared({ sweepFeeSat: 180 }));
-    const unilateralExit = vi.fn(async () => checked([{ txid: 'fan', kind: 'fanOut' }]));
+    const prepareRecoverFunds = vi.fn(async () => prepared({ sweepFeeSats: 180 }));
+    const recoverFunds = vi.fn(async () => checked([{ txid: 'fan', kind: 'fanOut' }]));
     const outcome = await startExit(
       pendingExit({ fundingAddressIndex: 3 }),
       [feeCoin(5_898)],
-      sdk({ prepareUnilateralExit, unilateralExit }),
+      sdk({ prepareRecoverFunds, recoverFunds }),
       '02abc',
     );
 
     // Not the leaves the first quote picked: a payment since could have spent one.
-    expect(prepareUnilateralExit).toHaveBeenCalledWith(expect.objectContaining({ selection: { type: 'auto' }, feeRateSatPerVbyte: 2 }));
-    expect(unilateralExit).toHaveBeenCalledWith(
-      expect.objectContaining({ fundingInputs: [expect.objectContaining({ txid: 'coin-5898', value: 5_898 })] }),
+    expect(prepareRecoverFunds).toHaveBeenCalledWith(expect.objectContaining({ selection: { type: 'all' }, feeRateSatPerVbyte: 2 }));
+    expect(recoverFunds).toHaveBeenCalledWith(
+      expect.objectContaining({ fundingInputs: [expect.objectContaining({ txid: 'coin-5898', valueSats: 5_898 })] }),
       expect.anything(),
     );
     expect(outcome.type).toBe('started');
@@ -653,8 +772,8 @@ describe('startExit', () => {
 
   it('reports what the build says it still needs, sized on the coins it had', async () => {
     const driver = sdk({
-      prepareUnilateralExit: async () => prepared(),
-      unilateralExit: async () => {
+      prepareRecoverFunds: async () => prepared(),
+      recoverFunds: async () => {
         throw new Error('Insufficient CPFP funding: need at least 6400 sats');
       },
     });
@@ -665,10 +784,10 @@ describe('startExit', () => {
   });
 
   it('builds nothing once the wallet holds nothing worth its fee', async () => {
-    const unilateralExit = vi.fn(async () => checked([]));
-    const driver = sdk({ prepareUnilateralExit: async () => prepared({ leaves: [] }), unilateralExit });
+    const recoverFunds = vi.fn(async () => checked([]));
+    const driver = sdk({ prepareRecoverFunds: async () => prepared({ leaves: [] }), recoverFunds });
     expect(await startExit(pendingExit(), [feeCoin(5_898)], driver, '02abc')).toEqual({ type: 'nothingToExit' });
-    expect(unilateralExit).not.toHaveBeenCalled();
+    expect(recoverFunds).not.toHaveBeenCalled();
   });
 
 });

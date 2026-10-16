@@ -1,8 +1,8 @@
 import type {
   ExitTransactionStatus,
-  PrepareUnilateralExitResponse,
-  UnilateralExitResponse,
-  UnilateralExitTransaction,
+  PrepareRecoverFundsResponse,
+  RecoverFundsResponse,
+  RecoveryTransaction,
 } from '@breeztech/breez-sdk-spark';
 import type { ChainUtxo } from '@/services/chain';
 import type { ExitSdk, PendingExit, UnilateralExitPlan } from './driver';
@@ -40,9 +40,16 @@ export const locked = (spendableAtHeight?: number): ExitTransactionStatus => ({
   spendableAtHeight,
 });
 
+/** A transaction with one input and one output of `sat`, for what a confirmed delivery paid. */
+export const paying = (sat: number): string => {
+  const value = BigInt(sat).toString(16).padStart(16, '0').match(/../g)!.reverse().join('');
+  return '0200000001' + '00'.repeat(32) + '00000000' + '00' + 'ffffffff' +
+    '01' + value + '160014' + 'ab'.repeat(20) + '00000000';
+};
+
 export const tx = (
-  over: Partial<UnilateralExitTransaction> & { txid: string },
-): UnilateralExitTransaction => ({
+  over: Partial<RecoveryTransaction> & { txid: string },
+): RecoveryTransaction => ({
   kind: 'node',
   txHex: 'aa',
   dependsOn: [],
@@ -52,27 +59,32 @@ export const tx = (
 
 /** What the sdk hands back for an exit: the same set, statuses refreshed. */
 export const checked = (
-  transactions: Array<Partial<UnilateralExitTransaction> & { txid: string }>,
-  over: Partial<UnilateralExitResponse> = {},
-): UnilateralExitResponse => ({
-  recoverableValueSat: 100_000,
-  totalFeeSat: 2_000,
-  cpfpFeeSat: 1_800,
-  fanoutFeeSat: 0,
-  sweepFeeSat: 200,
-  leaves: [{ leafId: 'leaf-1', value: 100_000 }],
+  transactions: Array<Partial<RecoveryTransaction> & { txid: string }>,
+  over: Partial<RecoverFundsResponse> = {},
+): RecoverFundsResponse => ({
+  recoverableValueSats: 100_000,
+  totalFeeSats: 2_000,
+  cooperativeFeeSats: 0,
+  cpfpFeeSats: 1_800,
+  fanoutFeeSats: 0,
+  refundFeeSats: 0,
+  sweepFeeSats: 200,
+  leaves: [{ leafId: 'leaf-1', valueSats: 100_000, method: 'unilateral' }],
+  failed: [],
   fundingInputs: [],
   transactions: transactions.map(tx),
+  feeRateSatPerVbyte: 2,
+  destination: 'bc1qdest',
   ...over,
 });
 
 export const plan = (
-  transactions: UnilateralExitTransaction[],
-  over: Partial<Omit<UnilateralExitPlan, 'exit'>> & { exit?: Partial<UnilateralExitResponse> } = {},
+  transactions: RecoveryTransaction[],
+  over: Partial<Omit<UnilateralExitPlan, 'exit'>> & { exit?: Partial<RecoverFundsResponse> } = {},
 ): UnilateralExitPlan => {
   const { exit, ...rest } = over;
   return {
-    version: 4,
+    version: 5,
     network: 'mainnet',
     destination: 'bc1qdest',
     feeRateSatPerVbyte: 2,
@@ -86,16 +98,18 @@ export const plan = (
 };
 
 export const prepared = (
-  over: Partial<PrepareUnilateralExitResponse> = {},
-): PrepareUnilateralExitResponse => ({
-  leaves: [{ leafId: 'leaf-1', value: 100_000 }],
-  recoverableValueSat: 100_000,
-  totalFeeSat: 2_000,
-  cpfpFeeSat: 1_800,
-  fanoutFeeSat: 0,
-  sweepFeeSat: 200,
-  singleUtxoFundingSat: 3_000,
-  perBranchFunding: [],
+  over: Partial<PrepareRecoverFundsResponse> = {},
+): PrepareRecoverFundsResponse => ({
+  leaves: [{ leafId: 'leaf-1', valueSats: 100_000, method: 'unilateral' }],
+  skipped: [],
+  recoverableValueSats: 100_000,
+  totalFeeSats: 2_000,
+  cooperativeFeeSats: 0,
+  cpfpFeeSats: 1_800,
+  fanoutFeeSats: 0,
+  refundFeeSats: 0,
+  sweepFeeSats: 200,
+  funding: { singleUtxoSats: 3_000, perBranch: [] },
   feeRateSatPerVbyte: 2,
   destination: 'bc1qdest',
   exitChainState: {
@@ -110,15 +124,15 @@ export const prepared = (
 
 /** An sdk whose check confirms whatever it is handed, with nothing to rebuild. */
 export const sdk = (over: Partial<ExitSdk> = {}): ExitSdk => ({
-  checkUnilateralExit: async ({ exit }) => ({ exit, verdict: { type: 'valid' } }),
+  checkRecoverFunds: async ({ recovery }) => ({ recovery, verdict: { type: 'valid' } }),
   importUnilateralExitState: async () => ({
     importedLeaves: 0,
     skippedForeignLeaves: 0,
     skippedConflictingLeaves: 0,
     skippedChains: 0,
   }),
-  prepareUnilateralExit: async () => prepared({ leaves: [] }),
-  unilateralExit: async () => checked([]),
+  prepareRecoverFunds: async () => prepared({ leaves: [] }),
+  recoverFunds: async () => checked([]),
   exportUnilateralExitState: async () => ({ exitState: 'snapshot' }),
   ...over,
 });

@@ -100,7 +100,10 @@ export function autoClaimsEarly(
   maxFee: MaxFee,
 ): boolean {
   const early = earlyOption(quote);
-  const ceiling = claimCeilingSats(maxFee);
+  // A rate limit only has a sat figure once the SDK prices it for this deposit,
+  // which the quote carries. A fixed one is read directly: a ceiling the sheet
+  // just recorded is in force before the quote is fetched again.
+  const ceiling = claimCeilingSats(maxFee) ?? early?.maxFeeSats ?? null;
   return early !== null && ceiling !== null && early.feeSats <= ceiling;
 }
 

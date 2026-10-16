@@ -57,12 +57,18 @@ describe('getCrossChainDestination', () => {
     type: 'orchestra',
     chain: 'Solana',
     recipientAddress: '8kBoWYZadELjg8dgS2c5DXyapr8y8fsGY2HZWsaagguz',
-    estimatedOut: '1030000',
+    estimatedOut: 1_030_000n,
     assetDecimals: 6,
     status: 'completed',
     orderId: 'o1',
     quoteId: 'q1',
   };
+
+  // Amounts are bigints, so a zero is falsy where its string form was not.
+  it('keeps a delivered amount of zero', () => {
+    const dest = getCrossChainDestination(crossChainPayment({ ...orchestra, deliveredAmount: 0n }));
+    expect(dest.deliveredAmount).toBe(0n);
+  });
 
   it('surfaces the external tx hash', () => {
     const dest = getCrossChainDestination(crossChainPayment({ ...orchestra, externalTxHash: '5jQ8f' }));

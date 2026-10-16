@@ -5,6 +5,7 @@ import { FeeBreakdownCard } from '@/components/FeeBreakdownCard';
 import { SatAmount } from '@/components/SatAmount';
 import { truncateAddress } from '@/utils/crossChainFormat';
 import type { QuoteFields } from '../hooks/useUnilateralExitFlow';
+import { leafFeesSat } from '../driver';
 
 export const QuoteStep: React.FC<QuoteFields> = ({
   quote,
@@ -43,7 +44,7 @@ export const QuoteStep: React.FC<QuoteFields> = ({
     );
   }
 
-  if (quote.totalFeeSat >= quote.recoverableValueSat || willReceiveSat <= 0) {
+  if (quote.totalFeeSats >= quote.recoverableValueSats || willReceiveSat <= 0) {
     return (
       <div className="space-y-6">
         <AlertCard variant="warning" title="Nothing is worth exiting right now">
@@ -55,6 +56,8 @@ export const QuoteStep: React.FC<QuoteFields> = ({
       </div>
     );
   }
+
+  const leafFeeSat = leafFeesSat(quote);
 
   return (
     <div className="space-y-4">
@@ -78,9 +81,10 @@ export const QuoteStep: React.FC<QuoteFields> = ({
 
       <FeeBreakdownCard
         items={[
-          { label: 'Balance', value: quote.recoverableValueSat },
+          { label: 'Balance', value: quote.recoverableValueSats },
           { label: 'Sweep fee', value: sweepFeeSat, approximate: true },
-          { label: 'Exit fee', value: quote.singleUtxoFundingSat, highlight: true },
+          ...(leafFeeSat > 0 ? [{ label: 'Recovery fee', value: leafFeeSat, approximate: true }] : []),
+          { label: 'Exit fee', value: quote.funding?.singleUtxoSats ?? 0, highlight: true },
         ]}
       />
 

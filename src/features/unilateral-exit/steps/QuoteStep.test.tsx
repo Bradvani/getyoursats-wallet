@@ -1,18 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
-import type { PrepareUnilateralExitResponse } from '@breeztech/breez-sdk-spark';
+import type { PrepareRecoverFundsResponse } from '@breeztech/breez-sdk-spark';
 import { QuoteStep } from './QuoteStep';
 import { canContinueFromQuote } from '../hooks/useUnilateralExitFlow';
 
-const quote = (over: Partial<PrepareUnilateralExitResponse> = {}): PrepareUnilateralExitResponse => ({
-  leaves: [{ leafId: 'leaf-1', value: 100_000 }],
-  recoverableValueSat: 100_000,
-  totalFeeSat: 4_000,
-  cpfpFeeSat: 3_800,
-  fanoutFeeSat: 0,
-  sweepFeeSat: 200,
-  singleUtxoFundingSat: 6_000,
-  perBranchFunding: [],
+const quote = (over: Partial<PrepareRecoverFundsResponse> = {}): PrepareRecoverFundsResponse => ({
+  leaves: [{ leafId: 'leaf-1', valueSats: 100_000, method: 'unilateral' }],
+  recoverableValueSats: 100_000,
+  totalFeeSats: 4_000,
+  cpfpFeeSats: 3_800,
+  cooperativeFeeSats: 0,
+  fanoutFeeSats: 0,
+  refundFeeSats: 0,
+  sweepFeeSats: 200,
+  skipped: [],
+  funding: { singleUtxoSats: 6_000, perBranch: [] },
   feeRateSatPerVbyte: 2,
   destination: 'bc1qdest',
   exitChainState: {
@@ -50,6 +52,15 @@ describe('QuoteStep', () => {
     expect(within(row).getByText(/200/)).toBeInTheDocument();
   });
 
+  it('shows the cooperative and refund fees the leaves pay, only when there are any', () => {
+    renderStep();
+    expect(screen.queryByText('Recovery fee')).not.toBeInTheDocument();
+
+    renderStep({ quote: quote({ cooperativeFeeSats: 1_000, refundFeeSats: 300 }) });
+    const row = screen.getByText('Recovery fee').parentElement as HTMLElement;
+    expect(within(row).getByText(/1 300/)).toBeInTheDocument();
+  });
+
   it('says what the exit fee pays for, and that it does not come back', () => {
     renderStep();
     expect(screen.getByText('Exit fee')).toBeInTheDocument();
@@ -74,20 +85,20 @@ describe('QuoteStep', () => {
 
   it('will not let an exit start when the fees would eat it', () => {
     renderStep({
-      quote: quote({ recoverableValueSat: 1_000, totalFeeSat: 4_000 }),
+      quote: quote({ recoverableValueSats: 1_000, totalFeeSats: 4_000 }),
       sweepFeeSat: 200,
       willReceiveSat: 800,
     });
     expect(screen.getByText('Nothing is worth exiting right now')).toBeInTheDocument();
     expect(canContinueFromQuote(fields({
-      quote: quote({ recoverableValueSat: 1_000, totalFeeSat: 4_000 }),
+      quote: quote({ recoverableValueSats: 1_000, totalFeeSats: 4_000 }),
       sweepFeeSat: 200,
       willReceiveSat: 800,
     }))).toBe(false);
   });
 
   it('distinguishes having no leaves at all from the fees being too high', () => {
-    renderStep({ quote: quote({ leaves: [], recoverableValueSat: 0 }) });
+    renderStep({ quote: quote({ leaves: [], recoverableValueSats: 0 }) });
     expect(screen.getByText('Nothing here to exit')).toBeInTheDocument();
     expect(screen.queryByText('Nothing is worth exiting right now')).not.toBeInTheDocument();
     expect(screen.queryByText('Change fee rate')).not.toBeInTheDocument();

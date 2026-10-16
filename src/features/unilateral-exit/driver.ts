@@ -1,11 +1,11 @@
 import { singleKeyCpfpSigner } from '@breeztech/breez-sdk-spark';
 import type {
   BreezSdk,
-  CheckUnilateralExitResponse,
+  CheckRecoverFundsResponse,
   CpfpInput,
-  PrepareUnilateralExitResponse,
-  UnilateralExitResponse,
-  UnilateralExitTransaction,
+  PrepareRecoverFundsResponse,
+  RecoverFundsResponse,
+  RecoveryTransaction,
 } from '@breeztech/breez-sdk-spark';
 import type { ChainClient, ChainUtxo } from '@/services/chain';
 import { logger, LogCategory } from '@/services/logger';
@@ -20,7 +20,7 @@ import { deriveFundingKey, MnemonicNeedsPasskeyError, readWalletMnemonic, type F
 export type ExitPhase = 'active' | 'complete' | 'redo';
 
 export interface UnilateralExitPlan {
-  version: 4;
+  version: 5;
   network: string;
   destination: string;
   feeRateSatPerVbyte: number;
@@ -36,8 +36,8 @@ export interface UnilateralExitPlan {
    * produced this plan. Absent on a plan written before the field existed.
    */
   quotedExitFeeSat?: number;
-  /** The sdk's latest word on the exit, handed back to `checkUnilateralExit` unchanged. */
-  exit: UnilateralExitResponse;
+  /** The sdk's latest word on the exit, handed back to `checkRecoverFunds` unchanged. */
+  exit: RecoverFundsResponse;
   /**
    * Why the network last refused each transaction, by txid, for diagnostics. The
    * tracker shows none: Glow retries a refusal on every check. Cleared once the
@@ -49,7 +49,7 @@ export interface UnilateralExitPlan {
   exitStateSnapshot?: string;
 }
 
-const PLAN_VERSION = 4;
+const PLAN_VERSION = 5;
 
 export interface WalletKey {
   identityPubkey: string;
@@ -68,14 +68,14 @@ export interface PlanMeta {
 const storageKey = ({ identityPubkey, network }: WalletKey): string =>
   `recovery-plan:${identityPubkey.slice(0, 16)}:${network}`;
 
-export function planFromExitResponse(exit: UnilateralExitResponse, meta: PlanMeta): UnilateralExitPlan {
+export function planFromExitResponse(exit: RecoverFundsResponse, meta: PlanMeta): UnilateralExitPlan {
   return { version: PLAN_VERSION, ...meta, exit, refusals: {}, phase: 'active' };
 }
 
 /** Folds a check onto the plan. The sdk owns the exit and the phase; glow keeps only what the network told it about its own sends. */
 export function applyExitCheck(
   plan: UnilateralExitPlan,
-  checked: UnilateralExitResponse,
+  checked: RecoverFundsResponse,
   phase: ExitPhase,
 ): UnilateralExitPlan {
   const open = new Set(
@@ -117,12 +117,72 @@ export function savePlan(wallet: WalletKey, plan: UnilateralExitPlan): void {
   }
 }
 
+// The plan Glow stored under SDK 0.26 (version 4). Its exit no longer parses
+// as this SDK's recovery, so a stored one is converted on load.
+
+type V4CpfpInput =
+  | { type: 'p2wpkh' | 'p2tr'; txid: string; vout: number; value: number; pubkey: string }
+  | { type: 'custom'; txid: string; vout: number; value: number; scriptPubkeyHex: string; signedInputWeight: number };
+
+interface V4Exit {
+  recoverableValueSat: number;
+  totalFeeSat: number;
+  cpfpFeeSat: number;
+  fanoutFeeSat: number;
+  sweepFeeSat: number;
+  leaves: { leafId: string; value: number }[];
+  transactions: RecoveryTransaction[];
+  fundingInputs: V4CpfpInput[];
+}
+
+interface V4Plan extends Omit<UnilateralExitPlan, 'version' | 'exit'> {
+  version: 4;
+  exit: V4Exit;
+}
+
+const fundingInputOf = (input: V4CpfpInput): CpfpInput =>
+  input.type === 'custom'
+    ? {
+        type: 'custom',
+        txid: input.txid,
+        vout: input.vout,
+        valueSats: input.value,
+        scriptPubkeyHex: input.scriptPubkeyHex,
+        signedInputWeight: input.signedInputWeight,
+      }
+    : { type: input.type, txid: input.txid, vout: input.vout, valueSats: input.value, pubkey: input.pubkey };
+
+/** The same exit in this SDK's shape. Each transaction reads the same in both, so the set keeps running. */
+export function planFromV4(old: V4Plan): UnilateralExitPlan {
+  const { exit, ...rest } = old;
+  return {
+    ...rest,
+    version: PLAN_VERSION,
+    exit: {
+      recoverableValueSats: exit.recoverableValueSat,
+      totalFeeSats: exit.totalFeeSat,
+      cooperativeFeeSats: 0,
+      refundFeeSats: 0,
+      cpfpFeeSats: exit.cpfpFeeSat,
+      fanoutFeeSats: exit.fanoutFeeSat,
+      sweepFeeSats: exit.sweepFeeSat,
+      leaves: exit.leaves.map(leaf => ({ leafId: leaf.leafId, valueSats: leaf.value, method: 'unilateral' })),
+      failed: [],
+      transactions: exit.transactions,
+      fundingInputs: exit.fundingInputs.map(fundingInputOf),
+      feeRateSatPerVbyte: old.feeRateSatPerVbyte,
+      destination: old.destination,
+    },
+  };
+}
+
 export function loadPlan(wallet: WalletKey): UnilateralExitPlan | null {
   const raw = localStorage.getItem(storageKey(wallet));
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as UnilateralExitPlan;
+    const parsed = JSON.parse(raw) as UnilateralExitPlan | V4Plan;
     if (!Array.isArray(parsed?.exit?.transactions)) return null;
+    if (parsed.version === 4) return planFromV4(parsed);
     return parsed.version === PLAN_VERSION ? parsed : null;
   } catch {
     return null;
@@ -183,41 +243,59 @@ export function clearPendingExit(wallet: WalletKey): void {
  * replaces it.
  */
 export function quotedSweepFeeSat(
-  quote: PrepareUnilateralExitResponse,
+  quote: PrepareRecoverFundsResponse,
   resuming: UnilateralExitPlan | null,
 ): number {
-  return Math.max(quote.sweepFeeSat, resuming?.quotedSweepFeeSat ?? 0);
+  return Math.max(quote.sweepFeeSats, resuming?.quotedSweepFeeSat ?? 0);
 }
 
+/** The fees besides the sweep's that come off the leaves' own value: the cooperative recoveries' and the refunds'. */
+export const leafFeesSat = (exit: { cooperativeFeeSats: number; refundFeeSats: number }): number =>
+  exit.cooperativeFeeSats + exit.refundFeeSats;
+
+const isConfirmed = (tx: RecoveryTransaction): boolean => tx.status.type === 'confirmed';
+
 /**
- * What the destination address ends up with: the balance less the sweep's fee,
- * until the sweep confirms and the figure is read off the sweep itself.
+ * What pays the destination: the sweep of the unilateral leaves, and one
+ * transaction per cooperative leaf. An exit can have either part alone.
+ */
+const deliveries = (transactions: RecoveryTransaction[]): RecoveryTransaction[] =>
+  transactions.filter(tx => tx.kind === 'sweep' || tx.kind === 'cooperative');
+
+/**
+ * What the destination address ends up with: the balance less the fees taken
+ * from it, until everything paying the destination confirms and the figure is
+ * read off those transactions.
  *
  * The funding is not counted. It pays the other fees, and what it has left
  * comes back only if the sweep glow built is the one that lands.
  */
 export function willReceiveSat(
-  exit: PrepareUnilateralExitResponse | UnilateralExitPlan,
+  exit: PrepareRecoverFundsResponse | UnilateralExitPlan,
   resuming: UnilateralExitPlan | null = null,
 ): number {
   if (!('exit' in exit)) {
-    return Math.max(0, exit.recoverableValueSat - quotedSweepFeeSat(exit, resuming));
+    return Math.max(0, exit.recoverableValueSats - quotedSweepFeeSat(exit, resuming) - leafFeesSat(exit));
   }
-  const sweep = exit.exit.transactions.find(tx => tx.kind === 'sweep');
-  const swept = sweep?.status.type === 'confirmed' ? outputTotalSat(sweep.txHex) : null;
-  return swept ?? Math.max(0, exit.exit.recoverableValueSat - exit.quotedSweepFeeSat);
+  const paying = deliveries(exit.exit.transactions);
+  const paid = paying.map(tx => (isConfirmed(tx) ? outputTotalSat(tx.txHex) : null));
+  if (paid.length > 0 && paid.every(sat => sat !== null)) {
+    return paid.reduce<number>((sum, sat) => sum + (sat ?? 0), 0);
+  }
+  return Math.max(0, exit.exit.recoverableValueSats - exit.quotedSweepFeeSat - leafFeesSat(exit.exit));
 }
 
 /** Whether a quote moves anything worth more than it costs to move. */
 export const isWorthExiting = (
-  quote: PrepareUnilateralExitResponse,
+  quote: PrepareRecoverFundsResponse,
   receiveSat: number = willReceiveSat(quote),
-): boolean => quote.leaves.length > 0 && quote.totalFeeSat < quote.recoverableValueSat && receiveSat > 0;
+): boolean => quote.leaves.length > 0 && quote.totalFeeSats < quote.recoverableValueSats && receiveSat > 0;
 
 /**
  * Where the money is. A leaf sits in Spark until its refund is on-chain, then
  * in an output only the owner can spend, and reaches the destination when the
- * sweep confirms.
+ * sweep confirms. A cooperative leaf is on-chain from the start, the operators
+ * having moved it, and reaches the destination when its own recovery confirms.
  */
 export interface ExitStages {
   inSpark: number;
@@ -229,16 +307,31 @@ export interface ExitStages {
 export function exitStages(plan: UnilateralExitPlan): ExitStages {
   const willReceive = willReceiveSat(plan);
   const { transactions, leaves } = plan.exit;
-  if (transactions.find(tx => tx.kind === 'sweep')?.status.type === 'confirmed') {
+  const paying = deliveries(transactions);
+  if (paying.length > 0 && paying.every(isConfirmed)) {
     return { inSpark: 0, onChain: 0, delivered: willReceive, willReceive };
   }
 
-  const refunded = new Set(
-    transactions.filter(tx => tx.kind === 'refund' && tx.status.type === 'confirmed').map(tx => tx.nodeId),
+  const sweep = transactions.find(tx => tx.kind === 'sweep');
+  const swept = sweep !== undefined && isConfirmed(sweep);
+  const recovered = new Map(
+    transactions.filter(tx => tx.kind === 'cooperative' && isConfirmed(tx)).map(tx => [tx.nodeId, tx]),
   );
-  const total = leaves.reduce((sum, leaf) => sum + leaf.value, 0);
-  const onChain = leaves.filter(leaf => refunded.has(leaf.leafId)).reduce((sum, leaf) => sum + leaf.value, 0);
-  return { inSpark: total - onChain, onChain, delivered: 0, willReceive };
+  const refunded = new Set(
+    transactions.filter(tx => tx.kind === 'refund' && isConfirmed(tx)).map(tx => tx.nodeId),
+  );
+  const stages = { inSpark: 0, onChain: 0, delivered: swept ? (outputTotalSat(sweep.txHex) ?? 0) : 0, willReceive };
+  for (const leaf of leaves) {
+    if (leaf.method === 'cooperative') {
+      const recovery = recovered.get(leaf.leafId);
+      if (recovery) stages.delivered += outputTotalSat(recovery.txHex) ?? 0;
+      else stages.onChain += leaf.valueSats;
+    } else if (!swept) {
+      if (refunded.has(leaf.leafId)) stages.onChain += leaf.valueSats;
+      else stages.inSpark += leaf.valueSats;
+    }
+  }
+  return stages;
 }
 
 /**
@@ -247,7 +340,7 @@ export function exitStages(plan: UnilateralExitPlan): ExitStages {
  * Null once nothing is left to send. Relies on the sdk returning the set in
  * broadcast order, so a dependency is always reached before what depends on it.
  */
-export function blocksToFinish(all: UnilateralExitTransaction[], tipHeight: number): number | null {
+export function blocksToFinish(all: RecoveryTransaction[], tipHeight: number): number | null {
   const after = new Map<string, number>();
   let longest: number | null = null;
 
@@ -277,15 +370,15 @@ export function blocksToFinish(all: UnilateralExitTransaction[], tipHeight: numb
 /** The slice of the sdk a pass drives. */
 export type ExitSdk = Pick<
   BreezSdk,
-  | 'checkUnilateralExit'
-  | 'prepareUnilateralExit'
-  | 'unilateralExit'
+  | 'checkRecoverFunds'
+  | 'prepareRecoverFunds'
+  | 'recoverFunds'
   | 'importUnilateralExitState'
   | 'exportUnilateralExitState'
 >;
 
 /** The sdk resolves this against the chain tip, timelock included. */
-export const isReady = (tx: UnilateralExitTransaction): boolean => tx.status.type === 'ready';
+export const isReady = (tx: RecoveryTransaction): boolean => tx.status.type === 'ready';
 
 export { destinationAddressOf } from '@/utils/destinationAddress';
 
@@ -311,7 +404,9 @@ export function sentFunding(
   plan: UnilateralExitPlan | null,
   confirmed: { txid: string; vout: number; value: number }[],
 ): Funding {
-  const own = plan && !plan.exit.transactions.some(tx => tx.status.type === 'confirmed') ? plan.exit.fundingInputs : [];
+  const own = plan && !plan.exit.transactions.some(tx => tx.status.type === 'confirmed')
+    ? plan.exit.fundingInputs.map(input => ({ txid: input.txid, vout: input.vout, value: input.valueSats }))
+    : [];
   const coins = new Map([...own, ...confirmed].map(coin => [`${coin.txid}:${coin.vout}`, coin.value]));
   return { sat: [...coins.values()].reduce((total, value) => total + value, 0), inputs: coins.size };
 }
@@ -374,11 +469,11 @@ export async function startExit(
     key ?? deriveFundingKey(await readWalletMnemonic({ interactive: true }), network, fundingAddressIndex);
   await restoreExitState(sdk, null, await loadExitState(identityPubkey).catch(() => null));
 
-  const quote = await sdk.prepareUnilateralExit({
+  const quote = await sdk.prepareRecoverFunds({
     feeRateSatPerVbyte,
     fundingKind: { type: 'p2wpkh' },
     destination,
-    selection: { type: 'auto' },
+    selection: { type: 'all' },
   });
   if (!isWorthExiting(quote)) return { type: 'nothingToExit' };
 
@@ -386,12 +481,12 @@ export async function startExit(
     type: 'p2wpkh',
     txid,
     vout,
-    value,
+    valueSats: value,
     pubkey: publicKeyHex,
   }));
-  let exit: UnilateralExitResponse;
+  let exit: RecoverFundsResponse;
   try {
-    exit = await sdk.unilateralExit({ prepared: quote, fundingInputs }, singleKeyCpfpSigner(secretKey));
+    exit = await sdk.recoverFunds({ prepared: quote, fundingInputs }, singleKeyCpfpSigner(secretKey));
   } catch (e) {
     const required = requiredFundingOf(e instanceof Error ? e.message : String(e));
     if (required === null) throw e;
@@ -403,7 +498,7 @@ export async function startExit(
     .exportUnilateralExitState()
     .then(r => r.exitState)
     .catch(() => undefined);
-  const meta = { network, destination, feeRateSatPerVbyte, fundingAddressIndex, quotedSweepFeeSat: quote.sweepFeeSat, quotedExitFeeSat: quote.singleUtxoFundingSat };
+  const meta = { network, destination, feeRateSatPerVbyte, fundingAddressIndex, quotedSweepFeeSat: quote.sweepFeeSats, quotedExitFeeSat: quote.funding?.singleUtxoSats };
   return { type: 'started', plan: { ...planFromExitResponse(exit, meta), exitStateSnapshot } };
 }
 
@@ -430,7 +525,7 @@ export interface NextAction {
  * The next timelock to mature, and what it frees. A step that is ready is
  * already being sent, so it is not something to wait for.
  */
-export function nextAction(all: UnilateralExitTransaction[], tipHeight: number): NextAction | null {
+export function nextAction(all: RecoveryTransaction[], tipHeight: number): NextAction | null {
   const waits = all.flatMap(tx =>
     tx.status.type === 'waitingForTimelock' && tx.status.spendableAtHeight !== undefined
       ? [Math.max(0, tx.status.spendableAtHeight - tipHeight)]
@@ -441,7 +536,7 @@ export function nextAction(all: UnilateralExitTransaction[], tipHeight: number):
   return { blocks, transactions: waits.filter(w => w === blocks).length };
 }
 
-const phaseOf = (verdict: CheckUnilateralExitResponse['verdict']): ExitPhase => {
+const phaseOf = (verdict: CheckRecoverFundsResponse['verdict']): ExitPhase => {
   switch (verdict.type) {
     case 'done':
       return 'complete';
@@ -454,8 +549,8 @@ const phaseOf = (verdict: CheckUnilateralExitResponse['verdict']): ExitPhase => 
 
 /** Reads the exit back against the chain. Needs nothing but the stored response, so it works with the leaves gone from the operators' view. */
 export async function checkExit(plan: UnilateralExitPlan, sdk: ExitSdk): Promise<UnilateralExitPlan> {
-  const checked = await sdk.checkUnilateralExit({ exit: plan.exit });
-  return applyExitCheck(plan, checked.exit, phaseOf(checked.verdict));
+  const checked = await sdk.checkRecoverFunds({ recovery: plan.exit });
+  return applyExitCheck(plan, checked.recovery, phaseOf(checked.verdict));
 }
 
 /**
@@ -481,8 +576,8 @@ export async function rebuildExit(
   );
   await restoreExitState(sdk, plan, await loadExitState(identityPubkey).catch(() => null));
 
-  // Named, not reselected: `auto` can drop a leaf that is part-way out.
-  const prepared = await sdk.prepareUnilateralExit({
+  // Named, not reselected: `all` can drop a leaf that is part-way out.
+  const prepared = await sdk.prepareRecoverFunds({
     feeRateSatPerVbyte: plan.feeRateSatPerVbyte,
     fundingKind: { type: 'p2wpkh' },
     destination: plan.destination,
@@ -490,7 +585,7 @@ export async function rebuildExit(
   });
   if (prepared.leaves.length === 0) return null;
 
-  const rebuilt = await sdk.unilateralExit(
+  const rebuilt = await sdk.recoverFunds(
     { prepared, fundingInputs: plan.exit.fundingInputs },
     singleKeyCpfpSigner(key.secretKey),
   );

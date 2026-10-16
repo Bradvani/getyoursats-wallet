@@ -75,9 +75,8 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
   const payment = optionalPayment!;
 
   // Format a conversion side's amount or fee in its native unit
-  // Note: side.amount and side.fee are strings from WASM (u128 serialized as string)
   const formatSideValue = (side: ConversionSide, isFee?: boolean): ReactNode => {
-    const value = BigInt(isFee ? side.fee : side.amount);
+    const value = isFee ? side.fee : side.amount;
     if (side.asset.ticker === 'BTC') {
       return <SatAmount sats={Number(value)} />;
     }

@@ -17,13 +17,13 @@ const twoLeaves = (transactions: Parameters<typeof plan>[0], over: Parameters<ty
     ...over,
     exit: {
       leaves: [
-        { leafId: 'leaf-1', value: 180_000 },
-        { leafId: 'leaf-2', value: 420_000 },
+        { leafId: 'leaf-1', valueSats: 180_000, method: 'unilateral' },
+        { leafId: 'leaf-2', valueSats: 420_000, method: 'unilateral' },
       ],
-      recoverableValueSat: 600_000,
-      totalFeeSat: 3_122,
-      cpfpFeeSat: 2_907,
-      sweepFeeSat: 0,
+      recoverableValueSats: 600_000,
+      totalFeeSats: 3_122,
+      cpfpFeeSats: 2_907,
+      sweepFeeSats: 0,
       ...over.exit,
     },
   });

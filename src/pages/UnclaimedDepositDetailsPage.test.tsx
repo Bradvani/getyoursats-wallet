@@ -47,7 +47,6 @@ function depositWithFee(requiredFeeSats: number): DepositInfo {
       tx: 'e'.repeat(64),
       vout: 0,
       requiredFeeSats,
-      requiredFeeRateSatPerVbyte: requiredFeeSats / 99,
     },
   };
 }
@@ -115,11 +114,11 @@ function quote(overrides: Partial<FetchClaimDepositQuoteResponse> = {}): FetchCl
     confirmations: 1,
     instant: {
       confirmationsRequired: 1, creditAmountSats: 96_800, feeSats: 3_200,
-      feeRateSatPerVbyte: 4, isEstimate: false,
+      isEstimate: false,
     },
     mature: {
       confirmationsRequired: 3, creditAmountSats: 99_802, feeSats: 198,
-      feeRateSatPerVbyte: 2, isEstimate: true,
+      isEstimate: true,
     },
     ...overrides,
   };
@@ -346,7 +345,7 @@ describe('a confirming deposit with both routes on offer', () => {
     vi.mocked(client.fetchClaimDepositQuote).mockResolvedValue(quote({
       confirmations: 1,
       instant: { confirmationsRequired: 2, creditAmountSats: 96_800, feeSats: 3_200,
-        feeRateSatPerVbyte: 4, isEstimate: false },
+        isEstimate: false },
     }));
     stream.emitSynced();
 
@@ -403,7 +402,7 @@ describe('a confirming deposit with both routes on offer', () => {
         claimError: {
           type: 'maxDepositClaimFeeExceeded',
           tx: 'a'.repeat(64), vout: 0,
-          requiredFeeSats: 512, requiredFeeRateSatPerVbyte: 4,
+          requiredFeeSats: 512,
         },
       })],
     });
@@ -428,7 +427,7 @@ describe('a confirming deposit with both routes on offer', () => {
         claimError: {
           type: 'maxDepositClaimFeeExceeded',
           tx: 'a'.repeat(64), vout: 0,
-          requiredFeeSats: 512, requiredFeeRateSatPerVbyte: 4,
+          requiredFeeSats: 512,
         },
       })],
     });
@@ -616,7 +615,7 @@ describe('an early route the limit already covers', () => {
   const cheap = () => quote({
     confirmations: 0,
     instant: { confirmationsRequired: 1, creditAmountSats: 99_653, feeSats: 347,
-      feeRateSatPerVbyte: 4, isEstimate: false },
+      isEstimate: false },
   });
 
   beforeEach(() => saveSettings({ depositMaxFee: { type: 'fixed', amount: 500 } }));
@@ -658,7 +657,7 @@ describe('an early route the limit already covers', () => {
   it('drops the maturity warning it would otherwise contradict', async () => {
     const overBoth = cheap();
     overBoth.mature = { confirmationsRequired: 3, creditAmountSats: 99_400, feeSats: 600,
-      feeRateSatPerVbyte: 5, isEstimate: true };
+      isEstimate: true };
     await renderSheet(makeDeposit(), withQuote(overBoth));
 
     await findInstantRow();
@@ -678,7 +677,7 @@ describe('a fee that rises between quoting and claiming', () => {
   const risen = () => quote({
     instant: {
       confirmationsRequired: 1, creditAmountSats: 95_400, feeSats: 4_600,
-      feeRateSatPerVbyte: 6, isEstimate: false,
+      isEstimate: false,
     },
   });
 
@@ -763,7 +762,7 @@ describe('an early route that has not unlocked yet', () => {
     confirmations: 0,
     instant: {
       confirmationsRequired: 1, creditAmountSats: 96_800, feeSats: 3_200,
-      feeRateSatPerVbyte: 4, isEstimate: false,
+      isEstimate: false,
     },
   });
 
@@ -816,7 +815,7 @@ describe('a deposit the provider will not front', () => {
     const pointless = quote({
       instant: {
         confirmationsRequired: 3, creditAmountSats: 96_800, feeSats: 3_200,
-        feeRateSatPerVbyte: 4, isEstimate: false,
+        isEstimate: false,
       },
     });
     await renderSheet(makeDeposit(), withQuote(pointless));
@@ -904,6 +903,25 @@ describe('an automatic claim that fails under the sheet', () => {
     stream.emitSynced();
 
     await screen.findByText('operator unavailable');
+    expect(button('Reject')).toBeInTheDocument();
+    expect(queryButton(/^Claim/)).toBeNull();
+  });
+
+  it('says why when the deposit is too small to claim', async () => {
+    const client = withQuote(quote());
+    const stream = eventStream();
+    await renderSheet(makeDeposit(), client, stream.subscribe);
+    await findInstantRow();
+
+    vi.mocked(client.listUnclaimedDeposits).mockResolvedValue({
+      deposits: [makeDeposit({
+        isMature: true,
+        claimError: { type: 'depositTooSmall', tx: 'e'.repeat(64), vout: 0 },
+      })],
+    });
+    stream.emitSynced();
+
+    await screen.findByText('This transfer is too small to cover the fee to claim it.');
     expect(button('Reject')).toBeInTheDocument();
     expect(queryButton(/^Claim/)).toBeNull();
   });
@@ -1104,7 +1122,7 @@ describe('committing the wait', () => {
   const cheapEnough = () => quote({
     confirmations: 0,
     instant: { confirmationsRequired: 1, creditAmountSats: 99_653, feeSats: 347,
-      feeRateSatPerVbyte: 4, isEstimate: false },
+      isEstimate: false },
   });
 
   beforeEach(() => saveSettings({ depositMaxFee: { type: 'fixed', amount: 500 } }));
@@ -1203,9 +1221,9 @@ describe('a spread the ceiling does not cover yet', () => {
     amountSats: 10_000,
     confirmations: 0,
     instant: { confirmationsRequired: 0, creditAmountSats: 9_303, feeSats: 697,
-      feeRateSatPerVbyte: 7, isEstimate: false },
+      isEstimate: false },
     mature: { confirmationsRequired: 3, creditAmountSats: 9_802, feeSats: 198,
-      feeRateSatPerVbyte: 2, isEstimate: true },
+      isEstimate: true },
   });
 
   it('still offers the front, which the ceiling does not cover today', async () => {
@@ -1226,9 +1244,9 @@ describe('reopening after committing the wait', () => {
     amountSats: 10_000,
     confirmations: 0,
     instant: { confirmationsRequired: 1, creditAmountSats: 9_653, feeSats: 347,
-      feeRateSatPerVbyte: 4, isEstimate: false },
+      isEstimate: false },
     mature: { confirmationsRequired: 3, creditAmountSats: 9_901, feeSats: 99,
-      feeRateSatPerVbyte: 2, isEstimate: true },
+      isEstimate: true },
   });
 
   // 347 sits under the 500 default, so the front is what happens and picking
