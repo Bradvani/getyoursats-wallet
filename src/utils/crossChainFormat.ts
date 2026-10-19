@@ -114,3 +114,16 @@ export function getCrossChainDestination(payment: Payment): CrossChainDestinatio
 
   return dest;
 }
+
+/**
+ * How an Orchestra send ended when it did not deliver, or null while it is in
+ * flight or once it completes. The Spark payment can still read `completed`
+ * here: the deposit reached Orchestra, and a refund lands as its own payment.
+ */
+export function getCrossChainSendOutcome(payment: Payment): 'failed' | 'refunded' | null {
+  if (payment.paymentType !== 'send') return null;
+  const details = payment.details;
+  const convInfo = details && 'conversionInfo' in details ? details.conversionInfo : undefined;
+  if (convInfo?.type !== 'orchestra') return null;
+  return convInfo.status === 'failed' || convInfo.status === 'refunded' ? convInfo.status : null;
+}

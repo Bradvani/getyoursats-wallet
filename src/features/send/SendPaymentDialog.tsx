@@ -305,7 +305,6 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
                     amountSats={parseInt(send.amount) || 0}
                     feesIncluded={send.feesIncluded}
                     tokenIdentifier={send.tokenIdentifier}
-                    conversionOptions={send.conversionOptions}
                     onBack={send.backToAmount}
                     onRun={send.handleRun}
                   />

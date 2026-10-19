@@ -10,7 +10,7 @@ import { getTokenAmountFromPayment, formatTokenAmount, buildTokenDisplayConfig, 
 import { useFiatData } from '../contexts/FiatDataContext';
 import { useContactsContext } from '../contexts/ContactsContext';
 import { getPaymentDescription, getProviderDisplayName, isCrossChainPayment } from '../utils/paymentDescription';
-import { formatChainName, getCrossChainDestination, formatReceiveAmount } from '../utils/crossChainFormat';
+import { formatChainName, getCrossChainDestination, getCrossChainSendOutcome, formatReceiveAmount } from '../utils/crossChainFormat';
 import { explorerTxUrl, chainExplorerTxUrl } from '../utils/explorer';
 
 interface PaymentDetailsDialogProps {
@@ -35,6 +35,7 @@ const getDefaultVisibleFields = () => ({
   conversionDetails: false,
   recipientAddress: false,
   externalTxHash: false,
+  conversionId: false,
 });
 
 const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPayment, onClose }) => {
@@ -121,6 +122,11 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
   // the destination (recipient + delivered amount); for a receive it's the
   // source the sender deposited. Null for all non-cross-chain payments.
   const dest = isCrossChainPayment(payment) ? getCrossChainDestination(payment) : null;
+  const crossChainOutcome = getCrossChainSendOutcome(payment);
+  // An order that has not completed may need support, which traces it by its quote.
+  const orchestraInfo = payment.details && 'conversionInfo' in payment.details
+    && payment.details.conversionInfo?.type === 'orchestra' ? payment.details.conversionInfo : undefined;
+  const showConversionId = !isReceive && !!orchestraInfo?.quoteId && orchestraInfo.status !== 'completed';
   const conversions = payment.conversionDetails?.conversions;
 
   // Receive: the amount the sender deposited on the external chain (the `from`
@@ -185,7 +191,8 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
             )}
             {dest && !isReceive && (
               <>
-                {dest.deliveredAmount !== undefined && dest.assetDecimals !== undefined && dest.assetTicker && (
+                {/* The fallback is the quote's estimate, which never arrived. */}
+                {!crossChainOutcome && dest.deliveredAmount !== undefined && dest.assetDecimals !== undefined && dest.assetTicker && (
                   <PaymentInfoRow
                     label="Received Amount"
                     value={`~${formatReceiveAmount(dest.deliveredAmount, dest.assetDecimals)} ${dest.assetTicker}`}
@@ -203,6 +210,14 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
                   />
                 )}
                 {externalTxRow}
+                {showConversionId && (
+                  <CollapsibleCodeField
+                    label="Conversion ID"
+                    value={orchestraInfo.quoteId}
+                    isVisible={visibleFields.conversionId}
+                    onToggle={() => toggleField('conversionId')}
+                  />
+                )}
               </>
             )}
 

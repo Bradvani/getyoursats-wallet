@@ -111,13 +111,15 @@ const AmountStep: React.FC<AmountStepProps> = ({
     // step has no inputs and shouldn't inherit an open keyboard.
     await dismissKeyboard();
 
-    // Token send-all bypasses validation: amount goes directly as tokenBalance to the SDK
+    // Token send-all bypasses validation: amount goes directly as tokenBalance to the SDK.
+    // Cross-chain gets no explicit toBitcoin: the SDK sends the token direct on a
+    // route that accepts it, and an explicit conversion would swap to BTC and back.
     if (isTokenMode && isSendAllToken && tokenBalance && tokenIdentifier) {
       onNext(
         tokenBalance,
         true,
         tokenIdentifier,
-        { conversionType: { type: 'toBitcoin', fromTokenIdentifier: tokenIdentifier } },
+        amountFirst ? undefined : { conversionType: { type: 'toBitcoin', fromTokenIdentifier: tokenIdentifier } },
       );
       return;
     }

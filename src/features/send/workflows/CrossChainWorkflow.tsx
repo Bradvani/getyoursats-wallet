@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type {
-  ConversionOptions,
   CrossChainAddressDetails,
   CrossChainRoutePair,
   PrepareSendPaymentResponse,
@@ -36,7 +35,6 @@ interface CrossChainWorkflowProps {
   amountSats: number;
   feesIncluded: boolean;
   tokenIdentifier?: string | null;
-  conversionOptions?: ConversionOptions | null;
   onBack: () => void;
   onRun: (runner: () => Promise<void>) => Promise<void>;
 }
@@ -53,7 +51,6 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
   amountSats,
   feesIncluded,
   tokenIdentifier,
-  conversionOptions,
   onBack,
   onRun,
 }) => {
@@ -102,9 +99,8 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
       amount: effectiveAmount,
       feePolicy: feesIncluded ? 'feesIncluded' : undefined,
       tokenIdentifier: effectiveTokenId,
-      conversionOptions: conversionOptions ?? undefined,
     });
-  }, [wallet, addressDetails.address, effectiveAmount, effectiveTokenId, feesIncluded, conversionOptions]);
+  }, [wallet, addressDetails.address, effectiveAmount, effectiveTokenId, feesIncluded]);
 
   // Prepare all providers in parallel for provider step
   const prepareAllProviders = useCallback((providerRoutes: CrossChainRoutePair[]) => {
