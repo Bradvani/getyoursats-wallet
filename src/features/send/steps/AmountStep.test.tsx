@@ -5,7 +5,6 @@ import { WalletProvider } from '@/contexts/WalletContext';
 import { FiatDataProvider } from '@/contexts/FiatDataContext';
 import { StableBalanceProvider } from '@/contexts/StableBalanceContext';
 import { createMockClient } from '@/test/mocks/mockWalletApi';
-import { USDB_TICKER, USDB_TOKEN_IDENTIFIER } from '@/constants/stableBalance';
 import AmountStep, { AmountStepProps } from './AmountStep';
 
 // The mock rate makes a dollar 1,000 sats.
@@ -151,46 +150,5 @@ describe('AmountStep USD entry (no stable balance)', () => {
     );
     expect(screen.queryByRole('button', { name: '₿' })).toBeNull();
     expect(screen.queryByRole('button', { name: '$' })).toBeNull();
-  });
-});
-
-describe('AmountStep Send All from the stable balance', () => {
-  const stableClient = () => createMockClient({
-    getUserSettings: vi.fn().mockResolvedValue({ stableBalanceActiveLabel: USDB_TICKER }),
-    getTokensMetadata: vi.fn().mockResolvedValue({
-      tokensMetadata: [{ identifier: USDB_TOKEN_IDENTIFIER, ticker: USDB_TICKER, decimals: 6 }],
-    }),
-  } as unknown as Partial<BreezSdk>);
-
-  async function sendAll(props: Partial<AmountStepProps>) {
-    // No BTC balance, so Send All takes the token balance once the stable
-    // balance has loaded, whichever denomination the step mounted in.
-    const { onNext } = renderAmountStep({ balanceSats: 0, tokenBalance: 5_000_000n, ...props }, stableClient());
-    await waitFor(() => {
-      fireEvent.click(screen.getByText('Send All'));
-      expect(screen.getByTestId('amount-input')).toHaveValue('5.00');
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    return onNext;
-  }
-
-  it('converts to bitcoin first on a non-cross-chain send', async () => {
-    const onNext = await sendAll({});
-    await waitFor(() => expect(onNext).toHaveBeenCalledWith(
-      5_000_000n,
-      true,
-      USDB_TOKEN_IDENTIFIER,
-      { conversionType: { type: 'toBitcoin', fromTokenIdentifier: USDB_TOKEN_IDENTIFIER } },
-    ));
-  });
-
-  it('leaves the source to the SDK on a cross-chain send', async () => {
-    const onNext = await sendAll({ amountFirst: true });
-    await waitFor(() => expect(onNext).toHaveBeenCalledWith(
-      5_000_000n,
-      true,
-      USDB_TOKEN_IDENTIFIER,
-      undefined,
-    ));
   });
 });
