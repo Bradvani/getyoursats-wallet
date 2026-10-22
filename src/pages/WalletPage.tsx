@@ -380,42 +380,13 @@ const WalletPage: React.FC<WalletPageProps> = ({
         />
       )}
 
-      {/* Bottom action bar - full width layout */}
-      <div className="bottom-bar flex items-center z-30">
-        {/* Send button */}
-        <button
-          onClick={openSendDialog}
-          className="action-button action-button-send"
-          data-testid="send-button"
-        >
-          <ArrowUpIcon />
-          <span>Send</span>
-        </button>
-
-        {/* QR Scanner button - viewfinder style */}
-        <button
-          onClick={() => setIsQrScannerOpen(true)}
-          className="qr-scanner-button"
-          aria-label="Scan QR Code"
-          data-testid="scan-button"
-        >
-          <span className="qr-corner qr-corner--tl" />
-          <span className="qr-corner qr-corner--tr" />
-          <span className="qr-corner qr-corner--bl" />
-          <span className="qr-corner qr-corner--br" />
-          <QrCodeIcon />
-        </button>
-
-        {/* Receive button */}
-        <button
-          onClick={openReceiveDialog}
-          className="action-button action-button-receive"
-          data-testid="receive-button"
-        >
-          <ArrowDownIcon />
-          <span>Receive</span>
-        </button>
-      </div>
+      {/* One accessible dock for all primary wallet actions. */}
+      <nav className="gys-action-dock" aria-label="Wallet actions">
+        <button type="button" onClick={openSendDialog} data-testid="send-button" aria-label="Send Bitcoin"><ArrowUpIcon/><span>Send</span></button>
+        <button type="button" onClick={openReceiveDialog} data-testid="receive-button" aria-label="Receive Bitcoin"><ArrowDownIcon/><span>Receive</span></button>
+        <button type="button" onClick={()=>setIsQrScannerOpen(true)} data-testid="scan-button" aria-label="Scan payment QR"><QrCodeIcon/><span>Scan</span></button>
+        <button type="button" onClick={()=>setGysPosOpen(true)} data-testid="pos-button" aria-label="Accept payment using POS" className="gys-action-dock__accept"><span className="gys-action-dock__bitcoin" aria-hidden="true">₿</span><span>Accept</span></button>
+      </nav>
 
       {/* Save Contact Dialog */}
       <SaveContactDialog
@@ -426,7 +397,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
       />
 
       {/* Side Menu */}
-      <button onClick={()=>setGysPosOpen(true)} aria-label="Open merchant POS" style={{position:'fixed',bottom:100,right:18,zIndex:40,background:'#ffcb2b',color:'#090909',fontWeight:800,padding:'13px 19px',borderRadius:16}}>POS</button>
       {gysPosOpen&&<GetYourSatsPos onClose={()=>setGysPosOpen(false)}/>}
       <SideMenu
         isOpen={isMenuOpen}
