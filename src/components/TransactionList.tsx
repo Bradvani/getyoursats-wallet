@@ -9,6 +9,7 @@ import { useFiatData } from '../contexts/FiatDataContext';
 import { useContactsContext } from '../contexts/ContactsContext';
 import { formatTokenAmount, buildTokenDisplayConfig, tokenAmountDisplaysAsZero, withAssetDecimals } from '../utils/tokenFormatting';
 import { getPaymentDescription } from '../utils/paymentDescription';
+import { getCrossChainSendOutcome } from '../utils/crossChainFormat';
 import type { UnilateralExitEntry } from '../features/unilateral-exit/listEntries';
 
 // Hoisted static JSX elements (rendering-hoist-jsx optimization)
@@ -167,6 +168,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
   const renderTransactionItem = (tx: Payment, index: number) => {
     const isReceive = tx.paymentType === 'receive';
     const isFailed = tx.status === 'failed';
+    const crossChainOutcome = isFailed ? null : getCrossChainSendOutcome(tx);
     const isPending = !isFailed && (tx.status === 'pending' || tx.conversionDetails?.status === 'pending');
     const needsAction = depositNeedsAction(tx);
     // An unclaimed deposit has no time of its own, so the row says where it
@@ -215,9 +217,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
             {isPending && (
               <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-spark-warning animate-pulse" />
             )}
-            {isFailed && (
+            {(isFailed || crossChainOutcome) && (
               <span className="shrink-0 px-1.5 py-0.5 rounded-sm bg-spark-primary/15 text-spark-primary text-[10px] font-medium uppercase">
-                Failed
+                {crossChainOutcome === 'refunded' ? 'Refunded' : 'Failed'}
               </span>
             )}
           </div>

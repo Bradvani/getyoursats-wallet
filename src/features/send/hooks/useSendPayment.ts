@@ -54,7 +54,6 @@ export interface UseSendPaymentReturn {
    *  step send "back" to input instead of the amount step the user never saw. */
   amountFixed: boolean;
   tokenIdentifier: string | null;
-  conversionOptions: ConversionOptions | null;
   // Actions
   clearError: () => void;
   reset: () => void;
@@ -82,7 +81,6 @@ export function useSendPayment(): UseSendPaymentReturn {
   const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('sending');
   const [amountFixed, setAmountFixed] = useState(false);
   const [tokenIdentifier, setTokenIdentifier] = useState<string | null>(null);
-  const [conversionOptions, setConversionOptions] = useState<ConversionOptions | null>(null);
 
   // Balance is read live from the wallet info context, which is auto-refreshed
   // by useBreezSdk on `synced`/`paymentSucceeded`/`claimedDeposits` events. We
@@ -259,7 +257,6 @@ export function useSendPayment(): UseSendPaymentReturn {
     if (parsedInputType === 'crossChainAddress') {
       setAmount(String(amount));
       setTokenIdentifier(tokenIdentifier ?? null);
-      setConversionOptions(conversionOptions ?? null);
       setCurrentStep('workflow');
       return;
     }
@@ -387,7 +384,6 @@ export function useSendPayment(): UseSendPaymentReturn {
     setProcessingPhase('sending');
     setAmountFixed(false);
     setTokenIdentifier(null);
-    setConversionOptions(null);
   }, []);
 
   // Return to the amount step from the cross-chain workflow. Clears `amount`
@@ -414,7 +410,6 @@ export function useSendPayment(): UseSendPaymentReturn {
     processingPhase,
     amountFixed,
     tokenIdentifier,
-    conversionOptions,
     clearError: useCallback(() => setError(null), []),
     reset,
     processInput,
