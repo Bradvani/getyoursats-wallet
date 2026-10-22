@@ -247,7 +247,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 </div>
                 <ChevronRightIcon size="md" />
               </button>
-              {hasBuyProviderSettings() && (
+              {import.meta.env.VITE_GETYOURSATS_ENABLE_LEGACY_BUY === 'true' && hasBuyProviderSettings() && (
                 <button
                   className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors"
                   type="button"

@@ -101,10 +101,11 @@ const WalletPage: React.FC<WalletPageProps> = ({
   // Computed per render (cheap in-memory read) so the Buy button's
   // visibility is fresh after any return from Settings; a memo keyed
   // on menu state went stale when providers changed under an overlay.
-  const enabledBuyProviders = filterProvidersByPlatform(
-    filterProvidersByNetwork(getBuyProviderSettings(), network),
-    cashAppInstalled,
-  );
+  // Do not surface uncontracted third-party ramps as an India UPI feature.
+  // This legacy Glow handoff is disabled unless explicitly reviewed/enabled.
+  const enabledBuyProviders = import.meta.env.VITE_GETYOURSATS_ENABLE_LEGACY_BUY === 'true'
+    ? filterProvidersByPlatform(filterProvidersByNetwork(getBuyProviderSettings(), network), cashAppInstalled)
+    : [];
   const [saveContactAddress, setSaveContactAddress] = useState<string | null>(null);
   // Bump these on each open so each dialog remounts and lazy-inits its
   // state, instead of relying on a reset-in-effect inside the dialog.
