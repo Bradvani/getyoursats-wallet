@@ -76,7 +76,7 @@ export function buildConnectConfig(overrideNetwork?: Network): Config {
   try {
     const s = getSettings();
     if (s.depositMaxFee) {
-      config.maxDepositClaimFee = s.depositMaxFee;
+      config.maxDepositClaimFee = { onchain: s.depositMaxFee };
     }
     if (s.syncIntervalSecs != null) {
       config.syncIntervalSecs = s.syncIntervalSecs;

@@ -149,28 +149,28 @@ describe('predicting the automatic early claim', () => {
   const covered = () => quoteOf(option(1, 300), option(3, 198), 0);
 
   it('sees the claim coming when the fee is inside a fixed limit', () => {
-    expect(autoClaimsEarly(covered(), { type: 'fixed', amount: 500 })).toBe(true);
+    expect(autoClaimsEarly(covered(), { onchain: { type: 'fixed', amount: 500 } })).toBe(true);
   });
 
   it('counts a fee exactly at the limit as covered, as the SDK does', () => {
-    expect(autoClaimsEarly(covered(), { type: 'fixed', amount: 300 })).toBe(true);
+    expect(autoClaimsEarly(covered(), { onchain: { type: 'fixed', amount: 300 } })).toBe(true);
   });
 
   it('leaves the choice alone when the fee is above the limit', () => {
-    expect(autoClaimsEarly(covered(), { type: 'fixed', amount: 200 })).toBe(false);
+    expect(autoClaimsEarly(covered(), { onchain: { type: 'fixed', amount: 200 } })).toBe(false);
   });
 
   // Not gated on the deposit's current depth: the point is to say what will
   // happen, and a route that opens a block from now still will.
   it('predicts it before the route has opened', () => {
     const deep = quoteOf(option(2, 300), option(3, 198), 0);
-    expect(autoClaimsEarly(deep, { type: 'fixed', amount: 500 })).toBe(true);
+    expect(autoClaimsEarly(deep, { onchain: { type: 'fixed', amount: 500 } })).toBe(true);
   });
 
   it('predicts nothing for a deposit the provider will not front', () => {
-    expect(autoClaimsEarly(quoteOf(null, option(3, 198), 0), { type: 'fixed', amount: 500 }))
+    expect(autoClaimsEarly(quoteOf(null, option(3, 198), 0), { onchain: { type: 'fixed', amount: 500 } }))
       .toBe(false);
-    expect(autoClaimsEarly(null, { type: 'fixed', amount: 500 })).toBe(false);
+    expect(autoClaimsEarly(null, { onchain: { type: 'fixed', amount: 500 } })).toBe(false);
   });
 
   // A rate limit is sat-per-vbyte, and only the SDK can price it for this
@@ -179,14 +179,14 @@ describe('predicting the automatic early claim', () => {
   it('reads a rate limit through the ceiling the SDK priced for the deposit', () => {
     const priced = (maxFeeSats: number) =>
       quoteOf({ ...option(1, 300), maxFeeSats }, option(3, 198), 0);
-    expect(autoClaimsEarly(priced(400), { type: 'rate', satPerVbyte: 1 })).toBe(true);
-    expect(autoClaimsEarly(priced(250), { type: 'networkRecommended', leewaySatPerVbyte: 0 }))
+    expect(autoClaimsEarly(priced(400), { onchain: { type: 'rate', satPerVbyte: 1 } })).toBe(true);
+    expect(autoClaimsEarly(priced(250), { onchain: { type: 'networkRecommended', leewaySatPerVbyte: 0 } }))
       .toBe(false);
   });
 
   it('declines to predict against a rate limit the quote does not price', () => {
-    expect(autoClaimsEarly(covered(), { type: 'rate', satPerVbyte: 1 })).toBe(false);
-    expect(autoClaimsEarly(covered(), { type: 'networkRecommended', leewaySatPerVbyte: 0 }))
+    expect(autoClaimsEarly(covered(), { onchain: { type: 'rate', satPerVbyte: 1 } })).toBe(false);
+    expect(autoClaimsEarly(covered(), { onchain: { type: 'networkRecommended', leewaySatPerVbyte: 0 } }))
       .toBe(false);
   });
 
@@ -194,14 +194,14 @@ describe('predicting the automatic early claim', () => {
   // quote's figure can still be the one it replaced.
   it('holds a fixed limit over the ceiling the quote was priced at', () => {
     const stale = quoteOf({ ...option(1, 300), maxFeeSats: 500 }, option(3, 198), 0);
-    expect(autoClaimsEarly(stale, { type: 'fixed', amount: 200 })).toBe(false);
+    expect(autoClaimsEarly(stale, { onchain: { type: 'fixed', amount: 200 } })).toBe(false);
   });
 });
 
 describe('the ceiling an early claim is held to', () => {
   it('prefers the ceiling standing on the deposit to the configured one', () => {
-    expect(earlyClaimCeiling({ type: 'fixed', amount: 3_200 }, { type: 'fixed', amount: 500 }))
-      .toEqual({ type: 'fixed', amount: 3_200 });
+    expect(earlyClaimCeiling({ onchain: { type: 'fixed', amount: 3_200 } }, { onchain: { type: 'fixed', amount: 500 } }))
+      .toEqual({ onchain: { type: 'fixed', amount: 3_200 } });
   });
 
   // The direction nobody's intuition gets right, and true only of the early
@@ -209,19 +209,23 @@ describe('the ceiling an early claim is held to', () => {
   // back from being fronted. The claim at maturity runs under whichever admits
   // more, so it is not held back with it.
   it('holds a deposit back from the front when its ceiling sits below the default', () => {
-    expect(earlyClaimCeiling({ type: 'fixed', amount: 100 }, { type: 'fixed', amount: 500 }))
-      .toEqual({ type: 'fixed', amount: 100 });
+    expect(earlyClaimCeiling({ onchain: { type: 'fixed', amount: 100 } }, { onchain: { type: 'fixed', amount: 500 } }))
+      .toEqual({ onchain: { type: 'fixed', amount: 100 } });
   });
 
   it('falls back to the configured ceiling when the deposit carries none', () => {
-    expect(earlyClaimCeiling(undefined, { type: 'fixed', amount: 500 }))
-      .toEqual({ type: 'fixed', amount: 500 });
+    expect(earlyClaimCeiling(undefined, { onchain: { type: 'fixed', amount: 500 } }))
+      .toEqual({ onchain: { type: 'fixed', amount: 500 } });
   });
 
   it('reads a fixed ceiling in sats and declines to name the rate kinds', () => {
-    expect(claimCeilingSats({ type: 'fixed', amount: 500 })).toBe(500);
-    expect(claimCeilingSats({ type: 'rate', satPerVbyte: 1 })).toBeNull();
-    expect(claimCeilingSats({ type: 'networkRecommended', leewaySatPerVbyte: 0 })).toBeNull();
+    expect(claimCeilingSats({ onchain: { type: 'fixed', amount: 500 } })).toBe(500);
+    expect(claimCeilingSats({ onchain: { type: 'rate', satPerVbyte: 1 } })).toBeNull();
+    expect(claimCeilingSats({ onchain: { type: 'networkRecommended', leewaySatPerVbyte: 0 } })).toBeNull();
+  });
+
+  it('declines to name a fixed ceiling that takes a share of the deposit', () => {
+    expect(claimCeilingSats({ onchain: { type: 'fixed', amount: 500 }, proportionalPpm: 1_000 })).toBeNull();
   });
 
   // Not derived from the early fee: the spread falls as the deposit gets

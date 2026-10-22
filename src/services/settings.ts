@@ -1,4 +1,4 @@
-import { MaxFee } from "@breeztech/breez-sdk-spark/web";
+import type { MaxOnchainFee } from "@breeztech/breez-sdk-spark/web";
 import type { Network } from "@breeztech/breez-sdk-spark";
 import { Capacitor } from "@capacitor/core";
 import { Preferences } from "@capacitor/preferences";
@@ -56,7 +56,7 @@ export function filterProvidersByNetwork(providers: BuyBitcoinProvider[], networ
 }
 
 export interface UserSettings {
-  depositMaxFee: MaxFee;
+  depositMaxFee: MaxOnchainFee;
   /**
    * Last value entered for each limit type, so switching the type back and
    * forth keeps what the user chose instead of resetting to the default.
@@ -81,7 +81,7 @@ const FIAT_SETTINGS_KEY = 'fiat_settings_v1';
 const ACTIVE_FIAT_KEY = 'fiat_active_currency';
 const BUY_PROVIDERS_KEY = 'buy_providers_v1';
 
-export type DepositMaxFeeType = MaxFee['type'];
+export type DepositMaxFeeType = MaxOnchainFee['type'];
 
 /**
  * Deposits are claimed automatically while the claim fee stays under this
@@ -99,7 +99,7 @@ const defaultSettings: UserSettings = {
 };
 
 /** The number carried by a limit, whatever unit its type uses. */
-export function depositMaxFeeValue(fee: MaxFee): number {
+export function depositMaxFeeValue(fee: MaxOnchainFee): number {
   if (fee.type === 'fixed') return fee.amount;
   if (fee.type === 'rate') return fee.satPerVbyte;
   return fee.leewaySatPerVbyte;
@@ -111,7 +111,7 @@ export function depositMaxFeeValue(fee: MaxFee): number {
  * persisting a malformed one would fail validation on the next read and take
  * every other setting down with it.
  */
-export function buildDepositMaxFee(type: DepositMaxFeeType, input: string): MaxFee | null {
+export function buildDepositMaxFee(type: DepositMaxFeeType, input: string): MaxOnchainFee | null {
   const n = Number(input);
   if (input.trim() === '' || !Number.isFinite(n) || n < 0) return null;
   // Every variant is a u64 in the SDK, rates included. A fraction crossing
@@ -191,7 +191,7 @@ export function getSettings(): UserSettings {
     }
     const byType = parsed.depositMaxFeeByType;
     const out: UserSettings = {
-      depositMaxFee: depositMaxFee as MaxFee,
+      depositMaxFee: depositMaxFee as MaxOnchainFee,
       depositMaxFeeByType: sanitizeFeeByType(byType),
       syncIntervalSecs: typeof parsed.syncIntervalSecs === 'number' ? parsed.syncIntervalSecs : undefined,
       lnurlDomain: typeof parsed.lnurlDomain === 'string' ? parsed.lnurlDomain : undefined,
