@@ -47,3 +47,12 @@
 .gys-address-banner__value{padding:0;text-align:left;overflow:hidden;word-break:break-all;font-size:14px;line-height:1.5;color:#ffcf46;font-weight:750}
 .gys-address-banner__value:focus-visible{outline:2px solid #ffca28;outline-offset:3px}
 .gys-address-banner__pending{font-size:12px;line-height:1.5;color:#a5a09a}
+
+.gys-dca{display:grid;gap:15px;padding:28px 20px 35px;max-width:510px;margin:0 auto;color:#f5f1e6;overflow:auto}
+.gys-dca__eyebrow{font-weight:800;letter-spacing:.13em;color:#ceac5b;font-size:10px}
+.gys-dca h2{font-size:24px;font-weight:800;letter-spacing:-.04em}
+.gys-dca__sub{font-size:12px;line-height:1.65;color:#aaa49a}
+.gys-dca label{font-size:13px;font-weight:700;color:#d5cfc2}
+.gys-dca input,.gys-dca select{background:#222;border:1px solid #403c32;padding:14px 15px;border-radius:12px;color:#f7f1e5;font-size:16px;width:100%}
+.gys-dca input:focus-visible,.gys-dca select:focus-visible{outline:2px solid #ffca28;outline-offset:2px}
+.gys-dca__message{padding:12px;background:#242018;border:1px solid #705720;border-radius:12px;font-size:12px;color:#edd8a0;line-height:1.5}

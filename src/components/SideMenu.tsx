@@ -58,11 +58,12 @@ interface SideMenuProps {
   onClose: () => void;
   onLogout: () => void;
   onOpenSettings: () => void;
+  onOpenDca: () => void;
   onOpenRefund?: () => void;
   hasRejectedDeposits?: boolean;
 }
 
-const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSettings, onOpenRefund, hasRejectedDeposits = false }) => {
+const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSettings, onOpenDca, onOpenRefund, hasRejectedDeposits = false }) => {
   // While the drawer is open, push the solid spark-surface tone over
   // the wallet page's glass tint so the status bar matches the drawer
   // panel's solid bg. Tied to isOpen so popping happens on close.
@@ -133,6 +134,11 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
       onClick: () => closeDrawerThen(onOpenRefund),
       highlight: true
     }] : []),
+    {
+      icon: <SettingsIcon />,
+      label: 'Recurring buys',
+      onClick: () => closeDrawerThen(onOpenDca)
+    },
     {
       icon: <SettingsIcon />,
       label: 'Settings',

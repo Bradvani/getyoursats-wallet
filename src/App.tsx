@@ -1,3 +1,4 @@
+import DcaPage from './getyoursats/DcaPage';
 import * as bip39 from 'bip39';
 import {deviceOnlyStorage} from './services/secureStorage';
 import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
@@ -57,7 +58,7 @@ import type { Seed, Payment, BreezSdk } from '@breeztech/breez-sdk-spark';
 
 const PASSKEY_MIGRATION_ENABLED = true;
 
-type Screen = 'home' | 'restore' | 'generate' | 'wallet' | 'getRefund' | 'settings' | 'backup' | 'security' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
+type Screen = 'home' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
 
 // Full-screen dim spinner shown while sdk.isLoading is true (logout in
 // progress, SDK reconnect, etc). Wrapped as its own component so the
@@ -288,6 +289,9 @@ const AppContent: React.FC = () => {
   // cancel via its own Cancel button.
   useBackButton(useCallback(() => {
     switch (currentScreen) {
+      case 'dca':
+        return <>{renderWalletPage()}<DcaPage onBack={()=>setUserScreen('wallet')}/></>;
+
       case 'settings':
       case 'getRefund':
       case 'unilateralExit':
@@ -401,6 +405,7 @@ const AppContent: React.FC = () => {
             setUserScreen('getRefund');
           }}
           onOpenSettings={() => setUserScreen('settings')}
+          onOpenDca={() => setUserScreen('dca')}
           onOpenUnilateralExit={() => setUserScreen('unilateralExit')}
           onBuyBitcoin={sdk.handleBuyBitcoin}
           network={sdk.config?.network}

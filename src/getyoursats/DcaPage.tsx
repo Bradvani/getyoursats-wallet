@@ -5,7 +5,7 @@ import DenominationTabs from './DenominationTabs';
 import {getDenomination,saveDenomination,satsToAmount,type Denomination} from './denomination';
 import {loadDcaDraft,saveDcaDraft,validateDcaDraft,type DcaFrequency} from './dcaPlan';
 export default function DcaPage({onBack}:{onBack:()=>void}){
-  const old=loadDcaDraft();
+  const [old]=useState(loadDcaDraft);
   const {fiatRates,fetchedAt}=useFiatData();
   const inrPerBtc=fiatRates.find(r=>r.coin==='INR')?.value;
   const [unit,setUnit]=useState<Denomination>(old?.denomination??getDenomination);
