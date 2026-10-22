@@ -1,12 +1,12 @@
 {
-  "name": "Glow",
-  "short_name": "Glow",
-  "description": "Glow is a bitcoin app for everyone. Everyday payments in bitcoin or USD, built in the open on the Breez SDK.",
+  "name": "GetYourSats",
+  "short_name": "GetYourSats",
+  "description": "Bitcoin and Lightning wallet",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
-  "background_color": "#0f0f18",
-  "theme_color": "#13131d",
+  "background_color": "#050505",
+  "theme_color": "#050505",
   "orientation": "portrait-primary",
   "categories": [
     "finance",
@@ -14,38 +14,9 @@
   ],
   "icons": [
     {
-      "src": "/icons/Glow-icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/Glow-icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/Glow-icon-maskable-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icons/Glow-icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icons/Glow_favicon.png",
-      "sizes": "64x64",
-      "type": "image/png"
-    },
-    {
-      "src": "/assets/Glow_Logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/assets/getyoursats-mark.jpg",
+      "sizes": "500x500",
+      "type": "image/jpeg",
       "purpose": "any"
     }
   ],

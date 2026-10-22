@@ -1,3 +1,5 @@
+import * as bip39 from 'bip39';
+import { Capacitor } from '@capacitor/core';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
 import { WalletProvider, WalletInfoProvider, WalletStatusProvider } from './contexts/WalletContext';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -128,6 +130,21 @@ const AppContent: React.FC = () => {
     return userScreen;
   }, [sdk.startupState, sdk.isConnected, userScreen]);
 
+  const handleGetYourSatsStart = async () => {
+    // Browsers lack an audited native wallet vault: require upstream seed backup.
+    if (!Capacitor.isNativePlatform()) {
+      setUserScreen('generate');
+      return;
+    }
+    try {
+      const mnemonic = bip39.generateMnemonic(128);
+      await sdk.connectWallet({ type: 'mnemonic', mnemonic }, false);
+      setUserScreen('wallet');
+    } catch (error) {
+      console.error('Wallet setup failed', error);
+      setUserScreen('home');
+    }
+  };
   // Navigate to wallet after successful connect
   const handleConnect = async (mnemonic: string, restore: boolean) => {
     await sdk.connectWallet({ type: 'mnemonic', mnemonic }, restore);
@@ -314,7 +331,7 @@ const AppContent: React.FC = () => {
         return (
           <HomePage
             onRestoreWallet={() => setUserScreen('restore')}
-            onCreateNewWallet={() => setUserScreen('generate')}
+            onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
             onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
             onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
             prfAvailable={sdk.prfAvailable}
@@ -390,7 +407,7 @@ const AppContent: React.FC = () => {
         return (
           <HomePage
             onRestoreWallet={() => setUserScreen('restore')}
-            onCreateNewWallet={() => setUserScreen('generate')}
+            onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
             onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
             onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
             prfAvailable={sdk.prfAvailable}

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './getyoursats/branding.css';
 
 /* Self-hosted font faces, bundled from @fontsource's woff2 files.
    These used to load from fonts.googleapis.com via a render-blocking <link>,
