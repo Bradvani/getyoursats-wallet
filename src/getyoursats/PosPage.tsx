@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import {useState} from 'react';
 import QRCode from 'react-qr-code';
 import {useWallet} from '../contexts/WalletContext';
 export default function PosPage({onClose}:{onClose:()=>void}) {

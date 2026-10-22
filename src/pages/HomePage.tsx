@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import {useState} from 'react';
 type Props={onRestoreWallet:()=>void;onCreateNewWallet:()=>void;onUsePasskey:()=>void;onCreatePasskey:()=>void;prfAvailable:boolean};
 export default function HomePage({onCreateNewWallet,onRestoreWallet}:Props) {
  const [busy,setBusy]=useState(false);
