@@ -1,3 +1,5 @@
+import {Capacitor} from '@capacitor/core';
+import {chooseWalletOnboarding} from './getyoursats/onboardingPolicy';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
 import { WalletProvider, WalletInfoProvider, WalletStatusProvider } from './contexts/WalletContext';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -132,6 +134,21 @@ const AppContent: React.FC = () => {
   // recoverable device backup has been validated across reinstall.
   // Until then, preserve the upstream mnemonic/backup ceremony.
   const handleGetYourSatsStart = () => {
+    const next = chooseWalletOnboarding({
+      prfAvailable: sdk.prfAvailable,
+      origin: window.location.origin,
+      approvedWebOrigin: import.meta.env.VITE_GETYOURSATS_PASSKEY_ORIGIN,
+      isNative: Capacitor.isNativePlatform(),
+      nativeAssociationVerified: import.meta.env.VITE_GETYOURSATS_NATIVE_PASSKEY_READY === 'true',
+    });
+    if (next === 'passkey') {
+      // Reuse upstream discovery: existing passkey -> same wallet;
+      // no credential -> PRF registration. Do not force-new by default.
+      setPasskeySkipDetection(false);
+      setPasskeyFailed(false);
+      setUserScreen('passkey');
+      return;
+    }
     setUserScreen('generate');
   };
   // Navigate to wallet after successful connect

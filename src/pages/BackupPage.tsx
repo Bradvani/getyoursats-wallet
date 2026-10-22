@@ -11,7 +11,6 @@ import {
 } from '@/services/passkeyService';
 import { deviceOnlyStorage, secureStorage, getBiometryInfo, BiometryInfo } from '@/services/secureStorage';
 import { logger, LogCategory } from '@/services/logger';
-import { copyToClipboard } from '@/utils/clipboard';
 import { useScreenCaptureProtection } from '@/utils/screenSecurity';
 
 interface BackupPageProps {
@@ -22,7 +21,6 @@ interface BackupPageProps {
 
 const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' }) => {
   const [mnemonic, setMnemonic] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -206,19 +204,6 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
     }
   };
 
-  const handleCopy = async () => {
-    if (!mnemonic) return;
-    try {
-      await copyToClipboard(mnemonic);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
-      logger.warn(LogCategory.UI, 'Failed to copy mnemonic to clipboard', {
-        error: e instanceof Error ? e.message : String(e),
-      });
-    }
-  };
-
   const handleHide = () => {
     setIsRevealed(false);
     if (isPasskey && !seedFromVault) {
@@ -259,7 +244,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
                 <div>
                   <h4 className="font-medium text-spark-text-primary mb-1">Passkey Protected</h4>
                   <p className="text-spark-text-muted text-sm">
-                    Your recovery phrase is derived from your passkey. To restore on another device, use your passkey or the recovery phrase below.
+                    This wallet's recovery phrase is derived from your passkey. You can optionally write it down offline as an independent backup. Passkey syncing depends on your device provider.
                   </p>
                 </div>
               </div>
@@ -377,18 +362,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
                   >
                     Hide
                   </button>
-                  <button
-                    onClick={handleCopy}
-                    className={`
-                      px-3 py-1.5 text-sm font-medium rounded-lg transition-all
-                      ${copied
-                        ? 'bg-spark-success/20 text-spark-success border border-spark-success/30'
-                        : 'bg-spark-primary text-white hover:bg-spark-primary-light'
-                      }
-                    `}
-                  >
-                    {copied ? 'Copied!' : 'Copy'}
-                  </button>
+
                 </div>
               </div>
 
