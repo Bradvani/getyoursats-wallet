@@ -6,6 +6,8 @@ import { logger, LogCategory } from '../services/logger';
 interface FiatData {
   fiatRates: Rate[];
   fiatCurrencies: FiatCurrency[];
+  /** Timestamp of most recent successful SDK rate fetch (milliseconds). */
+  fetchedAt?: number;
 }
 
 interface FiatDataContextValue extends FiatData {
@@ -23,25 +25,28 @@ export const FiatDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { sdk, isConnected } = useWalletConnection();
   const [fiatRates, setFiatRates] = useState<Rate[]>([]);
   const [fiatCurrencies, setFiatCurrencies] = useState<FiatCurrency[]>([]);
+  const [fetchedAt, setFetchedAt] = useState<number | undefined>(undefined);
 
   const refreshFiatData = useCallback(async (): Promise<FiatData> => {
-    const known = { fiatRates, fiatCurrencies };
+    const known = { fiatRates, fiatCurrencies, fetchedAt };
     if (!sdk) return known;
     try {
       const [ratesResult, currenciesResult] = await Promise.all([
         sdk.listFiatRates(),
         sdk.listFiatCurrencies(),
       ]);
+      const now = Date.now();
       setFiatRates(ratesResult.rates);
       setFiatCurrencies(currenciesResult.currencies);
-      return { fiatRates: ratesResult.rates, fiatCurrencies: currenciesResult.currencies };
+      setFetchedAt(now);
+      return { fiatRates: ratesResult.rates, fiatCurrencies: currenciesResult.currencies, fetchedAt: now };
     } catch (error) {
       logger.warn(LogCategory.SDK, 'Failed to refresh fiat data', {
         error: error instanceof Error ? error.message : String(error),
       });
       return known;
     }
-  }, [sdk, fiatRates, fiatCurrencies]);
+  }, [sdk, fiatRates, fiatCurrencies, fetchedAt]);
 
   useEffect(() => {
     if (!isConnected || !sdk) return;
@@ -55,6 +60,7 @@ export const FiatDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (cancelled) return;
         setFiatRates(ratesResult.rates);
         setFiatCurrencies(currenciesResult.currencies);
+        setFetchedAt(Date.now());
         logger.info(LogCategory.SDK, 'Fiat data fetched', {
           ratesCount: ratesResult.rates.length,
           currenciesCount: currenciesResult.currencies.length,
@@ -98,7 +104,7 @@ export const FiatDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [isConnected, sdk]);
 
   return (
-    <FiatDataContext.Provider value={{ fiatRates, fiatCurrencies, refreshFiatData }}>
+    <FiatDataContext.Provider value={{ fiatRates, fiatCurrencies, fetchedAt, refreshFiatData }}>
       {children}
     </FiatDataContext.Provider>
   );

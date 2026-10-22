@@ -33,3 +33,11 @@
 .gys-action-dock__bitcoin{font-size:23px;line-height:21px;font-weight:800}
 @media(max-width:360px){.gys-action-dock{gap:3px;padding-left:7px;padding-right:7px}.gys-action-dock button{font-size:10px}.gys-welcome h1{font-size:30px}}
 @media(prefers-reduced-motion:reduce){.gys-welcome__start,.gys-action-dock button{transition:none}}
+
+.gys-unit-switch{display:flex;gap:3px;border:1px solid rgba(255,202,40,.18);background:#171717;padding:4px;border-radius:12px;max-width:max-content;margin:8px 0 10px}
+.gys-unit-switch button{min-width:55px;padding:9px 11px;font-size:12px;font-weight:800;border-radius:9px;color:#c5bda9}
+.gys-unit-switch button[aria-pressed="true"]{background:#ffca28;color:#111}
+.gys-unit-switch button:disabled{opacity:.3;cursor:not-allowed}
+.gys-unit-switch button:focus-visible{outline:2px solid #ffca28;outline-offset:3px}
+.gys-pos-note{color:#a6a194;font-size:12px;line-height:1.5}.gys-pos-equivalent{color:#ffcf49;font-size:14px;font-weight:700}
+.gys-pos-pending{color:#d4b567}.gys-pos-paid{color:#87d0a4}
