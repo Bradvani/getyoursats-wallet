@@ -509,7 +509,7 @@ export function useBreezSdk(
             showToast(
               'error',
               'Could not save to this device',
-              'You may be asked to sign in again the next time you open Glow.',
+              'You may be asked to sign in again the next time you open GetYourSats.',
             );
           }
         } else if (passkeyLabel != null) {
@@ -1016,7 +1016,7 @@ export function useBreezSdk(
             // of routing back to welcome (which would look like the
             // wallet was lost).
             setError(
-              'Biometric authentication is unavailable. Please enable Face ID / Touch ID / fingerprint for Glow in your device settings and try again.',
+              'Biometric authentication is unavailable. Please enable Face ID / Touch ID / fingerprint for GetYourSats in your device settings and try again.',
             );
             setStartupState('native-locked');
             break;
