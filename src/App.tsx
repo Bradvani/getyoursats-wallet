@@ -1,3 +1,4 @@
+import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
 import {Capacitor} from '@capacitor/core';
 import {chooseWalletOnboarding} from './getyoursats/onboardingPolicy';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
@@ -85,6 +86,20 @@ const AppContent: React.FC = () => {
   // 'unlocking', auto-'wallet' on reconnect) are layered in by
   // `currentScreen` below.
   const [userScreen, setUserScreen] = useState<Screen>('home');
+  const [setupIssue,setSetupIssue]=useState<string|null>(null);
+  const serviceConfigured=isWalletServiceConfigured(
+    import.meta.env.VITE_BREEZ_API_KEY,
+    new URLSearchParams(window.location.search).get('network')==='regtest' &&
+      Boolean(import.meta.env.VITE_SPARK_LOCAL_CONFIG)
+  );
+  const requireWalletService=():boolean=>{
+    if(serviceConfigured){setSetupIssue(null);return true;}
+    setSetupIssue('Wallet setup is temporarily unavailable. Please try again later.');
+    return false;
+  };
+  const handleGetYourSatsRestore=()=>{
+    if(requireWalletService())setUserScreen('restore');
+  };
   const [refundAnimationDirection, setRefundAnimationDirection] = useState<'left' | 'up'>('left');
   const [passkeySdkConnected, setPasskeySdkConnected] = useState(false);
   // True when the user entered the passkey screen via the explicit
@@ -134,6 +149,7 @@ const AppContent: React.FC = () => {
   // recoverable device backup has been validated across reinstall.
   // Until then, preserve the upstream mnemonic/backup ceremony.
   const handleGetYourSatsStart = () => {
+    if (!requireWalletService()) return;
     const next = chooseWalletOnboarding({
       prfAvailable: sdk.prfAvailable,
       origin: window.location.origin,
@@ -336,11 +352,12 @@ const AppContent: React.FC = () => {
         // preserve the pre-refactor behavior of the `wallet` case.
         return (
           <HomePage
-            onRestoreWallet={() => setUserScreen('restore')}
+            onRestoreWallet={handleGetYourSatsRestore}
             onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
             onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
             onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
             prfAvailable={sdk.prfAvailable}
+            setupIssue={setupIssue}
           />
         );
       }
@@ -412,11 +429,12 @@ const AppContent: React.FC = () => {
       case 'home':
         return (
           <HomePage
-            onRestoreWallet={() => setUserScreen('restore')}
+            onRestoreWallet={handleGetYourSatsRestore}
             onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
             onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
             onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
             prfAvailable={sdk.prfAvailable}
+            setupIssue={setupIssue}
           />
         );
 

@@ -1,10 +1,24 @@
-import {useState} from 'react';
-type Props={onRestoreWallet:()=>void;onCreateNewWallet:()=>void;onUsePasskey:()=>void;onCreatePasskey:()=>void;prfAvailable:boolean};
-export default function HomePage({onCreateNewWallet,onRestoreWallet}:Props) {
- const [busy,setBusy]=useState(false);
- return <main style={{minHeight:'100dvh',height:'100%',display:'flex',flexDirection:'column',justifyContent:'space-between',alignItems:'center',background:'#050505',color:'#f5f1eb',padding:'max(46px,env(safe-area-inset-top)) 24px max(34px,env(safe-area-inset-bottom))',textAlign:'center'}}>
- <div style={{fontSize:14,letterSpacing:'0.27em',fontWeight:800}}>GETYOURSATS</div>
- <section style={{display:'grid',justifyItems:'center',gap:27}}><img width={170} height={170} style={{objectFit:'contain',borderRadius:'24%'}} alt="GetYourSats" src="/assets/getyoursats-mark.jpg"/><div><h1 style={{fontSize:32,fontWeight:800,letterSpacing:'-0.045em'}}>Bitcoin. Simply yours.</h1><p style={{marginTop:12,color:'#aaa'}}>Save · Send · Receive</p></div></section>
- <section style={{display:'grid',gap:17,width:'100%',maxWidth:360}}><button data-testid="get-started-button" disabled={busy} onClick={()=>{setBusy(true);onCreateNewWallet()}} style={{background:'#ffcb2b',color:'#070707',borderRadius:16,padding:18,fontWeight:800,fontSize:18}}>{busy?'Starting…':'Start'}</button><button onClick={onRestoreWallet} style={{color:'#aaa',padding:10}}>Restore wallet</button></section>
+import {useId} from 'react';
+type Props={onRestoreWallet:()=>void;onCreateNewWallet:()=>void;onUsePasskey:()=>void;onCreatePasskey:()=>void;prfAvailable:boolean;setupIssue?:string|null};
+export default function HomePage({onCreateNewWallet,onRestoreWallet,setupIssue}:Props){
+ const errorId=useId();
+ return <main className="gys-welcome">
+  <div className="gys-welcome__aura" aria-hidden="true"/>
+  <header className="gys-welcome__header" aria-label="GetYourSats">
+    <img src="/assets/getyoursats-mark.jpg" width="34" height="34" alt="" className="gys-welcome__mark"/>
+    <span className="gys-welcome__wordmark">GETYOURSATS</span>
+  </header>
+  <div className="gys-welcome__main">
+    <div className="gys-welcome__emblem" aria-hidden="true"><img src="/assets/getyoursats-mark.jpg" alt="" width="140" height="140"/></div>
+    <p className="gys-welcome__eyebrow">YOUR BITCOIN. YOUR KEYS.</p>
+    <h1>Bitcoin, made simple.</h1>
+    <p className="gys-welcome__subtitle">Pay anyone. Accept payments. Keep control.</p>
+  </div>
+  <section className="gys-welcome__actions" aria-label="Get started">
+    <button className="gys-welcome__start" type="button" onClick={onCreateNewWallet} aria-describedby={setupIssue?errorId:undefined}>Start <span aria-hidden="true">↗</span></button>
+    <button className="gys-welcome__restore" type="button" onClick={onRestoreWallet}>Restore existing wallet</button>
+    {setupIssue&&<p id={errorId} role="alert" className="gys-welcome__error">{setupIssue}</p>}
+    <p className="gys-welcome__footer">Self-custody by design <span aria-hidden="true">·</span> Powered by Bitcoin</p>
+  </section>
  </main>;
 }
