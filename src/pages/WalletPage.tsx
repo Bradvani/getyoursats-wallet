@@ -1,3 +1,4 @@
+import {useLightningAddress} from '../features/receive/hooks/useLightningAddress';
 import GetYourSatsPos from '../getyoursats/PosPage';
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useWallet } from '../contexts/WalletContext';
@@ -73,6 +74,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [gysPosOpen,setGysPosOpen] = useState(false);
+  const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
@@ -306,6 +308,22 @@ const WalletPage: React.FC<WalletPageProps> = ({
         />
       </div>
 
+      {/* Lightning address: ready on first wallet screen, not a hidden signup step. */}
+      <div className="gys-address-banner" role="status" aria-live="polite">
+        <span className="gys-address-banner__label">⚡ Your Lightning address</span>
+        {primaryLightningAddress.address ? (
+          <button type="button" className="gys-address-banner__value"
+            onClick={()=>void navigator.clipboard.writeText(primaryLightningAddress.address!.lightningAddress)}
+            aria-label="Copy your Lightning address"
+            title="Copy Lightning address">
+            {primaryLightningAddress.address.lightningAddress}
+          </button>
+        ):<span className="gys-address-banner__pending">
+          {primaryLightningAddress.isLoading?'Setting up your address…':
+           primaryLightningAddress.error?'Address temporarily unavailable':
+           primaryLightningAddress.isSupported?'Tap Receive to set up':'Not available on this network'}
+        </span>}
+      </div>
       {/* Scrollable transaction list */}
       <div
         ref={transactionsContainerRef}

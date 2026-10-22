@@ -41,3 +41,9 @@
 .gys-unit-switch button:focus-visible{outline:2px solid #ffca28;outline-offset:3px}
 .gys-pos-note{color:#a6a194;font-size:12px;line-height:1.5}.gys-pos-equivalent{color:#ffcf49;font-size:14px;font-weight:700}
 .gys-pos-pending{color:#d4b567}.gys-pos-paid{color:#87d0a4}
+
+.gys-address-banner{display:flex;flex-direction:column;gap:6px;margin:0 14px 8px;padding:12px 15px;background:#171510;border:1px solid rgba(255,202,40,.15);border-radius:16px;position:relative;z-index:2;min-width:0}
+.gys-address-banner__label{font-weight:700;letter-spacing:.015em;font-size:11px;color:#c4af7b}
+.gys-address-banner__value{padding:0;text-align:left;overflow:hidden;word-break:break-all;font-size:14px;line-height:1.5;color:#ffcf46;font-weight:750}
+.gys-address-banner__value:focus-visible{outline:2px solid #ffca28;outline-offset:3px}
+.gys-address-banner__pending{font-size:12px;line-height:1.5;color:#a5a09a}

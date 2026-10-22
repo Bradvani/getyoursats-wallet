@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { LightningAddressInfo } from '@breeztech/breez-sdk-spark';
+import type { LightningAddressInfo, BreezSdk } from '@breeztech/breez-sdk-spark';
 import { useWallet } from '../../../contexts/WalletContext';
 import { generateRandomName } from '../../../utils/randomName';
 import { logger, LogCategory } from '@/services/logger';
@@ -30,6 +30,33 @@ export interface UseLightningAddress {
 // gives us a typed error to branch on.
 const LOAD_FAILED_MESSAGE = "Couldn't load your Lightning address. Please try again.";
 const SAVE_FAILED_MESSAGE = "Couldn't save your Lightning address. Please try again.";
+
+
+/**
+ * Coordinate address registration across WalletPage and ReceivePaymentDialog.
+ * Both screens can mount together. Registration must run at most once per
+ * wallet SDK instance to avoid allocating two random addresses in a race.
+ */
+const registrationBySdk = new WeakMap<BreezSdk, Promise<LightningAddressInfo|null>>();
+async function ensureLightningAddress(sdk:BreezSdk):Promise<LightningAddressInfo|null>{
+  const existing=registrationBySdk.get(sdk);
+  if(existing)return existing;
+  const task=(async()=>{
+    let result=await sdk.getLightningAddress();
+    if(result)return result;
+    const base=generateRandomName();
+    for(let i=0;i<3;i++){
+      const username=base+(i===0?'':String(Math.floor(1000+Math.random()*9000)));
+      if(!(await sdk.checkLightningAddressAvailable({username})))continue;
+      await sdk.registerLightningAddress({username,description:`Pay to ${username}@breez.tips`});
+      result=await sdk.getLightningAddress();
+      if(result)return result;
+    }
+    return null;
+  })();
+  registrationBySdk.set(sdk,task);
+  try{return await task;}finally{registrationBySdk.delete(sdk)}
+}
 
 export const useLightningAddress = (): UseLightningAddress => {
   const wallet = useWallet();
@@ -89,21 +116,7 @@ export const useLightningAddress = (): UseLightningAddress => {
 
     setIsLoading(true);
     try {
-      let addr = await wallet.getLightningAddress();
-      if (!addr) {
-        // Generate a base username, then try with random 4-digit suffixes on collision
-        const baseName = generateRandomName();
-        for (let attempt = 0; attempt < 3; attempt++) {
-          const suffix = attempt === 0 ? '' : String(Math.floor(1000 + Math.random() * 9000));
-          const username = baseName + suffix;
-          const isAvailable = await wallet.checkLightningAddressAvailable({ username });
-          if (isAvailable) {
-            await wallet.registerLightningAddress({ username, description: `Pay to ${username}@breez.tips` });
-            addr = await wallet.getLightningAddress();
-            break;
-          }
-        }
-      }
+      const addr = await ensureLightningAddress(wallet);
       setAddress(addr ?? null);
     } catch (err) {
       logger.error(LogCategory.PAYMENT, 'Failed to load Lightning address', {
