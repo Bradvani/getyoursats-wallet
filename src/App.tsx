@@ -290,8 +290,8 @@ const AppContent: React.FC = () => {
   useBackButton(useCallback(() => {
     switch (currentScreen) {
       case 'dca':
-        return <>{renderWalletPage()}<DcaPage onBack={()=>setUserScreen('wallet')}/></>;
-
+        setUserScreen('wallet');
+        return true;
       case 'settings':
       case 'getRefund':
       case 'unilateralExit':
@@ -512,6 +512,9 @@ const AppContent: React.FC = () => {
             />
           </>
         );
+
+      case 'dca':
+        return <>{renderWalletPage()}<DcaPage onBack={()=>setUserScreen('wallet')}/></>;
 
       case 'settings':
         return (
