@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { USDB_TICKER, USDB_TOKEN_IDENTIFIER } from '../constants/stableBalance';
 import { buildConnectConfig } from './sdkConnect';
-import { saveSettings } from './settings';
+import { getSettings, saveSettings } from './settings';
 
 describe('buildConnectConfig', () => {
   beforeEach(() => {
@@ -11,6 +11,26 @@ describe('buildConnectConfig', () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  it('rejects an unset API key before wallet connection', () => {
+    vi.stubEnv('VITE_BREEZ_API_KEY', '');
+    expect(() => buildConnectConfig('mainnet')).toThrow(/connectivity is not configured/);
+  });
+
+  it('rejects a tutorial placeholder API key', () => {
+    vi.stubEnv('VITE_BREEZ_API_KEY', 'your_breez_api_key_here');
+    expect(() => buildConnectConfig('mainnet')).toThrow(/connectivity is not configured/);
+  });
+
+  it('ignores stale locally configured custom LNURL domains', () => {
+    saveSettings({ ...getSettings(), lnurlDomain: 'unverified.getyoursats.test' });
+    expect(buildConnectConfig('mainnet').lnurlDomain).not.toBe('unverified.getyoursats.test');
+  });
+
+  it('does not activate unverified GetYourSats LNURL domains', () => {
+    vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN', 'getyoursats.example');
+    expect(buildConnectConfig('mainnet').lnurlDomain).not.toBe('getyoursats.example');
   });
 
   it('sets the stable balance token and cross-chain sends on mainnet', () => {

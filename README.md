@@ -1,69 +1,41 @@
-# Glow Web App
+# GetYourSats Wallet
 
-A PWA app showing how to implement [Breez SDK](https://sdk-doc-spark.breez.technology/) with WebAssembly.
+Standalone GetYourSats Bitcoin/Lightning wallet foundation, forked from the MIT-licensed [Breez Glow web reference implementation](https://github.com/breez/glow-web). Upstream copyright and license notices are retained.
 
-See it in action [here](https://glow-app.co).
+## Current release status
 
-## Overview
+This repository builds and runs a Breez Spark-backed React wallet. **This is not yet a funds-enabled public beta**. The wallet depends on an approved Breez API key and independent device/web security and recovery testing. The web PWA has the upstream recovery-phrase storage security trade-offs.
 
-Built with React, this demo app showcases best practices for integrating Lightning in a web environment using the Breez SDK’s WebAssembly bindings. It enables users to:
+GetYourSats-specific features: official brand, one-button Start, SDK-backed Lightning merchant POS, and build/test CI. See [GETYOURSATS.md](GETYOURSATS.md) for implementation boundaries.
 
-- Send payments via various protocols such as: Lightning address, LNURL-Pay, Bolt11, BTC address, Spark address
-- Receive payments via various protocols such as: Lightning address, LNURL-Pay, Bolt11, BTC address
+### Run locally
 
-## Technologies Used
-
-- [Breez SDK](https://sdk-doc-spark.breez.technology/) for all the bitcoin functionality
-- React with TypeScript
-- Tailwind CSS for styling
-
-## Getting Started
-
-### Clone the repository
-
-```bash
-git clone https://github.com/breez/glow-web.git
-cd glow-web
-```
-
-### Install dependencies
-
-```bash
-npm install
-```
-
-### Set up environment variables
-
-1. Copy the example environment file:
-
-```bash
+```sh
+npm ci
 cp example.env .env.local
-```
-
-2. Edit `.env.local` and add your Breez API key (required):
-
-```
-VITE_BREEZ_API_KEY="your_breez_api_key_here"
-```
-
-See `example.env` for all available configuration options.
-
-### Start the development server
-
-```bash
+# Replace tutorial placeholders in .env.local with an approved Breez SDK key.
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+### Deploy to Vercel
 
-## Building for Production
+- Import `Bradvani/getyoursats-wallet` as a **single Vite project** from the repository root `./`.
+- Build command: `npm run build`; output directory: `dist`.
+- Configure **VITE_BREEZ_API_KEY** for the relevant environments with a provider-approved *browser-distributable SDK key*. Vite embeds it into client JavaScript; do not use a private server API secret here.
+- Deploy to a protected preview until the funds-enabled release gates pass.
+- Domain setup and LNURL are separate from wallet host/domain; a username under GetYourSats requires verified email ownership and an approved LNURL domain.
 
-```bash
-npm run build
-```
+Official setup instructions: https://sdk-doc-spark.breez.technology/guide/getting_started.html
 
-The build output will be in the `dist` directory.
+To request an API key, use the contact form on https://breez.technology/sdk/ (the `/contact/apikey` path is a programmatic POST endpoint, **not** an ordinary browser page).
 
-## Security Note
+### Release blockers
 
-If you don’t use a passkey (recommended), your recovery phrase is stored in `localStorage` which is not a secure storage mechanism. Any JavaScript running in the browser (including XSS attacks or malicious extensions) can access it, potentially compromising your funds.
+- Real funded Lightning send/receive, Spark deposit/withdrawal and restore testing
+- Verified merchant POS settlement and crash/reload recovery
+- Independent wallet security assessment and signed native builds
+- Email account linking and unique LNURL username claims
+- Contracted Indian fiat/UPI/exchange APIs, KYC/compliance and tax reporting
+- Verified Vercel environment/deployment logs (different account scopes may apply)
+
+Do not treat green TypeScript/unit tests as wallet acceptance certification.

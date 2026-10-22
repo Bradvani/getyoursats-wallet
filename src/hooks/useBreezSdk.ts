@@ -455,10 +455,10 @@ export function useBreezSdk(
       } catch (e) {
         // Only a missing key gets this message. Any other config error takes
         // the connect failure path, so onboarding does not carry on unconnected.
-        if (import.meta.env.VITE_BREEZ_API_KEY) throw e;
-        showToast('error', 'Missing API Key', formatError(e));
-        setIsLoading(false);
-        return;
+        // Do not silently return: a wallet page must never open without a
+        // connected SDK. The outer catch handles cleanup and error state.
+        showToast('error', 'Wallet service unavailable', 'Please try again once wallet connectivity is configured.');
+        throw e;
       }
       setConfig(cfg);
 
