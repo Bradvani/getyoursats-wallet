@@ -502,15 +502,12 @@ export function useBreezSdk(
         if (deviceOnlyStorage.isSupported()) {
           try {
             await deviceOnlyStorage.storeSeed(seed);
-          } catch {
-            // Non-fatal for this session, but the next launch has
-            // nothing to reconnect from, so say so rather than letting
-            // it look like the app forgot the account on restart.
-            showToast(
-              'error',
-              'Could not save to this device',
-              'You may be asked to sign in again the next time you open GetYourSats.',
-            );
+          } catch (e) {
+            // Safety: never mark an unrecoverable, unpersisted native wallet
+            // as connected. The catch below disconnects the SDK.
+            showToast('error', 'Secure wallet storage failed',
+              'This device cannot safely preserve your wallet. No funds should be deposited.');
+            throw e;
           }
         } else if (passkeyLabel != null) {
           // Web passkey mode: never cache the PRF-derived seed.

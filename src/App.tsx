@@ -1,3 +1,5 @@
+import * as bip39 from 'bip39';
+import {deviceOnlyStorage} from './services/secureStorage';
 import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
 import {Capacitor} from '@capacitor/core';
 import {chooseWalletOnboarding} from './getyoursats/onboardingPolicy';
@@ -148,8 +150,27 @@ const AppContent: React.FC = () => {
   // Release gate: anonymous instant-onboarding is only safe once a
   // recoverable device backup has been validated across reinstall.
   // Until then, preserve the upstream mnemonic/backup ceremony.
-  const handleGetYourSatsStart = () => {
+  const handleGetYourSatsStart = async () => {
     if (!requireWalletService()) return;
+
+    // Native-only instant wallet: keys are generated with a cryptographic
+    // random source and must be written to the OS-backed secure device vault.
+    // No seed phrase is displayed to someone starting the wallet in public.
+    if (Capacitor.isNativePlatform() && deviceOnlyStorage.isSupported()) {
+      try {
+        setSetupIssue(null);
+        const mnemonic = bip39.generateMnemonic(128);
+        await sdk.connectWallet({ type: 'mnemonic', mnemonic }, false);
+        setUserScreen('wallet');
+      } catch {
+        setSetupIssue('Could not secure wallet keys on this device. Please retry or use manual recovery.');
+        setUserScreen('home');
+      }
+      return;
+    }
+    // A web wallet without a verified WebAuthn RP cannot promise device-loss
+    // recovery. Prefer a synced PRF-derived passkey rather than plaintext seed
+    // storage. Never route Start to an unsolicited seed-word display.
     const next = chooseWalletOnboarding({
       prfAvailable: sdk.prfAvailable,
       origin: window.location.origin,
@@ -158,15 +179,17 @@ const AppContent: React.FC = () => {
       nativeAssociationVerified: import.meta.env.VITE_GETYOURSATS_NATIVE_PASSKEY_READY === 'true',
     });
     if (next === 'passkey') {
-      // Reuse upstream discovery: existing passkey -> same wallet;
-      // no credential -> PRF registration. Do not force-new by default.
       setPasskeySkipDetection(false);
       setPasskeyFailed(false);
       setUserScreen('passkey');
       return;
     }
-    setUserScreen('generate');
+    setSetupIssue('Secure one-tap web setup needs a supported passkey and an approved permanent wallet domain. You can use manual setup below.');
   };
+  const handleGetYourSatsManual = () => {
+    if (requireWalletService()) setUserScreen('generate');
+  };
+
   // Navigate to wallet after successful connect
   const handleConnect = async (mnemonic: string, restore: boolean) => {
     await sdk.connectWallet({ type: 'mnemonic', mnemonic }, restore);
@@ -354,6 +377,7 @@ const AppContent: React.FC = () => {
           <HomePage
             onRestoreWallet={handleGetYourSatsRestore}
             onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
+            onCreateManualWallet={handleGetYourSatsManual}
             onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
             onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
             prfAvailable={sdk.prfAvailable}
@@ -431,6 +455,7 @@ const AppContent: React.FC = () => {
           <HomePage
             onRestoreWallet={handleGetYourSatsRestore}
             onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
+            onCreateManualWallet={handleGetYourSatsManual}
             onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
             onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
             prfAvailable={sdk.prfAvailable}

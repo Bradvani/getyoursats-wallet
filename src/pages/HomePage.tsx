@@ -1,6 +1,6 @@
 import {useId} from 'react';
-type Props={onRestoreWallet:()=>void;onCreateNewWallet:()=>void;onUsePasskey:()=>void;onCreatePasskey:()=>void;prfAvailable:boolean;setupIssue?:string|null};
-export default function HomePage({onCreateNewWallet,onRestoreWallet,setupIssue}:Props){
+type Props={onRestoreWallet:()=>void;onCreateNewWallet:()=>void;onCreateManualWallet:()=>void;onUsePasskey:()=>void;onCreatePasskey:()=>void;prfAvailable:boolean;setupIssue?:string|null};
+export default function HomePage({onCreateNewWallet,onCreateManualWallet,onRestoreWallet,setupIssue}:Props){
  const errorId=useId();
  return <main className="gys-welcome">
   <div className="gys-welcome__aura" aria-hidden="true"/>
@@ -17,6 +17,7 @@ export default function HomePage({onCreateNewWallet,onRestoreWallet,setupIssue}:
   <section className="gys-welcome__actions" aria-label="Get started">
     <button className="gys-welcome__start" type="button" onClick={onCreateNewWallet} aria-describedby={setupIssue?errorId:undefined}>Start <span aria-hidden="true">↗</span></button>
     <button className="gys-welcome__restore" type="button" onClick={onRestoreWallet}>Restore existing wallet</button>
+    <button className="gys-welcome__advanced" type="button" onClick={onCreateManualWallet}>Advanced · Create with offline backup</button>
     {setupIssue&&<p id={errorId} role="alert" className="gys-welcome__error">{setupIssue}</p>}
     <p className="gys-welcome__footer">Self-custody by design <span aria-hidden="true">·</span> Powered by Bitcoin</p>
   </section>
