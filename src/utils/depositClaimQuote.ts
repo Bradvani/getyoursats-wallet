@@ -51,10 +51,12 @@ export function earlyOption(quote: FetchClaimDepositQuoteResponse | null): Claim
 /**
  * The limit in sats, or null when it cannot be named. Only a fixed limit is
  * already a sat figure: the rate types are sat-per-vbyte and mean nothing
- * without the size of a claim transaction that has not been built yet.
+ * without the size of a claim transaction that has not been built yet, and a
+ * proportional share means nothing without the deposit's amount.
  */
 export function claimCeilingSats(maxFee: MaxFee): number | null {
-  return maxFee.type === 'fixed' ? maxFee.amount : null;
+  if (maxFee.proportionalPpm) return null;
+  return maxFee.onchain.type === 'fixed' ? maxFee.onchain.amount : null;
 }
 
 /**

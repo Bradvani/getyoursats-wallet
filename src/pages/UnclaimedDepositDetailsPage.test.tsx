@@ -69,13 +69,13 @@ it('retries at the fee the failed claim quoted, not the one it rejected', async 
   fireEvent.click(screen.getByText('Approve'));
   await waitFor(() => expect(screen.getByText('Network fee changed')).toBeInTheDocument());
   expect(client.claimDeposit).toHaveBeenLastCalledWith(
-    expect.objectContaining({ maxFee: { type: 'fixed', amount: 198 } }),
+    expect.objectContaining({ maxFee: { onchain: { type: 'fixed', amount: 198 } } }),
   );
 
   fireEvent.click(screen.getByText('Approve'));
   await waitFor(() =>
     expect(client.claimDeposit).toHaveBeenLastCalledWith(
-      expect.objectContaining({ maxFee: { type: 'fixed', amount: 297 } }),
+      expect.objectContaining({ maxFee: { onchain: { type: 'fixed', amount: 297 } } }),
     ),
   );
 });
@@ -268,7 +268,7 @@ describe('a confirming deposit with both routes on offer', () => {
   // Nothing left to close once the ceiling is already the cost of the wait.
   it('goes inert once the ceiling leaves no room to front', async () => {
     await renderSheet(
-      makeDeposit({ maxClaimFee: { type: 'fixed', amount: 198 } }),
+      makeDeposit({ maxClaimFee: { onchain: { type: 'fixed', amount: 198 } } }),
       withQuote(quote()),
     );
 
@@ -590,7 +590,7 @@ describe('a confirming deposit with both routes on offer', () => {
     await waitFor(() => expect(client.claimDeposit).toHaveBeenCalled());
     // Below the quoted fee the SDK declines the route and waits for maturity.
     expect(vi.mocked(client.claimDeposit).mock.calls[0][0]).toEqual({
-      txid: 'a'.repeat(64), vout: 0, maxFee: { type: 'fixed', amount: 3_200 },
+      txid: 'a'.repeat(64), vout: 0, maxFee: { onchain: { type: 'fixed', amount: 3_200 } },
     });
   });
 
@@ -649,7 +649,7 @@ describe('an early route the limit already covers', () => {
     expect(button(PAID_ROW)).toHaveAttribute('aria-checked', 'false');
     // The tap itself refuses the front, at the cost of the wait.
     await waitFor(() => expect(vi.mocked(client.claimDeposit).mock.calls[0][0])
-      .toEqual({ txid: 'a'.repeat(64), vout: 0, maxFee: { type: 'fixed', amount: 198 } }));
+      .toEqual({ txid: 'a'.repeat(64), vout: 0, maxFee: { onchain: { type: 'fixed', amount: 198 } } }));
   });
 
   // Both can be true of one quote. The approve panel is never reached, because
@@ -936,7 +936,7 @@ describe('a standing ceiling on the deposit', () => {
 
   it('reads the route the SDK will take off the deposit, not off the settings', async () => {
     await renderSheet(
-      makeDeposit({ maxClaimFee: { type: 'fixed', amount: 3_200 } }),
+      makeDeposit({ maxClaimFee: { onchain: { type: 'fixed', amount: 3_200 } } }),
       withQuote(quote({ confirmations: 0 })),
     );
 
@@ -948,7 +948,7 @@ describe('a standing ceiling on the deposit', () => {
 
   it('leaves the footer empty once the ceiling is what the selection asks for', async () => {
     await renderSheet(
-      makeDeposit({ maxClaimFee: { type: 'fixed', amount: 3_200 } }),
+      makeDeposit({ maxClaimFee: { onchain: { type: 'fixed', amount: 3_200 } } }),
       withQuote(quote({ confirmations: 0 })),
     );
 
@@ -961,7 +961,7 @@ describe('a standing ceiling on the deposit', () => {
   // route to predict.
   it('names nothing when the standing ceiling is not in sats', async () => {
     await renderSheet(
-      makeDeposit({ maxClaimFee: { type: 'rate', satPerVbyte: 50 } }),
+      makeDeposit({ maxClaimFee: { onchain: { type: 'rate', satPerVbyte: 50 } } }),
       withQuote(quote({ confirmations: 0 })),
     );
 
@@ -987,7 +987,7 @@ describe('committing a route that has not unlocked', () => {
     // The same call and the same argument as a claim that lands: the SDK
     // decides which of the two happens, from the deposit's depth.
     expect(vi.mocked(client.claimDeposit).mock.calls[0][0]).toEqual({
-      txid: 'a'.repeat(64), vout: 0, maxFee: { type: 'fixed', amount: 3_200 },
+      txid: 'a'.repeat(64), vout: 0, maxFee: { onchain: { type: 'fixed', amount: 3_200 } },
     });
   });
 
@@ -1002,7 +1002,7 @@ describe('committing a route that has not unlocked', () => {
 
     // The tap records the ceiling the route needs, at the price on its row.
     await waitFor(() => expect(vi.mocked(client.claimDeposit).mock.calls[0][0])
-      .toEqual({ txid: 'a'.repeat(64), vout: 0, maxFee: { type: 'fixed', amount: 3_200 } }));
+      .toEqual({ txid: 'a'.repeat(64), vout: 0, maxFee: { onchain: { type: 'fixed', amount: 3_200 } } }));
     expect(screen.queryByText(/Could not set this transfer up/)).toBeNull();
     expect(screen.queryByText(/did not go through/)).toBeNull();
     expect(button('Claim')).toBeDisabled();
@@ -1136,7 +1136,7 @@ describe('committing the wait', () => {
     fireEvent.click(button(/^Standard delivery/));
 
     await waitFor(() => expect(vi.mocked(client.claimDeposit).mock.calls[0][0])
-      .toEqual({ txid: 'a'.repeat(64), vout: 0, maxFee: { type: 'fixed', amount: 198 } }));
+      .toEqual({ txid: 'a'.repeat(64), vout: 0, maxFee: { onchain: { type: 'fixed', amount: 198 } } }));
   });
 
   // Committing the wait asks for a ceiling the spread is meant to exceed, so the
@@ -1161,7 +1161,7 @@ describe('committing the wait', () => {
     await waitFor(() => expect(client.claimDeposit).toHaveBeenCalled());
     const sent = vi.mocked(client.claimDeposit).mock.calls[0][0].maxFee;
     // The cost of the wait, not a shade under the route being skipped.
-    expect(sent).toEqual({ type: 'fixed', amount: 198 });
+    expect(sent).toEqual({ onchain: { type: 'fixed', amount: 198 } });
     const spreadAtAnyDepth = [347, 300, 250, 199];
     spreadAtAnyDepth.forEach(fee =>
       expect(fee, 'the front stays refused as the spread falls').toBeGreaterThan(198));
@@ -1177,7 +1177,7 @@ describe('committing the wait', () => {
 
     await waitFor(() => expect(client.claimDeposit).toHaveBeenCalled());
     expect(vi.mocked(client.claimDeposit).mock.calls[0][0]).toEqual({
-      txid: 'a'.repeat(64), vout: 0, maxFee: { type: 'fixed', amount: 198 },
+      txid: 'a'.repeat(64), vout: 0, maxFee: { onchain: { type: 'fixed', amount: 198 } },
     });
   });
 
@@ -1265,7 +1265,7 @@ describe('reopening after committing the wait', () => {
     fireEvent.click(button(/^Standard delivery/));
 
     await waitFor(() => expect(vi.mocked(client.claimDeposit).mock.calls[0][0])
-      .toEqual({ txid: 'a'.repeat(64), vout: 0, maxFee: { type: 'fixed', amount: 99 } }));
+      .toEqual({ txid: 'a'.repeat(64), vout: 0, maxFee: { onchain: { type: 'fixed', amount: 99 } } }));
     // Without this the list keeps a deposit carrying no ceiling at all.
     await waitFor(() => expect(onRefresh).toHaveBeenCalled());
     // And never the signal that stands the sheet down: the deposit is still
@@ -1293,7 +1293,7 @@ describe('reopening after committing the wait', () => {
     cleanup();
     // What the refreshed list now holds for this outpoint.
     await renderSheet(
-      makeDeposit({ amountSats: 10_000, maxClaimFee: { type: 'fixed', amount: 99 } }),
+      makeDeposit({ amountSats: 10_000, maxClaimFee: { onchain: { type: 'fixed', amount: 99 } } }),
       withQuote(overDefault()),
     );
 

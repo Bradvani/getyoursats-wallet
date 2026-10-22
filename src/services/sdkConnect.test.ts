@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { USDB_TICKER, USDB_TOKEN_IDENTIFIER } from '../constants/stableBalance';
 import { buildConnectConfig } from './sdkConnect';
+import { saveSettings } from './settings';
 
 describe('buildConnectConfig', () => {
   beforeEach(() => {
@@ -22,5 +23,10 @@ describe('buildConnectConfig', () => {
     const config = buildConnectConfig('regtest');
     expect(config.stableBalanceConfig).toBeUndefined();
     expect(config.crossChainConfig).toBeUndefined();
+  });
+
+  it('hands the SDK the saved claim limit as its on-chain part', () => {
+    saveSettings({ depositMaxFee: { type: 'rate', satPerVbyte: 3 } });
+    expect(buildConnectConfig('regtest').maxDepositClaimFee).toEqual({ onchain: { type: 'rate', satPerVbyte: 3 } });
   });
 });

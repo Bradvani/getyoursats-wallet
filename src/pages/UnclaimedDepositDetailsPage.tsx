@@ -263,7 +263,7 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
   // The ceiling every automatic attempt on this deposit is held to. The
   // deposit's own outranks the configured one in both directions, so a standing
   // ceiling below the default holds this deposit back rather than being ignored.
-  const maxFee = earlyClaimCeiling(standingCeiling, getSettings().depositMaxFee);
+  const maxFee = earlyClaimCeiling(standingCeiling, { onchain: getSettings().depositMaxFee });
   // What happens if nothing is committed here. The default selection, so the fee
   // on screen is always the one that will be charged.
   const willClaimEarly = autoClaimsEarly(quote, maxFee);
@@ -371,7 +371,7 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
     setIsProcessing(true);
     claimInFlightRef.current = true;
     try {
-      const maxFee: MaxFee = { type: 'fixed', amount: requiredFeeSats };
+      const maxFee: MaxFee = { onchain: { type: 'fixed', amount: requiredFeeSats } };
       const { outcome } = await wallet.claimDeposit({ txid: deposit.txid, vout: deposit.vout, maxFee });
       // Remove from rejected list if it was there
       removeRejectedDeposit(deposit.txid, deposit.vout);
@@ -510,7 +510,7 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
     setIsProcessing(true);
     claimInFlightRef.current = true;
     try {
-      const requestedCeiling: MaxFee = { type: 'fixed', amount: requested };
+      const requestedCeiling: MaxFee = { onchain: { type: 'fixed', amount: requested } };
       const { outcome } = await wallet.claimDeposit({
         txid: deposit.txid, vout: deposit.vout, maxFee: requestedCeiling,
       });
