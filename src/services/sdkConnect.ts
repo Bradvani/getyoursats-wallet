@@ -63,7 +63,7 @@ export function buildConnectConfig(overrideNetwork?: Network): Config {
   // Reject tutorial/example placeholders. This value is shipped to every
   // browser in Vite bundles, so use only a provider-approved client SDK key.
   const keyUnconfigured = !configuredKey ||
-    /^(your[_-]?|replace[_-]?|changeme|placeholder|test-key$)/i.test(configuredKey);
+    /^(your[_-]?|replace[_-]?|changeme|placeholder)/i.test(configuredKey);
 
   if (!applyLocalCluster(config, network) && keyUnconfigured) {
     throw new Error('Breez wallet connectivity is not configured. Set a valid provider-approved VITE_BREEZ_API_KEY in the deployment settings.');
