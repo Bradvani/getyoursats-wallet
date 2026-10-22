@@ -17,3 +17,13 @@ Docs: https://sdk-doc-spark.breez.technology/guide/custom_domain.html
 Use [Breez SDK official form](https://breez.technology/sdk/) to contact Breez for a client-distributable key. [SDK onboarding docs](https://sdk-doc-spark.breez.technology/guide/getting_started.html). The previously shared `https://breez.technology/contact/apikey` is meant for programmatic POST, not browsing.
 
 The web PWA is a demo/reference foundation; the upstream project explicitly says its web demo is not intended for production use. No public real-funds release without security and recovery sign-off. Exact Vercel deployment needs auditing in the owning Vercel team (not the separate previously connected account).
+
+## Recovery-first passkey onboarding (2026-10-23)
+- A single **Start** button selects Breez's existing PRF-derived passkey onboarding if the device supports PRF and an explicit stable, audited origin is configured.
+- Required for browser: `VITE_GETYOURSATS_PASSKEY_ORIGIN=https://the-canonical-wallet-host`. Preview branch URLs and unapproved origins fail closed to handwritten BIP39 setup.
+- Native builds also require `VITE_GETYOURSATS_NATIVE_PASSKEY_READY=true` only after Associated Domains / Digital Asset Links, native passkey plugin support and cross-device recovery have been verified. This flag is **not** permission to skip testing.
+- Passkey wallets derive their Bitcoin seed via WebAuthn PRF, not via a custodial email identity. The existing Backup page can re-derive and display the *same* wallet mnemonic after passkey authentication. This manual backup is **optional** but strongly recommended because losing a passkey without backup can lose funds.
+- **Removed** mnemonic clipboard export in onboarding and Backup. Manual setup now requires an offline two-word verification check before connecting the wallet. Native phrase screens request OS screenshot protection when supported; web browsers cannot enforce blocking screenshots or browser extensions.
+- This is not a GetYourSats cloud-backup server: account/email linking, provider sync diagnostics, authenticated restore on a second device and RP migration still require testing/implementation. PRF-compatible synced passkeys work according to the provider and domain configuration.
+- Never enable a passkey relying party on temporary Vercel PR hostnames. A future custom-domain change needs credential migration strategy.
+- Reference: https://sdk-doc-spark.breez.technology/guide/passkey.html .
