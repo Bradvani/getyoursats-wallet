@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { USDB_TICKER, USDB_TOKEN_IDENTIFIER } from '../constants/stableBalance';
 import { buildConnectConfig } from './sdkConnect';
-import { saveSettings } from './settings';
+import { getSettings, saveSettings } from './settings';
 
 describe('buildConnectConfig', () => {
   beforeEach(() => {
@@ -24,7 +24,7 @@ describe('buildConnectConfig', () => {
   });
 
   it('ignores stale locally configured custom LNURL domains', () => {
-    saveSettings({ lnurlDomain: 'unverified.getyoursats.test' });
+    saveSettings({ ...getSettings(), lnurlDomain: 'unverified.getyoursats.test' });
     expect(buildConnectConfig('mainnet').lnurlDomain).not.toBe('unverified.getyoursats.test');
   });
 
