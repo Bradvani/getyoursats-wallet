@@ -1,16 +1,17 @@
-// Glow Service Worker
-const CACHE_NAME = 'glow-v16';
+// GetYourSats Service Worker
+const CACHE_NAME = 'getyoursats-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icons/Glow_favicon.png',
-  '/icons/Glow-icon-192.png',
-  '/icons/Glow-icon-512.png',
-  '/icons/Glow-icon-maskable-192.png',
-  '/icons/Glow-icon-maskable-512.png',
-  '/assets/Glow_Logo.png',
-  '/assets/logo-breez-header.svg',
+  '/assets/getyoursats-mark.jpg',
+  
+  
+  
+  
+  
+  
+  
 ];
 
 // Install event - cache static assets
@@ -63,7 +64,7 @@ self.addEventListener('fetch', (event) => {
   // warm launch reads the ~11 MB wasm + JS bundle straight from cache instead of
   // re-fetching over the network. index.html / navigations stay network-first
   // (below) so a new deploy is always picked up. Non-hashed static assets
-  // (e.g. /assets/Glow_Logo.svg) don't match and keep the network-first path.
+  // (e.g. /assets/getyoursats-mark.jpg) don't match and keep the network-first path.
   const path = new URL(event.request.url).pathname;
   const isHashedAsset = /\/assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(js|mjs|css|wasm|woff2?|ttf)$/.test(path);
   if (isHashedAsset) {
