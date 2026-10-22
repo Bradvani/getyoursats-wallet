@@ -40,7 +40,11 @@ async function renderAmountPanel(client?: BreezSdk) {
 }
 
 describe('AmountPanel fiat entry (no stable balance)', () => {
-  beforeEach(()=>saveDenomination('sats'));
+  beforeEach(()=>{
+    saveDenomination('sats');
+    saveFiatSettings({selectedCurrencies:['USD']});
+    setDisplayFiatCurrency('USD');
+  });
 
   afterEach(() => {
     saveFiatSettings({ selectedCurrencies: ['USD'] });
