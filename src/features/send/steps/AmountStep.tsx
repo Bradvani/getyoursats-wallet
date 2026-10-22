@@ -1,3 +1,6 @@
+import {useFiatData} from '../../../contexts/FiatDataContext';
+import DenominationTabs from '../../../getyoursats/DenominationTabs';
+import {amountToSats,getDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
 import React, { useEffect, useState, useMemo } from 'react';
 import type { ConversionOptions } from '@breeztech/breez-sdk-spark';
 import { FormError, PrimaryButton, AMOUNT_FIELD_CLASS } from '../../../components/ui';
@@ -39,6 +42,11 @@ const AmountStep: React.FC<AmountStepProps> = ({
   // ("Send USD", amountFirst) starts in USD; plain BTC sends start in sats
   // with USD as a toggleable secondary option (#253).
   const fiatOverride = useFiatOverride('USD', amountFirst);
+  const {fiatRates,fetchedAt}=useFiatData();
+  const [denomination,setDenomination]=useState<Denomination>(getDenomination);
+  const [unitRaw,setUnitRaw]=useState('');
+  const inrPerBtc=fiatRates.find(r=>r.coin==='INR')?.value;
+  const currentRate=!!fetchedAt&&Date.now()-fetchedAt<120_000?inrPerBtc:undefined;
 
   const input = useAmountInput({ initialAmount: amount, balanceSats, tokenBalance, fiatOverride });
   const {
@@ -76,8 +84,27 @@ const AmountStep: React.FC<AmountStepProps> = ({
     setFeesIncluded(false);
   };
 
+  const isDenominated = !amountFirst && !isTokenMode && denomination !== 'sats';
+  const selectDenomination = (next:Denomination) => {
+    if(next==='INR'&&!currentRate)return;
+    const sats=Number(localAmount);
+    setIsTokenMode(false);
+    setDenomination(next);
+    saveDenomination(next);
+    setUnitRaw(Number.isSafeInteger(sats)&&sats>0?satsToAmount(sats,next,currentRate):'');
+    setFeesIncluded(false);
+    setLocalError(null);
+  };
+  const syncUnitFromSats=(sats:number)=>{
+    if(isDenominated)setUnitRaw(satsToAmount(sats,denomination,currentRate));
+  };
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.target.value);
+    const raw=e.target.value;
+    if(isDenominated){
+      setUnitRaw(raw);
+      const sats=amountToSats(raw,denomination,currentRate);
+      setAmount(sats?String(sats):'');
+    }else setAmount(raw);
     setFeesIncluded(false);
   };
 
@@ -173,6 +200,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
     </div>
   );
 
+  const unitInputValue=isDenominated?unitRaw:localAmount;
+  const unitUnavailable=denomination==='INR'&&!currentRate&&!amountFirst;
   const amountSection = (
     <div>
         <label className="block text-sm font-medium text-spark-text-primary mb-2">
@@ -180,10 +209,10 @@ const AmountStep: React.FC<AmountStepProps> = ({
         </label>
         <div className="relative">
           <input
-            type={isTokenMode ? 'text' : 'number'}
-            inputMode={isTokenMode ? 'decimal' : 'numeric'}
+            type={isDenominated?'text':isTokenMode?'text':'number'}
+            inputMode={isDenominated?'decimal':isTokenMode?'decimal':'numeric'}
             enterKeyHint="done"
-            value={localAmount}
+            value={unitInputValue}
             onChange={handleAmountChange}
             onKeyDown={async (e) => {
               // Enter on the amount field commits and advances to
@@ -196,7 +225,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
                 }
               }
             }}
-            placeholder={isTokenMode && config ? `Enter amount in ${config.currencyCode}` : 'Enter amount in sats'}
+            placeholder={isDenominated?`Enter amount in ${denomination}`:isTokenMode&&config?`Enter amount in ${config.currencyCode}`:'Enter amount in sats'}
             className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none read-only:cursor-not-allowed`}
             disabled={isLoading}
             readOnly={isSendAll}
@@ -214,6 +243,9 @@ const AmountStep: React.FC<AmountStepProps> = ({
           )}
         </div>
 
+        {!amountFirst&&<DenominationTabs value={denomination} onChange={selectDenomination} disabled={isLoading} inrAvailable={!!currentRate}/>}
+        {unitUnavailable&&<p role="status" className="text-xs text-spark-warning mt-2">Live INR/BTC rate unavailable. Choose sats or BTC.</p>}
+        {isDenominated&&!!localAmount&&<p className="text-xs text-spark-text-muted mt-2">≈ {localAmount} sats · Settlement is denominated in Bitcoin</p>}
         {/* Quick amount buttons */}
         <div className="flex gap-2 mt-3">
           {quickAmounts.map((quickAmount) => {
@@ -221,7 +253,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
             return (
               <button
                 key={quickAmount}
-                onClick={() => { setLocalAmount(String(quickAmount)); setFeesIncluded(false); setLocalError(null); }}
+                onClick={() => { setLocalAmount(String(quickAmount)); syncUnitFromSats(quickAmount); setFeesIncluded(false); setLocalError(null); }}
                 className={`flex-1 py-2 rounded-lg text-sm font-mono font-medium transition-all ${
                   isSelected
                     ? 'bg-spark-primary text-white'
@@ -240,7 +272,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
                 // fall through to the token branch so Send All switches
                 // denominations instead of inputting 0.
                 if (!isTokenMode && balanceSats !== undefined && balanceSats > 0) {
-                  setLocalAmount(String(balanceSats));
+                  setLocalAmount(String(balanceSats)); syncUnitFromSats(balanceSats);
                 } else if (hasTokenBalance && tokenBalanceDisplay) {
                   // Token send-all: switch to token mode + show token balance
                   if (!isTokenMode) setIsTokenMode(true);
@@ -252,7 +284,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
                   setLocalAmount(sendAllBtcInTokenDisplay);
                 } else if (balanceSats !== undefined) {
                   // Sats mode (with or without stable balance)
-                  setLocalAmount(String(balanceSats));
+                  setLocalAmount(String(balanceSats)); syncUnitFromSats(balanceSats);
                 }
                 setFeesIncluded(true);
                 setLocalError(null);
@@ -287,7 +319,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
       <PrimaryButton
         onClick={handleNext}
-        disabled={isLoading || !validAmount || !!inlineBalanceError}
+        disabled={isLoading || !validAmount || !!inlineBalanceError || unitUnavailable}
         className="w-full"
       >
         {isLoading ? (
