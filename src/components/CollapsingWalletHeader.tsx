@@ -252,7 +252,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
     if(bitcoinUnit==='INR'&&currentInrRate){
       const v=satsToAmount(Math.round(displayBalance),'INR',currentInrRate);
       const numeric=Number(v);
-      return Number.isFinite(numeric)?numeric.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}):v;
+      return Number.isFinite(numeric)?formatWithSpaces(numeric):v;
     }
     return formatWithSpaces(displayBalance);
   }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, currentInrRate]);

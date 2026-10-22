@@ -1,99 +1,58 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { BreezSdk } from '@breeztech/breez-sdk-spark';
 import { WalletProvider } from '@/contexts/WalletContext';
 import { FiatDataProvider } from '@/contexts/FiatDataContext';
 import { StableBalanceProvider } from '@/contexts/StableBalanceContext';
 import { createMockClient } from '@/test/mocks/mockWalletApi';
-import { saveFiatSettings, setDisplayFiatCurrency } from '@/services/settings';
+import { saveDenomination } from '../../getyoursats/denomination';
 import { waitForSheetOpen } from '@/test/utils/waitForSheetOpen';
 import AmountPanel from './AmountPanel';
-import {saveDenomination} from '../../getyoursats/denomination';
 
-// Mock rates put BTC at $100,000 and €92,000, so $1 = 1,000 sats.
 async function renderAmountPanel(client?: BreezSdk) {
   const setAmountSats = vi.fn();
   const mockClient = client ?? createMockClient();
-  render(
-    <WalletProvider client={mockClient} isConnected>
-      <FiatDataProvider>
-        <StableBalanceProvider>
-          <AmountPanel
-            isOpen
-            amountSats={null}
-            setAmountSats={setAmountSats}
-            setAmountDisplay={vi.fn()}
-            description=""
-            setDescription={vi.fn()}
-            isLoading={false}
-            error={null}
-            onCreateInvoice={vi.fn()}
-            onClose={vi.fn()}
-            resetCount={0}
-          />
-        </StableBalanceProvider>
-      </FiatDataProvider>
-    </WalletProvider>
-  );
+  render(<WalletProvider client={mockClient} isConnected>
+    <FiatDataProvider><StableBalanceProvider>
+      <AmountPanel isOpen amountSats={null} setAmountSats={setAmountSats}
+        setAmountDisplay={vi.fn()} description="" setDescription={vi.fn()}
+        isLoading={false} error={null} onCreateInvoice={vi.fn()}
+        onClose={vi.fn()} resetCount={0}/>
+    </StableBalanceProvider></FiatDataProvider>
+  </WalletProvider>);
   await waitForSheetOpen();
-  return { setAmountSats, client: mockClient };
+  return {setAmountSats, client:mockClient};
 }
-
-describe('AmountPanel fiat entry (no stable balance)', () => {
-  beforeEach(()=>{
-    saveDenomination('sats');
-    saveFiatSettings({selectedCurrencies:['USD']});
-    setDisplayFiatCurrency('USD');
+describe('GetYourSats receive amount denomination',()=>{
+  beforeEach(()=>saveDenomination('sats'));
+  afterEach(()=>saveDenomination('sats'));
+  it('starts in exact sats and sends integer sats to the invoice request',async()=>{
+    const {setAmountSats}=await renderAmountPanel();
+    fireEvent.change(screen.getByTestId('invoice-amount-input'),{target:{value:'5000'}});
+    await waitFor(()=>expect(setAmountSats).toHaveBeenCalledWith(5000n));
   });
-
-  afterEach(() => {
-    saveFiatSettings({ selectedCurrencies: ['USD'] });
-    setDisplayFiatCurrency('USD');
-    saveDenomination('sats');
+  it('converts BTC input to exact sats',async()=>{
+    const {setAmountSats}=await renderAmountPanel();
+    fireEvent.click(screen.getByRole('button',{name:'BTC'}));
+    fireEvent.change(screen.getByTestId('invoice-amount-input'),{target:{value:'0.00005'}});
+    await waitFor(()=>expect(setAmountSats).toHaveBeenCalledWith(5000n));
   });
-
-  it('converts typed dollars to sats', async () => {
-    const { setAmountSats } = await renderAmountPanel();
-
-    // The switcher appears once the USD rate loads.
-    fireEvent.click(await screen.findByRole('button', { name: '₿' }));
-    fireEvent.change(screen.getByTestId('invoice-amount-input'), { target: { value: '5' } });
-
-    await waitFor(() => expect(setAmountSats).toHaveBeenCalledWith(5000n));
+  it('converts INR at a real SDK-provided BTC/INR quote',async()=>{
+    const client=createMockClient({listFiatRates:vi.fn().mockResolvedValue({
+      rates:[{coin:'INR',value:5_000_000},{coin:'USD',value:100_000}]
+    })} as unknown as Partial<BreezSdk>);
+    const {setAmountSats}=await renderAmountPanel(client);
+    const inr=screen.getByRole('button',{name:'INR'});
+    await waitFor(()=>expect(inr).not.toBeDisabled());
+    fireEvent.click(inr);
+    fireEvent.change(screen.getByTestId('invoice-amount-input'),{target:{value:'50'}});
+    await waitFor(()=>expect(setAmountSats).toHaveBeenCalledWith(1000n));
   });
-
-  it('denominates in the currency the balance header is showing', async () => {
-    saveFiatSettings({ selectedCurrencies: ['USD', 'EUR'] });
-    // What the header writes when the user taps the balance to cycle to EUR.
-    setDisplayFiatCurrency('EUR');
-    const { setAmountSats } = await renderAmountPanel();
-
-    fireEvent.click(await screen.findByRole('button', { name: '₿' }));
-    fireEvent.change(screen.getByTestId('invoice-amount-input'), { target: { value: '5' } });
-
-    // €5 at €92,000/BTC = 5,435 sats.
-    await waitFor(() => expect(setAmountSats).toHaveBeenCalledWith(5435n));
-    expect(screen.getByRole('button', { name: '€' })).toBeInTheDocument();
-  });
-
-  it('falls back to the top of the list when that currency is deselected', async () => {
-    setDisplayFiatCurrency('EUR');
-    saveFiatSettings({ selectedCurrencies: ['USD'] });
-    const { setAmountSats } = await renderAmountPanel();
-
-    fireEvent.click(await screen.findByRole('button', { name: '₿' }));
-    fireEvent.change(screen.getByTestId('invoice-amount-input'), { target: { value: '5' } });
-
-    await waitFor(() => expect(setAmountSats).toHaveBeenCalledWith(5000n));
-  });
-
-  it('offers no fiat toggle while the rate has not loaded', async () => {
-    const client = createMockClient({
-      listFiatRates: vi.fn().mockResolvedValue({ rates: [] }),
-    } as unknown as Partial<BreezSdk>);
+  it('disables INR entry if the provider has no quote',async()=>{
+    const client=createMockClient({listFiatRates:vi.fn().mockResolvedValue({rates:[]})} as unknown as Partial<BreezSdk>);
     await renderAmountPanel(client);
-
-    await waitFor(() => expect(client.listFiatRates).toHaveBeenCalled());
-    expect(screen.queryByRole('button', { name: '₿' })).toBeNull();
+    await waitFor(()=>expect(client.listFiatRates).toHaveBeenCalled());
+    expect(screen.getByRole('button',{name:'INR'})).toBeDisabled();
+    expect(screen.getByRole('button',{name:'BTC'})).not.toBeDisabled();
   });
 });

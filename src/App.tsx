@@ -161,7 +161,11 @@ const AppContent: React.FC = () => {
       try {
         setSetupIssue(null);
         const mnemonic = bip39.generateMnemonic(128);
-        await sdk.connectWallet({ type: 'mnemonic', mnemonic }, false);
+        const seed = {type: 'mnemonic' as const, mnemonic};
+        // Fail closed: never open an anonymously funded wallet until its
+        // seed is successfully committed to the OS-backed device vault.
+        await deviceOnlyStorage.storeSeed(seed);
+        await sdk.connectWallet(seed, false);
         // No sensitive material in this reminder, only a recovery nudge.
         try{localStorage.setItem('gys:backup:pending','true')}catch{/* device-only marker */}
         setUserScreen('wallet');

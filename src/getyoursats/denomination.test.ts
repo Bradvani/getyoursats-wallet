@@ -14,6 +14,9 @@ describe('sats BTC INR unit input',()=>{
     expect(amountToSats('1.001','INR',5_000_000)).toBeNull();
     expect(amountToSats('999999999999999999','sats')).toBeNull();
   });
+  it('does not turn rounded INR into zero-value invoices',()=>{
+    expect(amountToSats('0.01','INR',20_000_000)).toBeNull();
+  });
   it('formats smaller BTC units',()=>expect(satsToAmount(1000,'BTC')).toBe('0.00001'));
   it('persists shared denomination preference',()=>{
     saveDenomination('INR');expect(getDenomination()).toBe('INR');saveDenomination('sats');
