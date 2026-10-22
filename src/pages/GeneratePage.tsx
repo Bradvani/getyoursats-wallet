@@ -65,7 +65,7 @@ const GeneratePage: React.FC<GeneratePageProps> = ({
     return (
       <PageLayout onBack={onBack} footer={<div />} title="Get Started" onClearError={onClearError}>
         <div className="flex items-center justify-center h-full">
-          <LoadingSpinner text="Setting up Glow..." />
+          <LoadingSpinner text="Setting up GetYourSats..." />
         </div>
       </PageLayout>
     );

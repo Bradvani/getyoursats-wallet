@@ -123,7 +123,7 @@ const LockScreen: React.FC<LockScreenProps> = ({
         // so cold start -> Face ID reads as one continuous frame, no logo
         // resize or jump.
         <div className="flex-1 flex items-center justify-center">
-          <img src="/assets/Glow_Logo.svg" alt="Glow" className="w-36 h-36 object-contain" />
+          <img src="/assets/getyoursats-mark.jpg" alt="GetYourSats" className="w-36 h-36 object-contain" />
         </div>
       )}
 
@@ -134,14 +134,14 @@ const LockScreen: React.FC<LockScreenProps> = ({
         zClassName="z-[100001]"
         title="Forgot your PIN?"
         message={isPasskey
-          ? "The PIN can't be recovered. The only way back in is to erase all Glow data on this device and sign in again with your passkey."
-          : "The PIN can't be recovered. The only way back in is to erase all Glow data on this device and restore from your recovery phrase. Make sure you have it saved."}
+          ? "The PIN can't be recovered. The only way back in is to erase all GetYourSats data on this device and sign in again with your passkey."
+          : "The PIN can't be recovered. The only way back in is to erase all GetYourSats data on this device and restore from your recovery phrase. Make sure you have it saved."}
         confirmLabel="Erase"
         // The dialog stays up until the device-owner prompt passes, so a
         // cancelled prompt reads as "nothing happened" rather than as a
         // silently dropped erase.
         onConfirm={() => {
-          void confirmDeviceOwner('Erase all Glow data').then((confirmed) => {
+          void confirmDeviceOwner('Erase all GetYourSats data').then((confirmed) => {
             if (!confirmed) return;
             setShowForgotConfirm(false);
             void onForgotPin();

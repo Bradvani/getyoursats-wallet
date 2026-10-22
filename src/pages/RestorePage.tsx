@@ -62,7 +62,7 @@ const RestorePage: React.FC<RestorePageProps> = ({
     <PageLayout footer={footer} onBack={onBack} title="Restore from Backup" onClearError={onClearError}>
        <div className="max-w-xl mx-auto w-full space-y-4">
         <p className="text-spark-text-secondary text-center mb-6">
-          Enter your 12 or 24-word recovery phrase to restore Glow. Words should be separated by spaces.
+          Enter your 12 or 24-word recovery phrase to restore GetYourSats. Words should be separated by spaces.
         </p>
 
         <div className="relative">

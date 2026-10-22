@@ -335,13 +335,13 @@ function showWebAssemblyBlocked(): void {
   // a clean launch under Lockdown Mode still leaves Glow off the list. Turning
   // Lockdown Mode off is the only route that actually works on native. Safari
   // does support per-site exceptions, so the web copy still points at those.
-  const heading = isIos ? 'Turn off Lockdown Mode to use Glow' : 'Lockdown Mode is stopping Glow';
+  const heading = isIos ? 'Turn off Lockdown Mode to use GetYourSats' : 'Lockdown Mode is stopping GetYourSats';
   // The steps read as a trail to follow, so anything the user has to spot in
   // iOS Settings is set in bold and worded exactly as the device labels it.
   const ui = (label: string) => `<strong class="font-semibold">${label}</strong>`;
   const intro = isIos
     ? ''
-    : 'Add an exception for Glow in your browser settings, or open Glow in another browser.';
+    : 'Add an exception for GetYourSats in your browser settings, or open GetYourSats in another browser.';
   const steps = isIos
     ? [
         `Open ${ui('Settings')}`,
@@ -356,7 +356,7 @@ function showWebAssemblyBlocked(): void {
       <div class="flex-1 flex items-center justify-center p-6">
         <div class="max-w-sm w-full space-y-8">
           <div class="flex flex-col items-center gap-4">
-            <img src="/assets/Glow_Logo.svg" alt="Glow" class="w-36 h-36 object-contain" />
+            <img src="/assets/getyoursats-mark.jpg" alt="GetYourSats" class="w-36 h-36 object-contain" />
             <h1 class="font-display text-2xl font-bold text-spark-text-primary text-center">${heading}</h1>
             ${intro ? `<p class="text-sm text-spark-text-secondary text-center">${intro}</p>` : ''}
           </div>
@@ -467,7 +467,7 @@ async function init() {
     document.getElementById('root')!.innerHTML = `
       <div style="color: #d4a574; padding: 20px; text-align: center; background: #0a0a0f; min-height: 100vh; display: flex; flex-direction: column; justify-content: center;">
         <h2>Failed to load application</h2>
-        <p>There was an error starting Glow. Please refresh and try again.</p>
+        <p>There was an error starting GetYourSats. Please refresh and try again.</p>
       </div>
     `;
   }

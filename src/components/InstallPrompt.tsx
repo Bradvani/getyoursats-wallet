@@ -95,7 +95,7 @@ const InstallPrompt: React.FC<InstallPromptProps> = ({ onClose }) => {
 
           <div className="flex-1 min-w-0">
             <h3 className="font-display font-semibold text-spark-text-primary text-sm">
-              Install Glow
+              Install GetYourSats
             </h3>
             <p className="text-xs text-spark-text-muted mt-1">
               Add to your home screen for quick access and a better experience.

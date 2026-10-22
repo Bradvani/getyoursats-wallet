@@ -321,7 +321,7 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
           // Rotate user.name so Apple Passwords doesn't dedupe a fresh
           // registration against a sibling; pin the sign-in to the active
           // cred so the OS can't substitute one that derives another wallet.
-          const userName = `Glow · ${createPasskeyTimestampLabel()}`;
+          const userName = `GetYourSats · ${createPasskeyTimestampLabel()}`;
           // Timed like register/signIn below: the label discovery inside
           // stalls on dead relays, and the timer isolates that from connect().
           // Ceremony-scoped clock. `detectStartMs` also covers the
@@ -374,11 +374,11 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
             setupMs: ceremonyStartMs ? ceremonyStartMs - detectStartMs : elapsedMs,
           });
           if (isAlreadyExists) {
-            // The active cred is gone but another Glow passkey is present, so
+            // The active cred is gone but another GetYourSats passkey is present, so
             // the register fall-through refused. Drop the stale pin: the
             // retry's unpinned sign-in then picks the present cred.
             localStorage.removeItem('passkeyActiveCredentialId');
-            setError('You already have a Glow passkey on this device. Try again to sign in.');
+            setError('You already have a GetYourSats passkey on this device. Try again to sign in.');
             setErrorKind('sign-in-failed');
             return;
           }
@@ -571,7 +571,7 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
               return;
             }
             setError(
-              'Your Glow passkey is no longer on this device. You can create a new one.',
+              'Your GetYourSats passkey is no longer on this device. You can create a new one.',
             );
             setErrorKind('sign-in-failed');
             setPhase('review');
@@ -583,7 +583,7 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
             // lure a duplicate. Stay on detecting with a retryable error.
             logger.warn(LogCategory.AUTH, 'Slow CREDENTIAL_NOT_FOUND on returning user, surfacing retryable error');
             setError(
-              'Could not find your Glow passkey on this device. Try again, or check Settings → Passwords.',
+              'Could not find your GetYourSats passkey on this device. Try again, or check Settings → Passwords.',
             );
             setErrorKind('sign-in-failed');
             return;
@@ -818,9 +818,9 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
           // bytes per call) and never host-supplied. Rotate user.name
           // per call so Apple Passwords doesn't dedupe siblings by
           // `(rpId, user.name)`.
-          const userName = `Glow · ${createPasskeyTimestampLabel()}`;
+          const userName = `GetYourSats · ${createPasskeyTimestampLabel()}`;
           // Exclude creds already on this device so the authenticator
-          // refuses a second Glow passkey (one per device per RP). A
+          // refuses a second GetYourSats passkey (one per device per RP). A
           // match raises PasskeyAlreadyExistsError, handled in the catch.
           const excludeCredentials = await getPasskey().credentials().get();
           // register() = WebAuthn create + PRF derive + kind:1 label
@@ -902,7 +902,7 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
             setIsNewUser(false);
             detectingFailCountRef.current = 0;
             setPhase('creating');
-            setError('You already have a Glow passkey on this device. Use it to sign in.');
+            setError('You already have a GetYourSats passkey on this device. Use it to sign in.');
             setErrorKind('already-exists');
             return;
           }
@@ -1168,9 +1168,9 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
       case 'auth-pick': return renderAuthPick();
       case 'connecting':
         if (error) return null;
-        return renderSpinner('Starting Glow...');
+        return renderSpinner('Starting GetYourSats...');
       case 'initializing':
-        return renderSpinner('Starting Glow...');
+        return renderSpinner('Starting GetYourSats...');
     }
   })();
 
