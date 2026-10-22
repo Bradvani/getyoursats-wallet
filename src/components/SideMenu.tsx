@@ -16,8 +16,8 @@ import GlowLogo from './GlowLogo';
 // App Store Review Guidelines 5.1.1(i) requires the privacy policy to be
 // reachable from inside the app, not just from the store listing, and 1.5
 // requires a way to reach the developer. Both pages ship from public/.
-const PRIVACY_POLICY_URL = 'https://glow-app.co/privacy.html';
-const SUPPORT_URL = 'https://glow-app.co/support.html';
+const PRIVACY_POLICY_URL = '/privacy.html';
+const SUPPORT_URL = '/support.html';
 
 // External-store measurement of the content-root's left offset, used
 // to anchor the drawer panel to the centered max-w-4xl column.
@@ -191,7 +191,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
             <div className="flex items-center justify-between mb-8 pt-6">
               <div className="flex items-center gap-2.5">
                 <GlowLogo sizePx={40} starsAnimating={starsAnimating} />
-                <h2 className="font-display text-xl font-bold text-spark-text-primary">Glow</h2>
+                <h2 className="font-display text-xl font-bold text-spark-text-primary">GetYourSats</h2>
               </div>
               <button
                 onClick={onClose}
@@ -298,8 +298,8 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                   </h3>
                   <p className={`text-spark-text-secondary text-sm text-center ${isPasskey ? 'mb-3' : 'mb-6'}`}>
                     {isPasskey
-                      ? "Logging out deletes all Glow data stored on this device. You'll need your passkey to access your funds again."
-                      : "Logging out deletes all Glow data stored on this device. Make sure you've saved your recovery phrase: you'll need it to access your funds again."}
+                      ? "Logging out deletes all GetYourSats data stored on this device. You'll need your passkey to access your funds again."
+                      : "Logging out deletes all GetYourSats data stored on this device. Make sure you've saved your recovery phrase: you'll need it to access your funds again."}
                   </p>
                   {isPasskey && (
                     <button

@@ -1,3 +1,4 @@
+import GetYourSatsPos from '../getyoursats/PosPage';
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { useToast } from '../contexts/ToastContext';
@@ -71,6 +72,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
   useStatusBarColor(STATUS_BAR_WALLET_GLASS);
 
   const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [gysPosOpen,setGysPosOpen] = useState(false);
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
@@ -424,6 +426,8 @@ const WalletPage: React.FC<WalletPageProps> = ({
       />
 
       {/* Side Menu */}
+      <button onClick={()=>setGysPosOpen(true)} aria-label="Open merchant POS" style={{position:'fixed',bottom:100,right:18,zIndex:40,background:'#ffcb2b',color:'#090909',fontWeight:800,padding:'13px 19px',borderRadius:16}}>POS</button>
+      {gysPosOpen&&<GetYourSatsPos onClose={()=>setGysPosOpen(false)}/>}
       <SideMenu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}

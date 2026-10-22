@@ -93,6 +93,9 @@ export function buildConnectConfig(overrideNetwork?: Network): Config {
     });
   }
 
+  // Only activate after Breez has verified the GetYourSats LNURL domain.
+  const brandedLnurlDomain = import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN;
+  if (brandedLnurlDomain) config.lnurlDomain = brandedLnurlDomain.trim();
   return config;
 }
 

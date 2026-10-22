@@ -1,0 +1,9 @@
+@theme{--color-spark-primary:#ffcb2b;--color-spark-dark:#070707;--color-spark-void:#050505;--color-spark-surface:#181818}
+.gys-pos{position:fixed;inset:0;z-index:900;background:#000c;display:grid;place-items:center;padding:14px;color:#f6f2ea}
+.gys-pos-card{max-width:480px;width:100%;background:#131313;border:1px solid #39332b;border-radius:24px;padding:24px}
+.gys-pos-card header{display:flex;justify-content:space-between;font-size:24px;margin-bottom:24px}
+.gys-pos-card section{display:grid;gap:18px}.gys-pos-card label{display:grid;gap:8px;font-size:14px;color:#b4b0a8}
+.gys-pos-card input{background:#242424;padding:14px;border-radius:12px;color:white;border:1px solid #333}
+.gys-primary{padding:16px;border-radius:14px;background:#ffcb2b;color:#060606;font-weight:800}
+.gys-pos button:disabled{opacity:.6}.gys-qr{padding:16px;background:white;border-radius:16px;margin:0 auto}
+.gys-invoice{text-align:center}.gys-error{color:#f88}
