@@ -72,14 +72,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
     if (typeof cfg.syncIntervalSecs === 'number') return String(cfg.syncIntervalSecs);
     return '';
   });
-  const [lnurlDomain, setLnurlDomain] = useState<string>(() => {
-    const s = getSettings();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK config type doesn't expose all fields
-    const cfg: any = config ?? {};
-    if (typeof s.lnurlDomain === 'string') return s.lnurlDomain;
-    if (typeof cfg.lnurlDomain === 'string') return cfg.lnurlDomain;
-    return '';
-  });
   const [preferSparkOverLightning, setPreferSparkOverLightning] = useState<boolean>(() => {
     const s = getSettings();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK config type doesn't expose all fields
@@ -135,7 +127,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
       ...(isDevMode
         ? {
             syncIntervalSecs: syncIntervalSecs !== '' ? Math.max(0, Math.floor(Number(syncIntervalSecs))) : undefined,
-            lnurlDomain: lnurlDomain !== '' ? lnurlDomain : undefined,
             preferSparkOverLightning,
           }
         : {}),
@@ -426,25 +417,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   value={syncIntervalSecs}
                   onChange={(e) => setSyncIntervalSecs(e.target.value)}
                   placeholder="e.g. 30"
-                />
-              </FormGroup>
-            </div>
-          )}
-
-          {/* LNURL */}
-          {isDevMode && (
-            <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-              <h3 className="font-display font-semibold text-spark-text-primary mb-3">LNURL</h3>
-              <FormGroup>
-                <label htmlFor="lnurl-domain" className="block text-sm text-spark-text-secondary mb-1">
-                  Custom domain
-                </label>
-                <FormInput
-                  id="lnurl-domain"
-                  type="text"
-                  value={lnurlDomain}
-                  onChange={(e) => setLnurlDomain(e.target.value)}
-                  placeholder="example.com"
                 />
               </FormGroup>
             </div>

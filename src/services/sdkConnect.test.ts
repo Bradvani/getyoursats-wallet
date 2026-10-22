@@ -23,6 +23,11 @@ describe('buildConnectConfig', () => {
     expect(() => buildConnectConfig('mainnet')).toThrow(/connectivity is not configured/);
   });
 
+  it('ignores stale locally configured custom LNURL domains', () => {
+    saveSettings({ lnurlDomain: 'unverified.getyoursats.test' });
+    expect(buildConnectConfig('mainnet').lnurlDomain).not.toBe('unverified.getyoursats.test');
+  });
+
   it('does not activate unverified GetYourSats LNURL domains', () => {
     vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN', 'getyoursats.example');
     expect(buildConnectConfig('mainnet').lnurlDomain).not.toBe('getyoursats.example');

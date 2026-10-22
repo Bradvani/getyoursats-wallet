@@ -87,9 +87,6 @@ export function buildConnectConfig(overrideNetwork?: Network): Config {
     if (s.syncIntervalSecs != null) {
       config.syncIntervalSecs = s.syncIntervalSecs;
     }
-    if (s.lnurlDomain != null) {
-      config.lnurlDomain = s.lnurlDomain;
-    }
     if (s.preferSparkOverLightning != null) {
       config.preferSparkOverLightning = s.preferSparkOverLightning;
     }
