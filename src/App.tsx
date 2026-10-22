@@ -162,6 +162,8 @@ const AppContent: React.FC = () => {
         setSetupIssue(null);
         const mnemonic = bip39.generateMnemonic(128);
         await sdk.connectWallet({ type: 'mnemonic', mnemonic }, false);
+        // No sensitive material in this reminder, only a recovery nudge.
+        try{localStorage.setItem('gys:backup:pending','true')}catch{/* device-only marker */}
         setUserScreen('wallet');
       } catch {
         setSetupIssue('Could not secure wallet keys on this device. Please retry or use manual recovery.');
@@ -405,6 +407,7 @@ const AppContent: React.FC = () => {
             setUserScreen('getRefund');
           }}
           onOpenSettings={() => setUserScreen('settings')}
+          onOpenBackup={() => setUserScreen('backup')}
           onOpenDca={() => setUserScreen('dca')}
           onOpenUnilateralExit={() => setUserScreen('unilateralExit')}
           onBuyBitcoin={sdk.handleBuyBitcoin}

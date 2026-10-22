@@ -56,3 +56,8 @@
 .gys-dca input,.gys-dca select{background:#222;border:1px solid #403c32;padding:14px 15px;border-radius:12px;color:#f7f1e5;font-size:16px;width:100%}
 .gys-dca input:focus-visible,.gys-dca select:focus-visible{outline:2px solid #ffca28;outline-offset:2px}
 .gys-dca__message{padding:12px;background:#242018;border:1px solid #705720;border-radius:12px;font-size:12px;color:#edd8a0;line-height:1.5}
+
+.gys-backup-nudge{display:grid;gap:8px;margin:0 14px 8px;background:#231d12;border:1px solid rgba(255,202,40,.28);border-radius:14px;padding:10px 14px;position:relative;z-index:3}
+.gys-backup-nudge strong{font-size:12px;color:#f8d890}.gys-backup-nudge p{font-size:11px;line-height:1.55;color:#c1b5a1;margin-top:4px}
+.gys-backup-nudge__actions{display:flex;gap:10px;align-items:center}.gys-backup-nudge__actions button{padding:8px 10px;border-radius:10px;font-size:11px;font-weight:800;color:#ffc937;background:#3c3017}
+.gys-backup-nudge__actions button+button{background:transparent;color:#a9a39a}

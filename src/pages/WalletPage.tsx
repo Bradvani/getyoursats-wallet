@@ -41,6 +41,7 @@ interface WalletPageProps {
   hasRejectedDeposits: boolean;
   onOpenGetRefund: (source?: 'menu' | 'icon') => void;
   onOpenSettings: () => void;
+  onOpenBackup: () => void;
   onOpenDca: () => void;
   onOpenUnilateralExit: () => void;
   onBuyBitcoin: (provider: BuyBitcoinProvider) => Promise<void>;
@@ -58,6 +59,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
   hasRejectedDeposits,
   onOpenGetRefund,
   onOpenSettings,
+  onOpenBackup,
   onOpenDca,
   onOpenUnilateralExit,
   onBuyBitcoin,
@@ -76,6 +78,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [gysPosOpen,setGysPosOpen] = useState(false);
+  const [needsBackupReminder]=useState(()=> {
+    try{return localStorage.getItem('gys:backup:pending')==='true'}catch{return false}
+  });
+  const [reminderDismissed,setReminderDismissed]=useState(false);
   const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
@@ -326,6 +332,16 @@ const WalletPage: React.FC<WalletPageProps> = ({
            primaryLightningAddress.isSupported?'Tap Receive to set up':'Not available on this network'}
         </span>}
       </div>
+      {needsBackupReminder&&!reminderDismissed&&
+        <section className="gys-backup-nudge" aria-label="Protect your wallet">
+          <div><strong>Protect your Bitcoin</strong>
+            <p>Your wallet is on this device. If you lose it without backup, your sats may be lost.</p>
+          </div>
+          <div className="gys-backup-nudge__actions">
+            <button type="button" onClick={onOpenBackup}>Back up privately</button>
+            <button type="button" onClick={()=>setReminderDismissed(true)}>Later</button>
+          </div>
+        </section>}
       {/* Scrollable transaction list */}
       <div
         ref={transactionsContainerRef}
