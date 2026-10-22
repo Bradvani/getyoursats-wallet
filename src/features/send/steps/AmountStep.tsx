@@ -46,7 +46,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const [denomination,setDenomination]=useState<Denomination>(getDenomination);
   const [unitRaw,setUnitRaw]=useState('');
   const inrPerBtc=fiatRates.find(r=>r.coin==='INR')?.value;
-  const currentRate=!!fetchedAt&&Date.now()-fetchedAt<120_000?inrPerBtc:undefined;
+  const currentRate=fetchedAt?inrPerBtc:undefined;
 
   const input = useAmountInput({ initialAmount: amount, balanceSats, tokenBalance, fiatOverride });
   const {
@@ -132,6 +132,10 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
   const handleNext = async () => {
     if (!validAmount) return;
+    if (!amountFirst && denomination==='INR' && (!fetchedAt || Date.now()-fetchedAt>120_000)) {
+      setLocalError('The INR/BTC rate has expired. Refresh the wallet before sending.');
+      return;
+    }
     setLocalError(null);
 
     // Dismiss the keyboard before advancing to confirm: the confirm

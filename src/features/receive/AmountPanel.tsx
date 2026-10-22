@@ -63,7 +63,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   const {fiatRates,fetchedAt}=useFiatData();
   const [denomination,setDenomination]=React.useState<Denomination>(getDenomination);
   const [unitRaw,setUnitRaw]=React.useState('');
-  const currentRate=!!fetchedAt&&Date.now()-fetchedAt<120_000?fiatRates.find(r=>r.coin==='INR')?.value:undefined;
+  const currentRate=fetchedAt?fiatRates.find(r=>r.coin==='INR')?.value:undefined;
   const {
     amountInput: displayAmount,
     setAmount,
@@ -90,6 +90,15 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
     saveDenomination(next);
     setUnitRaw(satNumber>0?satsToAmount(satNumber,next,currentRate):'');
     if(next==='sats')setAmountInput(satNumber>0?String(satNumber):'');
+  };
+  const [rateError,setRateError]=React.useState('');
+  const requestInvoice=()=>{
+    if(denomination==='INR' && (!fetchedAt || Date.now()-fetchedAt>120_000)){
+      setRateError('INR/BTC price has expired. Refresh the wallet and try again.');
+      return;
+    }
+    setRateError('');
+    onCreateInvoice();
   };
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -259,7 +268,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
                   // already generating.
                   await dismissKeyboard();
                   if (validAmount && !isLoading) {
-                    onCreateInvoice();
+                    requestInvoice();
                   }
                 }
               }}
@@ -270,7 +279,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
             />
           </div>
 
-          <FormError error={amountTooLarge ? 'Invalid amount' : error} data-testid="invoice-error-message" />
+          <FormError error={rateError || (amountTooLarge ? 'Invalid amount' : error)} data-testid="invoice-error-message" />
 
           {/* Generate Button */}
           <PrimaryButton
@@ -279,7 +288,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
               // roundtrip so the user sees the loading state and the
               // resulting invoice QR unobstructed.
               await dismissKeyboard();
-              onCreateInvoice();
+              requestInvoice();
             }}
             type="submit"
             disabled={isLoading || !validAmount || unitUnavailable}

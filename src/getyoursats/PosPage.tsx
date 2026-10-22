@@ -22,8 +22,8 @@ export default function PosPage({onClose}:{onClose:()=>void}){
   const [paid,setPaid]=useState(false);
 
   const inrRate=fiatRates.find(r=>r.coin==='INR')?.value;
-  const isRateFresh=!!fetchedAt && Date.now()-fetchedAt < 120_000;
-  const displayRate=isRateFresh ? inrRate : undefined;
+  const isRateAvailable=!!fetchedAt;
+  const displayRate=isRateAvailable ? inrRate : undefined;
   const approxSats=amountToSats(amount,unit,displayRate);
   const onUnit=(next:Denomination)=>{
     if(next==='INR'&&!displayRate)return;
