@@ -1,3 +1,5 @@
+import DenominationTabs from '../getyoursats/DenominationTabs';
+import {getDenomination,saveDenomination,satsToAmount,type Denomination} from '../getyoursats/denomination';
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import type { GetInfoResponse, FiatCurrency } from '@breeztech/breez-sdk-spark';
 import { safeAreaTop } from '../utils/safeAreaInsets';
@@ -44,6 +46,8 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
   // Persisted rather than a plain index: the receive amount input reads the
   // same value so it denominates in whatever the balance is showing.
   const [activeFiatId, setActiveFiatId] = useState<string>(getDisplayFiatCurrency);
+  const [bitcoinUnit,setBitcoinUnit]=useState<Denomination>(getDenomination);
+  const currentInrRate=fiatRates.find(r=>r.coin==='INR')?.value;
   // User-driven open. session is bumped on every tap so the dialog
   // remounts with fresh state via key-based remount (no reset effect).
   const [userToggle, setUserToggle] = useState<{
@@ -244,17 +248,23 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
       const sym = stableBalance.displayConfig.symbol;
       return full.startsWith(sym) ? full.slice(sym.length).trimStart() : full;
     }
+    if(bitcoinUnit==='BTC')return satsToAmount(Math.round(displayBalance),'BTC');
+    if(bitcoinUnit==='INR'&&currentInrRate){
+      const v=satsToAmount(Math.round(displayBalance),'INR',currentInrRate);
+      const numeric=Number(v);
+      return Number.isFinite(numeric)?numeric.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}):v;
+    }
     return formatWithSpaces(displayBalance);
-  }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance]);
+  }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, currentInrRate]);
 
   // Currency symbol to show before the balance (₿ for sats, $ etc. for stable)
   const currencySymbol = stableBalance.isActive && stableBalance.displayConfig?.symbol
     ? stableBalance.displayConfig.symbol
-    : '₿';
+    : bitcoinUnit==='INR'&&currentInrRate?'₹':'₿';
 
   if (!walletInfo) return null;
 
-  const balanceSuffix = stableBalance.isActive ? 'USD' : 'sats';
+  const balanceSuffix = stableBalance.isActive ? 'USD' : bitcoinUnit;
 
   // Hide the fiat secondary line while stable balance config is still loading
   const hasSecondaryLine = stableBalance.isActive ? !!stableSecondarySats : (!stableBalanceLoading && !!currentFiat);
@@ -436,6 +446,11 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
             }} />
           </div>
         </div>
+
+        {!stableBalance.isActive && <div className="flex justify-center my-2">
+          <DenominationTabs value={bitcoinUnit} inrAvailable={!!currentInrRate}
+            onChange={unit=>{setBitcoinUnit(unit);saveDenomination(unit)}}/>
+        </div>}
 
         {/* Bottom spacing */}
         <div className="h-4" />
