@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { BreezSdk } from '@breeztech/breez-sdk-spark';
 import { WalletProvider } from '@/contexts/WalletContext';
@@ -8,6 +8,7 @@ import { createMockClient } from '@/test/mocks/mockWalletApi';
 import { saveFiatSettings, setDisplayFiatCurrency } from '@/services/settings';
 import { waitForSheetOpen } from '@/test/utils/waitForSheetOpen';
 import AmountPanel from './AmountPanel';
+import {saveDenomination} from '../../getyoursats/denomination';
 
 // Mock rates put BTC at $100,000 and €92,000, so $1 = 1,000 sats.
 async function renderAmountPanel(client?: BreezSdk) {
@@ -39,9 +40,12 @@ async function renderAmountPanel(client?: BreezSdk) {
 }
 
 describe('AmountPanel fiat entry (no stable balance)', () => {
+  beforeEach(()=>saveDenomination('sats'));
+
   afterEach(() => {
     saveFiatSettings({ selectedCurrencies: ['USD'] });
     setDisplayFiatCurrency('USD');
+    saveDenomination('sats');
   });
 
   it('converts typed dollars to sats', async () => {
