@@ -1,3 +1,6 @@
+import {useFiatData} from '../../contexts/FiatDataContext';
+import DenominationTabs from '../../getyoursats/DenominationTabs';
+import {amountToSats,getDenomination,saveDenomination,satsToAmount,type Denomination} from '../../getyoursats/denomination';
 import React, { useRef, useEffect, useMemo } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import {
@@ -57,12 +60,17 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   // sats client-side (#356). Denominated in whatever currency the balance
   // header is showing, including one the user cycled to by tapping it.
   const input = useAmountInput({ fiatOverride: useFiatOverride(getDisplayFiatCurrency()) });
+  const {fiatRates,fetchedAt}=useFiatData();
+  const [denomination,setDenomination]=React.useState<Denomination>(getDenomination);
+  const [unitRaw,setUnitRaw]=React.useState('');
+  const currentRate=!!fetchedAt&&Date.now()-fetchedAt<120_000?fiatRates.find(r=>r.coin==='INR')?.value:undefined;
   const {
     amountInput: displayAmount,
     setAmount,
     setAmountInput,
     resetAmount,
     isTokenMode,
+    setIsTokenMode,
     toggleDenomination,
     tokenSymbol,
     config,
@@ -71,6 +79,18 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
     amountSats: parsedSats,
   } = input;
 
+  const customUnit=denomination!=='sats'&&!isTokenMode;
+  const unitUnavailable=denomination==='INR'&&!currentRate;
+  const shownAmount=customUnit?unitRaw:displayAmount;
+  const chooseUnit=(next:Denomination)=>{
+    if(next==='INR'&&!currentRate)return;
+    const satNumber=parsedSats===null?0:Number(parsedSats);
+    setIsTokenMode(false);
+    setDenomination(next);
+    saveDenomination(next);
+    setUnitRaw(satNumber>0?satsToAmount(satNumber,next,currentRate):'');
+    if(next==='sats')setAmountInput(satNumber>0?String(satNumber):'');
+  };
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Push the hook's parsed sats up to the parent. Centralizes the contract:
@@ -83,8 +103,9 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   // so the figure goes up alongside the sats. Null in sats mode: there the
   // sats are the figure.
   useEffect(() => {
-    setAmountDisplay(isTokenMode && config ? formatTokenInput(displayAmount, config) : null);
-  }, [isTokenMode, config, displayAmount, setAmountDisplay]);
+    setAmountDisplay(customUnit&&unitRaw?unitRaw+' '+denomination:
+      isTokenMode && config ? formatTokenInput(displayAmount,config):null);
+  }, [isTokenMode, config, displayAmount, setAmountDisplay,customUnit,unitRaw,denomination]);
 
   // Clear local state whenever the parent dialog calls
   // `useReceivePayment.reset()` or `closeAmountPanel()`, which bumps
@@ -96,13 +117,14 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   useEffect(() => {
     if (resetCount === 0) return;
     resetAmount();
+    setUnitRaw('');
   }, [resetCount, resetAmount]);
 
   // Also clear when the dialog closes via the `isOpen` prop, so the
   // input doesn't persist a stale value on the next open even if the
   // parent hasn't bumped `resetCount`.
   useEffect(() => {
-    if (!isOpen) resetAmount();
+    if (!isOpen) {resetAmount(); setUnitRaw('')}
   }, [isOpen, resetAmount]);
 
   const handleToggleDenomination = () => {
@@ -110,11 +132,16 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   };
 
   const handleAmountChange = (value: string) => {
-    setAmount(value);
+    if(customUnit){
+      setUnitRaw(value);
+      const converted=amountToSats(value,denomination,currentRate);
+      setAmount(converted?String(converted):'');
+    }else setAmount(value);
   };
 
   const handleQuickAmount = (quickAmount: number) => {
     setAmountInput(String(quickAmount));
+    if(customUnit)setUnitRaw(satsToAmount(quickAmount,denomination,currentRate));
   };
 
   // Receive has no balance to scale against, so both denominations offer the
@@ -134,13 +161,13 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   // (fiat or sats) and unsafe results from fiat→sats conversion.
   const amountTooLarge = useMemo(() => {
     if (displayAmount === '' || parsedSats !== null) return false;
-    const numeric = Number(displayAmount);
+    const numeric = Number(shownAmount);
     if (!Number.isFinite(numeric) || numeric <= 0) return false;
     const projectedSats = isTokenMode && btcFiatRate > 0
       ? (numeric / btcFiatRate) * 100_000_000
       : numeric;
     return projectedSats > Number.MAX_SAFE_INTEGER;
-  }, [displayAmount, parsedSats, isTokenMode, btcFiatRate]);
+  }, [displayAmount, shownAmount, parsedSats, isTokenMode, btcFiatRate]);
 
   return (
     <BottomSheetContainer isOpen={isOpen} onClose={onClose} showBackdrop>
@@ -159,9 +186,9 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
             </label>
             <div className="relative">
               <textarea
-                inputMode={isTokenMode ? 'decimal' : 'numeric'}
+                inputMode={customUnit?'decimal':isTokenMode?'decimal':'numeric'}
                 enterKeyHint="next"
-                value={displayAmount}
+                value={shownAmount}
                 onChange={(e) => handleAmountChange(e.target.value)}
                 onKeyDown={(e) => {
                   // Enter on the amount field advances to the
@@ -172,13 +199,13 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
                     descriptionInputRef.current?.focus();
                   }
                 }}
-                placeholder={isTokenMode ? '0.00' : '0'}
+                placeholder={customUnit?(denomination==='INR'?'₹ 20.00':'0.0001'):isTokenMode?'0.00':'0'}
                 disabled={isLoading}
                 rows={1}
                 className={`${AMOUNT_FIELD_CLASS} resize-none pr-16 font-mono`}
                 data-testid="invoice-amount-input"
               />
-              {tokenSymbol && (
+              {tokenSymbol && denomination==='sats' && (
                 <CurrencySwitcher
                   isTokenMode={isTokenMode}
                   tokenSymbol={tokenSymbol}
@@ -187,6 +214,9 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
                 />
               )}
             </div>
+            <DenominationTabs value={denomination} onChange={chooseUnit} disabled={isLoading} inrAvailable={!!currentRate}/>
+            {unitUnavailable&&<p role="status" className="text-xs text-spark-warning">Live INR/BTC price unavailable. Choose sats or BTC.</p>}
+            {customUnit&&parsedSats!==null&&<p className="text-xs text-spark-text-muted">≈ {String(parsedSats)} sats · Invoice settles in Bitcoin</p>}
           </div>
 
           {/* Quick amount buttons. Hidden while the native keyboard is
@@ -202,7 +232,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
                 disabled={isLoading}
                 className={`
                   flex-1 py-2 rounded-lg text-sm font-mono font-medium transition-all
-                  ${displayAmount === String(quickAmount)
+                  ${shownAmount === (customUnit?satsToAmount(quickAmount,denomination,currentRate):String(quickAmount))
                     ? 'bg-spark-primary text-black'
                     : 'bg-spark-elevated border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
                   }
@@ -252,7 +282,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
               onCreateInvoice();
             }}
             type="submit"
-            disabled={isLoading || !validAmount}
+            disabled={isLoading || !validAmount || unitUnavailable}
             className="w-full"
             data-testid="generate-invoice-button"
           >
