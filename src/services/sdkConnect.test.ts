@@ -13,6 +13,21 @@ describe('buildConnectConfig', () => {
     vi.unstubAllEnvs();
   });
 
+  it('rejects an unset API key before wallet connection', () => {
+    vi.stubEnv('VITE_BREEZ_API_KEY', '');
+    expect(() => buildConnectConfig('mainnet')).toThrow(/connectivity is not configured/);
+  });
+
+  it('rejects a tutorial placeholder API key', () => {
+    vi.stubEnv('VITE_BREEZ_API_KEY', 'your_breez_api_key_here');
+    expect(() => buildConnectConfig('mainnet')).toThrow(/connectivity is not configured/);
+  });
+
+  it('does not activate unverified GetYourSats LNURL domains', () => {
+    vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN', 'getyoursats.example');
+    expect(buildConnectConfig('mainnet').lnurlDomain).not.toBe('getyoursats.example');
+  });
+
   it('sets the stable balance token and cross-chain sends on mainnet', () => {
     const config = buildConnectConfig('mainnet');
     expect(config.stableBalanceConfig?.tokens).toEqual([{ label: USDB_TICKER, tokenIdentifier: USDB_TOKEN_IDENTIFIER }]);

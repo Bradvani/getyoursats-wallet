@@ -57,10 +57,16 @@ export function selectedNetwork(): Network {
 export function buildConnectConfig(overrideNetwork?: Network): Config {
   const network = overrideNetwork ?? selectedNetwork();
   const config: Config = defaultConfig(network);
-  config.apiKey = import.meta.env.VITE_BREEZ_API_KEY;
+  const configuredKey = import.meta.env.VITE_BREEZ_API_KEY?.trim();
+  config.apiKey = configuredKey;
 
-  if (!applyLocalCluster(config, network) && !config.apiKey) {
-    throw new Error('Breez API key not found. Create a .env file with VITE_BREEZ_API_KEY=your_key');
+  // Reject tutorial/example placeholders. This value is shipped to every
+  // browser in Vite bundles, so use only a provider-approved client SDK key.
+  const keyUnconfigured = !configuredKey ||
+    /^(your[_-]?|replace[_-]?|changeme|placeholder|test-key$)/i.test(configuredKey);
+
+  if (!applyLocalCluster(config, network) && keyUnconfigured) {
+    throw new Error('Breez wallet connectivity is not configured. Set a valid provider-approved VITE_BREEZ_API_KEY in the deployment settings.');
   }
 
   // The stable balance token and cross-chain sends are mainnet-only: the SDK
@@ -93,9 +99,10 @@ export function buildConnectConfig(overrideNetwork?: Network): Config {
     });
   }
 
-  // Only activate after Breez has verified the GetYourSats LNURL domain.
-  const brandedLnurlDomain = import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN;
-  if (brandedLnurlDomain) config.lnurlDomain = brandedLnurlDomain.trim();
+  // Identity-linked GetYourSats usernames cannot be claimed safely
+  // until the email verification and username entitlement backend exists.
+  // Keep the default Breez domain even if a premature Vercel env variable
+  // was set. Re-enable only after that integration is completed and tested.
   return config;
 }
 
