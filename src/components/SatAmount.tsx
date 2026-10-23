@@ -2,7 +2,7 @@ import React from 'react';
 import { formatWithSpaces } from '../utils/formatNumber';
 
 /**
- * A sat amount: the ₿ symbol followed by space-grouped thousands.
+ * A sat amount: space-grouped thousands with the correct satoshi unit.
  *
  * Owns the mono font together with the `word-spacing` that corrects it. Mono
  * gives a space a full character cell, and -0.4em is calibrated against that,
@@ -17,15 +17,15 @@ export const SatAmount: React.FC<{
   sats: number | bigint;
   className?: string;
   /**
-   * Marks an estimate with "~", in the ₿'s colour. It hangs outside the box,
+   * Marks an estimate with "~". It hangs outside the box,
    * so a centred amount stays centred on its digits.
    */
   approximate?: boolean;
 }> = ({ sats, className = '', approximate = false }) => (
   <span className={`inline-flex items-center font-mono [word-spacing:-0.4em] ${approximate ? 'relative' : ''} ${className}`}>
     {approximate && <span className="absolute right-full opacity-70">~</span>}
-    <span className="text-[0.8em] opacity-70 mr-px">₿</span>
     {formatWithSpaces(sats)}
+    <span className="text-[0.8em] opacity-70 ml-1">sats</span>
   </span>
 );
 
