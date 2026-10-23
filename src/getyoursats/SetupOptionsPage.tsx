@@ -15,7 +15,7 @@ export default function SetupOptionsPage({stableOrigin,onBack,onOfflineSetup}:Pr
         ?'This browser cannot create a recoverable passkey wallet on this device. You can still choose a handwritten, offline recovery backup.'
         :'This deployment link changes with each build. For a wallet that can be recovered later, use our permanent beta address instead.'}</p>
       <div className="gys-setup__actions">
-        {!stableOrigin && <a className="gys-setup__primary" href="https://beta.getyoursats.com">Open secure beta wallet ↗</a>}
+        {!stableOrigin && <a className="gys-setup__primary" href="https://beta.getyoursats.com">Open GetYourSats beta ↗</a>}
         <button type="button" className="gys-setup__secondary" onClick={onOfflineSetup}>
           Set up with offline recovery
         </button>

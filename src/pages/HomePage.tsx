@@ -30,7 +30,7 @@ export default function HomePage({
           <img src="/assets/getyoursats-mark.jpg" alt="" width={37} height={37}/>
           <span>GETYOURSATS</span>
         </div>
-        <span className="gys-welcome__header-tag">{isBeta ? 'PRIVATE BETA' : 'BITCOIN · LIGHTNING'}</span>
+        <span className="gys-welcome__header-tag">{isBeta ? 'BETA BUILD' : 'BITCOIN · LIGHTNING'}</span>
       </header>
 
       <div className="gys-welcome__stage">
