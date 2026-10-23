@@ -3,7 +3,7 @@ import * as bip39 from 'bip39';
 import {deviceOnlyStorage, SecureStorageError} from './services/secureStorage';
 import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
 import {Capacitor} from '@capacitor/core';
-import {chooseWalletOnboarding, approvedGetYourSatsOrigin} from './getyoursats/onboardingPolicy';
+import {chooseWalletOnboarding, approvedGetYourSatsOrigin, shouldDiscoverExistingPasskey} from './getyoursats/onboardingPolicy';
 import {prfAvailability} from './services/passkeyService';
 import SetupOptionsPage from './getyoursats/SetupOptionsPage';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
@@ -220,8 +220,10 @@ const AppContent: React.FC = () => {
       // the SDK still authenticates the credential before loading funds.
       let knownPasskey = false;
       try {
-        knownPasskey = localStorage.getItem('passkeyRegistered') === '1'
-          || localStorage.getItem('passkeyLabel') !== null;
+        knownPasskey = shouldDiscoverExistingPasskey(
+          localStorage.getItem('passkeyRegistered'),
+          localStorage.getItem('passkeyLabel'),
+        );
       } catch { /* Browser denies storage: use explicit new-wallet route. */ }
       setPasskeySkipDetection(!knownPasskey);
       setPasskeyFailed(false);
