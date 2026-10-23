@@ -1,6 +1,6 @@
 import DcaPage from './getyoursats/DcaPage';
 import * as bip39 from 'bip39';
-import {deviceOnlyStorage} from './services/secureStorage';
+import {deviceOnlyStorage, SecureStorageError} from './services/secureStorage';
 import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
 import {Capacitor} from '@capacitor/core';
 import {chooseWalletOnboarding} from './getyoursats/onboardingPolicy';
@@ -160,12 +160,36 @@ const AppContent: React.FC = () => {
     if (Capacitor.isNativePlatform() && deviceOnlyStorage.isSupported()) {
       try {
         setSetupIssue(null);
+        // Never call hasStoredSeed() here: the native implementation returns
+        // false on vault read errors, which is NOT proof that a wallet is absent.
+        // retrieveSeed() distinguishes a truly empty vault from failure.
+        let existingSeed: Awaited<ReturnType<typeof deviceOnlyStorage.retrieveSeed>> | undefined;
+        try {
+          existingSeed = await deviceOnlyStorage.retrieveSeed();
+        } catch (err) {
+          if (!(err instanceof SecureStorageError && err.code === 'NO_STORED_SEED')) {
+            throw err; // KEY_INVALIDATED, vault corruption, locked storage: fail closed.
+          }
+        }
+        if (existingSeed) {
+          // Reopen the *same wallet*; never replace keys on a failed reconnect.
+          await sdk.connectWallet(existingSeed, false, undefined, 'secureStorage');
+          setUserScreen('wallet');
+          return;
+        }
+
         const mnemonic = bip39.generateMnemonic(128);
         const seed = {type: 'mnemonic' as const, mnemonic};
-        // Fail closed: never open an anonymously funded wallet until its
-        // seed is successfully committed to the OS-backed device vault.
         await deviceOnlyStorage.storeSeed(seed);
-        await sdk.connectWallet(seed, false);
+        // Read-back validation: an accepted write is not enough if the stored
+        // entry is unreadable. Do not connect or display a receive address.
+        const recovered = await deviceOnlyStorage.retrieveSeed();
+        if (recovered.type !== 'mnemonic' || recovered.mnemonic !== mnemonic) {
+          throw new Error('Device vault recovery validation failed');
+        }
+        // Vault already contains the new seed. Avoid the SDK hook's second
+        // storeSeed() call, which could overwrite a recoverable wallet.
+        await sdk.connectWallet(seed, false, undefined, 'secureStorage');
         // No sensitive material in this reminder, only a recovery nudge.
         try{localStorage.setItem('gys:backup:pending','true')}catch{/* device-only marker */}
         setUserScreen('wallet');
