@@ -1,24 +1,18 @@
-import {useId, useState} from 'react';
+import {useId} from 'react';
 import {ChevronRightIcon} from '../components/Icons';
 
 type Props = {
   onRestoreWallet: () => void;
   onCreateNewWallet: () => void;
-  onCreateManualWallet: () => void;
-  onUsePasskey: () => void;
-  onCreatePasskey: () => void;
-  prfAvailable: boolean;
   setupIssue?: string | null;
 };
 
 export default function HomePage({
   onCreateNewWallet,
-  onCreateManualWallet,
   onRestoreWallet,
   setupIssue,
 }: Props) {
   const errorId = useId();
-  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   return (
     <main className="gys-welcome">
@@ -47,21 +41,9 @@ export default function HomePage({
               aria-label="Restore existing wallet">
               Already have a wallet? <strong>Restore it <span aria-hidden="true">↗</span></strong>
             </button>
-            <div className="gys-welcome__secondary">
-              <button type="button" aria-expanded={advancedOpen}
-                aria-label="More recovery options" aria-controls="gys-welcome-advanced"
-                onClick={() => setAdvancedOpen(!advancedOpen)}>
-                More recovery options
-                <span className={advancedOpen ? 'gys-welcome__chevron gys-welcome__chevron--up' : 'gys-welcome__chevron'} aria-hidden="true">⌄</span>
-              </button>
-              {advancedOpen && (
-                <div id="gys-welcome-advanced">
-                  <button type="button" className="gys-welcome__manual" onClick={onCreateManualWallet}>
-                    Set up with an offline recovery phrase
-                  </button>
-                </div>
-              )}
-            </div>
+            <p className="gys-welcome__passkey-note">
+              <span aria-hidden="true">✦</span> Start with a device passkey. Fingerprint, face unlock or screen lock may be offered by your device. You can review an optional handwritten backup later in Settings.
+            </p>
             {setupIssue && (
               <div id={errorId} role="alert" className="gys-welcome__error">{setupIssue}</div>
             )}
