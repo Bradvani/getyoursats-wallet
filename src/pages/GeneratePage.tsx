@@ -1,4 +1,5 @@
 import {useState,useEffect} from 'react';
+import {createRecoveryChallenge, type RecoveryChallenge} from '../getyoursats/recoveryChallenge';
 import * as bip39 from 'bip39';
 import {PrimaryButton} from '../components/ui';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -23,7 +24,7 @@ export default function GeneratePage({
  const [isLoading,setIsLoading]=useState(true);
  const [generationError,setGenerationError]=useState('');
  const [stage,setStage]=useState<Stage>('show');
- const [challenge,setChallenge]=useState<[number,number]>([1,8]);
+ const [challenge,setChallenge]=useState<RecoveryChallenge|null>(null);
  const [answers,setAnswers]=useState<[string,string]>(['','']);
  const [validationError,setValidationError]=useState('');
  useScreenCaptureProtection(true);
@@ -31,11 +32,6 @@ export default function GeneratePage({
    try{
      // BIP39 uses a cryptographically secure random source, not Math.random.
      const phrase=bip39.generateMnemonic(128);
-     const entropy=new Uint32Array(2);
-     crypto.getRandomValues(entropy);
-     const first=entropy[0]%12;
-     const second=(first+1+(entropy[1]%11))%12;
-     setChallenge([first,second]);
      setMnemonic(phrase);
    }catch(error){
      logger.error(LogCategory.AUTH,'Failed to generate recovery phrase',{error:error instanceof Error?error.message:String(error)});
@@ -43,7 +39,16 @@ export default function GeneratePage({
    }finally{setIsLoading(false)}
  },[]);
  const words=mnemonic.split(' ');
+ const advanceToVerification=()=>{
+   // Returning to the phrase and continuing must ask for two *new* positions.
+   // Do not regenerate wallet keys or carry over typed answers.
+   setChallenge(previous=>createRecoveryChallenge(words.length,previous??undefined));
+   setAnswers(['','']);
+   setValidationError('');
+   setStage('verify');
+ };
  const verify=()=>{
+   if(!challenge)return;
    const a=answers[0].trim().toLowerCase(),b=answers[1].trim().toLowerCase();
    if(a!==words[challenge[0]]||b!==words[challenge[1]]){
      setValidationError('Those words do not match. Check your offline backup and try again.');
@@ -59,7 +64,7 @@ export default function GeneratePage({
    <AlertCard variant="error" title="Setup unavailable">{generationError}</AlertCard>
  </PageLayout>;
  const footer=<div className="max-w-xl mx-auto">
-  {stage==='show'?<PrimaryButton className="w-full" onClick={()=>setStage('verify')}>I've written the words down</PrimaryButton>:
+  {stage==='show'?<PrimaryButton className="w-full" onClick={advanceToVerification}>I've written the words down</PrimaryButton>:
    <PrimaryButton className="w-full" onClick={verify} disabled={!answers[0].trim()||!answers[1].trim()}>Verify offline backup</PrimaryButton>}
  </div>;
  return <PageLayout onBack={stage==='verify'?()=>{setStage('show');setAnswers(['','']);setValidationError('')}:onBack}
@@ -79,7 +84,7 @@ export default function GeneratePage({
     <WebSecurityNotice recommendPasskey={recommendPasskey}/>
   </>:<>
     <p className="text-spark-text-secondary text-center">Confirm two words from your handwritten backup. The recovery phrase is hidden during this check.</p>
-    {challenge.map((index,i)=><label key={index} className="block space-y-2">
+    {challenge?.map((index,i)=><label key={index} className="block space-y-2">
       <span className="text-sm font-medium text-spark-text-secondary">Word {index+1}</span>
       <input type="text" autoComplete="off" autoCapitalize="none" spellCheck={false}
        className="w-full bg-spark-surface border border-spark-border rounded-xl p-3 text-spark-text-primary"
