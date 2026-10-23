@@ -1,3 +1,4 @@
+import {configuredBrandedLightningDomain} from '../getyoursats/lightningDomain';
 import {isConfiguredSdkKey} from '../getyoursats/walletReadiness';
 import {
   Config,
@@ -96,10 +97,13 @@ export function buildConnectConfig(overrideNetwork?: Network): Config {
     });
   }
 
-  // Identity-linked GetYourSats usernames cannot be claimed safely
-  // until the email verification and username entitlement backend exists.
-  // Keep the default Breez domain even if a premature Vercel env variable
-  // was set. Re-enable only after that integration is completed and tested.
+  // Custom LNURL must be provider-verified and reachable before the
+  // operator enables the deployment gate. No fallback rewrite of existing
+  // wallet addresses: the SDK is authoritative for received identities.
+  const brandedDomain = configuredBrandedLightningDomain();
+  if (network === 'mainnet' && brandedDomain) {
+    config.lnurlDomain = brandedDomain;
+  }
   return config;
 }
 

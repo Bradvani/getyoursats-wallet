@@ -3,7 +3,7 @@ import * as bip39 from 'bip39';
 import {deviceOnlyStorage, SecureStorageError} from './services/secureStorage';
 import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
 import {Capacitor} from '@capacitor/core';
-import {chooseWalletOnboarding, approvedGetYourSatsOrigin} from './getyoursats/onboardingPolicy';
+import {chooseWalletOnboarding, approvedGetYourSatsOrigin, shouldDiscoverExistingPasskey} from './getyoursats/onboardingPolicy';
 import {prfAvailability} from './services/passkeyService';
 import SetupOptionsPage from './getyoursats/SetupOptionsPage';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
@@ -212,7 +212,20 @@ const AppContent: React.FC = () => {
       nativeAssociationVerified: import.meta.env.VITE_GETYOURSATS_NATIVE_PASSKEY_READY === 'true',
     });
     if (next === 'passkey') {
-      setPasskeySkipDetection(false);
+      // The welcome Start action is for NEW wallets by default. The old
+      // speculative sign-in called on every first tap surfaces a remote-device
+      // QR on mobile even when this browser has no registered credential.
+      // Only invoke sign-in discovery if local metadata indicates an
+      // established passkey. This is a hint, NOT proof of wallet ownership;
+      // the SDK still authenticates the credential before loading funds.
+      let knownPasskey = false;
+      try {
+        knownPasskey = shouldDiscoverExistingPasskey(
+          localStorage.getItem('passkeyRegistered'),
+          localStorage.getItem('passkeyLabel'),
+        );
+      } catch { /* Browser denies storage: use explicit new-wallet route. */ }
+      setPasskeySkipDetection(!knownPasskey);
       setPasskeyFailed(false);
       setUserScreen('passkey');
       return;
@@ -238,6 +251,14 @@ const AppContent: React.FC = () => {
   const handlePasskeyConnect = async (seed: Seed, label: string, isNewWallet: boolean) => {
     try {
       await sdk.connectWallet(seed, !isNewWallet, label);
+      if (isNewWallet) {
+        // Only post-success, never cache seed words here. A paper backup is
+        // optional once the passkey has actually derived and connected.
+        try {
+          localStorage.setItem('gys:backup:pending', 'true');
+          localStorage.setItem('gys:backup:method', 'passkey');
+        } catch { /* reminder metadata is non-sensitive and optional */ }
+      }
       setPasskeySdkConnected(true);
     } catch {
       // Stay on passkey screen — sdk.error will be set by useBreezSdk
@@ -417,10 +438,6 @@ const AppContent: React.FC = () => {
           <HomePage
             onRestoreWallet={handleGetYourSatsRestore}
             onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
-            onCreateManualWallet={handleGetYourSatsManual}
-            onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
-            onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
-            prfAvailable={sdk.prfAvailable}
             setupIssue={setupIssue}
           />
         );
@@ -497,10 +514,6 @@ const AppContent: React.FC = () => {
           <HomePage
             onRestoreWallet={handleGetYourSatsRestore}
             onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
-            onCreateManualWallet={handleGetYourSatsManual}
-            onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
-            onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
-            prfAvailable={sdk.prfAvailable}
             setupIssue={setupIssue}
           />
         );
@@ -695,6 +708,11 @@ const AppContent: React.FC = () => {
         return (
           <RestorePage
             onConnect={(mnemonic) => handleConnect(mnemonic, true)}
+            onUsePasskey={() => {
+              setPasskeySkipDetection(false);
+              setPasskeyFailed(false);
+              setUserScreen('passkey');
+            }}
             onBack={() => setUserScreen('home')}
             onClearError={sdk.clearError}
             isLoading={sdk.isLoading}

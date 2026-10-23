@@ -1,3 +1,4 @@
+import {configuredBrandedLightningDomain} from '../../../getyoursats/lightningDomain';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LightningAddressInfo, BreezSdk } from '@breeztech/breez-sdk-spark';
 import { useWallet } from '../../../contexts/WalletContext';
@@ -48,7 +49,7 @@ async function ensureLightningAddress(sdk:BreezSdk):Promise<LightningAddressInfo
     for(let i=0;i<3;i++){
       const username=base+(i===0?'':String(Math.floor(1000+Math.random()*9000)));
       if(!(await sdk.checkLightningAddressAvailable({username})))continue;
-      await sdk.registerLightningAddress({username,description:`Pay to ${username}@breez.tips`});
+      await sdk.registerLightningAddress({username,description:'Receive Bitcoin with GetYourSats'});
       result=await sdk.getLightningAddress();
       if(result)return result;
     }
@@ -174,6 +175,13 @@ export const useLightningAddress = (): UseLightningAddress => {
   }, []);
 
   const save = useCallback(async () => {
+    // A branded GetYourSats username is an account entitlement, not a
+    // self-service SDK-only claim. Do not permit squatting on reserved or
+    // email-derived aliases before verified-email backend checks exist.
+    if (configuredBrandedLightningDomain()) {
+      setError('Personalised GetYourSats addresses require verified email. This feature is not available yet.');
+      return;
+    }
     if (!isSupported) {
       markUnsupported();
       return;
@@ -195,7 +203,7 @@ export const useLightningAddress = (): UseLightningAddress => {
         return;
       }
 
-      await wallet.registerLightningAddress({ username, description: `Pay to ${username}@breez.tips` });
+      await wallet.registerLightningAddress({ username, description: 'Receive Bitcoin with GetYourSats' });
       const actualInfo = await wallet.getLightningAddress();
       setAddress(actualInfo ?? null);
       setIsEditing(false);

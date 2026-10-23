@@ -34,3 +34,15 @@ export function chooseWalletOnboarding({
 export function approvedGetYourSatsOrigin(origin: string): string | undefined {
   return origin === 'https://wallet.getyoursats.com' ? origin : undefined;
 }
+
+
+/**
+ * Start goes straight to create only on an unrecognised browser profile,
+ * avoiding speculative remote-device passkey sign-in and its QR picker.
+ * A local registered/label hint means we must try the existing credential
+ * first. These hints do not prove who owns a wallet; the SDK's WebAuthn
+ * ceremony remains the sole identity proof.
+ */
+export function shouldDiscoverExistingPasskey(registered: string | null, label: string | null): boolean {
+  return registered === '1' || label !== null;
+}

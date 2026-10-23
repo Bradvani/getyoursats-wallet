@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { WarningIcon, PasskeyIcon } from '../components/Icons';
+import { WarningIcon, PasskeyIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import { WebSecurityNotice } from '../components/WebSecurityNotice';
 import SlideInPage from '../components/layout/SlideInPage';
 import { PinGate } from '../components/PinEntry';
@@ -22,6 +22,9 @@ interface BackupPageProps {
 const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' }) => {
   const [mnemonic, setMnemonic] = useState<string | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [privateViewing, setPrivateViewing] = useState(false);
+  const [paperReady, setPaperReady] = useState(false);
+  const canReveal = privateViewing && paperReady;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -206,6 +209,8 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
 
   const handleHide = () => {
     setIsRevealed(false);
+    setPrivateViewing(false);
+    setPaperReady(false);
     if (isPasskey && !seedFromVault) {
       setMnemonic(null);
       setPasskeyAttemptFailed(false);
@@ -253,17 +258,37 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
 
           {!isPasskey && mnemonic && <WebSecurityNotice />}
 
+          {!isRevealed && <section aria-label="Private recovery phrase viewing checklist"
+            className="rounded-2xl border border-spark-border bg-spark-dark p-5 space-y-3">
+            <h3 className="font-semibold text-spark-text-primary">Before you view recovery words</h3>
+            <p className="text-sm text-spark-text-secondary">
+              The phrase is hidden by default. A handwritten backup is optional for passkey wallets but can help with device loss.
+              Never photograph it or send it to anyone.
+            </p>
+            <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
+              <input type="checkbox" checked={privateViewing} onChange={e=>setPrivateViewing(e.target.checked)}
+                className="mt-1 accent-spark-primary"/>
+              <span>I am in a private space away from cameras or people who could read my screen.</span>
+            </label>
+            <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
+              <input type="checkbox" checked={paperReady} onChange={e=>setPaperReady(e.target.checked)}
+                className="mt-1 accent-spark-primary"/>
+              <span>I will store a written copy securely and offline, never in a screenshot or message.</span>
+            </label>
+            {!canReveal && <p className="text-xs text-spark-text-muted">Complete both checks to enable viewing.</p>}
+          </section>}
+
           {/* Reveal button (passkey mode, happy path). After a failed
               passkey attempt, the fallback card below replaces this
               one and folds the error + Face ID retry into one tile. */}
           {isPasskey && !isRevealed && !mnemonic && !passkeyAttemptFailed && (
             <button
               onClick={handleRevealPasskey}
-              disabled={isLoading}
+              disabled={isLoading || !canReveal}
               className="w-full bg-spark-dark border border-spark-border rounded-2xl p-8 flex flex-col items-center gap-4 hover:border-spark-border-light transition-colors disabled:opacity-50"
             >
               <span className="font-display font-semibold text-spark-text-primary">
-                {isLoading ? 'Authenticating...' : 'Tap to reveal phrase'}
+                <span className="inline-flex items-center gap-2"><EyeIcon size="sm"/> {isLoading ? 'Authenticating...' : 'Reveal words privately'}</span>
               </span>
               <span className="text-sm text-spark-text-muted">
                 {isLoading ? 'Complete passkey authentication' : 'Requires passkey authentication'}
@@ -281,11 +306,11 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
               onClick={mnemonic
                 ? () => setIsRevealed(true)
                 : () => { void revealFromVault('biometric'); }}
-              disabled={isLoading}
+              disabled={isLoading || !canReveal}
               className="w-full bg-spark-dark border border-spark-border rounded-2xl p-8 flex flex-col items-center gap-4 hover:border-spark-border-light transition-colors disabled:opacity-50"
             >
               <span className="font-display font-semibold text-spark-text-primary">
-                {isLoading ? 'Authenticating...' : 'Tap to reveal phrase'}
+                <span className="inline-flex items-center gap-2"><EyeIcon size="sm"/> {isLoading ? 'Authenticating...' : 'Reveal words privately'}</span>
               </span>
               <span className="text-sm text-spark-text-muted">
                 {mnemonic
@@ -316,12 +341,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
           {isPasskey && passkeyAttemptFailed && !isRevealed && !mnemonic
             && (fallbackTier === 'biometric' || fallbackTier === 'device') && (
             <button
-              onClick={() => { void revealFromVault(fallbackTier); }}
-              disabled={isLoading}
+              onClick={() => { if (canReveal) void revealFromVault(fallbackTier); }}
+              disabled={isLoading || !canReveal}
               className="w-full bg-spark-dark border border-spark-border rounded-2xl p-8 flex flex-col items-center gap-4 hover:border-spark-border-light transition-colors disabled:opacity-50"
             >
               <span className="font-display font-semibold text-spark-text-primary">
-                {isLoading ? 'Authenticating...' : 'Tap to reveal phrase'}
+                <span className="inline-flex items-center gap-2"><EyeIcon size="sm"/> {isLoading ? 'Authenticating...' : 'Reveal words privately'}</span>
               </span>
               <span className="text-sm text-spark-text-muted">
                 {fallbackTier === 'device'
@@ -358,9 +383,10 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleHide}
+                    aria-label="Hide recovery words"
                     className="px-3 py-1.5 text-sm font-medium text-spark-text-muted hover:text-spark-text-primary border border-spark-border rounded-lg hover:bg-white/5 transition-colors"
                   >
-                    Hide
+                    <span className="inline-flex items-center gap-2"><EyeOffIcon size="sm"/> Hide words</span>
                   </button>
 
                 </div>

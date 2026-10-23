@@ -111,7 +111,7 @@ describe('PendingExitStep', () => {
     step({ coins: [coin(3_000, false)] });
     // 68 vB at 2 sat/vB for the second coin.
     expect(screen.getAllByText(/3 034/).length).toBeGreaterThan(0);
-    expect(screen.getByTestId('unilateral-exit-pending-status')).toHaveTextContent('3 000 received');
+    expect(screen.getByTestId('unilateral-exit-pending-status')).toHaveTextContent('3 000 sats received');
   });
 
   it('stops asking once a payment covers the fee, before it confirms, so nobody pays twice', () => {

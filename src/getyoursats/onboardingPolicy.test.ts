@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {chooseWalletOnboarding, approvedGetYourSatsOrigin} from './onboardingPolicy';
+import {chooseWalletOnboarding, approvedGetYourSatsOrigin, shouldDiscoverExistingPasskey} from './onboardingPolicy';
 const cfg={
   prfAvailable:true,origin:'https://wallet.getyoursats.com',
   approvedWebOrigin:'https://wallet.getyoursats.com',isNative:false,nativeAssociationVerified:false,
@@ -36,5 +36,16 @@ describe('known wallet origin activation',()=>{
    expect(approvedGetYourSatsOrigin('https://getyoursats-wallet-any.vercel.app')).toBeUndefined();
    expect(approvedGetYourSatsOrigin('https://getyoursats.com')).toBeUndefined();
    expect(approvedGetYourSatsOrigin('http://wallet.getyoursats.com')).toBeUndefined();
+ });
+});
+
+describe('Start passkey ceremony selection',()=>{
+ it('avoids cross-device passkey discovery on a fresh mobile browser',()=>{
+  expect(shouldDiscoverExistingPasskey(null,null)).toBe(false);
+  expect(shouldDiscoverExistingPasskey('0',null)).toBe(false);
+ });
+ it('reuses an established passkey instead of silently creating new wallet keys',()=>{
+  expect(shouldDiscoverExistingPasskey('1',null)).toBe(true);
+  expect(shouldDiscoverExistingPasskey(null,'Default')).toBe(true);
  });
 });
