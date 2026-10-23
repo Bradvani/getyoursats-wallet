@@ -238,6 +238,14 @@ const AppContent: React.FC = () => {
   const handlePasskeyConnect = async (seed: Seed, label: string, isNewWallet: boolean) => {
     try {
       await sdk.connectWallet(seed, !isNewWallet, label);
+      if (isNewWallet) {
+        // Only post-success, never cache seed words here. A paper backup is
+        // optional once the passkey has actually derived and connected.
+        try {
+          localStorage.setItem('gys:backup:pending', 'true');
+          localStorage.setItem('gys:backup:method', 'passkey');
+        } catch { /* reminder metadata is non-sensitive and optional */ }
+      }
       setPasskeySdkConnected(true);
     } catch {
       // Stay on passkey screen — sdk.error will be set by useBreezSdk
