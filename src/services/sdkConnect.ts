@@ -1,3 +1,4 @@
+import {configuredBrandedLightningDomain} from '../getyoursats/lightningDomain';
 import {isConfiguredSdkKey} from '../getyoursats/walletReadiness';
 import {
   Config,
@@ -96,18 +97,12 @@ export function buildConnectConfig(overrideNetwork?: Network): Config {
     });
   }
 
-  // Breez-hosted branded Lightning addresses require BOTH a CNAME for
-  // pay.getyoursats.com -> breez.tips and Breez's API-key-bound approval.
-  // Neither the existence of a Vercel domain nor a UI preference is proof.
-  // Explicit two-part deployment gating prevents preview/misconfigured hosts
-  // from silently registering unrecoverable addresses on an unapproved domain.
-  //
-  // This config controls the address domain only; personalised usernames
-  // still require a separate verified-email entitlement backend.
-  const requestedLnurlDomain = import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN?.trim().toLowerCase();
-  const domainApproved = import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED === 'true';
-  if (network === 'mainnet' && domainApproved && requestedLnurlDomain === 'pay.getyoursats.com') {
-    config.lnurlDomain = 'pay.getyoursats.com';
+  // Custom LNURL must be provider-verified and reachable before the
+  // operator enables the deployment gate. No fallback rewrite of existing
+  // wallet addresses: the SDK is authoritative for received identities.
+  const brandedDomain = configuredBrandedLightningDomain();
+  if (network === 'mainnet' && brandedDomain) {
+    config.lnurlDomain = brandedDomain;
   }
   return config;
 }
