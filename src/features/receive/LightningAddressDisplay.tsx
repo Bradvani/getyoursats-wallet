@@ -1,3 +1,4 @@
+import {configuredBrandedLightningDomain} from '../../getyoursats/lightningDomain';
 import React, { type ReactNode } from 'react';
 import type { LightningAddressInfo } from '@breeztech/breez-sdk-spark';
 import { AlertCard } from '../../components/AlertCard';
@@ -40,9 +41,7 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
   qrCardClassName,
 }) => {
   const { showToast } = useToast();
-  const brandedDomainActive =
-    import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED === 'true'
-    && import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN === 'pay.getyoursats.com';
+  const brandedDomainActive = Boolean(configuredBrandedLightningDomain());
   const amountLink = (className: string) => (
     <TextButton
       onClick={onCustomizeAmount}
