@@ -6,6 +6,20 @@ Customers should eventually receive **`username@getyoursats.com`**, not merely `
 
 **Current production** uses the default Breez-hosted `@breez.tips` addresses. A successful existing Lightning payment confirms the current route works for that transaction. No custom hostname is deployed as of this document.
 
+## Alternative: self-host LNURL on the root domain (no Breez domain registration)
+
+The official Breez Spark SDK custom-domain guide also supports **self-hosting the LNURL service**, with no Breez domain registration required. This is distinct from hosting a Lightning node: the LNURL service manages Lightning-address lookup and invoice callbacks, while the current Spark wallet still connects to its configured Spark operator/SSP network for payments.
+
+To use this option, operate the documented Breez-compatible LNURL server (or another audited implementation), configure `getyoursats.com` as an allowed hostname, expose `/.well-known/lnurlp/*` and SDK registration/callback routes from the root site, and set the SDK `lnurlDomain` to `getyoursats.com` only after real callback and settled-payment validation. Secure account-to-wallet binding, rate limits, abuse defenses, signed service-to-service authentication and durable server storage are required for personalized username ownership. Avoid building a custom LNURL server from scratch without auditing the full server-side registration/authentication protocol.
+
+**Breez approval is required only if we choose their hosted LNURL service** (via CNAME or reverse proxy), not if we operate a compatible self-hosted LNURL service.
+
+**Decision gate:** evaluate hosted vs self-hosted based on availability, privacy, support obligations, migration and operating risk, and keep the working `@breez.tips` addresses until proven. Do not use our LND/CLN node's URL as a substitute for the Spark SDK's `sparkConfig`: that configuration accepts Spark operators and service-provider information, not a Lightning node channel or LND endpoint.
+
+References:
+- https://sdk-doc-spark.breez.technology/guide/custom_domain.html
+- https://sdk-doc-spark.breez.technology/guide/config.html
+
 ## Hosted Breez LNURL path: root domain with reverse proxy
 
 Breez supports two models. A CNAME at `pay.getyoursats.com` pointing to `breez.tips` is straightforward, but produces `@pay.getyoursats.com`, **not** the product's requested root-domain address.
@@ -50,5 +64,5 @@ Official docs:
 ## Current blockers
 
 - The Vercel project/deployment APIs are accessible when called without explicit team scope; the domain **DNS-record listing** API still returns 403 and must be authorized or checked in the account dashboard.
-- Breez custom-domain approval, root website routing/secret, working LNURL callback and email+username entitlement service are unverified/not implemented.
+- For Breez-hosted LNURL: custom-domain approval and server-only reverse-proxy secret are unverified. Alternatively, implement and audit a self-hosted LNURL service instead; it does not need Breez domain approval. In both options, root website routing, working LNURL callback and email+username entitlement service are unverified/not implemented.
 - No test with real funds is authorized by this document.
