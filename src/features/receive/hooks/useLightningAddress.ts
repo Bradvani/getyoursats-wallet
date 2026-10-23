@@ -1,3 +1,4 @@
+import {configuredBrandedLightningDomain} from '../../../getyoursats/lightningDomain';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LightningAddressInfo, BreezSdk } from '@breeztech/breez-sdk-spark';
 import { useWallet } from '../../../contexts/WalletContext';
@@ -177,8 +178,7 @@ export const useLightningAddress = (): UseLightningAddress => {
     // A branded GetYourSats username is an account entitlement, not a
     // self-service SDK-only claim. Do not permit squatting on reserved or
     // email-derived aliases before verified-email backend checks exist.
-    if (import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED === 'true'
-      && import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN === 'pay.getyoursats.com') {
+    if (configuredBrandedLightningDomain()) {
       setError('Personalised GetYourSats addresses require verified email. This feature is not available yet.');
       return;
     }
