@@ -270,3 +270,85 @@
 }
 .gys-welcome__passkey-note span{color:#eac26f;font-size:15px;line-height:1.15;flex-shrink:0}
 @media(max-width:720px){.gys-welcome__passkey-note{justify-content:center;max-width:330px;margin:15px auto 0}}
+
+/* Premium wallet-first mobile hierarchy. Balance/identity are real SDK data. */
+.gys-wallet{background:linear-gradient(160deg,#08090c 0%,#101013 68%,#171613 100%)}
+.gys-wallet__history-trigger{display:none}
+.gys-partner-buy-overlay{position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.77);
+ backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:20px;color:#f5f1e9}
+.gys-partner-buy{width:min(100%,470px);max-height:92dvh;overflow:auto;background:linear-gradient(160deg,#202024,#121314);
+ border:1px solid rgba(255,209,103,.27);border-radius:24px;padding:clamp(20px,4vw,30px);
+ box-shadow:0 34px 90px rgba(0,0,0,.6);animation:gys-panel-in .28s ease-out both}
+.gys-partner-buy__header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.gys-partner-buy__header small{font-size:9px;color:#d3b770;letter-spacing:.13em;font-weight:750}
+.gys-partner-buy__header h2{font-size:26px;line-height:1.2;font-weight:820;letter-spacing:-.05em;margin-top:7px}
+.gys-partner-buy__header>button{width:38px;height:38px;border-radius:11px;border:1px solid rgba(255,255,255,.12);
+ background:rgba(255,255,255,.05);color:#d4d0c6}
+.gys-partner-buy__lead{color:#c5c1b7;font-size:13px;line-height:1.7;margin:20px 0}
+.gys-partner-buy__safety{padding:17px;border:1px solid rgba(243,199,92,.22);background:rgba(241,188,70,.055);border-radius:15px}
+.gys-partner-buy__safety strong{font-size:13px;color:#ffdb93}
+.gys-partner-buy__safety p{color:#bdb8ab;font-size:12px;line-height:1.65;margin-top:7px}
+.gys-partner-buy__check{display:flex;align-items:flex-start;gap:12px;font-size:12px;color:#ded8cb;line-height:1.6;margin:19px 0}
+.gys-partner-buy__check input{margin-top:3px;accent-color:#ffc931;flex-shrink:0}
+.gys-partner-buy__primary{width:100%;min-height:54px;border-radius:13px;color:#111;background:#ffcc39;
+ font-size:14px;font-weight:800;transition:transform .18s,background .18s}
+.gys-partner-buy__primary:hover:not(:disabled){background:#ffda63;transform:translateY(-1px)}
+.gys-partner-buy__primary:disabled{opacity:.38;cursor:not-allowed}
+.gys-partner-buy__disclaimer{color:#918f8a;font-size:10px;line-height:1.6;margin-top:18px}
+.gys-partner-buy button:focus-visible{outline:2px solid #ffcb2b;outline-offset:3px}
+
+@media(max-width:720px){
+ .gys-wallet{height:100dvh;overflow:hidden}
+ .gys-wallet__header{flex:1 1 auto;min-height:228px;position:relative;top:auto}
+ .gys-wallet-balance-surface{height:100%;width:100%;background:transparent}
+ .gys-wallet-balance-surface__content{min-height:100%;display:flex;flex-direction:column;padding-bottom:8px}
+ .gys-wallet-balance-surface__content>.text-center{margin:auto 0;padding:10px 0 24px}
+ .gys-wallet-balance-surface__content>.h-14{margin-bottom:0}
+ .gys-wallet-balance-surface__content .balance-display{font-size:clamp(46px,10.3vw,72px);line-height:1.15;letter-spacing:-.055em}
+ .gys-wallet-balance-surface__content>.h-4{height:2px}
+ .gys-wallet__address{flex:none;align-items:center;gap:4px;text-align:center;background:none;border:none;
+  padding:6px 18px 9px;margin:0 16px;border-radius:8px}
+ .gys-wallet__address .gys-address-banner__label{font-size:10px;letter-spacing:.05em;font-weight:650;color:#ad9c7c}
+ .gys-wallet__address .gys-address-banner__value{font-size:clamp(11px,3.15vw,14px);
+  line-height:1.55;text-align:center;max-width:100%;overflow-wrap:anywhere;color:#efc44f}
+ .gys-wallet__history-trigger{display:flex;align-items:center;justify-content:center;gap:12px;
+  min-height:55px;flex:none;background:transparent;color:#a9a8af;font-size:16px;font-weight:620;
+  border-top:1px solid rgba(255,255,255,.035);transition:color .2s}
+ .gys-wallet__history-trigger:focus-visible{outline:2px solid #ffca28;outline-offset:-3px}
+ .gys-wallet__history-trigger:active{color:#ffe0a0}
+ .gys-wallet__history-arrow{display:inline-block;font-size:23px;line-height:1;transition:transform .24s ease}
+ .gys-wallet__history-arrow--open{transform:rotate(180deg)}
+ .gys-wallet__history-count{font-size:11px;background:rgba(255,255,255,.07);color:#c6c4c1;
+  padding:3px 8px;border-radius:99px}
+ .gys-wallet__activity:not(.gys-wallet__activity--open){display:none}
+ .gys-wallet__activity--open{display:block;flex:1 1 auto;min-height:0}
+ .gys-wallet--history-open .gys-wallet__header{flex:0 0 auto;min-height:0}
+ .gys-wallet--history-open .gys-wallet-balance-surface__content{min-height:0}
+ .gys-wallet--history-open .gys-wallet-balance-surface__content>.text-center{margin:0;padding:0 0 4px}
+ .gys-wallet--history-open .gys-wallet-balance-surface__content .balance-display{font-size:clamp(34px,8vw,50px)}
+ .gys-wallet--history-open .gys-wallet-balance-surface__content>.h-4{display:none}
+ .gys-action-dock{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px 16px max(17px,env(safe-area-inset-bottom));
+  background:linear-gradient(0deg,rgba(21,21,19,.985),rgba(21,21,19,.94));border-top:1px solid rgba(255,255,255,.055)}
+ .gys-action-dock button{min-height:66px;flex-direction:row;font-size:19px;font-weight:770;gap:9px;
+  border-radius:18px;transition:transform .22s cubic-bezier(.2,.75,.15,1),box-shadow .2s ease,background .2s ease}
+ .gys-action-dock button svg{height:20px;width:20px}
+ .gys-action-dock .gys-action-dock__utility{display:none}
+ .gys-action-dock .gys-action-dock__receive{background:transparent;border:1.5px solid #f5bc31;color:#f5c74b}
+ .gys-action-dock .gys-action-dock__send{background:#f5bf32;color:#10100d;border:1.5px solid #f5bf32;
+  box-shadow:0 10px 32px rgba(234,175,36,.09)}
+ .gys-action-dock .gys-action-dock__send:hover{background:#ffcf4b}
+ .gys-action-dock .gys-action-dock__receive:hover{background:rgba(255,201,55,.07)}
+}
+@media(max-width:360px){.gys-action-dock button{font-size:16px;min-height:60px}.gys-action-dock{gap:9px;padding-left:10px;padding-right:10px}}
+@media(max-height:665px) and (max-width:720px){
+ .gys-wallet-balance-surface__content>.text-center{padding:0}
+ .gys-wallet-balance-surface__content .balance-display{font-size:clamp(38px,10vw,60px)}
+ .gys-wallet__history-trigger{min-height:43px}
+ .gys-action-dock button{min-height:54px}
+ .gys-wallet__address{padding:2px 14px}
+}
+@media(prefers-reduced-motion:reduce){
+ .gys-wallet__history-arrow,.gys-wallet__history-trigger,
+ .gys-action-dock button,.gys-partner-buy__primary{transition:none}
+ .gys-partner-buy{animation:none}
+}
