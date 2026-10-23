@@ -1,4 +1,5 @@
 import {useId, useState} from 'react';
+import {ChevronRightIcon} from '../components/Icons';
 
 type Props = {
   onRestoreWallet: () => void;
@@ -42,10 +43,7 @@ export default function HomePage({
             <button className="gys-welcome__start" type="button" onClick={onCreateNewWallet}
               aria-describedby={setupIssue ? errorId : undefined}>
               <span>Start</span>
-              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M13 6l6 6-6 6"/>
-              </svg>
+              <ChevronRightIcon size="lg" />
             </button>
             <button className="gys-welcome__restore" type="button" onClick={onRestoreWallet}
               aria-label="Restore existing wallet">
