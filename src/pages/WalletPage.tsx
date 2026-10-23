@@ -6,7 +6,8 @@ import { useToast } from '../contexts/ToastContext';
 import { logger, LogCategory } from '@/services/logger';
 import CollapsingWalletHeader from '../components/CollapsingWalletHeader';
 import SideMenu from '../components/SideMenu';
-import TransactionList from '../components/TransactionList';
+import MarketPulse from '../getyoursats/MarketPulse';
+import WalletActivityPanel from '../getyoursats/WalletActivityPanel';
 import PullToRefresh from '../components/PullToRefresh';
 import { GetInfoResponse, Payment, DepositInfo, Network } from '@breeztech/breez-sdk-spark';
 import type { BuyBitcoinProvider } from '../services/settings';
@@ -342,19 +343,21 @@ const WalletPage: React.FC<WalletPageProps> = ({
             <button type="button" onClick={()=>setReminderDismissed(true)}>Later</button>
           </div>
         </section>}
-      {/* Scrollable transaction list */}
+      {/* Live SDK market quotes and wallet-verified activity. */}
       <div
         ref={transactionsContainerRef}
         className="grow overflow-y-auto relative z-0 scrollbar-hidden"
         onScroll={handleScroll}
       >
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
-        <TransactionList
+        <MarketPulse />
+        <WalletActivityPanel
           transactions={mergeDepositsWithTransactions(transactions, unclaimedDeposits)}
           onPaymentSelected={handlePaymentSelected}
           isSyncing={isSyncing}
           exitEntries={exitEntries}
           onExitSelected={handleExitSelected}
+          onRefresh={() => { void syncNow(); }}
         />
       </div>
 
