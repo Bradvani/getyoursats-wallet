@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {chooseWalletOnboarding} from './onboardingPolicy';
+import {chooseWalletOnboarding, approvedGetYourSatsOrigin} from './onboardingPolicy';
 const cfg={
   prfAvailable:true,origin:'https://wallet.getyoursats.com',
   approvedWebOrigin:'https://wallet.getyoursats.com',isNative:false,nativeAssociationVerified:false,
@@ -25,5 +25,16 @@ describe('wallet onboarding guard',()=>{
    for(const url of ['not-a-url','http://wallet.getyoursats.com','https://wallet.getyoursats.com/folder']){
       expect(chooseWalletOnboarding({...cfg,approvedWebOrigin:url})).toBe('manual');
    }
+ });
+});
+
+describe('known wallet origin activation',()=>{
+ it('accepts the verified canonical wallet',()=>{
+   expect(approvedGetYourSatsOrigin('https://wallet.getyoursats.com')).toBe('https://wallet.getyoursats.com');
+ });
+ it('does not trust random preview names or parent domains',()=>{
+   expect(approvedGetYourSatsOrigin('https://getyoursats-wallet-any.vercel.app')).toBeUndefined();
+   expect(approvedGetYourSatsOrigin('https://getyoursats.com')).toBeUndefined();
+   expect(approvedGetYourSatsOrigin('http://wallet.getyoursats.com')).toBeUndefined();
  });
 });

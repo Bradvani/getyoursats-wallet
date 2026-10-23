@@ -19,8 +19,16 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Confirm missing SDK config cannot create an orphan wallet
-        run: npx playwright test e2e/tests/getyoursats-setup.spec.ts --project chromium
+        run: npx playwright test e2e/tests/getyoursats-setup.spec.ts e2e/tests/getyoursats-landing.spec.ts --project chromium
         env:
           VITE_BREEZ_API_KEY: ''
           VITE_SPARK_LOCAL_CONFIG: ''
           VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
+      - name: Upload landing visual evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: getyoursats-landing-chromium
+          path: test-artifacts/*.png
+          if-no-files-found: ignore
+          retention-days: 7
