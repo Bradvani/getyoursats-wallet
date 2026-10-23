@@ -9,9 +9,7 @@ import { formatWithSpaces } from '../utils/formatNumber';
  * so a caller must never be able to set one without the other. Inherits its
  * size, so wrap it to scale.
  *
- * Two displays stay hand-rolled: the balance header positions ₿ absolutely and
- * tightens via `.balance-display`, and the transaction list's token rows carry
- * a symbol that varies per asset.
+ * The wallet balance header handles the BTC symbol only for actual BTC units.
  */
 export const SatAmount: React.FC<{
   sats: number | bigint;
@@ -25,7 +23,7 @@ export const SatAmount: React.FC<{
   <span className={`inline-flex items-center font-mono [word-spacing:-0.4em] ${approximate ? 'relative' : ''} ${className}`}>
     {approximate && <span className="absolute right-full opacity-70">~</span>}
     {formatWithSpaces(sats)}
-    <span className="text-[0.8em] opacity-70 ml-1">sats</span>
+    <span className="text-[0.8em] opacity-70 ml-1">{' '}sats</span>
   </span>
 );
 
