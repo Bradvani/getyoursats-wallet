@@ -61,7 +61,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
   hasRejectedDeposits,
   onOpenGetRefund,
   onOpenSettings,
-  onOpenBackup,
   onOpenDca,
   onOpenUnilateralExit,
   onBuyBitcoin,
