@@ -33,6 +33,25 @@ describe('buildConnectConfig', () => {
     expect(buildConnectConfig('mainnet').lnurlDomain).not.toBe('getyoursats.example');
   });
 
+  it('does not enable branded addresses on an unapproved domain', () => {
+    vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN', 'pay.getyoursats.com');
+    vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED', 'false');
+    expect(buildConnectConfig('mainnet').lnurlDomain).not.toBe('pay.getyoursats.com');
+  });
+
+  it('activates only the approved pay.getyoursats.com address domain on mainnet', () => {
+    vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN', 'pay.getyoursats.com');
+    vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED', 'true');
+    expect(buildConnectConfig('mainnet').lnurlDomain).toBe('pay.getyoursats.com');
+    expect(buildConnectConfig('regtest').lnurlDomain).not.toBe('pay.getyoursats.com');
+  });
+
+  it('rejects wrong LNURL domains even with approval flag', () => {
+    vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN', 'another.domain.example');
+    vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED', 'true');
+    expect(buildConnectConfig('mainnet').lnurlDomain).not.toBe('another.domain.example');
+  });
+
   it('sets the stable balance token and cross-chain sends on mainnet', () => {
     const config = buildConnectConfig('mainnet');
     expect(config.stableBalanceConfig?.tokens).toEqual([{ label: USDB_TICKER, tokenIdentifier: USDB_TOKEN_IDENTIFIER }]);
