@@ -33,4 +33,17 @@ describe('WalletActivityPanel', () => {
     expect(screen.getByText('Your first transaction starts here.')).toBeTruthy();
     expect(screen.queryByTestId('full-history')).toBeNull();
   });
+  it('filters the connected-wallet history and clears filters without inventing rows', () => {
+    const transactions = [payment('wallet-in','completed','receive'), payment('wallet-out','pending','send')];
+    render(<WalletActivityPanel transactions={transactions} isSyncing={false}
+      onPaymentSelected={vi.fn()} exitEntries={[]} onExitSelected={vi.fn()} onRefresh={vi.fn()}/>);
+    fireEvent.click(screen.getByRole('tab',{name:/Transaction history/}));
+    fireEvent.change(screen.getByRole('searchbox',{name:'Search transactions'}), {target:{value:'wallet-in'}});
+    expect(screen.getByText('1 of 2 wallet records')).toBeTruthy();
+    expect(screen.getByTestId('full-history').textContent).toContain('SDK history: 1');
+    fireEvent.change(screen.getByRole('searchbox',{name:'Search transactions'}), {target:{value:'not-here'}});
+    expect(screen.getByText('No transactions match these filters.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button',{name:'Clear filters'}));
+    expect(screen.getByText('2 of 2 wallet records')).toBeTruthy();
+  });
 });
