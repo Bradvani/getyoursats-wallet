@@ -4,7 +4,10 @@ import {fireEvent,render,screen,waitFor} from '@testing-library/react';
 import GeneratePage from '../pages/GeneratePage';
 import RestorePage from '../pages/RestorePage';
 
-vi.mock('bip39',()=>({generateMnemonic:()=>Array(11).fill('abandon').concat('about').join(' ')}));
+vi.mock('bip39',async(importOriginal)=>{
+ const original=await importOriginal<typeof import('bip39')>();
+ return {...original,generateMnemonic:()=>Array(11).fill('abandon').concat('about').join(' ')};
+});
 vi.mock('../components/layout/PageLayout',()=>({
  default:({children,footer}:{children:ReactNode;footer:ReactNode})=>
   <main>{children}<footer>{footer}</footer></main>
