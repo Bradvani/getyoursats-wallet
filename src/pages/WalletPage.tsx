@@ -1,3 +1,4 @@
+import {useLightningAddress} from '../features/receive/hooks/useLightningAddress';
 import GetYourSatsPos from '../getyoursats/PosPage';
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useWallet } from '../contexts/WalletContext';
@@ -40,6 +41,8 @@ interface WalletPageProps {
   hasRejectedDeposits: boolean;
   onOpenGetRefund: (source?: 'menu' | 'icon') => void;
   onOpenSettings: () => void;
+  onOpenBackup: () => void;
+  onOpenDca: () => void;
   onOpenUnilateralExit: () => void;
   onBuyBitcoin: (provider: BuyBitcoinProvider) => Promise<void>;
   network?: Network;
@@ -56,6 +59,8 @@ const WalletPage: React.FC<WalletPageProps> = ({
   hasRejectedDeposits,
   onOpenGetRefund,
   onOpenSettings,
+  onOpenBackup,
+  onOpenDca,
   onOpenUnilateralExit,
   onBuyBitcoin,
   network,
@@ -73,6 +78,11 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [gysPosOpen,setGysPosOpen] = useState(false);
+  const [needsBackupReminder]=useState(()=> {
+    try{return localStorage.getItem('gys:backup:pending')==='true'}catch{return false}
+  });
+  const [reminderDismissed,setReminderDismissed]=useState(false);
+  const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
   const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
@@ -101,10 +111,11 @@ const WalletPage: React.FC<WalletPageProps> = ({
   // Computed per render (cheap in-memory read) so the Buy button's
   // visibility is fresh after any return from Settings; a memo keyed
   // on menu state went stale when providers changed under an overlay.
-  const enabledBuyProviders = filterProvidersByPlatform(
-    filterProvidersByNetwork(getBuyProviderSettings(), network),
-    cashAppInstalled,
-  );
+  // Do not surface uncontracted third-party ramps as an India UPI feature.
+  // This legacy Glow handoff is disabled unless explicitly reviewed/enabled.
+  const enabledBuyProviders = import.meta.env.VITE_GETYOURSATS_ENABLE_LEGACY_BUY === 'true'
+    ? filterProvidersByPlatform(filterProvidersByNetwork(getBuyProviderSettings(), network), cashAppInstalled)
+    : [];
   const [saveContactAddress, setSaveContactAddress] = useState<string | null>(null);
   // Bump these on each open so each dialog remounts and lazy-inits its
   // state, instead of relying on a reset-in-effect inside the dialog.
@@ -305,6 +316,32 @@ const WalletPage: React.FC<WalletPageProps> = ({
         />
       </div>
 
+      {/* Lightning address: ready on first wallet screen, not a hidden signup step. */}
+      <div className="gys-address-banner" role="status" aria-live="polite">
+        <span className="gys-address-banner__label">⚡ Your Lightning address</span>
+        {primaryLightningAddress.address ? (
+          <button type="button" className="gys-address-banner__value"
+            onClick={()=>void navigator.clipboard.writeText(primaryLightningAddress.address!.lightningAddress)}
+            aria-label="Copy your Lightning address"
+            title="Copy Lightning address">
+            {primaryLightningAddress.address.lightningAddress}
+          </button>
+        ):<span className="gys-address-banner__pending">
+          {primaryLightningAddress.isLoading?'Setting up your address…':
+           primaryLightningAddress.error?'Address temporarily unavailable':
+           primaryLightningAddress.isSupported?'Tap Receive to set up':'Not available on this network'}
+        </span>}
+      </div>
+      {needsBackupReminder&&!reminderDismissed&&
+        <section className="gys-backup-nudge" aria-label="Protect your wallet">
+          <div><strong>Protect your Bitcoin</strong>
+            <p>Your wallet is on this device. If you lose it without backup, your sats may be lost.</p>
+          </div>
+          <div className="gys-backup-nudge__actions">
+            <button type="button" onClick={onOpenBackup}>Back up privately</button>
+            <button type="button" onClick={()=>setReminderDismissed(true)}>Later</button>
+          </div>
+        </section>}
       {/* Scrollable transaction list */}
       <div
         ref={transactionsContainerRef}
@@ -380,42 +417,13 @@ const WalletPage: React.FC<WalletPageProps> = ({
         />
       )}
 
-      {/* Bottom action bar - full width layout */}
-      <div className="bottom-bar flex items-center z-30">
-        {/* Send button */}
-        <button
-          onClick={openSendDialog}
-          className="action-button action-button-send"
-          data-testid="send-button"
-        >
-          <ArrowUpIcon />
-          <span>Send</span>
-        </button>
-
-        {/* QR Scanner button - viewfinder style */}
-        <button
-          onClick={() => setIsQrScannerOpen(true)}
-          className="qr-scanner-button"
-          aria-label="Scan QR Code"
-          data-testid="scan-button"
-        >
-          <span className="qr-corner qr-corner--tl" />
-          <span className="qr-corner qr-corner--tr" />
-          <span className="qr-corner qr-corner--bl" />
-          <span className="qr-corner qr-corner--br" />
-          <QrCodeIcon />
-        </button>
-
-        {/* Receive button */}
-        <button
-          onClick={openReceiveDialog}
-          className="action-button action-button-receive"
-          data-testid="receive-button"
-        >
-          <ArrowDownIcon />
-          <span>Receive</span>
-        </button>
-      </div>
+      {/* One accessible dock for all primary wallet actions. */}
+      <nav className="gys-action-dock" aria-label="Wallet actions">
+        <button type="button" onClick={openSendDialog} data-testid="send-button" aria-label="Send Bitcoin"><ArrowUpIcon/><span>Send</span></button>
+        <button type="button" onClick={openReceiveDialog} data-testid="receive-button" aria-label="Receive Bitcoin"><ArrowDownIcon/><span>Receive</span></button>
+        <button type="button" onClick={()=>setIsQrScannerOpen(true)} data-testid="scan-button" aria-label="Scan payment QR"><QrCodeIcon/><span>Scan</span></button>
+        <button type="button" onClick={()=>setGysPosOpen(true)} data-testid="pos-button" aria-label="Accept payment using POS" className="gys-action-dock__accept"><span className="gys-action-dock__bitcoin" aria-hidden="true">₿</span><span>Accept</span></button>
+      </nav>
 
       {/* Save Contact Dialog */}
       <SaveContactDialog
@@ -426,13 +434,13 @@ const WalletPage: React.FC<WalletPageProps> = ({
       />
 
       {/* Side Menu */}
-      <button onClick={()=>setGysPosOpen(true)} aria-label="Open merchant POS" style={{position:'fixed',bottom:100,right:18,zIndex:40,background:'#ffcb2b',color:'#090909',fontWeight:800,padding:'13px 19px',borderRadius:16}}>POS</button>
       {gysPosOpen&&<GetYourSatsPos onClose={()=>setGysPosOpen(false)}/>}
       <SideMenu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
+        onOpenDca={onOpenDca}
         onOpenRefund={() => onOpenGetRefund('menu')}
         hasRejectedDeposits={hasRejectedDeposits}
       />

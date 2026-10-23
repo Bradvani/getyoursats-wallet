@@ -135,7 +135,7 @@ export function depositMaxFeeDrafts(settings: UserSettings): Record<DepositMaxFe
 }
 
 const defaultFiatSettings: FiatSettings = {
-  selectedCurrencies: ['USD'],
+  selectedCurrencies: ['INR', 'USD'],
 };
 
 // In-memory cache for localStorage reads (js-cache-storage optimization)

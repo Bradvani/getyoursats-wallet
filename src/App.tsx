@@ -1,3 +1,7 @@
+import DcaPage from './getyoursats/DcaPage';
+import * as bip39 from 'bip39';
+import {deviceOnlyStorage, SecureStorageError} from './services/secureStorage';
+import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
 import {Capacitor} from '@capacitor/core';
 import {chooseWalletOnboarding} from './getyoursats/onboardingPolicy';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
@@ -54,7 +58,7 @@ import type { Seed, Payment, BreezSdk } from '@breeztech/breez-sdk-spark';
 
 const PASSKEY_MIGRATION_ENABLED = true;
 
-type Screen = 'home' | 'restore' | 'generate' | 'wallet' | 'getRefund' | 'settings' | 'backup' | 'security' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
+type Screen = 'home' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
 
 // Full-screen dim spinner shown while sdk.isLoading is true (logout in
 // progress, SDK reconnect, etc). Wrapped as its own component so the
@@ -85,6 +89,20 @@ const AppContent: React.FC = () => {
   // 'unlocking', auto-'wallet' on reconnect) are layered in by
   // `currentScreen` below.
   const [userScreen, setUserScreen] = useState<Screen>('home');
+  const [setupIssue,setSetupIssue]=useState<string|null>(null);
+  const serviceConfigured=isWalletServiceConfigured(
+    import.meta.env.VITE_BREEZ_API_KEY,
+    new URLSearchParams(window.location.search).get('network')==='regtest' &&
+      Boolean(import.meta.env.VITE_SPARK_LOCAL_CONFIG)
+  );
+  const requireWalletService=():boolean=>{
+    if(serviceConfigured){setSetupIssue(null);return true;}
+    setSetupIssue('Wallet setup is temporarily unavailable. Please try again later.');
+    return false;
+  };
+  const handleGetYourSatsRestore=()=>{
+    if(requireWalletService())setUserScreen('restore');
+  };
   const [refundAnimationDirection, setRefundAnimationDirection] = useState<'left' | 'up'>('left');
   const [passkeySdkConnected, setPasskeySdkConnected] = useState(false);
   // True when the user entered the passkey screen via the explicit
@@ -133,7 +151,57 @@ const AppContent: React.FC = () => {
   // Release gate: anonymous instant-onboarding is only safe once a
   // recoverable device backup has been validated across reinstall.
   // Until then, preserve the upstream mnemonic/backup ceremony.
-  const handleGetYourSatsStart = () => {
+  const handleGetYourSatsStart = async () => {
+    if (!requireWalletService()) return;
+
+    // Native-only instant wallet: keys are generated with a cryptographic
+    // random source and must be written to the OS-backed secure device vault.
+    // No seed phrase is displayed to someone starting the wallet in public.
+    if (Capacitor.isNativePlatform() && deviceOnlyStorage.isSupported()) {
+      try {
+        setSetupIssue(null);
+        // Never call hasStoredSeed() here: the native implementation returns
+        // false on vault read errors, which is NOT proof that a wallet is absent.
+        // retrieveSeed() distinguishes a truly empty vault from failure.
+        let existingSeed: Awaited<ReturnType<typeof deviceOnlyStorage.retrieveSeed>> | undefined;
+        try {
+          existingSeed = await deviceOnlyStorage.retrieveSeed();
+        } catch (err) {
+          if (!(err instanceof SecureStorageError && err.code === 'NO_STORED_SEED')) {
+            throw err; // KEY_INVALIDATED, vault corruption, locked storage: fail closed.
+          }
+        }
+        if (existingSeed) {
+          // Reopen the *same wallet*; never replace keys on a failed reconnect.
+          await sdk.connectWallet(existingSeed, false, undefined, 'secureStorage');
+          setUserScreen('wallet');
+          return;
+        }
+
+        const mnemonic = bip39.generateMnemonic(128);
+        const seed = {type: 'mnemonic' as const, mnemonic};
+        await deviceOnlyStorage.storeSeed(seed);
+        // Read-back validation: an accepted write is not enough if the stored
+        // entry is unreadable. Do not connect or display a receive address.
+        const recovered = await deviceOnlyStorage.retrieveSeed();
+        if (recovered.type !== 'mnemonic' || recovered.mnemonic !== mnemonic) {
+          throw new Error('Device vault recovery validation failed');
+        }
+        // Vault already contains the new seed. Avoid the SDK hook's second
+        // storeSeed() call, which could overwrite a recoverable wallet.
+        await sdk.connectWallet(seed, false, undefined, 'secureStorage');
+        // No sensitive material in this reminder, only a recovery nudge.
+        try{localStorage.setItem('gys:backup:pending','true')}catch{/* device-only marker */}
+        setUserScreen('wallet');
+      } catch {
+        setSetupIssue('Could not secure wallet keys on this device. Please retry or use manual recovery.');
+        setUserScreen('home');
+      }
+      return;
+    }
+    // A web wallet without a verified WebAuthn RP cannot promise device-loss
+    // recovery. Prefer a synced PRF-derived passkey rather than plaintext seed
+    // storage. Never route Start to an unsolicited seed-word display.
     const next = chooseWalletOnboarding({
       prfAvailable: sdk.prfAvailable,
       origin: window.location.origin,
@@ -142,15 +210,17 @@ const AppContent: React.FC = () => {
       nativeAssociationVerified: import.meta.env.VITE_GETYOURSATS_NATIVE_PASSKEY_READY === 'true',
     });
     if (next === 'passkey') {
-      // Reuse upstream discovery: existing passkey -> same wallet;
-      // no credential -> PRF registration. Do not force-new by default.
       setPasskeySkipDetection(false);
       setPasskeyFailed(false);
       setUserScreen('passkey');
       return;
     }
-    setUserScreen('generate');
+    setSetupIssue('Secure one-tap web setup needs a supported passkey and an approved permanent wallet domain. You can use manual setup below.');
   };
+  const handleGetYourSatsManual = () => {
+    if (requireWalletService()) setUserScreen('generate');
+  };
+
   // Navigate to wallet after successful connect
   const handleConnect = async (mnemonic: string, restore: boolean) => {
     await sdk.connectWallet({ type: 'mnemonic', mnemonic }, restore);
@@ -249,6 +319,9 @@ const AppContent: React.FC = () => {
   // cancel via its own Cancel button.
   useBackButton(useCallback(() => {
     switch (currentScreen) {
+      case 'dca':
+        setUserScreen('wallet');
+        return true;
       case 'settings':
       case 'getRefund':
       case 'unilateralExit':
@@ -336,11 +409,13 @@ const AppContent: React.FC = () => {
         // preserve the pre-refactor behavior of the `wallet` case.
         return (
           <HomePage
-            onRestoreWallet={() => setUserScreen('restore')}
+            onRestoreWallet={handleGetYourSatsRestore}
             onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
+            onCreateManualWallet={handleGetYourSatsManual}
             onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
             onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
             prfAvailable={sdk.prfAvailable}
+            setupIssue={setupIssue}
           />
         );
       }
@@ -360,6 +435,8 @@ const AppContent: React.FC = () => {
             setUserScreen('getRefund');
           }}
           onOpenSettings={() => setUserScreen('settings')}
+          onOpenBackup={() => setUserScreen('backup')}
+          onOpenDca={() => setUserScreen('dca')}
           onOpenUnilateralExit={() => setUserScreen('unilateralExit')}
           onBuyBitcoin={sdk.handleBuyBitcoin}
           network={sdk.config?.network}
@@ -412,11 +489,13 @@ const AppContent: React.FC = () => {
       case 'home':
         return (
           <HomePage
-            onRestoreWallet={() => setUserScreen('restore')}
+            onRestoreWallet={handleGetYourSatsRestore}
             onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
+            onCreateManualWallet={handleGetYourSatsManual}
             onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
             onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
             prfAvailable={sdk.prfAvailable}
+            setupIssue={setupIssue}
           />
         );
 
@@ -464,6 +543,9 @@ const AppContent: React.FC = () => {
             />
           </>
         );
+
+      case 'dca':
+        return <>{renderWalletPage()}<DcaPage onBack={()=>setUserScreen('wallet')}/></>;
 
       case 'settings':
         return (
