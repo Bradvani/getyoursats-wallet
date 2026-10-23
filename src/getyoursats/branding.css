@@ -262,3 +262,11 @@
 .gys-pos-orders__row small{color:#aaa49a;font-size:10px}
 .gys-pos-orders .gys-pos-note{line-height:1.55;color:#ada79b}
 @media(prefers-reduced-motion:reduce){.gys-pos-orders__row{transition:none}}
+
+/* Start is the passkey-first wallet route; recovery stays within Settings. */
+.gys-welcome__passkey-note {
+  display:flex;align-items:flex-start;gap:9px;margin:15px 4px 0;
+  color:#acaa9f;font-size:11px;line-height:1.65;text-align:left;
+}
+.gys-welcome__passkey-note span{color:#eac26f;font-size:15px;line-height:1.15;flex-shrink:0}
+@media(max-width:720px){.gys-welcome__passkey-note{justify-content:center;max-width:330px;margin:15px auto 0}}
