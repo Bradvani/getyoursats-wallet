@@ -98,36 +98,36 @@ describe('AmountStep USD entry (no stable balance)', () => {
   };
 
   it('offers only quick amounts the balance covers', async () => {
-    // 3,000 sats clears ₿1 000 and ₿2 000 and nothing above.
+    // 3,000 sats clears 1 000 satsand 2 000 satsand nothing above.
     renderAmountStep({ balanceSats: 3000 });
 
     const labels = await ratedLabels();
-    expect(labels).toContain('₿1 000');
-    expect(labels).toContain('₿2 000');
-    expect(labels).not.toContain('₿5 000');
-    expect(labels).not.toContain('₿100 000');
+    expect(labels).toContain('1 000 sats');
+    expect(labels).toContain('2 000 sats');
+    expect(labels).not.toContain('5 000 sats');
+    expect(labels).not.toContain('100 000 sats');
   });
 
   it('never offers the whole balance as a quick amount', async () => {
     // 100,000 sats: the largest round amount inside the fee headroom is
-    // ₿50 000, so tapping a quick amount can't dead-end on insufficient funds.
+    // 50 000 sats, so tapping a quick amount can't dead-end on insufficient funds.
     renderAmountStep();
 
     const labels = await ratedLabels();
-    expect(labels).toEqual(expect.arrayContaining(['₿2 000', '₿10 000', '₿50 000']));
-    expect(labels).not.toContain('₿100 000');
+    expect(labels).toEqual(expect.arrayContaining(['2 000 sats', '10 000 sats', '50 000 sats']));
+    expect(labels).not.toContain('100 000 sats');
   });
 
   it('scales the quick amounts to the loaded rate, not the fallback', async () => {
     // A rate of 2,000 sats to the dollar puts the smallest round amount worth a
-    // dollar at ₿2 000. The fallback scale would still offer ₿1 000.
+    // dollar at 2 000 sats. The fallback scale would still offer 1 000 sats.
     const client = createMockClient({
       listFiatRates: vi.fn().mockResolvedValue({ rates: [{ coin: 'USD', value: 50000 }] }),
     } as unknown as Partial<BreezSdk>);
     renderAmountStep({ balanceSats: 3000 }, client);
 
-    await waitFor(() => expect(buttonLabels()).not.toContain('₿1 000'));
-    expect(buttonLabels()).toContain('₿2 000');
+    await waitFor(() => expect(buttonLabels()).not.toContain('1 000 sats'));
+    expect(buttonLabels()).toContain('2 000 sats');
   });
 
   it('offers sat quick amounts before any rate has loaded', () => {
@@ -138,7 +138,7 @@ describe('AmountStep USD entry (no stable balance)', () => {
     } as unknown as Partial<BreezSdk>);
     renderAmountStep({ balanceSats: 3000 }, client);
 
-    expect(buttonLabels()).toEqual(expect.arrayContaining(['₿1 000', '₿2 000']));
+    expect(buttonLabels()).toEqual(expect.arrayContaining(['1 000 sats', '2 000 sats']));
   });
 
   it('keeps cross-chain (amountFirst) USD-only with no toggle', async () => {
