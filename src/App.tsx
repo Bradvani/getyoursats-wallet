@@ -212,7 +212,18 @@ const AppContent: React.FC = () => {
       nativeAssociationVerified: import.meta.env.VITE_GETYOURSATS_NATIVE_PASSKEY_READY === 'true',
     });
     if (next === 'passkey') {
-      setPasskeySkipDetection(false);
+      // The welcome Start action is for NEW wallets by default. The old
+      // speculative sign-in called on every first tap surfaces a remote-device
+      // QR on mobile even when this browser has no registered credential.
+      // Only invoke sign-in discovery if local metadata indicates an
+      // established passkey. This is a hint, NOT proof of wallet ownership;
+      // the SDK still authenticates the credential before loading funds.
+      let knownPasskey = false;
+      try {
+        knownPasskey = localStorage.getItem('passkeyRegistered') === '1'
+          || localStorage.getItem('passkeyLabel') !== null;
+      } catch { /* Browser denies storage: use explicit new-wallet route. */ }
+      setPasskeySkipDetection(!knownPasskey);
       setPasskeyFailed(false);
       setUserScreen('passkey');
       return;
@@ -425,10 +436,6 @@ const AppContent: React.FC = () => {
           <HomePage
             onRestoreWallet={handleGetYourSatsRestore}
             onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
-            onCreateManualWallet={handleGetYourSatsManual}
-            onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
-            onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
-            prfAvailable={sdk.prfAvailable}
             setupIssue={setupIssue}
           />
         );
@@ -505,10 +512,6 @@ const AppContent: React.FC = () => {
           <HomePage
             onRestoreWallet={handleGetYourSatsRestore}
             onCreateNewWallet={() => { void handleGetYourSatsStart(); }}
-            onCreateManualWallet={handleGetYourSatsManual}
-            onUsePasskey={() => { setPasskeySkipDetection(false); setUserScreen('passkey'); }}
-            onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
-            prfAvailable={sdk.prfAvailable}
             setupIssue={setupIssue}
           />
         );
