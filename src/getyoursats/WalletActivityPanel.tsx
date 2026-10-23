@@ -2,6 +2,7 @@ import {useMemo, useState} from 'react';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 import TransactionList from '../components/TransactionList';
 import type {UnilateralExitEntry} from '../features/unilateral-exit/listEntries';
+import {historyToCsv, selectHistory, type HistoryDirection, type HistoryStatus} from './historyRecords';
 
 interface Props {
   transactions: Payment[];
@@ -35,6 +36,27 @@ export default function WalletActivityPanel({
   transactions, isSyncing, onPaymentSelected, exitEntries, onExitSelected, onRefresh,
 }: Props) {
   const [tab, setTab] = useState<'activity'|'history'>('activity');
+  const [query, setQuery] = useState('');
+  const [direction, setDirection] = useState<HistoryDirection>('all');
+  const [status, setStatus] = useState<HistoryStatus>('all');
+  const filteredHistory = useMemo(
+    () => selectHistory(transactions, query, direction, status),
+    [transactions, query, direction, status],
+  );
+  const exportCsv = () => {
+    if (!filteredHistory.length) return;
+    // The file is created entirely on device from current wallet SDK results.
+    const csv = historyToCsv(filteredHistory);
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'getyoursats-transactions.csv';
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
   const latest = useMemo(()=> [...transactions]
     .filter(tx => Number.isFinite(tx.timestamp) && tx.timestamp > 0)
     .sort((a,b)=>b.timestamp-a.timestamp).slice(0,8), [transactions]);
@@ -89,8 +111,47 @@ export default function WalletActivityPanel({
         </button>
       </div>
       : <div id="gys-panel-history" role="tabpanel" aria-labelledby="gys-tab-history">
-        <TransactionList transactions={transactions} isSyncing={isSyncing}
-          onPaymentSelected={onPaymentSelected} exitEntries={exitEntries} onExitSelected={onExitSelected}/>
+        <div className="gys-history-controls">
+          <label className="gys-history-controls__search">
+            <span>Search transactions</span>
+            <input type="search" value={query} placeholder="Payment ID, network or status"
+              onChange={event => setQuery(event.target.value)} />
+          </label>
+          <div className="gys-history-controls__filters">
+            <label><span>Direction</span>
+              <select value={direction} onChange={event => setDirection(event.target.value as HistoryDirection)}>
+                <option value="all">All directions</option>
+                <option value="send">Sent</option>
+                <option value="receive">Received</option>
+              </select>
+            </label>
+            <label><span>Status</span>
+              <select value={status} onChange={event => setStatus(event.target.value as HistoryStatus)}>
+                <option value="all">All statuses</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+              </select>
+            </label>
+          </div>
+          <div className="gys-history-controls__footer">
+            <span aria-live="polite">{filteredHistory.length} of {transactions.length} wallet records</span>
+            <button type="button" disabled={!filteredHistory.length} onClick={exportCsv}>
+              Export CSV ↗
+            </button>
+          </div>
+        </div>
+        {filteredHistory.length || !transactions.length
+          ? <TransactionList transactions={filteredHistory} isSyncing={isSyncing}
+              onPaymentSelected={onPaymentSelected}
+              exitEntries={query || direction !== 'all' || status !== 'all' ? [] : exitEntries}
+              onExitSelected={onExitSelected}/>
+          : <div className="gys-history-controls__empty">
+              No transactions match these filters.
+              <button type="button" onClick={() => { setQuery(''); setDirection('all'); setStatus('all'); }}>
+                Clear filters
+              </button>
+            </div>}
       </div>}
   </section>;
 }
