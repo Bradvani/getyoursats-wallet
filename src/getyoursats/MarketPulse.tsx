@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useFiatData} from '../contexts/FiatDataContext';
 
 /** Quotes come from the wallet's own Breez SDK fiat-rate feed (refreshed
@@ -7,10 +7,15 @@ import {useFiatData} from '../contexts/FiatDataContext';
 export default function MarketPulse() {
   const {fiatRates, fetchedAt, refreshFiatData} = useFiatData();
   const [currency, setCurrency] = useState<'INR'|'USD'>('INR');
+  const [clock, setClock] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [unit, setUnit] = useState<'BTC'|'sats'>('BTC');
   const rate = fiatRates.find(item => item.coin === currency)?.value;
   const validRate = typeof rate === 'number' && Number.isFinite(rate) && rate > 0 ? rate : null;
-  const stale = !fetchedAt || Date.now() - fetchedAt > 120_000;
+  const stale = !fetchedAt || clock - fetchedAt > 120_000;
   const money = (value: number, minDecimals: number, maxDecimals: number) =>
     new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', {
       style: 'currency', currency, minimumFractionDigits: minDecimals,
