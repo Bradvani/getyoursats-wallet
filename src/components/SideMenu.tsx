@@ -2,7 +2,7 @@ import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Transition, TransitionChild } from '@headlessui/react';
 import { isPasskeyMode } from '@/services/passkeyService';
-import { RefundIcon, SettingsIcon, LogoutIcon, CloseIcon, AlertTriangleIcon, ExternalLinkIcon } from './Icons';
+import { RefundIcon, SettingsIcon, LogoutIcon, CloseIcon, AlertTriangleIcon, ExternalLinkIcon, QrCodeIcon, CurrencyIcon, ArrowDownIcon } from './Icons';
 import { ACCOUNT_DELETION_GUIDE_URL } from '@/services/accountDeletion';
 import { openExternalUrl } from '@/utils/externalLink';
 import { safeAreaTop, safeAreaBottom } from '../utils/safeAreaInsets';
@@ -59,11 +59,14 @@ interface SideMenuProps {
   onLogout: () => void;
   onOpenSettings: () => void;
   onOpenDca: () => void;
+  onOpenScan?: () => void;
+  onOpenMerchantPos?: () => void;
+  onOpenPartnerBuy?: () => void;
   onOpenRefund?: () => void;
   hasRejectedDeposits?: boolean;
 }
 
-const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSettings, onOpenDca, onOpenRefund, hasRejectedDeposits = false }) => {
+const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSettings, onOpenDca, onOpenScan, onOpenMerchantPos, onOpenPartnerBuy, onOpenRefund, hasRejectedDeposits = false }) => {
   // While the drawer is open, push the solid spark-surface tone over
   // the wallet page's glass tint so the status bar matches the drawer
   // panel's solid bg. Tied to isOpen so popping happens on close.
@@ -133,6 +136,21 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
       label: 'Get Refund',
       onClick: () => closeDrawerThen(onOpenRefund),
       highlight: true
+    }] : []),
+    ...(onOpenPartnerBuy ? [{
+      icon: <CurrencyIcon />,
+      label: 'Buy Bitcoin',
+      onClick: () => closeDrawerThen(onOpenPartnerBuy)
+    }] : []),
+    ...(onOpenScan ? [{
+      icon: <QrCodeIcon />,
+      label: 'Scan payment QR',
+      onClick: () => closeDrawerThen(onOpenScan)
+    }] : []),
+    ...(onOpenMerchantPos ? [{
+      icon: <ArrowDownIcon />,
+      label: 'Point of Sale',
+      onClick: () => closeDrawerThen(onOpenMerchantPos)
     }] : []),
     {
       icon: <SettingsIcon />,
