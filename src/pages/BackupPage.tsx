@@ -267,12 +267,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
             </p>
             <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
               <input type="checkbox" checked={privateViewing} onChange={e=>setPrivateViewing(e.target.checked)}
-                className="mt-1 accent-amber-400"/>
+                className="mt-1 accent-spark-primary"/>
               <span>I am in a private space away from cameras or people who could read my screen.</span>
             </label>
             <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
               <input type="checkbox" checked={paperReady} onChange={e=>setPaperReady(e.target.checked)}
-                className="mt-1 accent-amber-400"/>
+                className="mt-1 accent-spark-primary"/>
               <span>I will store a written copy securely and offline, never in a screenshot or message.</span>
             </label>
             {!canReveal && <p className="text-xs text-spark-text-muted">Complete both checks to enable viewing.</p>}
