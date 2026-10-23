@@ -174,6 +174,14 @@ export const useLightningAddress = (): UseLightningAddress => {
   }, []);
 
   const save = useCallback(async () => {
+    // A branded GetYourSats username is an account entitlement, not a
+    // self-service SDK-only claim. Do not permit squatting on reserved or
+    // email-derived aliases before verified-email backend checks exist.
+    if (import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED === 'true'
+      && import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN === 'pay.getyoursats.com') {
+      setError('Personalised GetYourSats addresses require verified email. This feature is not available yet.');
+      return;
+    }
     if (!isSupported) {
       markUnsupported();
       return;
