@@ -271,7 +271,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
 
   return (
   <>
-    <div className="relative overflow-hidden transition-all duration-200">
+    <div className="gys-wallet-balance-surface relative overflow-hidden transition-all duration-200">
       {/* Glassmorphism background - extends into safe area */}
       <div
         className="absolute inset-0 bg-spark-surface/80 backdrop-blur-xl border-b border-spark-border"
@@ -296,7 +296,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
           to a fixed 0.5rem gap on Android native (where env() is
           unreliable) and to env(safe-area-inset-top) on iOS / web. */}
       <div
-        className="relative z-10 px-4 pb-2"
+        className="gys-wallet-balance-surface__content relative z-10 px-4 pb-2"
         style={{ paddingTop: safeAreaTop }}
       >
         {/* Top bar with menu and network. Fixed h-14 (56dp) matches the
