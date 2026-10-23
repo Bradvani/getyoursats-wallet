@@ -66,8 +66,7 @@
 .gys-welcome__halo-outer{position:absolute;inset:0;border:1px solid rgba(231,190,93,.085);border-radius:50%}
 .gys-welcome__halo-inner{position:absolute;inset:22%;border:1px solid rgba(231,190,93,.13);border-radius:50%}
 .gys-welcome__coin{width:75%;height:75%;position:relative;z-index:1;display:grid;place-items:center}
-.gys-welcome__coin img{width:100%;height:100%;object-fit:contain;mix-blend-mode:screen;
- filter:drop-shadow(0 0 27px rgba(255,195,30,.18))}
+.gys-welcome__coin img{width:100%;height:100%;object-fit:contain;mix-blend-mode:screen}
 .gys-welcome__orbit-dot{position:absolute;height:7px;width:7px;border-radius:50%;background:#e6ad35;box-shadow:0 0 17px rgba(240,182,43,.45)}
 .gys-welcome__orbit-dot--one{top:14%;right:24%}.gys-welcome__orbit-dot--two{bottom:15%;left:17%;height:5px;width:5px;background:#8e7c4b}
 .gys-welcome__visual-caption{display:flex;gap:13px;align-items:center;color:#a49c89;text-transform:uppercase;letter-spacing:.16em;font-size:9px;font-weight:700;white-space:nowrap}
