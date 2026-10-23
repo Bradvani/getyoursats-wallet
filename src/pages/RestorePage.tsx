@@ -7,6 +7,7 @@ import { useScreenCaptureProtection } from '@/utils/screenSecurity';
 
 interface RestorePageProps {
   onConnect: (mnemonic: string) => Promise<void>;
+  onUsePasskey: () => void;
   onBack: () => void;
   onClearError: () => void;
   isLoading?: boolean;
@@ -14,11 +15,13 @@ interface RestorePageProps {
 
 const RestorePage: React.FC<RestorePageProps> = ({
   onConnect,
+  onUsePasskey,
   onBack,
   onClearError,
   isLoading = false,
 }) => {
   const [mnemonic, setMnemonic] = useState<string>('');
+  const [manualOpen, setManualOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // The user types their existing recovery phrase here: block capture
@@ -45,24 +48,39 @@ const RestorePage: React.FC<RestorePageProps> = ({
     }
   };
 
-  const footer = (
+  const footer = manualOpen ? (
     <div className="max-w-xl mx-auto">
-      <PrimaryButton
-        onClick={handleSubmit}
-        disabled={!mnemonic.trim() || isLoading}
-        className="w-full"
-        data-testid="restore-confirm-button"
-      >
-        {isLoading ? 'Restoring...' : 'Restore'}
+      <PrimaryButton onClick={handleSubmit} disabled={!mnemonic.trim() || isLoading}
+        className="w-full" data-testid="restore-confirm-button">
+        {isLoading ? 'Restoring...' : 'Restore with offline words'}
       </PrimaryButton>
     </div>
-  );
+  ) : <div/>;
 
   return (
     <PageLayout footer={footer} onBack={onBack} title="Restore from Backup" onClearError={onClearError}>
        <div className="max-w-xl mx-auto w-full space-y-4">
-        <p className="text-spark-text-secondary text-center mb-6">
-          Enter your 12 or 24-word recovery phrase to restore GetYourSats. Words should be separated by spaces.
+        <div className="rounded-2xl border border-amber-300/25 bg-spark-dark p-5 space-y-3">
+          <h2 className="text-lg font-semibold text-spark-text-primary">Restore your existing wallet</h2>
+          <p className="text-sm text-spark-text-secondary">
+            If you saved a GetYourSats passkey with your device's password manager, use it to sign in.
+            Face unlock, fingerprint or your screen lock may be used by the operating system.
+          </p>
+          <PrimaryButton className="w-full" onClick={onUsePasskey}>
+            Sign in with my passkey
+          </PrimaryButton>
+          <p className="text-xs text-spark-text-muted">
+            If this device can't find the passkey, check its password manager or return here for offline recovery.
+          </p>
+        </div>
+        <button type="button" className="w-full rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary"
+          aria-expanded={manualOpen} aria-controls="offline-restore-form"
+          onClick={() => setManualOpen(open => !open)}>
+          {manualOpen ? 'Hide offline recovery' : 'Restore with handwritten recovery words'}
+        </button>
+        {manualOpen && <div id="offline-restore-form" className="space-y-4">
+        <p className="text-spark-text-secondary text-center">
+          Enter your existing 12 or 24-word phrase privately. Words must be in order, separated by spaces.
         </p>
 
         <div className="relative">
@@ -88,6 +106,7 @@ const RestorePage: React.FC<RestorePageProps> = ({
         )}
 
         <WebSecurityNotice />
+        </div>}
 
         <div className="flex-1" />
       </div>
