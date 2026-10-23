@@ -242,7 +242,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <h3 className="font-display font-semibold text-spark-text-primary">GetYourSats address</h3>
                 <p className="text-xs text-spark-text-muted mt-1">Your personal @getyoursats.com identity</p>
               </div>
-              <span className="shrink-0 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1 text-xs text-amber-200">
+              <span className="shrink-0 rounded-full border border-amber-400/25 bg-spark-primary/10 px-3 py-1 text-xs text-spark-primary">
                 Coming soon
               </span>
             </div>
