@@ -29,9 +29,8 @@ describe('wallet onboarding guard',()=>{
 });
 
 describe('known wallet origin activation',()=>{
- it('accepts the verified production wallet and stable owned beta',()=>{
+ it('accepts the verified canonical wallet',()=>{
    expect(approvedGetYourSatsOrigin('https://wallet.getyoursats.com')).toBe('https://wallet.getyoursats.com');
-   expect(approvedGetYourSatsOrigin('https://beta.getyoursats.com')).toBe('https://beta.getyoursats.com');
  });
  it('does not trust random preview names or parent domains',()=>{
    expect(approvedGetYourSatsOrigin('https://getyoursats-wallet-any.vercel.app')).toBeUndefined();

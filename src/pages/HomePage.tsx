@@ -20,7 +20,7 @@ export default function HomePage({
   const errorId = useId();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const isBeta = typeof window !== 'undefined' &&
-    window.location.hostname === 'beta.getyoursats.com';
+    window.location.hostname === 'wallet.getyoursats.com';
 
   return (
     <main className="gys-welcome">
@@ -30,7 +30,7 @@ export default function HomePage({
           <img src="/assets/getyoursats-mark.jpg" alt="" width={37} height={37}/>
           <span>GETYOURSATS</span>
         </div>
-        <span className="gys-welcome__header-tag">{isBeta ? 'BETA BUILD' : 'BITCOIN · LIGHTNING'}</span>
+        <span className="gys-welcome__header-tag">BITCOIN · LIGHTNING</span>
       </header>
 
       <div className="gys-welcome__stage">

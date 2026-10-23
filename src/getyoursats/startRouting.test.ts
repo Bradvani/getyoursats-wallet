@@ -14,6 +14,6 @@ describe('Start must never surface a seed or trap users on temp URLs',()=>{
  });
  it('provides a stable custom beta address rather than temporary vercel.app keys',()=>{
    const options=readFileSync('src/getyoursats/SetupOptionsPage.tsx','utf8');
-   expect(options).toContain('https://beta.getyoursats.com');
+   expect(options).toContain('https://wallet.getyoursats.com');
  });
 });
