@@ -2,6 +2,7 @@ import {useState,useEffect} from 'react';
 import {createRecoveryChallenge, type RecoveryChallenge} from '../getyoursats/recoveryChallenge';
 import * as bip39 from 'bip39';
 import {PrimaryButton} from '../components/ui';
+import {EyeIcon, EyeOffIcon} from '../components/Icons';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageLayout from '../components/layout/PageLayout';
 import {AlertCard} from '../components/AlertCard';
@@ -27,6 +28,11 @@ export default function GeneratePage({
  const [challenge,setChallenge]=useState<RecoveryChallenge|null>(null);
  const [answers,setAnswers]=useState<[string,string]>(['','']);
  const [validationError,setValidationError]=useState('');
+ const [privatePlace,setPrivatePlace]=useState(false);
+ const [offlineReady,setOfflineReady]=useState(false);
+ const [wordsRevealed,setWordsRevealed]=useState(false);
+ const [everRevealed,setEverRevealed]=useState(false);
+ const [backedUp,setBackedUp]=useState(false);
  useScreenCaptureProtection(true);
  useEffect(()=>{
    try{
@@ -64,20 +70,53 @@ export default function GeneratePage({
    <AlertCard variant="error" title="Setup unavailable">{generationError}</AlertCard>
  </PageLayout>;
  const footer=<div className="max-w-xl mx-auto">
-  {stage==='show'?<PrimaryButton className="w-full" onClick={advanceToVerification}>I've written the words down</PrimaryButton>:
+  {stage==='show'?<PrimaryButton className="w-full" onClick={advanceToVerification} disabled={!everRevealed || !backedUp}>Verify my handwritten backup</PrimaryButton>:
    <PrimaryButton className="w-full" onClick={verify} disabled={!answers[0].trim()||!answers[1].trim()}>Verify offline backup</PrimaryButton>}
  </div>;
  return <PageLayout onBack={stage==='verify'?()=>{setStage('show');setAnswers(['','']);setValidationError('')}:onBack}
  footer={footer} title="Manual recovery" onClearError={onClearError}>
  <div className="max-w-xl mx-auto w-full space-y-5">
   {stage==='show'?<>
-    <p className="text-spark-text-secondary text-center">Write these words on paper in order. Never screenshot, photograph, email or paste them into another app.</p>
-    <div className="grid grid-cols-3 gap-2 bg-spark-dark border border-spark-border rounded-2xl p-4 select-none" aria-label="Recovery phrase">
-      {words.map((word,index)=><div key={index} className="flex gap-2 items-center rounded-lg bg-spark-surface p-2">
-        <span className="font-mono text-xs text-spark-text-muted">{index+1}.</span>
-        <span className="font-mono text-sm font-medium text-spark-text-primary">{word}</span>
-      </div>)}
+    <div className="space-y-3 rounded-2xl border border-spark-border bg-spark-dark p-5">
+      <p className="text-spark-text-primary font-semibold">Private backup checklist</p>
+      <p className="text-sm text-spark-text-secondary">Your recovery words are hidden. Reveal them only when you are ready to write them down privately.</p>
+      <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
+        <input type="checkbox" className="mt-1 accent-amber-400" checked={privatePlace} onChange={e=>setPrivatePlace(e.target.checked)}/>
+        <span>I am somewhere private, away from cameras and other people.</span>
+      </label>
+      <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
+        <input type="checkbox" className="mt-1 accent-amber-400" checked={offlineReady} onChange={e=>setOfflineReady(e.target.checked)}/>
+        <span>I will use paper and keep this backup offline. I will not screenshot, copy or share the words.</span>
+      </label>
+      <button type="button" aria-label={wordsRevealed?'Hide recovery words':'Reveal recovery words'}
+        aria-pressed={wordsRevealed}
+        disabled={!wordsRevealed && (!privatePlace || !offlineReady)}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-400/40 px-4 py-3 font-semibold text-amber-200 disabled:cursor-not-allowed disabled:opacity-40"
+        onClick={()=>{
+          if(wordsRevealed){setWordsRevealed(false);return;}
+          if(privatePlace && offlineReady){setWordsRevealed(true);setEverRevealed(true);}
+        }}>
+        {wordsRevealed?<EyeOffIcon size="sm"/>:<EyeIcon size="sm"/>}
+        {wordsRevealed?'Hide words':'Reveal words privately'}
+      </button>
     </div>
+    {wordsRevealed ? (
+      <div className="grid grid-cols-3 gap-2 bg-spark-dark border border-spark-border rounded-2xl p-4 select-none" aria-label="Recovery phrase">
+        {words.map((word,index)=><div key={index} className="flex gap-2 items-center rounded-lg bg-spark-surface p-2">
+          <span className="font-mono text-xs text-spark-text-muted">{index+1}.</span>
+          <span className="font-mono text-sm font-medium text-spark-text-primary">{word}</span>
+        </div>)}
+      </div>
+    ) : (
+      <div className="rounded-2xl border border-spark-border bg-spark-surface p-5 text-center text-sm text-spark-text-muted" role="status">
+        Recovery words hidden
+      </div>
+    )}
+    <label className="flex items-start gap-3 rounded-xl border border-spark-border p-4 text-sm text-spark-text-secondary">
+      <input type="checkbox" className="mt-1 accent-amber-400" checked={backedUp} disabled={!everRevealed}
+        onChange={e=>setBackedUp(e.target.checked)}/>
+      <span>I have written down all the words in order and stored them in a secure, private place.</span>
+    </label>
     <AlertCard variant="warning" title="Offline only">
       Nobody at GetYourSats can recover your private keys for you. Store your handwritten backup securely and separately from your phone.
     </AlertCard>
