@@ -257,10 +257,10 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
     return formatWithSpaces(displayBalance);
   }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, currentInrRate]);
 
-  // Currency symbol to show before the balance (₿ for sats, $ etc. for stable)
+  // The Bitcoin glyph denotes BTC, never sats. Sats are labelled by their unit selector.
   const currencySymbol = stableBalance.isActive && stableBalance.displayConfig?.symbol
     ? stableBalance.displayConfig.symbol
-    : bitcoinUnit==='INR'&&currentInrRate?'₹':'₿';
+    : bitcoinUnit==='INR'&&currentInrRate?'₹':bitcoinUnit==='BTC'?'₿':'';
 
   if (!walletInfo) return null;
 
@@ -406,7 +406,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
             <span className="balance-display">
               {formattedPrimaryBalance}
             </span>
-            {displayBalance > 0 && <span className="absolute right-full top-1/2 -translate-y-1/2 mr-0.5 text-3xl text-spark-text-secondary opacity-70 font-mono">{currencySymbol}</span>}
+            {displayBalance > 0 && currencySymbol && <span className="absolute right-full top-1/2 -translate-y-1/2 mr-0.5 text-3xl text-spark-text-secondary opacity-70 font-mono">{currencySymbol}</span>}
           </div>
 
           {/* Secondary line - fiat value or BTC as fiat equivalent */}
