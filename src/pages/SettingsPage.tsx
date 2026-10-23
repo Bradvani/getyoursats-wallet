@@ -218,7 +218,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 
           {/* Backup */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-            <h3 className="font-display font-semibold text-spark-text-primary mb-3">Backup</h3>
+            <h3 className="font-display font-semibold text-spark-text-primary mb-3">Privacy &amp; recovery</h3>
             <button
               className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors"
               type="button"
@@ -226,11 +226,35 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             >
               <div className="flex items-center gap-3">
                 <KeyIcon size="md" />
-                <span>Recovery Phrase</span>
+                <span>Optional handwritten backup</span>
               </div>
               <ChevronRightIcon size="md" />
             </button>
           </div>
+
+          {/* Account-linked personalised addresses are never granted from
+              browser-local counters or mutable settings. This is informational
+              until backend verifies email, username, and eligible fee events. */}
+          <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-3"
+            aria-label="GetYourSats Lightning identity">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-display font-semibold text-spark-text-primary">GetYourSats address</h3>
+                <p className="text-xs text-spark-text-muted mt-1">Your personal @getyoursats.com identity</p>
+              </div>
+              <span className="shrink-0 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1 text-xs text-amber-200">
+                Coming soon
+              </span>
+            </div>
+            <p className="text-sm text-spark-text-secondary leading-relaxed">
+              Your wallet works now with its existing Lightning address. A personalised GetYourSats address will unlock after
+              your email and username are verified and the required eligible payment fees are confirmed by our service.
+            </p>
+            <p className="text-xs text-spark-text-muted">
+              This feature isn't active yet. Changing a display name or making payments cannot unlock it locally.
+              Your existing receiving address will not be replaced automatically.
+            </p>
+          </section>
 
           {/* Display */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
