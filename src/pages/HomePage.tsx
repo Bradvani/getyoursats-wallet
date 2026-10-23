@@ -19,8 +19,6 @@ export default function HomePage({
 }: Props) {
   const errorId = useId();
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const isBeta = typeof window !== 'undefined' &&
-    window.location.hostname === 'wallet.getyoursats.com';
 
   return (
     <main className="gys-welcome">
