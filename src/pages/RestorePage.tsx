@@ -60,7 +60,7 @@ const RestorePage: React.FC<RestorePageProps> = ({
   return (
     <PageLayout footer={footer} onBack={onBack} title="Restore from Backup" onClearError={onClearError}>
        <div className="max-w-xl mx-auto w-full space-y-4">
-        <div className="rounded-2xl border border-amber-300/25 bg-spark-dark p-5 space-y-3">
+        <div className="rounded-2xl border border-spark-primary/25 bg-spark-dark p-5 space-y-3">
           <h2 className="text-lg font-semibold text-spark-text-primary">Restore your existing wallet</h2>
           <p className="text-sm text-spark-text-secondary">
             If you saved a GetYourSats passkey with your device's password manager, use it to sign in.
