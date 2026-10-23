@@ -9,7 +9,7 @@ vi.mock('../components/TransactionList', () => ({
 }));
 
 const payment = (id: string, status: 'pending'|'failed'|'completed', type: 'send'|'receive'): Payment =>
-  ({id, status, paymentType: type, method: 'lightning', timestamp: 1710000000, amount: 1000, fees: 0}) as Payment;
+  ({id, status, paymentType: type, method: 'lightning', timestamp: 1710000000, amount: 1000n, fees: 0n}) as unknown as Payment;
 
 describe('WalletActivityPanel', () => {
   it('displays real SDK payments, opens their details and preserves full history', () => {
