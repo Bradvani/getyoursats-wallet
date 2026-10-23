@@ -82,14 +82,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const [gysPosOpen,setGysPosOpen] = useState(false);
   const [partnerBuyOpen,setPartnerBuyOpen] = useState(false);
   const [historyOpen,setHistoryOpen] = useState(false);
-  const [needsBackupReminder]=useState(()=> {
-    try{return localStorage.getItem('gys:backup:pending')==='true'}catch{return false}
-  });
-  const [reminderMethod]=useState(()=> {
-    try{return localStorage.getItem('gys:backup:method')==='passkey'?'passkey':'device';}
-    catch{return 'device';}
-  });
-  const [reminderDismissed,setReminderDismissed]=useState(false);
   const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
@@ -340,18 +332,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
            primaryLightningAddress.isSupported?'Tap Receive to set up':'Not available on this network'}
         </span>}
       </div>
-      {needsBackupReminder&&!reminderDismissed&&
-        <section className="gys-backup-nudge" aria-label="Protect your wallet">
-          <div><strong>Complete your wallet setup</strong>
-            <p>{reminderMethod==='passkey'
-              ? 'Your wallet is ready. Your passkey is your primary recovery method; consider an optional handwritten backup for extra resilience.'
-              : 'Your wallet is ready. Secure storage protects your keys on this device, but a recovery backup is still important before storing funds.'}</p>
-          </div>
-          <div className="gys-backup-nudge__actions">
-            <button type="button" onClick={onOpenBackup}>Review recovery options</button>
-            <button type="button" onClick={()=>setReminderDismissed(true)}>Later</button>
-          </div>
-        </section>}
       <button type="button" className="gys-wallet__history-trigger" aria-expanded={historyOpen}
         aria-controls="gys-wallet-history" onClick={()=>setHistoryOpen(v=>!v)}>
         <span aria-hidden="true" className={historyOpen?'gys-wallet__history-arrow gys-wallet__history-arrow--open':'gys-wallet__history-arrow'}>⌃</span>
