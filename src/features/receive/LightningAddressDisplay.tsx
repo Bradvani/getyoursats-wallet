@@ -40,6 +40,9 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
   qrCardClassName,
 }) => {
   const { showToast } = useToast();
+  const brandedDomainActive =
+    import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED === 'true'
+    && import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN === 'pay.getyoursats.com';
   const amountLink = (className: string) => (
     <TextButton
       onClick={onCustomizeAmount}
@@ -92,7 +95,9 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
         <p className="text-spark-text-secondary text-sm mb-4">
           Create a Lightning Address to receive payments easily
         </p>
-        <PrimaryButton onClick={onEdit}>Create Lightning Address</PrimaryButton>
+        {brandedDomainActive
+          ? <p className="text-spark-text-muted text-sm">Address registration is unavailable. Please try again later.</p>
+          : <PrimaryButton onClick={onEdit}>Create Lightning Address</PrimaryButton>}
       </div>,
     ) : (
       <div className="w-full flex justify-center">{amountLink('text-sm')}</div>
@@ -113,7 +118,7 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
         textColor="text-spark-primary"
         onCopied={() => showToast('success', 'Copied!')}
         onShareError={() => showToast('error', 'Failed to share')}
-        additionalActions={<EditButton onClick={onEdit} />}
+        additionalActions={brandedDomainActive ? undefined : <EditButton onClick={onEdit} />}
         textToCopy={address.lightningAddress}
         textToShare={address.lnurl.bech32}
         shareLabel="LNURL-Pay"
