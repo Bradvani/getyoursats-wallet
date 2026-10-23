@@ -237,3 +237,17 @@
  .gys-market-pulse,.gys-activity,.gys-welcome__coin,.gys-welcome__halo-outer,.gys-welcome__content h1,.gys-welcome__subtitle,.gys-welcome__actions,.gys-market-pulse__dot{animation:none!important}
  .gys-market-pulse__switches button,.gys-activity__refresh,.gys-welcome__start{transition:none}
 }
+
+/* Searchable wallet history - stays client-side, never sends tx identifiers off-device. */
+.gys-history-controls {padding:19px 18px 8px;display:grid;gap:12px}
+.gys-history-controls label{display:grid;gap:7px;font-size:11px;color:#b5b0a7;font-weight:650}
+.gys-history-controls input,.gys-history-controls select{width:100%;min-width:0;border:1px solid rgba(255,225,177,.19);border-radius:11px;background:#121314;color:#eee7da;font-size:13px;padding:12px 13px;outline:none;transition:border-color .18s,box-shadow .18s}
+.gys-history-controls input:focus-visible,.gys-history-controls select:focus-visible{border-color:#f1c375;box-shadow:0 0 0 3px rgba(241,195,117,.11)}
+.gys-history-controls__filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.gys-history-controls__footer{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#97948f;font-size:11px;flex-wrap:wrap}
+.gys-history-controls__footer button,.gys-history-controls__empty button{border:1px solid rgba(246,200,119,.34);border-radius:10px;padding:9px 13px;color:#ffda99;background:rgba(255,195,103,.09);font-size:11px;font-weight:750;transition:background .2s,transform .2s}
+.gys-history-controls__footer button:hover:not(:disabled),.gys-history-controls__empty button:hover{background:rgba(255,195,103,.18);transform:translateY(-1px)}
+.gys-history-controls__footer button:disabled{opacity:.4;cursor:not-allowed}
+.gys-history-controls__empty{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:13px;padding:40px 20px;color:#b1aba1;font-size:13px;text-align:center}
+@media(max-width:390px){.gys-history-controls__filters{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.gys-history-controls input,.gys-history-controls select,.gys-history-controls__footer button,.gys-history-controls__empty button{transition:none}}
