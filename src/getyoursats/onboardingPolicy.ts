@@ -28,3 +28,10 @@ export function chooseWalletOnboarding({
     return 'manual';
   }
 }
+
+/** Explicitly approved, owned origins. Do not whitelist ephemeral vercel.app
+ * hosts: passkey PRF wallet recovery is tied to the relying party identity. */
+export function approvedGetYourSatsOrigin(origin: string): string | undefined {
+  return origin === 'https://wallet.getyoursats.com' ||
+    origin === 'https://beta.getyoursats.com' ? origin : undefined;
+}

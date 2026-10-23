@@ -3,7 +3,7 @@ import * as bip39 from 'bip39';
 import {deviceOnlyStorage, SecureStorageError} from './services/secureStorage';
 import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
 import {Capacitor} from '@capacitor/core';
-import {chooseWalletOnboarding} from './getyoursats/onboardingPolicy';
+import {chooseWalletOnboarding, approvedGetYourSatsOrigin} from './getyoursats/onboardingPolicy';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
 import { WalletProvider, WalletInfoProvider, WalletStatusProvider } from './contexts/WalletContext';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -205,7 +205,7 @@ const AppContent: React.FC = () => {
     const next = chooseWalletOnboarding({
       prfAvailable: sdk.prfAvailable,
       origin: window.location.origin,
-      approvedWebOrigin: import.meta.env.VITE_GETYOURSATS_PASSKEY_ORIGIN,
+      approvedWebOrigin: import.meta.env.VITE_GETYOURSATS_PASSKEY_ORIGIN || approvedGetYourSatsOrigin(window.location.origin),
       isNative: Capacitor.isNativePlatform(),
       nativeAssociationVerified: import.meta.env.VITE_GETYOURSATS_NATIVE_PASSKEY_READY === 'true',
     });
@@ -215,7 +215,13 @@ const AppContent: React.FC = () => {
       setUserScreen('passkey');
       return;
     }
-    setSetupIssue('Secure one-tap web setup needs a supported passkey and an approved permanent wallet domain. You can use manual setup below.');
+    if (!approvedGetYourSatsOrigin(window.location.origin)) {
+      // A temporary vercel.app URL is not a stable wallet recovery identity.
+      // Never mint wallet keys on a deployment hostname that may disappear.
+      setSetupIssue('This test URL cannot store recoverable passkeys. Open beta.getyoursats.com to test securely.');
+      return;
+    }
+    setSetupIssue('A compatible passkey is required for one-tap web setup on this device. Use the offline recovery option below.');
   };
   const handleGetYourSatsManual = () => {
     if (requireWalletService()) setUserScreen('generate');
