@@ -16,7 +16,7 @@ export default function HomePage({onCreateNewWallet,onCreateManualWallet,onResto
   </div>
   <section className="gys-welcome__actions" aria-label="Get started">
     <button className="gys-welcome__start" type="button" onClick={onCreateNewWallet} aria-describedby={setupIssue?errorId:undefined}>Start <span aria-hidden="true">↗</span></button>
-    <button className="gys-welcome__restore" type="button" onClick={onRestoreWallet}>Restore existing wallet</button>
+    <button className="gys-welcome__restore" type="button" onClick={onRestoreWallet} aria-label="Restore existing wallet">Restore existing wallet</button>
     <button className="gys-welcome__advanced" type="button" onClick={onCreateManualWallet}>Advanced · Create with offline backup</button>
     {setupIssue&&<p id={errorId} role="alert" className="gys-welcome__error">{setupIssue}</p>}
     <p className="gys-welcome__footer">Self-custody by design <span aria-hidden="true">·</span> Powered by Bitcoin</p>
