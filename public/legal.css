@@ -17,14 +17,14 @@ body {
   line-height: 1.65;
 }
 body::before {
-  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background: radial-gradient(ellipse 60% 35% at 80% -10%, rgba(193, 127, 31, .13), transparent 80%),
     radial-gradient(ellipse 38% 46% at -12% 65%, rgba(176, 112, 34, .06), transparent 90%);
 }
 a { color: var(--gold); text-underline-offset: .2em; }
 a:hover { color: #ffda93; }
 a:focus-visible, button:focus-visible { outline: 2px solid #ffda93; outline-offset: 4px; border-radius: 4px; }
-.site-shell { max-width: 1060px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); }
+.site-shell { position: relative; z-index: 1; max-width: 1060px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); }
 .site-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; border-bottom: 1px solid var(--line); min-height: 96px; }
 .wordmark { display: inline-flex; gap: 12px; align-items: center; color: var(--ink); font-size: .88rem; font-weight: 800; letter-spacing: .14em; text-decoration: none; }
 .brand-coin { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid #b9822d; border-radius: 50%; color: #ffcf76; font-size: 1.48rem; line-height: 1; background: radial-gradient(circle at 26% 22%, #66502c, #1a140c 72%); box-shadow: 0 0 28px rgba(223, 156, 55, .12), inset 0 1px 1px rgba(255,255,255,.22); }
