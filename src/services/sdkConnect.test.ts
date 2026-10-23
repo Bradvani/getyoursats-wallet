@@ -39,11 +39,18 @@ describe('buildConnectConfig', () => {
     expect(buildConnectConfig('mainnet').lnurlDomain).not.toBe('pay.getyoursats.com');
   });
 
-  it('activates only the approved pay.getyoursats.com address domain on mainnet', () => {
+  it('activates the approved pay.getyoursats.com subdomain on mainnet', () => {
     vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN', 'pay.getyoursats.com');
     vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED', 'true');
     expect(buildConnectConfig('mainnet').lnurlDomain).toBe('pay.getyoursats.com');
     expect(buildConnectConfig('regtest').lnurlDomain).not.toBe('pay.getyoursats.com');
+  });
+
+  it('accepts @getyoursats.com as the canonical domain only after explicit approval', () => {
+    vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN', 'getyoursats.com');
+    vi.stubEnv('VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED', 'true');
+    expect(buildConnectConfig('mainnet').lnurlDomain).toBe('getyoursats.com');
+    expect(buildConnectConfig('regtest').lnurlDomain).not.toBe('getyoursats.com');
   });
 
   it('rejects wrong LNURL domains even with approval flag', () => {
