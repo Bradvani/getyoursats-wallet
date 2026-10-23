@@ -342,11 +342,11 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
             && (fallbackTier === 'biometric' || fallbackTier === 'device') && (
             <button
               onClick={() => { if (canReveal) void revealFromVault(fallbackTier); }}
-              disabled={isLoading}
+              disabled={isLoading || !canReveal}
               className="w-full bg-spark-dark border border-spark-border rounded-2xl p-8 flex flex-col items-center gap-4 hover:border-spark-border-light transition-colors disabled:opacity-50"
             >
               <span className="font-display font-semibold text-spark-text-primary">
-                {isLoading ? 'Authenticating...' : 'Tap to reveal phrase'}
+                <span className="inline-flex items-center gap-2"><EyeIcon size="sm"/> {isLoading ? 'Authenticating...' : 'Reveal words privately'}</span>
               </span>
               <span className="text-sm text-spark-text-muted">
                 {fallbackTier === 'device'
