@@ -10,7 +10,7 @@ test('@public-smoke responsive GetYourSats welcome is one cohesive surface',asyn
   await expect(page.getByRole('heading',{name:'Bitcoin, on your terms.'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Start'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Restore existing wallet'})).toBeVisible();
-  await expect(page.locator('.gys-welcome__coin img')).toHaveCSS('mix-blend-mode','screen');
+  await expect(page.locator('.gys-welcome__coin img')).toHaveCSS('mask-mode','luminance');
   expect(await page.locator('.gys-welcome__coin img').evaluate((x)=> (x as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   mkdirSync('test-artifacts',{recursive:true});
   await page.screenshot({path:'test-artifacts/welcome-desktop.png',animations:'disabled'});

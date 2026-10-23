@@ -141,3 +141,20 @@
 .gys-setup__secondary{padding:16px 18px;border:1px solid #62532e;color:#e9cb80;border-radius:16px;font-weight:700;text-align:center}
 .gys-setup__actions{display:grid;gap:10px;padding-top:10px}
 .gys-setup__primary:focus-visible,.gys-setup__secondary:focus-visible,.gys-setup__back:focus-visible{outline:2px solid #ffca28;outline-offset:3px}
+
+/* Original brand artwork is an opaque JPEG. Use its luminance as an alpha
+ * mask so the black JPG canvas doesn't appear as a separate square. */
+.gys-welcome__brand img,
+.gys-welcome__coin img{
+  mix-blend-mode:normal;
+  -webkit-mask-image:url('/assets/getyoursats-mark.jpg');
+  mask-image:url('/assets/getyoursats-mark.jpg');
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
+  -webkit-mask-position:center;
+  mask-position:center;
+  -webkit-mask-size:contain;
+  mask-size:contain;
+  mask-mode:luminance;
+  filter:brightness(1.12);
+}
