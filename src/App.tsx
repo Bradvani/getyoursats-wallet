@@ -706,6 +706,11 @@ const AppContent: React.FC = () => {
         return (
           <RestorePage
             onConnect={(mnemonic) => handleConnect(mnemonic, true)}
+            onUsePasskey={() => {
+              setPasskeySkipDetection(false);
+              setPasskeyFailed(false);
+              setUserScreen('passkey');
+            }}
             onBack={() => setUserScreen('home')}
             onClearError={sdk.clearError}
             isLoading={sdk.isLoading}
