@@ -82,6 +82,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const [needsBackupReminder]=useState(()=> {
     try{return localStorage.getItem('gys:backup:pending')==='true'}catch{return false}
   });
+  const [reminderMethod]=useState(()=> {
+    try{return localStorage.getItem('gys:backup:method')==='passkey'?'passkey':'device';}
+    catch{return 'device';}
+  });
   const [reminderDismissed,setReminderDismissed]=useState(false);
   const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
@@ -335,11 +339,13 @@ const WalletPage: React.FC<WalletPageProps> = ({
       </div>
       {needsBackupReminder&&!reminderDismissed&&
         <section className="gys-backup-nudge" aria-label="Protect your wallet">
-          <div><strong>Protect your Bitcoin</strong>
-            <p>Your wallet is on this device. If you lose it without backup, your sats may be lost.</p>
+          <div><strong>Complete your wallet setup</strong>
+            <p>{reminderMethod==='passkey'
+              ? 'Your wallet is ready. Your passkey is your primary recovery method; consider an optional handwritten backup for extra resilience.'
+              : 'Your wallet is ready. Secure storage protects your keys on this device, but a recovery backup is still important before storing funds.'}</p>
           </div>
           <div className="gys-backup-nudge__actions">
-            <button type="button" onClick={onOpenBackup}>Back up privately</button>
+            <button type="button" onClick={onOpenBackup}>Review recovery options</button>
             <button type="button" onClick={()=>setReminderDismissed(true)}>Later</button>
           </div>
         </section>}
