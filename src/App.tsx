@@ -4,6 +4,8 @@ import {deviceOnlyStorage, SecureStorageError} from './services/secureStorage';
 import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
 import {Capacitor} from '@capacitor/core';
 import {chooseWalletOnboarding, approvedGetYourSatsOrigin} from './getyoursats/onboardingPolicy';
+import {prfAvailability} from './services/passkeyService';
+import SetupOptionsPage from './getyoursats/SetupOptionsPage';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
 import { WalletProvider, WalletInfoProvider, WalletStatusProvider } from './contexts/WalletContext';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -58,7 +60,7 @@ import type { Seed, Payment, BreezSdk } from '@breeztech/breez-sdk-spark';
 
 const PASSKEY_MIGRATION_ENABLED = true;
 
-type Screen = 'home' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
+type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
 
 // Full-screen dim spinner shown while sdk.isLoading is true (logout in
 // progress, SDK reconnect, etc). Wrapped as its own component so the
@@ -203,7 +205,7 @@ const AppContent: React.FC = () => {
     // recovery. Prefer a synced PRF-derived passkey rather than plaintext seed
     // storage. Never route Start to an unsolicited seed-word display.
     const next = chooseWalletOnboarding({
-      prfAvailable: sdk.prfAvailable,
+      prfAvailable: sdk.prfAvailable || await prfAvailability().catch(() => false),
       origin: window.location.origin,
       approvedWebOrigin: import.meta.env.VITE_GETYOURSATS_PASSKEY_ORIGIN || approvedGetYourSatsOrigin(window.location.origin),
       isNative: Capacitor.isNativePlatform(),
@@ -215,13 +217,10 @@ const AppContent: React.FC = () => {
       setUserScreen('passkey');
       return;
     }
-    if (!approvedGetYourSatsOrigin(window.location.origin)) {
-      // A temporary vercel.app URL is not a stable wallet recovery identity.
-      // Never mint wallet keys on a deployment hostname that may disappear.
-      setSetupIssue('This test URL cannot store recoverable passkeys. Open beta.getyoursats.com to test securely.');
-      return;
-    }
-    setSetupIssue('A compatible passkey is required for one-tap web setup on this device. Use the offline recovery option below.');
+    // No modal error and no unsolicited recovery-phrase exposure. Present
+    // meaningful next actions on unsupported browsers or preview URLs.
+    setSetupIssue(null);
+    setUserScreen('walletSetup');
   };
   const handleGetYourSatsManual = () => {
     if (requireWalletService()) setUserScreen('generate');
@@ -345,6 +344,7 @@ const AppContent: React.FC = () => {
       case 'passkeyLocalState':
         setUserScreen('passkeySettings');
         return true;
+      case 'walletSetup':
       case 'restore':
       case 'generate':
       case 'passkey':
@@ -502,6 +502,15 @@ const AppContent: React.FC = () => {
             onCreatePasskey={() => { setPasskeySkipDetection(true); setUserScreen('passkey'); }}
             prfAvailable={sdk.prfAvailable}
             setupIssue={setupIssue}
+          />
+        );
+
+      case 'walletSetup':
+        return (
+          <SetupOptionsPage
+            stableOrigin={Boolean(approvedGetYourSatsOrigin(window.location.origin))}
+            onBack={() => setUserScreen('home')}
+            onOfflineSetup={handleGetYourSatsManual}
           />
         );
 
