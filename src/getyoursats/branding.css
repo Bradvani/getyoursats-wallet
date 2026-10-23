@@ -8,31 +8,45 @@
 .gys-pos button:disabled{opacity:.6}.gys-qr{padding:16px;background:white;border-radius:16px;margin:0 auto}
 .gys-invoice{text-align:center}.gys-error{color:#f88}
 
-/* GetYourSats core surfaces — intentional black, warm-gold and quiet hierarchy. */
-.gys-welcome{position:relative;isolation:isolate;min-height:100dvh;min-height:100svh;display:flex;flex-direction:column;justify-content:space-between;align-items:center;overflow:hidden;background:#070707;color:#f6f2e8;padding:max(28px,env(safe-area-inset-top)) 24px max(27px,env(safe-area-inset-bottom));font-family:'Plus Jakarta Sans',system-ui,sans-serif}
-.gys-welcome__aura{position:absolute;z-index:-1;inset:0;pointer-events:none;background:radial-gradient(ellipse 75% 38% at 50% 40%,rgba(248,186,24,.075),transparent 73%),linear-gradient(180deg,#080808 3%,#0e0d0b 54%,#070707 98%)}
-.gys-welcome__header{align-self:flex-start;display:flex;align-items:center;gap:10px}.gys-welcome__mark{width:34px;height:34px;object-fit:contain;border-radius:10px}
-.gys-welcome__wordmark{font-size:12px;font-weight:800;letter-spacing:.24em}
-.gys-welcome__main{width:100%;max-width:550px;display:flex;flex-direction:column;align-items:center;text-align:center;margin:35px 0 22px}
-.gys-welcome__emblem{height:170px;width:170px;display:grid;place-items:center;margin-bottom:18px;filter:drop-shadow(0 12px 55px rgba(245,185,15,.12))}.gys-welcome__emblem img{height:140px;width:140px;object-fit:contain}
-.gys-welcome__eyebrow{color:#c4a45c;letter-spacing:.2em;font-weight:800;font-size:10px;margin-bottom:12px}
-.gys-welcome h1{font-size:clamp(32px,7vw,46px);letter-spacing:-.055em;font-weight:800;line-height:1.13}
-.gys-welcome__subtitle{color:#aaa49a;font-size:clamp(13px,3.5vw,15px);line-height:1.6;margin-top:14px}
-.gys-welcome__actions{width:min(100%,390px);display:flex;flex-direction:column;align-items:stretch;gap:8px}
-.gys-welcome__start{display:flex;align-items:center;justify-content:center;gap:12px;background:#ffca28;color:#110f09;font-size:16px;font-weight:800;border-radius:16px;min-height:58px;transition:transform .16s ease,filter .16s ease}
-.gys-welcome__start:hover{filter:brightness(1.06)}.gys-welcome__start:active{transform:scale(.985)}
-.gys-welcome__start:focus-visible,.gys-welcome__restore:focus-visible,.gys-action-dock button:focus-visible{outline:2px solid #ffca28;outline-offset:3px}
-.gys-welcome__restore{color:#c8c0b2;font-size:13px;font-weight:600;min-height:42px;padding:8px}
-.gys-welcome__error{border-radius:12px;background:#30201b;border:1px solid #794438;color:#f9cfc6;padding:12px;font-size:13px;line-height:1.6;text-align:center}
-.gys-welcome__footer{text-align:center;color:#807c72;font-size:11px;padding-top:12px;letter-spacing:.02em}.gys-welcome__footer span{padding:0 4px}
+/* GetYourSats welcome · quiet editorial composition; logo tile blends into dark canvas */
+.gys-welcome{position:relative;isolation:isolate;min-height:100svh;display:flex;flex-direction:column;justify-content:space-between;align-items:center;overflow:hidden;background:#08090b;color:#f5f3ec;padding:max(23px,env(safe-area-inset-top)) clamp(20px,5vw,52px) max(28px,env(safe-area-inset-bottom));font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+.gys-welcome__aura{position:absolute;z-index:-1;inset:0;pointer-events:none;background:radial-gradient(ellipse 35% 28% at 50% 43%,rgba(255,195,53,.10),transparent 86%),radial-gradient(ellipse 48% 49% at 50% 67%,rgba(156,122,38,.055),transparent 90%),linear-gradient(135deg,#0e1014,#070707 55%,#0d0b08)}
+.gys-welcome__header{width:100%;max-width:1050px;align-self:center;display:flex;align-items:center;gap:11px}
+.gys-welcome__mark{width:36px;height:36px;object-fit:contain;border-radius:8px;mix-blend-mode:screen}
+.gys-welcome__wordmark{font-size:11px;font-weight:800;letter-spacing:.23em}
+.gys-welcome__header-note{margin-left:auto;color:#706f69;font-weight:700;font-size:10px;letter-spacing:.17em}
+.gys-welcome__main{width:100%;max-width:660px;display:flex;flex-direction:column;align-items:center;text-align:center;margin:10px 0 20px}
+.gys-welcome__halo{height:220px;width:220px;display:grid;place-items:center;position:relative;margin-bottom:7px}
+.gys-welcome__halo:before{content:"";position:absolute;inset:-12px;border-radius:100%;border:1px solid rgba(255,205,63,.07);box-shadow:0 0 130px rgba(231,166,26,.045),inset 0 0 80px rgba(242,190,55,.02)}
+.gys-welcome__halo img{height:196px;width:196px;object-fit:contain;mix-blend-mode:screen;filter:drop-shadow(0 12px 32px rgba(254,197,28,.11))}
+.gys-welcome__eyebrow{color:#c3a66f;letter-spacing:.22em;font-weight:800;font-size:10px;margin:5px 0 15px}
+.gys-welcome h1{font-size:clamp(38px,5.5vw,64px);max-width:680px;letter-spacing:-.066em;font-weight:750;line-height:1.1}
+.gys-welcome h1 span{color:#ffca2c}
+.gys-welcome__subtitle{color:#a5a39c;font-size:clamp(14px,2vw,17px);line-height:1.75;margin-top:18px}
+.gys-welcome__rail{margin-top:28px;display:flex;align-items:center;justify-content:center;gap:17px;color:#b6ae98;font-size:11px;font-weight:750;letter-spacing:.05em}
+.gys-welcome__rail>span:first-child{display:flex;align-items:center;gap:7px}.gys-welcome__rail-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f5bd32;box-shadow:0 0 11px #eab72b66}
+.gys-welcome__rail-divider{height:12px;width:1px;background:#37342a}
+.gys-welcome__actions{width:min(100%,380px);display:flex;flex-direction:column;align-items:stretch;gap:8px}
+.gys-welcome__start{display:flex;align-items:center;justify-content:center;position:relative;background:#ffca2b;color:#17140e;font-size:16px;font-weight:850;border-radius:15px;min-height:61px;box-shadow:0 8px 32px rgba(255,194,30,.14);transition:transform .16s ease,background .16s ease,box-shadow .16s ease}
+.gys-welcome__start:hover{background:#ffda5c;box-shadow:0 10px 36px rgba(255,194,30,.22)}.gys-welcome__start:active{transform:scale(.986)}
+.gys-welcome__start-arrow{position:absolute;right:22px;font-size:19px;font-weight:600}
+.gys-welcome__start:focus-visible,.gys-welcome__restore:focus-visible,.gys-welcome__subnav button:focus-visible,.gys-action-dock button:focus-visible{outline:2px solid #ffca28;outline-offset:3px}
+.gys-welcome__restore{color:#a6a49e;font-size:13px;font-weight:450;min-height:43px;padding:8px}
+.gys-welcome__restore strong{color:#f0e6cd;font-weight:700}
+.gys-welcome__error{border-radius:13px;background:#231a17;border:1px solid rgba(228,144,93,.24);color:#eec3b0;padding:13px 16px;font-size:12px;line-height:1.55;text-align:center}
+.gys-welcome__subnav{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;color:#77746f;font-size:11px}
+.gys-welcome__subnav button{color:#9b968d;padding:5px}.gys-welcome__subnav-dot{color:#564e41}
+@media(max-height:760px){.gys-welcome__halo{width:150px;height:150px}.gys-welcome__halo img{height:140px;width:140px}.gys-welcome__rail{margin-top:17px}.gys-welcome__main{margin:5px 0 12px}.gys-welcome__subnav{margin-top:6px}}
+@media(max-width:480px){.gys-welcome__header-note{display:none}.gys-welcome__halo{height:170px;width:170px}.gys-welcome__halo img{height:160px;width:160px}.gys-welcome h1{font-size:clamp(36px,10vw,45px)}.gys-welcome__main{margin:16px 0}.gys-welcome__subtitle{font-size:14px}.gys-welcome__rail{margin-top:20px}}
+@media(prefers-reduced-motion:reduce){.gys-welcome__start{transition:none}}
 .gys-action-dock{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;gap:8px;flex-shrink:0;position:relative;z-index:30;background:rgba(15,15,14,.96);border-top:1px solid rgba(247,202,86,.15);padding:11px 12px max(11px,env(safe-area-inset-bottom));box-shadow:0 -8px 35px rgba(0,0,0,.23);backdrop-filter:blur(20px)}
 .gys-action-dock button{min-width:0;min-height:58px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;border:1px solid transparent;border-radius:12px;color:#d8d2c4;font-size:11px;font-weight:700;transition:background .16s ease,transform .16s ease}
 .gys-action-dock button:hover{background:#24231f}.gys-action-dock button:active{transform:scale(.97)}
 .gys-action-dock button svg{width:21px;height:21px}
 .gys-action-dock .gys-action-dock__accept{color:#ffcf39;background:rgba(255,202,40,.10);border-color:rgba(255,202,40,.18)}
 .gys-action-dock__bitcoin{font-size:23px;line-height:21px;font-weight:800}
-@media(max-width:360px){.gys-action-dock{gap:3px;padding-left:7px;padding-right:7px}.gys-action-dock button{font-size:10px}.gys-welcome h1{font-size:30px}}
-@media(prefers-reduced-motion:reduce){.gys-welcome__start,.gys-action-dock button{transition:none}}
+@media(max-width:360px){.gys-action-dock{gap:3px;padding-left:7px;padding-right:7px}.gys-action-dock button{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.gys-action-dock button{transition:none}}
 
 .gys-unit-switch{display:flex;gap:3px;border:1px solid rgba(255,202,40,.18);background:#171717;padding:4px;border-radius:12px;max-width:max-content;margin:8px 0 10px}
 .gys-unit-switch button{min-width:55px;padding:9px 11px;font-size:12px;font-weight:800;border-radius:9px;color:#c5bda9}

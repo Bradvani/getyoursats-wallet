@@ -215,7 +215,16 @@ const AppContent: React.FC = () => {
       setUserScreen('passkey');
       return;
     }
-    setSetupIssue('Secure one-tap web setup needs a supported passkey and an approved permanent wallet domain. You can use manual setup below.');
+    // Temporary Vercel URLs are never permitted to mint passkeys:
+    // their relying-party ID would strand recovery when the preview expires.
+    // Direct first-time users to the permanent production wallet origin.
+    if (window.location.hostname.endsWith('.vercel.app')) {
+      window.location.assign('https://wallet.getyoursats.com');
+      return;
+    }
+    setSetupIssue(sdk.prfAvailable
+      ? 'Passkey setup needs the permanent wallet domain to be enabled. You can restore an existing wallet or choose advanced recovery setup.'
+      : 'A compatible passkey is needed for one-tap wallet creation on this browser. You can restore a wallet or choose advanced recovery setup.');
   };
   const handleGetYourSatsManual = () => {
     if (requireWalletService()) setUserScreen('generate');
