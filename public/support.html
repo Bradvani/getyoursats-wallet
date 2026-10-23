@@ -1,1 +1,71 @@
-<html><head><title>GetYourSats support</title></head><body><h1>GetYourSats</h1><p>Support channel pending setup.</p></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070809">
+  <meta name="description" content="GetYourSats Bitcoin and Lightning wallet support, recovery guidance and troubleshooting.">
+  <link rel="canonical" href="https://wallet.getyoursats.com/support.html">
+  <link rel="icon" type="image/jpeg" href="/assets/getyoursats-mark.jpg">
+  <link rel="stylesheet" href="/legal.css">
+  <title>Wallet Support | GetYourSats</title>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="wordmark" href="/" aria-label="GetYourSats home"><span class="brand-coin" aria-hidden="true">₿</span><span>GETYOURSATS</span></a>
+      <nav class="site-nav" aria-label="Main navigation"><a href="/">Wallet</a><a href="/privacy.html">Privacy</a><a href="/support.html" aria-current="page">Support</a></nav>
+    </header>
+    <main id="main-content">
+      <section class="hero" aria-labelledby="page-title">
+        <p class="eyebrow">We're here to help</p>
+        <h1 id="page-title">Support that puts<br><em>ownership first.</em></h1>
+        <p class="lead">Questions about wallet setup, Lightning payments or recovery? Reach us directly. GetYourSats is a public beta, so please report issues before trusting it with significant funds.</p>
+        <div class="support-actions">
+          <a class="primary-link" href="mailto:getyoursats@gmail.com?subject=GetYourSats%20wallet%20support">Email GetYourSats support ↗</a>
+          <a class="secondary-link" href="/">Back to wallet</a>
+        </div>
+        <p class="metadata">getyoursats@gmail.com · No guaranteed response time during beta</p>
+      </section>
+      <aside class="notice"><strong>Security first.</strong> We will never ask for your recovery phrase, private key, passkey secret, or remote access to your device. Do not send any of these in emails or screenshots. If someone asks for them while claiming to be GetYourSats support, treat it as a scam.</aside>
+      <nav class="contents" aria-label="On this page">
+        <a href="#start">Getting started</a><a href="#recovery">Recovery</a><a href="#payments">Payments</a><a href="#merchants">Merchants</a><a href="#report">Report an issue</a>
+      </nav>
+      <div class="content-grid">
+        <section class="content-section" id="start">
+          <h2>01 / Start button or wallet connection fails</h2>
+          <p>Make sure you are using the official wallet at <a href="https://wallet.getyoursats.com">wallet.getyoursats.com</a> with a current browser and an internet connection. The site may show a temporary-availability notice if the Breez SDK is not configured or cannot be reached.</p>
+          <p>Do not repeatedly create new wallets or clear browser data as a troubleshooting shortcut. If you already created a wallet, use the existing-wallet recovery path instead.</p>
+        </section>
+        <section class="content-section" id="recovery">
+          <h2>02 / Restore an existing wallet</h2>
+          <p>From the welcome screen, select <strong>Restore existing wallet</strong> and use the recovery method originally associated with that wallet. Passkey recovery depends on your credential provider, device compatibility and relying-party domain. Offline recovery requires the correct recovery information.</p>
+          <p>Our support inbox cannot reconstruct lost private keys. Before changing devices, confirm your recovery method works and keep any handwritten recovery phrase securely offline.</p>
+        </section>
+        <section class="content-section" id="payments">
+          <h2>03 / Receiving or sending Bitcoin</h2>
+          <p>Only share a receiving address or invoice after the wallet confirms that it is connected. Do not assume a visible interface or successful deployment means the payment network is ready. Confirm the network, payment details, and amount before sending.</p>
+          <p>If a payment appears stuck, record its approximate time and the displayed status. <strong>Never send funds just to test a feature without independently verifying the receiving destination.</strong></p>
+        </section>
+        <section class="content-section" id="merchants">
+          <h2>04 / Merchant and INR features</h2>
+          <p>Merchant point-of-sale reconciliation, Indian UPI integrations, and recurring fiat purchase execution are under development or require provider approval. A draft screen or INR estimate is not a completed fiat payment or confirmed Bitcoin settlement.</p>
+          <p>If you are testing the point-of-sale flow, use a controlled environment and check the underlying transaction record before treating an order as paid.</p>
+        </section>
+        <section class="content-section" id="report">
+          <h2>05 / Report a problem safely</h2>
+          <p>Email <a href="mailto:getyoursats@gmail.com?subject=GetYourSats%20bug%20report">getyoursats@gmail.com</a> with only the information needed to diagnose the issue:</p>
+          <ul>
+            <li>Device type, operating system, browser and whether the app is installed.</li>
+            <li>What you tapped, what you expected, and what actually happened.</li>
+            <li>Approximate time, region, and an error message with secret data removed.</li>
+            <li>For payment problems, the visible status and a non-sensitive transaction reference, if available.</li>
+          </ul>
+          <p>Do not attach seed phrases, private keys, full passkey information, or security credentials. Read the <a href="/privacy.html">Privacy Notice</a> for how support information is handled.</p>
+        </section>
+      </div>
+    </main>
+    <footer class="site-footer"><span>© 2026 GetYourSats · Bitcoin first. Ownership always.</span><nav aria-label="Footer"><a href="/">Wallet</a><a href="/privacy.html">Privacy</a></nav></footer>
+  </div>
+</body>
+</html>
