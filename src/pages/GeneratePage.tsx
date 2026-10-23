@@ -81,17 +81,17 @@ export default function GeneratePage({
       <p className="text-spark-text-primary font-semibold">Private backup checklist</p>
       <p className="text-sm text-spark-text-secondary">Your recovery words are hidden. Reveal them only when you are ready to write them down privately.</p>
       <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
-        <input type="checkbox" className="mt-1 accent-amber-400" checked={privatePlace} onChange={e=>setPrivatePlace(e.target.checked)}/>
+        <input type="checkbox" className="mt-1 accent-spark-primary" checked={privatePlace} onChange={e=>setPrivatePlace(e.target.checked)}/>
         <span>I am somewhere private, away from cameras and other people.</span>
       </label>
       <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
-        <input type="checkbox" className="mt-1 accent-amber-400" checked={offlineReady} onChange={e=>setOfflineReady(e.target.checked)}/>
+        <input type="checkbox" className="mt-1 accent-spark-primary" checked={offlineReady} onChange={e=>setOfflineReady(e.target.checked)}/>
         <span>I will use paper and keep this backup offline. I will not screenshot, copy or share the words.</span>
       </label>
       <button type="button" aria-label={wordsRevealed?'Hide recovery words':'Reveal recovery words'}
         aria-pressed={wordsRevealed}
         disabled={!wordsRevealed && (!privatePlace || !offlineReady)}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-400/40 px-4 py-3 font-semibold text-amber-200 disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-spark-primary/40 px-4 py-3 font-semibold text-spark-primary disabled:cursor-not-allowed disabled:opacity-40"
         onClick={()=>{
           if(wordsRevealed){setWordsRevealed(false);return;}
           if(privatePlace && offlineReady){setWordsRevealed(true);setEverRevealed(true);}
@@ -113,7 +113,7 @@ export default function GeneratePage({
       </div>
     )}
     <label className="flex items-start gap-3 rounded-xl border border-spark-border p-4 text-sm text-spark-text-secondary">
-      <input type="checkbox" className="mt-1 accent-amber-400" checked={backedUp} disabled={!everRevealed}
+      <input type="checkbox" className="mt-1 accent-spark-primary" checked={backedUp} disabled={!everRevealed}
         onChange={e=>setBackedUp(e.target.checked)}/>
       <span>I have written down all the words in order and stored them in a secure, private place.</span>
     </label>
