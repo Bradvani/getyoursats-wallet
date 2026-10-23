@@ -1,3 +1,4 @@
+import {configuredBrandedLightningDomain} from '../../getyoursats/lightningDomain';
 import React from 'react';
 import type { LightningAddressInfo } from '@breeztech/breez-sdk-spark';
 import { BottomSheetContainer, BottomSheetCard, DialogHeader, FormError, LoadingSpinner, PrimaryButton } from '../../components/ui';
@@ -71,7 +72,7 @@ const LightningAddressEditSheet: React.FC<LightningAddressEditSheetProps> = ({
             className="flex-1 min-w-0 bg-transparent px-4 py-3 text-spark-text-primary text-lg font-mono placeholder-spark-text-muted focus:outline-hidden resize-none"
           />
           <span className="shrink-0 px-4 py-3 text-spark-text-muted font-medium text-sm">
-            @{address?.lightningAddress.split('@')[1] || (import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN_APPROVED === 'true' && import.meta.env.VITE_GETYOURSATS_LNURL_DOMAIN === 'pay.getyoursats.com' ? 'pay.getyoursats.com' : 'breez.tips')}
+            @{address?.lightningAddress.split('@')[1] || (configuredBrandedLightningDomain() || 'breez.tips')}
           </span>
         </div>
 
