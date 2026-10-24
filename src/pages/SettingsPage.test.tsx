@@ -49,3 +49,12 @@ describe('unilateral exit on the settings page', () => {
     expect(screen.getByTestId('settings-unilateral-exit')).toBeInTheDocument();
   });
 });
+
+describe('help and app identity', () => {
+  it('shows direct Privacy and Support entries and the shared build version', () => {
+    renderSettings();
+    expect(screen.getByTestId('settings-privacy-link')).toHaveTextContent('Privacy Policy');
+    expect(screen.getByTestId('settings-support-link')).toHaveTextContent('Support');
+    expect(screen.getByText('GetYourSats v0.0.0-test')).toBeInTheDocument();
+  });
+});
