@@ -7,6 +7,7 @@ permissions:
   contents: read
 jobs:
   snapshot:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.number == 31
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -18,18 +19,16 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - name: Capture tracked public source only
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install chromium
+      - name: Capture the public Chromium binary for pixel QA
         run: |
-          mkdir -p /tmp/gys-review-evidence
-          git rev-parse HEAD > /tmp/gys-review-evidence/COMMIT.txt
-          git archive --format=tar HEAD | gzip > /tmp/gys-review-evidence/source.tar.gz
-      - name: Install exact lockfile dependencies without lifecycle scripts or credentials
-        run: npm ci --ignore-scripts
-      - name: Capture installed public SDK and local verification tools
-        run: tar -czf /tmp/gys-review-evidence/dependencies.tar.gz node_modules
+          mkdir -p /tmp/gys-browser-evidence
+          git rev-parse HEAD > /tmp/gys-browser-evidence/COMMIT.txt
+          tar -czf /tmp/gys-browser-evidence/chromium.tar.gz -C "$HOME/.cache" ms-playwright
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: review-source-${{ github.event.pull_request.head.sha }}
-          path: /tmp/gys-review-evidence/*
+          name: review-browser-${{ github.event.pull_request.head.sha }}
+          path: /tmp/gys-browser-evidence/*
           retention-days: 1
           compression-level: 0
