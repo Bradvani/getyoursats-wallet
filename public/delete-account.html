@@ -1,160 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="color-scheme" content="light dark" />
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#13131d" media="(prefers-color-scheme: dark)" />
-  <meta name="robots" content="index, follow" />
-  <title>How to delete your Glow account</title>
-  <meta name="description" content="How to delete your Glow account and remove your passkey." />
-  <link rel="icon" href="/icons/Glow_favicon.png" />
-  <script src="/delete-account.js" defer></script>
-  <style>
-    :root {
-      --void: #ffffff;
-      --surface: #f5f3ef;
-      --border: #e6e2da;
-      --text: #16161c;
-      --text-secondary: rgba(0, 0, 0, 0.68);
-      --text-muted: rgba(0, 0, 0, 0.42);
-      --primary: #20609f;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --void: #0a0a0f;
-        --surface: #151520;
-        --border: #252535;
-        --text: #ffffff;
-        --text-secondary: rgba(255, 255, 255, 0.7);
-        --text-muted: rgba(255, 255, 255, 0.4);
-        --primary: #d4a574;
-      }
-
-      body {
-        background:
-          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.15), transparent),
-          radial-gradient(ellipse 60% 40% at 100% 0%, rgba(247, 147, 26, 0.08), transparent),
-          radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0, 212, 255, 0.06), transparent),
-          var(--void);
-        background-attachment: fixed;
-      }
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      background: var(--void);
-      color: var(--text-secondary);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.65;
-      -webkit-text-size-adjust: 100%;
-    }
-
-    main {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 3rem 1.25rem 5rem;
-    }
-
-    h1 {
-      color: var(--text);
-      font-size: 2rem;
-      line-height: 1.2;
-      margin: 0 0 0.5rem;
-    }
-
-    h2 {
-      color: var(--text);
-      font-size: 1.25rem;
-      margin: 2.5rem 0 0.75rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border);
-    }
-
-    p { margin: 0 0 1rem; }
-
-    ol, ul {
-      margin: 0 0 1rem;
-      padding-left: 1.25rem;
-    }
-
-    li { margin: 0 0 0.6rem; }
-
-    strong { color: var(--text); }
-
-    a {
-      color: var(--primary);
-      text-decoration: none;
-    }
-
-    a:hover { text-decoration: underline; }
-
-    .back-bar {
-      display: none;
-      background: none;
-      border: 0;
-      color: var(--primary);
-      font: inherit;
-      font-weight: 600;
-      padding: 0 0 1.5rem;
-      cursor: pointer;
-    }
-
-    .standalone .back-bar { display: block; }
-  </style>
-</head>
-
-<body>
-  <main>
-    <button type="button" class="back-bar">
-      &larr; Back to Glow
-    </button>
-    <h1>How to delete your Glow account</h1>
-    <p>Deleting your Glow account means clearing its data from your device and removing your
-      passkey. Here is how it works and how to do it.</p>
-
-    <h2>Your passkey is the key to your funds</h2>
-    <p>Glow is non-custodial: your funds are secured by keys derived from your passkey (in
-      iCloud Keychain, Google Password Manager, or another password manager) or by your
-      12-word recovery phrase. Breez never holds them. As long as either one exists, you can
-      restore access on any device.</p>
-
-    <h2>Steps to delete your account</h2>
-    <ol>
-      <li>Save your recovery phrase first if you hold funds (see below).</li>
-      <li>In Glow, open the menu and tap Logout. This erases all Glow data on this device and
-        signs you out.</li>
-      <li>Delete the passkey from your password manager (steps below).</li>
-    </ol>
-
-    <h2>Save your recovery phrase before deleting your passkey</h2>
-    <p>The passkey and the recovery phrase are the only two ways to access your funds.</p>
-    <p>To save it: open the menu, then Settings &gt; Backup &gt; Show Recovery Phrase.</p>
-
-    <h2>Removing your passkey on iPhone and iPad</h2>
-    <ol>
-      <li>Open the Passwords app.</li>
-      <li>Search for Glow.</li>
-      <li>Select the entry, tap Delete Passkey, and confirm.</li>
-    </ol>
-    <p>Deleting syncs to all your Apple devices via iCloud Keychain.</p>
-
-    <h2>Removing your passkey on Android</h2>
-    <ol>
-      <li>Open Google Password Manager (Settings &gt; Passwords &amp; accounts, or
-        <a href="https://passwordmanager.google.com">passwordmanager.google.com</a>).</li>
-      <li>Search for Glow.</li>
-      <li>Select the entry, tap Delete, and confirm.</li>
-    </ol>
-
-    <h2>Questions?</h2>
-    <p>Contact Breez at <a href="mailto:contact@breez.technology">contact@breez.technology</a>.</p>
-  </main>
-</body>
-
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#0B0B0B"><link rel="icon" type="image/png" href="https://wallet.getyoursats.com/brand/favicon-48.png"><title>Account removal | GetYourSats</title><meta name="description" content="Understand safe wallet removal, passkeys and optional account-record deletion."><link rel="canonical" href="https://getyoursats.com/delete-account"><style>
+:root{color-scheme:dark;--bg:#0B0B0B;--ink:#FAF9F6;--mute:#a4a4a1;--line:rgba(255,255,255,.13);--orange:#F7931A}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit}a:focus-visible,button:focus-visible{outline:2px solid var(--orange);outline-offset:4px}::selection{background:var(--orange);color:#0B0B0B}
+body:before{content:"";position:absolute;inset:0 0 auto;pointer-events:none;height:680px;background:radial-gradient(ellipse 48% 52% at 85% 8%,rgba(247,147,26,.12),transparent 80%);z-index:-1}
+.shell{width:min(1160px,calc(100% - 52px));margin:auto}
+.top{border-bottom:1px solid var(--line);background:rgba(11,11,11,.89);backdrop-filter:blur(18px);position:sticky;top:0;z-index:10}
+.navbar{min-height:80px;display:flex;align-items:center;gap:24px;justify-content:space-between}
+.mark{width:152px;height:42px;object-fit:contain;object-position:left center}.links{display:flex;align-items:center;gap:clamp(10px,2vw,30px);white-space:nowrap}.links a{color:#c0c0bd;font-size:13px;text-decoration:none;transition:color .2s}.links a:hover,.links a.current{color:#fff}.links .wallet{padding:11px 17px;border-radius:999px;border:1px solid rgba(247,147,26,.5);color:#ffc184}
+.hero{padding:clamp(64px,9vw,128px) 0 55px;border-bottom:1px solid var(--line)}.eyebrow{font-size:11px;letter-spacing:.23em;text-transform:uppercase;font-weight:800;color:var(--orange);margin:0 0 18px}.hero h1{font-size:clamp(45px,6.5vw,86px);letter-spacing:-.067em;line-height:1.04;font-weight:800;max-width:900px;margin:0}.lead{max-width:680px;color:#bfbfbb;font-size:clamp(16px,1.8vw,20px);line-height:1.75;margin:24px 0 0}.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:27px}.primary{display:inline-flex;gap:10px;align-items:center;border-radius:999px;padding:14px 23px;background:var(--orange);color:#12110f;font-size:14px;font-weight:750;text-decoration:none}.secondary{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:14px 23px;color:var(--ink);text-decoration:none;font-size:14px}
+.layout{display:grid;grid-template-columns:235px minmax(0,1fr);gap:clamp(28px,6vw,110px);padding-top:58px;padding-bottom:100px}.toc{position:sticky;top:110px;align-self:start;display:grid;gap:14px}.toc strong{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#71716e;margin-bottom:8px}.toc a{color:#999995;text-decoration:none;font-size:13px;line-height:1.5;padding:4px 0 4px 14px;border-left:1px solid rgba(255,255,255,.16)}.toc a:hover,.toc a:focus-visible{color:var(--orange);border-color:var(--orange)}
+.prose{max-width:770px}.prose h2{font-size:clamp(22px,2.4vw,30px);letter-spacing:-.04em;line-height:1.25;padding-top:34px;margin:12px 0 15px;scroll-margin-top:105px}.prose p,.prose li{color:#b8b8b3;font-size:15px;line-height:1.85}.prose p{margin:0 0 18px}.prose ul,.prose ol{padding-left:23px}.prose a{color:#ffae58;text-underline-offset:4px}.prose strong{color:#f9f7ee}.prose .note{border:1px solid rgba(247,147,26,.34);background:rgba(247,147,26,.06);padding:24px 27px;border-radius:20px;margin:10px 0 34px}.prose .note p{margin:0}
+.bottom-cta{background:#161512;border:1px solid rgba(247,147,26,.21);border-radius:26px;padding:clamp(24px,4vw,43px);margin-bottom:95px;display:flex;align-items:center;justify-content:space-between;gap:24px}.bottom-cta h2{font-size:clamp(26px,3.4vw,38px);letter-spacing:-.04em;margin:6px 0 12px}.bottom-cta p{color:var(--mute);margin:0;line-height:1.7}.bottom-cta .eyebrow{font-size:10px;margin:0}
+.footer{border-top:1px solid var(--line);padding:34px 0 55px;display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;color:#8f8f8b;font-size:12px}.footer a{text-decoration:none;color:#b4b4b0}.footer a:hover{color:var(--orange)}.footer-links{display:flex;gap:18px}
+@media(max-width:760px){.shell{width:min(100% - 36px,550px)}.navbar{min-height:74px}.mark{width:111px;height:34px}.links{gap:12px}.links a{font-size:11px}.links .wallet{padding:9px 12px}.hero{padding:70px 0 46px}.layout{grid-template-columns:1fr;padding-top:34px;padding-bottom:52px}.toc{position:static;display:flex;overflow-x:auto;padding-bottom:14px;white-space:nowrap;gap:10px}.toc strong{display:none}.toc a{border-left:0;border-bottom:1px solid #333;padding:8px 3px}.bottom-cta{flex-direction:column;align-items:flex-start;margin-bottom:50px}.bottom-cta .primary{width:100%;justify-content:center}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+</style></head><body><header class="top"><nav class="shell navbar" aria-label="Main"><a href="https://getyoursats.com/" aria-label="GetYourSats homepage"><img class="mark" alt="GetYourSats" src="https://wallet.getyoursats.com/brand/wordmark-horizontal-dark.svg"></a><div class="links"><a class="current" href="https://getyoursats.com/privacy">Privacy</a><a class="" href="https://getyoursats.com/support">Support</a><a class="wallet" href="https://wallet.getyoursats.com/">Open wallet ↗</a></div></nav></header><main><section class="shell hero"><p class="eyebrow">GetYourSats / Account</p><h1>Leaving should be as clear as joining.</h1><p class="lead">A simple guide to removing wallet data from your device, handling your passkey and requesting deletion of optional account records.</p></section><div class="shell layout"><aside class="toc" aria-label="On this page"><strong>On this page</strong><a href="#section-1">What removal means</a><a href="#section-2">Before logging out</a><a href="#section-3">Device removal</a><a href="#section-4">Passkey removal</a><a href="#section-5">Account records</a><a href="#section-6">Get help</a></aside><article class="prose"><div class="note"><p><strong>Before you remove a wallet, confirm you can restore it independently.</strong> A self-custodial wallet cannot be recovered by customer support. Never send anyone a seed phrase, passkey credential, PIN or private key.</p></div>
+<h2 id="section-1">What removal means</h2>
+<p>Logging out removes GetYourSats wallet data stored on that device. It does not reverse Bitcoin transactions or erase public blockchain records. Removing a passkey from a password manager is a separate action, and it may affect recovery on your other synced devices.</p>
+<h2 id="section-2">Before you log out</h2>
+<ol><li>Check your available wallet recovery method in Settings and confirm any backup is complete and recoverable.</li><li>If you chose a manual recovery phrase, store it offline and never share or photograph it. If your wallet uses a passkey, confirm it is synced and that the restoration method is supported before removing the device.</li><li>Resolve pending payments, swaps or unilateral exits before clearing wallet data. For an active unilateral exit, retain its required recovery data and seek support before proceeding.</li></ol>
+<h2 id="section-3">Remove wallet data from this device</h2>
+<p>Open your GetYourSats wallet, go to the menu and select <strong>Log Out</strong>. Read the confirmation carefully. After logging out, the app's wallet data on this device is cleared. The account or wallet may still be restorable if your independent recovery material remains available.</p>
+<h2 id="section-4">Remove an associated passkey</h2>
+<p>Only after confirming an alternative restoration route, open the password manager you used for GetYourSats. On Apple devices, use the Passwords app. On Android, use Google Password Manager or your selected passkey manager. Search for the GetYourSats website or saved passkey and follow that provider's instructions to remove it. The provider determines sync and deletion across devices.</p>
+<h2 id="section-5">Request deletion of optional account records</h2>
+<p>Optional server-held email verification and account information may require a separate deletion request. Email <a href="mailto:getyoursats@gmail.com?subject=GetYourSats%20data%20deletion%20request">getyoursats@gmail.com</a> and describe the records you want reviewed. We may need to verify control of the linked wallet. Third-party providers and the Bitcoin network maintain records under their own policies and legal obligations.</p>
+<h2 id="section-6">Get help</h2>
+<p>If you're not certain your wallet is recoverable, <strong>do not log out yet</strong>. Visit <a href="https://getyoursats.com/support">Support</a> before deleting local wallet data. Support cannot retrieve your private keys or recovery words.</p></article></div><section class="shell bottom-cta"><div><p class="eyebrow">Here to help</p><h2>Questions? We’re listening.</h2><p>Reach our support team without sharing private keys, recovery words or wallet credentials.</p></div><a class="primary" href="mailto:getyoursats@gmail.com?subject=GetYourSats%20help">Contact support ↗</a></section></main><footer class="shell footer"><span>© 2026 GetYourSats · Bitcoin-first</span><nav class="footer-links" aria-label="Footer"><a href="https://getyoursats.com/">Home</a><a href="https://getyoursats.com/privacy">Privacy</a><a href="https://getyoursats.com/support">Support</a><a href="https://getyoursats.com/delete-account">Account removal</a></nav></footer></body></html>
