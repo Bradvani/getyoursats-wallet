@@ -5,6 +5,8 @@ import { createRoot } from 'react-dom/client';
 import type { BreezSdk, GetInfoResponse, Payment, SdkEvent } from '@breeztech/breez-sdk-spark';
 import '../../src/index.css';
 import '../../src/getyoursats/premium.css';
+import '../../src/getyoursats/appearance.css';
+import { initPresentation } from '../../src/services/presentationPreferences';
 import { WalletProvider, WalletInfoProvider } from '../../src/contexts/WalletContext';
 import { ToastProvider } from '../../src/contexts/ToastContext';
 import { FiatDataProvider } from '../../src/contexts/FiatDataContext';
@@ -16,7 +18,7 @@ import ProcessingStep from '../../src/features/send/steps/ProcessingStep';
 import ResultStep from '../../src/features/send/steps/ResultStep';
 import PaymentCelebration from '../../src/components/PaymentCelebration';
 
-const info: GetInfoResponse = { identityPubkey: 'fixture-identity', balanceSats: 125000, recoverableFundsSats: 0, tokenBalances: new Map() };
+const info: GetInfoResponse = { identityPubkey: 'a'.repeat(66), balanceSats: 125000, recoverableFundsSats: 0, tokenBalances: new Map() };
 const received = { id: 'fixture-receive', paymentType: 'receive', status: 'completed', amount: 5000n, fees: 0n, timestamp: Math.floor(Date.now()/1000), method: 'lightning' } as Payment;
 
 // Explicit, dev-only settlement trigger. A Charge creates a REAL-looking
@@ -66,4 +68,5 @@ function Fixture() {
   : <ProcessingStep processingPhase={screen==='converting'?'converting':'sending'} operationType={screen==='receiving'?'withdraw':'payment'} />}
  </ContactsProvider></StableBalanceProvider></FiatDataProvider></WalletInfoProvider></WalletProvider></ToastProvider>;
 }
+initPresentation();
 createRoot(document.getElementById('root')!).render(<Fixture />);
