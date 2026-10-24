@@ -9,6 +9,8 @@ import AppErrorBoundary from './components/AppErrorBoundary';
 // font-display: swap. See the comment there.
 import './index.css';
 import './getyoursats/premium.css';
+import './getyoursats/appearance.css';
+import { initPresentation, subscribePresentation, getResolvedAppearance } from './services/presentationPreferences';
 import { logger, LogCategory } from '@/services/logger';
 import { initWebViewportManager } from '@/utils/webViewportManager';
 import { installUserAgentStrippingFetch } from '@/utils/stripUserAgentFetch';
@@ -20,6 +22,16 @@ import { prfAvailability } from '@/services/passkeyService';
 // Strip the SDK's script-set User-Agent before the SDK (or anything else)
 // issues a request. stripUserAgentFetch.ts explains why it is still needed.
 installUserAgentStrippingFetch();
+
+// Apply locally stored presentation preferences before mounting React.
+initPresentation();
+if (Capacitor.isNativePlatform()) {
+  subscribePresentation(() => {
+    const orange = getResolvedAppearance() === 'orange';
+    void StatusBar.setStyle({ style: orange ? Style.Dark : Style.Light }).catch(() => {});
+    void StatusBar.setBackgroundColor({ color: orange ? '#FAF7F1' : '#13131d' }).catch(() => {});
+  });
+}
 
 // Allow JSON.stringify to handle BigInt values (e.g. payment amounts/fees from SDK)
 (BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function () {
@@ -45,7 +57,7 @@ startDeepLinks();
 // deeper #0a0a0f canvas so the system bars visibly match the header
 // glassmorphism surface rather than disappearing into near-black.
 if (Capacitor.isNativePlatform()) {
-  StatusBar.setStyle({ style: Style.Dark }).catch(() => {
+  StatusBar.setStyle({ style: getResolvedAppearance()==='orange' ? Style.Dark : Style.Light }).catch(() => {
     /* unsupported platform or Android 15+ edge-to-edge — ignore */
   });
   // #13131d = spark-surface (#151520) composited at 80% opacity over the
@@ -56,7 +68,7 @@ if (Capacitor.isNativePlatform()) {
   // through the status/nav bars rather than meeting a visibly different
   // shade at their edges. Off by ~2 rgb units from the solid spark-surface
   // used on SlideInPage / PageLayout headers — imperceptible on dark UIs.
-  StatusBar.setBackgroundColor({ color: '#13131d' }).catch(() => {
+  StatusBar.setBackgroundColor({ color: getResolvedAppearance()==='orange' ? '#FAF7F1' : '#13131d' }).catch(() => {
     /* iOS ignores setBackgroundColor; Android 15+ no-op — ignore */
   });
   if (Capacitor.getPlatform() === 'android') {
