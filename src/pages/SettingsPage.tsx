@@ -14,7 +14,8 @@ import { logger, LogCategory } from '@/services/logger';
 import { shareOrDownloadLogs, exportDatabaseState } from '@/services/logExport';
 import { useSecretTap } from '@/hooks/useSecretTap';
 import { isPasskeyMode } from '@/services/passkeyService';
-import { getAppVersion } from '@/services/appVersion';
+import { useAppVersion } from '@/hooks/useAppVersion';
+import { PRIVACY_POLICY_URL, SUPPORT_URL } from '@/constants/publicPages';
 
 interface SettingsPageProps {
   onBack: () => void;
@@ -40,8 +41,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onOpenUnilateralExit,
 }) => {
   const wallet = useWallet();
-  const [appVersion, setAppVersion] = useState<string | null>(null);
-  useEffect(() => { void getAppVersion().then(setAppVersion); }, []);
+  const appVersion = useAppVersion();
   const {
     handleTap: devTap,
     activated: isDevMode,
@@ -500,6 +500,20 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
           )}
 
+          {/* Public privacy and support pages are accessible without a wallet session. */}
+          <section className="bg-spark-dark border border-spark-border rounded-2xl p-4" aria-label="Help and information">
+            <h3 className="font-display font-semibold text-spark-text-primary mb-1">Help &amp; information</h3>
+            <p className="text-xs text-spark-text-muted mb-3">Clear answers and a direct way to reach us.</p>
+            <div className="space-y-2">
+              <button type="button" onClick={() => { void openExternalUrl(PRIVACY_POLICY_URL); }} className="flex items-center justify-between w-full rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-primary/50 transition-colors" data-testid="settings-privacy-link">
+                <span className="flex items-center gap-3"><ShieldCheckIcon size="md" />Privacy Policy</span><ExternalLinkIcon size="sm" />
+              </button>
+              <button type="button" onClick={() => { void openExternalUrl(SUPPORT_URL); }} className="flex items-center justify-between w-full rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-primary/50 transition-colors" data-testid="settings-support-link">
+                <span className="flex items-center gap-3"><ExternalLinkIcon size="md" />Support &amp; help</span><ExternalLinkIcon size="sm" />
+              </button>
+            </div>
+          </section>
+
           {/* Account deletion (App Store 5.1.1(v)): opens the guide
               explaining how to delete the account (logout wipes the
               device) and remove the passkey. Reachable without dev
@@ -525,7 +539,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               onClick={devTap}
               className="text-spark-text-muted text-xs hover:text-spark-text-secondary transition-colors select-none"
             >
-              GetYourSats{appVersion && ` v${appVersion}`}
+              GetYourSats v{appVersion}
               {isDevMode && <span className="ml-1 text-spark-primary">(dev)</span>}
             </button>
             {devTapCount > 0 && devTapCount < devTapThreshold && (

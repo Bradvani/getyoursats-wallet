@@ -1,4 +1,6 @@
 import React, { useState, useSyncExternalStore } from 'react';
+import { useAppVersion } from '@/hooks/useAppVersion';
+import { PRIVACY_POLICY_URL, SUPPORT_URL } from '@/constants/publicPages';
 import { createPortal } from 'react-dom';
 import { Transition, TransitionChild } from '@headlessui/react';
 import { isPasskeyMode } from '@/services/passkeyService';
@@ -14,11 +16,7 @@ import { useUnilateralExitEngineState } from '../features/unilateral-exit/hooks/
 import GetYourSatsWordmark from './GetYourSatsWordmark';
 import {featureAvailability} from '../getyoursats/featureAvailability';
 
-// App Store Review Guidelines 5.1.1(i) requires the privacy policy to be
-// reachable from inside the app, not just from the store listing, and 1.5
-// requires a way to reach the developer. Both pages ship from public/.
-const PRIVACY_POLICY_URL = '/privacy.html';
-const SUPPORT_URL = '/support.html';
+// Public policy and support links are reachable without wallet authentication.
 
 // External-store measurement of the content-root's left offset, used
 // to anchor the drawer panel to the centered max-w-4xl column.
@@ -80,6 +78,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     getServerSnapshot
   );
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const appVersion = useAppVersion();
 
   // When the logout confirmation dialog opens, dim the system bars to
   // the same scrim tone the React backdrop applies to the content
@@ -243,15 +242,16 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
             </nav>
 
             {/* Footer */}
-            <div className="pt-6 pb-6 border-t border-spark-border space-y-2">
+            <div className="pt-5 pb-6 border-t border-spark-border space-y-3">
               {/* Buttons rather than anchors: openExternalUrl keeps native
                   in an in-app browser that returns to the drawer on Done,
                   and same-origin pages in the PWA's own overlay. */}
-              <div className="flex items-center justify-center gap-2 text-xs text-spark-text-muted">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-spark-text-muted text-center mb-2">Help &amp; information</p>
+              <div className="flex items-center justify-center gap-3 text-xs text-spark-text-muted">
                 <button
                   type="button"
                   onClick={() => { void openExternalUrl(PRIVACY_POLICY_URL); }}
-                  className="hover:text-spark-text-secondary transition-colors"
+                  className="rounded-lg px-3 py-2 border border-spark-border hover:border-spark-primary/50 hover:text-spark-text-secondary transition-colors"
                 >
                   Privacy Policy
                 </button>
@@ -264,7 +264,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                   Support
                 </button>
               </div>
-              <p className="text-xs text-spark-text-muted text-center">GetYourSats · v0.1</p>
+              <p data-testid="menu-app-version" className="text-xs text-spark-text-muted text-center mt-3">GetYourSats · v{appVersion}</p>
             </div>
 
             {/* Logout Confirmation Dialog.
