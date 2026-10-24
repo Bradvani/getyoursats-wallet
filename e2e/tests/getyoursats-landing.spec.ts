@@ -41,7 +41,7 @@ test('@public-smoke GetYourSats landing identity animates without affecting onbo
   await expect(page.getByRole('button',{name:'Start'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Restore existing wallet'})).toBeVisible();
   await page.emulateMedia({reducedMotion:'reduce'});
-  await expect(page.locator('.gys-welcome__hero-mark')).toHaveCSS('animation-duration','1e-05s');
+  await expect(page.locator('.gys-welcome__hero-mark')).toHaveCSS('animation-name','none');
 });
 
 test('@public-smoke iPhone browser has dismissible Add to Home Screen guidance above Start',async({browser})=>{
