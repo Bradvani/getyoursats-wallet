@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useSyncExternalStore } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Transition, TransitionChild } from '@headlessui/react';
 import { isPasskeyMode } from '@/services/passkeyService';
