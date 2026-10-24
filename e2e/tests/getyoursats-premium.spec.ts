@@ -12,11 +12,12 @@ for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
   await page.goto(fixture);
   await expect(page.getByRole('button',{name:'Send Bitcoin',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Receive Bitcoin',exact:true})).toBeVisible();
+  await expect(page.getByTestId('wallet-balance')).toHaveText(/125\s*000/);
   const recovery = page.getByRole('button',{name:/Protect your Bitcoin/});
   await expect(recovery).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   mkdirSync('test-artifacts',{recursive:true});
-  await page.screenshot({path:`test-artifacts/wallet-${width}.png`,fullPage:true});
+  await page.screenshot({path:`test-artifacts/wallet-${width}.png`,fullPage:true,animations:'disabled'});
   await recovery.click();
   await expect(page.getByRole('heading',{name:'Recovery entry reached'})).toBeVisible();
   expect(errors).toEqual([]);
@@ -35,7 +36,11 @@ test('@public-smoke send receive settings and reduced motion',async({page})=>{
  for(const state of ['sending','converting','receiving','sent','failed','received','settings']){
   await page.goto(fixture+'?screen='+state);
   if(state!=='settings')await expect(page.locator('[data-motion-state]')).toBeVisible();
-  await page.screenshot({path:`test-artifacts/state-${state}.png`});
+  await page.screenshot({path:`test-artifacts/state-${state}.png`,animations:'disabled'});
+  if(state==='received'){
+   await page.getByRole('button',{name:'Done',exact:true}).click();
+   await expect(page.getByRole('button',{name:'Send Bitcoin',exact:true})).toBeVisible();
+  }
  }
  await page.emulateMedia({reducedMotion:'reduce'});
  await page.goto(fixture+'?screen=sending');
