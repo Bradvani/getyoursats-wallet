@@ -5,7 +5,7 @@ import { useStableBalance } from '../contexts/StableBalanceContext';
 import { SatAmount } from './SatAmount';
 import { useFiatData } from '../contexts/FiatDataContext';
 import { getTokenAmountFromPayment, formatTokenAmount, buildTokenDisplayConfig, withAssetDecimals } from '../utils/tokenFormatting';
-import GlowLogo from './GlowLogo';
+import './premiumMotion.css';
 import { hapticLight } from '@/utils/haptics';
 
 interface PaymentCelebrationProps {
@@ -20,7 +20,6 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
   const stableBalance = useStableBalance();
   const { fiatCurrencies } = useFiatData();
   const [isVisible, setIsVisible] = useState(false);
-  const [starsAnimating, setStarsAnimating] = useState(false);
 
   useEffect(() => {
     // Trigger entrance animation
@@ -28,7 +27,6 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
     void hapticLight();
 
     // Start dot animation after the logo settles in
-    const starTimer = setTimeout(() => setStarsAnimating(true), 500);
 
     // Auto close after animation
     const closeTimer = setTimeout(() => {
@@ -37,7 +35,6 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
     }, 4000);
 
     return () => {
-      clearTimeout(starTimer);
       clearTimeout(closeTimer);
     };
   }, [onClose]);
@@ -70,19 +67,8 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
           isVisible ? 'scale-100 translate-y-0' : 'scale-50 translate-y-20'
         }`}
       >
-        {/* Glow Logo */}
-        <div className="relative mb-8">
-          {/* Outer glow */}
-          <div className="absolute -inset-4 rounded-full blur-2xl" style={{ background: 'rgba(212,165,116,0.30)' }} />
-
-          {/* Logo container */}
-          <div className="relative w-28 h-28 flex items-center justify-center">
-            <GlowLogo
-              sizePx={96}
-              starsAnimating={starsAnimating}
-              imgClassName="drop-shadow-[0_0_30px_rgba(212,165,116,0.6)]"
-            />
-          </div>
+        <div className={`gys-payment-motion ${isSent ? 'gys-payment-motion--sent' : 'gys-payment-motion--received'} mb-8 w-28 h-28 rounded-full border border-[#F7931A]/40 bg-[#17110b] flex items-center justify-center`}>
+          <span className="gys-payment-motion__bolt" aria-hidden="true">{isSent ? '↗' : '↙'}</span>
         </div>
 
         {/* Title */}
@@ -92,7 +78,7 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
 
         {/* Amount with brand glow */}
         <div className="relative animate-fade-in-up text-center" style={{ animationDelay: '0.4s' }}>
-          <div className="absolute inset-0 blur-2xl rounded-full" style={{ background: 'rgba(212,165,116,0.35)' }} />
+          <div className="absolute inset-0 blur-2xl rounded-full" style={{ background: 'rgba(247,147,26,0.25)' }} />
           {displayText ? (
             <span className="relative text-5xl font-display font-bold text-spark-primary">
               {isSent ? '-' : '+'}{(() => {
