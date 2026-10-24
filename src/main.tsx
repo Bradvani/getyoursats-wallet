@@ -27,7 +27,7 @@ installUserAgentStrippingFetch();
 // Apply locally stored presentation preferences before mounting React.
 initPresentation();
 if (Capacitor.isNativePlatform()) {
-  subscribePresentation(refreshSystemBarsForTheme);
+  subscribePresentation(() => { if (Capacitor.getPlatform() === 'android') refreshSystemBarsForTheme(); else void StatusBar.setStyle({ style: getResolvedAppearance() === 'orange' ? Style.Dark : Style.Light }).catch(() => {}); });
 }
 
 // Allow JSON.stringify to handle BigInt values (e.g. payment amounts/fees from SDK)
