@@ -1,4 +1,4 @@
-import QRCode from 'react-qr-code';
+import {QRCode} from 'react-qr-code';
 
 /**
  * Human-scannable high-contrast payment QR with the approved GetYourSats monogram.
