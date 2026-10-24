@@ -24,7 +24,8 @@
     "regtest:renewed-leaf": "node local-regtest/watchtower.mjs leaf",
     "regtest:parent-exit": "node local-regtest/watchtower.mjs parent",
     "regtest:watchtower-exit": "node local-regtest/watchtower.mjs exit",
-    "test:email-service": "node --test tests/email-account.test.mjs"
+    "test:email-service": "node --test tests/email-account.test.mjs tests/handle-core.test.mjs",
+    "test:handle-service": "node --test tests/handle-core.test.mjs"
   },
   "dependencies": {
     "@breeztech/breez-sdk-spark": "file:vendor/breeztech-breez-sdk-spark.tgz",

@@ -1,5 +1,6 @@
 import {useLightningAddress} from '../features/receive/hooks/useLightningAddress';
 import GetYourSatsPos from '../getyoursats/PosPage';
+import PosErrorBoundary from '../components/PosErrorBoundary';
 import PartnerBuyDialog from '../getyoursats/PartnerBuyDialog';
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useWallet } from '../contexts/WalletContext';
@@ -450,7 +451,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
       />
 
       {/* Side Menu */}
-      {gysPosOpen&&<GetYourSatsPos onClose={()=>setGysPosOpen(false)}/>}
+      {gysPosOpen&&<PosErrorBoundary onClose={()=>setGysPosOpen(false)}><GetYourSatsPos onClose={()=>setGysPosOpen(false)}/></PosErrorBoundary>}
       {partnerBuyOpen&&<PartnerBuyDialog network={network} onClose={()=>setPartnerBuyOpen(false)}/>}
       <SideMenu
         isOpen={isMenuOpen}

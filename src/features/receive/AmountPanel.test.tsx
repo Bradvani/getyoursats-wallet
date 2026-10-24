@@ -60,4 +60,19 @@ describe('GetYourSats receive amount denomination',()=>{
     expect(screen.getByRole('button',{name:'USD'})).toBeDisabled();
     expect(screen.getByRole('button',{name:'BTC'})).not.toBeDisabled();
   });
+  it('uses a one-line amount field with currency selection ahead of the entry',async()=>{
+    await renderAmountPanel();
+    const amount=screen.getByRole('textbox',{name:'Request amount'});
+    expect(amount.tagName).toBe('INPUT');
+    expect(screen.getByRole('group',{name:'Amount denomination'})).toBeInTheDocument();
+    expect(screen.getByRole('region',{name:'Suggested amounts'})).toBeInTheDocument();
+  });
+  it('uses BTC-denominated presets, not sats-labelled suggestions',async()=>{
+    const {setAmountSats}=await renderAmountPanel();
+    fireEvent.click(screen.getByRole('button',{name:'BTC'}));
+    fireEvent.click(screen.getByRole('button',{name:'0.00005'}));
+    expect(screen.getByTestId('invoice-amount-input')).toHaveValue('0.00005');
+    await waitFor(()=>expect(setAmountSats).toHaveBeenCalledWith(5000n));
+  });
+
 });

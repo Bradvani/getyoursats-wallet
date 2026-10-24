@@ -3,7 +3,6 @@ import type { LightningAddressInfo } from '@breeztech/breez-sdk-spark';
 import { AlertCard } from '../../components/AlertCard';
 import { QRCodeContainer, QrPlaceholder, PrimaryButton, CopyableText, TextButton } from '../../components/ui';
 import { useToast } from '../../contexts/ToastContext';
-import { EditIcon } from '../../components/Icons';
 
 export interface LightningAddressDisplayProps {
   address: LightningAddressInfo | null;
@@ -17,17 +16,6 @@ export interface LightningAddressDisplayProps {
   qrSize?: number;
   qrCardClassName?: string;
 }
-
-const EditButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    className="flex items-center gap-2 px-4 border border-spark-border text-spark-text-secondary rounded-xl font-medium text-sm hover:text-spark-text-primary hover:border-spark-border-light transition-colors"
-    title="Edit Lightning Address"
-  >
-    <EditIcon />
-    Edit
-  </button>
-);
 
 const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
   address,
@@ -113,13 +101,15 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
         textColor="text-spark-primary"
         onCopied={() => showToast('success', 'Copied!')}
         onShareError={() => showToast('error', 'Failed to share')}
-        additionalActions={<EditButton onClick={onEdit} />}
         textToCopy={address.lightningAddress}
         textToShare={address.lnurl.bech32}
         shareLabel="LNURL-Pay"
         data-testid="lightning-address-text"
       />
 
+      <p className="text-xs text-center text-spark-text-muted max-w-xs">
+        Want yourname@getyoursats.com? After optional email verification, claim your name from Settings → Account identity. No activity thresholds.
+      </p>
       {amountLink('mt-2')}
     </div>
   );

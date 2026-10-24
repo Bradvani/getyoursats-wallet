@@ -1,5 +1,6 @@
 import {useEffect,useState} from 'react';
 import SlideInPage from '../components/layout/SlideInPage';
+import GetYourSatsUsernameClaim from './GetYourSatsUsernameClaim';
 import {useWallet} from '../contexts/WalletContext';
 import {selectedNetwork} from '../services/sdkConnect';
 
@@ -120,9 +121,10 @@ export default function EmailVerificationPage({onBack}:{onBack:()=>void}){
         </>}
         {!!error&&<p role="alert" className="text-sm text-spark-warning">{error}</p>}
       </div>
+      {verified?.verified && <GetYourSatsUsernameClaim/>}
       <p className="text-xs text-spark-text-muted leading-relaxed">
-        A verified email does not automatically activate a personalised @getyoursats.com Lightning address.
-        Username ownership and any fee-based eligibility will be verified separately by GetYourSats.
+        Your anonymous Lightning Address remains available whether or not you link an email.
+        A personalized username has no activity or purchase threshold, but must be verified as payable before use.
       </p>
     </div>
   </SlideInPage>;
