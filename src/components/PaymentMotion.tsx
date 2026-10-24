@@ -9,11 +9,11 @@ export type PaymentMotionState = 'sending' | 'receiving' | 'converting' | 'sent'
  * Pure presentation: SDK state comes from the caller. A CSS clock never
  * changes payment status, and a pending transfer never shows our success mark.
  */
-export default function PaymentMotion({ state, compact = false }: { state: PaymentMotionState; compact?: boolean }) {
+export default function PaymentMotion({ state, compact = false, animate = true }: { state: PaymentMotionState; compact?: boolean; animate?: boolean }) {
   const pending = state === 'sending' || state === 'receiving' || state === 'converting';
   const success = state === 'sent' || state === 'received';
   return <div aria-hidden="true" data-motion-state={state}
-    className={`gys-transfer gys-transfer--${state} ${pending ? 'gys-transfer--pending' : ''} ${success ? 'gys-transfer--success' : ''} ${compact ? 'gys-transfer--compact' : ''}`}>
+    className={`gys-transfer gys-transfer--${state} ${pending ? 'gys-transfer--pending' : ''} ${success ? 'gys-transfer--success' : ''} ${compact ? 'gys-transfer--compact' : ''} ${!animate ? 'gys-transfer--static' : ''}`}>
     <span className="gys-transfer__glow" />
     <span className="gys-transfer__orbit" />
     <svg className="gys-transfer__streak" viewBox="0 0 160 160" fill="none" aria-hidden="true">
