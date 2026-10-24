@@ -209,16 +209,29 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <LockIcon size="md" />
-                  <span>Lock Screen</span>
+                  <span>PIN &amp; biometric unlock</span>
                 </div>
                 <ChevronRightIcon size="md" />
               </button>
             </div>
           )}
 
+          {/* Native PIN/Face ID/fingerprint works for manual phrase wallets.
+              This is an app lock, NOT a new PRF wallet / cloud recovery path. */}
+          {!isAppLockSupported() && !isPasskeyMode() && (
+            <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-2" aria-label="Browser biometric unlock availability">
+              <h3 className="font-display font-semibold text-spark-text-primary">Passkey &amp; biometric unlock</h3>
+              <p className="text-sm text-spark-text-muted leading-relaxed">
+                This manually backed-up wallet uses its existing recovery words. Adding a new Breez passkey here would create a different wallet,
+                so browser passkey unlock is not offered until secure same-wallet key wrapping is independently verified.
+                Keep your handwritten backup safe; never replace your existing wallet to enable biometrics.
+              </p>
+            </section>
+          )}
+
           {/* Backup */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-            <h3 className="font-display font-semibold text-spark-text-primary mb-3">Backup</h3>
+            <h3 className="font-display font-semibold text-spark-text-primary mb-3">Privacy &amp; recovery</h3>
             <button
               className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors"
               type="button"
@@ -226,7 +239,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             >
               <div className="flex items-center gap-3">
                 <KeyIcon size="md" />
-                <span>Recovery Phrase</span>
+                <span>Optional handwritten backup</span>
               </div>
               <ChevronRightIcon size="md" />
             </button>
