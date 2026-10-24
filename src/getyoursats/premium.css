@@ -140,3 +140,51 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  .gys-wallet-balance-surface__content>.h-14{position:relative;z-index:5}
  .gys-app-header__identity{opacity:1;filter:none;mix-blend-mode:normal}
 }
+
+/* Daily wallet stays operational, with sensitive recovery entry only in Settings. */
+.gys-home-quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;
+  flex:none;margin:6px 18px 9px}
+.gys-home-quick-actions__button{display:flex;align-items:center;gap:11px;min-width:0;
+  min-height:70px;padding:12px;border:1px solid #393029;border-radius:17px;
+  background:#151413;text-align:left;color:#f9f6f0;
+  transition:background .18s ease,transform .18s ease,border-color .18s ease}
+.gys-home-quick-actions__button:hover{background:#241b13;border-color:#f7931a}
+.gys-home-quick-actions__button:active{transform:scale(.985)}
+.gys-home-quick-actions__icon{display:grid;place-items:center;flex:none;width:36px;height:36px;
+  border-radius:11px;background:#302113;color:#f7931a}
+.gys-home-quick-actions__text{display:grid;gap:3px;min-width:0}
+.gys-home-quick-actions__text strong{font-size:13px;font-weight:750;letter-spacing:-.02em}
+.gys-home-quick-actions__text small{font-size:11px;color:#aea9a2;line-height:1.35}
+/* Opaque header plane avoids WebKit backdrop compositing over the wordmark. */
+.gys-wallet-balance-surface__veil{background:#0b0b0b;pointer-events:none;z-index:0;
+  -webkit-backdrop-filter:none;backdrop-filter:none}
+.gys-wallet-balance-surface__content{z-index:2}
+.gys-wallet-balance-surface__toolbar{position:relative;z-index:30;isolation:isolate;
+  opacity:1;filter:none;transform:translateZ(0)}
+.gys-app-header__identity{position:relative;z-index:30;isolation:isolate;min-width:0;
+  filter:none;opacity:1}
+.gys-wallet-balance-surface__toolbar .gys-brand-wordmark--compact{
+  display:block;width:clamp(124px,35vw,163px);height:auto;max-height:43px;
+  object-fit:contain;opacity:1;filter:none;mix-blend-mode:normal;
+  -webkit-backface-visibility:hidden;backface-visibility:hidden}
+@media(max-width:380px){
+  .gys-home-quick-actions{gap:8px;margin-inline:12px}
+  .gys-home-quick-actions__button{min-height:65px;padding:9px 8px;gap:7px}
+  .gys-home-quick-actions__text strong{font-size:12px}
+  .gys-home-quick-actions__text small{font-size:10px}
+  .gys-home-quick-actions__icon{width:31px;height:31px}
+  .gys-wallet-balance-surface__toolbar .gys-brand-wordmark--compact{width:117px}
+}
+@media(display-mode:standalone){
+  .gys-wallet__header{isolation:isolate;z-index:30}
+  .gys-wallet-balance-surface{isolation:isolate}
+  .gys-wallet-balance-surface__veil{-webkit-backdrop-filter:none;backdrop-filter:none;
+    background:#0b0b0b}
+  .gys-wallet-balance-surface__toolbar{z-index:30}
+  .gys-app-header__identity .gys-brand-wordmark--compact{opacity:1;filter:none}
+}
+html.ios-standalone-bottom-gap .gys-wallet__header{isolation:isolate;z-index:30}
+html.ios-standalone-bottom-gap .gys-wallet-balance-surface__veil{background:#0b0b0b;
+  -webkit-backdrop-filter:none;backdrop-filter:none}
+html.ios-standalone-bottom-gap .gys-wallet-balance-surface__toolbar{z-index:30}
+@media(prefers-reduced-motion:reduce){.gys-home-quick-actions__button{transition:none}}

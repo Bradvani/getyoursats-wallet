@@ -12,7 +12,7 @@ import WalletActivityPanel from '../getyoursats/WalletActivityPanel';
 import PullToRefresh from '../components/PullToRefresh';
 import { GetInfoResponse, Payment, DepositInfo, Network } from '@breeztech/breez-sdk-spark';
 import type { BuyBitcoinProvider } from '../services/settings';
-import { ArrowUpIcon, QrCodeIcon, ArrowDownIcon } from '../components/Icons';
+import { ArrowUpIcon, QrCodeIcon, ArrowDownIcon, ClockIcon } from '../components/Icons';
 import { mergeDepositsWithTransactions, ExtendedPayment, isUnclaimedDepositPayment } from '@/utils/depositHelpers';
 import SendPaymentDialog from '../features/send/SendPaymentDialog';
 import ReceivePaymentDialog from '../features/receive/ReceivePaymentDialog';
@@ -44,7 +44,6 @@ interface WalletPageProps {
   onOpenGetRefund: (source?: 'menu' | 'icon') => void;
   onOpenSettings: () => void;
   onOpenFiatCurrencies?: () => void;
-  onOpenBackup: () => void;
   onOpenDca: () => void;
   onOpenUnilateralExit: () => void;
   onBuyBitcoin: (provider: BuyBitcoinProvider) => Promise<void>;
@@ -64,7 +63,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
   onOpenSettings,
   onOpenFiatCurrencies,
   onOpenDca,
-  onOpenBackup,
   onOpenUnilateralExit,
   onBuyBitcoin,
   network,
@@ -84,19 +82,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const [gysPosOpen,setGysPosOpen] = useState(false);
   const [partnerBuyOpen,setPartnerBuyOpen] = useState(false);
   const [historyOpen,setHistoryOpen] = useState(false);
-  const [manualBackupConfirmed,setManualBackupConfirmed] = useState(false);
-  const walletIdentity=walletInfo?.identityPubkey;
-  useEffect(()=>{
-    if(!walletIdentity)return;
-    try{
-      const key='gys:manual-backup-verified:'+walletIdentity.toLowerCase();
-      if(sessionStorage.getItem('gys:manual-backup-verified-pending')==='1'){
-        localStorage.setItem(key,'1');
-        sessionStorage.removeItem('gys:manual-backup-verified-pending');
-      }
-      setManualBackupConfirmed(localStorage.getItem(key)==='1');
-    }catch{setManualBackupConfirmed(false)}
-  },[walletIdentity]);
   const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
@@ -347,11 +332,20 @@ const WalletPage: React.FC<WalletPageProps> = ({
            primaryLightningAddress.isSupported?'Tap Receive to set up':'Not available on this network'}
         </span>}
       </div>
-      {!manualBackupConfirmed && <button type="button" className="gys-backup-card" onClick={onOpenBackup}>
-        <span className="gys-backup-card__icon" aria-hidden="true">↗</span>
-        <span><strong>Review recovery options</strong><small>Keep a private recovery method available</small></span>
-        <span aria-hidden="true">→</span>
-      </button>}
+      {/* Recovery words stay inside Settings; they must not be one tap
+          away from the everyday wallet without an authenticated web app lock. */}
+      <nav className="gys-home-quick-actions" aria-label="Merchant and planning actions">
+        <button type="button" className="gys-home-quick-actions__button"
+          onClick={()=>setGysPosOpen(true)} aria-label="Open Point of Sale">
+          <span className="gys-home-quick-actions__icon" aria-hidden="true"><QrCodeIcon size="lg"/></span>
+          <span className="gys-home-quick-actions__text"><strong>Point of Sale</strong><small>Accept a payment</small></span>
+        </button>
+        <button type="button" className="gys-home-quick-actions__button"
+          onClick={onOpenDca} aria-label="Open Recurring Buys">
+          <span className="gys-home-quick-actions__icon" aria-hidden="true"><ClockIcon size="lg"/></span>
+          <span className="gys-home-quick-actions__text"><strong>Recurring Buys</strong><small>Plan purchases</small></span>
+        </button>
+      </nav>
       <button type="button" className="gys-wallet__history-trigger" aria-expanded={historyOpen}
         aria-controls="gys-wallet-history" onClick={()=>setHistoryOpen(v=>!v)}>
         <span aria-hidden="true" className={historyOpen?'gys-wallet__history-arrow gys-wallet__history-arrow--open':'gys-wallet__history-arrow'}>⌃</span>

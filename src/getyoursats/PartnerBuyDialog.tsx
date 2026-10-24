@@ -26,20 +26,24 @@ export default function PartnerBuyDialog({onClose,network}:Props) {
         <button type="button" aria-label="Close buy Bitcoin" onClick={onClose}>✕</button>
       </header>
       <p className="gys-partner-buy__lead">
-        Compare available payment options with Onramper. Your preferred display currency is {getDisplayFiatCurrency()}. The payment provider,
-        not GetYourSats, handles the purchase, identity checks, payment methods and fees.
+        Purchases are handled by an independent payment provider, not by GetYourSats.
+        Your preferred display currency is {getDisplayFiatCurrency()}. Availability, identity checks,
+        payment methods, purchase fees and delivery terms are set by the provider.
       </p>
       {ready ? <>
         <div className="gys-partner-buy__safety">
           <strong>Check the destination before paying.</strong>
           <p>
-            Our wallet uses Breez Spark. Onramper's Bitcoin checkout requires a
-            compatible <b>Bitcoin on-chain receiving address</b> — a Lightning
+            A provider checkout requires a compatible <b>Bitcoin on-chain receiving address</b> — a Lightning
             address or Lightning invoice is not a Bitcoin deposit address.
             Open Receive, confirm a current supported Bitcoin deposit address,
             its minimums and fees, then independently verify every detail at checkout.
           </p>
         </div>
+        <p className="gys-partner-buy__disclaimer">
+          You will leave GetYourSats for an independent provider at buy.onramper.com.
+          Review its identity checks, terms and fees before paying.
+        </p>
         <label className="gys-partner-buy__check">
           <input type="checkbox" checked={acknowledged}
             onChange={e=>setAcknowledged(e.target.checked)}/>
@@ -47,19 +51,19 @@ export default function PartnerBuyDialog({onClose,network}:Props) {
         </label>
         <button type="button" className="gys-partner-buy__primary" disabled={!acknowledged}
           onClick={() => { if(checkout) void openExternalUrl(checkout); }}>
-          Continue to Onramper ↗
+          Open external checkout ↗
         </button>
       </> : <div className="gys-partner-buy__safety">
         <strong>Partner checkout isn't active yet.</strong>
         <p>
-          We need an approved Onramper partner integration, verified BTC
-          destination compatibility and country-specific purchase checks
-          before enabling it. You can still send and receive Lightning payments now.
+          We are evaluating approved payment partners and compatible Bitcoin
+          delivery methods before enabling purchases. Existing Lightning payments
+          remain available.
         </p>
       </div>}
       <p className="gys-partner-buy__disclaimer">
         No purchase is completed or recorded as paid in GetYourSats from opening this window.
-        Partner availability and INR/UPI support vary by provider and location.
+        Payment methods and availability vary by country and provider.
       </p>
     </section>
   </div>;

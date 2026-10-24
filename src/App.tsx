@@ -472,7 +472,6 @@ const AppContent: React.FC = () => {
           }}
           onOpenSettings={() => setUserScreen('settings')}
           onOpenFiatCurrencies={() => setUserScreen('fiatCurrencies')}
-          onOpenBackup={() => setUserScreen('backup')}
           onOpenDca={() => setUserScreen('dca')}
           onOpenUnilateralExit={() => setUserScreen('unilateralExit')}
           onBuyBitcoin={sdk.handleBuyBitcoin}
