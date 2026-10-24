@@ -49,12 +49,9 @@ export default function PosPage({onClose}:{onClose:()=>void}){
       const identity=info.identityPubkey;
       if(!identity){setJournalWarning('Wallet identity is unavailable. Charges cannot be tracked yet.');return;}
       const previous=readPosOrders(identity);
+      // Preserve the device journal, but never auto-resume a previous invoice.
+      // Older orders can be opened explicitly from History if needed.
       setWalletIdentity(identity);setOrders(previous);
-      if(previous.length){
-        const latest=previous[0];
-        setInvoice(latest.invoice);setInvoiceSats(latest.amountSats);
-        setInvoiceUnit(latest.unit);setFee(latest.feeSats);
-      }
     }).catch(()=>{if(mounted)setJournalWarning('Cannot read wallet identity for POS records.');});
     return()=>{mounted=false};
   },[sdk]);
@@ -159,7 +156,11 @@ export default function PosPage({onClose}:{onClose:()=>void}){
   const copy=async()=>{
     try{await navigator.clipboard.writeText(invoice)}catch{setError('Could not copy invoice')}
   };
-  const reset=()=>{setInvoice('');setAmount('');setPaid(false);setFreshlyConfirmed(false);setShowHistory(false);setError('')};
+  const reset=()=>{
+    setInvoice('');setInvoiceSats(0);setInvoiceUnit('sats');setFee(0);
+    setAmount('');setNote('');setEditingNote(false);
+    setPaid(false);setFreshlyConfirmed(false);setShowHistory(false);setError('');
+  };
   useEffect(()=>{
     if(!walletIdentity || !orders.length)return;
     let active=true;
@@ -205,7 +206,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
             <strong>{formatWithSpaces(payment.amount)} 丰</strong>
           </li>)}</ol>}
       </section>:invoice?<section className="gys-pos-terminal__invoice" aria-live="polite">
-        <h2 className="gys-pos-terminal__invoice-title">Scan to pay</h2>
+        <h2 className="gys-pos-terminal__invoice-title">{settled?'Charge complete':'Scan to pay'}</h2>
         {settled ? <div className="gys-pos-terminal__success" data-testid="pos-received-motion" role="status">
           <PaymentMotion state="received" animate={freshlyConfirmed} />
           <span className="gys-pos-terminal__success-title">Payment received</span>
@@ -220,8 +221,10 @@ export default function PosPage({onClose}:{onClose:()=>void}){
         <strong className={settled?'gys-pos-paid':'gys-pos-pending'}>
           {settled?'Payment confirmed by the wallet':'Waiting for payment confirmation'}
         </strong>
-        <small>Estimated receiver fee: {fee} sats</small>
-        <button type="button" className="gys-pos-terminal__secondary" onClick={()=>void copy()}>Copy invoice</button>
+        {!settled && <>
+          <small>Estimated receiver fee: {fee} sats</small>
+          <button type="button" className="gys-pos-terminal__secondary" onClick={()=>void copy()}>Copy invoice</button>
+        </>}
         <button type="button" className="gys-pos-terminal__charge" onClick={reset}>New charge</button>
       </section>:<>
         <section className="gys-pos-terminal__amount">
@@ -263,7 +266,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
           </button>
         </footer>
       </>}
-      {!!orders.length&&(!invoice || showHistory)&&<section aria-label="Recent device POS orders" className="gys-pos-terminal__history">
+      {!!orders.length&&showHistory&&<section aria-label="Recent device POS orders" className="gys-pos-terminal__history">
         <p className="gys-pos-terminal__muted">Recent orders on this device · wallet verified for completed status</p>
         <ol>{orders.slice(0,5).map(order=><li key={order.id}>
           <button type="button" onClick={()=>{

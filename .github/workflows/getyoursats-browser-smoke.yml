@@ -19,7 +19,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Confirm missing SDK config cannot create an orphan wallet
-        run: npx playwright test e2e/tests/getyoursats-setup.spec.ts e2e/tests/getyoursats-landing.spec.ts e2e/tests/getyoursats-premium.spec.ts --project chromium
+        run: npx playwright test e2e/tests/getyoursats-setup.spec.ts e2e/tests/getyoursats-landing.spec.ts e2e/tests/getyoursats-premium.spec.ts e2e/tests/getyoursats-orange-audit.spec.ts e2e/tests/getyoursats-scarcity-rulebook.spec.ts --project chromium
         env:
           VITE_BREEZ_API_KEY: ''
           VITE_SPARK_LOCAL_CONFIG: ''
