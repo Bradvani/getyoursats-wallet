@@ -37,7 +37,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .gys-page-header__brand{max-width:24%}
 @media(min-width:981px){.gys-welcome h1{font-size:clamp(42px,4vw,54px);max-width:none}}
 @media(min-width:721px){.gys-wallet{max-width:760px;margin:auto}.gys-backup-card{margin-inline:28px}.gys-wallet__address{margin-inline:28px}.gys-action-dock{padding-inline:28px}}
-@media(max-width:720px){.gys-wallet__header{min-height:210px}.gys-wallet__address{margin:4px 16px;padding:9px 12px}.gys-backup-card{margin:4px 16px 6px}.gys-welcome__visual{min-height:130px;height:clamp(140px,23svh,230px)}.gys-welcome__hero-mark{width:310px}.gys-welcome__header-tag{font-size:8px;padding:8px}.gys-page-header__brand{left:16px;right:auto}.gys-page-header__brand--back{left:53px;right:auto}.gys-page-header__brand .gys-brand-wordmark{width:48px;height:29px}}
+@media(max-width:720px){.gys-wallet__header{min-height:210px}.gys-wallet__address{margin:4px 16px;padding:9px 12px}.gys-backup-card{margin:4px 16px 6px}.gys-welcome__visual{min-height:130px;height:clamp(140px,23svh,230px)}.gys-welcome__hero-mark{width:310px}.gys-welcome__header-tag{font-size:8px;padding:8px}.gys-page-header__brand{left:16px;right:auto}.gys-page-header__brand--back{left:53px;right:auto}/* Keep the actual SVG legible on secondary pages; the previous 48px rendering
+   made its detailed custom lettering blur at phone scale. */
+.gys-page-header__brand .gys-brand-wordmark{width:clamp(76px,20vw,92px);height:auto;max-height:33px;object-fit:contain;filter:none;opacity:1}
+@media(max-width:360px){.gys-page-header__brand--back{display:none}}}
 @media(max-height:680px) and (max-width:720px){.gys-wallet__header{min-height:160px}.gys-backup-card{padding:8px 12px}.gys-welcome__visual{height:125px;min-height:110px}.gys-welcome__hero-mark{width:230px}.gys-welcome__visual-caption{display:none}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
