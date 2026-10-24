@@ -3,7 +3,7 @@
    No wallet-storage, signing, SDK, amount or payment state is touched. */
 :root[data-gys-theme='orange']{
  color-scheme:light;
- --spark-primary:#D76800; --spark-primary-light:#CE6400;
+ --spark-primary:#F7931A; --spark-primary-light:#F7931A;
  --spark-void:#FAF7F1;--spark-dark:#F3ECE0;--spark-surface:#FFFCF7;--spark-elevated:#F0E6D7;
  --spark-border:#E1D7C9;--spark-border-light:#CFC2B1;
  --spark-text-primary:#241D17;--spark-text-secondary:#52483E;--spark-text-muted:#74695E;
@@ -11,7 +11,7 @@
  --glow-primary:rgba(247,147,26,.12);
  --color-spark-void:#FAF7F1;--color-spark-dark:#F3ECE0;--color-spark-surface:#FFFCF7;--color-spark-elevated:#F0E6D7;
  --color-spark-border:#E1D7C9;--color-spark-border-light:#CFC2B1;
- --color-spark-primary:#C86000;--color-spark-primary-light:#B65400;
+ --color-spark-primary:#F7931A;--color-spark-primary-light:#F7931A;
  --color-spark-warning:#AD4900;--color-spark-text-primary:#241D17;
  --color-spark-text-secondary:#52483E;--color-spark-text-muted:#74695E;
  --color-spark-warn-border:#DB8728;--color-spark-warn-surface:#FFF3DF;
