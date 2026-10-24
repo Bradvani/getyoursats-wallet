@@ -53,3 +53,88 @@
  .gys-transfer *,.gys-flow-step>div{animation:none!important;transition:none!important}
  .gys-transfer__check{stroke-dashoffset:0}
 }
+
+
+/* Payment Motion v1 · directional Bitcoin-orange brand effect.
+   This is entirely visual. Timeouts/CSS cannot report payment settlement. */
+.gys-transfer{width:152px;height:152px;margin:6px auto 24px;color:#F7931A}
+.gys-transfer__glow{position:absolute;inset:-17%;border-radius:50%;
+  background:radial-gradient(circle,rgba(247,147,26,.19) 0%,rgba(247,147,26,.07) 42%,transparent 70%);
+  opacity:.32;pointer-events:none}
+.gys-transfer__core{position:relative;z-index:2;width:94px;height:94px;
+  border-radius:29px;background:rgba(247,147,26,.10);
+  border:1px solid rgba(247,147,26,.32);box-shadow:0 0 0 8px rgba(247,147,26,.035)}
+.gys-transfer--pending .gys-transfer__glow{opacity:.3}
+.gys-transfer--success .gys-transfer__glow{animation:gys-moment-glow .88s ease-out both}
+.gys-transfer__streak{position:absolute;z-index:3;inset:-12%;width:124%;height:124%;
+  pointer-events:none;opacity:0;filter:drop-shadow(0 0 3px rgba(247,147,26,.30))}
+.gys-transfer__streak-path{stroke-dasharray:185;stroke-dashoffset:185}
+.gys-transfer--sent .gys-transfer__streak{animation:gys-streak-appear .74s cubic-bezier(.2,.8,.2,1) both}
+.gys-transfer--sent .gys-transfer__streak-path{animation:gys-wire-out .60s cubic-bezier(.2,.8,.2,1) both}
+.gys-transfer--received .gys-transfer__streak{transform:rotate(180deg);animation:gys-streak-in .74s cubic-bezier(.2,.8,.2,1) both}
+.gys-transfer--received .gys-transfer__streak-path{animation:gys-wire-in .60s cubic-bezier(.2,.8,.2,1) both}
+.gys-transfer--success .gys-transfer__core{transform:none;
+  animation:gys-monogram-land .58s cubic-bezier(.18,.85,.25,1.05) both;
+  background:#15110e;border-color:rgba(247,147,26,.38);border-radius:27px}
+.gys-transfer__mark{display:block;width:67px;height:67px;object-fit:contain;
+  border-radius:16px;box-shadow:0 7px 19px rgba(247,147,26,.10)}
+.gys-transfer__seal{position:absolute;right:4px;bottom:3px;display:grid;place-items:center;
+  width:23px;height:23px;border-radius:50%;font:700 14px/1 system-ui,sans-serif;
+  color:#0B0B0B;background:#F7931A;box-shadow:0 0 0 3px #15110e;
+  animation:gys-seal-appear .28s .35s both}
+.gys-transfer--success .gys-transfer__particle{display:none}
+.gys-transfer--success .gys-transfer__orbit{animation:gys-confirm .65s ease-out both;
+  border-color:rgba(247,147,26,.26)}
+.gys-transfer--failed .gys-transfer__glow{display:none}
+.gys-transfer--failed .gys-transfer__streak{display:none}
+.gys-transfer--compact{width:40px;height:40px;margin:0}
+.gys-transfer--compact .gys-transfer__glow,.gys-transfer--compact .gys-transfer__streak,
+.gys-transfer--compact .gys-transfer__seal{display:none}
+.gys-transfer--compact .gys-transfer__core{width:28px;height:28px;border-radius:9px;
+  box-shadow:none}
+.gys-transfer--compact .gys-transfer__mark{width:24px;height:24px;border-radius:6px}
+.gys-payment-stage__amount{margin:2px 0 15px;text-align:center;color:#F7931A;
+  font-size:clamp(27px,7vw,37px);font-weight:800;letter-spacing:-.055em;
+  animation:gys-amount-arrive .52s .17s both}
+.gys-moment__amount{animation:gys-amount-arrive .54s .23s both}
+.gys-moment__title{animation:gys-amount-arrive .4s .16s both}
+.gys-pos-terminal__success{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:7px;width:100%;padding:8px 0 2px;min-height:180px}
+.gys-pos-terminal__success .gys-transfer{margin:4px auto 5px}
+.gys-pos-terminal__success-title{font-weight:800;font-size:20px;letter-spacing:-.045em;
+  color:#FAF9F6}
+@keyframes gys-streak-appear{
+  0%{opacity:0}19%{opacity:.95}73%{opacity:.8}100%{opacity:0}
+}
+@keyframes gys-streak-in{
+  0%{opacity:0}20%{opacity:.95}72%{opacity:.8}100%{opacity:0}
+}
+@keyframes gys-wire-out{
+  0%{stroke-dashoffset:185}75%,100%{stroke-dashoffset:0}
+}
+@keyframes gys-wire-in{
+  0%{stroke-dashoffset:-185}75%,100%{stroke-dashoffset:0}
+}
+@keyframes gys-moment-glow{
+  0%{opacity:.12;transform:scale(.78)}34%{opacity:.72;transform:scale(1.09)}
+  100%{opacity:.22;transform:scale(1)}
+}
+@keyframes gys-monogram-land{
+  0%{opacity:0;transform:scale(.74) rotate(-6deg)}
+  62%{opacity:1;transform:scale(1.06) rotate(1deg)}
+  100%{opacity:1;transform:scale(1)}
+}
+@keyframes gys-seal-appear{
+  from{opacity:0;transform:scale(.65)}to{opacity:1;transform:scale(1)}
+}
+@keyframes gys-amount-arrive{
+  from{opacity:0;transform:translateY(10px) scale(.96)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  .gys-transfer__streak,.gys-transfer__glow{display:none!important}
+  .gys-transfer__core,.gys-transfer__seal,.gys-payment-stage__amount,
+  .gys-moment__amount,.gys-moment__title{animation:none!important;transition:none!important}
+  .gys-transfer--success .gys-transfer__core{opacity:1;transform:none}
+  .gys-transfer__seal{opacity:1;transform:none}
+}
