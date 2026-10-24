@@ -1,0 +1,35 @@
+name: Review source evidence
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/review-source-evidence.yml'
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Capture tracked public source only
+        run: |
+          mkdir -p /tmp/gys-review-evidence
+          git rev-parse HEAD > /tmp/gys-review-evidence/COMMIT.txt
+          git archive --format=tar HEAD | gzip > /tmp/gys-review-evidence/source.tar.gz
+      - name: Install exact lockfile dependencies without lifecycle scripts or credentials
+        run: npm ci --ignore-scripts
+      - name: Capture installed public SDK and local verification tools
+        run: tar -czf /tmp/gys-review-evidence/dependencies.tar.gz node_modules
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: review-source-${{ github.event.pull_request.head.sha }}
+          path: /tmp/gys-review-evidence/*
+          retention-days: 1
+          compression-level: 0
