@@ -47,6 +47,7 @@ import { isSendSheetOpen } from '../features/send/sendSheetVisibility';
 import { clearPin, isAppLockSupported } from '../services/appLock';
 import { hasConversionInFlight } from '../contexts/WalletContext';
 import { isConversionPayment } from '../utils/paymentDescription';
+import {newlyCompletedReceive,rememberPaymentId} from '../getyoursats/paymentMomentPolicy';
 import { unsettledDeposits } from '../utils/depositHelpers';
 
 // ============================================
@@ -250,6 +251,7 @@ export function useBreezSdk(
   const isInitialLoadRef = useRef(true);
   const eventListenerIdRef = useRef<string | null>(null);
   const shownPaymentIdsRef = useRef<Set<string>>(new Set());
+  const hasCompletedPaymentSnapshotRef = useRef(false);
   const sdkRef = useLatest(sdk);
   // Guards the retryUnlock flow against concurrent invocation. The
   // app-resume listener and checkForExistingWallet both try to fire
@@ -288,7 +290,14 @@ export function useBreezSdk(
         s.listPayments({ offset: 0, limit: 100 }),
       ]);
       setWalletInfo(info);
+      const newReceipt = newlyCompletedReceive(
+        txns.payments, shownPaymentIdsRef.current, hasCompletedPaymentSnapshotRef.current
+      );
+      hasCompletedPaymentSnapshotRef.current = true;
       setTransactions(filterOngoingConversionPayments(txns.payments));
+      // Newly settled receives sometimes arrive via sync after a PWA resumes,
+      // without a foreground paymentSucceeded event. Initial history is silent.
+      if (newReceipt && !isMigrationInProgress()) setCelebrationPayment(newReceipt);
       return true;
     } catch (e) {
       logger.error(LogCategory.SDK, 'Error refreshing wallet data', { error: formatError(e) });
@@ -343,8 +352,9 @@ export function useBreezSdk(
         method: event.payment.method,
       });
       if (!alreadyShown) {
-        shownPaymentIdsRef.current.add(paymentId);
-        setTimeout(() => shownPaymentIdsRef.current.delete(paymentId), 30000);
+        // Keep payment IDs for this active wallet session. A 30-second
+        // expiration let a subsequent SDK sync replay the same success.
+        rememberPaymentId(shownPaymentIdsRef.current, paymentId);
 
         const isReceived = event.payment.paymentType === 'receive';
         const isConversion = isConversionPayment(event.payment);
@@ -530,7 +540,14 @@ export function useBreezSdk(
             connectedSdk!.listPayments({ offset: 0, limit: 100 }),
           ]));
         setWalletInfo(info);
-        setTransactions(filterOngoingConversionPayments(txns.payments));
+        const newReceipt = newlyCompletedReceive(
+        txns.payments, shownPaymentIdsRef.current, hasCompletedPaymentSnapshotRef.current
+      );
+      hasCompletedPaymentSnapshotRef.current = true;
+      setTransactions(filterOngoingConversionPayments(txns.payments));
+      // Newly settled receives sometimes arrive via sync after a PWA resumes,
+      // without a foreground paymentSucceeded event. Initial history is silent.
+      if (newReceipt && !isMigrationInProgress()) setCelebrationPayment(newReceipt);
         logger.info(LogCategory.SDK, 'Connected wallet identity', {
           identityPubkey: info.identityPubkey,
           label: passkeyLabel ?? null,
@@ -636,6 +653,7 @@ export function useBreezSdk(
     clearRejectedDeposits();
     clearClaimFees();
     shownPaymentIdsRef.current.clear();
+    hasCompletedPaymentSnapshotRef.current = false;
     setIsConnected(false);
     setIsSyncing(false);
     setWalletInfo(null);
@@ -678,6 +696,7 @@ export function useBreezSdk(
     setPasskeyMode(label, SHARED_RP_ID ?? defaultRpId);
     markLabelUsed(label);
     shownPaymentIdsRef.current.clear();
+    hasCompletedPaymentSnapshotRef.current = false;
     setCelebrationPayment(null);
 
     try {
@@ -686,7 +705,14 @@ export function useBreezSdk(
         newSdk.listPayments({ offset: 0, limit: 100 }),
       ]);
       setWalletInfo(info);
+      const newReceipt = newlyCompletedReceive(
+        txns.payments, shownPaymentIdsRef.current, hasCompletedPaymentSnapshotRef.current
+      );
+      hasCompletedPaymentSnapshotRef.current = true;
       setTransactions(filterOngoingConversionPayments(txns.payments));
+      // Newly settled receives sometimes arrive via sync after a PWA resumes,
+      // without a foreground paymentSucceeded event. Initial history is silent.
+      if (newReceipt && !isMigrationInProgress()) setCelebrationPayment(newReceipt);
       logger.info(LogCategory.SDK, 'Connected wallet identity', {
         identityPubkey: info.identityPubkey,
         label,
@@ -754,6 +780,7 @@ export function useBreezSdk(
     setCachedStableTicker(null);
     clearStableRestorePrompted();
     shownPaymentIdsRef.current.clear();
+    hasCompletedPaymentSnapshotRef.current = false;
 
     if (secureStorage.isSupported()) {
       try {
@@ -795,7 +822,14 @@ export function useBreezSdk(
         connectedSdk.listPayments({ offset: 0, limit: 100 }),
       ]);
       setWalletInfo(info);
+      const newReceipt = newlyCompletedReceive(
+        txns.payments, shownPaymentIdsRef.current, hasCompletedPaymentSnapshotRef.current
+      );
+      hasCompletedPaymentSnapshotRef.current = true;
       setTransactions(filterOngoingConversionPayments(txns.payments));
+      // Newly settled receives sometimes arrive via sync after a PWA resumes,
+      // without a foreground paymentSucceeded event. Initial history is silent.
+      if (newReceipt && !isMigrationInProgress()) setCelebrationPayment(newReceipt);
       setIsConnected(true);
       markLabelUsed(wallet.label);
 
@@ -905,6 +939,7 @@ export function useBreezSdk(
     setCachedStableTicker(null);
     clearStableRestorePrompted();
     shownPaymentIdsRef.current.clear();
+    hasCompletedPaymentSnapshotRef.current = false;
     setIsLoading(false);
   }, [sdk]);
 

@@ -781,6 +781,7 @@ const AppContent: React.FC = () => {
                   the mount plays it in full after unlock. */}
               {sdk.celebrationPayment !== null && !appLock.locked && (
                 <PaymentCelebration
+                  key={sdk.celebrationPayment.id}
                   payment={sdk.celebrationPayment}
                   onClose={sdk.dismissCelebration}
                 />

@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
 import BrandedQrCode from '../components/BrandedQrCode';
+import PaymentMotion from '../components/PaymentMotion';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 import {useWallet} from '../contexts/WalletContext';
 import {useFiatData} from '../contexts/FiatDataContext';
@@ -30,6 +31,8 @@ export default function PosPage({onClose}:{onClose:()=>void}){
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const [paid,setPaid]=useState(false);
+  const [freshlyConfirmed,setFreshlyConfirmed]=useState(false);
+  const checkedExistingReceiptsRef=useRef(false);
   const [showHistory,setShowHistory]=useState(false);
   const [history,setHistory]=useState<Payment[]>([]);
   const [historyBusy,setHistoryBusy]=useState(false);
@@ -72,6 +75,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     return()=>{viewport?.removeEventListener('resize',update);viewport?.removeEventListener('scroll',update)};
   },[]);
   useInvoicePaid(invoice,()=>{
+    setFreshlyConfirmed(true);
     setPaid(true);
     // A successful SDK event, never an editable local flag, confirms paid.
     void loadHistory();
@@ -84,8 +88,10 @@ export default function PosPage({onClose}:{onClose:()=>void}){
       const matches=reconcilePosOrders(orders,result.payments);
       setConfirmedIds(new Set(matches.keys()));
       if(invoice && orders.some(order=>order.invoice.toLowerCase()===invoice.toLowerCase() && matches.has(order.id))){
+        if(checkedExistingReceiptsRef.current && !settled) setFreshlyConfirmed(true);
         setPaid(true);
       }
+      checkedExistingReceiptsRef.current=true;
     }catch{setError('Unable to load wallet payments right now.')}
     finally{setHistoryBusy(false)}
   };
@@ -113,7 +119,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
   };
   const create=async()=>{
     if(busy||!priceSats)return;
-    setBusy(true);setError('');setPaid(false);
+    setBusy(true);setError('');setPaid(false);setFreshlyConfirmed(false);
     try {
       let rate=validRate;
       if(isFiat(unit)){
@@ -153,7 +159,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
   const copy=async()=>{
     try{await navigator.clipboard.writeText(invoice)}catch{setError('Could not copy invoice')}
   };
-  const reset=()=>{setInvoice('');setAmount('');setPaid(false);setShowHistory(false);setError('')};
+  const reset=()=>{setInvoice('');setAmount('');setPaid(false);setFreshlyConfirmed(false);setShowHistory(false);setError('')};
   useEffect(()=>{
     if(!walletIdentity || !orders.length)return;
     let active=true;
@@ -163,12 +169,22 @@ export default function PosPage({onClose}:{onClose:()=>void}){
         if(!active)return;
         const matches=reconcilePosOrders(orders,result.payments);
         setConfirmedIds(new Set(matches.keys()));
+        // A passive SDK event can be missed when a PWA is backgrounded.
+        // Initial reconciliation is silent; only later newly completed
+        // receipts for the actively displayed charge get a fresh flash.
+        const matchingCurrent = orders.find(order =>
+          order.invoice.toLowerCase()===invoice.toLowerCase() && matches.has(order.id));
+        if(matchingCurrent && !paid) {
+          if(checkedExistingReceiptsRef.current) setFreshlyConfirmed(true);
+          setPaid(true);
+        }
+        checkedExistingReceiptsRef.current=true;
       }catch{/* Never synthesize settlement when the SDK is unavailable. */}
     };
     void reconcile();
     const timer=window.setInterval(()=>void reconcile(),20_000);
     return()=>{active=false;window.clearInterval(timer)};
-  },[sdk,walletIdentity,orders]);
+  },[sdk,walletIdentity,orders,invoice,paid]);
   return <div ref={root} role="dialog" aria-modal="true" aria-label="Merchant point of sale" className="gys-pos gys-pos--terminal">
     <div className="gys-pos-terminal">
       <header className="gys-pos-terminal__header">
@@ -190,12 +206,15 @@ export default function PosPage({onClose}:{onClose:()=>void}){
           </li>)}</ol>}
       </section>:invoice?<section className="gys-pos-terminal__invoice" aria-live="polite">
         <h2 className="gys-pos-terminal__invoice-title">Scan to pay</h2>
-        <div className="gys-pos-terminal__qr" data-testid="pos-invoice-qr"
+        {settled ? <div className="gys-pos-terminal__success" data-testid="pos-received-motion" role="status">
+          <PaymentMotion state="received" animate={freshlyConfirmed} />
+          <span className="gys-pos-terminal__success-title">Payment received</span>
+        </div> : <div className="gys-pos-terminal__qr" data-testid="pos-invoice-qr"
           aria-label="Scan this Lightning invoice to pay">
           <PosQrBoundary key={invoice}>
             <BrandedQrCode value={invoice.toUpperCase()} size={288} label="Lightning invoice QR code" />
           </PosQrBoundary>
-        </div>
+        </div>}
         <h2>{formatWithSpaces(invoiceSats)} <span>丰 sats</span></h2>
         <p>Requested in {invoiceUnit} · Receives Lightning sats</p>
         <strong className={settled?'gys-pos-paid':'gys-pos-pending'}>
@@ -249,7 +268,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
         <ol>{orders.slice(0,5).map(order=><li key={order.id}>
           <button type="button" onClick={()=>{
             setInvoice(order.invoice);setInvoiceSats(order.amountSats);setInvoiceUnit(order.unit);
-            setFee(order.feeSats);setPaid(confirmedIds.has(order.id));setShowHistory(false);setError('');
+            setFee(order.feeSats);setPaid(confirmedIds.has(order.id));setFreshlyConfirmed(false);setShowHistory(false);setError('');
           }}>
             {formatWithSpaces(order.amountSats)} sats · {order.description.slice(0,32)} ·
             {confirmedIds.has(order.id)?' Confirmed':' Awaiting verification'}

@@ -34,6 +34,31 @@ for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
   expect(errors).toEqual([]);
  });
 }
+test('@public-smoke merchant shows lightning flash only after an SDK confirmed receipt',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto(fixture);
+ await page.getByRole('button',{name:'Open Point of Sale'}).click();
+ const terminal=page.getByRole('dialog',{name:'Merchant point of sale'});
+ await terminal.getByRole('button',{name:'1',exact:true}).click();
+ await terminal.getByRole('button',{name:'Charge',exact:true}).click();
+ await expect(page.getByTestId('pos-invoice-qr').locator('svg')).toBeVisible();
+ await expect(page.getByTestId('pos-received-motion')).toHaveCount(0);
+ await expect(terminal).toContainText('Waiting for payment confirmation');
+ // A click on Charge must NOT simulate a payment. Only the dev-only fixture
+ // dispatch of the SDK's paymentSucceeded event is allowed to settle it.
+ await page.evaluate(()=>{
+  (window as Window & {__gysFixtureSettlePos?:()=>void}).__gysFixtureSettlePos?.();
+ });
+ await expect(page.getByTestId('pos-received-motion')).toBeVisible();
+ await expect(page.getByTestId('pos-received-motion').locator('[data-motion-state="received"]')).toBeVisible();
+ await expect(page.getByTestId('pos-received-motion').locator('img[src="/brand/monogram.svg"]')).toBeVisible();
+ await expect(page.getByTestId('pos-invoice-qr')).toHaveCount(0);
+ await expect(terminal).toContainText('Payment confirmed by the wallet');
+ await page.screenshot({path:'test-artifacts/pos-payment-received.png',animations:'disabled'});
+ await terminal.getByRole('button',{name:'New charge'}).click();
+ await expect(page.getByTestId('pos-received-motion')).toHaveCount(0);
+});
+
 test('@public-smoke send receive settings and reduced motion',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);
@@ -48,7 +73,13 @@ test('@public-smoke send receive settings and reduced motion',async({page})=>{
   await page.goto(fixture+'?screen='+state);
   if(state!=='settings')await expect(page.locator('[data-motion-state]')).toBeVisible();
   if(state==='settings')await expect(page.getByRole('heading',{name:'Settings',exact:true})).toBeVisible();
-  if(state==='received')await expect(page.getByRole('status')).toHaveCSS('opacity','1');
+  if(state==='received'){
+   await expect(page.getByTestId('payment-received-moment')).toHaveCSS('opacity','1');
+   await expect(page.getByTestId('payment-received-moment').locator('img[src="/brand/monogram.svg"]')).toBeVisible();
+  }
+  if(state==='sent'){
+   await expect(page.getByTestId('payment-success').locator('img[src="/brand/monogram.svg"]')).toBeVisible();
+  }
   await page.screenshot({path:`test-artifacts/state-${state}.png`,animations:'disabled'});
   if(state==='received'){
    await page.getByRole('button',{name:'Done',exact:true}).click();
@@ -59,6 +90,9 @@ test('@public-smoke send receive settings and reduced motion',async({page})=>{
  await page.goto(fixture+'?screen=sending');
  await expect(page.locator('.gys-transfer__orbit')).toHaveCSS('animation-name','none');
  await expect(page.getByRole('status')).toHaveAttribute('aria-busy','true');
+ await page.goto(fixture+'?screen=received');
+ await expect(page.getByTestId('payment-received-moment')).toBeVisible();
+ await expect(page.locator('.gys-transfer--received .gys-transfer__glow')).toHaveCSS('display','none');
 });
 
 test('@public-smoke installed iOS header keeps the official wordmark clear',async({page})=>{
