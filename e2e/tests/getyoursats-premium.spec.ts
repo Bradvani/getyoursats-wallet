@@ -36,6 +36,8 @@ test('@public-smoke send receive settings and reduced motion',async({page})=>{
  for(const state of ['sending','converting','receiving','sent','failed','received','settings']){
   await page.goto(fixture+'?screen='+state);
   if(state!=='settings')await expect(page.locator('[data-motion-state]')).toBeVisible();
+  if(state==='settings')await expect(page.getByRole('heading',{name:'Settings',exact:true})).toBeVisible();
+  if(state==='received')await expect(page.getByRole('status')).toHaveCSS('opacity','1');
   await page.screenshot({path:`test-artifacts/state-${state}.png`,animations:'disabled'});
   if(state==='received'){
    await page.getByRole('button',{name:'Done',exact:true}).click();
