@@ -21,11 +21,11 @@ export function isPosOrder(value: unknown): value is PosOrder {
   const x = value as Partial<PosOrder>;
   return typeof x.id === 'string' && x.id.length > 0 && x.id.length <= 120 &&
     typeof x.invoice === 'string' && /^ln(bc|tb|bcrt|sb)[0-9a-z]{20,}$/i.test(x.invoice) &&
-    Number.isSafeInteger(x.amountSats) && (x.amountSats ?? 0) > 0 &&
+    typeof x.amountSats === 'number' && Number.isSafeInteger(x.amountSats) && x.amountSats > 0 &&
     (x.unit === 'sats' || x.unit === 'BTC' || (typeof x.unit === 'string' && /^[A-Z]{3}$/.test(x.unit))) &&
     typeof x.description === 'string' && x.description.length <= 200 &&
-    Number.isSafeInteger(x.createdAt) && (x.createdAt ?? 0) > 0 &&
-    Number.isFinite(x.feeSats) && (x.feeSats ?? -1) >= 0;
+    typeof x.createdAt === 'number' && Number.isSafeInteger(x.createdAt) && x.createdAt > 0 &&
+    typeof x.feeSats === 'number' && Number.isFinite(x.feeSats) && x.feeSats >= 0;
 }
 
 /** The local journal is an untrusted convenience, not merchant accounting.
