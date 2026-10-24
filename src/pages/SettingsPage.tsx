@@ -23,6 +23,7 @@ interface SettingsPageProps {
   onOpenPasskeySettings: () => void;
   onOpenSecurity: () => void;
   onOpenBackup: () => void;
+  onOpenEmail: () => void;
   onOpenUnilateralExit: () => void;
 }
 
@@ -34,6 +35,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onOpenPasskeySettings,
   onOpenSecurity,
   onOpenBackup,
+  onOpenEmail,
   onOpenUnilateralExit,
 }) => {
   const wallet = useWallet();
@@ -243,6 +245,17 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
               <ChevronRightIcon size="md" />
             </button>
+          </div>
+
+          {/* This is not email-based wallet recovery. Identity must be
+              signed by the active Spark wallet and confirmed server-side. */}
+          <div className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-2">
+            <h3 className="font-display font-semibold text-spark-text-primary">Account identity</h3>
+            <button type="button" onClick={onOpenEmail}
+              className="flex w-full items-center justify-between rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary transition-colors hover:bg-white/5 hover:text-spark-text-primary">
+              <span>Verify email address</span><ChevronRightIcon size="md"/>
+            </button>
+            <p className="text-xs text-spark-text-muted">Optional. An email cannot unlock your wallet or replace your backup.</p>
           </div>
 
           {/* Display */}

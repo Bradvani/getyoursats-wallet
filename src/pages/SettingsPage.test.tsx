@@ -18,6 +18,7 @@ const renderSettings = () => render(
     onOpenPasskeySettings={vi.fn()}
     onOpenSecurity={vi.fn()}
     onOpenBackup={vi.fn()}
+    onOpenEmail={vi.fn()}
     onOpenUnilateralExit={vi.fn()}
   />
   </WalletProvider>

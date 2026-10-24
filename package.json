@@ -23,7 +23,8 @@
     "regtest:fund": "node local-regtest/fund.mjs",
     "regtest:renewed-leaf": "node local-regtest/watchtower.mjs leaf",
     "regtest:parent-exit": "node local-regtest/watchtower.mjs parent",
-    "regtest:watchtower-exit": "node local-regtest/watchtower.mjs exit"
+    "regtest:watchtower-exit": "node local-regtest/watchtower.mjs exit",
+    "test:email-service": "node --test tests/email-account.test.mjs"
   },
   "dependencies": {
     "@breeztech/breez-sdk-spark": "file:vendor/breeztech-breez-sdk-spark.tgz",

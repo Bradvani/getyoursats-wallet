@@ -20,6 +20,7 @@ import { FiatDataProvider } from './contexts/FiatDataContext';
 import { StableBalanceProvider, useStableBalance } from './contexts/StableBalanceContext';
 
 import HomePage from './pages/HomePage';
+import EmailVerificationPage from './pages/EmailVerificationPage';
 import WalletPage from './pages/WalletPage';
 import RestorePage from './pages/RestorePage';
 import GeneratePage from './pages/GeneratePage';
@@ -60,7 +61,7 @@ import type { Seed, Payment, BreezSdk } from '@breeztech/breez-sdk-spark';
 
 const PASSKEY_MIGRATION_ENABLED = true;
 
-type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
+type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'email' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
 
 // Full-screen dim spinner shown while sdk.isLoading is true (logout in
 // progress, SDK reconnect, etc). Wrapped as its own component so the
@@ -355,6 +356,7 @@ const AppContent: React.FC = () => {
         return true;
       case 'backup':
       case 'security':
+      case 'email':
       case 'fiatCurrencies':
       case 'buyProviders':
       case 'passkeySettings':
@@ -486,6 +488,7 @@ const AppContent: React.FC = () => {
         onOpenPasskeySettings={() => setUserScreen('passkeySettings')}
         onOpenSecurity={() => setUserScreen('security')}
         onOpenBackup={() => setUserScreen('backup')}
+        onOpenEmail={() => setUserScreen('email')}
         onOpenUnilateralExit={() => setUserScreen('unilateralExit')}
       />
     );
@@ -690,6 +693,15 @@ const AppContent: React.FC = () => {
               onBack={() => setUserScreen('settings')}
               network={sdk.config?.network}
             />
+          </>
+        );
+
+      case 'email':
+        return (
+          <>
+            {renderWalletPage()}
+            {renderSettingsPage()}
+            <EmailVerificationPage onBack={() => setUserScreen('settings')}/>
           </>
         );
 
