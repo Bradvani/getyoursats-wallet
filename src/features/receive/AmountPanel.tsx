@@ -1,6 +1,6 @@
 import {useFiatData} from '../../contexts/FiatDataContext';
 import DenominationTabs from '../../getyoursats/DenominationTabs';
-import {amountToSats,getDenomination,saveDenomination,satsToAmount,type Denomination} from '../../getyoursats/denomination';
+import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../getyoursats/denomination';
 import React, { useRef, useEffect, useMemo } from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import {
@@ -63,7 +63,9 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   const {fiatRates,fetchedAt}=useFiatData();
   const [denomination,setDenomination]=React.useState<Denomination>(getDenomination);
   const [unitRaw,setUnitRaw]=React.useState('');
-  const currentRate=fetchedAt?fiatRates.find(r=>r.coin==='INR')?.value:undefined;
+  const currentCurrency=isFiatDenomination(denomination)?denomination:getDisplayFiatCurrency();
+  const currentRate=fetchedAt?fiatRates.find(r=>r.coin===currentCurrency)?.value:undefined;
+  const rateFor=(unit:Denomination)=>fiatRates.find(r=>r.coin===unit)?.value;
   const {
     amountInput: displayAmount,
     setAmount,
@@ -80,21 +82,22 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   } = input;
 
   const customUnit=denomination!=='sats'&&!isTokenMode;
-  const unitUnavailable=denomination==='INR'&&!currentRate;
+  const unitUnavailable=isFiatDenomination(denomination)&&!currentRate;
   const shownAmount=customUnit?unitRaw:displayAmount;
   const chooseUnit=(next:Denomination)=>{
-    if(next==='INR'&&!currentRate)return;
+    const nextRate=isFiatDenomination(next)?rateFor(next):undefined;
+    if(isFiatDenomination(next)&&(!nextRate||!fetchedAt))return;
     const satNumber=parsedSats===null?0:Number(parsedSats);
     setIsTokenMode(false);
     setDenomination(next);
     saveDenomination(next);
-    setUnitRaw(satNumber>0?satsToAmount(satNumber,next,currentRate):'');
+    setUnitRaw(satNumber>0?satsToAmount(satNumber,next,nextRate):'');
     if(next==='sats')setAmountInput(satNumber>0?String(satNumber):'');
   };
   const [rateError,setRateError]=React.useState('');
   const requestInvoice=()=>{
-    if(denomination==='INR' && (!fetchedAt || Date.now()-fetchedAt>120_000)){
-      setRateError('INR/BTC price has expired. Refresh the wallet and try again.');
+    if(isFiatDenomination(denomination) && (!fetchedAt || Date.now()-fetchedAt>120_000)){
+      setRateError(denomination+'/BTC quote has expired. Refresh the wallet and try again.');
       return;
     }
     setRateError('');
@@ -208,7 +211,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
                     descriptionInputRef.current?.focus();
                   }
                 }}
-                placeholder={customUnit?(denomination==='INR'?'₹ 20.00':'0.0001'):isTokenMode?'0.00':'0'}
+                placeholder={customUnit?(isFiatDenomination(denomination)?'0.00':'0.0001'):isTokenMode?'0.00':'0'}
                 disabled={isLoading}
                 rows={1}
                 className={`${AMOUNT_FIELD_CLASS} resize-none pr-16 font-mono`}
@@ -223,8 +226,8 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
                 />
               )}
             </div>
-            <DenominationTabs value={denomination} onChange={chooseUnit} disabled={isLoading} inrAvailable={!!currentRate}/>
-            {unitUnavailable&&<p role="status" className="text-xs text-spark-warning">Live INR/BTC price unavailable. Choose sats or BTC.</p>}
+            <DenominationTabs value={denomination} onChange={chooseUnit} disabled={isLoading} fiatAvailable={!!currentRate}/>
+            {unitUnavailable&&<p role="status" className="text-xs text-spark-warning">Live {denomination}/BTC price unavailable. Choose sats or BTC.</p>}
             {customUnit&&parsedSats!==null&&<p className="text-xs text-spark-text-muted">≈ {String(parsedSats)} sats · Invoice settles in Bitcoin</p>}
           </div>
 

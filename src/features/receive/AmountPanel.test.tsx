@@ -6,6 +6,7 @@ import { FiatDataProvider } from '@/contexts/FiatDataContext';
 import { StableBalanceProvider } from '@/contexts/StableBalanceContext';
 import { createMockClient } from '@/test/mocks/mockWalletApi';
 import { saveDenomination } from '../../getyoursats/denomination';
+import {setDisplayFiatCurrency,saveFiatSettings} from '../../services/settings';
 import { waitForSheetOpen } from '@/test/utils/waitForSheetOpen';
 import AmountPanel from './AmountPanel';
 
@@ -24,7 +25,11 @@ async function renderAmountPanel(client?: BreezSdk) {
   return {setAmountSats, client:mockClient};
 }
 describe('GetYourSats receive amount denomination',()=>{
-  beforeEach(()=>saveDenomination('sats'));
+  beforeEach(()=>{
+    saveFiatSettings({selectedCurrencies:['USD']});
+    setDisplayFiatCurrency('USD');
+    saveDenomination('sats');
+  });
   afterEach(()=>saveDenomination('sats'));
   it('starts in exact sats and sends integer sats to the invoice request',async()=>{
     const {setAmountSats}=await renderAmountPanel();
@@ -37,22 +42,22 @@ describe('GetYourSats receive amount denomination',()=>{
     fireEvent.change(screen.getByTestId('invoice-amount-input'),{target:{value:'0.00005'}});
     await waitFor(()=>expect(setAmountSats).toHaveBeenCalledWith(5000n));
   });
-  it('converts INR at a real SDK-provided BTC/INR quote',async()=>{
+  it('converts USD using the SDK-provided BTC/USD quote',async()=>{
     const client=createMockClient({listFiatRates:vi.fn().mockResolvedValue({
       rates:[{coin:'INR',value:5_000_000},{coin:'USD',value:100_000}]
     })} as unknown as Partial<BreezSdk>);
     const {setAmountSats}=await renderAmountPanel(client);
-    const inr=screen.getByRole('button',{name:'INR'});
-    await waitFor(()=>expect(inr).not.toBeDisabled());
-    fireEvent.click(inr);
+    const usd=screen.getByRole('button',{name:'USD'});
+    await waitFor(()=>expect(usd).not.toBeDisabled());
+    fireEvent.click(usd);
     fireEvent.change(screen.getByTestId('invoice-amount-input'),{target:{value:'50'}});
-    await waitFor(()=>expect(setAmountSats).toHaveBeenCalledWith(1000n));
+    await waitFor(()=>expect(setAmountSats).toHaveBeenCalledWith(50000n));
   });
-  it('disables INR entry if the provider has no quote',async()=>{
+  it('disables USD entry if the provider has no quote',async()=>{
     const client=createMockClient({listFiatRates:vi.fn().mockResolvedValue({rates:[]})} as unknown as Partial<BreezSdk>);
     await renderAmountPanel(client);
     await waitFor(()=>expect(client.listFiatRates).toHaveBeenCalled());
-    expect(screen.getByRole('button',{name:'INR'})).toBeDisabled();
+    expect(screen.getByRole('button',{name:'USD'})).toBeDisabled();
     expect(screen.getByRole('button',{name:'BTC'})).not.toBeDisabled();
   });
 });

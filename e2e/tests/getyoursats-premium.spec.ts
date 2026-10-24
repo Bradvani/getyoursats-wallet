@@ -13,7 +13,7 @@ for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
   await expect(page.getByRole('button',{name:'Send Bitcoin',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Receive Bitcoin',exact:true})).toBeVisible();
   await expect(page.getByTestId('wallet-balance')).toHaveText(/125\s*000/);
-  const recovery = page.getByRole('button',{name:/Protect your Bitcoin/});
+  const recovery = page.getByRole('button',{name:/Review recovery options/});
   await expect(recovery).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   mkdirSync('test-artifacts',{recursive:true});
