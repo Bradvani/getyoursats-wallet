@@ -53,8 +53,10 @@ describe('unilateral exit on the settings page', () => {
 describe('help and app identity', () => {
   it('shows direct Privacy and Support entries and the shared build version', () => {
     renderSettings();
-    expect(screen.getByTestId('settings-privacy-link')).toHaveTextContent('Privacy Policy');
-    expect(screen.getByTestId('settings-support-link')).toHaveTextContent('Support');
+    expect(screen.queryByTestId('settings-privacy-link')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('settings-support-link')).not.toBeInTheDocument();
+    expect(screen.getByTestId('settings-appearance-orange')).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByTestId('settings-language-hi')).toBeInTheDocument();
     expect(screen.getByText('GetYourSats v0.0.0-test')).toBeInTheDocument();
   });
 });

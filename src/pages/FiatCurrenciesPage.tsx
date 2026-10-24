@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { LoadingSpinner, Checkbox } from '../components/ui';
 import { useWallet } from '@/contexts/WalletContext';
 import { getFiatSettings, saveFiatSettings, getDisplayFiatCurrency, setDisplayFiatCurrency } from '../services/settings';
@@ -19,6 +19,7 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
   const [selectedCurrencies, setSelectedCurrencies] = useState<string[]>([]);
   const [primaryCurrency,setPrimaryCurrency]=useState(getDisplayFiatCurrency);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,7 +65,7 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
       }
       return newSelection;
     });
-  }, []);
+  }, [primaryCurrency]);
 
   const handleDragStart = useCallback((currencyId: string) => {
     setDraggedItem(currencyId);
@@ -135,6 +136,18 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
     .filter(c => !selectedCurrencies.includes(c.id))
     .sort((a, b) => a.id.localeCompare(b.id));
 
+  // Search by ISO code, localized currency name or printed symbol. The full
+  // selection order is never rewritten by searching.
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+  const matches = useCallback((currency: FiatCurrency) => {
+    if (!normalizedQuery) return true;
+    return [currency.id, currency.info.name, currency.info.symbol?.grapheme ?? '']
+      .some(part => part.toLocaleLowerCase().includes(normalizedQuery));
+  }, [normalizedQuery]);
+  const filteredSelected = useMemo(() => selectedCurrencyList.filter(matches), [selectedCurrencies, currencies, matches]);
+  const filteredAvailable = useMemo(() => unselectedCurrencyList.filter(matches), [selectedCurrencies, currencies, matches]);
+  const hitCount = filteredSelected.length + filteredAvailable.length;
+
   return (
     <SlideInPage title="Currencies" closeStyle="back" onClose={onBack} slideFrom="right">
       {isLoading ? (
@@ -146,12 +159,26 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
           Failed to load currencies. Please try again.
         </div>
       ) : (
-        <div className="p-4 space-y-2">
+        <div className="p-4 space-y-3">
+          <div className="relative">
+            <span aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 text-spark-text-muted text-xl">⌕</span>
+            <input type="search" inputMode="search" autoComplete="off" enterKeyHint="search"
+              aria-label="Search currencies" placeholder="Search code, name or symbol…"
+              data-testid="currency-search" className="gys-currency-search"
+              value={searchQuery} onChange={event => setSearchQuery(event.currentTarget.value)} />
+          </div>
+          <p role="status" className="text-xs text-spark-text-muted px-1">
+            {normalizedQuery ? `${hitCount} matching currencies` : `${currencies.length} available currencies · ${selectedCurrencies.length} selected`}
+          </p>
+          {hitCount===0 && <div className="rounded-2xl border border-spark-border p-8 text-center text-sm text-spark-text-secondary" data-testid="currency-no-results">
+            No matching currencies. Try a different name or code.
+          </div>}
+          {filteredSelected.length>0 && <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-spark-text-muted px-1 pt-2">Your currencies</p>}
           {/* Selected currencies - with drag handles */}
-          {selectedCurrencyList.map((currency, index) => (
+          {filteredSelected.map((currency, index) => (
             <div
               key={currency.id}
-              draggable
+              draggable={!normalizedQuery}
               onDragStart={() => handleDragStart(currency.id)}
               onDragOver={(e) => handleDragOver(e, currency.id)}
               onDragEnd={handleDragEnd}
@@ -191,7 +218,7 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
               <div className="flex flex-col gap-0.5">
                 <button
                   onClick={() => handleMoveUp(currency.id)}
-                  disabled={index === 0}
+                  disabled={Boolean(normalizedQuery) || index === 0}
                   className="p-1 text-spark-text-muted hover:text-spark-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="Move up"
                 >
@@ -199,7 +226,7 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
                 </button>
                 <button
                   onClick={() => handleMoveDown(currency.id)}
-                  disabled={index === selectedCurrencyList.length - 1}
+                  disabled={Boolean(normalizedQuery) || index === filteredSelected.length - 1}
                   className="p-1 text-spark-text-muted hover:text-spark-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="Move down"
                 >
@@ -215,7 +242,8 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
           ))}
 
           {/* Unselected currencies */}
-          {unselectedCurrencyList.map((currency) => (
+          {filteredAvailable.length>0 && <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-spark-text-muted px-1 pt-3">More currencies</p>}
+          {filteredAvailable.map((currency) => (
             <div
               key={currency.id}
               className="flex items-center gap-3 p-3 bg-spark-dark/50 border border-spark-border/50 rounded-xl"

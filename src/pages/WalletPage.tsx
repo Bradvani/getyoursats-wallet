@@ -1,3 +1,5 @@
+import {usePresentation} from '@/hooks/usePresentation';
+import {WALLET_COPY} from '@/services/presentationPreferences';
 import {useLightningAddress} from '../features/receive/hooks/useLightningAddress';
 import GetYourSatsPos from '../getyoursats/PosPage';
 import {featureAvailability} from '../getyoursats/featureAvailability';
@@ -71,6 +73,8 @@ const WalletPage: React.FC<WalletPageProps> = ({
   onDepositChanged,
 }) => {
   const wallet = useWallet();
+  const {language,copy}=usePresentation();
+  const wc=WALLET_COPY[language];
   const { showToast } = useToast();
 
   // Tint the native system bars to the wallet page glass effective
@@ -320,7 +324,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
       {/* Lightning address: ready on first wallet screen, not a hidden signup step. */}
       <div className="gys-address-banner gys-wallet__address" role="status" aria-live="polite">
-        <span className="gys-address-banner__label">⚡ Your Lightning address</span>
+        <span className="gys-address-banner__label">⚡ {wc.lightning}</span>
         {primaryLightningAddress.address ? (
           <button type="button" className="gys-address-banner__value"
             onClick={()=>void navigator.clipboard.writeText(primaryLightningAddress.address!.lightningAddress)}
@@ -340,20 +344,20 @@ const WalletPage: React.FC<WalletPageProps> = ({
         <button type="button" className="gys-home-quick-actions__button"
           onClick={()=>setGysPosOpen(true)} aria-label="Open Point of Sale">
           <span className="gys-home-quick-actions__icon" aria-hidden="true"><QrCodeIcon size="lg"/></span>
-          <span className="gys-home-quick-actions__text"><strong>Point of Sale</strong><small>Accept a payment</small></span>
+          <span className="gys-home-quick-actions__text"><strong>{copy.pointOfSale}</strong><small>{wc.accept}</small></span>
         </button>
         <button type="button" className="gys-home-quick-actions__button"
           onClick={featureAvailability.recurringBuy ? onOpenDca : undefined}
           disabled={!featureAvailability.recurringBuy}
           aria-label={featureAvailability.recurringBuy ? 'Open Recurring Buys' : 'Recurring Buys coming soon'}>
           <span className="gys-home-quick-actions__icon" aria-hidden="true"><ClockIcon size="lg"/></span>
-          <span className="gys-home-quick-actions__text"><strong>Recurring Buys</strong><small>Coming soon</small></span>
+          <span className="gys-home-quick-actions__text"><strong>{copy.recurring}</strong><small>{wc.soon}</small></span>
         </button>
       </nav>
       <button type="button" className="gys-wallet__history-trigger" aria-expanded={historyOpen}
         aria-controls="gys-wallet-history" onClick={()=>setHistoryOpen(v=>!v)}>
         <span aria-hidden="true" className={historyOpen?'gys-wallet__history-arrow gys-wallet__history-arrow--open':'gys-wallet__history-arrow'}>⌃</span>
-        <span>{historyOpen ? 'Hide history' : 'History'}</span>
+        <span>{historyOpen ? wc.hideHistory : wc.history}</span>
         {transactions.length > 0 && <span className="gys-wallet__history-count">{transactions.length}</span>}
       </button>
       {/* Live SDK market quotes and wallet-verified activity. */}
@@ -436,9 +440,9 @@ const WalletPage: React.FC<WalletPageProps> = ({
       {/* Receive and Send stay dominant; scanning and POS stay available in the menu. */}
       <nav className="gys-action-dock" aria-label="Wallet actions">
         <button type="button" onClick={openReceiveDialog} data-testid="receive-button" aria-label="Receive Bitcoin"
-          className="gys-action-dock__receive"><ArrowDownIcon/><span>Receive</span></button>
+          className="gys-action-dock__receive"><ArrowDownIcon/><span>{wc.receive}</span></button>
         <button type="button" onClick={openSendDialog} data-testid="send-button" aria-label="Send Bitcoin"
-          className="gys-action-dock__send"><ArrowUpIcon/><span>Send</span></button>
+          className="gys-action-dock__send"><ArrowUpIcon/><span>{wc.send}</span></button>
         <button type="button" onClick={()=>setIsQrScannerOpen(true)} data-testid="scan-button" aria-label="Scan payment QR"
           className="gys-action-dock__utility"><QrCodeIcon/><span>Scan</span></button>
         <button type="button" onClick={()=>setGysPosOpen(true)} data-testid="pos-button" aria-label="Accept payment using POS"
