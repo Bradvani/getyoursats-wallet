@@ -1,3 +1,4 @@
+import BrandIntro from '../components/BrandIntro';
 import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
 import {useId} from 'react';
 import {ChevronRightIcon} from '../components/Icons';
@@ -21,6 +22,7 @@ export default function HomePage({
 
   return (
     <main className="gys-welcome">
+      <BrandIntro />
       <div className="gys-welcome__atmosphere" aria-hidden="true"/>
       <header className="gys-welcome__header">
         <div className="gys-welcome__brand"><GetYourSatsWordmark landing /></div>
