@@ -8,6 +8,7 @@ import {formatWithSpaces} from '../utils/formatNumber';
 import {getDisplayFiatCurrency} from '../services/settings';
 import {amountToSats,getDenomination,saveDenomination,satsToAmount,type Denomination} from './denomination';
 import DenominationTabs from './DenominationTabs';
+import PosQrBoundary from '../components/PosQrBoundary';
 import {readPosOrders,savePosOrders,reconcilePosOrders,type PosOrder} from './posLedger';
 import {validatePosInvoiceResponse} from './posInvoice';
 
@@ -188,7 +189,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
             <strong>{formatWithSpaces(payment.amount)} 丰</strong>
           </li>)}</ol>}
       </section>:invoice?<section className="gys-pos-terminal__invoice" aria-live="polite">
-        <div className="gys-pos-terminal__qr"><QRCode value={invoice.toUpperCase()} size={218}/></div>
+        <div className="gys-pos-terminal__qr"><PosQrBoundary><QRCode value={invoice.toUpperCase()} size={218}/></PosQrBoundary></div>
         <h2>{formatWithSpaces(invoiceSats)} <span>丰 sats</span></h2>
         <p>Requested in {invoiceUnit} · Receives Lightning sats</p>
         <strong className={settled?'gys-pos-paid':'gys-pos-pending'}>
