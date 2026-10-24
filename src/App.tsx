@@ -218,6 +218,13 @@ const AppContent: React.FC = () => {
       // The metadata is only a UI routing hint, never proof of custody.
       let knownPasskey = false;
       try {
+        // Never start a new passkey-derived wallet over a locally stored
+        // manual wallet that might be temporarily disconnected.
+        if (localStorage.getItem('walletMnemonic') !== null) {
+          setSetupIssue('A wallet already exists on this device. Reopen or restore it before creating another wallet.');
+          setUserScreen('home');
+          return;
+        }
         knownPasskey = shouldDiscoverExistingPasskey(
           localStorage.getItem('passkeyRegistered'),
           localStorage.getItem('passkeyLabel'),
