@@ -271,7 +271,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
                 </p>
               </details>
             </aside>
-          )
+          )}
 
           {!isRevealed && <section aria-label="Private recovery phrase viewing checklist"
             className="rounded-2xl border border-spark-border bg-spark-dark p-5 space-y-3">
