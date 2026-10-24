@@ -11,6 +11,7 @@ import './index.css';
 import './getyoursats/premium.css';
 import './getyoursats/appearance.css';
 import { initPresentation, subscribePresentation, getResolvedAppearance } from './services/presentationPreferences';
+import { refreshSystemBarsForTheme } from './utils/statusBarManager';
 import { logger, LogCategory } from '@/services/logger';
 import { initWebViewportManager } from '@/utils/webViewportManager';
 import { installUserAgentStrippingFetch } from '@/utils/stripUserAgentFetch';
@@ -26,11 +27,7 @@ installUserAgentStrippingFetch();
 // Apply locally stored presentation preferences before mounting React.
 initPresentation();
 if (Capacitor.isNativePlatform()) {
-  subscribePresentation(() => {
-    const orange = getResolvedAppearance() === 'orange';
-    void StatusBar.setStyle({ style: orange ? Style.Dark : Style.Light }).catch(() => {});
-    void StatusBar.setBackgroundColor({ color: orange ? '#FAF7F1' : '#13131d' }).catch(() => {});
-  });
+  subscribePresentation(() => { if (Capacitor.getPlatform() === 'android') refreshSystemBarsForTheme(); else void StatusBar.setStyle({ style: getResolvedAppearance() === 'orange' ? Style.Dark : Style.Light }).catch(() => {}); });
 }
 
 // Allow JSON.stringify to handle BigInt values (e.g. payment amounts/fees from SDK)
