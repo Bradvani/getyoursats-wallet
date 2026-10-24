@@ -57,8 +57,15 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
     .toHaveAttribute('src','/brand/wordmark-horizontal-light.svg');
   await expect(page.getByRole('button',{name:'Send Bitcoin'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Receive Bitcoin'})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Scan payment QR'})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Accept payment using POS'})).toBeVisible();
+  if(width<=720){
+   // The compact action dock intentionally keeps only Send / Receive.
+   await expect(page.getByRole('button',{name:'Open Point of Sale'})).toBeVisible();
+   await expect(page.getByRole('button',{name:'Accept payment using POS'})).toBeHidden();
+   await expect(page.getByRole('button',{name:'Scan payment QR'})).toBeHidden();
+  }else{
+   await expect(page.getByRole('button',{name:'Scan payment QR'})).toBeVisible();
+   await expect(page.getByRole('button',{name:'Accept payment using POS'})).toBeVisible();
+  }
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);
   expect(overflow).toBe(false);
   mkdirSync('test-artifacts',{recursive:true});
@@ -76,7 +83,7 @@ test('@public-smoke Orange POS starts at a blank charge even with a previous com
  });
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);
- await page.getByRole('button',{name:'Accept payment using POS'}).click();
+ await page.getByRole('button',{name:'Open Point of Sale'}).click();
  const pos=page.getByRole('dialog',{name:'Merchant point of sale'});
  await expect(pos).toBeVisible();
  await expect(pos.getByText('Amount to charge')).toBeVisible();
@@ -100,7 +107,7 @@ test('@public-smoke Orange POS starts at a blank charge even with a previous com
  await expect(pos.getByText('Amount to charge')).toBeVisible();
  await expect(pos.getByText('Previously issued order')).toHaveCount(0);
  await pos.getByRole('button',{name:'Close point of sale'}).click();
- await page.getByRole('button',{name:'Accept payment using POS'}).click();
+ await page.getByRole('button',{name:'Open Point of Sale'}).click();
  await expect(pos.getByText('Amount to charge')).toBeVisible();
  await expect(pos.getByText('Payment received')).toHaveCount(0);
 });
