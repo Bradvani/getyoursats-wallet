@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import type { BreezSdk, LightningAddressInfo } from '@breeztech/breez-sdk-spark';
 import { WalletProvider } from '@/contexts/WalletContext';
 import { ToastProvider } from '@/contexts/ToastContext';
@@ -16,11 +16,10 @@ const address = (username: string): LightningAddressInfo => ({
   username,
 });
 
-describe('Lightning address edit sheet', () => {
-  it('changes the username from its own sheet, after confirming', async () => {
+describe('anonymous Lightning Address personalization', () => {
+  it('keeps the SDK-issued Breez receiver stable and directs personalization through verified identity', async () => {
     const client = createMockClient() as unknown as BreezSdk;
     client.getLightningAddress = vi.fn().mockResolvedValue(address('alice'));
-
     render(
       <ToastProvider>
         <WalletProvider client={client} isConnected>
@@ -33,19 +32,9 @@ describe('Lightning address edit sheet', () => {
       </ToastProvider>,
     );
     await waitForSheetOpen();
-
-    fireEvent.click(await screen.findByTitle('Edit Lightning Address'));
-    // Let the edit sheet finish opening too, for the reason in waitForSheetOpen.
-    const title = await screen.findByText('Edit Address');
-    await waitFor(() => expect(title.closest('.react-modal-sheet-root')).toBeVisible());
-
-    fireEvent.change(screen.getByPlaceholderText('satoshi'), { target: { value: 'bob' } });
-    fireEvent.click(screen.getByTestId('save-address-button'));
-    fireEvent.click(await screen.findByRole('button', { name: 'Change' }));
-
-    await waitFor(() =>
-      expect(client.registerLightningAddress).toHaveBeenCalledWith(expect.objectContaining({ username: 'bob' })),
-    );
-    await waitFor(() => expect(screen.queryByText('Edit Address')).toBeNull());
+    expect(await screen.findByTestId('lightning-address-text')).toBeInTheDocument();
+    expect(screen.queryByTitle('Edit Lightning Address')).toBeNull();
+    expect(screen.getByText(/Personalize your Lightning name in Settings/)).toBeInTheDocument();
+    expect(client.registerLightningAddress).not.toHaveBeenCalled();
   });
 });
