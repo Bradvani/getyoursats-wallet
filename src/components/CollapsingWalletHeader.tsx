@@ -1,6 +1,6 @@
 import GetYourSatsWordmark from './GetYourSatsWordmark';
 import DenominationTabs from '../getyoursats/DenominationTabs';
-import {getDenomination,saveDenomination,satsToAmount,type Denomination} from '../getyoursats/denomination';
+import {getDenomination,saveDenomination,satsToAmount,satoshiSymbol,type Denomination} from '../getyoursats/denomination';
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import type { GetInfoResponse, FiatCurrency } from '@breeztech/breez-sdk-spark';
 import { safeAreaTop } from '../utils/safeAreaInsets';
@@ -8,7 +8,7 @@ import { getFiatSettings, getDisplayFiatCurrency, setDisplayFiatCurrency, buyCop
 import { formatWithSpaces } from '../utils/formatNumber';
 import { SatAmount } from './SatAmount';
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber';
-import { MenuIcon, AlertTriangleIcon, CurrencyIcon, CashAppIcon, SpinnerIcon, SwapVerticalIcon } from './Icons';
+import { ChevronDownIcon, AlertTriangleIcon, CurrencyIcon, CashAppIcon, SpinnerIcon, SwapVerticalIcon } from './Icons';
 import { useStableBalance } from '../contexts/StableBalanceContext';
 import { useFiatData } from '../contexts/FiatDataContext';
 import { getTokenBalance, formatTokenAmount } from '../utils/tokenFormatting';
@@ -327,11 +327,12 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
           {/* Menu button */}
           <button
             onClick={onOpenMenu}
-            className="p-2 -ml-2 text-spark-text-secondary hover:text-spark-text-primary transition-colors rounded-xl hover:bg-white/5"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center gap-0.5 p-2 -ml-2 text-[#F7931A] hover:text-[#FFB25E] transition-colors rounded-xl hover:bg-white/5"
             aria-label="Open menu"
             data-testid="menu-button"
           >
-            <MenuIcon size="lg" />
+            <span className="font-semibold text-[25px] leading-none" aria-hidden="true">{satoshiSymbol}</span>
+            <ChevronDownIcon size="xs" className="opacity-65" />
           </button>
             <GetYourSatsWordmark compact />
           </div>
