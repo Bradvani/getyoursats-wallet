@@ -30,6 +30,9 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
     selectedContactAddress || paymentInput || ''
   );
   const [isInputFocused, setIsInputFocused] = useState(false);
+  // The shortcut guides the input; the SDK remains the authority for the actual
+  // protocol, asset, routes and fees once a destination has been parsed.
+  const [preferredRail, setPreferredRail] = useState<'auto' | 'bitcoin' | 'lightning' | 'stablecoin'>('auto');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(() => {
     const initialAddress = selectedContactAddress || paymentInput;
     if (!initialAddress) return null;
@@ -39,6 +42,13 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
   const autocompleteContacts = useMemo(() => searchContacts(contacts, localPaymentInput), [contacts, localPaymentInput]);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const recipientPlaceholder = preferredRail === 'bitcoin'
+    ? 'Bitcoin address (bc1...)'
+    : preferredRail === 'lightning'
+      ? 'Lightning address or invoice (lnbc...)'
+      : preferredRail === 'stablecoin'
+        ? 'Recipient address for USDT / USDC'
+        : 'Lightning address, invoice, Bitcoin or stablecoin destination';
 
   const handlePaste = async () => {
     try {
@@ -88,6 +98,31 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Scan/Paste first: reduce technical input friction without bypassing SDK parsing. */}
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-spark-text-primary">Where would you like to send?</p>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onScanQr}
+            disabled={isLoading || !onScanQr}
+            className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-[#F7931A] bg-[#F7931A] px-3 py-3 text-sm font-semibold text-[#0B0B0B] hover:bg-[#FFB25E] disabled:opacity-50"
+          >
+            <QrCodeIcon size="sm" />
+            Scan QR
+          </button>
+          <button
+            type="button"
+            onClick={handlePaste}
+            disabled={isLoading}
+            className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-spark-border bg-spark-surface px-3 py-3 text-sm font-semibold text-spark-text-primary hover:border-[#F7931A] disabled:opacity-50"
+          >
+            <ClipboardIcon size="sm" />
+            Paste
+          </button>
+        </div>
+      </div>
+      <p className="text-xs text-spark-text-muted">Or enter a destination below. We’ll recognize the payment format.</p>
       {/* Input with autocomplete */}
       <div className="h-20">
         {selectedContact ? (
@@ -159,7 +194,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              placeholder='lnbc... / bc1... / spark1... / user@domain.com / contact / USDC or USDT address'
+              placeholder={recipientPlaceholder}
               className={`${FIELD_BASE_CLASS} h-full p-4 resize-none font-mono text-sm outline-hidden`}
               disabled={isLoading}
               data-testid="payment-input"
@@ -181,33 +216,41 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
         </SimpleAlert>
       )}
 
-      {/* Quick action buttons */}
-      <div className="flex gap-2">
-        <button
-          onClick={handlePaste}
-          disabled={isLoading}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-spark-surface border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light transition-colors disabled:opacity-50"
-        >
-          <ClipboardIcon size="xs" />
-          <span className="text-sm font-medium">Paste</span>
-        </button>
-        <button
-          onClick={onScanQr}
-          disabled={isLoading}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-spark-surface border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light transition-colors disabled:opacity-50"
-        >
-          <QrCodeIcon size="xs" />
-          <span className="text-sm font-medium">Scan</span>
-        </button>
-        <button
-          onClick={onOpenContacts}
-          disabled={isLoading}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-spark-surface border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light transition-colors disabled:opacity-50"
-        >
-          <ContactsIcon size="xs" />
-          <span className="text-sm font-medium">Contacts</span>
-        </button>
+      {/* Compact shortcuts are input guidance, not hardcoded payment routes.
+          SDK address parsing and cross-chain route availability control settlement. */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-spark-text-muted">Payment type</p>
+        <div className="grid grid-cols-3 gap-2" role="group" aria-label="Payment type shortcuts">
+          {([
+            { rail: 'bitcoin', label: 'Bitcoin' },
+            { rail: 'lightning', label: 'Lightning' },
+            { rail: 'stablecoin', label: 'USDT / USDC' },
+          ] as const).map(({ rail, label }) => (
+            <button
+              key={rail}
+              type="button"
+              aria-pressed={preferredRail === rail}
+              disabled={isLoading}
+              onClick={() => { setPreferredRail(rail); inputRef.current?.focus(); }}
+              className={preferredRail === rail
+                ? 'min-h-11 rounded-xl border border-[#F7931A] bg-[#2A2117] px-2 py-2 text-xs font-semibold text-[#F7931A]'
+                : 'min-h-11 rounded-xl border border-spark-border bg-spark-surface px-2 py-2 text-xs font-semibold text-spark-text-secondary hover:border-[#F7931A]'}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-spark-text-muted">Available networks, assets and fees are verified after you enter a destination.</p>
       </div>
+      <button
+        type="button"
+        onClick={onOpenContacts}
+        disabled={isLoading || !onOpenContacts}
+        className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-spark-border bg-spark-surface px-3 py-2 text-sm font-medium text-spark-text-secondary hover:text-spark-text-primary"
+      >
+        <ContactsIcon size="sm" />
+        Choose a contact
+      </button>
 
       {/* Continue button */}
       <PrimaryButton
