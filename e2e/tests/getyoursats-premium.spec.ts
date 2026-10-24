@@ -14,18 +14,23 @@ for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
   await expect(page.getByRole('button',{name:'Receive Bitcoin',exact:true})).toBeVisible();
   await expect(page.getByTestId('wallet-balance')).toHaveText(/125\s*000/);
   const pos=page.getByRole('button',{name:'Open Point of Sale'});
-  const recurring=page.getByRole('button',{name:'Open Recurring Buys'});
+  const recurring=page.getByRole('button',{name:'Recurring Buys coming soon'});
   await expect(pos).toBeVisible();
   await expect(recurring).toBeVisible();
   await expect(page.getByRole('button',{name:/Protect your Bitcoin|Review recovery options/})).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   mkdirSync('test-artifacts',{recursive:true});
   await page.screenshot({path:`test-artifacts/wallet-${width}.png`,fullPage:true,animations:'disabled'});
+  await expect(recurring).toBeDisabled();
   await pos.click();
-  await expect(page.getByRole('dialog',{name:'Merchant point of sale'})).toBeVisible();
+  const terminal=page.getByRole('dialog',{name:'Merchant point of sale'});
+  await expect(terminal).toBeVisible();
+  await terminal.getByRole('button',{name:'1',exact:true}).click();
+  await terminal.getByRole('button',{name:'Charge',exact:true}).click();
+  const paymentQr=page.getByTestId('pos-invoice-qr');
+  await expect(paymentQr.locator('svg')).toBeVisible();
+  await expect(paymentQr.locator('img[src="/brand/monogram.svg"]')).toBeVisible();
   await page.getByRole('button',{name:'Close point of sale'}).click();
-  await recurring.click();
-  await expect(page.getByRole('heading',{name:'Recurring Buys entry reached'})).toBeVisible();
   expect(errors).toEqual([]);
  });
 }
