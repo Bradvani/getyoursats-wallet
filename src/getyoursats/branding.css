@@ -323,3 +323,54 @@
  .gys-action-dock button,.gys-partner-buy__primary{transition:none}
  .gys-partner-buy{animation:none}
 }
+
+/* GetYourSats visual identity shared across landing, wallet and secondary pages. */
+.gys-wordmark{display:inline-flex;align-items:center;gap:9px;max-width:100%;white-space:nowrap;color:#f4d690;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:17px;letter-spacing:-.045em;font-weight:820;line-height:1}
+.gys-wordmark__mark{height:32px;width:32px;flex:0 0 auto;object-fit:contain;mix-blend-mode:screen;
+  -webkit-mask-image:url('/assets/getyoursats-mark.jpg');mask-image:url('/assets/getyoursats-mark.jpg');
+  -webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-size:contain;mask-size:contain;mask-mode:luminance}
+.gys-wordmark--compact{font-size:13px;letter-spacing:-.035em;gap:6px}
+.gys-wordmark--compact .gys-wordmark__mark{width:27px;height:27px}
+.gys-wordmark--landing{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#f5f1e8;font-weight:800}
+.gys-wordmark--landing .gys-wordmark__mark{width:37px;height:37px}
+.gys-app-header__identity{display:flex;align-items:center;gap:8px;min-width:0}
+.gys-page-header__brand{position:absolute;left:14px;top:50%;transform:translateY(-50%);display:flex;align-items:center;z-index:1;max-width:37%}
+.gys-page-header__brand--back{left:53px}
+.gys-page-header__brand .gys-wordmark__name{overflow:hidden;text-overflow:ellipsis}
+.gys-setup__header{display:flex;justify-content:space-between;align-items:center;gap:14px;position:sticky;top:0;z-index:10}
+.gys-welcome__header{position:relative;z-index:5}
+.gys-welcome__content{animation:gys-hero-arrive .75s cubic-bezier(.18,.8,.2,1) both}
+.gys-welcome__eyebrow{animation:gys-hero-arrive .75s .08s cubic-bezier(.18,.8,.2,1) both}
+.gys-welcome h1{animation:gys-hero-arrive .85s .16s cubic-bezier(.18,.8,.2,1) both}
+.gys-welcome__subtitle{animation:gys-hero-arrive .75s .25s cubic-bezier(.18,.8,.2,1) both}
+.gys-welcome__actions{animation:gys-hero-arrive .8s .31s cubic-bezier(.18,.8,.2,1) both}
+.gys-welcome__halo-outer{animation:gys-halo-breathe 9s ease-in-out infinite}
+.gys-welcome__halo-inner{animation:gys-halo-breathe 8s 1.6s ease-in-out infinite reverse}
+.gys-welcome__coin{animation:gys-hero-float 7.5s ease-in-out infinite}
+.gys-welcome__orbit-dot--one{animation:gys-orbit-dot 6s ease-in-out infinite}
+.gys-welcome__atmosphere{animation:gys-ambient-glow 15s ease-in-out infinite alternate}
+.gys-welcome__start:hover{transform:translateY(-2px)}
+.gys-welcome__start:active{transform:translateY(0) scale(.985)}
+@keyframes gys-hero-arrive{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+@keyframes gys-halo-breathe{0%,100%{opacity:.6;transform:scale(.985)}50%{opacity:1;transform:scale(1.035)}}
+@keyframes gys-hero-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes gys-orbit-dot{0%,100%{opacity:.7;transform:translateY(0)}50%{opacity:1;transform:translateY(-5px)}}
+@keyframes gys-ambient-glow{from{opacity:.75}to{opacity:1}}
+@media(max-width:660px){
+  .gys-app-header__identity{gap:4px}
+  .gys-app-header__identity .gys-wordmark--compact{font-size:12px}
+  .gys-page-header__brand .gys-wordmark__name{display:none}
+  .gys-page-header__brand .gys-wordmark{gap:0}
+}
+@media(max-width:370px){
+  .gys-app-header__identity .gys-wordmark__name{font-size:11px}
+  .gys-app-header__identity .gys-wordmark__mark{width:23px;height:23px}
+}
+@media(prefers-reduced-motion:reduce){
+ .gys-welcome__content,.gys-welcome__eyebrow,.gys-welcome h1,
+ .gys-welcome__subtitle,.gys-welcome__actions,.gys-welcome__halo-outer,
+ .gys-welcome__halo-inner,.gys-welcome__coin,.gys-welcome__orbit-dot--one,
+ .gys-welcome__atmosphere{animation:none!important}
+ .gys-welcome__start:hover{transform:none}
+}

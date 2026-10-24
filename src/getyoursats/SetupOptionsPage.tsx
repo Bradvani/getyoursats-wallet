@@ -1,3 +1,4 @@
+import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
 type Props = {
   stableOrigin: boolean;
   onBack: () => void;
@@ -6,7 +7,10 @@ type Props = {
 /** No keys are generated and no seed words are revealed on this screen. */
 export default function SetupOptionsPage({stableOrigin,onBack,onOfflineSetup}:Props){
   return <main className="gys-setup">
-    <button type="button" className="gys-setup__back" onClick={onBack}>← Back</button>
+    <header className="gys-setup__header">
+      <GetYourSatsWordmark compact />
+      <button type="button" className="gys-setup__back" onClick={onBack}>← Back</button>
+    </header>
     <section className="gys-setup__body">
       <img className="gys-setup__mark" src="/assets/getyoursats-mark.jpg" alt="" />
       <span className="gys-setup__eyebrow">SECURE WALLET SETUP</span>

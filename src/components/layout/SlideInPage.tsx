@@ -1,3 +1,4 @@
+import GetYourSatsWordmark from '../GetYourSatsWordmark';
 import React, { ReactNode, useState } from 'react';
 import { Transition, TransitionChild } from '@headlessui/react';
 import { CloseIcon, BackIcon } from '../Icons';
@@ -106,6 +107,7 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
                 close buttons land at the same screen y coordinate when
                 navigating between screens. */}
             <div className="relative px-4 h-14 flex items-center justify-center">
+              <div className={`gys-page-header__brand ${closeStyle==='back'?'gys-page-header__brand--back':''}`}><GetYourSatsWordmark compact /></div>
               <h1 className="text-center font-display text-lg font-semibold text-spark-text-primary">
                 {title}
               </h1>

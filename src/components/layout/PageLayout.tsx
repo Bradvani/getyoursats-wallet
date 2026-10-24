@@ -1,3 +1,4 @@
+import GetYourSatsWordmark from '../GetYourSatsWordmark';
 import React, { ReactNode } from 'react';
 import { BackIcon } from '../Icons';
 import { safeAreaTop, safeAreaBottom } from '../../utils/safeAreaInsets';
@@ -35,8 +36,9 @@ const PageLayout: React.FC<PageLayoutProps> = ({
               wallet page CollapsingWalletHeader top row so the back button
               lands at the same screen y coordinate when navigating. */}
           <div className="relative px-4 h-14 flex items-center justify-center">
+            <div className={`gys-page-header__brand ${onBack?'gys-page-header__brand--back':''}`}><GetYourSatsWordmark compact /></div>
             <h1 className="text-center font-display text-xl font-bold text-spark-text-primary">
-              {title || "Glow"}
+              {title || "GetYourSats"}
             </h1>
             {onBack && (
               <button

@@ -1,3 +1,4 @@
+import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
 import {useId, useState} from 'react';
 import {ChevronRightIcon} from '../components/Icons';
 
@@ -24,18 +25,15 @@ export default function HomePage({
     <main className="gys-welcome">
       <div className="gys-welcome__atmosphere" aria-hidden="true"/>
       <header className="gys-welcome__header">
-        <div className="gys-welcome__brand" aria-label="GetYourSats">
-          <img src="/assets/getyoursats-mark.jpg" alt="" width={37} height={37}/>
-          <span>GETYOURSATS</span>
-        </div>
+        <div className="gys-welcome__brand"><GetYourSatsWordmark landing /></div>
         <span className="gys-welcome__header-tag">BITCOIN · LIGHTNING</span>
       </header>
 
       <div className="gys-welcome__stage">
         <div className="gys-welcome__content">
-          <div className="gys-welcome__eyebrow"><span aria-hidden="true"/> YOUR BITCOIN. YOUR CALL.</div>
-          <h1>Bitcoin, <em>on your terms.</em></h1>
-          <p className="gys-welcome__subtitle">One place to send, receive and accept Bitcoin with Lightning.</p>
+          <div className="gys-welcome__eyebrow"><span aria-hidden="true"/> YOUR KEYS. YOUR NEXT MOVE.</div>
+          <h1>Your sats. <em>Your move.</em></h1>
+          <p className="gys-welcome__subtitle">A self-custodial wallet for everyday Bitcoin. Pay, get paid and stay in control with Lightning.</p>
 
           <div className="gys-welcome__actions" aria-label="Wallet setup">
             <button className="gys-welcome__start" type="button" onClick={onCreateNewWallet}
@@ -79,14 +77,14 @@ export default function HomePage({
           </div>
           <div className="gys-welcome__visual-caption">
             <span className="gys-welcome__caption-line"/>
-            <span>Built for ownership</span>
+            <span>Ownership in motion</span>
           </div>
         </div>
       </div>
 
       <footer className="gys-welcome__footer">
         <span>NO ACCOUNT TO GET STARTED</span>
-        <span>BITCOIN FIRST. ALWAYS.</span>
+        <span>YOUR WALLET. YOUR WAY.</span>
       </footer>
     </main>
   );

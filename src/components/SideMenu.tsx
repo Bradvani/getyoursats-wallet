@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useSyncExternalStore } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Transition, TransitionChild } from '@headlessui/react';
 import { isPasskeyMode } from '@/services/passkeyService';
@@ -11,7 +11,7 @@ import { STATUS_BAR_SURFACE, STATUS_BAR_DIALOG_SCRIM } from '../utils/statusBarM
 import { useBackButton } from '../hooks/useBackButton';
 import { SimpleAlert } from './AlertCard';
 import { useUnilateralExitEngineState } from '../features/unilateral-exit/hooks/useUnilateralExitEngineLifecycle';
-import GlowLogo from './GlowLogo';
+import GetYourSatsWordmark from './GetYourSatsWordmark';
 
 // App Store Review Guidelines 5.1.1(i) requires the privacy policy to be
 // reachable from inside the app, not just from the store listing, and 1.5
@@ -99,20 +99,6 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
 
   const isPasskey = isPasskeyMode();
   const isExitInProgress = useUnilateralExitEngineState().plan !== null;
-
-  // Stars animate after the 300ms slide-in delay. Derived from isOpen
-  // so close flips it off immediately without a reset in an effect.
-  const [starsLit, setStarsLit] = useState(false);
-  const starsAnimating = isOpen && starsLit;
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const timer = setTimeout(() => setStarsLit(true), 300);
-    return () => {
-      clearTimeout(timer);
-      setStarsLit(false);
-    };
-  }, [isOpen]);
 
   // Close the drawer first, then fire the navigation callback once the
   // drawer's leave animation completes. Kept sequential (not
@@ -213,10 +199,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-8 pt-6">
-              <div className="flex items-center gap-2.5">
-                <GlowLogo sizePx={40} starsAnimating={starsAnimating} />
-                <h2 className="font-display text-xl font-bold text-spark-text-primary">GetYourSats</h2>
-              </div>
+              <GetYourSatsWordmark />
               <button
                 onClick={onClose}
                 className="p-2 -mr-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"

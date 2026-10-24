@@ -1,3 +1,4 @@
+import GetYourSatsWordmark from './GetYourSatsWordmark';
 import DenominationTabs from '../getyoursats/DenominationTabs';
 import {getDenomination,saveDenomination,satsToAmount,type Denomination} from '../getyoursats/denomination';
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
@@ -303,7 +304,8 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
             Material toolbar height used by SlideInPage and PageLayout so
             the menu/back buttons land at the same screen y coordinate on
             every screen. */}
-        <div className="h-14 flex items-center justify-between mb-4">
+        <div className="h-14 flex items-center justify-between gap-2 mb-4">
+          <div className="gys-app-header__identity">
           {/* Menu button */}
           <button
             onClick={onOpenMenu}
@@ -313,6 +315,8 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
           >
             <MenuIcon size="lg" />
           </button>
+            <GetYourSatsWordmark compact />
+          </div>
 
           {/* Action buttons */}
           <div className="flex items-center gap-2">
