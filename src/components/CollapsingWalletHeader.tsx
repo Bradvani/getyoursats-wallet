@@ -289,9 +289,11 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
   return (
   <>
     <div className="gys-wallet-balance-surface relative overflow-hidden transition-all duration-200">
-      {/* Glassmorphism background - extends into safe area */}
+      {/* Solid header avoids iOS standalone's layered backdrop-filter
+          obscuring the wordmark after launch or app resume. */}
       <div
-        className="absolute inset-0 bg-spark-surface/80 backdrop-blur-xl border-b border-spark-border"
+        aria-hidden="true"
+        className="gys-wallet-balance-surface__veil absolute inset-0 border-b border-spark-border"
         style={{
           top: 'calc(-1 * env(safe-area-inset-top, 0px))',
         }}
@@ -320,7 +322,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
             Material toolbar height used by SlideInPage and PageLayout so
             the menu/back buttons land at the same screen y coordinate on
             every screen. */}
-        <div className="h-14 flex items-center justify-between gap-2 mb-4">
+        <div className="gys-wallet-balance-surface__toolbar h-14 flex items-center justify-between gap-2 mb-4">
           <div className="gys-app-header__identity">
           {/* Menu button */}
           <button

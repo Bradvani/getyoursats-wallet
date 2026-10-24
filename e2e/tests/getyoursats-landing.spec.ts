@@ -65,3 +65,14 @@ test('@public-smoke iPhone browser has dismissible Add to Home Screen guidance a
   expect(horizontalOverflow).toBe(false);
  }finally{await context.close()}
 });
+
+test('@public-smoke browser icon is official full-colour GetYourSats artwork',async({page})=>{
+ await page.goto('http://localhost:5173/');
+ await expect(page.locator('#splash')).toHaveCount(0,{timeout:60000});
+ await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute('href',/wordmark-stacked-dark\.svg/);
+ await expect(page.locator('link[rel="mask-icon"]')).toHaveCount(0);
+ const response=await page.request.get('/manifest.json');
+ expect(response.ok()).toBe(true);
+ const manifest=await response.json();
+ expect(manifest.icons[0].src).toBe('/brand/wordmark-stacked-dark.svg');
+});

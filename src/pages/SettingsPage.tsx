@@ -224,7 +224,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-2" aria-label="Browser biometric unlock availability">
               <h3 className="font-display font-semibold text-spark-text-primary">Passkey &amp; biometric unlock</h3>
               <p className="text-sm text-spark-text-muted leading-relaxed">
-                This manually backed-up wallet uses its existing recovery words. Adding a new Breez passkey here would create a different wallet,
+                This manually backed-up wallet uses its existing recovery words. Generating an unrelated key-derived passkey could create a different wallet,
                 so browser passkey unlock is not offered until secure same-wallet key wrapping is independently verified.
                 Keep your handwritten backup safe; never replace your existing wallet to enable biometrics.
               </p>
