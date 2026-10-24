@@ -28,7 +28,7 @@ const sdk = new Proxy({
  listFiatRates: async () => ({ rates: [{ coin:'USD', value:90000 }] }),
  getUserSettings: async () => ({ sparkPrivateModeEnabled: false }),
  getTokensMetadata: async () => ({tokensMetadata: []}),
- receivePayment: async () => ({ paymentRequest: 'bc1qdemonstrationonly', fee: 0n }),
+ receivePayment: async () => ({ paymentRequest: 'lnbc1'+'a'.repeat(90), fee: 0n }),
  listPayments: async () => ({ payments: [received] }),
 } satisfies Partial<BreezSdk>, { get(target, key) { return target[key as keyof typeof target] ?? (async () => ({})); } }) as unknown as BreezSdk;
 function Fixture() {

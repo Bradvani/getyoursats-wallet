@@ -1,5 +1,6 @@
 import {useLightningAddress} from '../features/receive/hooks/useLightningAddress';
 import GetYourSatsPos from '../getyoursats/PosPage';
+import {featureAvailability} from '../getyoursats/featureAvailability';
 import PosErrorBoundary from '../components/PosErrorBoundary';
 import PartnerBuyDialog from '../getyoursats/PartnerBuyDialog';
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
@@ -300,7 +301,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
           onOpenMenu={() => setIsMenuOpen(true)}
           // Hidden when nothing is left to offer: no provider enabled in
           // Settings, or (on iOS) Cash App not installed.
-          onOpenBuyBitcoin={enabledBuyProviders.length === 0 ? undefined : () => {
+          onOpenBuyBitcoin={!featureAvailability.buyBitcoin || enabledBuyProviders.length === 0 ? undefined : () => {
             if (enabledBuyProviders.length === 1 && enabledBuyProviders[0] === 'moonpay') {
               // MoonPay can redirect directly; Cash App needs amount entry via the dialog.
               setIsBuyLoading(true);
@@ -342,9 +343,11 @@ const WalletPage: React.FC<WalletPageProps> = ({
           <span className="gys-home-quick-actions__text"><strong>Point of Sale</strong><small>Accept a payment</small></span>
         </button>
         <button type="button" className="gys-home-quick-actions__button"
-          onClick={onOpenDca} aria-label="Open Recurring Buys">
+          onClick={featureAvailability.recurringBuy ? onOpenDca : undefined}
+          disabled={!featureAvailability.recurringBuy}
+          aria-label={featureAvailability.recurringBuy ? 'Open Recurring Buys' : 'Recurring Buys coming soon'}>
           <span className="gys-home-quick-actions__icon" aria-hidden="true"><ClockIcon size="lg"/></span>
-          <span className="gys-home-quick-actions__text"><strong>Recurring Buys</strong><small>Plan purchases</small></span>
+          <span className="gys-home-quick-actions__text"><strong>Recurring Buys</strong><small>Coming soon</small></span>
         </button>
       </nav>
       <button type="button" className="gys-wallet__history-trigger" aria-expanded={historyOpen}

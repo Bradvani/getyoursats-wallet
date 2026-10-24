@@ -12,6 +12,7 @@ import { useBackButton } from '../hooks/useBackButton';
 import { SimpleAlert } from './AlertCard';
 import { useUnilateralExitEngineState } from '../features/unilateral-exit/hooks/useUnilateralExitEngineLifecycle';
 import GetYourSatsWordmark from './GetYourSatsWordmark';
+import {featureAvailability} from '../getyoursats/featureAvailability';
 
 // App Store Review Guidelines 5.1.1(i) requires the privacy policy to be
 // reachable from inside the app, not just from the store listing, and 1.5
@@ -127,6 +128,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     ...(onOpenPartnerBuy ? [{
       icon: <CurrencyIcon />,
       label: 'Buy Bitcoin',
+      comingSoon: !featureAvailability.buyBitcoin,
       onClick: () => closeDrawerThen(onOpenPartnerBuy)
     }] : []),
     ...(onOpenScan ? [{
@@ -142,6 +144,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     {
       icon: <ClockIcon />,
       label: 'Recurring Buys',
+      comingSoon: !featureAvailability.recurringBuy,
       onClick: () => closeDrawerThen(onOpenDca)
     },
     ...(onOpenFiatCurrencies?[{
@@ -220,7 +223,10 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
               {menuItems.map((item, index) => (
                 <button
                   key={index}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                  type="button"
+                  disabled={'comingSoon' in item && Boolean(item.comingSoon)}
+                  aria-label={('comingSoon' in item && item.comingSoon) ? item.label + ' coming soon' : item.label}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all disabled:cursor-default disabled:opacity-60 ${
                     ('highlight' in item && item.highlight)
                       ? 'text-spark-warning hover:text-spark-warning hover:bg-spark-warning/10'
                       : 'text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5'
@@ -229,6 +235,9 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                 >
                   {item.icon}
                   <span className="font-display font-medium">{item.label}</span>
+                  {'comingSoon' in item && item.comingSoon && (
+                    <span className="gys-feature-soon ml-auto">Coming soon</span>
+                  )}
                 </button>
               ))}
             </nav>

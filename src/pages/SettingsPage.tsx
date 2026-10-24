@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import {featureAvailability} from '../getyoursats/featureAvailability';
 import { ConfirmDialog, FormGroup, FormInput, LoadingSpinner, PrimaryButton, Switch } from '../components/ui';
 import { PinGate } from '../components/PinEntry';
 import { getSettings, saveSettings, UserSettings, hasBuyProviderSettings, isDevMode as isDevModeEnabled, setDevMode, buildDepositMaxFee, depositMaxFeeDrafts, depositMaxFeeValue, DepositMaxFeeType } from '../services/settings';
@@ -265,11 +266,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               signed by the active Spark wallet and confirmed server-side. */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-2">
             <h3 className="font-display font-semibold text-spark-text-primary">Account identity</h3>
-            <button type="button" onClick={onOpenEmail}
-              className="flex w-full items-center justify-between rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary transition-colors hover:bg-white/5 hover:text-spark-text-primary">
-              <span>Verify email address</span><ChevronRightIcon size="md"/>
+            <button type="button"
+              disabled={!featureAvailability.emailVerification}
+              onClick={featureAvailability.emailVerification ? onOpenEmail : undefined}
+              className="flex w-full items-center justify-between rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary transition-colors disabled:cursor-default disabled:opacity-70">
+              <span>Verify email address</span>
+              {featureAvailability.emailVerification ? <ChevronRightIcon size="md"/> : <span className="gys-feature-soon">Coming soon</span>}
             </button>
-            <p className="text-xs text-spark-text-muted">Optional. An email cannot unlock your wallet or replace your backup.</p>
+            <p className="text-xs text-spark-text-muted">Available after the verified email service launches. Email is not a wallet backup.</p>
           </div>
 
           {/* Display */}
@@ -291,13 +295,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <button
                   className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors"
                   type="button"
-                  onClick={onOpenBuyProviders}
+                  onClick={featureAvailability.buyBitcoin ? onOpenBuyProviders : undefined}
+                  disabled={!featureAvailability.buyBitcoin}
                 >
                   <div className="flex items-center gap-3">
                     <CurrencyIcon size="md" />
                     <span>Buy Bitcoin</span>
                   </div>
-                  <ChevronRightIcon size="md" />
+                  {featureAvailability.buyBitcoin ? <ChevronRightIcon size="md" /> : <span className="gys-feature-soon">Coming soon</span>}
                 </button>
               )}
             </div>

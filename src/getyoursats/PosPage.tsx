@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
-import QRCode from 'react-qr-code';
+import BrandedQrCode from '../components/BrandedQrCode';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 import {useWallet} from '../contexts/WalletContext';
 import {useFiatData} from '../contexts/FiatDataContext';
@@ -189,7 +189,13 @@ export default function PosPage({onClose}:{onClose:()=>void}){
             <strong>{formatWithSpaces(payment.amount)} 丰</strong>
           </li>)}</ol>}
       </section>:invoice?<section className="gys-pos-terminal__invoice" aria-live="polite">
-        <div className="gys-pos-terminal__qr"><PosQrBoundary><QRCode value={invoice.toUpperCase()} size={218}/></PosQrBoundary></div>
+        <h2 className="gys-pos-terminal__invoice-title">Scan to pay</h2>
+        <div className="gys-pos-terminal__qr" data-testid="pos-invoice-qr"
+          aria-label="Scan this Lightning invoice to pay">
+          <PosQrBoundary key={invoice}>
+            <BrandedQrCode value={invoice.toUpperCase()} size={288} label="Lightning invoice QR code" />
+          </PosQrBoundary>
+        </div>
         <h2>{formatWithSpaces(invoiceSats)} <span>丰 sats</span></h2>
         <p>Requested in {invoiceUnit} · Receives Lightning sats</p>
         <strong className={settled?'gys-pos-paid':'gys-pos-pending'}>
@@ -238,7 +244,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
           </button>
         </footer>
       </>}
-      {!!orders.length&&<section aria-label="Recent device POS orders" className="gys-pos-terminal__history">
+      {!!orders.length&&(!invoice || showHistory)&&<section aria-label="Recent device POS orders" className="gys-pos-terminal__history">
         <p className="gys-pos-terminal__muted">Recent orders on this device · wallet verified for completed status</p>
         <ol>{orders.slice(0,5).map(order=><li key={order.id}>
           <button type="button" onClick={()=>{
