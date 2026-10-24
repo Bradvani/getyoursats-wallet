@@ -2,7 +2,7 @@ import React, { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Transition, TransitionChild } from '@headlessui/react';
 import { isPasskeyMode } from '@/services/passkeyService';
-import { RefundIcon, SettingsIcon, LogoutIcon, CloseIcon, AlertTriangleIcon, ExternalLinkIcon, QrCodeIcon, CurrencyIcon, ArrowDownIcon } from './Icons';
+import { RefundIcon, SettingsIcon, LogoutIcon, CloseIcon, AlertTriangleIcon, ExternalLinkIcon, QrCodeIcon, CurrencyIcon, ArrowDownIcon, ClockIcon } from './Icons';
 import { ACCOUNT_DELETION_GUIDE_URL } from '@/services/accountDeletion';
 import { openExternalUrl } from '@/utils/externalLink';
 import { safeAreaTop, safeAreaBottom } from '../utils/safeAreaInsets';
@@ -58,6 +58,7 @@ interface SideMenuProps {
   onClose: () => void;
   onLogout: () => void;
   onOpenSettings: () => void;
+  onOpenFiatCurrencies?: () => void;
   onOpenDca: () => void;
   onOpenScan?: () => void;
   onOpenMerchantPos?: () => void;
@@ -66,7 +67,7 @@ interface SideMenuProps {
   hasRejectedDeposits?: boolean;
 }
 
-const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSettings, onOpenDca, onOpenScan, onOpenMerchantPos, onOpenPartnerBuy, onOpenRefund, hasRejectedDeposits = false }) => {
+const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSettings, onOpenFiatCurrencies, onOpenDca, onOpenScan, onOpenMerchantPos, onOpenPartnerBuy, onOpenRefund, hasRejectedDeposits = false }) => {
   // While the drawer is open, push the solid spark-surface tone over
   // the wallet page's glass tint so the status bar matches the drawer
   // panel's solid bg. Tied to isOpen so popping happens on close.
@@ -119,7 +120,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     // Get Refund - only show when there are rejected deposits
     ...(hasRejectedDeposits && onOpenRefund ? [{
       icon: <RefundIcon />,
-      label: 'Get Refund',
+      label: 'Refund',
       onClick: () => closeDrawerThen(onOpenRefund),
       highlight: true
     }] : []),
@@ -130,7 +131,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     }] : []),
     ...(onOpenScan ? [{
       icon: <QrCodeIcon />,
-      label: 'Scan payment QR',
+      label: 'Scan QR',
       onClick: () => closeDrawerThen(onOpenScan)
     }] : []),
     ...(onOpenMerchantPos ? [{
@@ -139,10 +140,15 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
       onClick: () => closeDrawerThen(onOpenMerchantPos)
     }] : []),
     {
-      icon: <SettingsIcon />,
-      label: 'Recurring buys',
+      icon: <ClockIcon />,
+      label: 'Recurring Buys',
       onClick: () => closeDrawerThen(onOpenDca)
     },
+    ...(onOpenFiatCurrencies?[{
+      icon: <CurrencyIcon/>,
+      label: 'Currency',
+      onClick:()=>closeDrawerThen(onOpenFiatCurrencies)
+    }]:[]),
     {
       icon: <SettingsIcon />,
       label: 'Settings',
@@ -150,7 +156,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     },
     {
       icon: <LogoutIcon />,
-      label: 'Logout',
+      label: 'Log Out',
       onClick: () => { setShowLogoutConfirm(true); }
     }
   ];
@@ -249,18 +255,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                   Support
                 </button>
               </div>
-              <a
-                href="https://breez.technology/sdk/"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  void openExternalUrl('https://breez.technology/sdk/');
-                }}
-                className="block text-xs text-spark-text-muted text-center hover:text-spark-text-secondary transition-colors"
-              >
-                Powered by Breez SDK
-              </a>
+              <p className="text-xs text-spark-text-muted text-center">GetYourSats · v0.1</p>
             </div>
 
             {/* Logout Confirmation Dialog.

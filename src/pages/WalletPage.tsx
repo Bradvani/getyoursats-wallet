@@ -43,6 +43,7 @@ interface WalletPageProps {
   hasRejectedDeposits: boolean;
   onOpenGetRefund: (source?: 'menu' | 'icon') => void;
   onOpenSettings: () => void;
+  onOpenFiatCurrencies: () => void;
   onOpenBackup: () => void;
   onOpenDca: () => void;
   onOpenUnilateralExit: () => void;
@@ -61,6 +62,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
   hasRejectedDeposits,
   onOpenGetRefund,
   onOpenSettings,
+  onOpenFiatCurrencies,
   onOpenDca,
   onOpenBackup,
   onOpenUnilateralExit,
@@ -82,6 +84,19 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const [gysPosOpen,setGysPosOpen] = useState(false);
   const [partnerBuyOpen,setPartnerBuyOpen] = useState(false);
   const [historyOpen,setHistoryOpen] = useState(false);
+  const [manualBackupConfirmed,setManualBackupConfirmed] = useState(false);
+  const walletIdentity=walletInfo?.identityPubkey;
+  useEffect(()=>{
+    if(!walletIdentity)return;
+    try{
+      const key='gys:manual-backup-verified:'+walletIdentity.toLowerCase();
+      if(sessionStorage.getItem('gys:manual-backup-verified-pending')==='1'){
+        localStorage.setItem(key,'1');
+        sessionStorage.removeItem('gys:manual-backup-verified-pending');
+      }
+      setManualBackupConfirmed(localStorage.getItem(key)==='1');
+    }catch{setManualBackupConfirmed(false)}
+  },[walletIdentity]);
   const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
@@ -332,11 +347,11 @@ const WalletPage: React.FC<WalletPageProps> = ({
            primaryLightningAddress.isSupported?'Tap Receive to set up':'Not available on this network'}
         </span>}
       </div>
-      <button type="button" className="gys-backup-card" onClick={onOpenBackup}>
+      {!manualBackupConfirmed && <button type="button" className="gys-backup-card" onClick={onOpenBackup}>
         <span className="gys-backup-card__icon" aria-hidden="true">↗</span>
-        <span><strong>Protect your Bitcoin</strong><small>Review your recovery options</small></span>
+        <span><strong>Review recovery options</strong><small>Keep a private recovery method available</small></span>
         <span aria-hidden="true">→</span>
-      </button>
+      </button>}
       <button type="button" className="gys-wallet__history-trigger" aria-expanded={historyOpen}
         aria-controls="gys-wallet-history" onClick={()=>setHistoryOpen(v=>!v)}>
         <span aria-hidden="true" className={historyOpen?'gys-wallet__history-arrow gys-wallet__history-arrow--open':'gys-wallet__history-arrow'}>⌃</span>
@@ -448,6 +463,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
         onClose={() => setIsMenuOpen(false)}
         onLogout={onLogout}
         onOpenSettings={onOpenSettings}
+        onOpenFiatCurrencies={onOpenFiatCurrencies}
         onOpenDca={onOpenDca}
         onOpenScan={()=>setIsQrScannerOpen(true)}
         onOpenMerchantPos={()=>setGysPosOpen(true)}

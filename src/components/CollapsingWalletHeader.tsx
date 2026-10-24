@@ -48,7 +48,23 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
   // same value so it denominates in whatever the balance is showing.
   const [activeFiatId, setActiveFiatId] = useState<string>(getDisplayFiatCurrency);
   const [bitcoinUnit,setBitcoinUnit]=useState<Denomination>(getDenomination);
-  const currentInrRate=fiatRates.find(r=>r.coin==='INR')?.value;
+  const primaryFiatCurrency=bitcoinUnit==='sats'||bitcoinUnit==='BTC'?activeFiatId:bitcoinUnit;
+  const primaryFiatRate=fiatRates.find(r=>r.coin===primaryFiatCurrency)?.value;
+  const primaryFiatSymbol=fiatCurrencies.find(c=>c.id===primaryFiatCurrency)?.info.symbol?.grapheme||primaryFiatCurrency;
+  const [fiatRevision,setFiatRevision]=useState(0);
+  useEffect(()=>{
+    const sync=()=>{
+      setActiveFiatId(getDisplayFiatCurrency());
+      setBitcoinUnit(getDenomination());
+      setFiatRevision(v=>v+1);
+    };
+    window.addEventListener('gys:fiat-pref-changed',sync);
+    window.addEventListener('gys:currency-pref-changed',sync);
+    return()=>{
+      window.removeEventListener('gys:fiat-pref-changed',sync);
+      window.removeEventListener('gys:currency-pref-changed',sync);
+    };
+  },[]);
   // User-driven open. session is bumped on every tap so the dialog
   // remounts with fresh state via key-based remount (no reset effect).
   const [userToggle, setUserToggle] = useState<{
@@ -144,7 +160,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
     }
 
     return result;
-  }, [ratesMap, currenciesMap]);
+  }, [ratesMap, currenciesMap, fiatRevision]);
 
   // Falls back to the first entry when the stored currency isn't in the list
   // (rate missing, or the user removed it in Settings).
@@ -250,18 +266,18 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
       return full.startsWith(sym) ? full.slice(sym.length).trimStart() : full;
     }
     if(bitcoinUnit==='BTC')return satsToAmount(Math.round(displayBalance),'BTC');
-    if(bitcoinUnit==='INR'&&currentInrRate){
-      const v=satsToAmount(Math.round(displayBalance),'INR',currentInrRate);
+    if(bitcoinUnit!=='sats'&&bitcoinUnit!=='BTC'&&primaryFiatRate){
+      const v=satsToAmount(Math.round(displayBalance),bitcoinUnit,primaryFiatRate);
       const numeric=Number(v);
       return Number.isFinite(numeric)?formatWithSpaces(numeric):v;
     }
     return formatWithSpaces(displayBalance);
-  }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, currentInrRate]);
+  }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, primaryFiatRate]);
 
   // The Bitcoin glyph denotes BTC, never sats. Sats are labelled by their unit selector.
   const currencySymbol = stableBalance.isActive && stableBalance.displayConfig?.symbol
     ? stableBalance.displayConfig.symbol
-    : bitcoinUnit==='INR'&&currentInrRate?'₹':bitcoinUnit==='BTC'?'₿':'';
+    : bitcoinUnit==='sats'?'丰':bitcoinUnit==='BTC'?'₿':primaryFiatRate?primaryFiatSymbol:'';
 
   if (!walletInfo) return null;
 
@@ -410,7 +426,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
             <span className="balance-display">
               {formattedPrimaryBalance}
             </span>
-            {displayBalance > 0 && currencySymbol && <span className="absolute right-full top-1/2 -translate-y-1/2 mr-0.5 text-3xl text-spark-text-secondary opacity-70 font-mono">{currencySymbol}</span>}
+            {displayBalance >= 0 && currencySymbol && <span className="absolute right-full top-1/2 -translate-y-1/2 mr-0.5 text-3xl text-spark-text-secondary opacity-70 font-mono">{currencySymbol}</span>}
           </div>
 
           {/* Secondary line - fiat value or BTC as fiat equivalent */}
@@ -452,7 +468,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
         </div>
 
         {!stableBalance.isActive && <div className="flex justify-center my-2">
-          <DenominationTabs value={bitcoinUnit} inrAvailable={!!currentInrRate}
+          <DenominationTabs value={bitcoinUnit} fiatAvailable={!!primaryFiatRate}
             onChange={unit=>{setBitcoinUnit(unit);saveDenomination(unit)}}/>
         </div>}
 

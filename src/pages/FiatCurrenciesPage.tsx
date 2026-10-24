@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { LoadingSpinner, Checkbox } from '../components/ui';
 import { useWallet } from '@/contexts/WalletContext';
-import { getFiatSettings, saveFiatSettings } from '../services/settings';
+import { getFiatSettings, saveFiatSettings, getDisplayFiatCurrency, setDisplayFiatCurrency } from '../services/settings';
 import type { FiatCurrency } from '@breeztech/breez-sdk-spark';
 import SlideInPage from '../components/layout/SlideInPage';
 import { ChevronUpIcon, ChevronDownIcon, DragHandleIcon } from '../components/Icons';
@@ -17,6 +17,7 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
   const [loadError, setLoadError] = useState(false);
   const [currencies, setCurrencies] = useState<FiatCurrency[]>([]);
   const [selectedCurrencies, setSelectedCurrencies] = useState<string[]>([]);
+  const [primaryCurrency,setPrimaryCurrency]=useState(getDisplayFiatCurrency);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,6 +28,7 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
         // Load saved settings
         const settings = getFiatSettings();
         setSelectedCurrencies(settings.selectedCurrencies);
+        setPrimaryCurrency(getDisplayFiatCurrency());
 
         // Load available currencies from SDK
         const fiatCurrencies = (await wallet.listFiatCurrencies()).currencies;
@@ -56,6 +58,10 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
       }
       // Save immediately
       saveFiatSettings({ selectedCurrencies: newSelection });
+      if(!newSelection.includes(primaryCurrency)){
+        const next=newSelection[0]??'USD';
+        setPrimaryCurrency(next);setDisplayFiatCurrency(next);
+      }
       return newSelection;
     });
   }, []);
@@ -130,7 +136,7 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
     .sort((a, b) => a.id.localeCompare(b.id));
 
   return (
-    <SlideInPage title="Fiat Currencies" closeStyle="back" onClose={onBack} slideFrom="right">
+    <SlideInPage title="Currencies" closeStyle="back" onClose={onBack} slideFrom="right">
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner />
@@ -175,6 +181,12 @@ const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
                 </p>
               </div>
 
+              <button type="button" onClick={()=>{setPrimaryCurrency(currency.id);setDisplayFiatCurrency(currency.id)}}
+                aria-pressed={primaryCurrency===currency.id}
+                aria-label={'Use '+currency.id+' as default currency'}
+                className={`px-3 py-2 rounded-xl text-xs font-semibold border ${primaryCurrency===currency.id?'text-spark-primary border-spark-primary':'text-spark-text-muted border-spark-border'}`}>
+                {primaryCurrency===currency.id?'Default':'Use'}
+              </button>
               {/* Reorder buttons (mobile-friendly) */}
               <div className="flex flex-col gap-0.5">
                 <button

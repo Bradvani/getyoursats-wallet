@@ -11,7 +11,6 @@ import { WalletProvider, WalletInfoProvider, WalletStatusProvider } from './cont
 import LoadingSpinner from './components/LoadingSpinner';
 import BrandIntro from './components/BrandIntro';
 import PaymentCelebration from './components/PaymentCelebration';
-import InstallPrompt from './components/InstallPrompt';
 import OfflineBanner from './components/OfflineBanner';
 import StagingGate from './components/StagingGate';
 import { ToastProvider, useToast } from './contexts/ToastContext';
@@ -253,6 +252,12 @@ const AppContent: React.FC = () => {
   // Navigate to wallet after successful connect
   const handleConnect = async (mnemonic: string, restore: boolean) => {
     await sdk.connectWallet({ type: 'mnemonic', mnemonic }, restore);
+    // Only manual setup that passed the two-word backup challenge reaches
+    // this path with restore=false. Defer wallet scoping until the SDK has
+    // supplied the connected public identity. No phrase is stored here.
+    if(!restore){
+      try{sessionStorage.setItem('gys:manual-backup-verified-pending','1')}catch{/* reminder stays visible */}
+    }
     setUserScreen('wallet');
   };
 
@@ -466,6 +471,7 @@ const AppContent: React.FC = () => {
             setUserScreen('getRefund');
           }}
           onOpenSettings={() => setUserScreen('settings')}
+          onOpenFiatCurrencies={() => setUserScreen('fiatCurrencies')}
           onOpenBackup={() => setUserScreen('backup')}
           onOpenDca={() => setUserScreen('dca')}
           onOpenUnilateralExit={() => setUserScreen('unilateralExit')}
@@ -791,7 +797,6 @@ const AppContent: React.FC = () => {
                   />
                 </Suspense>
               )}
-              <InstallPrompt />
               <OfflineBanner />
               {appLock.locked && (
                 <LockScreen

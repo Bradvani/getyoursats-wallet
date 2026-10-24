@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import type {Network} from '@breeztech/breez-sdk-spark';
 import {openExternalUrl} from '../utils/externalLink';
+import {getDisplayFiatCurrency} from '../services/settings';
 import {onramperAvailable,onramperBuyUrl} from './onramperCheckout';
 
 interface Props {
@@ -25,7 +26,7 @@ export default function PartnerBuyDialog({onClose,network}:Props) {
         <button type="button" aria-label="Close buy Bitcoin" onClick={onClose}>✕</button>
       </header>
       <p className="gys-partner-buy__lead">
-        Compare available payment options with Onramper. The payment provider,
+        Compare available payment options with Onramper. Your preferred display currency is {getDisplayFiatCurrency()}. The payment provider,
         not GetYourSats, handles the purchase, identity checks, payment methods and fees.
       </p>
       {ready ? <>
