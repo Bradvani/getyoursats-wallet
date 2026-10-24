@@ -138,3 +138,10 @@
   .gys-transfer--success .gys-transfer__core{opacity:1;transform:none}
   .gys-transfer__seal{opacity:1;transform:none}
 }
+
+/* A verified historical POS receipt remains branded but must not replay its flash. */
+.gys-transfer--static .gys-transfer__streak,.gys-transfer--static .gys-transfer__glow{display:none}
+.gys-transfer--static .gys-transfer__core,.gys-transfer--static .gys-transfer__orbit,
+.gys-transfer--static .gys-transfer__seal{animation:none!important;transition:none!important}
+.gys-transfer--static .gys-transfer__core{opacity:1;transform:none}
+.gys-transfer--static .gys-transfer__seal{opacity:1;transform:none}
