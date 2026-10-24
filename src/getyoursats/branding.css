@@ -142,24 +142,6 @@
 .gys-setup__actions{display:grid;gap:10px;padding-top:10px}
 .gys-setup__primary:focus-visible,.gys-setup__secondary:focus-visible,.gys-setup__back:focus-visible{outline:2px solid #F7931A;outline-offset:3px}
 
-/* Original brand artwork is an opaque JPEG. Use its luminance as an alpha
- * mask so the black JPG canvas doesn't appear as a separate square. */
-.gys-welcome__brand img,
-.gys-welcome__coin img{
-  mix-blend-mode:normal;
-  -webkit-mask-image:url('/assets/getyoursats-mark.jpg');
-  mask-image:url('/assets/getyoursats-mark.jpg');
-  -webkit-mask-repeat:no-repeat;
-  mask-repeat:no-repeat;
-  -webkit-mask-position:center;
-  mask-position:center;
-  -webkit-mask-size:contain;
-  mask-size:contain;
-  mask-mode:luminance;
-  filter:brightness(1.12);
-}
-
-
 /* Wallet dashboard: quiet premium motion, truthful live-data surfaces. */
 .gys-market-pulse {
   position:relative; overflow:hidden; margin:16px 16px 13px; padding:19px 20px 16px;

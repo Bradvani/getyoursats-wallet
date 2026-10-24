@@ -92,10 +92,9 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
           )}
         </div>
 
-        {/* Tap to dismiss hint */}
-        <p className="mt-10 text-spark-text-muted text-sm animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-          Tap anywhere to dismiss
-        </p>
+        <button type="button" className="gys-payment-done mt-10" onClick={onClose}>
+          Done
+        </button>
       </div>
     </div>,
     document.body

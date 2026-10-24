@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 const fixture = 'http://localhost:5173/e2e/fixtures/premium-ui.html';
+test.beforeEach(async ({ page }) => {
+ page.setDefaultTimeout(10000);
+ page.on('pageerror', error => console.error('Fixture runtime error:', error.message));
+});
 for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
  test(`@public-smoke wallet layout and recovery access ${width}`, async ({page}) => {
   const errors:string[]=[];page.on('pageerror', e=>errors.push(e.message));
@@ -26,7 +30,7 @@ test('@public-smoke send receive settings and reduced motion',async({page})=>{
  await page.screenshot({path:'test-artifacts/receive-mobile.png'});
  await page.goto(fixture);
  await page.getByRole('button',{name:'Send Bitcoin',exact:true}).click();
- await expect(page.getByRole('heading',{name:'Send',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Send BTC or USD',exact:true})).toBeVisible();
  await page.screenshot({path:'test-artifacts/send-mobile.png'});
  for(const state of ['sending','converting','receiving','sent','failed','received','settings']){
   await page.goto(fixture+'?screen='+state);

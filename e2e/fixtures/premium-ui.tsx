@@ -16,7 +16,7 @@ import ProcessingStep from '../../src/features/send/steps/ProcessingStep';
 import ResultStep from '../../src/features/send/steps/ResultStep';
 import PaymentCelebration from '../../src/components/PaymentCelebration';
 
-const info = { balanceSats: 125000, tokenBalances: [] } as unknown as GetInfoResponse;
+const info = { balanceSats: 125000, tokenBalances: new Map() } as unknown as GetInfoResponse;
 const received = { id: 'fixture-receive', paymentType: 'receive', status: 'completed', amount: 5000n, fees: 0n, timestamp: Math.floor(Date.now()/1000), method: 'lightning' } as Payment;
 const sdk = new Proxy({
  getInfo: async () => info,

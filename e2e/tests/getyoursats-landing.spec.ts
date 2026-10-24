@@ -35,6 +35,7 @@ test('@public-smoke GetYourSats landing identity animates without affecting onbo
   await page.goto('http://localhost:5173/');
   await expect(page.locator('#splash')).toHaveCount(0,{timeout:60000});
   await expect(page.locator('.gys-welcome__header').getByRole('img',{name:'GetYourSats'})).toBeVisible();
+  await expect(page.locator('.gys-welcome__header img')).toHaveCSS('mask-image','none');
   await expect(page.locator('.gys-welcome__hero-mark')).toHaveCSS('animation-name','gys-hero-arrive');
   await expect(page.getByRole('button',{name:'Start'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Restore existing wallet'})).toBeVisible();
