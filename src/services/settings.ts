@@ -135,7 +135,7 @@ export function depositMaxFeeDrafts(settings: UserSettings): Record<DepositMaxFe
 }
 
 const defaultFiatSettings: FiatSettings = {
-  selectedCurrencies: ['INR', 'USD'],
+  selectedCurrencies: ['USD'],
 };
 
 // In-memory cache for localStorage reads (js-cache-storage optimization)
@@ -242,6 +242,7 @@ export function getFiatSettings(): FiatSettings {
 
 export function saveFiatSettings(settings: FiatSettings): void {
   setCachedItem(FIAT_SETTINGS_KEY, JSON.stringify(settings));
+  if(typeof window!=='undefined')window.dispatchEvent(new Event('gys:fiat-pref-changed'));
 }
 
 /**
@@ -258,7 +259,16 @@ export function getDisplayFiatCurrency(): string {
 }
 
 export function setDisplayFiatCurrency(currencyId: string): void {
-  setCachedItem(ACTIVE_FIAT_KEY, currencyId);
+  if(!/^[A-Z]{3}$/.test(currencyId)||currencyId==='BTC')throw Error('Invalid fiat currency');
+  setCachedItem(ACTIVE_FIAT_KEY,currencyId);
+  // If the active primary unit is fiat, update it alongside the preferred
+  // currency. Users displaying sats or BTC keep that choice unchanged.
+  try{
+    const unit=localStorage.getItem('gys:denomination:v1');
+    if(unit&&/^[A-Z]{3}$/.test(unit)&&unit!=='BTC')
+      localStorage.setItem('gys:denomination:v1',currencyId);
+  }catch{/* optional display choice */}
+  if(typeof window!=='undefined')window.dispatchEvent(new Event('gys:fiat-pref-changed'));
 }
 
 // Stable Balance disclaimer acceptance (one-time)

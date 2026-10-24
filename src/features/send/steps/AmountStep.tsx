@@ -1,6 +1,6 @@
 import {useFiatData} from '../../../contexts/FiatDataContext';
 import DenominationTabs from '../../../getyoursats/DenominationTabs';
-import {amountToSats,getDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
+import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
 import React, { useEffect, useState, useMemo } from 'react';
 import type { ConversionOptions } from '@breeztech/breez-sdk-spark';
 import { FormError, PrimaryButton, AMOUNT_FIELD_CLASS } from '../../../components/ui';
@@ -13,6 +13,7 @@ import { useBalanceValidation } from '../hooks/useBalanceValidation';
 import { useHasPendingConversion } from '../../../contexts/WalletContext';
 import { dismissKeyboard } from '../../../utils/keyboard';
 import { SatAmount } from '../../../components/SatAmount';
+import {getDisplayFiatCurrency} from '../../../services/settings';
 
 export interface AmountStepProps {
   paymentInput: string;
@@ -45,8 +46,9 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const {fiatRates,fetchedAt}=useFiatData();
   const [denomination,setDenomination]=useState<Denomination>(getDenomination);
   const [unitRaw,setUnitRaw]=useState('');
-  const inrPerBtc=fiatRates.find(r=>r.coin==='INR')?.value;
-  const currentRate=fetchedAt?inrPerBtc:undefined;
+  const currentCurrency=isFiatDenomination(denomination)?denomination:getDisplayFiatCurrency();
+  const currentRate=fetchedAt?fiatRates.find(r=>r.coin===currentCurrency)?.value:undefined;
+  const rateFor=(unit:Denomination)=>fiatRates.find(r=>r.coin===unit)?.value;
 
   const input = useAmountInput({ initialAmount: amount, balanceSats, tokenBalance, fiatOverride });
   const {
@@ -86,12 +88,13 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
   const isDenominated = !amountFirst && !isTokenMode && denomination !== 'sats';
   const selectDenomination = (next:Denomination) => {
-    if(next==='INR'&&!currentRate)return;
+    const nextRate=isFiatDenomination(next)?rateFor(next):undefined;
+    if(isFiatDenomination(next)&&(!nextRate||!fetchedAt))return;
     const sats=Number(localAmount);
     setIsTokenMode(false);
     setDenomination(next);
     saveDenomination(next);
-    setUnitRaw(Number.isSafeInteger(sats)&&sats>0?satsToAmount(sats,next,currentRate):'');
+    setUnitRaw(Number.isSafeInteger(sats)&&sats>0?satsToAmount(sats,next,nextRate):'');
     setFeesIncluded(false);
     setLocalError(null);
   };
@@ -132,8 +135,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
   const handleNext = async () => {
     if (!validAmount) return;
-    if (!amountFirst && denomination==='INR' && (!fetchedAt || Date.now()-fetchedAt>120_000)) {
-      setLocalError('The INR/BTC rate has expired. Refresh the wallet before sending.');
+    if (!amountFirst && isFiatDenomination(denomination) && (!fetchedAt || Date.now()-fetchedAt>120_000)) {
+      setLocalError('The '+denomination+'/BTC rate has expired. Refresh the wallet before sending.');
       return;
     }
     setLocalError(null);
@@ -205,7 +208,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   );
 
   const unitInputValue=isDenominated?unitRaw:localAmount;
-  const unitUnavailable=denomination==='INR'&&!currentRate&&!amountFirst;
+  const unitUnavailable=isFiatDenomination(denomination)&&!currentRate&&!amountFirst;
   const amountSection = (
     <div>
         <label className="block text-sm font-medium text-spark-text-primary mb-2">
@@ -247,8 +250,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
           )}
         </div>
 
-        {!amountFirst&&<DenominationTabs value={denomination} onChange={selectDenomination} disabled={isLoading} inrAvailable={!!currentRate}/>}
-        {unitUnavailable&&<p role="status" className="text-xs text-spark-warning mt-2">Live INR/BTC rate unavailable. Choose sats or BTC.</p>}
+        {!amountFirst&&<DenominationTabs value={denomination} onChange={selectDenomination} disabled={isLoading} fiatAvailable={!!currentRate}/>}
+        {unitUnavailable&&<p role="status" className="text-xs text-spark-warning mt-2">Live {denomination}/BTC rate unavailable. Choose sats or BTC.</p>}
         {isDenominated&&!!localAmount&&<p className="text-xs text-spark-text-muted mt-2">≈ {localAmount} sats · Settlement is denominated in Bitcoin</p>}
         {/* Quick amount buttons */}
         <div className="flex gap-2 mt-3">

@@ -40,3 +40,103 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 @media(max-width:720px){.gys-wallet__header{min-height:210px}.gys-wallet__address{margin:4px 16px;padding:9px 12px}.gys-backup-card{margin:4px 16px 6px}.gys-welcome__visual{min-height:130px;height:clamp(140px,23svh,230px)}.gys-welcome__hero-mark{width:310px}.gys-welcome__header-tag{font-size:8px;padding:8px}.gys-page-header__brand{left:16px;right:auto}.gys-page-header__brand--back{left:53px;right:auto}.gys-page-header__brand .gys-brand-wordmark{width:48px;height:29px}}
 @media(max-height:680px) and (max-width:720px){.gys-wallet__header{min-height:160px}.gys-backup-card{padding:8px 12px}.gys-welcome__visual{height:125px;min-height:110px}.gys-welcome__hero-mark{width:230px}.gys-welcome__visual-caption{display:none}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Release: scarcity-focused welcome, intact 3D cream original with no filters. */
+.gys-welcome__scarcity-pill{font-size:10px;font-weight:820;letter-spacing:.18em;color:#f7c282}
+.gys-welcome__hero-mark{filter:none!important;mix-blend-mode:normal!important;object-fit:contain}
+.gys-welcome__visual-caption{display:none}
+.gys-inline-install{display:flex;align-items:flex-start;gap:10px;text-align:left;border:1px solid rgba(247,147,26,.34);border-radius:15px;
+  background:rgba(247,147,26,.045);padding:13px 12px;line-height:1.5;color:#eee3d3}
+.gys-inline-install__icon{color:#f7931a;flex-shrink:0}
+.gys-inline-install__body{min-width:0;flex:1;font-size:11px}
+.gys-inline-install strong{font-size:12px;color:#f7ead3}
+.gys-inline-install p{margin:4px 0 0;color:#bdb7ac}
+.gys-inline-install__action{margin-top:8px;color:#f7931a;border-bottom:1px solid #f7931a;font-weight:700}
+.gys-inline-install__close{margin:-5px -4px 0 0;padding:6px;color:#a6a29b;flex:none}
+.gys-welcome__actions{gap:9px}
+.gys-app-header__identity{isolation:isolate;position:relative;z-index:3}
+.gys-app-header__identity .gys-brand-wordmark{width:84px;height:50px;opacity:1;filter:none}
+.gys-wallet-balance-surface__content{isolation:isolate}
+@media(display-mode:standalone){
+ .gys-wallet-balance-surface__content{padding-top:max(14px,env(safe-area-inset-top,0px))!important}
+ .gys-app-header__identity .gys-brand-wordmark{width:92px;height:54px}
+}
+@media(max-width:720px){
+ .gys-welcome__scarcity-pill{font-size:9px;letter-spacing:.11em}
+ .gys-welcome__hero-mark{width:min(100%,270px)}
+ .gys-welcome__visual{height:clamp(135px,19svh,205px)}
+ .gys-welcome h1{font-size:clamp(35px,7.7vw,49px);line-height:1.04}
+ .gys-welcome__subtitle{font-size:clamp(13px,3.8vw,16px);line-height:1.57}
+ .gys-welcome__actions{margin:13px auto 0}
+ .gys-inline-install{padding:11px 10px;gap:8px}
+}
+@media(max-height:680px) and (max-width:720px){
+ .gys-welcome__visual{height:115px}
+ .gys-welcome__hero-mark{max-height:116px;width:auto}
+ .gys-welcome__stage{padding:7px 0}
+ .gys-inline-install p{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){.gys-inline-install,.gys-welcome__hero-mark{transition:none!important;animation:none!important}}
+
+/* Full-screen merchant terminal: Amount is a native-keyboard-free output. */
+.gys-pos--terminal{position:fixed;inset:0;top:var(--gys-pos-view-top,0px);height:var(--gys-pos-view-height,100dvh);
+  z-index:11000;display:block;padding:0;background:#0b0b0b;overflow:hidden}
+.gys-pos-terminal{width:100%;max-width:600px;height:100%;margin:auto;display:flex;flex-direction:column;
+  padding:max(12px,env(safe-area-inset-top,0px)) clamp(14px,3vw,24px) max(13px,env(safe-area-inset-bottom,0px));
+  color:#f6f2eb;overflow-y:auto;overscroll-behavior:contain}
+.gys-pos-terminal__header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex:none;padding:10px 3px 14px}
+.gys-pos-terminal__header strong{font-size:20px;letter-spacing:-.04em;font-weight:820}
+.gys-pos-terminal__header>div{display:flex;align-items:center;gap:9px}
+.gys-pos-terminal__header button,.gys-pos-terminal__secondary{padding:10px 12px;border:1px solid #39312a;border-radius:11px;
+  color:#e7ddd1;background:#161616;font-size:13px}
+.gys-pos-terminal__amount{text-align:center;display:flex;flex-direction:column;align-items:center;gap:9px;
+  margin:auto 0 8px;min-height:112px}
+.gys-pos-terminal__amount output{font-size:clamp(40px,8vw,66px);font-weight:850;letter-spacing:-.065em;line-height:1.13;
+  font-variant-numeric:tabular-nums;max-width:100%;overflow-wrap:anywhere}
+.gys-pos-terminal__amount output small{font-size:15px;letter-spacing:normal;color:#f7931a;font-weight:700}
+.gys-pos-terminal__muted{font-size:12px;color:#ada8a1;line-height:1.6}
+.gys-pos-terminal__note{padding:10px 0 12px;flex:none;color:#a9a39a;font-size:13px}
+.gys-pos-terminal__note>button{padding:10px 5px;color:#c8c0b3;text-align:left}
+.gys-pos-terminal__note label{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.gys-pos-terminal__note input{flex:1;min-width:170px;font-size:16px;color:#faf6ef;background:#242424;border:1px solid #574633;border-radius:12px;padding:12px}
+.gys-pos-terminal__note label button{background:#f7931a;color:#111;border-radius:11px;padding:12px}
+.gys-pos-terminal__keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1 0 220px;min-height:220px;
+  grid-auto-rows:minmax(44px,1fr);border-top:1px solid #39332d;border-left:1px solid #39332d}
+.gys-pos-terminal__keypad button{display:grid;place-items:center;border-right:1px solid #39332d;
+  border-bottom:1px solid #39332d;font-size:clamp(22px,4vw,33px);background:#141414;color:#f7f5ef;
+  transition:background .18s ease}
+.gys-pos-terminal__keypad button:nth-child(10),.gys-pos-terminal__keypad button:nth-child(12){color:#f7931a}
+.gys-pos-terminal__keypad button:last-child{grid-column:2}
+.gys-pos-terminal__keypad button:active{background:#30241a}
+.gys-pos-terminal__keypad button:disabled{opacity:.25}
+.gys-pos-terminal__footer{flex:none;padding:12px 0 5px}
+.gys-pos-terminal__charge{width:100%;min-height:57px;background:#f7931a;color:#0b0b0b;border-radius:17px;
+  font-size:20px;letter-spacing:-.025em;font-weight:850}
+.gys-pos-terminal__charge:disabled{opacity:.37}
+.gys-pos-terminal__error{color:#ffd3b8;background:#4b241b;border-radius:10px;font-size:12px;padding:10px;margin-top:6px}
+.gys-pos-terminal__invoice{display:flex;align-items:center;flex-direction:column;gap:15px;text-align:center;margin:auto 0;overflow:auto}
+.gys-pos-terminal__qr{padding:15px;background:#fff;border-radius:19px}
+.gys-pos-terminal__invoice h2{font-size:38px;font-weight:800}
+.gys-pos-terminal__invoice h2 span{font-size:14px;font-weight:600;color:#eeb873}
+.gys-pos-terminal__invoice p,.gys-pos-terminal__invoice small{color:#aaa49a;font-size:12px}
+.gys-pos-terminal__history{display:flex;flex-direction:column;gap:13px;min-height:0;overflow-y:auto;padding:24px 0}
+.gys-pos-terminal__row{display:flex;justify-content:space-between;align-items:center}
+.gys-pos-terminal__history h2{font-size:24px;font-weight:800}
+.gys-pos-terminal__history ol{list-style:none;padding:0;margin:0}
+.gys-pos-terminal__history li{display:flex;justify-content:space-between;gap:10px;padding:14px 0;border-bottom:1px solid #333}
+.gys-pos-terminal__history li strong{color:#f7931a}
+@media(max-height:630px){.gys-pos-terminal__amount{margin:5px 0}.gys-pos-terminal__keypad{flex-basis:185px;min-height:185px}
+ .gys-pos-terminal__keypad button{font-size:21px}.gys-pos-terminal__charge{min-height:47px}}
+@media(prefers-reduced-motion:reduce){.gys-pos-terminal__keypad button{transition:none}}
+
+/* Keep the merchant keypad to four rows on compact iPhones. */
+.gys-pos-terminal__keypad button:last-child{grid-column:auto}
+.gys-pos-terminal__decimal-row{display:flex;justify-content:space-between;gap:14px;padding:6px 4px;flex:none}
+.gys-pos-terminal__decimal-row button{padding:7px 12px;font-size:13px;color:#f7931a;border:1px solid #47331d;border-radius:10px;background:#161411}
+.gys-pos-terminal__decimal-row button:disabled{opacity:.3}
+/* Standalone iOS uses an opaque system status bar; the header no longer sits
+ * behind the black-translucent overlay. Keep a visible first-row brand mark. */
+@media(display-mode:standalone){
+ .gys-wallet-balance-surface__content>.h-14{position:relative;z-index:5}
+ .gys-app-header__identity{opacity:1;filter:none;mix-blend-mode:normal}
+}

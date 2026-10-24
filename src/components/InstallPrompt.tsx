@@ -1,135 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import { Transition } from '@headlessui/react';
-import { DownloadIcon, CloseIcon } from './Icons';
+import {useEffect,useState} from 'react';
+import {DownloadIcon,CloseIcon} from './Icons';
 
-const INSTALL_PROMPT_DISMISSED_KEY = 'install_prompt_dismissed';
-
+const DISMISS_KEY='gys:install:welcome-dismissed:v1';
 interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  prompt:()=>Promise<void>;
+  userChoice:Promise<{outcome:'accepted'|'dismissed'}>;
 }
+const standalone=()=>window.matchMedia('(display-mode: standalone)').matches
+  || (navigator as Navigator & {standalone?:boolean}).standalone===true;
+const isIos=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent)
+  || (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
-interface InstallPromptProps {
-  onClose?: () => void;
+export default function InstallPrompt(){
+  const [dismissed,setDismissed]=useState(()=>{
+    try{return localStorage.getItem(DISMISS_KEY)==='1'}catch{return false}
+  });
+  const [installed,setInstalled]=useState(standalone);
+  const [deferred,setDeferred]=useState<BeforeInstallPromptEvent|null>(null);
+  const [busy,setBusy]=useState(false);
+  const ios=isIos();
+  const safari=ios && /Safari/i.test(navigator.userAgent)
+    && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(navigator.userAgent);
+  useEffect(()=>{
+    const offered=(event:Event)=>{event.preventDefault();setDeferred(event as BeforeInstallPromptEvent)};
+    const complete=()=>setInstalled(true);
+    window.addEventListener('beforeinstallprompt',offered);
+    window.addEventListener('appinstalled',complete);
+    return ()=>{
+      window.removeEventListener('beforeinstallprompt',offered);
+      window.removeEventListener('appinstalled',complete);
+    };
+  },[]);
+  if(installed||dismissed||(!ios&&!deferred))return null;
+  const close=()=>{
+    setDismissed(true);
+    try{localStorage.setItem(DISMISS_KEY,'1')}catch{/* optional preference */}
+  };
+  const install=async()=>{
+    if(!deferred||busy)return;
+    setBusy(true);
+    try{
+      await deferred.prompt();
+      if((await deferred.userChoice).outcome==='accepted')setInstalled(true);
+    }catch{/* On Android install availability can change; main Start stays active. */}
+    finally{setBusy(false);setDeferred(null)}
+  };
+  return <section className="gys-inline-install" aria-label="Optional home-screen installation">
+    <DownloadIcon size="sm" className="gys-inline-install__icon"/>
+    <div className="gys-inline-install__body">
+      <strong>Keep GetYourSats a tap away</strong>
+      {ios?<p>{safari?
+        'On iPhone: tap Share in Safari, choose Add to Home Screen, then Add.':
+        'On iPhone: open this wallet in Safari, tap Share, then Add to Home Screen.'}
+        {' '}You can also start in your browser.</p>:
+        <p>Install from your browser for quick access. It is optional and does not change wallet custody.</p>}
+      {!!deferred&&<button type="button" className="gys-inline-install__action"
+        onClick={()=>void install()} disabled={busy}>{busy?'Opening…':'Install app'}</button>}
+    </div>
+    <button type="button" onClick={close} className="gys-inline-install__close" aria-label="Dismiss installation guidance">
+      <CloseIcon size="sm"/>
+    </button>
+  </section>;
 }
-
-/**
- * A prompt that appears to help users install the app as a PWA.
- * Only shows if the browser supports installation and user hasn't dismissed it.
- */
-const InstallPrompt: React.FC<InstallPromptProps> = ({ onClose }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalling, setIsInstalling] = useState(false);
-
-  useEffect(() => {
-    // Check if already dismissed
-    const dismissed = localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY);
-    if (dismissed === 'true') return;
-
-    // Check if already installed (standalone mode)
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
-
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-
-      // Delay showing the prompt for better UX
-      setTimeout(() => {
-        setIsVisible(true);
-      }, 3000);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-
-    setIsInstalling(true);
-
-    try {
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-
-      if (outcome === 'accepted') {
-        setIsVisible(false);
-        onClose?.();
-      }
-    } finally {
-      setIsInstalling(false);
-      setDeferredPrompt(null);
-    }
-  };
-
-  const handleDismiss = () => {
-    localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true');
-    setIsVisible(false);
-    onClose?.();
-  };
-
-  if (!isVisible || !deferredPrompt) return null;
-
-  return (
-    <Transition
-      show={isVisible}
-      as="div"
-      enter="transform transition ease-out duration-300"
-      enterFrom="translate-y-full opacity-0"
-      enterTo="translate-y-0 opacity-100"
-      leave="transform transition ease-in duration-200"
-      leaveFrom="translate-y-0 opacity-100"
-      leaveTo="translate-y-full opacity-0"
-      className="fixed bottom-4 left-4 right-4 z-40 max-w-md mx-auto"
-    >
-      <div className="bg-spark-surface border border-spark-border rounded-2xl p-4 shadow-glass-lg">
-        <div className="flex items-start gap-3">
-          {/* Download icon */}
-          <div className="shrink-0 w-10 h-10 bg-spark-primary/20 rounded-xl flex items-center justify-center">
-            <DownloadIcon className="text-spark-primary" />
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <h3 className="font-display font-semibold text-spark-text-primary text-sm">
-              Install GetYourSats
-            </h3>
-            <p className="text-xs text-spark-text-muted mt-1">
-              Add to your home screen for quick access and a better experience.
-            </p>
-
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={handleInstall}
-                disabled={isInstalling}
-                className="flex-1 px-3 py-2 bg-spark-primary text-white text-sm font-medium rounded-xl hover:bg-spark-primary-light transition-colors disabled:opacity-50"
-              >
-                {isInstalling ? 'Installing...' : 'Install'}
-              </button>
-              <button
-                onClick={handleDismiss}
-                disabled={isInstalling}
-                className="px-3 py-2 text-spark-text-muted text-sm font-medium hover:text-spark-text-secondary transition-colors"
-              >
-                Not now
-              </button>
-            </div>
-          </div>
-
-          {/* Close button */}
-          <button
-            onClick={handleDismiss}
-            className="shrink-0 p-1 text-spark-text-muted hover:text-spark-text-secondary transition-colors"
-          >
-            <CloseIcon size="sm" />
-          </button>
-        </div>
-      </div>
-    </Transition>
-  );
-};
-
-export default InstallPrompt;

@@ -142,3 +142,20 @@ describe('deposit claim limit helpers', () => {
     expect(getSettings().depositMaxFeeByType).toBeUndefined();
   });
 });
+
+describe('global fiat default',()=>{
+ it('defaults to USD for new browser profiles',async()=>{
+  localStorage.clear();vi.resetModules();
+  const {getFiatSettings,getDisplayFiatCurrency}=await import('./settings');
+  expect(getFiatSettings().selectedCurrencies[0]).toBe('USD');
+  expect(getDisplayFiatCurrency()).toBe('USD');
+ });
+ it('preserves an existing saved INR choice',async()=>{
+  localStorage.clear();vi.resetModules();
+  localStorage.setItem('fiat_settings_v1',JSON.stringify({selectedCurrencies:['INR','USD']}));
+  localStorage.setItem('fiat_active_currency','INR');
+  const {getFiatSettings,getDisplayFiatCurrency}=await import('./settings');
+  expect(getFiatSettings().selectedCurrencies[0]).toBe('INR');
+  expect(getDisplayFiatCurrency()).toBe('INR');
+ });
+});
