@@ -66,5 +66,8 @@ describe('BackupActions', () => {
     render(<BackupActions />);
     fireEvent.click(screen.getByTestId('unilateral-exit-backup-save'));
     await waitFor(() => expect(exportUnilateralExitState).toHaveBeenCalled());
+    // ZIP generation finishes after the SDK export. Keep the component
+    // mounted until its completion state, before the test window is torn down.
+    await waitFor(() => expect(screen.getByTestId('unilateral-exit-backup-save')).toBeEnabled());
   });
 });
