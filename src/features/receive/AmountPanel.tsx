@@ -12,7 +12,8 @@ import {
   AMOUNT_FIELD_CLASS,
 } from '../../components/ui';
 import { LightningBoltIcon } from '../../components/Icons';
-import { fixedQuickAmounts, formatQuickAmount, formatTokenInput } from '../../utils/tokenFormatting';
+import { formatTokenInput } from '../../utils/tokenFormatting';
+import {receiveAmountPresets} from './receiveAmountPresets';
 import CurrencySwitcher from '../../components/ui/CurrencySwitcher';
 import { SatAmount } from '../../components/SatAmount';
 import { useAmountInput, useFiatOverride } from '../../hooks/useAmountInput';
@@ -77,7 +78,6 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
     tokenSymbol,
     config,
     btcFiatRate,
-    quickAmountScale,
     amountSats: parsedSats,
   } = input;
 
@@ -151,14 +151,17 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
     }else setAmount(value);
   };
 
-  const handleQuickAmount = (quickAmount: number) => {
-    setAmountInput(String(quickAmount));
-    if(customUnit)setUnitRaw(satsToAmount(quickAmount,denomination,currentRate));
+  const handleQuickAmount = (value:string) => {
+    handleAmountChange(value);
   };
 
-  // Receive has no balance to scale against, so both denominations offer the
-  // same fixed points of value, held to that value by the rate.
-  const quickAmounts = fixedQuickAmounts(quickAmountScale, [10, 50, 200]);
+  // Presets are shown in the unit the person actually selected.
+  // Stable-balance token mode retains its USD-denominated quick values.
+  const quickAmounts = receiveAmountPresets(denomination,isTokenMode);
+  const amountUnitLabel=isTokenMode&&config?(tokenSymbol||'USD'):
+    denomination==='sats'?'sats':denomination==='BTC'?'BTC':denomination;
+  const amountEquivalent=parsedSats!==null && customUnit && unitRaw
+    ? satsToAmount(Number(parsedSats),'sats') : '';
 
   // Mirrors the guard in `useReceivePayment.generateBolt11Invoice` so
   // the UI disables the Generate button + Enter-to-submit path for
@@ -190,22 +193,30 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
           icon={<LightningBoltIcon />}
         />
 
-        {/* Amount Input */}
+        {/* Currency first: choose how to express the requested Bitcoin amount,
+            then enter it in a single-line numeric field. */}
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-spark-text-primary mb-2">
-              Amount
-            </label>
-            <div className="relative">
-              <textarea
+          <section className="rounded-2xl border border-spark-border bg-spark-elevated/30 p-4 space-y-3" aria-label="Requested amount">
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="receive-request-amount" className="block text-sm font-medium text-spark-text-primary">
+                Request amount
+              </label>
+              <span className="text-xs text-spark-text-muted">Settles in Bitcoin</span>
+            </div>
+            <div aria-label="Choose amount currency">
+              <DenominationTabs value={denomination} onChange={chooseUnit} disabled={isLoading} fiatAvailable={!!currentRate}/>
+            </div>
+            <div className="rounded-xl border border-spark-border bg-spark-dark px-4 py-3 flex items-center gap-3 focus-within:border-spark-primary">
+              <input
+                id="receive-request-amount"
+                type="text"
+                autoComplete="off"
+                pattern="[0-9]*[.,]?[0-9]*"
                 inputMode={customUnit?'decimal':isTokenMode?'decimal':'numeric'}
                 enterKeyHint="next"
                 value={shownAmount}
                 onChange={(e) => handleAmountChange(e.target.value)}
                 onKeyDown={(e) => {
-                  // Enter on the amount field advances to the
-                  // description field (the soft keyboard's Next
-                  // action). Never inserts a newline.
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     descriptionInputRef.current?.focus();
@@ -213,47 +224,47 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
                 }}
                 placeholder={customUnit?(isFiatDenomination(denomination)?'0.00':'0.0001'):isTokenMode?'0.00':'0'}
                 disabled={isLoading}
-                rows={1}
-                className={`${AMOUNT_FIELD_CLASS} resize-none pr-16 font-mono`}
+                className="min-w-0 w-full flex-1 bg-transparent text-spark-text-primary text-3xl font-semibold font-mono tracking-tight outline-none placeholder:text-spark-text-muted"
                 data-testid="invoice-amount-input"
+                aria-describedby="receive-amount-equivalent"
               />
-              {tokenSymbol && denomination==='sats' && (
+              <span aria-label="Selected denomination" className="shrink-0 rounded-lg bg-spark-elevated px-2 py-1 text-sm text-spark-text-secondary font-semibold">{amountUnitLabel}</span>
+            </div>
+            {tokenSymbol && denomination==='sats' && (
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-spark-text-secondary">Stable balance</span>
                 <CurrencySwitcher
                   isTokenMode={isTokenMode}
                   tokenSymbol={tokenSymbol}
                   onSwitch={handleToggleDenomination}
                   disabled={isLoading}
                 />
-              )}
+              </div>
+            )}
+            <div id="receive-amount-equivalent" className="min-h-5 text-xs text-spark-text-muted" aria-live="polite">
+              {unitUnavailable ? `Live ${denomination}/BTC price unavailable. Select sats or BTC.`
+                : customUnit && amountEquivalent ? `≈ ${Number(amountEquivalent).toLocaleString('en-US')} sats · indicative conversion`
+                : denomination==='sats'&&!isTokenMode ? 'Enter an exact amount in satoshis'
+                : 'The exact satoshi amount will appear after conversion'}
             </div>
-            <DenominationTabs value={denomination} onChange={chooseUnit} disabled={isLoading} fiatAvailable={!!currentRate}/>
-            {unitUnavailable&&<p role="status" className="text-xs text-spark-warning">Live {denomination}/BTC price unavailable. Choose sats or BTC.</p>}
-            {customUnit&&parsedSats!==null&&<p className="text-xs text-spark-text-muted">≈ {String(parsedSats)} sats · Invoice settles in Bitcoin</p>}
-          </div>
+          </section>
 
-          {/* Quick amount buttons. Hidden while the native keyboard is
-              up: this is the tallest sheet form, and with the row kept
-              the amount/description fields get pushed into inner
-              scrolling, which makes focus switches jump. */}
-          <div className="flex gap-2 hide-on-keyboard">
-            {quickAmounts.map((quickAmount) => (
-              <button
-                key={quickAmount}
-                type="button"
-                onClick={() => handleQuickAmount(quickAmount)}
-                disabled={isLoading}
-                className={`
-                  flex-1 py-2 rounded-lg text-sm font-mono font-medium transition-all
-                  ${shownAmount === (customUnit?satsToAmount(quickAmount,denomination,currentRate):String(quickAmount))
-                    ? 'bg-spark-primary text-black'
-                    : 'bg-spark-elevated border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
-                  }
-                `}
-              >
-                {isTokenMode && config ? formatQuickAmount(quickAmount, config) : <SatAmount sats={quickAmount} />}
-              </button>
-            ))}
-          </div>
+          <section className="space-y-2 hide-on-keyboard" aria-label="Suggested amounts">
+            <p className="text-xs text-spark-text-muted">Quick amounts · {amountUnitLabel}</p>
+            <div className="grid grid-cols-3 gap-2">
+              {quickAmounts.map(value=>(
+                <button key={value} type="button" onClick={()=>handleQuickAmount(value)}
+                  disabled={isLoading || unitUnavailable}
+                  aria-pressed={shownAmount===value}
+                  className={`min-h-11 rounded-xl border px-2 text-sm font-semibold font-mono transition-colors
+                    ${shownAmount===value
+                      ? 'bg-spark-primary text-black border-spark-primary'
+                      : 'bg-spark-elevated border-spark-border text-spark-text-primary hover:border-spark-border-light'}`}>
+                  {value}
+                </button>
+              ))}
+            </div>
+          </section>
 
           {/* Description */}
           <div>
