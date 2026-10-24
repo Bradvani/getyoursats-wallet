@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { WarningIcon, PasskeyIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
-import { WebSecurityNotice } from '../components/WebSecurityNotice';
+import { Capacitor } from '@capacitor/core';
 import SlideInPage from '../components/layout/SlideInPage';
 import { PinGate } from '../components/PinEntry';
 import { LoadingSpinner } from '../components/ui';
@@ -256,14 +256,31 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
             </div>
           )}
 
-          {!isPasskey && mnemonic && <WebSecurityNotice />}
+
+          {!isPasskey && mnemonic && !Capacitor.isNativePlatform() && (
+            <aside className="rounded-xl border border-spark-border bg-spark-dark p-4 space-y-2" aria-label="Browser wallet recovery guidance">
+              <p className="text-sm font-medium text-spark-text-primary">Keep your recovery words private</p>
+              <p className="text-sm text-spark-text-secondary">
+                Anyone who sees these words can control your wallet. Use a secure, offline backup before adding real funds.
+              </p>
+              <details className="text-xs text-spark-text-muted">
+                <summary className="cursor-pointer font-medium text-spark-text-secondary">About browser storage</summary>
+                <p className="mt-2 leading-relaxed">
+                  Browser extensions or a compromised website may be able to expose recovery words stored in a browser.
+                  Avoid untrusted extensions and do not store your phrase in screenshots, cloud notes or messages.
+                </p>
+              </details>
+            </aside>
+          )
 
           {!isRevealed && <section aria-label="Private recovery phrase viewing checklist"
             className="rounded-2xl border border-spark-border bg-spark-dark p-5 space-y-3">
             <h3 className="font-semibold text-spark-text-primary">Before you view recovery words</h3>
             <p className="text-sm text-spark-text-secondary">
-              The phrase is hidden by default. A handwritten backup is optional for passkey wallets but can help with device loss.
-              Never photograph it or send it to anyone.
+              The phrase is hidden by default. {isPasskey
+                ? 'A handwritten copy is optional for passkey wallets, but can provide another recovery path.'
+                : 'For a recovery-word wallet, these are the words that restore access to your funds.'}
+              {' '}Never photograph or share them.
             </p>
             <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
               <input type="checkbox" checked={privateViewing} onChange={e=>setPrivateViewing(e.target.checked)}
@@ -273,7 +290,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
             <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
               <input type="checkbox" checked={paperReady} onChange={e=>setPaperReady(e.target.checked)}
                 className="mt-1 accent-spark-primary"/>
-              <span>I will store a written copy securely and offline, never in a screenshot or message.</span>
+              <span>I understand these words control my wallet, and I will never screenshot, store online or share them.</span>
             </label>
             {!canReveal && <p className="text-xs text-spark-text-muted">Complete both checks to enable viewing.</p>}
           </section>}
