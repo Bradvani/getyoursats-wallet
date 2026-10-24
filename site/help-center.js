@@ -2,6 +2,15 @@
 const $=id=>document.getElementById(id);const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x};
 let l=new URL(location.href).searchParams.get('lang');if(!langs.includes(l)){try{l=localStorage.getItem('gys:help-lang')}catch{l=null}}if(!langs.includes(l))l='en';
 function render(){const d=T[l];document.documentElement.lang=l;const sel=$('gys-language');if(sel)sel.value=l;
+const hero=document.querySelector('.hero h1');const lead=document.querySelector('.hero .lead');
+const isPrivacy=location.pathname.indexOf('/privacy')>=0;
+if(hero)hero.textContent=isPrivacy?d.privacyTitle:d.title;
+if(lead)lead.textContent=isPrivacy?d.privacyLead:d.lead;
+document.querySelectorAll('.navbar .links a').forEach(a=>{
+ if(a.getAttribute('href')?.endsWith('/privacy'))a.textContent=({en:'Privacy',hi:'गोपनीयता',es:'Privacidad',pt:'Privacidade'})[l];
+ if(a.getAttribute('href')?.endsWith('/support'))a.textContent=({en:'Support',hi:'सहायता',es:'Soporte',pt:'Apoio'})[l];
+});
+const langSelect=$('gys-language');if(langSelect)langSelect.setAttribute('aria-label',d.language);
 document.querySelectorAll('[data-help-label]').forEach(n=>{const k=n.getAttribute('data-help-label');if(typeof d[k]==='string')n.textContent=d[k]});
 const lessons=$('gys-lessons');if(lessons){lessons.replaceChildren();lessons.append(el('p','eyebrow','GETYOURSATS / BITCOIN BASICS'),el('h2','gys-heading',d.title),el('p','gys-help-intro',d.lead));
 const chart=el('div','gys-supply');chart.append(el('p',null,d.supply));const btc=el('div','gys-supply-top');btc.append(el('b',null,d.btc),el('span',null,'21,000,000 BTC'));chart.append(btc);
