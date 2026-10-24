@@ -218,16 +218,30 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             </div>
           )}
 
-          {/* Native PIN/Face ID/fingerprint works for manual phrase wallets.
-              This is an app lock, NOT a new PRF wallet / cloud recovery path. */}
+          {/* Web/PWA imports do not have a secure, wallet-bound app lock.
+              Keep the limitation visible, but put implementation details
+              behind a disclosure rather than a frightening warning panel. */}
           {!isAppLockSupported() && !isPasskeyMode() && (
-            <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-2" aria-label="Browser biometric unlock availability">
-              <h3 className="font-display font-semibold text-spark-text-primary">Passkey &amp; biometric unlock</h3>
-              <p className="text-sm text-spark-text-muted leading-relaxed">
-                This manually backed-up wallet uses its existing recovery words. Generating an unrelated key-derived passkey could create a different wallet,
-                so browser passkey unlock is not offered until secure same-wallet key wrapping is independently verified.
-                Keep your handwritten backup safe; never replace your existing wallet to enable biometrics.
-              </p>
+            <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-3" aria-label="Wallet security availability">
+              <div className="flex items-start gap-3">
+                <LockIcon size="md" />
+                <div className="min-w-0">
+                  <h3 className="font-display font-semibold text-spark-text-primary">Wallet protection</h3>
+                  <p className="text-sm text-spark-text-muted leading-relaxed mt-1">
+                    Wallet PIN and biometric approval are not available for imported recovery-word wallets in the browser yet.
+                    Keep your recovery words offline and secure your device.
+                  </p>
+                </div>
+              </div>
+              <details className="border-t border-spark-border pt-3">
+                <summary className="cursor-pointer text-xs font-medium text-spark-text-secondary hover:text-spark-text-primary">
+                  Why is this unavailable?
+                </summary>
+                <p className="mt-2 text-xs text-spark-text-muted leading-relaxed">
+                  A new passkey must not generate a different wallet or silently replace your existing recovery words.
+                  Secure same-wallet protection needs independent verification before it can be offered.
+                </p>
+              </details>
             </section>
           )}
 
