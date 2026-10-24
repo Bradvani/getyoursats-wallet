@@ -6,7 +6,7 @@ const validFiat=(code:string)=>/^[A-Z]{3}$/.test(code)&&code!=='BTC';
 export const isFiatDenomination=(unit:Denomination)=>unit!=='sats'&&unit!=='BTC'&&validFiat(unit);
 export const satoshiSymbol='丰';
 export function currencyDecimals(code:string):number{
- try{return new Intl.NumberFormat('en',{style:'currency',currency:code}).resolvedOptions().maximumFractionDigits}
+ try{return new Intl.NumberFormat('en',{style:'currency',currency:code}).resolvedOptions().maximumFractionDigits??2}
  catch{return 2}
 }
 export function getDenomination():Denomination{

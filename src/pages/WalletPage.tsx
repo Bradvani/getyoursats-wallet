@@ -43,7 +43,7 @@ interface WalletPageProps {
   hasRejectedDeposits: boolean;
   onOpenGetRefund: (source?: 'menu' | 'icon') => void;
   onOpenSettings: () => void;
-  onOpenFiatCurrencies: () => void;
+  onOpenFiatCurrencies?: () => void;
   onOpenBackup: () => void;
   onOpenDca: () => void;
   onOpenUnilateralExit: () => void;
