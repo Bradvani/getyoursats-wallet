@@ -1,0 +1,21 @@
+/* GetYourSats motion system. Brand orange is #F7931A, without gold gradients. */
+:root { --spark-primary:#F7931A; --spark-primary-light:#F7931A; --glow-primary:rgba(247,147,26,.23); --spark-warning:#F7931A; }
+.gys-cinematic-intro {position:fixed;inset:0;z-index:80;pointer-events:none;display:grid;place-items:center;background:#0b0b0b;color:#fff;animation:gys-intro-exit .42s 1.93s ease-in forwards;overflow:hidden}
+.gys-cinematic-intro__lockup{position:relative;text-align:center;transform:skew(-5deg);line-height:.88}
+.gys-cinematic-intro__top{font-weight:900;font-size:clamp(36px,8vw,72px);letter-spacing:-.07em;white-space:nowrap}
+.gys-cinematic-intro__typed{display:inline-block;overflow:hidden;white-space:nowrap;width:0;animation:gys-type .9s steps(7,end) .1s forwards}
+.gys-cinematic-intro__coin{display:inline-grid;place-items:center;background:#F7931A;border-radius:50%;width:.91em;height:.91em;color:white;font-size:.86em;letter-spacing:0;vertical-align:.03em;animation:gys-coin .42s 1.1s both}
+.gys-cinematic-intro__bottom{font-weight:1000;font-size:clamp(90px,23vw,200px);letter-spacing:-.105em;font-style:italic;transform:scale(1.65) translateY(35px);opacity:0;animation:gys-sats-hit .48s 1.07s cubic-bezier(.15,.9,.25,1.2) forwards}
+.gys-cinematic-intro__stroke{height:9px;width:55%;margin:15px auto;background:#F7931A;border-radius:100%;transform:scaleX(0) skew(-20deg);animation:gys-stroke .34s 1.47s ease-out forwards}
+.gys-cinematic-intro__flash{position:absolute;inset:0;background:white;opacity:0;mix-blend-mode:screen;animation:gys-lightning .35s 1.07s steps(1,end) both}
+@keyframes gys-type{to{width:100%}}@keyframes gys-coin{from{filter:brightness(5);transform:scale(1.8)}to{filter:none;transform:scale(1)}}
+@keyframes gys-sats-hit{to{transform:scale(1) translateY(0);opacity:1}}@keyframes gys-stroke{to{transform:scaleX(1) skew(-20deg)}}
+@keyframes gys-lightning{0%,25%,45%,100%{opacity:0}12%,34%{opacity:.8}}
+@keyframes gys-intro-exit{to{opacity:0;visibility:hidden}}
+.gys-payment-motion{position:relative;isolation:isolate}
+.gys-payment-motion:before{content:'';position:absolute;inset:-35%;border:1px solid #F7931A;border-radius:50%;opacity:0;pointer-events:none;animation:gys-payment-ring 1.1s .15s ease-out forwards}
+.gys-payment-motion--sent:before{border-style:dashed}
+.gys-payment-motion__bolt{color:#F7931A;font-size:52px;font-weight:900;filter:drop-shadow(0 0 24px rgba(247,147,26,.5));animation:gys-bolt .7s ease-out both}
+@keyframes gys-payment-ring{0%{transform:scale(.4);opacity:.8}100%{transform:scale(1.45);opacity:0}}
+@keyframes gys-bolt{from{opacity:0;transform:translateY(20px) scale(.7)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.gys-cinematic-intro{display:none}.gys-payment-motion:before,.gys-payment-motion__bolt{animation:none}}
