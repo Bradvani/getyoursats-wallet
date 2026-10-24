@@ -1,3 +1,5 @@
+import { usePresentation } from '@/hooks/usePresentation';
+import { APP_LANGUAGES, setAppLanguage, setAppearancePreference, type AppearancePreference } from '@/services/presentationPreferences';
 import React, { useEffect, useRef, useState } from 'react';
 import {featureAvailability} from '../getyoursats/featureAvailability';
 import { ConfirmDialog, FormGroup, FormInput, LoadingSpinner, PrimaryButton, Switch } from '../components/ui';
@@ -15,7 +17,6 @@ import { shareOrDownloadLogs, exportDatabaseState } from '@/services/logExport';
 import { useSecretTap } from '@/hooks/useSecretTap';
 import { isPasskeyMode } from '@/services/passkeyService';
 import { useAppVersion } from '@/hooks/useAppVersion';
-import { PRIVACY_POLICY_URL, SUPPORT_URL } from '@/constants/publicPages';
 
 interface SettingsPageProps {
   onBack: () => void;
@@ -42,6 +43,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 }) => {
   const wallet = useWallet();
   const appVersion = useAppVersion();
+  const { language, appearance, copy } = usePresentation();
   const {
     handleTap: devTap,
     activated: isDevMode,
@@ -185,7 +187,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   // header's close button is the way out.
   if (exportGate === 'pin') {
     return (
-      <SlideInPage title="Settings" onClose={() => setExportGate(null)} slideFrom="left">
+      <SlideInPage title={copy.settings} onClose={() => setExportGate(null)} slideFrom="left">
         <PinGate reason="Export database" onUnlocked={() => { void runExportDb(); }} />
       </SlideInPage>
     );
@@ -278,7 +280,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 
           {/* Display */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-            <h3 className="font-display font-semibold text-spark-text-primary mb-3">Display</h3>
+            <h3 className="font-display font-semibold text-spark-text-primary mb-3">{copy.display}</h3>
             <div className="space-y-2">
               <button
                 className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors"
@@ -287,10 +289,48 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <CurrencyIcon size="md" />
-                  <span>Fiat Currencies</span>
+                  <span>{copy.currency}</span>
                 </div>
                 <ChevronRightIcon size="md" />
               </button>
+              <div className="pt-4 border-t border-spark-border mt-3">
+                <h4 className="text-sm font-semibold text-spark-text-primary mb-2">{copy.appearance}</h4>
+                <div className="grid grid-cols-3 gap-2" role="group" aria-label={copy.appearance}>
+                  {(['dark','orange','system'] as const satisfies ReadonlyArray<AppearancePreference>).map(value => (
+                    <button key={value} type="button" aria-pressed={appearance===value}
+                      data-testid={`settings-appearance-${value}`} onClick={() => setAppearancePreference(value)}
+                      className="gys-settings-choice">
+                      <strong>{copy[value]}</strong>
+                      <small>{value==='dark'?'●':value==='orange'?'◐':'◉'} {appearance===value ? '✓' : ''}</small>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-spark-text-muted leading-relaxed">
+                  {language==='hi'?'ऑरेंज एक हल्का, गर्म रंग है। सिस्टम आपके डिवाइस की सेटिंग का पालन करता है।':
+                   language==='es'?'Naranja ofrece una apariencia clara y cálida. Sistema sigue el aspecto del dispositivo.':
+                   language==='pt'?'Laranja usa tons claros e quentes. Sistema segue as definições do dispositivo.':
+                   'Orange is a warm, light experience. System follows your device appearance.'}
+                </p>
+              </div>
+              <div className="pt-4 border-t border-spark-border mt-3">
+                <h4 className="text-sm font-semibold text-spark-text-primary mb-2">{copy.language}</h4>
+                <div className="gys-settings-lang" role="group" aria-label={copy.language}>
+                  {APP_LANGUAGES.map(item => (
+                    <button key={item.code} type="button" lang={item.code} aria-pressed={language===item.code}
+                      data-testid={`settings-language-${item.code}`} onClick={() => setAppLanguage(item.code)}
+                      className="gys-settings-choice">
+                      <strong>{item.name} {language===item.code?'✓':''}</strong>
+                      <small>{item.subtitle}</small>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-spark-text-muted leading-relaxed">
+                  {language==='hi'?'नेविगेशन और मार्गदर्शिका अनुवाद उपलब्ध हैं। महत्वपूर्ण भुगतान और रिकवरी निर्देश अभी अंग्रेज़ी में रहते हैं।':
+                   language==='es'?'Menús y guías traducidos. Algunas instrucciones de pagos y recuperación siguen en inglés.':
+                   language==='pt'?'Menus e guias traduzidos. Algumas instruções de pagamentos e recuperação continuam em inglês.':
+                   'Navigation and guides are localized. Some sensitive payment and recovery instructions remain in English pending review.'}
+                </p>
+              </div>
               {import.meta.env.VITE_GETYOURSATS_ENABLE_LEGACY_BUY === 'true' && hasBuyProviderSettings() && (
                 <button
                   className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors"
@@ -499,20 +539,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             </p>
           </div>
           )}
-
-          {/* Public privacy and support pages are accessible without a wallet session. */}
-          <section className="bg-spark-dark border border-spark-border rounded-2xl p-4" aria-label="Help and information">
-            <h3 className="font-display font-semibold text-spark-text-primary mb-1">Help &amp; information</h3>
-            <p className="text-xs text-spark-text-muted mb-3">Clear answers and a direct way to reach us.</p>
-            <div className="space-y-2">
-              <button type="button" onClick={() => { void openExternalUrl(PRIVACY_POLICY_URL); }} className="flex items-center justify-between w-full rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-primary/50 transition-colors" data-testid="settings-privacy-link">
-                <span className="flex items-center gap-3"><ShieldCheckIcon size="md" />Privacy Policy</span><ExternalLinkIcon size="sm" />
-              </button>
-              <button type="button" onClick={() => { void openExternalUrl(SUPPORT_URL); }} className="flex items-center justify-between w-full rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-primary/50 transition-colors" data-testid="settings-support-link">
-                <span className="flex items-center gap-3"><ExternalLinkIcon size="md" />Support &amp; help</span><ExternalLinkIcon size="sm" />
-              </button>
-            </div>
-          </section>
 
           {/* Account deletion (App Store 5.1.1(v)): opens the guide
               explaining how to delete the account (logout wipes the
