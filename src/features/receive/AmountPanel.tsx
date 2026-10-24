@@ -14,6 +14,7 @@ import {
 import { LightningBoltIcon } from '../../components/Icons';
 import { formatTokenInput } from '../../utils/tokenFormatting';
 import {receiveAmountPresets} from './receiveAmountPresets';
+import {formatWithSpaces} from '../../utils/formatNumber';
 import CurrencySwitcher from '../../components/ui/CurrencySwitcher';
 import { useAmountInput, useFiatOverride } from '../../hooks/useAmountInput';
 import { getDisplayFiatCurrency } from '../../services/settings';
@@ -242,7 +243,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
             )}
             <div id="receive-amount-equivalent" className="min-h-5 text-xs text-spark-text-muted" aria-live="polite">
               {unitUnavailable ? `Live ${denomination}/BTC price unavailable. Select sats or BTC.`
-                : customUnit && amountEquivalent ? `≈ ${Number(amountEquivalent).toLocaleString('en-US')} sats · indicative conversion`
+                : customUnit && amountEquivalent ? `≈ ${formatWithSpaces(Number(amountEquivalent))} sats · indicative conversion`
                 : denomination==='sats'&&!isTokenMode ? 'Enter an exact amount in satoshis'
                 : 'The exact satoshi amount will appear after conversion'}
             </div>
