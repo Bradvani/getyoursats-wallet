@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Payment } from '@breeztech/breez-sdk-spark';
 import { useStableBalance } from '../contexts/StableBalanceContext';
@@ -21,25 +21,52 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
   const { fiatCurrencies } = useFiatData();
   const [isVisible, setIsVisible] = useState(false);
 
+  // The SDK owns settlement. This timer only closes the presentation.
+  // Hold it while a PWA tab is hidden so a backgrounded receive isn't
+  // silently consumed before the user returns to their wallet.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => {
-    // Trigger entrance animation
-    const frame = requestAnimationFrame(() => setIsVisible(true));
-    void hapticLight();
+    let revealFrame: number | undefined;
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
+    let exitTimer: ReturnType<typeof setTimeout> | undefined;
+    let hapticPlayed = false;
 
-    let exitTimer: ReturnType<typeof setTimeout>;
-
-    // Auto close after animation
-    const closeTimer = setTimeout(() => {
-      setIsVisible(false);
-      exitTimer = setTimeout(onClose, 500);
-    }, 4000);
-
-    return () => {
-      cancelAnimationFrame(frame);
+    const clearPresentationTimers = () => {
+      if (revealFrame !== undefined) cancelAnimationFrame(revealFrame);
       clearTimeout(closeTimer);
       clearTimeout(exitTimer);
     };
-  }, [onClose]);
+    const showWhenVisible = () => {
+      clearPresentationTimers();
+      if (document.visibilityState === 'hidden') return;
+      setIsVisible(false);
+      revealFrame = requestAnimationFrame(() => {
+        setIsVisible(true);
+        if (!hapticPlayed) {
+          hapticPlayed = true;
+          void hapticLight();
+        }
+      });
+      closeTimer = setTimeout(() => {
+        setIsVisible(false);
+        exitTimer = setTimeout(() => onCloseRef.current(), 350);
+      }, 5200);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        clearPresentationTimers();
+      } else {
+        showWhenVisible();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    showWhenVisible();
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      clearPresentationTimers();
+    };
+  }, [payment.id]);
 
   // Determine display: token amount or sats
   // Always show token denomination for token payments, even if stable balance is off
@@ -52,29 +79,34 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-100 flex items-center justify-center transition-all duration-500 ${
+      data-testid={isSent ? 'payment-sent-moment' : 'payment-received-moment'}
+      className={`gys-moment fixed inset-0 z-100 flex items-center justify-center transition-all duration-500 motion-reduce:transition-none ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
-      role="status" aria-live="polite"
+      role="status" aria-live="polite" aria-atomic="true"
     >
       {/* Backdrop with blur */}
-      <div className="absolute inset-0 bg-spark-void/90 backdrop-blur-md" />
+      <div className="absolute inset-0 bg-spark-void/95 backdrop-blur-sm" />
 
       {/* Main content */}
       <div
-        className={`relative z-10 flex flex-col items-center transform transition-all duration-700 ${
+        className={`relative z-10 flex flex-col items-center transform transition-all duration-500 motion-reduce:transition-none motion-reduce:transform-none ${
           isVisible ? 'scale-100 translate-y-0' : 'scale-50 translate-y-20'
         }`}
       >
         <PaymentMotion state={isSent ? 'sent' : 'received'} />
 
         {/* Title */}
-        <h2 className="text-2xl font-display font-bold text-spark-text-primary mb-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+        <h2 className="gys-moment__title text-2xl font-display font-bold text-spark-text-primary mb-2">
           {isSent ? 'Payment Sent' : 'Payment Received'}
         </h2>
 
-        {/* Amount with brand glow */}
-        <div className="relative animate-fade-in-up text-center" style={{ animationDelay: '0.4s' }}>
+        <p className="text-sm text-spark-text-secondary mb-5">
+          {isSent ? 'Confirmed by your wallet' : 'Sats confirmed in your wallet'}
+        </p>
+
+        {/* Exact SDK amount, displayed with a visual arrival rather than a misleading simulated count. */}
+        <div data-testid="payment-moment-amount" className="gys-moment__amount relative text-center">
           <div className="absolute inset-0 blur-2xl rounded-full" style={{ background: 'rgba(247,147,26,0.25)' }} />
           {displayText ? (
             <span className="relative text-5xl font-display font-bold text-spark-primary">
