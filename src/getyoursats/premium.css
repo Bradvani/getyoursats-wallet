@@ -207,3 +207,14 @@ html.ios-standalone-bottom-gap .gys-wallet-balance-surface__toolbar{z-index:30}
 
 /* On the narrowest screens, prefer a readable page title and back arrow over a crowded secondary wordmark. */
 @media(max-width:360px){.gys-page-header__brand--back{display:none}}
+
+/* An unfinished product is visible but never actionable. Keep the label clear
+   rather than showing a functional Buy/DCA/email control that goes nowhere. */
+.gys-feature-soon{display:inline-block;white-space:nowrap;font-size:10px;
+  line-height:1.2;font-style:normal;font-weight:730;letter-spacing:.01em;
+  color:#C9A780;background:#302318;border:1px solid #5B3E25;
+  border-radius:999px;padding:5px 8px}
+.gys-home-quick-actions__button:disabled{cursor:default;opacity:.72;
+  border-color:#33312e;transform:none}
+.gys-home-quick-actions__button:disabled:hover{background:#151413;
+  border-color:#33312e}
