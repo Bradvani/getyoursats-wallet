@@ -48,3 +48,73 @@
 @media(max-width:700px){.gys-contact-grid{grid-template-columns:1fr;gap:0}.gys-lesson summary{gap:12px;min-height:68px}.gys-lesson summary strong{font-size:14px}.gys-lesson>p{padding-left:0}.gys-language{max-width:115px}.navbar .links>a:not(.wallet){display:none}}
 @media(prefers-reduced-motion:reduce){.gys-lesson,.gys-track i{transition:none}}
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* The supply comparison illustrates two different rulebooks, not price predictions. */
+.gys-rule-simulator{margin:34px 0 50px;padding:26px clamp(16px,3vw,28px);
+ border:1px solid #393229;border-radius:27px;background:linear-gradient(160deg,#181715,#101010)}
+.gys-rule-heading{font-size:clamp(24px,3.6vw,34px)!important;line-height:1.15;
+ letter-spacing:-.045em;margin:3px 0 10px!important;color:#FAF9F6}
+.gys-rule-intro{max-width:690px;font-size:14px!important;color:#BEB8AF!important;
+ line-height:1.75;margin-bottom:23px!important}
+.gys-rule-cards{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.gys-rule-card{min-width:0;padding:22px clamp(14px,2.5vw,25px);border-radius:22px;
+ border:1px solid #37322B;background:#1F1C18;display:flex;flex-direction:column;gap:11px}
+.gys-rule-card--fiat{background:#24211C;border-color:#4B3C2D}
+.gys-rule-kicker{font-size:10px!important;letter-spacing:.16em;text-transform:uppercase;
+ font-weight:790;color:#F7931A!important;margin:0!important;line-height:1.5!important}
+.gys-rule-visual{position:relative;width:186px;height:184px;max-width:100%;margin:0 auto;
+ display:grid;place-items:center}
+.gys-rule-visual svg{width:168px;height:168px;max-width:100%}
+.gys-rule-fill{transform-origin:center;transform:rotate(-90deg);
+ stroke-linecap:round;transition:stroke-dasharray .35s ease}
+.gys-rule-ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+ flex-direction:column;pointer-events:none}
+.gys-rule-ring-label strong{font-size:46px;letter-spacing:-.08em;color:#FAF9F6;font-weight:830;line-height:1}
+.gys-rule-ring-label span{font-size:11px;letter-spacing:.24em;color:#F7931A;font-weight:750;margin-top:5px}
+.gys-rule-description{font-size:12px!important;color:#D4C8B8!important;line-height:1.6!important;
+ text-align:center;margin:0!important}
+.gys-rule-reading{color:#FAF9F6!important;font-size:13px!important;font-weight:710;
+ margin:7px 0 0!important;text-align:center}
+.gys-rule-meta{color:#ADA399!important;font-size:11px!important;text-align:center;
+ margin:0 0 8px!important}
+.gys-era-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:6px;margin-top:auto;padding-top:12px}
+.gys-era-button{border:1px solid #554838;border-radius:11px;
+ font:750 11px/1.4 system-ui;color:#D7CEC2;background:#322D26;
+ min-height:37px;cursor:pointer;transition:background .15s,border-color .15s}
+.gys-era-button:hover{border-color:#F7931A}
+.gys-era-button[aria-pressed=true]{background:#F7931A;color:#140F09;border-color:#F7931A;
+ box-shadow:0 3px 12px #F7931A20}
+.gys-fiat-visual{display:flex;align-items:center;justify-content:center;min-height:184px;
+ border:1px solid #443A30;border-radius:19px;
+ background:radial-gradient(ellipse at 50% 50%,#342A21,#181613 90%);padding:14px}
+.gys-fiat-money{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;width:100%;max-width:260px}
+.gys-fiat-unit{height:24px;border-radius:5px;background:#665A49;color:#D9CEBF;
+ font:850 12px/24px system-ui;text-align:center;display:block}
+.gys-fiat-unit--issued{background:#F7931A;color:#211509;animation:gys-money-appear .22s ease-out both}
+.gys-fiat-amount{text-align:center;color:#F4E9DB!important;font-size:13px!important;
+ line-height:1.75!important;margin:3px 0!important;min-height:45px}
+.gys-fiat-controls{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}
+.gys-fiat-controls button{font:750 12px/1.3 system-ui;min-height:45px;border-radius:12px;
+ padding:10px 14px;cursor:pointer}
+.gys-fiat-issue{flex:1;background:#F7931A;border:1px solid #F7931A;color:#1A1108}
+.gys-fiat-reset{background:#28231D;border:1px solid #74624B;color:#F5E7D4}
+.gys-fiat-controls button:disabled{cursor:not-allowed;opacity:.54}
+.gys-fiat-controls button:not(:disabled):hover{filter:brightness(1.06)}
+.gys-era-button:focus-visible,.gys-fiat-controls button:focus-visible{outline:2px solid #F7931A;outline-offset:3px}
+.gys-rule-takeaway{color:#FFC175!important;font-size:13px!important;
+ font-weight:760;margin:21px 0 8px!important}
+.gys-rule-disclaimer{color:#ABA39A!important;font-size:11px!important;
+ line-height:1.7;margin:0!important}
+@keyframes gys-money-appear{from{opacity:.3;transform:scale(.82)}to{opacity:1;transform:scale(1)}}
+@media(max-width:650px){
+ .gys-rule-cards{grid-template-columns:1fr}
+ .gys-rule-card{padding:20px}
+ .gys-rule-visual{height:163px}
+ .gys-rule-visual svg{width:150px;height:150px}
+ .gys-fiat-visual{min-height:145px}
+ .gys-era-buttons{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){
+ .gys-rule-fill,.gys-fiat-unit--issued{animation:none;transition:none}
+}
