@@ -16,21 +16,21 @@ import ProcessingStep from '../../src/features/send/steps/ProcessingStep';
 import ResultStep from '../../src/features/send/steps/ResultStep';
 import PaymentCelebration from '../../src/components/PaymentCelebration';
 
-const info = { balanceSats: 125000, tokenBalances: new Map() } as unknown as GetInfoResponse;
+const info: GetInfoResponse = { identityPubkey: 'fixture-identity', balanceSats: 125000, recoverableFundsSats: 0, tokenBalances: new Map() };
 const received = { id: 'fixture-receive', paymentType: 'receive', status: 'completed', amount: 5000n, fees: 0n, timestamp: Math.floor(Date.now()/1000), method: 'lightning' } as Payment;
 const sdk = new Proxy({
  getInfo: async () => info,
  listContacts: async () => [],
  addEventListener: async () => 'fixture-listener',
- removeEventListener: async () => undefined,
- getLightningAddress: async () => ({ lightningAddress: 'preview@example.invalid', lnurl: 'lnurl1demonstrationonly' }),
- listFiatCurrencies: async () => ({ currencies: [{ id: 'USD', name: 'US Dollar', info: {name:'US Dollar',fractionSize:2,spacing:0,symbol:{grapheme:'$',template:'$1',rtl:false,position:1}} }] }),
+ removeEventListener: async () => true,
+ getLightningAddress: async () => ({ description: 'UI preview', username: 'preview', lightningAddress: 'preview@example.invalid', lnurl: { bech32: 'lnurl1demonstrationonly', url: 'https://example.invalid/lnurl' } }),
+ listFiatCurrencies: async () => ({ currencies: [{ id: 'USD', name: 'US Dollar', info: {name:'US Dollar',localizedName:[],localeOverrides:[],fractionSize:2,spacing:0,symbol:{grapheme:'$',template:'$1',rtl:false,position:1}} }] }),
  listFiatRates: async () => ({ rates: [{ coin:'USD', value:90000 }] }),
- getUserSettings: async () => ({}),
- getTokensMetadata: async () => [],
- receivePayment: async () => ({ paymentRequest: 'bc1qdemonstrationonly', fee: 0 }),
+ getUserSettings: async () => ({ sparkPrivateModeEnabled: false }),
+ getTokensMetadata: async () => ({tokensMetadata: []}),
+ receivePayment: async () => ({ paymentRequest: 'bc1qdemonstrationonly', fee: 0n }),
  listPayments: async () => ({ payments: [received] }),
-}, { get(target, key) { return target[key as keyof typeof target] ?? (async () => ({})); } }) as unknown as BreezSdk;
+} satisfies Partial<BreezSdk>, { get(target, key) { return target[key as keyof typeof target] ?? (async () => ({})); } }) as unknown as BreezSdk;
 function Fixture() {
  const [screen,setScreen]=useState(new URLSearchParams(location.search).get('screen') || 'wallet');
  const close=()=>setScreen('wallet');
