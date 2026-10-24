@@ -47,8 +47,8 @@ class AppErrorBoundary extends React.Component<Props, State> {
             Something went wrong
           </h1>
           <p className="text-sm text-spark-text-secondary">
-            Glow hit an unexpected error. Your funds are safe: reloading does not
-            change anything stored on this device.
+            GetYourSats couldn't display this screen. Reloading does not intentionally erase wallet data.
+            If a payment was in progress, check verified wallet activity before retrying.
           </p>
         </div>
         <button
@@ -56,7 +56,7 @@ class AppErrorBoundary extends React.Component<Props, State> {
           onClick={() => window.location.reload()}
           className="px-6 py-3 rounded-xl bg-spark-primary font-display font-semibold text-white"
         >
-          Reload Glow
+          Reload GetYourSats
         </button>
       </div>
     );
