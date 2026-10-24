@@ -2,7 +2,7 @@
 // All SDK methods are local doubles; no wallet or network payment is created.
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { BreezSdk, GetInfoResponse, Payment } from '@breeztech/breez-sdk-spark';
+import type { BreezSdk, GetInfoResponse, Payment, SdkEvent } from '@breeztech/breez-sdk-spark';
 import '../../src/index.css';
 import '../../src/getyoursats/premium.css';
 import { WalletProvider, WalletInfoProvider } from '../../src/contexts/WalletContext';
@@ -18,6 +18,28 @@ import PaymentCelebration from '../../src/components/PaymentCelebration';
 
 const info: GetInfoResponse = { identityPubkey: 'fixture-identity', balanceSats: 125000, recoverableFundsSats: 0, tokenBalances: new Map() };
 const received = { id: 'fixture-receive', paymentType: 'receive', status: 'completed', amount: 5000n, fees: 0n, timestamp: Math.floor(Date.now()/1000), method: 'lightning' } as Payment;
+
+// Explicit, dev-only settlement trigger. A Charge creates a REAL-looking
+// fixture invoice but never simulates paid until the test requests it.
+const merchantInvoice='lnbc1'+'a'.repeat(90);
+const posReceived = {
+  id:'fixture-pos-settled',paymentType:'receive',status:'completed',
+  amount:1000n,fees:0n,timestamp:Math.floor(Date.now()/1000),method:'lightning',
+  details:{type:'lightning',invoice:merchantInvoice}
+} as unknown as Payment;
+let merchantPaid=false;
+const mockEventSubscribers=new Set<(event:SdkEvent)=>void>();
+const subscribeToSdkEvents=(listener:(event:SdkEvent)=>void)=>{
+  mockEventSubscribers.add(listener);
+  return ()=>{mockEventSubscribers.delete(listener);};
+};
+(window as Window & {__gysFixtureSettlePos?:()=>void}).__gysFixtureSettlePos=()=>{
+  if(merchantPaid)return;
+  merchantPaid=true;
+  for(const listener of mockEventSubscribers){
+    listener({type:'paymentSucceeded',payment:posReceived} as SdkEvent);
+  }
+};
 const sdk = new Proxy({
  getInfo: async () => info,
  listContacts: async () => [],
@@ -28,13 +50,13 @@ const sdk = new Proxy({
  listFiatRates: async () => ({ rates: [{ coin:'USD', value:90000 }] }),
  getUserSettings: async () => ({ sparkPrivateModeEnabled: false }),
  getTokensMetadata: async () => ({tokensMetadata: []}),
- receivePayment: async () => ({ paymentRequest: 'lnbc1'+'a'.repeat(90), fee: 0n }),
- listPayments: async () => ({ payments: [received] }),
+ receivePayment: async () => ({ paymentRequest: merchantInvoice, fee: 0n }),
+ listPayments: async () => ({ payments: merchantPaid ? [posReceived,received] : [received] }),
 } satisfies Partial<BreezSdk>, { get(target, key) { return target[key as keyof typeof target] ?? (async () => ({})); } }) as unknown as BreezSdk;
 function Fixture() {
  const [screen,setScreen]=useState(new URLSearchParams(location.search).get('screen') || 'wallet');
  const close=()=>setScreen('wallet');
- return <ToastProvider><WalletProvider client={sdk} isConnected><WalletInfoProvider walletInfo={info}><FiatDataProvider><StableBalanceProvider><ContactsProvider>
+ return <ToastProvider><WalletProvider client={sdk} isConnected subscribeToSdkEvents={subscribeToSdkEvents}><WalletInfoProvider walletInfo={info}><FiatDataProvider><StableBalanceProvider><ContactsProvider>
   {screen==='wallet' ? <WalletPage walletInfo={info} transactions={[received]} unclaimedDeposits={[]} refreshWalletData={async()=>true} isSyncing={false} error={null} onClearError={()=>{}} onLogout={close} hasRejectedDeposits={false} onOpenGetRefund={()=>{}} onOpenSettings={()=>setScreen('settings')} onOpenDca={()=>setScreen('dca')} onOpenUnilateralExit={()=>{}} onBuyBitcoin={async()=>{}} />
   : screen==='settings' ? <SettingsPage onBack={close} config={null} onOpenFiatCurrencies={()=>{}} onOpenBuyProviders={()=>{}} onOpenPasskeySettings={()=>{}} onOpenSecurity={()=>{}} onOpenBackup={()=>setScreen('backup')} onOpenEmail={()=>{}} onOpenUnilateralExit={()=>{}} />
   : screen==='dca' ? <h1>Recurring Buys entry reached</h1>
