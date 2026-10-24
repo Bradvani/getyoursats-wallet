@@ -26,7 +26,8 @@ export function useInvoicePaid(
       if (event.type !== 'paymentSucceeded') return;
       const details = event.payment.details;
       if (!details || details.type !== 'lightning') return;
-      if (details.invoice.toLowerCase() === target) {
+      if (event.payment.paymentType === 'receive' && event.payment.status === 'completed' &&
+          typeof details.invoice === 'string' && details.invoice.toLowerCase() === target) {
         onPaidRef.current();
       }
     });
