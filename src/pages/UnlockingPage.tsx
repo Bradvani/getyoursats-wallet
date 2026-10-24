@@ -15,6 +15,7 @@
  */
 
 import React, { useEffect } from 'react';
+import BrandIntro from '../components/BrandIntro';
 import { Capacitor } from '@capacitor/core';
 import { logger, LogCategory } from '../services/logger';
 
@@ -42,11 +43,7 @@ const UnlockingPage: React.FC = () => {
         }}
       >
         <div className="max-w-sm w-full flex flex-col items-center gap-8">
-          <img
-            src="/assets/Glow_Logo.svg"
-            alt="Glow"
-            className="w-36 h-36 object-contain"
-          />
+          <BrandIntro inline />
 
           <div className="flex items-center justify-center gap-3 text-spark-text-secondary text-sm">
             <div className="w-5 h-5 rounded-full border-2 border-spark-primary border-t-transparent animate-spin" />

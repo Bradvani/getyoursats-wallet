@@ -1,0 +1,55 @@
+/* Motion is decorative. No duration drives wallet or transaction state. */
+.gys-brand-reveal{position:fixed;inset:0;z-index:80;pointer-events:none;display:grid;place-items:center;background:#0B0B0B;animation:gys-reveal-exit .32s 1.85s both}
+.gys-brand-reveal__art{position:relative;width:min(76vw,460px);aspect-ratio:1060/620}
+.gys-brand-reveal__art>img,.gys-brand-reveal__lightning{position:absolute;inset:0;width:100%;height:100%}
+.gys-brand-reveal__top{clip-path:inset(0 100% 0 0);animation:gys-type .85s steps(7,end) .08s forwards}
+.gys-brand-reveal__sats{opacity:0;transform-origin:50% 65%;animation:gys-sats .46s .96s cubic-bezier(.16,.9,.2,1.12) forwards}
+.gys-brand-reveal__coin{opacity:0;animation:gys-coin .4s .99s forwards}
+.gys-brand-reveal__lightning{stroke:#F7931A;stroke-width:9;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0;animation:gys-flash .35s .9s both}
+.gys-brand-reveal--inline{position:relative;inset:auto;background:none;animation:none;padding:20px}
+.gys-brand-reveal--inline .gys-brand-reveal__art{width:min(65vw,240px)}
+@keyframes gys-type{to{clip-path:inset(0 0 0 0)}}
+@keyframes gys-sats{from{opacity:0;transform:translateY(25px) scale(1.3)}to{opacity:1;transform:none}}
+@keyframes gys-coin{from{opacity:0;filter:brightness(2)}to{opacity:1;filter:none}}
+@keyframes gys-flash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+@keyframes gys-reveal-exit{to{opacity:0;visibility:hidden}}
+.gys-transfer{position:relative;display:grid;place-items:center;width:130px;height:130px;margin:10px auto 28px;color:#F7931A;isolation:isolate}
+.gys-transfer__core{display:grid;place-items:center;width:88px;height:88px;border-radius:28px;background:rgba(247,147,26,.09);border:1px solid rgba(247,147,26,.24);transform:rotate(-6deg)}
+.gys-transfer__core svg{width:45px;height:45px;transform:rotate(6deg)}
+.gys-transfer__orbit{position:absolute;inset:0;border:1px solid rgba(247,147,26,.18);border-radius:50%}
+.gys-transfer--pending .gys-transfer__orbit{border-top:2px solid #F7931A;animation:gys-orbit 2s linear infinite}
+.gys-transfer__particle{position:absolute;top:0;left:calc(50% - 3px);width:6px;height:6px;border-radius:50%;background:currentColor}
+.gys-transfer--pending .gys-transfer__arrow{animation:gys-send 1.6s ease-in-out infinite}
+.gys-transfer--receiving .gys-transfer__arrow{animation-direction:reverse}
+.gys-transfer--sent .gys-transfer__orbit,.gys-transfer--received .gys-transfer__orbit{animation:gys-confirm .65s ease-out both}
+.gys-transfer__check{stroke-dasharray:40;stroke-dashoffset:40;animation:gys-check .4s .1s ease-out forwards}
+.gys-transfer--received .gys-transfer__core{animation:gys-receive .5s ease-out both}
+.gys-transfer--failed{color:var(--color-spark-error,#ef4444)}
+.gys-transfer--failed .gys-transfer__core{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3)}
+.gys-transfer--failed .gys-transfer__orbit,.gys-transfer--failed .gys-transfer__particle{display:none}
+.gys-transfer--compact{width:40px;height:40px;margin:0;flex:none}
+.gys-transfer--compact .gys-transfer__core{width:28px;height:28px;border-radius:9px}
+.gys-transfer--compact svg{width:20px;height:20px}
+.gys-transfer--compact .gys-transfer__particle{width:4px;height:4px;left:calc(50% - 2px)}
+@keyframes gys-orbit{to{transform:rotate(360deg)}}
+@keyframes gys-send{0%,100%{transform:translate(-2px,2px)}50%{transform:translate(2px,-2px)}}
+@keyframes gys-confirm{from{transform:scale(.65);opacity:1}to{transform:scale(1.15);opacity:.25}}
+@keyframes gys-check{to{stroke-dashoffset:0}}
+@keyframes gys-receive{from{transform:translateY(-18px) rotate(-6deg);opacity:0}to{transform:rotate(-6deg);opacity:1}}
+.gys-payment-stage{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 12px;text-align:center}
+.gys-payment-stage h3{font-size:27px;letter-spacing:-.045em;font-weight:800;margin:10px 0}
+.gys-payment-stage p{max-width:300px;font-size:14px;line-height:1.65;color:var(--color-spark-text-secondary);margin-bottom:20px}
+.gys-overline{text-transform:uppercase;letter-spacing:.16em;font-size:10px;font-weight:750;color:#F7931A}
+.gys-payment-stage__note{max-width:260px;font-size:11px;line-height:1.6;color:var(--color-spark-text-muted)}
+.gys-receive-status{display:flex;align-items:center;gap:14px;max-width:320px;text-align:left}
+.gys-receive-status strong{display:block;font-size:13px}.gys-receive-status small{display:block;font-size:11px;color:var(--color-spark-text-secondary);line-height:1.5;margin-top:3px}
+.gys-payment-done{min-width:150px;padding:14px 25px;border:1px solid rgba(255,255,255,.22);border-radius:16px;color:#FAF9F6}
+.gys-flow-step>div{animation:gys-step .24s ease-out both}
+@keyframes gys-step{from{opacity:.4;transform:translateY(9px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+ .gys-brand-reveal:not(.gys-brand-reveal--inline){display:none}
+ .gys-brand-reveal--inline img{animation:none;clip-path:none;opacity:1}
+ .gys-brand-reveal__lightning{display:none}
+ .gys-transfer *,.gys-flow-step>div{animation:none!important;transition:none!important}
+ .gys-transfer__check{stroke-dashoffset:0}
+}

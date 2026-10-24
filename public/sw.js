@@ -1,10 +1,12 @@
 // GetYourSats Service Worker
-const CACHE_NAME = 'getyoursats-v1';
+const CACHE_NAME = 'getyoursats-brand-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/assets/getyoursats-mark.jpg',
+  '/brand/wordmark-stacked-dark.svg',
+  '/brand/app-icon-192.png',
+  '/brand/app-icon-512.png',
   
   
   

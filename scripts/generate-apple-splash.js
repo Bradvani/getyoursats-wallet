@@ -13,9 +13,9 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SOURCE_LOGO = join(rootDir, 'public/assets/Glow_Logo.svg');
+const SOURCE_LOGO = join(rootDir, 'public/brand/wordmark-stacked-dark.svg');
 const OUTPUT_DIR = join(rootDir, 'public/apple-splash');
-const CANVAS = { r: 15, g: 15, b: 24, alpha: 1 }; // #0f0f18, matches #splash
+const CANVAS = { r: 11, g: 11, b: 11, alpha: 1 }; // #0f0f18, matches #splash
 const MARK_BOX_PT = 144;
 
 // Device point sizes and DPRs, one per apple-touch-startup-image link.

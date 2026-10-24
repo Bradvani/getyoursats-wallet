@@ -490,7 +490,7 @@ export const StepContainer: React.FC<{
   children: ReactNode;
   className?: string;
 }> = ({ children, className = "" }) => (
-  <div className={`relative ${className}`} style={{ minHeight: '280px' }}>
+  <div className={`gys-flow-step relative ${className}`} style={{ minHeight: '280px' }}>
     {children}
   </div>
 );

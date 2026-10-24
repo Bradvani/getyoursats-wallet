@@ -1,3 +1,4 @@
+import BrandIntro from '../components/BrandIntro';
 import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
 import {useId} from 'react';
 import {ChevronRightIcon} from '../components/Icons';
@@ -21,6 +22,7 @@ export default function HomePage({
 
   return (
     <main className="gys-welcome">
+      <BrandIntro />
       <div className="gys-welcome__atmosphere" aria-hidden="true"/>
       <header className="gys-welcome__header">
         <div className="gys-welcome__brand"><GetYourSatsWordmark landing /></div>
@@ -53,15 +55,7 @@ export default function HomePage({
           </div>
         </div>
         <div className="gys-welcome__visual" aria-hidden="true">
-          <div className="gys-welcome__halo">
-            <div className="gys-welcome__halo-outer"/>
-            <div className="gys-welcome__halo-inner"/>
-            <div className="gys-welcome__coin">
-              <img src="/assets/getyoursats-mark.jpg" width={240} height={240} alt=""/>
-            </div>
-            <span className="gys-welcome__orbit-dot gys-welcome__orbit-dot--one"/>
-            <span className="gys-welcome__orbit-dot gys-welcome__orbit-dot--two"/>
-          </div>
+          <img className="gys-welcome__hero-mark" src="/brand/wordmark-3d-transparent.png" width={720} height={540} alt="" />
           <div className="gys-welcome__visual-caption">
             <span className="gys-welcome__caption-line"/>
             <span>Ownership in motion</span>

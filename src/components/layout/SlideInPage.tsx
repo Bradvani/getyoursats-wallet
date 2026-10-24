@@ -95,7 +95,7 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
           leave="transform transition ease-m3-emphasized-accelerate duration-200"
           leaveFrom={to}
           leaveTo={from}
-          className="absolute inset-0 flex flex-col bg-spark-surface"
+          className="gys-page-surface absolute inset-0 flex flex-col bg-spark-surface"
         >
           {/* Header with safe area top padding */}
           <header

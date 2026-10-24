@@ -1,7 +1,6 @@
-import React, { useEffect, useState, type ReactNode } from 'react';
+import React, { useEffect, type ReactNode } from 'react';
 import { PrimaryButton } from '../../../components/ui';
-import { CloseIcon } from '../../../components/Icons';
-import GlowLogo from '../../../components/GlowLogo';
+import PaymentMotion from '../../../components/PaymentMotion';
 import { hapticLight } from '@/utils/haptics';
 
 export interface ResultStepProps {
@@ -18,13 +17,11 @@ export interface ResultStepProps {
 
 const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operationType = 'payment', description, children }) => {
   const isSuccess = result === 'success';
-  const [starsAnimating, setStarsAnimating] = useState(false);
 
   useEffect(() => {
     if (isSuccess) {
       void hapticLight();
-      const timer = setTimeout(() => setStarsAnimating(true), 300);
-      return () => clearTimeout(timer);
+
     }
   }, [isSuccess]);
 
@@ -56,16 +53,8 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
   if (!isSuccess) {
     // Payment failure: circular error icon with glow
     return (
-      <div className="flex flex-col items-center justify-center py-4" data-testid="payment-failure">
-        <div className="relative mb-6">
-          {/* Error glow */}
-          <div className="absolute inset-0 w-20 h-20 rounded-full blur-xl bg-spark-primary/30" />
-
-          {/* Error icon */}
-          <div className="relative w-20 h-20 rounded-full flex items-center justify-center bg-spark-primary/20 border-2 border-spark-primary">
-            <CloseIcon className="w-10 h-10 text-spark-primary" />
-          </div>
-        </div>
+      <div className="gys-payment-stage" data-testid="payment-failure">
+        <PaymentMotion state="failed" />
 
         <h3 className="font-display text-2xl font-bold mb-2 text-spark-primary">
           {getTitle()}
@@ -84,21 +73,8 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
 
   // Success: show icon, title, description, and done button
   return (
-    <div className="flex flex-col items-center justify-center py-4" data-testid={isSuccess ? 'payment-success' : 'payment-failure'}>
-      {/* Result icon */}
-      <div className="relative mb-6">
-        {/* Glow effect */}
-        <div className="absolute -inset-3 rounded-full blur-xl" style={{ background: 'rgba(212,165,116,0.20)' }} />
-
-        {/* Logo */}
-        <div className="relative w-20 h-20 flex items-center justify-center">
-          <GlowLogo
-            sizePx={64}
-            starsAnimating={starsAnimating}
-            imgClassName="drop-shadow-[0_0_20px_rgba(212,165,116,0.5)]"
-          />
-        </div>
-      </div>
+    <div className="gys-payment-stage" data-testid={isSuccess ? 'payment-success' : 'payment-failure'}>
+      <PaymentMotion state="sent" />
 
       {/* Title */}
       <h3 className="font-display text-2xl font-bold mb-2 text-spark-primary">

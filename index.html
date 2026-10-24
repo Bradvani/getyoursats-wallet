@@ -28,9 +28,9 @@
        the same value the native app pins its system bars to (main.tsx),
        so PWA system bars blend with the header / bottom-bar glass. The
        media-qualified pair pins the same color in both system themes. -->
-  <meta name="theme-color" content="#050505 />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#050505 />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#050505 />
+  <meta name="theme-color" content="#0B0B0B" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0B0B0B" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0B0B" />
   <meta name="msapplication-TileColor" content="#0a0a0f" />
   <meta name="msapplication-tap-highlight" content="no" />
   
@@ -42,21 +42,21 @@
   <meta property="og:url" content="/" />
   <meta property="og:title" content="GetYourSats · Bitcoin wallet" />
   <meta property="og:description" content="GetYourSats is a Bitcoin wallet with Lightning payments." />
-  <meta property="og:image" content="/assets/getyoursats-mark.jpg" />
-  <meta property="og:image:width" content="500" />
-  <meta property="og:image:height" content="500" />
+  <meta property="og:image" content="/brand/app-icon-1024.png" />
+  <meta property="og:image:width" content="1024" />
+  <meta property="og:image:height" content="1024" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="GetYourSats · Bitcoin wallet" />
   <meta name="twitter:description" content="GetYourSats is a Bitcoin wallet with Lightning payments." />
-  <meta name="twitter:image" content="/assets/getyoursats-mark.jpg" />
+  <meta name="twitter:image" content="/brand/app-icon-1024.png" />
   
   <!-- Icons -->
-  <link rel="icon" type="image/svg+xml" href="/assets/getyoursats-mark.jpg" />
-  <link rel="icon" type="image/png" href="/assets/getyoursats-mark.jpg" />
-  <link rel="apple-touch-icon" href="/assets/getyoursats-mark.jpg" />
-  <link rel="mask-icon" href="/assets/getyoursats-mark.jpg" color="#0a0a0f" />
+  <link rel="icon" type="image/svg+xml" href="/brand/monogram.svg" />
+  <link rel="icon" type="image/png" href="/brand/app-icon-180.png" />
+  <link rel="apple-touch-icon" href="/brand/app-icon-180.png" />
+  <link rel="mask-icon" href="/brand/monogram.svg" color="#0a0a0f" />
   <!-- iOS standalone launch images. Without these iOS shows a blank
        scheme-colored frame (a black flash on this app) before first
        paint; background_color in the manifest is ignored. Canvas is
@@ -84,7 +84,7 @@
     /* Prevent pull-to-refresh on iOS */
     html, body {
       overscroll-behavior-y: none;
-      background: #050505; /* spark-dark: same canvas as the welcome page */
+      background: #0B0B0B; /* spark-dark: same canvas as the welcome page */
     }
 
     /* Initial splash screen. Fade-out is driven by the Web Animations
@@ -94,7 +94,7 @@
     #splash {
       position: fixed;
       inset: 0;
-      background: #050505;
+      background: #0B0B0B;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -124,7 +124,7 @@
 <body>
   <!-- Splash screen shown during initial load -->
   <div id="splash">
-    <img class="splash-logo" src="/assets/getyoursats-mark.jpg" alt="" />
+    <img class="splash-logo" src="/brand/wordmark-stacked-dark.svg" alt="" />
   </div>
   
   <div id="root"></div>

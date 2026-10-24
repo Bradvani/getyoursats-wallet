@@ -62,6 +62,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
   onOpenGetRefund,
   onOpenSettings,
   onOpenDca,
+  onOpenBackup,
   onOpenUnilateralExit,
   onBuyBitcoin,
   network,
@@ -331,6 +332,11 @@ const WalletPage: React.FC<WalletPageProps> = ({
            primaryLightningAddress.isSupported?'Tap Receive to set up':'Not available on this network'}
         </span>}
       </div>
+      <button type="button" className="gys-backup-card" onClick={onOpenBackup}>
+        <span className="gys-backup-card__icon" aria-hidden="true">↗</span>
+        <span><strong>Protect your Bitcoin</strong><small>Review your recovery options</small></span>
+        <span aria-hidden="true">→</span>
+      </button>
       <button type="button" className="gys-wallet__history-trigger" aria-expanded={historyOpen}
         aria-controls="gys-wallet-history" onClick={()=>setHistoryOpen(v=>!v)}>
         <span aria-hidden="true" className={historyOpen?'gys-wallet__history-arrow gys-wallet__history-arrow--open':'gys-wallet__history-arrow'}>⌃</span>

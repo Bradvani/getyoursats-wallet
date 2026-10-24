@@ -26,7 +26,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
   useStatusBarColor(STATUS_BAR_SURFACE);
 
   return (
-    <div className="min-h-dvh h-dvh w-full flex flex-col bg-spark-surface relative">
+    <div className="gys-page-surface min-h-dvh h-dvh w-full flex flex-col bg-spark-surface relative">
       {showHeader && (
         <header
           className="relative z-10 shrink-0 border-b border-spark-border bg-spark-surface/80 backdrop-blur-sm"
