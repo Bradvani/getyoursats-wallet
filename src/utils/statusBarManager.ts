@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
-import { StatusBar } from '@capacitor/status-bar';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { getResolvedAppearance } from '@/services/presentationPreferences';
 import { NavigationBar } from '@capgo/capacitor-navigation-bar';
 
 /**
@@ -64,13 +65,36 @@ type StackEntry = { color: string; token: symbol };
 const statusBarStack: StackEntry[] = [];
 const navBarStack: StackEntry[] = [];
 
+/** Map legacy native dark bar values onto our Orange theme surfaces.
+ * Scrims/loading remain dark and retain light icons. Never modify the
+ * underlying stack so a theme change also updates already-open sheets. */
+export function resolveSystemBarAppearance(color: string, orange = getResolvedAppearance()==='orange'):
+  { color: string; darkButtons: boolean } {
+  if (!orange) return { color, darkButtons: false };
+  const surface: Record<string, string> = {
+    '#13131d': '#F3ECE0', // home glass and bottom system strip
+    '#151520': '#FFFCF7', // drawer, settings and sheet surfaces
+    '#0f0f18': '#F3ECE0', // flat dark surfaces
+    '#0a0a0f': '#FAF7F1', // ordinary void canvas
+  };
+  const mapped = surface[color.toLowerCase()];
+  return mapped ? { color: mapped, darkButtons: true } : { color, darkButtons: false };
+}
+
+export function refreshSystemBarsForTheme(): void {
+  applyStatusBar();
+  applyNavBar();
+}
+
 function applyStatusBar(): void {
   if (!isAndroidNative) return;
   const color =
     statusBarStack.length > 0
       ? statusBarStack[statusBarStack.length - 1].color
       : STATUS_BAR_WALLET_GLASS;
-  StatusBar.setBackgroundColor({ color }).catch(() => {
+  const result = resolveSystemBarAppearance(color);
+  void StatusBar.setStyle({ style: result.darkButtons ? Style.Dark : Style.Light }).catch(() => {});
+  StatusBar.setBackgroundColor({ color: result.color }).catch(() => {
     /* unsupported platform or Android 15+ edge-to-edge — ignore */
   });
 }
@@ -81,7 +105,8 @@ function applyNavBar(): void {
     navBarStack.length > 0
       ? navBarStack[navBarStack.length - 1].color
       : STATUS_BAR_WALLET_GLASS;
-  NavigationBar.setNavigationBarColor({ color }).catch(() => {
+  const result = resolveSystemBarAppearance(color);
+  NavigationBar.setNavigationBarColor({ color: result.color, darkButtons: result.darkButtons }).catch(() => {
     /* unsupported platform or Android 15+ edge-to-edge — ignore */
   });
 }
