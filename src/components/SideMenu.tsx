@@ -1,3 +1,4 @@
+import { usePresentation } from '@/hooks/usePresentation';
 import React, { useState, useSyncExternalStore } from 'react';
 import { useAppVersion } from '@/hooks/useAppVersion';
 import { PRIVACY_POLICY_URL, SUPPORT_URL } from '@/constants/publicPages';
@@ -66,7 +67,7 @@ interface SideMenuProps {
   hasRejectedDeposits?: boolean;
 }
 
-const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSettings, onOpenFiatCurrencies, onOpenDca, onOpenScan, onOpenMerchantPos, onOpenPartnerBuy, onOpenRefund, hasRejectedDeposits = false }) => {
+const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSettings, onOpenDca, onOpenScan, onOpenMerchantPos, onOpenPartnerBuy, onOpenRefund, hasRejectedDeposits = false }) => {
   // While the drawer is open, push the solid spark-surface tone over
   // the wallet page's glass tint so the status bar matches the drawer
   // panel's solid bg. Tied to isOpen so popping happens on close.
@@ -79,6 +80,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
   );
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const appVersion = useAppVersion();
+  const {language, copy} = usePresentation();
 
   // When the logout confirmation dialog opens, dim the system bars to
   // the same scrim tone the React backdrop applies to the content
@@ -126,39 +128,35 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     }] : []),
     ...(onOpenPartnerBuy ? [{
       icon: <CurrencyIcon />,
-      label: 'Buy Bitcoin',
+      label: copy.buy,
       comingSoon: !featureAvailability.buyBitcoin,
       onClick: () => closeDrawerThen(onOpenPartnerBuy)
     }] : []),
     ...(onOpenScan ? [{
       icon: <QrCodeIcon />,
-      label: 'Scan QR',
+      label: copy.scan,
       onClick: () => closeDrawerThen(onOpenScan)
     }] : []),
     ...(onOpenMerchantPos ? [{
       icon: <ArrowDownIcon />,
-      label: 'Point of Sale',
+      label: copy.pointOfSale,
       onClick: () => closeDrawerThen(onOpenMerchantPos)
     }] : []),
     {
       icon: <ClockIcon />,
-      label: 'Recurring Buys',
+      label: copy.recurring,
       comingSoon: !featureAvailability.recurringBuy,
       onClick: () => closeDrawerThen(onOpenDca)
     },
-    ...(onOpenFiatCurrencies?[{
-      icon: <CurrencyIcon/>,
-      label: 'Currency',
-      onClick:()=>closeDrawerThen(onOpenFiatCurrencies)
-    }]:[]),
+
     {
       icon: <SettingsIcon />,
-      label: 'Settings',
+      label: copy.settings,
       onClick: () => closeDrawerThen(onOpenSettings)
     },
     {
       icon: <LogoutIcon />,
-      label: 'Log Out',
+      label: copy.logout,
       onClick: () => { setShowLogoutConfirm(true); }
     }
   ];
@@ -246,22 +244,22 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
               {/* Buttons rather than anchors: openExternalUrl keeps native
                   in an in-app browser that returns to the drawer on Done,
                   and same-origin pages in the PWA's own overlay. */}
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-spark-text-muted text-center mb-2">Help &amp; information</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-spark-text-muted text-center mb-2">{copy.help}</p>
               <div className="flex items-center justify-center gap-3 text-xs text-spark-text-muted">
                 <button
                   type="button"
-                  onClick={() => { void openExternalUrl(PRIVACY_POLICY_URL); }}
+                  onClick={() => { void openExternalUrl(PRIVACY_POLICY_URL + '?lang=' + language); }}
                   className="rounded-lg px-3 py-2 border border-spark-border hover:border-spark-primary/50 hover:text-spark-text-secondary transition-colors"
                 >
-                  Privacy Policy
+                  {copy.privacy}
                 </button>
                 <span aria-hidden="true">&middot;</span>
                 <button
                   type="button"
-                  onClick={() => { void openExternalUrl(SUPPORT_URL); }}
+                  onClick={() => { void openExternalUrl(SUPPORT_URL + '?lang=' + language); }}
                   className="hover:text-spark-text-secondary transition-colors"
                 >
-                  Support
+                  {copy.support}
                 </button>
               </div>
               <p data-testid="menu-app-version" className="text-xs text-spark-text-muted text-center mt-3">GetYourSats · v{appVersion}</p>
