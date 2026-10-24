@@ -81,6 +81,6 @@ test('@public-smoke recovery requires the Settings route',async({page})=>{
  await page.goto(fixture);
  await expect(page.getByRole('button',{name:/Protect your Bitcoin|Review recovery options/})).toHaveCount(0);
  await page.goto(fixture+'?screen=settings');
- await page.getByRole('button',{name:/Optional handwritten backup/}).click();
+ await page.getByRole('button',{name:/Recovery words/}).click();
  await expect(page.getByRole('heading',{name:'Recovery entry reached'})).toBeVisible();
 });
