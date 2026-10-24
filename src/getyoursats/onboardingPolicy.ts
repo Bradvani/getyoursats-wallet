@@ -34,3 +34,10 @@ export function chooseWalletOnboarding({
 export function approvedGetYourSatsOrigin(origin: string): string | undefined {
   return origin === 'https://wallet.getyoursats.com' ? origin : undefined;
 }
+
+/** A local hint controls which WebAuthn ceremony we open, never key ownership.
+ * Existing credentials on a DIFFERENT device use Restore -> Sign in with passkey.
+ */
+export function shouldDiscoverExistingPasskey(registered: string|null, label: string|null): boolean {
+  return registered === '1' || label !== null;
+}

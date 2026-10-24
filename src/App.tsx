@@ -3,7 +3,7 @@ import * as bip39 from 'bip39';
 import {deviceOnlyStorage, SecureStorageError} from './services/secureStorage';
 import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
 import {Capacitor} from '@capacitor/core';
-import {chooseWalletOnboarding, approvedGetYourSatsOrigin} from './getyoursats/onboardingPolicy';
+import {chooseWalletOnboarding, approvedGetYourSatsOrigin, shouldDiscoverExistingPasskey} from './getyoursats/onboardingPolicy';
 import {prfAvailability} from './services/passkeyService';
 import SetupOptionsPage from './getyoursats/SetupOptionsPage';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
@@ -212,7 +212,21 @@ const AppContent: React.FC = () => {
       nativeAssociationVerified: import.meta.env.VITE_GETYOURSATS_NATIVE_PASSKEY_READY === 'true',
     });
     if (next === 'passkey') {
-      setPasskeySkipDetection(false);
+      // A first-time visitor should CREATE a platform passkey. Speculative
+      // sign-in triggers cross-device QR prompts on many mobile browsers.
+      // Returning users with locally known passkeys still sign in.
+      // The metadata is only a UI routing hint, never proof of custody.
+      let knownPasskey = false;
+      try {
+        knownPasskey = shouldDiscoverExistingPasskey(
+          localStorage.getItem('passkeyRegistered'),
+          localStorage.getItem('passkeyLabel'),
+        );
+      } catch {
+        // On restricted browser storage, never assume credentials exist.
+        // The explicit Restore → passkey path is still available.
+      }
+      setPasskeySkipDetection(!knownPasskey);
       setPasskeyFailed(false);
       setUserScreen('passkey');
       return;
@@ -695,6 +709,11 @@ const AppContent: React.FC = () => {
         return (
           <RestorePage
             onConnect={(mnemonic) => handleConnect(mnemonic, true)}
+            onUsePasskey={() => {
+              setPasskeySkipDetection(false);
+              setPasskeyFailed(false);
+              setUserScreen('passkey');
+            }}
             onBack={() => setUserScreen('home')}
             onClearError={sdk.clearError}
             isLoading={sdk.isLoading}

@@ -1,5 +1,5 @@
 import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
-import {useId, useState} from 'react';
+import {useId} from 'react';
 import {ChevronRightIcon} from '../components/Icons';
 
 type Props = {
@@ -14,12 +14,10 @@ type Props = {
 
 export default function HomePage({
   onCreateNewWallet,
-  onCreateManualWallet,
   onRestoreWallet,
   setupIssue,
 }: Props) {
   const errorId = useId();
-  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   return (
     <main className="gys-welcome">
@@ -31,9 +29,9 @@ export default function HomePage({
 
       <div className="gys-welcome__stage">
         <div className="gys-welcome__content">
-          <div className="gys-welcome__eyebrow"><span aria-hidden="true"/> YOUR KEYS. YOUR NEXT MOVE.</div>
-          <h1>Your sats. <em>Your move.</em></h1>
-          <p className="gys-welcome__subtitle">A self-custodial wallet for everyday Bitcoin. Pay, get paid and stay in control with Lightning.</p>
+          <div className="gys-welcome__eyebrow"><span aria-hidden="true"/> BUILT FOR BITCOIN OWNERSHIP</div>
+          <h1>Own your Bitcoin. <em>Move at lightning speed.</em></h1>
+          <p className="gys-welcome__subtitle">Send, receive and accept Bitcoin with Lightning. Simple by design, self-custodial by default.</p>
 
           <div className="gys-welcome__actions" aria-label="Wallet setup">
             <button className="gys-welcome__start" type="button" onClick={onCreateNewWallet}
@@ -45,21 +43,10 @@ export default function HomePage({
               aria-label="Restore existing wallet">
               Already have a wallet? <strong>Restore it <span aria-hidden="true">↗</span></strong>
             </button>
-            <div className="gys-welcome__secondary">
-              <button type="button" aria-expanded={advancedOpen}
-                aria-label="More recovery options" aria-controls="gys-welcome-advanced"
-                onClick={() => setAdvancedOpen(!advancedOpen)}>
-                More recovery options
-                <span className={advancedOpen ? 'gys-welcome__chevron gys-welcome__chevron--up' : 'gys-welcome__chevron'} aria-hidden="true">⌄</span>
-              </button>
-              {advancedOpen && (
-                <div id="gys-welcome-advanced">
-                  <button type="button" className="gys-welcome__manual" onClick={onCreateManualWallet}>
-                    Set up with an offline recovery phrase
-                  </button>
-                </div>
-              )}
-            </div>
+            <p className="gys-welcome__passkey-explainer">
+              Start creates a wallet with a device passkey where supported. Your device may ask for Face ID, fingerprint or screen lock.
+              An offline backup is available later in Settings.
+            </p>
             {setupIssue && (
               <div id={errorId} role="alert" className="gys-welcome__error">{setupIssue}</div>
             )}
