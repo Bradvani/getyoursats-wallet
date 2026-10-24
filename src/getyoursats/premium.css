@@ -117,8 +117,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
   font-size:20px;letter-spacing:-.025em;font-weight:850}
 .gys-pos-terminal__charge:disabled{opacity:.37}
 .gys-pos-terminal__error{color:#ffd3b8;background:#4b241b;border-radius:10px;font-size:12px;padding:10px;margin-top:6px}
-.gys-pos-terminal__invoice{display:flex;align-items:center;flex-direction:column;gap:15px;text-align:center;margin:auto 0;overflow:auto}
-.gys-pos-terminal__qr{padding:15px;background:#fff;border-radius:19px}
+/* The actual payable invoice QR takes the viewport, not the order history.
+   Avoid vertical auto-centering that buried it on short standalone iOS screens. */
+.gys-pos-terminal__invoice{display:flex;align-items:center;flex-direction:column;
+  gap:12px;text-align:center;flex:1 0 auto;justify-content:flex-start;
+  margin:0;padding:9px 0 20px;overflow:visible;min-height:0}
+.gys-pos-terminal__invoice-title{font-size:19px!important;font-weight:760;letter-spacing:-.03em}
+.gys-pos-terminal__qr{display:flex;justify-content:center;align-items:center;
+  padding:13px;background:#fff;border-radius:19px;width:fit-content;
+  max-width:100%;margin:0 auto;min-height:0}
+.gys-pos-terminal__qr .gys-branded-qr{width:min(288px,calc(100vw - 66px))!important;
+  height:auto!important;aspect-ratio:1}
+.gys-pos-terminal__qr .gys-branded-qr svg{display:block;width:100%!important;height:100%!important}
+@media(max-height:650px){.gys-pos-terminal__qr .gys-branded-qr{
+  width:min(228px,calc(100vw - 66px))!important}}
+
 .gys-pos-terminal__invoice h2{font-size:38px;font-weight:800}
 .gys-pos-terminal__invoice h2 span{font-size:14px;font-weight:600;color:#eeb873}
 .gys-pos-terminal__invoice p,.gys-pos-terminal__invoice small{color:#aaa49a;font-size:12px}
