@@ -175,7 +175,7 @@ export function useAppLock(): AppLockState {
   }, []);
 
   const unlockWithBiometric = useCallback(async () => {
-    if (await tryAuthenticateBiometric('Unlock Glow')) setLocked(false);
+    if (await tryAuthenticateBiometric('Unlock GetYourSats')) setLocked(false);
   }, []);
 
   const unlockAfterWipe = useCallback(() => setLocked(false), []);
