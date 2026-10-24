@@ -15,7 +15,6 @@ import { LightningBoltIcon } from '../../components/Icons';
 import { formatTokenInput } from '../../utils/tokenFormatting';
 import {receiveAmountPresets} from './receiveAmountPresets';
 import CurrencySwitcher from '../../components/ui/CurrencySwitcher';
-import { SatAmount } from '../../components/SatAmount';
 import { useAmountInput, useFiatOverride } from '../../hooks/useAmountInput';
 import { getDisplayFiatCurrency } from '../../services/settings';
 import type { Sats } from '../../types/sats';
