@@ -1,5 +1,5 @@
 import './premiumMotion.css';
-import { TransferStateIcon } from './Icons';
+import { TransferStateIcon, PaymentLightningTrailIcon } from './Icons';
 
 export type PaymentMotionState = 'sending' | 'receiving' | 'converting' | 'sent' | 'received' | 'failed';
 
@@ -16,11 +16,7 @@ export default function PaymentMotion({ state, compact = false, animate = true }
     className={`gys-transfer gys-transfer--${state} ${pending ? 'gys-transfer--pending' : ''} ${success ? 'gys-transfer--success' : ''} ${compact ? 'gys-transfer--compact' : ''} ${!animate ? 'gys-transfer--static' : ''}`}>
     <span className="gys-transfer__glow" />
     <span className="gys-transfer__orbit" />
-    <svg className="gys-transfer__streak" viewBox="0 0 160 160" fill="none" aria-hidden="true">
-      <path className="gys-transfer__streak-path"
-        d="M69 98 L89 72 L84 63 L126 24"
-        stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+    <PaymentLightningTrailIcon />
     <span className="gys-transfer__core">
       {success
         ? <img className="gys-transfer__mark" src="/brand/monogram.svg" alt="" />
