@@ -1,3 +1,5 @@
+import {usePresentation} from '@/hooks/usePresentation';
+import {homeCopy} from '@/services/presentationPreferences';
 import {useId,useRef} from 'react';
 import InstallPrompt from '../components/InstallPrompt';
 import BrandIntro from '../components/BrandIntro';
@@ -15,6 +17,8 @@ type Props = {
 /** The visual morph never delays the original Start handler: delaying a
  * WebAuthn ceremony would lose the browser's transient user activation. */
 export default function HomePage({onCreateNewWallet,onRestoreWallet,setupIssue}:Props){
+  const {language}=usePresentation();
+  const tr=homeCopy(language);
   const errorId=useId();
   const heroRef=useRef<HTMLImageElement>(null);
   const onStart=()=>{
@@ -42,26 +46,25 @@ export default function HomePage({onCreateNewWallet,onRestoreWallet,setupIssue}:
     <BrandIntro />
     <div className="gys-welcome__atmosphere" aria-hidden="true"/>
     <header className="gys-welcome__header">
-      <span className="gys-welcome__scarcity-pill">21 MILLION. EVER.</span>
+      <span className="gys-welcome__scarcity-pill">{tr.scarcity}</span>
       <span className="gys-welcome__header-tag">BITCOIN · LIGHTNING</span>
     </header>
     <div className="gys-welcome__stage">
       <div className="gys-welcome__content">
-        <div className="gys-welcome__eyebrow"><span aria-hidden="true"/> BITCOIN HAS A LIMIT</div>
-        <h1>Every sat <em>counts.</em></h1>
-        <p className="gys-welcome__subtitle">Only 21 million bitcoin will ever exist. Keep yours close, move it in seconds, and accept payments over Lightning.</p>
+        <div className="gys-welcome__eyebrow"><span aria-hidden="true"/> {tr.eyebrow}</div>
+        <h1>{tr.heading} <em>{tr.emphasis}</em></h1>
+        <p className="gys-welcome__subtitle">{tr.subtitle}</p>
         <div className="gys-welcome__actions" aria-label="Wallet setup">
           <InstallPrompt />
           <button className="gys-welcome__start" type="button" onClick={onStart}
             aria-describedby={setupIssue?errorId:undefined}>
-            <span>Start</span><ChevronRightIcon size="lg"/>
+            <span>{tr.start}</span><ChevronRightIcon size="lg"/>
           </button>
           <button className="gys-welcome__restore" type="button" onClick={onRestoreWallet} aria-label="Restore existing wallet">
-            Already have a wallet? <strong>Restore it <span aria-hidden="true">↗</span></strong>
+            {tr.restoreQuestion} <strong>{tr.restore} <span aria-hidden="true">↗</span></strong>
           </button>
           <p className="gys-welcome__passkey-explainer">
-            Create a wallet with a supported device passkey. Your phone may use face unlock, fingerprint or screen lock.
-            Keep your recovery options private in Settings.
+            {tr.passkey}
           </p>
           {setupIssue&&<div id={errorId} role="alert" className="gys-welcome__error">{setupIssue}</div>}
         </div>
@@ -73,7 +76,7 @@ export default function HomePage({onCreateNewWallet,onRestoreWallet,setupIssue}:
       </div>
     </div>
     <footer className="gys-welcome__footer">
-      <span>BITCOIN FIRST.</span><span>SATS ARE SCARCE.</span>
+      <span>{tr.footOne}</span><span>{tr.footTwo}</span>
     </footer>
   </main>;
 }
