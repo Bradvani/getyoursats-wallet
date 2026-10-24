@@ -255,7 +255,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             >
               <div className="flex items-center gap-3">
                 <KeyIcon size="md" />
-                <span>Optional handwritten backup</span>
+                <span>Recovery words</span>
               </div>
               <ChevronRightIcon size="md" />
             </button>
