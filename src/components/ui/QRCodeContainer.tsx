@@ -1,5 +1,5 @@
 import React from 'react';
-import { QRCode } from 'react-qr-code';
+import BrandedQrCode from '../BrandedQrCode';
 import LoadingSpinner from '../LoadingSpinner';
 
 const Corners: React.FC = () => (
@@ -26,7 +26,7 @@ export const QRCodeContainer: React.FC<QrFrameProps & { value: string }> = ({ va
   <div className={`relative ${className}`}>
     <Corners />
     <div className={`qr-container ${cardClassName}`}>
-      <QRCode value={value} size={size} />
+      <BrandedQrCode value={value} size={size} label="Payment QR code" />
     </div>
   </div>
 );
