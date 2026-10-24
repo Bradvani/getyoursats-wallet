@@ -123,7 +123,7 @@ const LockScreen: React.FC<LockScreenProps> = ({
         // so cold start -> Face ID reads as one continuous frame, no logo
         // resize or jump.
         <div className="flex-1 flex items-center justify-center">
-          <img src="/assets/getyoursats-mark.jpg" alt="GetYourSats" className="w-36 h-36 object-contain" />
+          <img src="/brand/app-icon.svg" alt="GetYourSats" className="w-36 h-36 object-contain" />
         </div>
       )}
 

@@ -12,7 +12,7 @@ export default function SetupOptionsPage({stableOrigin,onBack,onOfflineSetup}:Pr
       <button type="button" className="gys-setup__back" onClick={onBack}>← Back</button>
     </header>
     <section className="gys-setup__body">
-      <img className="gys-setup__mark" src="/assets/getyoursats-mark.jpg" alt="" />
+      <img className="gys-setup__mark" src="/brand/app-icon.svg" alt="" />
       <span className="gys-setup__eyebrow">SECURE WALLET SETUP</span>
       <h1>{stableOrigin?'Choose your recovery method.':'Continue on our secure wallet domain.'}</h1>
       <p>{stableOrigin

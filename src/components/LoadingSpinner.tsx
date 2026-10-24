@@ -35,7 +35,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
             cy="20"
             r="17"
             fill="none"
-            stroke="rgba(212, 165, 116, 0.15)"
+            stroke="rgba(247,147,26,0.15)"
             strokeWidth={config.outer}
           />
           <circle
@@ -43,7 +43,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
             cy="20"
             r="17"
             fill="none"
-            stroke="#d4a574"
+            stroke="#F7931A"
             strokeWidth={config.outer}
             strokeLinecap="round"
             strokeDasharray="80 27"
@@ -65,7 +65,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
             cy="20"
             r="17"
             fill="none"
-            stroke="rgba(212, 165, 116, 0.4)"
+            stroke="rgba(247,147,26,0.4)"
             strokeWidth={config.inner}
             strokeLinecap="round"
             strokeDasharray="40 67"

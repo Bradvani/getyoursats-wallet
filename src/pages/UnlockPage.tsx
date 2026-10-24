@@ -84,8 +84,8 @@ const UnlockPage: React.FC<UnlockPageProps> = ({
           {/* Logo + headline */}
           <div className="flex flex-col items-center gap-4">
             <img
-              src="/assets/Glow_Logo.svg"
-              alt="Glow"
+              src="/brand/wordmark-stacked-dark.svg"
+              alt="GetYourSats"
               className="w-36 h-36 object-contain"
             />
             <h1 className="font-display text-2xl font-bold text-spark-text-primary">

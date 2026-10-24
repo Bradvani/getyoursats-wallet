@@ -10,8 +10,7 @@ test('@public-smoke responsive GetYourSats welcome is one cohesive surface',asyn
   await expect(page.getByRole('heading',{name:'Own your Bitcoin. Move at lightning speed.'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Start'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Restore existing wallet'})).toBeVisible();
-  await expect(page.locator('.gys-welcome__coin img')).toHaveCSS('mask-mode','luminance');
-  expect(await page.locator('.gys-welcome__coin img').evaluate((x)=> (x as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  expect(await page.locator('.gys-welcome__hero-mark').evaluate((x)=> (x as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   mkdirSync('test-artifacts',{recursive:true});
   await page.screenshot({path:'test-artifacts/welcome-desktop.png',animations:'disabled'});
 });
@@ -35,10 +34,10 @@ test('@public-smoke GetYourSats landing identity animates without affecting onbo
   await page.emulateMedia({reducedMotion:'no-preference'});
   await page.goto('http://localhost:5173/');
   await expect(page.locator('#splash')).toHaveCount(0,{timeout:60000});
-  await expect(page.locator('.gys-welcome__header').getByLabel('GetYourSats')).toBeVisible();
-  await expect(page.locator('.gys-welcome__coin')).toHaveCSS('animation-name','gys-hero-float');
+  await expect(page.locator('.gys-welcome__header').getByRole('img',{name:'GetYourSats'})).toBeVisible();
+  await expect(page.locator('.gys-welcome__hero-mark')).toHaveCSS('animation-name','gys-hero-arrive');
   await expect(page.getByRole('button',{name:'Start'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Restore existing wallet'})).toBeVisible();
   await page.emulateMedia({reducedMotion:'reduce'});
-  await expect(page.locator('.gys-welcome__coin')).toHaveCSS('animation-name','none');
+  await expect(page.locator('.gys-welcome__hero-mark')).toHaveCSS('animation-duration','1e-05s');
 });

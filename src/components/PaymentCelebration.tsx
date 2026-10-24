@@ -5,7 +5,7 @@ import { useStableBalance } from '../contexts/StableBalanceContext';
 import { SatAmount } from './SatAmount';
 import { useFiatData } from '../contexts/FiatDataContext';
 import { getTokenAmountFromPayment, formatTokenAmount, buildTokenDisplayConfig, withAssetDecimals } from '../utils/tokenFormatting';
-import './premiumMotion.css';
+import PaymentMotion from './PaymentMotion';
 import { hapticLight } from '@/utils/haptics';
 
 interface PaymentCelebrationProps {
@@ -23,19 +23,21 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
 
   useEffect(() => {
     // Trigger entrance animation
-    requestAnimationFrame(() => setIsVisible(true));
+    const frame = requestAnimationFrame(() => setIsVisible(true));
     void hapticLight();
 
-    // Start dot animation after the logo settles in
+    let exitTimer: ReturnType<typeof setTimeout>;
 
     // Auto close after animation
     const closeTimer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onClose, 500);
+      exitTimer = setTimeout(onClose, 500);
     }, 4000);
 
     return () => {
+      cancelAnimationFrame(frame);
       clearTimeout(closeTimer);
+      clearTimeout(exitTimer);
     };
   }, [onClose]);
 
@@ -53,10 +55,7 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
       className={`fixed inset-0 z-100 flex items-center justify-center transition-all duration-500 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
-      onClick={() => {
-        setIsVisible(false);
-        setTimeout(onClose, 500);
-      }}
+      role="status" aria-live="polite"
     >
       {/* Backdrop with blur */}
       <div className="absolute inset-0 bg-spark-void/90 backdrop-blur-md" />
@@ -67,9 +66,7 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
           isVisible ? 'scale-100 translate-y-0' : 'scale-50 translate-y-20'
         }`}
       >
-        <div className={`gys-payment-motion ${isSent ? 'gys-payment-motion--sent' : 'gys-payment-motion--received'} mb-8 w-28 h-28 rounded-full border border-[#F7931A]/40 bg-[#17110b] flex items-center justify-center`}>
-          <span className="gys-payment-motion__bolt" aria-hidden="true">{isSent ? '↗' : '↙'}</span>
-        </div>
+        <PaymentMotion state={isSent ? 'sent' : 'received'} />
 
         {/* Title */}
         <h2 className="text-2xl font-display font-bold text-spark-text-primary mb-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>

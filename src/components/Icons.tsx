@@ -427,3 +427,11 @@ export const CashAppIcon: React.FC<IconProps> = ({ className = '', size = 'lg' }
   </svg>
 );
 
+
+/** Brand lightning is a single local flash, never a full-screen strobe. */
+export const BrandLightningIcon = () => <svg className="gys-brand-reveal__lightning" viewBox="0 0 1060 620"><path d="M710 0 620 65 665 70 625 125" /></svg>;
+export const TransferStateIcon = ({ state }: { state: 'sending' | 'receiving' | 'converting' | 'sent' | 'received' | 'failed' }) => (
+  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    {state === 'failed' ? <path d="m15 15 18 18m0-18L15 33" /> : state === 'sent' || state === 'received' ? <path className="gys-transfer__check" d="m12 24 8 8 17-18" /> : state === 'converting' ? <path d="M12 19h24l-6-6m6 16H12l6 6" /> : <path className="gys-transfer__arrow" d={state === 'receiving' ? 'M34 14 14 34m0-16v16h16' : 'M14 34 34 14m-16 0h16v16'} />}
+  </svg>
+);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '../../contexts/ToastContext';
+import PaymentMotion from '../../components/PaymentMotion';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import {
   DialogHeader,
@@ -75,6 +76,10 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
       )}
 
       <QRCodeContainer value={paymentData} />
+      <div className="gys-receive-status" role="status">
+        <PaymentMotion state="receiving" compact />
+        <span><strong>Ready to receive</strong><small>Share this invoice. Confirmation appears when payment arrives.</small></span>
+      </div>
 
       <div className="w-full">
         <CopyableText

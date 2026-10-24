@@ -330,10 +330,10 @@
   /* ========================================
      PRIMARY ACCENT - Change this one line!
      ======================================== */
-  --spark-primary: #d4a574;
+  --spark-primary: #F7931A;
   /* Soft Gold - warm, elegant, premium */
   --spark-primary-light: #e8c9a8;
-  --glow-primary: rgba(212, 165, 116, 0.35);
+  --glow-primary: rgba(247,147,26,0.35);
 
   /* Core colors */
   --spark-void: #0a0a0f;
@@ -350,10 +350,10 @@
   /* Semantic colors */
   --spark-success: #10b981;
   --spark-error: #ef4444;
-  --spark-warning: #d4a574;
+  --spark-warning: #F7931A;
 
   /* Warning / error boxes: warm amber on dark teal */
-  --spark-warn-border: #8a7154;
+  --spark-warn-border: #F7931A;
   --spark-warn-surface: #182226;
   --spark-warn-title: #e8d3ba;
   --spark-warn-text: #d5cec5;
@@ -464,7 +464,7 @@ html.keyboard-visible .bottom-sheet-content-pad:focus-within {
   height: 100dvh;
   background:
     radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.15), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(247, 147, 26, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(247,147,26,0.08), transparent),
     radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0, 212, 255, 0.06), transparent),
     var(--spark-void);
   position: relative;
@@ -1458,7 +1458,7 @@ main {
 .sidebar-star {
   position: absolute;
   border-radius: 50%;
-  background: #d4af83;
+  background: #F7931A;
   pointer-events: none;
   opacity: 0;
 }

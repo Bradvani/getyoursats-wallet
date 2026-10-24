@@ -9,6 +9,7 @@ import SetupOptionsPage from './getyoursats/SetupOptionsPage';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
 import { WalletProvider, WalletInfoProvider, WalletStatusProvider } from './contexts/WalletContext';
 import LoadingSpinner from './components/LoadingSpinner';
+import BrandIntro from './components/BrandIntro';
 import PaymentCelebration from './components/PaymentCelebration';
 import InstallPrompt from './components/InstallPrompt';
 import OfflineBanner from './components/OfflineBanner';
@@ -72,8 +73,9 @@ type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca'
 const GlobalLoadingOverlay: React.FC = () => {
   useStatusBarColor(STATUS_BAR_LOADING);
   return (
-    <div className="absolute inset-0 bg-spark-void/95 backdrop-blur-sm z-50 flex items-center justify-center">
-      <LoadingSpinner />
+    <div className="absolute inset-0 bg-spark-void/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center" role="status" aria-label="Loading wallet">
+      <BrandIntro inline />
+      <LoadingSpinner size="small" text="Connecting to your wallet…" />
     </div>
   );
 };

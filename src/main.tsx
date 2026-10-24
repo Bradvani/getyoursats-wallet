@@ -8,6 +8,7 @@ import AppErrorBoundary from './components/AppErrorBoundary';
 // rather than importing @fontsource's own stylesheets, which hardcode
 // font-display: swap. See the comment there.
 import './index.css';
+import './getyoursats/premium.css';
 import { logger, LogCategory } from '@/services/logger';
 import { initWebViewportManager } from '@/utils/webViewportManager';
 import { installUserAgentStrippingFetch } from '@/utils/stripUserAgentFetch';
@@ -356,7 +357,7 @@ function showWebAssemblyBlocked(): void {
       <div class="flex-1 flex items-center justify-center p-6">
         <div class="max-w-sm w-full space-y-8">
           <div class="flex flex-col items-center gap-4">
-            <img src="/assets/getyoursats-mark.jpg" alt="GetYourSats" class="w-36 h-36 object-contain" />
+            <img src="/brand/app-icon.svg" alt="GetYourSats" class="w-36 h-36 object-contain" />
             <h1 class="font-display text-2xl font-bold text-spark-text-primary text-center">${heading}</h1>
             ${intro ? `<p class="text-sm text-spark-text-secondary text-center">${intro}</p>` : ''}
           </div>
@@ -465,7 +466,7 @@ async function init() {
     });
     void hideSplash();
     document.getElementById('root')!.innerHTML = `
-      <div style="color: #d4a574; padding: 20px; text-align: center; background: #0a0a0f; min-height: 100vh; display: flex; flex-direction: column; justify-content: center;">
+      <div style="color: #F7931A; padding: 20px; text-align: center; background: #0a0a0f; min-height: 100vh; display: flex; flex-direction: column; justify-content: center;">
         <h2>Failed to load application</h2>
         <p>There was an error starting GetYourSats. Please refresh and try again.</p>
       </div>
