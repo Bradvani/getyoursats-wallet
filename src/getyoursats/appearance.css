@@ -1,0 +1,68 @@
+/* GetYourSats display variants. Dark remains the migration-safe default.
+   Orange is a warm light canvas, not a saturated orange background.
+   No wallet-storage, signing, SDK, amount or payment state is touched. */
+:root[data-gys-theme='orange']{
+ color-scheme:light;
+ --spark-primary:#D76800; --spark-primary-light:#CE6400;
+ --spark-void:#FAF7F1;--spark-dark:#F3ECE0;--spark-surface:#FFFCF7;--spark-elevated:#F0E6D7;
+ --spark-border:#E1D7C9;--spark-border-light:#CFC2B1;
+ --spark-text-primary:#241D17;--spark-text-secondary:#52483E;--spark-text-muted:#74695E;
+ --spark-warn-border:#DB8728;--spark-warn-surface:#FFF3DF;--spark-warn-title:#56300C;--spark-warn-text:#6C4A24;
+ --glow-primary:rgba(247,147,26,.12);
+ --color-spark-void:#FAF7F1;--color-spark-dark:#F3ECE0;--color-spark-surface:#FFFCF7;--color-spark-elevated:#F0E6D7;
+ --color-spark-border:#E1D7C9;--color-spark-border-light:#CFC2B1;
+ --color-spark-primary:#C86000;--color-spark-primary-light:#B65400;
+ --color-spark-warning:#AD4900;--color-spark-text-primary:#241D17;
+ --color-spark-text-secondary:#52483E;--color-spark-text-muted:#74695E;
+ --color-spark-warn-border:#DB8728;--color-spark-warn-surface:#FFF3DF;
+ --color-spark-warn-title:#56300C;--color-spark-warn-text:#6C4A24;
+}
+:root[data-gys-theme='orange'] body{background:#FAF7F1;color:#241D17}
+:root[data-gys-theme='orange'].ios-standalone-bottom-gap,
+:root[data-gys-theme='orange'].ios-standalone-bottom-gap .bottom-bar{background:#F3ECE0}
+:root[data-gys-theme='orange'] .gys-welcome{background:#FAF7F1;color:#241D17}
+:root[data-gys-theme='orange'] .gys-welcome__atmosphere{background:radial-gradient(ellipse 68% 55% at 75% 20%,rgba(247,147,26,.09),transparent 80%)}
+:root[data-gys-theme='orange'] .gys-welcome h1{color:#241D17}
+:root[data-gys-theme='orange'] .gys-welcome__subtitle,
+:root[data-gys-theme='orange'] .gys-welcome__restore,
+:root[data-gys-theme='orange'] .gys-welcome__secondary>button{color:#5B5147}
+:root[data-gys-theme='orange'] .gys-welcome__header-tag{border-color:#E0C6A8;color:#61472D}
+:root[data-gys-theme='orange'] .gys-welcome__hero-mark{content:url('/brand/wordmark-stacked-light.svg');max-height:225px}
+:root[data-gys-theme='orange'] .gys-inline-install{background:#FFF6E7;border-color:#E4C7A3;color:#432B12}
+:root[data-gys-theme='orange'] .gys-inline-install strong{color:#382511}
+:root[data-gys-theme='orange'] .gys-inline-install p{color:#655345}
+:root[data-gys-theme='orange'] .gys-wallet,
+:root[data-gys-theme='orange'] .gys-wallet-balance-surface,
+:root[data-gys-theme='orange'] .gys-action-dock{background:#FAF7F1}
+:root[data-gys-theme='orange'] .gys-wallet-balance-surface__content,
+:root[data-gys-theme='orange'] .gys-wallet-balance-surface__content .balance-display{color:#241D17}
+:root[data-gys-theme='orange'] .gys-wallet__address{background:#FFF9EE;border-color:#E5D5BC}
+:root[data-gys-theme='orange'] .gys-wallet__address .gys-address-banner__label{color:#78695C}
+:root[data-gys-theme='orange'] .gys-backup-card{background:#FFFAF2;border-color:#E5D4BF;color:#241D17}
+:root[data-gys-theme='orange'] .gys-backup-card small{color:#64574C}
+:root[data-gys-theme='orange'] .gys-action-dock{border-color:#E2D5C5}
+:root[data-gys-theme='orange'] .gys-action-dock .gys-action-dock__receive{background:#FFF5E5;color:#9A4A00;border-color:#D46D12}
+:root[data-gys-theme='orange'] .gys-page-surface,
+:root[data-gys-theme='orange'] .gys-page-surface header{background:#FFFCF7}
+:root[data-gys-theme='orange'] .gys-pos-card{background:#FFFCF7;color:#241D17;border-color:#E1D7C9}
+:root[data-gys-theme='orange'] .gys-pos-card input{background:#FAF7F1;color:#241D17;border-color:#D8C9B6}
+:root[data-gys-theme='orange'] .gys-pos-card label{color:#574C40}
+:root[data-gys-theme='orange'] .gys-feature-soon{background:#FFF2DE;border-color:#DDBF99;color:#905215}
+:root[data-gys-theme='orange'] .gys-app-header__identity{color:#241D17}
+:root[data-gys-theme='orange'] .gys-settings-choice{background:#FFFAF3;border-color:#E1D7C9;color:#241D17}
+:root[data-gys-theme='orange'] .gys-settings-choice[aria-pressed=true]{background:#FFE2C3;border-color:#C86506;color:#673100}
+:root[data-gys-theme='orange'] .gys-settings-choice small{color:#695D51}
+:root[data-gys-theme='orange'] .gys-action-dock__send,
+:root[data-gys-theme='orange'] .button,
+:root[data-gys-theme='orange'] .gys-primary{color:#17110C}
+:root[data-gys-theme='orange'] .gys-wallet>div.absolute.inset-0{opacity:.03}
+.gys-settings-choice{border:1px solid var(--color-spark-border);border-radius:15px;padding:12px 14px;min-height:75px;text-align:left;background:var(--color-spark-surface);display:flex;flex-direction:column;gap:5px;justify-content:center;align-items:flex-start;transition:border-color .2s,background .2s}
+.gys-settings-choice[aria-pressed=true]{border-color:var(--color-spark-primary);background:rgba(247,147,26,.09)}
+.gys-settings-choice strong{font-size:14px;font-weight:750}
+.gys-settings-choice small{font-size:11px;color:var(--color-spark-text-muted);line-height:1.4}
+.gys-settings-choice:focus-visible{outline:2px solid #F7931A;outline-offset:3px}
+.gys-settings-lang{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.gys-currency-search{appearance:none;border:1px solid var(--color-spark-border);background:var(--color-spark-surface);color:var(--color-spark-text-primary);width:100%;border-radius:16px;padding:15px 44px 15px 45px;font:inherit;font-size:14px;outline:none}
+.gys-currency-search:focus{border-color:#F7931A;box-shadow:0 0 0 3px rgba(247,147,26,.12)}
+.gys-currency-search::placeholder{color:var(--color-spark-text-muted)}
+@media(prefers-reduced-motion:reduce){.gys-settings-choice{transition:none}}
