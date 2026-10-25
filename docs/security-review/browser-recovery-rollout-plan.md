@@ -2,11 +2,14 @@
 
 ## Decision and evidence boundary
 
-This is an implementation handoff for the uncommitted continuation work based on
+This is an implementation handoff for continuation work based on
 `9d6db8bb7171c7d76ec2a1fad4e539ef3b457356`, reviewed on 25 October 2026 UTC.
-It is **not a production approval**. The final combined release commit, SDK
-artifact digest, deployment identifier and compatible rollback artifact must be
-recorded after integration; none is claimed here.
+The removal and coordination sections have been updated against implementation
+commit `ca661c4e154cdd5310d391c4d913b721f2f49169`. It is **not a production
+approval**. The approved release commit, SDK artifact digest, deployment
+identifier and compatible rollback artifact must be recorded before promotion;
+none is claimed here. Earlier scoped test results below retain their original
+checkpoint limitations.
 
 The vault changes improve recovery under damaged records, storage quota failures
 and concurrent enrollment. They do not prove restored balances, history,
@@ -28,6 +31,8 @@ pass. Rollback to a plaintext-only or observer-only client is not acceptable.
 | `gys:wallet-vault:preserved-previous:v1:<digest>` | Exact previous vault bytes retained before password reset, including malformed bytes. The digest identifies the old vault/hint pair, so retries reuse the same preservation slot. |
 | `gys:wallet-recovery:preserved-manifest:v1:<digest>` | JSON containing the exact old hint string or `null`, retained alongside the previous vault. |
 | `gys:payment-journal:v1:<walletKey>:<operationId>` | Version 1 durable payment status record. `walletKey` binds network and SDK identity public key. Includes approved intent hash, amount/fee bounds, exact payment ID and state. Pending/unknown/submitting records must survive password changes, reconnects and deployment rollback. |
+| `gys:wallet-operation-generation:v1` | Origin storage generation captured by the gateway. A missing or changed marker synchronously invalidates an existing connection before delayed storage events arrive. Preserve it on upgrades; it is not a cross-version tombstone protocol. |
+| `recovery-plan:` and `unilateral-exit-pending:` prefixes | Any persisted entry prevents destructive removal, including damaged, empty or unarchived completed-plan records. Preserve until a separately verified recovery/archive procedure is available. |
 | SDK IndexedDB, passkey metadata and other wallet state | Preserve through encryption enrollment, password reset, app locking and ordinary upgrades. A wallet-data wipe is a different, destructive operation. |
 
 Vault recovery must not generate a mnemonic, replace a passkey-derived wallet,
@@ -158,25 +163,29 @@ Enrollment/recovery and spending use different locks:
 | Operation | Coordination implemented |
 | --- | --- |
 | Vault enrollment/password reset | Exclusive `getyoursats-vault-mutation-v1`, with session and record rechecks. |
-| Payment/reconciliation | Exclusive `gys:wallet-spend:<walletKey>` using Web Locks `ifAvailable`; other cooperating tabs reject competing work. |
-| Connected browser-wallet removal | `withWalletRemovalLock` checks the current session and journal, refuses unresolved records, and holds the same spend lock while the removal callback runs. |
+| Payment/reconciliation | Exclusive `gys:origin-wallet-operations:v1` followed by `gys:wallet-spend:<walletKey>`, both using Web Locks `ifAvailable`; cooperating clients on different wallets/networks also reject competing work. |
+| Connected browser-wallet removal | `withWalletRemovalLock` checks the current session and every journal record on the origin, refuses unresolved or malformed records, and holds the same origin-then-wallet locks throughout the removal callback. |
 
-The connected-wallet removal guard is progress, not a complete removal protocol.
-At this document's source snapshot, `handleLogout` can call the destructive
-removal callback without journal inspection when the browser SDK is null. Prove
-that no locked/disconnected entry point can reach that bypass or change it to
-preserve data until readiness can be established. Recovery readiness and pending
-exit/refund state also need explicit acceptance evidence.
+At `ca661c4`, browser removal with a null SDK is rejected without deleting wallet
+data. The removal callback also calls
+`src/features/unilateral-exit/removalProtection.ts` before destructive work: any
+persisted `recovery-plan:` or `unilateral-exit-pending:` key blocks removal,
+including entries a tolerant parser might treat as absent. This check covers all
+wallets/networks on the origin, not just the connected wallet. Recovery readiness
+and the safe resolution/archive of these records still need acceptance evidence.
 
 The callback clears wallet data including localStorage/IndexedDB; it is not a
 logout, locking, encryption migration, or deployment rollback mechanism.
-Storage events invalidate cooperating clients, but there is no durable
-cross-version removal tombstone. Once a removal lock is released, a stale tab,
-old cached client or still-running legacy signer may resume or recreate state.
-The vault mutation lock and spend lock also do not serialize all removal/migration
-combinations. Cover these interleavings with actual browser tests and block
-destructive removal until the protocol is complete. Never use a storage wipe
-to resolve a stuck uncertain-payment record.
+Candidate gateways synchronously compare their captured storage generation with
+`gys:wallet-operation-generation:v1`, rejecting an existing stale connection
+after a wipe even before its tab receives a storage event. This closes the
+candidate-to-candidate delayed-event window; it does not retrofit older cached
+clients or already-running legacy signers. There is still no durable
+cross-version removal tombstone. The vault mutation lock and origin/spend locks
+also do not serialize all removal/migration combinations. Cover these remaining
+interleavings with actual browser tests and keep destructive removal restricted
+until the protocol is complete. Never use a storage wipe to resolve a stuck
+uncertain-payment record.
 
 ## Uncertain payments and rollback compatibility
 
@@ -306,7 +315,7 @@ atomicity, OS memory cleanup or settlement.
 | Priority | Required outcome | Acceptance evidence |
 | --- | --- | --- |
 | P0 | Complete audited signer/gateway lifecycle and operation inventory, including SDK internal/background work and deliberately unavailable routes. | No value-moving callback bypasses exact-intent authorization; revoked sessions cannot sign; quote changes and duplicates fail closed. Any unavailable refund/exit route has an honest, usable recovery procedure rather than an indefinite unsupported screen. |
-| P0 | Close removal/migration/stale-client races, including SDK-null removal. | Browser tests show unresolved records survive every removal entry point, destructive removal cannot overlap migration/spending, and stale clients cannot resurrect removed state or execute after removal. |
+| P0 | Close the remaining vault-mutation/removal and older-client races; independently verify the implemented removal guards. | Browser tests confirm SDK-null removal preserves data, all-origin journal/exit records block removal, origin-then-wallet locks serialize candidate spending/removal, and generation checks reject stale candidate connections before storage events. Also demonstrate removal cannot overlap vault mutation and older clients cannot resurrect removed state or execute after removal. |
 | P0 | Provide durable, safe resolution of unknown/pending/malformed payment journal states. | Matching authoritative settlement/return evidence; no blind retry, no automatic clearing and no outcome inferred from local absence. Cross-device recovery procedure tested. |
 | P0 | Produce and test the vault-and-journal-aware rollback artifact and rollout controls. | Immutable rollback SHA/artifact, schema compatibility matrix and actual disposable-profile rollback rehearsal, including post-password-reset and unresolved-payment states. |
 | P0 | Verify original wallet preservation and supported-device recovery. | Same derived identity/network, expected balance and history after cold start and restore; real browser/PWA process/background tests and separately approved small-value settlement checks where necessary. |
