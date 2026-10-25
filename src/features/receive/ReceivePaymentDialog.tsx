@@ -217,7 +217,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
   };
 
   // The BTC tab shows Lightning or on-chain, reusing those two tab states.
-  const isBtcTab = receive.activeTab === 'lightning' || receive.activeTab === 'bitcoin';
+  const isBtcTab = receive.activeTab === 'lightning' || receive.activeTab === 'bitcoin' || receive.activeTab === 'spark';
   const btcMode: BtcMode = receive.activeTab === 'bitcoin' ? 'bitcoin' : 'lightning';
   // The card lags the dock by half a turn: it swaps codes while edge-on.
   const [shownMode, setShownMode] = useState<BtcMode>(btcMode);
@@ -355,7 +355,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
             <TabContainer>
               {tabsVisible && (
                 <TabList>
-                <Tab isActive={isBtcTab} onClick={() => { if (!isBtcTab) { handleTabChange('lightning'); setShownMode('lightning'); } }} data-testid="btc-tab">
+                <Tab isActive={isBtcTab} onClick={() => { if (!isBtcTab || receive.activeTab === 'spark') { handleTabChange('lightning'); setShownMode('lightning'); } }} data-testid="btc-tab">
                   <span className="font-bold text-sm">₿</span>
                   BTC
                 </Tab>
@@ -383,7 +383,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                   <>
                     {receive.currentStep === 'input' && (
                       <div className="pt-6">
-                        {isBtcTab && (
+                        {isBtcTab && receive.activeTab !== 'spark' && (
                           <div className="flex flex-col items-center gap-6">
                             {/* Dock, code, caption. The row runs edge to edge and its gaps match the corners' 12px overhang,
                                 so the dock and caption center between the sheet edge and the corners. */}
@@ -393,11 +393,39 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                               <SideCaption shown={shownMode} mode={btcMode} onChange={switchBtcMode} />
                             </div>
                             {btcView('details')}
+                            <button
+                              type="button"
+                              data-testid="direct-spark-receive-entry"
+                              onClick={() => handleTabChange('spark')}
+                              className="w-full rounded-xl border border-[#F7931A]/50 bg-[#F7931A]/10 px-4 py-3 text-left text-sm font-semibold text-spark-text-primary hover:border-[#F7931A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F7931A]"
+                            >
+                              Pay me directly on Spark · 0 sats transfer fee
+                              <span className="mt-1 block text-xs font-normal text-spark-text-secondary">
+                                Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.
+                              </span>
+                            </button>
                           </div>
                         )}
 
                         {receive.activeTab === 'spark' && (
-                          <SparkAddressDisplay address={receive.sparkAddress} isLoading={receive.sparkLoading} />
+                          <div className="flex w-full flex-col items-center gap-4" data-testid="direct-spark-receive-panel">
+                            <p className="text-center text-sm font-semibold text-spark-text-primary">
+                              Receive directly on Spark
+                            </p>
+                            <SparkAddressDisplay
+                              address={receive.sparkAddress}
+                              isLoading={receive.sparkLoading}
+                              error={receive.error}
+                              onRetry={() => handleTabChange('spark')}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => { handleTabChange('lightning'); setShownMode('lightning'); }}
+                              className="rounded-lg border border-spark-border px-4 py-2 text-sm text-spark-text-primary"
+                            >
+                              Back to Lightning
+                            </button>
+                          </div>
                         )}
                       </div>
                     )}
