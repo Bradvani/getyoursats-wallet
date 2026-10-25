@@ -332,3 +332,9 @@
  :root[data-gys-theme="orange"] .gys-action-dock button,
  :root[data-gys-theme="orange"] .gys-home-quick-actions__button{transition:none}
 }
+
+/* Activity is deliberately dark in the warm theme: its figures must not
+   inherit the surrounding light-surface foreground color. */
+:root[data-gys-theme="orange"] .gys-activity .gys-activity__amount{
+ color:#FAF9F6;
+}
