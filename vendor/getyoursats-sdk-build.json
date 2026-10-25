@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "sdkSourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+  "patchSha256": "e268eb54c8f88b9037cd7d9ce1ce9eaa134b93e7c2af94fa289773777c3fc7d5",
+  "baselinePackageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026",
+  "cargoLockSha256": "a4ff9d25f17511301751298d67caa1cd123d2ad220013f14875034ba1311b0b9",
+  "rustToolchain": "1.95.0",
+  "wasmBindgenVersion": "0.2.120",
+  "cargoProfile": "release (upstream profile, wasm-opt disabled)",
+  "rawCompiledWasmSha256": "0c435ad18e2346863e638566a35eff19351d785294a08859ad0253a302de96a5",
+  "generatedArtifacts": {
+    "web/breez_sdk_spark_wasm.js": "57e1bee51106b1a56c67dcec1aff33a2491f322e7c479ff0c78280f4bd8efe5b",
+    "web/breez_sdk_spark_wasm.d.ts": "34f2b5078eab5fb40e0c7c73ba31459384fa9dd01e9741bc07620f3b735af8d1",
+    "web/breez_sdk_spark_wasm_bg.wasm": "f8c465b1ec6b6829dba493a320180ec0088fe6304ad3635a4b5039818e50bbba",
+    "nodejs/breez_sdk_spark_wasm.js": "59047e674ddced8b254b8464d7c64f26610ae9eecd1e1c1526cfb278fd7f78a1",
+    "nodejs/breez_sdk_spark_wasm.d.ts": "b677e1b67eabb4455d510747f7732f44f71d67aff41a809bbe1f76d0d45fd2b2",
+    "nodejs/breez_sdk_spark_wasm_bg.wasm": "f8c465b1ec6b6829dba493a320180ec0088fe6304ad3635a4b5039818e50bbba",
+    "bundler/breez_sdk_spark_wasm.js": "6342628f134d0ad21d634559fe7b5a3cea6389e2e5a82134009cc94cfaec81e2",
+    "bundler/breez_sdk_spark_wasm.d.ts": "b677e1b67eabb4455d510747f7732f44f71d67aff41a809bbe1f76d0d45fd2b2",
+    "bundler/breez_sdk_spark_wasm_bg.wasm": "f8c465b1ec6b6829dba493a320180ec0088fe6304ad3635a4b5039818e50bbba",
+    "deno/breez_sdk_spark_wasm.js": "3f2f26ba35e870664cf9fc9dba96a7418752b63c9a4fea77c8788df92d75cac9",
+    "deno/breez_sdk_spark_wasm.d.ts": "b677e1b67eabb4455d510747f7732f44f71d67aff41a809bbe1f76d0d45fd2b2",
+    "deno/breez_sdk_spark_wasm_bg.wasm": "f8c465b1ec6b6829dba493a320180ec0088fe6304ad3635a4b5039818e50bbba"
+  },
+  "securityClaim": "same-wallet software signer factory; not isolated or hardware-backed",
+  "packageSha256": "29746558cedac9579c2668bafe7bc0fcbc7787b30d38009aa7f088ca7bd93072"
+}

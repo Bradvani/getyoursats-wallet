@@ -82,3 +82,8 @@ Acceptance: review the final combined source and exact SDK artifact; test deskto
 5. On failure, stop new enrollment/spending and preserve vault/journal/exit data. Use the compatible rollback build; never regenerate a wallet, erase unresolved records or restore plaintext persistence as a rollback shortcut.
 
 **Final recommendation: continue development from the pinned implementation, but do not deploy this restricted candidate to production.** The immediate dependency is a compiled, verified SDK signer extension plus the controlled synchronization/continuation design. The completed work and source patch are reusable; the gateway does not need to be rebuilt.
+
+
+## 26 October continuation: raw-seed factory compiled and integrated
+
+See `passkey-signer-build-20261026.md` and the machine-readable evidence in `evidence/security-review/passkey-signer-build-20261026.json`. The missing `Seed` import in the supplied extension was fixed, optimized WASM was built, original wallet semantics were checked and all browser seed representations now use revocable external callbacks. The internal passkey signer fallback is removed. This closes the compilation/integration task, not final security approval. The other release packages and production interlock remain unchanged.

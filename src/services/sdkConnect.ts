@@ -6,7 +6,7 @@ import {
   SparkConfig,
   connect,
   defaultConfig,
-  defaultExternalSigners,
+  defaultExternalSignersFromSeed,
   type BreezSdk,
   type Seed,
 } from '@breeztech/breez-sdk-spark';
@@ -126,12 +126,13 @@ export async function connectSdk(params: {
     await waitForBrowserSdkShutdowns();
     assertCurrentSession(epoch);
     const gateway = createOperationGateway(config.network);
-    // The SDK's mnemonic factory keeps the same phrase, passphrase and account.
-    // Entropy/passkey wallets need an SDK seed-based external-signer factory;
-    // never derive a replacement mnemonic as an application workaround.
-    const signers=seed.type==='mnemonic'
-      ? guardExternalSigners(defaultExternalSigners(seed.mnemonic,seed.passphrase,config.network,undefined))
-      : undefined;
+    // Preserve the literal Seed representation and SDK account default for
+    // both imported phrases and existing passkey-derived raw BIP32 seeds.
+    // Do not convert raw seed bytes into new BIP39 words or fall back to an
+    // internal signer that cannot be revoked through this session boundary.
+    const signers=guardExternalSigners(
+      defaultExternalSignersFromSeed(seed,config.network,undefined),
+    );
     const lifetime = createBrowserSdkLifetime(signers);
     // No autonomous stable-balance conversions until bounded mandates exist.
     const browserConfig = {...config, stableBalanceConfig:undefined, preferSparkOverLightning:false,
@@ -140,9 +141,8 @@ export async function connectSdk(params: {
       tokenOptimizationConfig:{...config.tokenOptimizationConfig,autoEnabled:false},
     };
     try {
-      let builder = (signers
-        ? SdkBuilder.newWithSigner(browserConfig,signers.breezSigner,signers.sparkSigner)
-        : SdkBuilder.new(browserConfig, seed)).withPaymentObserver(gateway.observer);
+      let builder = SdkBuilder.newWithSigner(browserConfig,signers.breezSigner,signers.sparkSigner)
+        .withPaymentObserver(gateway.observer);
       if (chainApiUrl && config.apiKey == null && config.sparkConfig)
         builder = builder.withRestChainService(chainApiUrl, 'esplora');
       const raw=await (await builder.withDefaultStorage(storageDir)).build();
