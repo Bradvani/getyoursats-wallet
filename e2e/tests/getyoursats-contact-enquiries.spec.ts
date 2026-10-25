@@ -48,8 +48,8 @@ test('@public-smoke support form offers action-oriented enquiries without implyi
  await page.locator('input[name=consent]').check();
  await page.getByRole('button',{name:'Send securely'}).click();
  await expect(page.getByRole('status',{name:''}).last()).toContainText('GYS-CATEGORY-QA');
- expect(submissions.at(-1)?.topic).toBe('partnership');
- expect(submissions.at(-1)?.message).toContain('potential partnership');
+ expect(submissions[submissions.length - 1]?.topic).toBe('partnership');
+ expect(submissions[submissions.length - 1]?.message).toContain('potential partnership');
  expect(errors).toEqual([]);
 });
 
