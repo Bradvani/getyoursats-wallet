@@ -94,7 +94,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const { historyOpen, setHistoryOpen, gysPosOpen, setGysPosOpen, navigate } = useWalletNavigation(onReturnToWallet, onOpenSettings);
-  const [marketOpen, setMarketOpen] = useState(false);
   const [partnerBuyOpen,setPartnerBuyOpen] = useState(false);
   const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
@@ -386,6 +385,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
       >
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
 
+        {/* One-glance market context belongs above transactions, never below
+            a long activity list or behind a collapsed disclosure. */}
+        {!historyOpen && !settingsActive && <MarketPulse />}
+
         <WalletActivityPanel
           view={historyOpen?'history':'activity'} onViewChange={view=>setHistoryOpen(view==='history')}
           transactions={mergeDepositsWithTransactions(transactions, unclaimedDeposits)}
@@ -395,7 +398,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
           onExitSelected={handleExitSelected}
           onRefresh={() => { void syncNow(); }}
         />
-        {!historyOpen&&<details className="gys-market-secondary" open={marketOpen} onToggle={event=>setMarketOpen(event.currentTarget.open)}><summary>Bitcoin market</summary>{marketOpen&&!settingsActive&&<MarketPulse/>}</details>}
       </div>
 
       {/* Send Payment Dialog - always mounted for instant response */}
