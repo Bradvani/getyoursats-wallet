@@ -36,3 +36,19 @@ test('Scan and merchant Accept follow active wallet language',async({page})=>{
  await expect(page.getByTestId('pos-button').locator('span').last()).toHaveText('Cobrar');
  await expect(page.getByTestId('pos-button')).toHaveAttribute('aria-label','Cobrar en modo comercio');
 });
+
+test('mobile drawer retains a compact set of working destinations without inactive promo rows', async ({page}) => {
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/e2e/fixtures/premium-ui.html');
+ await page.getByTestId('menu-button').click();
+ const menu=page.getByRole('navigation',{name:'Wallet menu'});
+ await expect(menu).toBeVisible();
+ await expect(menu.getByRole('button',{name:'History'})).toBeVisible();
+ await expect(menu.getByRole('button',{name:'Scan QR'})).toBeVisible();
+ await expect(menu.getByRole('button',{name:'Point of Sale'})).toBeVisible();
+ await expect(menu.getByRole('button',{name:'Settings'})).toBeVisible();
+ await expect(menu.getByRole('button',{name:/Buy Bitcoin|Recurring Buys/})).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Remove wallet from this device'})).toBeVisible();
+ await expect(page.getByTestId('menu-app-version')).toBeVisible();
+ await expect(page.locator('.gys-feature-soon')).toHaveCount(0);
+});
