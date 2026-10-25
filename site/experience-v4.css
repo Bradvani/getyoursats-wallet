@@ -196,3 +196,5 @@
 #features .feature-display .art-satellite[hidden],#features #ex-custody-methods[hidden]{display:none!important}
 
 #features{scroll-margin-top:100px}
+
+#features .feature-display-footer .circle-arrow[hidden]{display:none!important}
