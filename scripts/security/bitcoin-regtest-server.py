@@ -5,7 +5,6 @@ transaction; all chain/mempool results otherwise come from the actual local node
 """
 import json,os,subprocess,time,threading
 from http.server import ThreadingHTTPServer,BaseHTTPRequestHandler
-from pathlib import Path
 
 cli=os.environ['BITCOIN_CLI'];datadir=os.environ['BITCOIN_REGTEST_DATADIR']
 def rpc(method,*args,wallet=None):
@@ -65,7 +64,12 @@ class Handler(BaseHTTPRequestHandler):
   body=self.rfile.read(int(self.headers.get('content-length','0'))).decode()
   try:
    if self.path=='/test/mine':
-    state['fault']='none';blocks=rpc('generatetoaddress',1,mining);state['lastBlock']=blocks[-1];return self.send(200,{'block':blocks[-1]})
+    # A fresh coinbase script guarantees that a block mined in the same second
+    # cannot recreate the exact block we deliberately marked invalid earlier.
+    state['fault']='none'
+    fresh_address=rpc('getnewaddress',wallet='gys-miner')
+    blocks=rpc('generatetoaddress',1,fresh_address)
+    state['lastBlock']=blocks[-1];return self.send(200,{'block':blocks[-1]})
    if self.path=='/test/reorg':
     if not state['lastBlock']:return self.send(400,'No test block to invalidate')
     rpc('invalidateblock',state['lastBlock']);state['fault']='stale';return self.send(200,True)
@@ -85,6 +89,8 @@ class Handler(BaseHTTPRequestHandler):
       state['lostAck']=True;return self.send(503,'Injected response loss after Bitcoin Core accepted the transaction')
      return self.send(200,txid)
    return self.send(404,'not found')
-  except Exception:return self.send(500,'Regtest operation failed; no new transaction was created')
+  except Exception as error:
+   print('Disposable regtest control error:',self.path,str(error)[:500],flush=True)
+   return self.send(500,'Regtest operation failed; no new transaction was created')
 print('DISPOSABLE_BITCOIN_REGTEST_READY',flush=True)
 ThreadingHTTPServer(('127.0.0.1',3002),Handler).serve_forever()
