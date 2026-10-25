@@ -1,11 +1,13 @@
 import {afterEach,beforeEach,describe,expect,it} from 'vitest';
+import {rememberSignerIdentity,clearSignerIdentity} from './spendApproval';
+import {installVaultTestLock} from './vaultTestLock';
 import {enrollWebWallet,unlockWebWallet,checkWebWalletPassword,
   hasWebWalletVault,removeMatchingLegacyMnemonic,clearUnlockedWebMnemonic,WEB_VAULT_KEY,resetWebWalletPasswordWithWords} from './webWalletVault';
 
 const WORDS='abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
 const OTHER='legal winner thank year wave sausage worth useful legal winner thank yellow';
-beforeEach(()=>{localStorage.clear();clearUnlockedWebMnemonic()});
-afterEach(()=>{localStorage.clear();clearUnlockedWebMnemonic()});
+beforeEach(()=>{localStorage.clear();clearUnlockedWebMnemonic();clearSignerIdentity();installVaultTestLock()});
+afterEach(()=>{localStorage.clear();clearUnlockedWebMnemonic();clearSignerIdentity()});
 describe('browser phrase vault',()=>{
  it('writes only AES-GCM ciphertext and can unlock with the same phrase',async()=>{
   await enrollWebWallet(WORDS,'very-long-wallet-password-123');
@@ -14,6 +16,7 @@ describe('browser phrase vault',()=>{
   expect(localStorage.getItem('walletMnemonic')).toBeNull();
   expect(JSON.parse(raw).cipher).toBe('AES-GCM');
   expect(await unlockWebWallet('very-long-wallet-password-123')).toBe(WORDS);
+  await rememberSignerIdentity({type:'mnemonic',mnemonic:WORDS});
   expect(await checkWebWalletPassword('very-long-wallet-password-123')).toBe(true);
   expect(await checkWebWalletPassword('wrong password')).toBe(false);
  });
@@ -43,6 +46,26 @@ describe('browser phrase vault',()=>{
   await resetWebWalletPasswordWithWords(WORDS,'new-long-wallet-password');
   expect(await unlockWebWallet('new-long-wallet-password')).toBe(WORDS);
   await expect(unlockWebWallet('old-long-wallet-password')).rejects.toThrow();
+ });
+ it('serializes competing enrolments so a second wallet never overwrites the first',async()=>{
+  const both=await Promise.allSettled([
+    enrollWebWallet(WORDS,'shared-test-password-12345'),
+    enrollWebWallet(OTHER,'shared-test-password-12345'),
+  ]);
+  expect(both.filter(r=>r.status==='fulfilled')).toHaveLength(1);
+  expect(both.filter(r=>r.status==='rejected')).toHaveLength(1);
+  const decrypted=await unlockWebWallet('shared-test-password-12345');
+  expect([WORDS,OTHER]).toContain(decrypted);
+ });
+ it('repairs damaged vault metadata with matching words while retaining prior record',async()=>{
+  await enrollWebWallet(WORDS,'old-wallet-password-12345');
+  localStorage.setItem(WEB_VAULT_KEY,'{broken-json');
+  await resetWebWalletPasswordWithWords(WORDS,'replacement-wallet-password-6789');
+  expect(await unlockWebWallet('replacement-wallet-password-6789')).toBe(WORDS);
+  const keys=Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)??'');
+  const preserved=keys.filter(k=>k.startsWith('gys:wallet-vault:preserved-previous'));
+  expect(preserved).toHaveLength(1);
+  expect(localStorage.getItem(preserved[0])).toBe('{broken-json');
  });
  it('rejects damaged or unknown data without erasing it',async()=>{
   localStorage.setItem(WEB_VAULT_KEY,'{"v":1,"bad":true}');

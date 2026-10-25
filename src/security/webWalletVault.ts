@@ -4,9 +4,20 @@
  * An authenticated Spark external signer is required for true signing isolation.
  */
 import { Capacitor } from '@capacitor/core';
+import {hasSignerIdentity,matchesSignerIdentity} from './spendApproval';
 
 export const WEB_VAULT_KEY = 'gys:wallet-vault:v1';
 const LEGACY_KEY = 'walletMnemonic';
+const RECOVERY_HINT_KEY = 'gys:wallet-vault:recovery-fingerprint:v1';
+const QUARANTINE_PREFIX = 'gys:wallet-vault:preserved-previous:v1:';
+
+/** Cross-tab exclusive storage mutation. No unsupported-browser fallback to
+ * an unsafe localStorage read/write race. Requires a secure context. */
+async function withVaultMutation<T>(operation:()=>Promise<T>):Promise<T>{
+  if(typeof navigator==='undefined'||!navigator.locks?.request)
+    throw new Error('This browser cannot safely update wallet protection. Use an up-to-date browser.');
+  return navigator.locks.request('getyoursats-vault-mutation-v1',{mode:'exclusive'},operation);
+}
 const KDF_ROUNDS = 650_000;
 const KEY_LENGTH = 256;
 const enc = new TextEncoder();
@@ -100,21 +111,27 @@ export async function unlockWebWallet(passphrase: string): Promise<string> {
   const raw = localStorage.getItem(WEB_VAULT_KEY);
   if (!raw) throw new Error('Protected wallet not found. Restore your recovery phrase.');
   const mnemonic = await readVault(passphrase, raw);
-  // Do not let a corrupt or different legacy value get erased.
+  // Never commit a different decrypted wallet over an active signer identity.
+  if(hasSignerIdentity() && !await matchesSignerIdentity({type:'mnemonic',mnemonic}))
+    throw new Error('Vault identity does not match the connected signer');
   activeMnemonic = mnemonic;
   return mnemonic;
 }
 export async function checkWebWalletPassword(passphrase: string): Promise<boolean> {
   try {
     const mnemonic = await readVault(passphrase, localStorage.getItem(WEB_VAULT_KEY) ?? '');
-    return activeMnemonic != null && mnemonic === activeMnemonic;
+    return activeMnemonic != null && mnemonic === activeMnemonic
+      && await matchesSignerIdentity({type:'mnemonic',mnemonic});
   } catch { return false; }
 }
 /** Enroll without changing wallet identity. Existing vaults cannot be overwritten. */
 export async function enrollWebWallet(mnemonic: string, passphrase: string): Promise<void> {
+  return withVaultMutation(async()=>{
   if (Capacitor.isNativePlatform()) throw new Error('Browser vault is only available on the web.');
   if (passphrase.length < 12 || passphrase.length > 256) throw new Error('Use a password of at least 12 characters.');
   if (!crypto.subtle) throw new Error('Secure browser encryption is not available.');
+  if(hasSignerIdentity() && !await matchesSignerIdentity({type:'mnemonic',mnemonic}))
+    throw new Error('Cannot enroll a different wallet while a signer is connected.');
   const existing = localStorage.getItem(WEB_VAULT_KEY);
   if (existing) {
     const old = await readVault(passphrase, existing);
@@ -136,10 +153,24 @@ export async function enrollWebWallet(mnemonic: string, passphrase: string): Pro
   const serialized = JSON.stringify(record);
   // Verify the ciphertext before changing durable wallet state.
   if ((await readVault(passphrase, serialized)) !== mnemonic) throw new Error('Wallet vault verification failed.');
+  // Recovery hint is a public equality check, not a second secret or a
+  // guarantee against tampering. Stored before the vault so a torn write
+  // never leaves a vault without its recovery manifest.
+  const hint=await recoveryFingerprint(mnemonic);
+  if(hasSignerIdentity() && !await matchesSignerIdentity({type:'mnemonic',mnemonic}))
+    throw new Error('Connected signer changed during vault enrollment.');
+  const existingHint=localStorage.getItem(RECOVERY_HINT_KEY);
+  if(existingHint && existingHint!==hint)throw new Error('Different wallet recovery identity already exists on this device.');
+  localStorage.setItem(RECOVERY_HINT_KEY,hint);
+  if(localStorage.getItem(WEB_VAULT_KEY)!==null)
+    throw new Error('Another wallet was enrolled. No wallet record was replaced.');
   localStorage.setItem(WEB_VAULT_KEY, serialized);
   if ((await readVault(passphrase, localStorage.getItem(WEB_VAULT_KEY)!)) !== mnemonic)
     throw new Error('Wallet vault could not be verified after saving.');
+  if(hasSignerIdentity() && !await matchesSignerIdentity({type:'mnemonic',mnemonic}))
+    throw new Error('Vault identity does not match the connected signer');
   activeMnemonic = mnemonic;
+  });
 }
 /** Remove plaintext only after verified encrypted storage has the SAME phrase. */
 export async function removeMatchingLegacyMnemonic(passphrase: string): Promise<void> {
@@ -156,12 +187,23 @@ export async function removeMatchingLegacyMnemonic(passphrase: string): Promise<
 export async function resetWebWalletPasswordWithWords(
   mnemonic:string,newPassword:string
 ):Promise<void> {
+  return withVaultMutation(async()=>{
   const existing=localStorage.getItem(WEB_VAULT_KEY);
   if(!existing)throw new Error('There is no wallet to recover on this device.');
-  const record=validateRecord(JSON.parse(existing));
+  // Corrupted ciphertext metadata must not block recovery when a durable
+  // independent recovery fingerprint was written during enrollment.
+  let fingerprintFromRecord:string|null=null;
+  try{fingerprintFromRecord=validateRecord(JSON.parse(existing)).recoveryFingerprint;}catch{/* preserve broken bytes */}
+  const manifest=localStorage.getItem(RECOVERY_HINT_KEY);
+  if(manifest && fingerprintFromRecord && manifest!==fingerprintFromRecord)
+    throw new Error('Conflicting wallet recovery records. No data has changed.');
+  const expected=manifest??fingerprintFromRecord;
+  if(!expected)throw new Error('Cannot verify wallet identity from damaged storage. Use the original phrase in the separate recovery flow; the saved record was preserved.');
   const normalized=mnemonic.trim().toLowerCase().replace(/\s+/g,' ');
-  if(await recoveryFingerprint(normalized)!==record.recoveryFingerprint)
+  if(await recoveryFingerprint(normalized)!==expected)
     throw new Error('These recovery words do not match this device’s existing wallet. No data was changed.');
+  if(hasSignerIdentity()&&!await matchesSignerIdentity({type:'mnemonic',mnemonic:normalized}))
+    throw new Error('Recovery words do not match the connected signer.');
   // Retain previous ciphertext until the replacement has been encrypted and
   // authenticated locally. enrollWebWallet normally refuses overwrites.
   if(newPassword.length<12)throw new Error('Use a password of at least 12 characters.');
@@ -174,13 +216,21 @@ export async function resetWebWalletPasswordWithWords(
   const replacement:VaultRecord={
     v:1,cipher:'AES-GCM',kdf:'PBKDF2-SHA256',iterations:KDF_ROUNDS,
     salt:encodeBase64(salt),iv:encodeBase64(iv),
-    ciphertext:encodeBase64(ciphertext),recoveryFingerprint:record.recoveryFingerprint
+    ciphertext:encodeBase64(ciphertext),recoveryFingerprint:expected
   };
   const serialized=JSON.stringify(replacement);
   if(await readVault(newPassword,serialized)!==normalized)
     throw new Error('Failed to validate the replacement wallet vault.');
+  if(localStorage.getItem(WEB_VAULT_KEY)!==existing)
+    throw new Error('Wallet vault changed during recovery. No data has changed.');
+  // Preserve the full previous record (including malformed ciphertext) until
+  // explicit future cleanup, so rollback never needs to write plaintext.
+  const backupKey=QUARANTINE_PREFIX+crypto.randomUUID();
+  localStorage.setItem(backupKey,existing);
+  if(!manifest)localStorage.setItem(RECOVERY_HINT_KEY,expected);
   localStorage.setItem(WEB_VAULT_KEY,serialized);
   if(await readVault(newPassword,localStorage.getItem(WEB_VAULT_KEY)!)!==normalized)
     throw new Error('Failed to verify saved wallet protection.');
   activeMnemonic=normalized;
+  });
 }
