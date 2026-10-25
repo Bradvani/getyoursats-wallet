@@ -32,3 +32,9 @@ The favicon asset URLs use `?v=4` to avoid older browser-tab icon caches. The si
 - The sats slider and wheel are both linear over 1–100,000,000 sats: 25M = 25%, 50M = 50%, 75M = 75%.
 - The hero animates illustrative incoming sats and cross-rail value without inventing a funded user account.
 - Reduced-motion preferences replace automatic animations with completed readable states; keyboard navigation remains usable.
+
+## Bitcoin-first route visual explainer
+
+The `See the route` button in the Experience section starts a four-stage storyboard: SDK route discovery → quote review → conditional on-Spark BTC/token conversion via Flashnet → external-network delivery monitored by a cross-chain provider (including Orchestra). Direction and asset selections affect the visual stages. The storyboard never generates a payable invoice or moves funds.
+
+**Terminology:** Atomic refers only to the on-Spark conversion leg when a Flashnet BTC/token swap occurs. USDC/USDT from/to external networks have separate deposit, pending, provider delivery and possible refund states; do not describe the complete cross-chain route as instantaneous or end-to-end atomic. Source: Breez SDK Spark send/receive and token conversion guides, plus Spark's explanation of on-Spark swaps. This explainer must not show guaranteed delivery, fake exchange rates or guaranteed zero fees.
