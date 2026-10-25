@@ -35,9 +35,12 @@ jobs:
           p=Path('scripts/security/wire-signed-recovery.py');s=p.read_text().replace('if new in s and old not in s:return','if new in s:return');p.write_text(s)
           p=Path('src/security/signedRecoveryController.ts');s=p.read_text()
           s=s.replace("'feeLimitSats'|'transactions'>","'feeLimitSats'|'transactions'|'refund'>")
-          s=s.replace("Action:action,Network:network,Destination:r.destination,","Action:action,Network:network,Destination:r.destination,\n   ...(r.refund?{'Source outpoint':r.refund.txid+':'+r.refund.vout}:{}),")
+          if "'Source outpoint':r.refund.txid" not in s:
+              s=s.replace("Action:action,Network:network,Destination:r.destination,","Action:action,Network:network,Destination:r.destination,\n   ...(r.refund?{'Source outpoint':r.refund.txid+':'+r.refund.vout}:{}),")
           s=s.replace("feeLimitSats,transactions:[]},epoch,'Authorize deposit refund'","feeLimitSats,transactions:[],refund:request},epoch,'Authorize deposit refund'")
-          s=s.replace("const intentHash=await journalDigest({network,request,amountSats,feeLimitSats});live(epoch);","const intentHash=await journalDigest({network,request,amountSats,feeLimitSats});live(epoch);\n   if(Date.now()>=deadline)throw new Error('Refund preparation expired');")
+          anchor="const intentHash=await journalDigest({network,request,amountSats,feeLimitSats});live(epoch);"
+          replacement=anchor+"\n   if(Date.now()>=deadline)throw new Error('Refund preparation expired');"
+          if replacement not in s:s=s.replace(anchor,replacement)
           p.write_text(s)
           PY
           python3 scripts/security/wire-signed-recovery.py
@@ -48,14 +51,20 @@ jobs:
           set -euo pipefail
           npx tsc --noEmit
           npm run lint
-          npx vitest run --reporter=json --outputFile=/tmp/recovery-wiring/tests.json
+          rc=0
+          npx vitest run --reporter=json --outputFile=/tmp/recovery-wiring/tests.json || rc=$?
+          node - <<'JS'
+          const fs=require('fs');const r=JSON.parse(fs.readFileSync('/tmp/recovery-wiring/tests.json','utf8'));
+          console.log(JSON.stringify({total:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests}));
+          for(const suite of r.testResults||[])for(const t of suite.assertionResults||[])if(t.status==='failed')console.log('FAILED:',t.fullName,'\n',...(t.failureMessages||[]).map(m=>m.slice(0,4500)));
+          JS
+          test "$rc" = 0
           npm run test:security:wasm
           npm run build
           if VERCEL_ENV=production npx vite build >/tmp/recovery-wiring/interlock.log 2>&1; then exit 1; fi
           grep -q 'Browser wallet security release is not approved' /tmp/recovery-wiring/interlock.log
           git diff --full-index --binary > /tmp/recovery-wiring/source.patch
           git rev-parse HEAD > /tmp/recovery-wiring/base.txt
-          node -e "let r=require('/tmp/recovery-wiring/tests.json');console.log(JSON.stringify({total:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests}))"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
