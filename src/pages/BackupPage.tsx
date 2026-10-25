@@ -1,3 +1,4 @@
+import {getUnlockedWebMnemonic} from '../security/webWalletVault';
 import React, { useEffect, useState } from 'react';
 import { WarningIcon, PasskeyIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import { Capacitor } from '@capacitor/core';
@@ -102,7 +103,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
         return;
       }
       if (cancelled) return;
-      setMnemonic(localStorage.getItem('walletMnemonic'));
+      setMnemonic(getUnlockedWebMnemonic() ?? localStorage.getItem('walletMnemonic'));
     })();
     return () => {
       cancelled = true;
