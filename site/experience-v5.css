@@ -490,3 +490,205 @@
   #features .ex-chain-mark{width:35px;height:35px}
   #features .ex-chain-label{font-size:11px}
 }
+
+
+/* Network gallery v2: seven restrained brand marks on a shared editorial rail.
+   No boxed cards, staggered offsets, wrap-induced irregular labels, or empty
+   eighth slot. Network logos remain original artwork and aren't recoloured. */
+#features .ex-network-showcase {
+  margin-top:18px;
+  padding:clamp(20px,2.2vw,28px);
+  background:linear-gradient(145deg,#20211e 0%,#181a17 100%);
+  border:1px solid rgba(224,213,191,.19);
+  border-radius:24px;
+  box-shadow:inset 0 1px rgba(255,255,255,.035);
+}
+#features .ex-network-heading {
+  align-items:center;
+  gap:18px;
+  margin-bottom:19px;
+}
+#features .ex-network-heading h3 {
+  font-size:clamp(22px,2.6vw,30px);
+  line-height:1.14;
+  letter-spacing:-.052em;
+  font-weight:780;
+}
+#features .ex-network-kicker {
+  font-size:10px;
+  letter-spacing:.2em;
+  margin-bottom:8px;
+}
+#features .ex-network-count {
+  flex-shrink:0;
+  border:0;
+  padding:0;
+  background:none;
+  font-weight:740;
+  color:#BBAE9A;
+  font-size:10px;
+  letter-spacing:.14em;
+}
+#features .ex-chain-grid {
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:0;
+  padding:14px 0 12px;
+  border-block:1px solid rgba(224,213,191,.13);
+}
+#features .ex-chain-chip,
+#features .ex-chain-chip:nth-child(5),
+#features .ex-chain-chip:last-child {
+  grid-column:auto;
+  justify-self:stretch;
+  width:auto;
+  min-width:0;
+  min-height:114px;
+  padding:10px 4px;
+  border:1px solid transparent;
+  border-radius:16px;
+  background:transparent;
+  box-shadow:none;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  text-align:center;
+  animation:ex-network-reveal .4s both;
+  transition:background .18s ease,border-color .18s ease;
+}
+#features .ex-chain-chip:hover {
+  transform:none;
+  background:rgba(255,255,255,.035);
+  border-color:rgba(225,213,190,.15);
+}
+#features .ex-chain-mark {
+  flex:none;
+  display:grid;
+  place-items:center;
+  margin:0 auto;
+  width:60px;
+  height:60px;
+  padding:10px;
+  border:1px solid #464039;
+  border-radius:18px;
+  background:linear-gradient(155deg,#292a26,#1b1d19);
+  box-shadow:0 8px 20px rgba(0,0,0,.15),inset 0 1px rgba(255,255,255,.025);
+  overflow:hidden;
+  color:transparent;
+}
+#features .ex-chain-mark img {
+  display:block;
+  width:100%;
+  height:100%;
+  max-height:100%;
+  object-fit:contain;
+  border-radius:9px;
+  opacity:1;
+  filter:none;
+}
+#features .ex-chain-label {
+  color:#ECE8E0;
+  font-size:clamp(11px,1.1vw,13px);
+  font-weight:670;
+  line-height:1.25;
+  letter-spacing:-.018em;
+  overflow-wrap:normal;
+  white-space:nowrap;
+  text-overflow:clip;
+  width:100%;
+  text-align:center;
+}
+#features .ex-network-footnote {
+  max-width:880px;
+  margin:17px 0 0!important;
+  color:#AAA69D!important;
+  font-size:11px!important;
+  line-height:1.65!important;
+}
+#features .ex-network-footnote a {color:#F4B86D!important;font-weight:640}
+@media(max-width:900px) {
+  #features .ex-chain-grid {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:stretch;
+    gap:0;
+    padding:12px 0;
+  }
+  #features .ex-chain-chip,
+  #features .ex-chain-chip:nth-child(5),
+  #features .ex-chain-chip:last-child {
+    flex:0 0 25%;
+    width:25%;
+    min-height:99px;
+    padding:10px 4px;
+  }
+  #features .ex-chain-mark{width:52px;height:52px;border-radius:16px;padding:9px}
+  #features .ex-chain-label{font-size:12px}
+}
+@media(max-width:550px) {
+  #features .ex-network-showcase{padding:19px 13px 17px;margin-top:14px;border-radius:20px}
+  #features .ex-network-heading{margin-bottom:15px;gap:10px}
+  #features .ex-network-heading h3{font-size:clamp(18px,5vw,23px);line-height:1.1}
+  #features .ex-network-kicker{font-size:9px;letter-spacing:.15em}
+  #features .ex-network-count{font-size:9px;letter-spacing:.085em;align-self:flex-start;margin-top:4px}
+  #features .ex-chain-grid{padding:10px 0 8px}
+  #features .ex-chain-chip,
+  #features .ex-chain-chip:nth-child(5),
+  #features .ex-chain-chip:last-child{
+    flex:0 0 25%;
+    width:25%;
+    min-height:91px;
+    gap:9px;
+    padding:10px 1px;
+    border-radius:11px;
+  }
+  #features .ex-chain-mark{width:48px;height:48px;border-radius:14px;padding:8px}
+  #features .ex-chain-label{font-size:clamp(10px,2.8vw,12px);font-weight:670}
+  #features .ex-network-footnote{font-size:10.5px!important;line-height:1.65!important;margin-top:14px!important}
+}
+@media(max-width:350px) {
+  #features .ex-network-showcase{padding:16px 10px}
+  #features .ex-chain-mark{width:42px;height:42px;border-radius:12px;padding:7px}
+  #features .ex-chain-chip,
+  #features .ex-chain-chip:nth-child(5),
+  #features .ex-chain-chip:last-child{min-height:84px;gap:8px}
+  #features .ex-chain-label{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  #features .ex-chain-chip{animation:none;transition:none}
+}
+
+
+/* Collapse by the gallery's real usable width, not just the device viewport.
+   The Experience panel occupies a column even on a wide laptop. */
+#features .ex-network-showcase {container-type:inline-size}
+@container (max-width:545px){
+  #features .ex-chain-grid{
+    display:flex;flex-wrap:wrap;align-items:stretch;justify-content:center;gap:0;
+  }
+  #features .ex-chain-chip,
+  #features .ex-chain-chip:nth-child(5),
+  #features .ex-chain-chip:last-child{
+    flex:0 0 25%;width:25%;min-height:94px;padding:10px 2px;
+  }
+  #features .ex-chain-mark{width:49px;height:49px;padding:8px;border-radius:14px}
+  #features .ex-chain-label{font-size:clamp(10px,2.5cqw,12px)}
+}
+
+
+/* Narrow displays get intentionally terse ticker labels; accessible full
+   network names remain present in markup for assistive technology. */
+@media(max-width:550px){
+  #features .ex-chain-label[data-short]{font-size:0!important;letter-spacing:0;line-height:1}
+  #features .ex-chain-label[data-short]::after{
+    display:block;
+    content:attr(data-short);
+    font-size:clamp(10px,2.75vw,12px);
+    line-height:1.25;
+    letter-spacing:.045em;
+    font-weight:750;
+  }
+}
