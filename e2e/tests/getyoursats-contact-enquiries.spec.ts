@@ -22,10 +22,10 @@ test.beforeEach(async({page})=>{
 
 test('@public-smoke support form offers action-oriented enquiries without implying key recovery',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
- let submission:{topic?:string;email?:string;message?:string}|null=null;
+ const submissions:Array<{topic?:string;email?:string;message?:string}>=[];
  await page.route('**/api/contact',async route=>{
   if(route.request().method()==='GET')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({available:true})});
-  submission=route.request().postDataJSON();
+  submissions.push(route.request().postDataJSON());
   return route.fulfill({status:202,contentType:'application/json',body:JSON.stringify({ok:true,reference:'GYS-CATEGORY-QA'})});
  });
  await page.setViewportSize({width:390,height:844});
@@ -48,8 +48,8 @@ test('@public-smoke support form offers action-oriented enquiries without implyi
  await page.locator('input[name=consent]').check();
  await page.getByRole('button',{name:'Send securely'}).click();
  await expect(page.getByRole('status',{name:''}).last()).toContainText('GYS-CATEGORY-QA');
- expect(submission?.topic).toBe('partnership');
- expect(submission?.message).toContain('potential partnership');
+ expect(submissions.at(-1)?.topic).toBe('partnership');
+ expect(submissions.at(-1)?.message).toContain('potential partnership');
  expect(errors).toEqual([]);
 });
 
