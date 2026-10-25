@@ -46,8 +46,16 @@ for(const [width,height] of [[1440,900],[390,844],[320,700]]){
     // Static network coverage remains visible as assets and directions change.
     const grid=page.locator('.ex-chain-grid');
     await expect(grid).toBeVisible();
-    await expect(grid.locator('.ex-chain-chip')).toHaveCount(13);
-    await expect(page.locator('.ex-network-footnote')).toContainText('Routes vary by asset, direction and provider');
+    await expect(grid.locator('.ex-chain-chip')).toHaveCount(7);
+  const featured=['Ethereum','Solana','Base','BNB Chain','Arbitrum','TRON','Monad'];
+  for(const [index,name] of featured.entries()){
+    const tile=grid.locator('.ex-chain-chip').nth(index);
+    await expect(tile.getByText(name,{exact:true})).toBeVisible();
+    await expect(tile.locator('img')).toHaveAttribute('src',/trustwallet\/assets\/master\/blockchains\/.*\/info\/logo\.png$/);
+  }
+  await expect(page.locator('.ex-network-count')).toContainText('7 FEATURED');
+  await expect(page.locator('.ex-network-footnote')).toContainText('Monad availability is not yet confirmed');
+    await expect(page.locator('.ex-network-footnote')).toContainText('USDC/USDT availability varies by network, asset and direction');
     await expect(page.locator('#ex-route-journey')).toHaveCount(0);
     await expect(page.locator('#ex-route-preview')).toHaveCount(0);
     await expect(page.locator('#ex-route-description')).toContainText('Send sats as USDT');
@@ -118,7 +126,7 @@ test('@public-smoke reduced motion, accessible feature tabs and CTA accuracy',as
   await expect(page.locator('.ex-stack-motion-coin')).toHaveCSS('animation-name','none');
 });
 
-test('@public-smoke route network grid covers documented chain examples at every viewport',async({page})=>{
+test('@public-smoke featured logo grid is curated and route availability is qualified',async({page})=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
  for(const [width,height] of [[1440,900],[390,844],[320,700]]){
   await page.setViewportSize({width,height});
@@ -126,15 +134,15 @@ test('@public-smoke route network grid covers documented chain examples at every
   await page.locator('#tab-lightning').click();
   const grid=page.locator('.ex-chain-grid');
   await expect(grid).toBeVisible();
-  await expect(grid.locator('.ex-chain-chip')).toHaveCount(13);
-  for(const name of ['Ethereum','Base','Arbitrum','Optimism','Polygon','Avalanche','BNB Chain','Linea','Sei','Sonic','Unichain','Solana','Tron']){
+  await expect(grid.locator('.ex-chain-chip')).toHaveCount(7);
+  for(const name of ['Ethereum','Solana','Base','BNB Chain','Arbitrum','TRON','Monad']){
    await expect(grid.getByText(name,{exact:true})).toBeVisible();
   }
   await page.locator('#ex-route-reverse').click();
   await expect(page.locator('#ex-route-pair')).toHaveText('SATS  →  USDC');
   await page.locator('[data-ex-asset="USDT"]').click();
   await expect(page.locator('#ex-route-pair')).toHaveText('SATS  →  USDT');
-  await expect(grid.locator('.ex-chain-chip')).toHaveCount(13);
+  await expect(grid.locator('.ex-chain-chip')).toHaveCount(7);
   await expect(page.locator('.ex-network-footnote a')).toHaveAttribute('href','https://wallet.getyoursats.com/');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  }
@@ -147,7 +155,7 @@ test('@public-smoke reduced motion keeps the network listing readable without a 
  await page.goto(landing,{waitUntil:'domcontentloaded'});
  await page.locator('#tab-lightning').click();
  await expect(page.locator('.ex-chain-grid .ex-chain-chip').first()).toHaveCSS('animation-name','none');
- await expect(page.locator('.ex-network-count')).toContainText('13 NETWORKS + MORE');
+ await expect(page.locator('.ex-network-count')).toContainText('7 FEATURED');
  await expect(page.locator('#ex-route-journey')).toHaveCount(0);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });

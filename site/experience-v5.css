@@ -456,3 +456,37 @@
  .ex-chain-chip{animation:none;transition:none}
  .ex-chain-chip:hover{transform:none}
 }
+
+/* Seven featured networks: official chain marks replace letter tiles. */
+#features .ex-chain-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+#features .ex-chain-chip{min-height:58px;padding:9px 11px;gap:11px;
+  background:linear-gradient(145deg,#30312B,#20211F);border-color:#49473D;
+  box-shadow:inset 0 1px rgba(255,255,255,.035)}
+#features .ex-chain-chip:hover{border-color:color-mix(in srgb,var(--ex-chain-tint),#87785A 40%)}
+#features .ex-chain-mark{width:39px;height:39px;border-radius:13px;padding:5px;
+  overflow:hidden;background:#171715;border-color:#4E4638;color:transparent}
+#features .ex-chain-mark img{display:block;width:100%;height:100%;
+  object-fit:contain;filter:none;opacity:1}
+#features .ex-chain-label{font-size:clamp(11px,1vw,13px);
+  color:#F4F1E9;letter-spacing:-.015em;line-height:1.25}
+#features .ex-chain-chip:nth-child(5){grid-column:2}
+#features .ex-network-footnote{margin-top:15px!important}
+@media (max-width:950px) and (min-width:551px){
+  #features .ex-chain-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #features .ex-chain-chip:nth-child(5){grid-column:auto}
+  #features .ex-chain-chip:last-child{grid-column:2}
+}
+@media(max-width:550px){
+  #features .ex-chain-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  #features .ex-chain-chip{min-height:60px;padding:8px 10px;gap:9px}
+  #features .ex-chain-mark{width:39px;height:39px;padding:5px;border-radius:12px}
+  #features .ex-chain-label{font-size:12px}
+  #features .ex-chain-chip:nth-child(5){grid-column:auto}
+  #features .ex-chain-chip:last-child{grid-column:1/-1;
+    justify-self:center;width:calc(50% - 4px)}
+}
+@media(max-width:350px){
+  #features .ex-chain-chip{padding:8px 7px;gap:7px}
+  #features .ex-chain-mark{width:35px;height:35px}
+  #features .ex-chain-label{font-size:11px}
+}
