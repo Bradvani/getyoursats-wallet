@@ -42,7 +42,15 @@ const probe={
     gatewayInstalled:true,spendingAttempted:false,claimsAttempted:false};
   }finally{connecting=false;}
  },
- async observe(){regtestOnly();if(!wallet)throw new Error('Not connected');await wallet.syncWallet({});const info=await wallet.getInfo({ensureSynced:false});return {identityPubkey:info.identityPubkey,balanceSats:String(info.balanceSats)};},
+ async observe(){
+  regtestOnly();if(!wallet)throw new Error('Not connected');
+  await wallet.syncWallet({});
+  const info=await wallet.getInfo({ensureSynced:false});
+  const history=await wallet.listPayments({offset:0,limit:20});
+  // No invoices, preimages, signing material or credential fields are exported.
+  return {identityPubkey:info.identityPubkey,balanceSats:String(info.balanceSats),
+   payments:history.payments.map(p=>({id:p.id,amount:String(p.amount),fees:String(p.fees),status:p.status,type:p.paymentType,method:p.method}))};
+ },
  async stop(){if(wallet){await stopBrowserSdk(wallet);wallet=null;}},
 };
 Object.assign(window,{gysPublicRegtestProbe:probe});
