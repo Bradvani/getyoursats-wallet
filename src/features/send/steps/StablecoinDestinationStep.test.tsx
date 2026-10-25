@@ -92,9 +92,9 @@ describe('selected destination quote binding', () => {
   });
   it('preserves chain and token constraints carried by a payment URI', () => {
     const parsed = { ...details, chainId: 8453, contractAddress: '0xAbCd' };
-    const matching = { ...route('base'), chainId: 8453, contractAddress: '0xabcd' };
+    const matching = { ...route('base'), chainId: '8453', contractAddress: '0xabcd' };
     expect(routeMatchesAddress(matching, parsed)).toBe(true);
-    expect(routeMatchesAddress({ ...matching, chainId: 1 }, parsed)).toBe(false);
+    expect(routeMatchesAddress({ ...matching, chainId: '1' }, parsed)).toBe(false);
     expect(routeMatchesAddress({ ...matching, contractAddress: '0xother' }, parsed)).toBe(false);
     expect(routeMatchesAddress({ ...matching, chainId: undefined }, parsed)).toBe(false);
   });

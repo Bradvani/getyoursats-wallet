@@ -9,7 +9,7 @@ export interface StablecoinDestination {
 }
 
 export function routeMatchesAddress(route: CrossChainRoutePair, details: CrossChainAddressDetails) {
-  if (details.chainId !== undefined && route.chainId !== details.chainId) return false;
+  if (details.chainId !== undefined && route.chainId !== String(details.chainId)) return false;
   if (!details.contractAddress) return true;
   // A payment URI can specify a token contract. Keep that constraint even if
   // the provider returns a broader route catalogue. EVM hex is case-insensitive.
