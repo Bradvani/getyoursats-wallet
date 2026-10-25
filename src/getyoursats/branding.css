@@ -420,7 +420,7 @@
   display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;
   scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
   scrollbar-width:none;position:relative;
-  padding:2px 1px 6px;max-width:100%;touch-action:pan-x;
+  padding:2px 1px 6px;max-width:100%;touch-action:auto;
 }
 .gys-market-pulse__denominations::-webkit-scrollbar{display:none}
 .gys-market-pulse__denominations button{
