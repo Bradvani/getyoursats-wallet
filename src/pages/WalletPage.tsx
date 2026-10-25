@@ -1,3 +1,6 @@
+import {trustCopy} from '../getyoursats/trustCopy';
+import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
+import {SUPPORT_URL} from '../constants/publicPages';
 import {usePresentation} from '@/hooks/usePresentation';
 import {WALLET_COPY} from '@/services/presentationPreferences';
 import {useLightningAddress} from '../features/receive/hooks/useLightningAddress';
@@ -291,6 +294,17 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   return (
     <div className={`gys-wallet ${historyOpen ? "gys-wallet--history-open" : ""} flex flex-col h-[calc(100dvh)] relative overflow-hidden`}>
+      <aside className="gys-desktop-nav" aria-label="Wallet navigation">
+        <GetYourSatsWordmark compact/>
+        <nav>
+          <button type="button" aria-current={!historyOpen?'page':undefined} onClick={()=>setHistoryOpen(false)}>{trustCopy(language).wallet}</button>
+          <button type="button" aria-current={historyOpen?'page':undefined} onClick={()=>setHistoryOpen(true)}>{trustCopy(language).history}</button>
+          <button type="button" onClick={()=>setGysPosOpen(true)}>{trustCopy(language).merchant}</button>
+          <button type="button" onClick={onOpenSettings}>{copy.settings}</button>
+          <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">{trustCopy(language).help}</a>
+        </nav>
+        <p>Bitcoin first. Every sat counts.</p>
+      </aside>
       {/* Atmospheric background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-gradient-radial from-spark-primary/15 via-spark-primary/5 to-transparent blur-3xl" />
@@ -327,7 +341,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
         <span className="gys-address-banner__label">⚡ {wc.lightning}</span>
         {primaryLightningAddress.address ? (
           <button type="button" className="gys-address-banner__value"
-            onClick={()=>void navigator.clipboard.writeText(primaryLightningAddress.address!.lightningAddress)}
+            onClick={()=>void navigator.clipboard.writeText(primaryLightningAddress.address!.lightningAddress).then(()=>showToast('success',trustCopy(language).copySuccess)).catch(()=>showToast('error',trustCopy(language).copyFailure))}
             aria-label="Copy your Lightning address"
             title="Copy Lightning address">
             {primaryLightningAddress.address.lightningAddress}
@@ -354,12 +368,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
           <span className="gys-home-quick-actions__text"><strong>{copy.recurring}</strong><small>{wc.soon}</small></span>
         </button>
       </nav>
-      <button type="button" className="gys-wallet__history-trigger" aria-expanded={historyOpen}
-        aria-controls="gys-wallet-history" onClick={()=>setHistoryOpen(v=>!v)}>
-        <span aria-hidden="true" className={historyOpen?'gys-wallet__history-arrow gys-wallet__history-arrow--open':'gys-wallet__history-arrow'}>⌃</span>
-        <span>{historyOpen ? wc.hideHistory : wc.history}</span>
-        {transactions.length > 0 && <span className="gys-wallet__history-count">{transactions.length}</span>}
-      </button>
       {/* Live SDK market quotes and wallet-verified activity. */}
       <div
         ref={transactionsContainerRef}
@@ -367,8 +375,9 @@ const WalletPage: React.FC<WalletPageProps> = ({
         onScroll={handleScroll}
       >
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
-        <MarketPulse />
+
         <WalletActivityPanel
+          view={historyOpen?'history':'activity'} onViewChange={view=>setHistoryOpen(view==='history')}
           transactions={mergeDepositsWithTransactions(transactions, unclaimedDeposits)}
           onPaymentSelected={handlePaymentSelected}
           isSyncing={isSyncing}
@@ -376,6 +385,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
           onExitSelected={handleExitSelected}
           onRefresh={() => { void syncNow(); }}
         />
+        {!historyOpen&&<details className="gys-market-secondary"><summary>Bitcoin market</summary><MarketPulse/></details>}
       </div>
 
       {/* Send Payment Dialog - always mounted for instant response */}
@@ -464,6 +474,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         onLogout={onLogout}
+        onOpenHistory={()=>{setHistoryOpen(true);setIsMenuOpen(false);}}
         onOpenSettings={onOpenSettings}
         onOpenFiatCurrencies={onOpenFiatCurrencies}
         onOpenDca={onOpenDca}

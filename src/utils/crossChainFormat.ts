@@ -1,3 +1,4 @@
+import {atomicDecimal} from '../getyoursats/money';
 import type { Payment } from '@breeztech/breez-sdk-spark';
 
 /** Truncate a long address/string to `start…end` form (default ~42 chars). */
@@ -25,13 +26,7 @@ export function formatChainName(chain: string): string {
 }
 
 /** Format a base-unit amount in its asset's full precision (trailing zeros trimmed). */
-export function formatCrossChainAmount(amount: bigint, decimals: number): string {
-  const divisor = BigInt(10 ** decimals);
-  const whole = amount / divisor;
-  const frac = amount % divisor;
-  const fracStr = frac.toString().padStart(decimals, '0').replace(/0+$/, '');
-  return fracStr ? `${whole}.${fracStr}` : `${whole}`;
-}
+export function formatCrossChainAmount(amount: bigint, decimals: number): string { return atomicDecimal(amount,decimals); }
 
 /**
  * Parse a decimal amount string into an asset's base units, the inverse of

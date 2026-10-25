@@ -1,5 +1,5 @@
 import {usePresentation} from '@/hooks/usePresentation';
-import {homeCopy} from '@/services/presentationPreferences';
+import {homeCopy,APP_LANGUAGES,setAppLanguage,type AppLanguage} from '@/services/presentationPreferences';
 import {useId,useRef} from 'react';
 import InstallPrompt from '../components/InstallPrompt';
 import BrandIntro from '../components/BrandIntro';
@@ -47,7 +47,7 @@ export default function HomePage({onCreateNewWallet,onRestoreWallet,setupIssue}:
     <div className="gys-welcome__atmosphere" aria-hidden="true"/>
     <header className="gys-welcome__header">
       <span className="gys-welcome__scarcity-pill">{tr.scarcity}</span>
-      <span className="gys-welcome__header-tag">BITCOIN · LIGHTNING</span>
+      <label className="gys-language-picker"><span className="sr-only">Language</span><select aria-label="Language" value={language} onChange={event=>setAppLanguage(event.target.value as AppLanguage)}>{APP_LANGUAGES.map(item=><option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
     </header>
     <div className="gys-welcome__stage">
       <div className="gys-welcome__content">

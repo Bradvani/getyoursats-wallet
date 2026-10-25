@@ -13,10 +13,11 @@ for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
   await expect(page.getByRole('button',{name:'Send Bitcoin',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Receive Bitcoin',exact:true})).toBeVisible();
   await expect(page.getByTestId('wallet-balance')).toHaveText(/125\s*000/);
-  const pos=page.getByRole('button',{name:'Open Point of Sale'});
-  const recurring=page.getByRole('button',{name:'Recurring Buys coming soon'});
+  const pos=page.getByRole('button',{name:width>=1024?'Merchant mode':'Open Point of Sale',exact:true});
+  const recurring=page.locator('button[aria-label="Recurring Buys coming soon"]');
   await expect(pos).toBeVisible();
-  await expect(recurring).toBeVisible();
+  if(width<1024)await expect(recurring).toBeVisible();
+  else await expect(recurring).not.toBeVisible();
   await expect(page.getByRole('button',{name:/Protect your Bitcoin|Review recovery options/})).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   mkdirSync('test-artifacts',{recursive:true});

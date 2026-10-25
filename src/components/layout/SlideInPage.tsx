@@ -75,7 +75,7 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
     // above the drawer means the incoming page covers the drawer as
     // it slides in, collapsing two competing left-edge motions into
     // one dominant motion.
-    <div className="absolute inset-0 z-60 flex flex-col">
+    <div className="gys-slide-layer absolute inset-0 z-60 flex flex-col">
       <Transition show={isOpen} appear as="div" className="absolute inset-0 overflow-hidden">
         <TransitionChild
           as="div"

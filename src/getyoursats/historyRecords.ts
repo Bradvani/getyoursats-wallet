@@ -1,3 +1,4 @@
+import {getTokenAmountFromPayment} from '../utils/tokenFormatting';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 
 export type HistoryDirection = 'all' | 'send' | 'receive';
@@ -28,19 +29,22 @@ function csvCell(value: string): string {
 }
 
 export function historyToCsv(records: Payment[]): string {
-  const columns = ['Date UTC', 'Payment ID', 'Direction', 'Network', 'Status', 'Amount sats', 'Fee sats'];
+  const columns = ['Date UTC', 'Payment ID', 'Direction', 'Network', 'Status', 'Amount base units', 'Fee base units', 'Asset', 'Decimals'];
   const rows = records.map(tx => {
     const timestamp = Number.isFinite(tx.timestamp) && tx.timestamp > 0
       ? new Date(tx.timestamp * 1000).toISOString()
       : '';
+    const token=getTokenAmountFromPayment(tx);
     return [
       timestamp,
       tx.id,
       tx.paymentType,
       tx.method,
       tx.status,
-      String(tx.amount),
-      String(tx.fees),
+      String(token?.amount??tx.amount),
+      String(token?.fee??tx.fees),
+      token?.metadata.ticker??'sats',
+      String(token?.metadata.decimals??0),
     ].map(value => csvCell(String(value ?? ''))).join(',');
   });
   return [columns.join(','), ...rows].join('\r\n') + '\r\n';

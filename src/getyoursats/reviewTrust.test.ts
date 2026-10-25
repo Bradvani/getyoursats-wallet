@@ -1,0 +1,30 @@
+import {describe,it,expect} from 'vitest';
+import type {Payment,CrossChainReceiveInfo,InputType} from '@breeztech/breez-sdk-spark';
+import {formatMoney,atomicDecimal} from './money';
+import {paymentOutcome} from './paymentOutcome';
+import {receiveQuoteEvidence} from './receiveQuote';
+import {blocksWalletRemoval} from './removalPolicy';
+import {invoiceExpiresAt} from './invoiceExpiry';
+import {classifyLookupFailure} from './lookupFailure';
+import {TRUST_COPY} from './trustCopy';
+const payment=(status:Payment['status'])=>({id:'test',status,paymentType:'send',amount:15n,fees:2n,timestamp:1,method:'lightning'}) as Payment;
+describe('review monetary and settlement contracts',()=>{
+ it('labels 12473 atomic Bitcoin units as sats, never BTC',()=>{expect(formatMoney({kind:'sats',amount:12473n})).toBe('12 473 sats');expect(formatMoney({kind:'btc',sats:12473n})).toBe('0.00012473 BTC');});
+ it('preserves precision beyond the safe Number range',()=>{expect(atomicDecimal(100000000000000000000001n,18)).toBe('100000.000000000000000001');});
+ it('rejects unsafe numeric atoms and impossible decimal metadata',()=>{expect(()=>formatMoney({kind:'sats',amount:Number.MAX_SAFE_INTEGER+1})).toThrow();expect(()=>atomicDecimal(1n,37)).toThrow();});
+ it('handles signed atomic amounts without floating point',()=>expect(atomicDecimal(-100100n,6)).toBe('-0.1001'));
+ it.each(['completed','failed','pending'] as const)('honors the SDK status %s',status=>expect(paymentOutcome({payment:payment(status)})).toBe(status==='completed'?'success':status==='failed'?'failure':'unknown'));
+ it('does not declare settlement when a runner returns no payment',()=>expect(paymentOutcome(undefined)).toBe('unknown'));
+ it('blocks a pending payment and any unresolved conversion without an age loophole',()=>{expect(blocksWalletRemoval([payment('pending')],false)).toBe(true);expect(blocksWalletRemoval([{...payment('completed'),conversionDetails:{status:'pending'}} as Payment],false)).toBe(true);});
+ it('blocks an active exit and allows terminal settled records',()=>{expect(blocksWalletRemoval([],true)).toBe(true);expect(blocksWalletRemoval([payment('completed'),payment('failed')],false)).toBe(false);});
+ it('does not blame an address for a fetch exception',()=>expect(classifyLookupFailure(new TypeError('Failed to fetch'))).toBe('unavailable'));
+ it('preserves timeout and authoritative recipient absence as different cases',()=>{expect(classifyLookupFailure({code:'ETIMEDOUT'})).toBe('timeout');expect(classifyLookupFailure({code:'RECIPIENT_NOT_FOUND'})).toBe('notFound');});
+ it('keeps the observed $0.09 difference unexplained without fee asset precision',()=>{
+  const info={depositAddress:'public',depositAmount:10090000n,expectedReceivedAmount:12473n,destinationAsset:'BTC',serviceFeeAmount:90000n,expiresAt:1900000000} as CrossChainReceiveInfo;
+  const q=receiveQuoteEvidence(info,10000000n);expect(q.difference).toBe(90000n);expect(q.fee).toBeNull();expect(q.buffer).toBeNull();expect(q.destinationSats).toBe(12473n);
+ });
+ it('keeps fees in their own asset and scale',()=>{const q=receiveQuoteEvidence({depositAmount:10090000n,serviceFeeAmount:1000000000000n,serviceFeeAsset:'ETH',serviceFeeAssetDecimals:18,destinationAsset:'USDB',tokenIdentifier:'token',expectedReceivedAmount:10000000n,expiresAt:1900000000} as CrossChainReceiveInfo,10000000n);expect(q.fee?.asset).toBe('ETH');expect(q.fee?.decimals).toBe(18);expect(q.destinationSats).toBeNull();});
+ it('uses the top-level parsed BOLT11 timestamps, not a guessed hour',()=>expect(invoiceExpiresAt({type:'bolt11Invoice',timestamp:1000,expiry:600} as InputType)).toBe(1600000));
+ it('rejects non-invoice and malformed expiry data',()=>{expect(invoiceExpiresAt({type:'sparkAddress'} as InputType)).toBeNull();expect(invoiceExpiresAt({type:'bolt11Invoice',timestamp:1000,expiry:0} as InputType)).toBeNull();});
+ it.each(['hi','es','pt'] as const)('includes every critical key in %s (human review remains separate)',locale=>{expect(Object.keys(TRUST_COPY[locale]).sort()).toEqual(Object.keys(TRUST_COPY.en).sort());for(const text of Object.values(TRUST_COPY[locale]))expect(text.length).toBeGreaterThan(0);});
+});

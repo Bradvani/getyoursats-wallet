@@ -45,7 +45,7 @@ const pendingText = (
 
   const stillToSend = pendingTopUp(pending, coins).stillToSendSat;
   if (stillToSend > 0) {
-    const amount = `₿${formatWithSpaces(stillToSend)}`;
+    const amount = `${formatWithSpaces(stillToSend)} sats`;
     return { title: 'Waiting for exit fee', subtitle: coins.length > 0 ? `Send ${amount} more` : `Send ${amount} to start` };
   }
   if (!isPendingFunded(pending, coins)) return { title: 'Exit fee sent', subtitle: 'Waiting for a confirmation' };

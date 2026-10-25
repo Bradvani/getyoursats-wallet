@@ -1,3 +1,6 @@
+import {trustCopy} from '@/getyoursats/trustCopy';
+import {usePresentation} from '@/hooks/usePresentation';
+import {Capacitor} from '@capacitor/core';
 import React, { useState } from 'react';
 import PageLayout from '../components/layout/PageLayout';
 import { PrimaryButton, FIELD_BASE_CLASS } from '../components/ui';
@@ -20,6 +23,7 @@ const RestorePage: React.FC<RestorePageProps> = ({
   onClearError,
   isLoading = false,
 }) => {
+  const {language}=usePresentation(); const text=trustCopy(language);
   const [mnemonic, setMnemonic] = useState<string>('');
   const [manualOpen, setManualOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,10 +62,12 @@ const RestorePage: React.FC<RestorePageProps> = ({
   ) : <div/>;
 
   return (
-    <PageLayout footer={footer} onBack={onBack} title="Restore from Backup" onClearError={onClearError}>
+    <PageLayout footer={footer} onBack={onBack} title={text.restoreTitle} onClearError={onClearError}>
        <div className="max-w-xl mx-auto w-full space-y-4">
         <div className="rounded-2xl border border-spark-primary/25 bg-spark-dark p-5 space-y-3">
-          <h2 className="text-lg font-semibold text-spark-text-primary">Restore your existing wallet</h2>
+          <h2 className="text-lg font-semibold text-spark-text-primary">{text.restoreTitle}</h2>
+          <p className="text-sm text-spark-text-secondary">{text.restoreCompatibility}</p>
+          {!Capacitor.isNativePlatform()&&<p className="text-xs text-spark-text-muted">{text.browserLimit}</p>}
           <p className="text-sm text-spark-text-secondary">
             If you saved a GetYourSats passkey with your device's password manager, use it to sign in.
             Face unlock, fingerprint or your screen lock may be used by the operating system.

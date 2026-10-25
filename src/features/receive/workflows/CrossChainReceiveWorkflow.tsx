@@ -1,3 +1,7 @@
+import {formatMoney} from '@/getyoursats/money';
+import {receiveQuoteEvidence} from '@/getyoursats/receiveQuote';
+import {trustCopy} from '@/getyoursats/trustCopy';
+import {usePresentation} from '@/hooks/usePresentation';
 import React, { useCallback, useEffect, useState } from 'react';
 import type {
   CrossChainReceiveInfo,
@@ -11,7 +15,7 @@ import {
   FormError,
   AMOUNT_FIELD_CLASS,
 } from '../../../components/ui';
-import { SpinnerIcon, CopyIcon, CheckIcon } from '../../../components/Icons';
+import { SpinnerIcon } from '../../../components/Icons';
 import { CrossChainAssetStep } from '../../../components/crossChain/CrossChainAssetStep';
 import { CrossChainChainStep } from '../../../components/crossChain/CrossChainChainStep';
 import { useWallet } from '../../../contexts/WalletContext';
@@ -28,11 +32,10 @@ import {
   crossChainFriendlyError,
   landsInThisWallet,
 } from '../../../utils/crossChainRoutes';
-import { formatChainName, formatReceiveAmount, formatCrossChainAmount, parseCrossChainAmount } from '../../../utils/crossChainFormat';
+import { formatChainName, formatCrossChainAmount, parseCrossChainAmount } from '../../../utils/crossChainFormat';
 import { copyToClipboard } from '../../../utils/clipboard';
 import { normalizeDecimalInput } from '../../../utils/decimalInput';
 import { formatTokenAmount } from '../../../utils/tokenFormatting';
-import { formatWithSpaces } from '../../../utils/formatNumber';
 import { getProviderDisplayName } from '../../../utils/paymentDescription';
 import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
@@ -68,7 +71,17 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
   const [pendingAsset, setPendingAsset] = useState<string | null>(null);
   const [pendingChain, setPendingChain] = useState<string | null>(null);
   const [pendingProvider, setPendingProvider] = useState<string | null>(null);
-  const [amountCopied, setAmountCopied] = useState(false);
+  const {language}=usePresentation(); const text=trustCopy(language);
+  const [acknowledged,setAcknowledged]=useState(false);
+  const [revealed,setRevealed]=useState(false);
+  const [now,setNow]=useState(Date.now);
+  const [destinationMetadata,setDestinationMetadata]=useState<{identifier:string;ticker:string;decimals:number}|null>(null);
+  useEffect(()=>{if(step!=='result')return;const id=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(id);},[step]);
+  const destinationToken=receiveResult?.crossChainInfo?.tokenIdentifier;
+  useEffect(()=>{let active=true;if(!destinationToken)return;
+   void wallet.getTokensMetadata({tokenIdentifiers:[destinationToken]}).then(result=>{const item=result.tokensMetadata.find(x=>x.identifier===destinationToken);if(active&&item)setDestinationMetadata(item);}).catch(()=>{});
+   return()=>{active=false;};
+  },[wallet,destinationToken]);
 
   // The provider and result steps cap and scroll themselves, same as the
   // asset / chain steps do from inside their own components.
@@ -217,7 +230,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
   const goBackFromResult = () => {
     setReceiveResult(null);
     setSelectedRoute(null);
-    setAmountCopied(false);
+    setAcknowledged(false); setRevealed(false);
     if (routesForSelection.length > 1) {
       setStep('provider');
     } else {
@@ -237,35 +250,33 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
       if (stableBalance.tokenIdentifier === info.tokenIdentifier && stableBalance.displayConfig) {
         return formatTokenAmount(amount, stableBalance.displayConfig);
       }
-      return `$${formatReceiveAmount(amount, 6)}`;
+      if(destinationMetadata?.identifier===info.tokenIdentifier)return formatMoney({kind:'token',amount,decimals:destinationMetadata.decimals,ticker:destinationMetadata.ticker});
+      return `${amount.toString()} base units (${info.destinationAsset}; precision unavailable)`;
     }
-    return `₿${formatWithSpaces(Number(amount))}`;
+    return /^(btc|bitcoin|sats)$/i.test(info.destinationAsset)?formatMoney({kind:'sats',amount}):`${amount.toString()} base units (${info.destinationAsset}; precision unavailable)`;
   };
 
   const resultInfo = receiveResult?.crossChainInfo;
   const resultAssetName = selectedRoute ? assetDisplayName(selectedRoute.asset) : '';
   const resultChainName = selectedRoute ? formatChainName(selectedRoute.chain) : '';
-  // The amount the sender transfers. `resultDepositUsd` is the rounded $X.XX
+  // The amount the sender transfers is shown at the source asset's exact precision.
+  // Never substitute a bank-dollar symbol for a token amount. Original rounded
   // display; `resultDepositAmount` (bare, full precision) is what the copy button
   // and the QR/EIP-681 carry for the sender to pay — e.g. shows "$1.06" but the
   // real deposit (and copy) is "1.0558" when the SDK doesn't floor to the cent.
   const resultDepositAmount = selectedRoute && resultInfo
     ? formatCrossChainAmount(BigInt(resultInfo.depositAmount), selectedRoute.decimals)
     : usdInput;
-  const resultDepositUsd = selectedRoute && resultInfo
-    ? `$${formatReceiveAmount(BigInt(resultInfo.depositAmount), selectedRoute.decimals)}`
-    : `$${usdInput}`;
   // Plain deposit address for copy/paste (MetaMask etc.). The QR keeps the
   // EIP-681 URI so scanners auto-fill the amount; falls back to the URI if the
   // SDK omitted the structured info.
   const resultDepositAddress = resultInfo?.depositAddress ?? receiveResult?.paymentRequest ?? '';
   const resultShareMessage = `Send ${resultDepositAmount} ${resultAssetName} on ${resultChainName} to ${resultDepositAddress}`;
-  const copyDepositAmount = () => {
-    void copyToClipboard(resultDepositAmount);
-    setAmountCopied(true);
-    setTimeout(() => setAmountCopied(false), 2000);
-    showToast('success', 'Amount copied');
-  };
+  const requestedAtomic=selectedRoute?parseCrossChainAmount(usdInput,selectedRoute.decimals):null;
+  const quote=resultInfo&&requestedAtomic!==null?receiveQuoteEvidence(resultInfo,requestedAtomic):null;
+  const quoteUsable=!!quote?.expiresAtMs && now<quote.expiresAtMs;
+  const fee=quote?.fee;
+  const copyDepositAmount=async()=>{if(!revealed||!quoteUsable)return;try{await copyToClipboard(resultDepositAmount);showToast('success',text.copySuccess);}catch{showToast('error',text.copyFailure);}};
 
   // Steps are content-sized: the sheet re-measures and re-snaps per step, so a
   // short step is not padded out to the tallest one. `pt-6` is the step padding
@@ -279,7 +290,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
       {step === 'amount' && (
         <div>
           <div>
-            <label className="block text-sm font-medium text-spark-text-primary mb-2">Amount</label>
+            <p className="text-sm text-spark-text-secondary mb-3">{text.stablecoins} · {text.depositModel}</p><label className="block text-sm font-medium text-spark-text-primary mb-2">{text.requestedAmount}</label>
             <input
               type="text"
               inputMode="decimal"
@@ -292,7 +303,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
                   if (canContinue) fetchRoutes();
                 }
               }}
-              placeholder="Enter amount in USD"
+              placeholder="USDT / USDC"
               className={AMOUNT_FIELD_CLASS}
               data-testid="cross-chain-receive-amount-input"
             />
@@ -407,48 +418,30 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
           className="pb-2 flex flex-col items-center gap-4 overflow-y-auto overscroll-y-none touch-pan-y min-h-0"
           style={{ maxHeight: isSheetFull ? '85dvh' : '60dvh' }}
         >
-          {/* Amount the sender transfers — the copyable hero (copies the bare
-              number). The $ already signals dollars; the coin sits in the subtitle. */}
-          <div className="text-center">
-            <button
-              onClick={copyDepositAmount}
-              className="inline-flex items-center gap-2 group"
-              title="Copy amount"
-              data-testid="cross-chain-deposit-amount"
-            >
-              <span className="text-3xl font-mono font-bold text-spark-text-primary">
-                {resultDepositUsd}
-              </span>
-              {amountCopied
-                ? <CheckIcon size="sm" className="text-spark-success" />
-                : <CopyIcon size="sm" className="text-spark-text-muted group-hover:text-spark-text-secondary transition-colors" />}
-            </button>
-            <p className="text-sm text-spark-text-secondary mt-1">
-              {resultAssetName} on {resultChainName} · via {getProviderDisplayName(selectedRoute.provider)}
-            </p>
-          </div>
+          <section className="w-full space-y-3 rounded-xl border border-spark-border p-4 text-sm" aria-label={text.quoteReview}>
+            <h3 className="font-semibold text-spark-text-primary">{text.quoteReview}</h3>
+            <dl className="space-y-2 text-spark-text-secondary">
+              <div><dt>{text.requestedAmount}</dt><dd className="font-mono">{usdInput} {resultAssetName}</dd></div>
+              <div><dt>{text.requiredDeposit}</dt><dd className="font-mono text-xl text-spark-text-primary" data-testid="cross-chain-deposit-amount">{resultDepositAmount} {resultAssetName}</dd></div>
+              <div><dt>{text.network}</dt><dd>{resultChainName}</dd></div>
+              <div><dt>{text.expectedOutput}</dt><dd>{resultInfo?formatReceived(resultInfo):text.checking}</dd></div>
+              <div><dt>{text.provider}</dt><dd>{getProviderDisplayName(selectedRoute.provider)}</dd></div>
+              <div><dt>{text.providerFee}</dt><dd>{fee?formatMoney({kind:'token',amount:fee.amount,decimals:fee.decimals,ticker:fee.asset}):text.feeUnavailable}</dd></div>
+              {quote&&quote.difference!==0n&&<div><dt>{text.difference}</dt><dd>{formatMoney({kind:'token',amount:quote.difference,decimals:selectedRoute.decimals,ticker:resultAssetName})}<p>{text.unexplained}</p></dd></div>}
+              <div><dt>{text.expires}</dt><dd>{quote?.expiresAtMs?new Date(quote.expiresAtMs).toLocaleString(language):text.expiryUnavailable}</dd></div>
+            </dl>
+            <p className="text-xs text-spark-text-muted">{text.bufferUnavailable}</p>
+            <p className="text-xs text-spark-text-muted">{text.underpayment}</p>
+          </section>
+          {!quoteUsable?<div role="alert" className="w-full space-y-3"><p>{quote?.expiresAtMs?text.expired:text.expiryUnavailable}</p><PrimaryButton onClick={()=>generateOrder(selectedRoute)}>{text.retry}</PrimaryButton></div>:!revealed?<div className="w-full space-y-3">
+            <label className="flex gap-3 text-sm text-spark-text-secondary"><input type="checkbox" checked={acknowledged} onChange={event=>setAcknowledged(event.target.checked)}/>{text.depositAck}</label>
+            <PrimaryButton disabled={!acknowledged} onClick={()=>setRevealed(true)} className="w-full">{text.showDeposit}</PrimaryButton>
+          </div>:<>
+            <button type="button" onClick={()=>void copyDepositAmount()} className="min-h-11 text-spark-primary">{text.requiredDeposit}: {resultDepositAmount} {resultAssetName}</button>
+            <QRCodeContainer value={receiveResult.paymentRequest}/>
+            <CopyableText text={resultDepositAddress} textToShare={resultShareMessage} truncate showShare label={text.depositAddress} onCopied={()=>showToast('success',text.copySuccess)} onShareError={()=>showToast('error',text.copyFailure)} data-testid="cross-chain-deposit-address"/>
+          </>}
 
-          <QRCodeContainer value={receiveResult.paymentRequest} />
-
-          <CopyableText
-            text={resultDepositAddress}
-            textToShare={resultShareMessage}
-            truncate
-            showShare
-            label="Deposit Address"
-            shareLabel="Deposit"
-            onCopied={() => showToast('success', 'Address copied')}
-            onShareError={() => showToast('error', 'Failed to share')}
-            data-testid="cross-chain-deposit-address"
-          />
-
-          {/* What lands in the wallet */}
-          {resultInfo && (
-            <p className="text-sm text-spark-text-muted">
-              You'll receive{' '}
-              <span className="text-spark-text-primary font-mono font-medium">~{formatReceived(resultInfo)}</span>
-            </p>
-          )}
         </div>
       )}
     </div>

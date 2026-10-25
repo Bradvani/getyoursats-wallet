@@ -19,9 +19,9 @@ describe('WalletActivityPanel', () => {
       onPaymentSelected={onPaymentSelected} exitEntries={[]}
       onExitSelected={vi.fn()} onRefresh={vi.fn()}/>);
     expect(screen.getByRole('tab',{name:'Activity'}).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByText('Received Bitcoin')).toBeTruthy();
+    expect(screen.getByText('Received payment')).toBeTruthy();
     expect(screen.getByText('Outgoing payment')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button',{name:/Received Bitcoin, Lightning, view payment details/i}));
+    fireEvent.click(screen.getByRole('button',{name:/Received payment, 1 000 sats, Lightning, view payment details/i}));
     expect(onPaymentSelected).toHaveBeenCalledWith(transactions[0]);
     fireEvent.click(screen.getByRole('tab',{name:/Transaction history/}));
     expect(screen.getByTestId('full-history').textContent).toContain('SDK history: 2');

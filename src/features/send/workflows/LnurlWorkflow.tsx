@@ -1,3 +1,4 @@
+import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
 import React, { useMemo, useState } from 'react';
 import type { LnurlPayRequestDetails, PrepareLnurlPayRequest, PrepareLnurlPayResponse } from '@breeztech/breez-sdk-spark';
 import type { PaymentStep } from '../../../types/domain';
@@ -21,9 +22,9 @@ interface LnurlWorkflowProps {
   balanceSats?: number;
   tokenBalance?: bigint;
   onBack: () => void;
-  onRun: (runner: () => Promise<void>, hasConversion?: boolean) => Promise<void>;
+  onRun: (runner: () => Promise<PaymentExecutionResult>, hasConversion?: boolean) => Promise<void>;
   onPrepare: (args: PrepareLnurlPayRequest) => Promise<PrepareLnurlPayResponse>;
-  onPay: (prepareResponse: PrepareLnurlPayResponse) => Promise<void>;
+  onPay: (prepareResponse: PrepareLnurlPayResponse) => Promise<PaymentExecutionResult>;
 }
 
 const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, balanceSats, tokenBalance, onBack, onRun, onPrepare, onPay }) => {
@@ -193,11 +194,11 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
     // (token mode without stable balance) computes exact sats, so check it.
     if (!isTokenMode || !isStableBalanceActive) {
       if (minSats && sats < minSats) {
-        setError(`Amount must be at least ₿${formatWithSpaces(minSats)}`);
+        setError(`Amount must be at least ${formatWithSpaces(minSats)} sats`);
         return;
       }
       if (maxSats && sats > maxSats) {
-        setError(`Amount must be at most ₿${formatWithSpaces(maxSats)}`);
+        setError(`Amount must be at most ${formatWithSpaces(maxSats)} sats`);
         return;
       }
     }
