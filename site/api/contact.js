@@ -1,7 +1,19 @@
 // Public GetYourSats support form. The API only accepts same-origin requests.
 // Delivery is unavailable until Resend and a verified sender are configured.
 const allowedOrigins=new Set(['https://getyoursats.com','https://www.getyoursats.com']);
-const topics=new Set(['wallet','payment','recovery','privacy','general','mining']);
+const topicLabels=Object.freeze({
+  support:'Wallet & payment help',
+  feedback:'Product feedback & ideas',
+  partnership:'Partnerships & affiliations',
+  media:'Media & community collaborations',
+  privacy:'Privacy & data requests',
+  general:'General enquiry'
+});
+// Old cached forms may still submit former IDs. Route these privately
+// without continuing to present misleading recovery or mining categories.
+const legacyTopics=Object.freeze({
+  wallet:'support',payment:'support',recovery:'support',mining:'general'
+});
 const attempts=new Map();
 function respond(res,status,body){
  res.setHeader('Cache-Control','no-store');
@@ -21,10 +33,14 @@ export default async function handler(req,res){
  if(String(payload.website||'').trim())return respond(res,202,{ok:true}); // honeypot
  const email=String(payload.email||'').trim().slice(0,255);
  const name=String(payload.name||'').trim().slice(0,80);
- const topic=String(payload.topic||'').trim();
+ const requestedTopic=String(payload.topic||'').trim();
+ const topic=Object.hasOwn(topicLabels,requestedTopic)
+   ? requestedTopic
+   : Object.hasOwn(legacyTopics,requestedTopic) ? legacyTopics[requestedTopic] : null;
  const message=String(payload.message||'').trim();
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)||email.length>254)return respond(res,400,{error:'Enter a valid reply email'});
- if(!topics.has(topic))return respond(res,400,{error:'Choose a topic'});
+ if(!topic)return respond(res,400,{error:'Choose an enquiry type'});
+ const topicLabel=topicLabels[topic];
  if(message.length<15||message.length>2500)return respond(res,400,{error:'Your message must be 15–2500 characters'});
  if(payload.consent!==true)return respond(res,400,{error:'Please acknowledge the privacy reminder'});
  if(!available())return respond(res,503,{error:'Secure mail delivery is not available'});
@@ -36,7 +52,7 @@ export default async function handler(req,res){
  bucket.count++;attempts.set(ip,bucket);if(attempts.size>2000)attempts.clear();
  const reference='GYS-'+now.toString(36).toUpperCase().slice(-8);
  const text=[
-  'GetYourSats support request','Reference: '+reference,'Topic: '+topic,'Name: '+(name||'Not supplied'),
+  'GetYourSats website enquiry','Reference: '+reference,'Enquiry type: '+topicLabel,'Routing code: '+topic,'Name: '+(name||'Not supplied'),
   'Reply to: '+email,'',message.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g,''),'',
   'Never request private keys, recovery words or PINs in any reply.'
  ].join('\n');
@@ -44,7 +60,7 @@ export default async function handler(req,res){
   const upstream=await fetch('https://api.resend.com/emails',{
    method:'POST',
    headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json','Idempotency-Key':reference},
-   body:JSON.stringify({from:process.env.GETYOURSATS_SUPPORT_FROM,to:[process.env.GETYOURSATS_SUPPORT_TO],reply_to:email,subject:'GetYourSats · '+topic+' · '+reference,text}),
+   body:JSON.stringify({from:process.env.GETYOURSATS_SUPPORT_FROM,to:[process.env.GETYOURSATS_SUPPORT_TO],reply_to:email,subject:'GetYourSats · '+topicLabel+' · '+reference,text}),
    signal:AbortSignal.timeout(9000)
   });
   if(!upstream.ok)return respond(res,502,{error:'Email provider could not accept the request'});
