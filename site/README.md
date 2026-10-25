@@ -35,8 +35,7 @@ The favicon asset URLs use `?v=4` to avoid older browser-tab icon caches. The si
 ## Bitcoin-first network showcase
 
 The marketing page lists **13 documented routing-network examples**:
-Ethereum, Base, Arbitrum, Optimism, Polygon, Avalanche, BNB Chain,
-Linea, Sei, Sonic, Unichain, Solana and Tron. It keeps the USDC/USDT
+Ethereum, Solana, Base, BNB Chain, Arbitrum, TRON and Monad as a curated *visual* gallery. These are not a guarantee of active receive/send routes; Monad is not yet confirmed in live receive routing. It keeps the USDC/USDT
 selector and the sats ↔ stablecoin reversal so visitors can understand
 the wallet's purpose without a technical swap diagram.
 
@@ -49,3 +48,7 @@ them to the wallet to check available routes and review a live quote.
 No route is quoted, funded or executed by the marketing preview.
 The previous four-step technical Spark/Flashnet journey was intentionally
 removed to keep the public experience friendly to first-time Bitcoin users.
+
+## Seven-chain logo gallery (October 2026)
+
+The Bitcoin-First Routes card features seven user-selected networks: Ethereum, Solana, Base, BNB Chain, Arbitrum, TRON and Monad. Original chain logos are served from the Trust Wallet assets repository (the same upstream logo source used by the wallet's CryptoIcon component). Every image URL was checked for HTTP 200. The marketing gallery is **not** derived from a live `getCrossChainRoutes` response. Asset, direction, and provider availability are determined at runtime in the actual wallet; Monad routes are explicitly unconfirmed.
