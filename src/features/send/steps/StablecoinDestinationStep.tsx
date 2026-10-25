@@ -8,7 +8,7 @@ import { useSheetBack } from '../../../components/ui/sheets/BottomSheetCardConte
 import { formatChainName } from '../../../utils/crossChainFormat';
 import { normalizeChainName } from '../../../utils/crossChainRoutes';
 
-import type { StablecoinDestination } from '../utils/stablecoinDestination';
+import { routeMatchesAddress, type StablecoinDestination } from '../utils/stablecoinDestination';
 
 export default function StablecoinDestinationStep({ initialInput, initialSelection, onBack, onContinue }: {
   initialInput: string;
@@ -45,7 +45,8 @@ export default function StablecoinDestinationStep({ initialInput, initialSelecti
           setResult({ input, routes: [], error: 'invalid' });
           return;
         }
-        const routes = await wallet.getCrossChainRoutes({ type: 'send', addressDetails: parsed });
+        const listed = await wallet.getCrossChainRoutes({ type: 'send', addressDetails: parsed });
+        const routes = listed.filter(route => routeMatchesAddress(route, parsed));
         if (!cancelled) setResult({ input, routes, details: parsed,
           error: routes.length ? undefined : 'noRoutes' });
       } catch {

@@ -8,8 +8,18 @@ export interface StablecoinDestination {
   chain: string;
 }
 
+export function routeMatchesAddress(route: CrossChainRoutePair, details: CrossChainAddressDetails) {
+  if (details.chainId !== undefined && route.chainId !== details.chainId) return false;
+  if (!details.contractAddress) return true;
+  // A payment URI can specify a token contract. Keep that constraint even if
+  // the provider returns a broader route catalogue. EVM hex is case-insensitive.
+  const normalize = (value?: string) => details.addressFamily === 'evm' ? value?.toLowerCase() : value;
+  return normalize(route.contractAddress) === normalize(details.contractAddress);
+}
+
 export function matchesDestination(route: CrossChainRoutePair, destination: StablecoinDestination) {
-  return route.asset === destination.asset && normalizeChainName(route.chain) === destination.chain;
+  return route.asset === destination.asset && normalizeChainName(route.chain) === destination.chain
+    && routeMatchesAddress(route, destination.details);
 }
 
 export function quoteMatchesDestination(response: PrepareSendPaymentResponse, destination: StablecoinDestination): boolean {

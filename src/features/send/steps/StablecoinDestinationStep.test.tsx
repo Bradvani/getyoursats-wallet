@@ -4,7 +4,7 @@ import type { BreezSdk, CrossChainRoutePair, PrepareSendPaymentResponse } from '
 import { WalletProvider } from '../../../contexts/WalletContext';
 import { createMockClient } from '../../../test/mocks/mockWalletApi';
 import StablecoinDestinationStep from './StablecoinDestinationStep';
-import { quoteIsCurrent, quoteMatchesDestination, type StablecoinDestination } from '../utils/stablecoinDestination';
+import { quoteIsCurrent, quoteMatchesDestination, routeMatchesAddress, type StablecoinDestination } from '../utils/stablecoinDestination';
 
 const route = (chain: string, asset = 'USDC') => ({ chain, asset, provider: 'orchestra' }) as CrossChainRoutePair;
 const details = { address: '0xrecipient', addressFamily: 'evm' as const };
@@ -89,5 +89,13 @@ describe('selected destination quote binding', () => {
     expect(quoteIsCurrent(quote())).toBe(true);
     expect(quoteIsCurrent(quote({ expiresAt: '2000-01-01T00:00:00Z' }))).toBe(false);
     expect(quoteIsCurrent(quote({ expiresAt: 'invalid' }))).toBe(false);
+  });
+  it('preserves chain and token constraints carried by a payment URI', () => {
+    const parsed = { ...details, chainId: 8453, contractAddress: '0xAbCd' };
+    const matching = { ...route('base'), chainId: 8453, contractAddress: '0xabcd' };
+    expect(routeMatchesAddress(matching, parsed)).toBe(true);
+    expect(routeMatchesAddress({ ...matching, chainId: 1 }, parsed)).toBe(false);
+    expect(routeMatchesAddress({ ...matching, contractAddress: '0xother' }, parsed)).toBe(false);
+    expect(routeMatchesAddress({ ...matching, chainId: undefined }, parsed)).toBe(false);
   });
 });
