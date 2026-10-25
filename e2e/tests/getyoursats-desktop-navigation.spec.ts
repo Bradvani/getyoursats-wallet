@@ -41,6 +41,8 @@ for (const viewport of [{width:360,height:800}, {width:390,height:844}, {width:7
     await page.locator('.gys-slide-layer').getByRole('button', { name: 'Close', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const history = await page.locator('#gys-wallet-history').boundingBox();
+    expect(history!.height).toBeGreaterThan(100);
     await page.screenshot({ path: `test-artifacts/layout-${test.info().project.name}-${viewport.width}.png` });
   });
 }
