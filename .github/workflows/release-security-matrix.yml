@@ -1,0 +1,82 @@
+name: Release security engine matrix
+on:
+  push:
+    branches: [release/browser-pwa-security-localization-20261025]
+    paths:
+      - playwright.release-security.config.ts
+      - playwright.release-rollback.config.ts
+      - .github/workflows/release-security-matrix.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pr43-release-engine-matrix
+  cancel-in-progress: true
+jobs:
+  browsers:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium,firefox,webkit]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Encrypted vault, cross-tab concurrency and restricted previews
+        run: npx playwright test --config playwright.release-security.config.ts --project ${{ matrix.browser }}
+      - name: Build containment artifact and verify same-origin preservation
+        run: |
+          set -euo pipefail
+          npx tsc --project rollback/tsconfig.json
+          npx vite build --config vite.rollback.config.ts
+          node scripts/security/package-rollback.mjs
+          npx playwright test --config playwright.release-rollback.config.ts --project ${{ matrix.browser }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: engine-evidence-${{ matrix.browser }}-${{ github.sha }}
+          path: dist-rollback/rollback-manifest.json
+          retention-days: 30
+  dependency-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - name: Record advisories; do not auto-upgrade wallet dependencies
+        run: |
+          mkdir -p /tmp/dependency-evidence
+          npm audit --json > /tmp/dependency-evidence/all.json || true
+          npm audit --omit=dev --json > /tmp/dependency-evidence/runtime.json || true
+          node - <<'JS'
+          const fs=require('fs');
+          for(const scope of ['all','runtime']){
+            const data=JSON.parse(fs.readFileSync('/tmp/dependency-evidence/'+scope+'.json','utf8'));
+            console.log(scope,JSON.stringify(data.metadata?.vulnerabilities||{}));
+            for(const [name,item] of Object.entries(data.vulnerabilities||{})){
+              console.log(JSON.stringify({scope,name,severity:item.severity,range:item.range,direct:item.isDirect,fix:item.fixAvailable,via:item.via}));
+            }
+            if(data.error)throw new Error('Audit registry lookup failed; missing evidence is not a pass');
+          }
+          JS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: dependency-evidence-${{ github.sha }}
+          path: /tmp/dependency-evidence/
+          retention-days: 30
