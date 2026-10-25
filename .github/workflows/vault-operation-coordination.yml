@@ -1,0 +1,114 @@
+name: Verify vault operation coordination
+on:
+  push:
+    branches: [release/browser-pwa-security-localization-20261025]
+    paths:
+      - src/security/vaultOperationCoordination.ts
+      - src/security/vaultOperationCoordination.test.ts
+      - .github/workflows/vault-operation-coordination.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pr43-vault-operation-coordination
+  cancel-in-progress: true
+jobs:
+  verify:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Join existing mutation path to the shared operation lock
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/vault-coordination
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/security/webWalletVault.ts');s=p.read_text()
+          needle="import {withCoordinatedVaultMutation as withVaultMutation} from './vaultOperationCoordination';"
+          if needle not in s:
+              start=s.index('/** Cross-tab exclusive storage mutation.')
+              end=s.index('const KDF_ROUNDS',start)
+              s=s[:start]+s[end:]
+              anchor="import { Capacitor } from '@capacitor/core';"
+              assert s.count(anchor)==1
+              s=s.replace(anchor,anchor+'\n'+needle)
+              p.write_text(s)
+          p=Path('src/security/vaultTestLock.ts')
+          p.write_text('''/** Test-only Web Locks model. Separate names have separate queues. */
+          export function installVaultTestLock(){
+            const queues=new Map<string,Promise<void>>();
+            const request=async<T>(name:string,options:{ifAvailable?:boolean},cb:(lock:unknown)=>Promise<T>):Promise<T>=>{
+              if(options.ifAvailable&&queues.has(name))return cb(null);
+              const previous=queues.get(name)??Promise.resolve();
+              let release!:()=>void;
+              const current=new Promise<void>(resolve=>{release=resolve});
+              queues.set(name,current);
+              await previous;
+              try{return await cb({name});}
+              finally{release();if(queues.get(name)===current)queues.delete(name);}
+            };
+            Object.defineProperty(navigator,'locks',{configurable:true,value:{request}});
+          }
+          ''')
+          PY
+          git diff --check
+      - run: npm ci --ignore-scripts
+      - name: Test full suite and installed signer artifact
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npm run lint
+          npx vitest run --reporter=default --reporter=json --outputFile=/tmp/vault-coordination/tests.json
+          npm run test:security:wasm
+          npm run build
+          if VERCEL_ENV=production npx vite build >/tmp/vault-coordination/interlock.log 2>&1; then exit 1; fi
+          grep -q 'Browser wallet security release is not approved' /tmp/vault-coordination/interlock.log
+      - run: npx playwright install --with-deps chromium
+      - name: Exercise actual browser Web Locks and rollback migration with the new coordination
+        run: |
+          set -euo pipefail
+          npm run test:security:browser
+          npx tsc --project rollback/tsconfig.json
+          npx vite build --config vite.rollback.config.ts
+          node scripts/security/package-rollback.mjs
+          npx playwright test --config playwright.rollback.config.ts
+          git diff --binary --full-index -- src/security/webWalletVault.ts src/security/vaultTestLock.ts > /tmp/vault-coordination/source.patch
+          git rev-parse HEAD > /tmp/vault-coordination/base.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: vault-coordination-${{ github.sha }}
+          path: /tmp/vault-coordination/
+          retention-days: 30
+  preserve:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: release/browser-pwa-security-localization-20261025
+          fetch-depth: 100
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: vault-coordination-${{ github.sha }}
+          path: /tmp/vault-coordination
+      - name: Preserve verified locking without touching production
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$(cat /tmp/vault-coordination/base.txt)" HEAD
+          git apply --3way --index /tmp/vault-coordination/source.patch
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix(security): serialize vault mutation with spending and wallet removal'
+          git push origin HEAD:refs/heads/release/browser-pwa-security-localization-20261025
+          git rev-parse HEAD
