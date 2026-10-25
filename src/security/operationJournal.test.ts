@@ -1,6 +1,6 @@
 import {beforeEach,describe,it,expect,vi} from 'vitest';
 import type {Payment} from '@breeztech/breez-sdk-spark';
-import {journalDigest,operationWalletKey,readOperations,writeOperation,operationFromPayment,isUnresolved,withOperationLock,type OperationRecord} from './operationJournal';
+import {journalDigest,recipientCommitment,operationWalletKey,readOperations,writeOperation,operationFromPayment,isUnresolved,withOperationLock,type OperationRecord} from './operationJournal';
 const walletKey='a'.repeat(64);
 const record=():OperationRecord=>({version:1,walletKey,operationId:'11111111-1111-4111-8111-111111111111',paymentId:'payment-1',intentHash:'b'.repeat(64),network:'mainnet',route:'lightning',amountSats:'100',feeLimitSats:'2',state:'unknown',createdAt:1000,updatedAt:1000});
 const payment=():Payment=>({id:'payment-1',paymentType:'send',method:'lightning',status:'completed',amount:100n,fees:2n,timestamp:1});
@@ -49,5 +49,16 @@ describe('durable operation journal',()=>{
  it('does not execute a second tab when the browser reports its wallet lock is held',async()=>{
   const action=vi.fn();Object.defineProperty(navigator,'locks',{configurable:true,value:{request:(_name:string,_options:unknown,cb:(lock:null)=>unknown)=>cb(null)}});
   await expect(withOperationLock(walletKey,action)).rejects.toThrow(/Another tab/);expect(action).not.toHaveBeenCalled();
+ });
+});
+
+describe('cross-language recipient commitment',()=>{
+ it('matches the SDK rail-separated SHA256 vectors without storing recipient text',async()=>{
+  expect(await recipientCommitment('spark','021111111111111111111111111111111111111111111111111111111111111111')).toBe('51c51ba8980dc26fed342b10679bc1af02f3003e8b5452a059f9e2cff0c7fe05');
+  expect(await recipientCommitment('lightning','lnbc1publicfixture')).toBe('fbf272e1d859bf245c852ef128331e67f06b16aa27fc68f23b8f5ee7faa7758a');
+  expect(await recipientCommitment('bitcoin','bc1qpublicfixture')).toBe('8b6caf742650d6aaf7072a392866c496547de3c2ff011009559bff1f59f89c0a');
+ });
+ it('does not normalize case-sensitive Bitcoin base58 addresses',async()=>{
+  expect(await recipientCommitment('bitcoin','1CaseSensitive')).not.toBe(await recipientCommitment('bitcoin','1casesensitive'));
  });
 });

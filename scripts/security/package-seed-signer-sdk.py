@@ -61,8 +61,10 @@ def package(args: argparse.Namespace) -> None:
             for suffix in ('.js', '.d.ts', '_bg.wasm'):
                 file = dest / ('breez_sdk_spark_wasm' + suffix)
                 generated[str(file.relative_to(pkg))] = digest(file)
-            if 'defaultExternalSignersFromSeed' not in (dest / 'breez_sdk_spark_wasm.d.ts').read_text():
-                raise ValueError(f'Seed factory absent from {target} declarations')
+            declarations = (dest / 'breez_sdk_spark_wasm.d.ts').read_text()
+            for expected in ('defaultExternalSignersFromSeed', 'observeWalletState', 'observePayment'):
+                if expected not in declarations:
+                    raise ValueError(f'{expected} absent from {target} declarations')
         node = pkg / 'nodejs/index.mjs'
         text = node.read_text()
         if text.count('  defaultExternalSigners,') != 1:
@@ -74,7 +76,7 @@ def package(args: argparse.Namespace) -> None:
             "  if (!_module) _notInitialized('defaultExternalSignersFromSeed');\n"
             '  return _module.defaultExternalSignersFromSeed(...args);\n}\n')
         metadata = json.loads((pkg / 'package.json').read_text())
-        metadata['version'] = '0.1.0-getyoursats.seed.1'
+        metadata['version'] = '0.1.0-getyoursats.observe.1'
         (pkg / 'package.json').write_text(json.dumps(metadata, indent=2)+'\n')
         manifest = {
             'schema': 1, 'sdkSourceCommit': BASE_SOURCE,
@@ -83,7 +85,8 @@ def package(args: argparse.Namespace) -> None:
             'rustToolchain': '1.95.0', 'wasmBindgenVersion': BINDGEN_VERSION,
             'cargoProfile': 'release (upstream profile, wasm-opt disabled)',
             'rawCompiledWasmSha256': digest(wasm), 'generatedArtifacts': generated,
-            'securityClaim': 'same-wallet software signer factory; not isolated or hardware-backed',
+            'securityClaim': 'same-wallet software signing with observation-only network queries; not isolated or hardware-backed',
+            'extensions': ['seed-compatible-external-signers-v1', 'observation-only-wallet-state-v1'],
         }
         (pkg / 'getyoursats-build.json').write_text(json.dumps(manifest, indent=2)+'\n')
         # Deterministic archive: no local usernames, build timestamps or paths.

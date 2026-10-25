@@ -48,7 +48,6 @@ import {hasWebWalletVault,hasLegacyWebMnemonic,clearUnlockedWebMnemonic} from '.
 import {clearSignerIdentity,assertCurrentSession,getSpendingSessionEpoch,matchesSignerIdentity,lockSpendingSession} from '../security/spendApproval';
 import {stopBrowserSdk} from '../security/browserSdkLifetime';
 import {getOperationReconciliation} from '../security/operationGateway';
-import {isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
 import { hasConversionInFlight } from '../contexts/WalletContext';
 import { isConversionPayment } from '../utils/paymentDescription';
 import {newlyCompletedReceive,rememberPaymentId} from '../getyoursats/paymentMomentPolicy';
@@ -1452,9 +1451,8 @@ export function useBreezSdk(
     };
   }, [startupStateRef, retryUnlockRef]);
 
-  // Refresh on foreground. Restricted browser previews read cached status only:
-  // SDK syncWallet also claims deposits and resumes sends. A reviewed foreground
-  // synchronization/claim policy is still required before production release.
+  // Browser facade syncWallet is observation-only; it never maps to the raw
+  // SDK sync that can claim deposits or resume sends. Locked sessions reject it.
   const resyncInFlightRef = useRef(false);
   const foregroundResync = useCallback(async () => {
     if (resyncInFlightRef.current) return;
@@ -1475,7 +1473,7 @@ export function useBreezSdk(
           // Restricted browser previews never start effectful synchronization.
           await Promise.race([
             (async () => {
-              if(!isRestrictedBrowserWallet(s))await s.syncWallet({});
+              await s.syncWallet({});
               // The fetchers absorb their SDK errors and report them as
               // `false`, so a failed read retries the same way a
               // syncWallet throw does.

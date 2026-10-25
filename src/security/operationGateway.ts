@@ -10,10 +10,11 @@ import {
   assertCurrentSession, getSpendingSessionEpoch, isSpendingSessionLocked,
   requestSpendingApproval, getSignerIdentityToken,
 } from './spendApproval';
-import {journalDigest,operationWalletKey,readOperations,readAllOperations,isUnresolved,writeOperation,updateOperation,
+import {journalDigest,recipientCommitment,operationWalletKey,readOperations,readAllOperations,isUnresolved,writeOperation,updateOperation,
   operationFromPayment,withOperationLock,UncertainPaymentError,type OperationRecord} from './operationJournal';
 
 import {BROWSER_SPENDING_POLICY} from './browserReleasePolicy';
+import {observationSdk,verifyObservationWithoutCommit} from './paymentObservation';
 
 const RECONCILIATION=Symbol('wallet-operation-reconciliation');
 const STORAGE_GENERATION_KEY='gys:wallet-operation-generation:v1';
@@ -30,6 +31,7 @@ function captureStorageGeneration():string {
 export interface OperationReconciliation {
   status:()=>Promise<ReadonlyArray<OperationRecord>>;
   reconcile:()=>Promise<ReadonlyArray<OperationRecord>>;
+  observe:()=>Promise<void>;
   withWalletRemovalLock:(action:()=>Promise<void>)=>Promise<void>;
 }
 export function getOperationReconciliation(wallet:BreezSdk):OperationReconciliation|null {
@@ -112,6 +114,15 @@ export function createOperationGateway(network:Network) {
   };
   const reconciliation:OperationReconciliation=Object.freeze({
     status:async()=>readOperations(await getWalletKey()),
+    observe:async()=>{
+      assertConnection();const epoch=getSpendingSessionEpoch();assertUnlocked(epoch);
+      const walletKey=await getWalletKey();
+      await withOperationLock(walletKey,async()=>{
+        assertConnection();assertUnlocked(epoch);
+        await observationSdk(client!).observeWalletState();
+        assertConnection();assertUnlocked(epoch);
+      });
+    },
     withWalletRemovalLock:async(action:()=>Promise<void>)=>{
       assertConnection();const epoch=getSpendingSessionEpoch();assertUnlocked(epoch);
       const walletKey=await getWalletKey();
@@ -129,14 +140,23 @@ export function createOperationGateway(network:Network) {
       const walletKey=await getWalletKey();
       return withOperationLock(walletKey,async()=>{
         assertConnection();assertUnlocked(epoch);
-        // getPayment reads SDK storage. Absence is never proof of non-payment.
-        // syncWallet is deliberately excluded: it can resume value-moving work.
+        // This uses the explicit observation-only extension. Never substitute
+        // cached getPayment or an active sync that may claim/resume/broadcast.
+        const source=observationSdk(client!);
         for(const record of readOperations(walletKey).filter(isUnresolved)){
-          let payment:Payment;
-          try{payment=(await client!.getPayment({paymentId:record.paymentId})).payment}
+          if(!record.recipientHash)continue; // Preserve unresolved legacy operations without a binding.
+          const requestedAt=Date.now();
+          let observation;
+          try{observation=await source.observePayment({paymentId:record.paymentId,recipientCommitment:record.recipientHash})}
           catch{continue;}
           assertConnection();assertUnlocked(epoch);
-          try{operationFromPayment(record,payment)}catch{/* preserve unresolved evidence */}
+          try{
+            // Identity hashing is asynchronous; recheck session again before
+            // committing a durable terminal transition.
+            const result=await verifyObservationWithoutCommit(record,observation,requestedAt);
+            assertConnection();assertUnlocked(epoch);
+            if(result)updateOperation(record,{state:result});
+          }catch{/* preserve unresolved evidence rather than enable repayment */}
         }
         return readOperations(walletKey);
       });
@@ -245,6 +265,18 @@ export function createOperationGateway(network:Network) {
       }
       const deadline = Math.min(record.deadline,intent.expiry);
       if (Date.now() >= deadline) throw new Error('Payment quote or invoice expired');
+      let recipient:string,rail:'spark'|'lightning'|'bitcoin';
+      if(intent.payment.details.type==='spark'){
+        const address=await client!.parse(intent.payment.details.payRequest);
+        if(address.type!=='sparkAddress'||address.network!==(network==='mainnet'?'bitcoin':network)||!address.identityPublicKey)
+          throw new Error('Cannot bind the Spark recipient to this network');
+        recipient=address.identityPublicKey;rail='spark';
+      }else if(intent.payment.details.type==='lightning'){
+        recipient=intent.payment.details.invoice;rail='lightning';
+      }else if(intent.payment.details.type==='bitcoin'){
+        recipient=intent.payment.details.withdrawalAddress;rail='bitcoin';
+      }else throw new Error('Unsupported recipient commitment');
+      const recipientHash=await recipientCommitment(rail,recipient);
       const intentHash=await journalDigest({network,kind,request,fields:intent.fields});
       assertConnection();assertUnlocked(record.epoch);
       await requestSpendingApproval([intent.payment],intent.fields);
@@ -257,7 +289,7 @@ export function createOperationGateway(network:Network) {
       if (kind === 'send' && (request as SendPaymentRequest).prepareResponse.paymentMethod.type === 'bolt11Invoice')
         (executable as SendPaymentRequest).options = {type:'bolt11Invoice',preferSpark:false};
       activeOperation=writeOperation({version:1,walletKey,operationId:executable.idempotencyKey,
-        paymentId:executable.idempotencyKey,intentHash,network,route:intent.payment.details.type as 'spark'|'lightning'|'bitcoin',
+        paymentId:executable.idempotencyKey,intentHash,recipientHash,network,route:intent.payment.details.type as 'spark'|'lightning'|'bitcoin',
         amountSats:intent.payment.amount.toString(),feeLimitSats:intent.fee.toString(),state:'submitting',
         createdAt:Date.now(),updatedAt:Date.now()});
       // Persist before SDK invocation. Any exception after this point is uncertain,
@@ -286,8 +318,13 @@ export function createOperationGateway(network:Network) {
         if(key===BROWSER_SPENDING_POLICY)return true;
         if(key==='getInfo')return async(request:GetInfoRequest={})=>{
           assertConnection();
-          if(request.ensureSynced)throw new Error('Active wallet synchronization is unavailable pending continuation-policy review');
+          if(request.ensureSynced)await reconciliation.observe();
           return raw.getInfo({ensureSynced:false});
+        };
+        if(key==='syncWallet')return async()=>{
+          // Compatibility entrypoint intentionally maps to observation only;
+          // the raw SDK syncWallet is never exposed or invoked.
+          await reconciliation.observe();return {};
         };
         if(key==='receivePayment')return async(input:ReceivePaymentRequest)=>{
           assertConnection();const epoch=getSpendingSessionEpoch();assertUnlocked(epoch);

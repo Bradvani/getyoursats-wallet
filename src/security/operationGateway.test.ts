@@ -2,6 +2,7 @@ import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
 import type {BreezSdk,PrepareSendPaymentResponse,ProvisionalPayment,PrepareLnurlPayResponse,SendPaymentRequest,ReceivePaymentRequest,Network} from '@breeztech/breez-sdk-spark';
 import {createOperationGateway,getOperationReconciliation} from './operationGateway';
 import {writeOperation,operationWalletKey,readAllOperations} from './operationJournal';
+import type {ObservationSdk} from './paymentObservation';
 import {rememberSignerIdentity,clearSignerIdentity,getSpendingRequest,finishSpendingApproval,cancelSpendingApproval,lockSpendingSession} from './spendApproval';
 const seed={type:'mnemonic' as const,mnemonic:'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'};
 const response=():PrepareSendPaymentResponse=>({amount:100n,feePolicy:'feesExcluded',paymentMethod:{type:'sparkAddress',address:'spark-recipient',fee:0n}});
@@ -19,7 +20,7 @@ function harness(override?:ProvisionalPayment[],network:Network='mainnet') {
  const send=vi.fn(async(_request:SendPaymentRequest)=>{const expected=override?.[0]??transfer;await gate.observer.beforeSend(override??[transfer]);return {payment:payment(expected.paymentId,expected.details.type==='bitcoin'?'withdraw':expected.details.type as 'spark'|'lightning')}});
  const prepare=vi.fn(async()=>response());
  const refund=vi.fn();
- const raw={prepareSendPayment:prepare,sendPayment:send,refundDeposit:refund,getInfo:vi.fn(async()=>({identityPubkey:'wallet-identity-fixture',balanceSats:200n})),getPayment:vi.fn(async()=>{throw new Error('not found')})} as unknown as BreezSdk;
+ const raw={prepareSendPayment:prepare,sendPayment:send,refundDeposit:refund,parse:vi.fn(async()=>({type:'sparkAddress',address:'spark-recipient',identityPublicKey:'02'+'11'.repeat(32),network:network==='mainnet'?'bitcoin':network,source:{}})),getInfo:vi.fn(async()=>({identityPubkey:'wallet-identity-fixture',balanceSats:200n})),getPayment:vi.fn(async()=>{throw new Error('cached lookup must not be used')}),observeWalletState:vi.fn(async()=>({identityPubkey:'wallet-identity-fixture',balanceSats:200n})),observePayment:vi.fn(async()=>{throw new Error('not found')})} as unknown as ObservationSdk;
  return {gate,wallet:gate.protect(raw),send,prepare,refund,raw};
 }
 async function approvalReady(){await vi.waitFor(()=>expect(getSpendingRequest()).not.toBeNull());}
@@ -113,7 +114,7 @@ describe('connection operation gateway',()=>{
   const sending=h.wallet.sendPayment({prepareResponse:p});const rejected=expect(sending).rejects.toThrow(/expired during approval/);
   await approvalReady();vi.setSystemTime(62000);await approve();await rejected;expect(h.send).not.toHaveBeenCalled();
  });
- it.each(['refundDeposit','recoverFunds','getTokenIssuer','createTokenAllowance','pullPayment','sendBatch','publishSignedTransferPackage','signMessage','updateUserSettings','syncWallet','lnurlWithdraw','futureSpendMethod'])('denies unreviewed capability %s',method=>{
+ it.each(['refundDeposit','recoverFunds','getTokenIssuer','createTokenAllowance','pullPayment','sendBatch','publishSignedTransferPackage','signMessage','updateUserSettings','lnurlWithdraw','futureSpendMethod'])('denies unreviewed capability %s',method=>{
   const h=harness();expect(()=>Reflect.get(h.wallet,method)({})).toThrow(/unavailable pending/);expect(h.refund).not.toHaveBeenCalled();
  });
  it('does not expose SDK through prototype or property mutation',()=>{
@@ -159,9 +160,9 @@ describe('connection operation gateway',()=>{
   await approve();await rejected;
   const controller=getOperationReconciliation(h.wallet)!;
   const record=(await controller.reconcile())[0];expect(record.state).toBe('unknown');
-  vi.mocked(h.raw.getPayment).mockResolvedValueOnce({payment:{...payment(record.paymentId),status:'failed'}});
+  vi.mocked(h.raw.observePayment).mockResolvedValueOnce({paymentId:record.paymentId,identityPubkey:'wallet-identity-fixture',network:'mainnet',observedAt:Math.floor(Date.now()/1000),outcome:'unresolved',recipientCommitment:record.recipientHash,payment:{...payment(record.paymentId),status:'failed'}});
   expect((await controller.reconcile())[0].state).toBe('unknown');
-  vi.mocked(h.raw.getPayment).mockResolvedValueOnce({payment:payment(record.paymentId)});
+  vi.mocked(h.raw.observePayment).mockResolvedValueOnce({paymentId:record.paymentId,identityPubkey:'wallet-identity-fixture',network:'mainnet',observedAt:Math.floor(Date.now()/1000),outcome:'completed',recipientCommitment:record.recipientHash,payment:payment(record.paymentId)});
   expect((await controller.reconcile())[0].state).toBe('completed');
   await expect(h.wallet.prepareSendPayment({paymentRequest:{type:'input',input:'new recipient'}})).resolves.toBeDefined();
   expect(h.send).toHaveBeenCalledOnce();
@@ -256,14 +257,25 @@ describe('connection operation gateway',()=>{
   await expect(other.wallet.prepareSendPayment({paymentRequest:{type:'input',input:'recipient'}})).rejects.toThrow(/storage session changed/);
   expect(other.prepare).toHaveBeenCalledOnce();
  });
- it('blocks active synchronization before SDK invocation and permits only cached info reads',async()=>{
-  const gate=createOperationGateway('mainnet'),sync=vi.fn(),getInfo=vi.fn(async()=>({identityPubkey:'fixture'}));
-  const wallet=gate.protect({syncWallet:sync,getInfo} as unknown as BreezSdk);
-  expect(()=>wallet.syncWallet({})).toThrow(/unavailable pending/);
-  await expect(wallet.getInfo({ensureSynced:true})).rejects.toThrow(/continuation-policy/);
-  expect(sync).not.toHaveBeenCalled();expect(getInfo).not.toHaveBeenCalled();
+ it('maps browser refresh exclusively to observation and never calls raw active sync',async()=>{
+  const gate=createOperationGateway('mainnet'),sync=vi.fn(),getInfo=vi.fn(async(_request:{ensureSynced?:boolean})=>({identityPubkey:'fixture'}));
+  const observe=vi.fn(async()=>({identityPubkey:'fixture'})),paymentObservation=vi.fn();
+  const wallet=gate.protect({syncWallet:sync,getInfo,observeWalletState:observe,observePayment:paymentObservation} as unknown as BreezSdk);
+  await wallet.syncWallet({});await wallet.getInfo({ensureSynced:true});
+  expect(sync).not.toHaveBeenCalled();expect(observe).toHaveBeenCalledTimes(2);
   await wallet.getInfo({ensureSynced:false});await wallet.getInfo({});
-  expect(getInfo.mock.calls).toEqual([[{ensureSynced:false}],[{ensureSynced:false}]]);
+  expect(getInfo.mock.calls.every(([request])=>request.ensureSynced===false)).toBe(true);
+ });
+ it('refuses observation after lock before invoking any SDK query',async()=>{
+  const h=harness();lockSpendingSession();
+  await expect(h.wallet.syncWallet({})).rejects.toThrow(/locked/);
+  expect(h.raw.observeWalletState).not.toHaveBeenCalled();
+ });
+ it('discards a query result if backgrounding invalidates its session',async()=>{
+  const h=harness();vi.mocked(h.raw.observeWalletState).mockImplementationOnce(async()=>{
+   lockSpendingSession();return {identityPubkey:'wallet-identity-fixture'} as never;
+  });
+  await expect(h.wallet.syncWallet({})).rejects.toThrow(/session changed/);
  });
  it.each([
   {paymentMethod:{type:'crossChain',route:{},amount:100n}},

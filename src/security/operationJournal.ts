@@ -2,10 +2,10 @@ import type {Network, Payment} from '@breeztech/breez-sdk-spark';
 
 const PREFIX='gys:payment-journal:v1:';
 const EVENT='gys:payment-journal-changed';
-export type OperationState='submitting'|'unknown'|'pending'|'completed';
+export type OperationState='submitting'|'unknown'|'pending'|'completed'|'returned';
 export type OperationRecord=Readonly<{
   version:1; walletKey:string; operationId:string; paymentId:string;
-  intentHash:string; network:Network; route:'spark'|'lightning'|'bitcoin';
+  intentHash:string; recipientHash?:string; network:Network; route:'spark'|'lightning'|'bitcoin';
   amountSats:string; feeLimitSats:string; state:OperationState;
   createdAt:number; updatedAt:number;
 }>;
@@ -27,6 +27,14 @@ export async function journalDigest(value:unknown):Promise<string>{
   const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(value))));
   return Array.from(digest,b=>b.toString(16).padStart(2,'0')).join('');
 }
+/** A non-reversible recipient binding; never persist the invoice or address. */
+export async function recipientCommitment(rail:'spark'|'lightning'|'bitcoin',recipient:string):Promise<string>{
+ let canonical=recipient;
+ if(rail==='spark'||rail==='lightning'||/^(bc1|tb1|bcrt1)/i.test(recipient))canonical=recipient.toLowerCase();
+ const bytes=new TextEncoder().encode(rail+'\0'+canonical);
+ const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));
+ return Array.from(digest,b=>b.toString(16).padStart(2,'0')).join('');
+}
 export async function operationWalletKey(network:Network,identityPubkey:string):Promise<string>{
   if(!identityPubkey)throw new Error('Connected wallet identity is unavailable');
   return journalDigest({network,identityPubkey});
@@ -39,9 +47,9 @@ function valid(value:unknown,walletKey:string):value is OperationRecord{
   const r=value as OperationRecord;
   return r.version===1&&r.walletKey===walletKey&&/^[0-9a-f]{64}$/.test(r.walletKey)&&
     /^[0-9a-f-]{36}$/.test(r.operationId)&&typeof r.paymentId==='string'&&r.paymentId.length>0&&r.paymentId.length<256&&
-    /^[0-9a-f]{64}$/.test(r.intentHash)&&['mainnet','regtest','signet'].includes(r.network)&&
+    /^[0-9a-f]{64}$/.test(r.intentHash)&&(r.recipientHash===undefined||/^[0-9a-f]{64}$/.test(r.recipientHash))&&['mainnet','regtest','signet'].includes(r.network)&&
     ['spark','lightning','bitcoin'].includes(r.route)&&/^\d+$/.test(r.amountSats)&&/^\d+$/.test(r.feeLimitSats)&&
-    ['submitting','unknown','pending','completed'].includes(r.state)&&
+    ['submitting','unknown','pending','completed','returned'].includes(r.state)&&
     Number.isSafeInteger(r.createdAt)&&Number.isSafeInteger(r.updatedAt)&&r.createdAt>=0&&r.updatedAt>=r.createdAt;
 }
 export function hasOperationRecords():boolean {
@@ -77,8 +85,8 @@ export function writeOperation(record:OperationRecord):OperationRecord{
   if(!valid(record,record.walletKey))throw new Error('Invalid payment status record');
   // Persist an explicit schema so accidental extra SDK fields never become a
   // secondary invoice/credential copy in browser storage.
-  const {version,walletKey,operationId,paymentId,intentHash,network,route,amountSats,feeLimitSats,state,createdAt,updatedAt}=record;
-  const safeRecord:OperationRecord={version,walletKey,operationId,paymentId,intentHash,network,route,amountSats,feeLimitSats,state,createdAt,updatedAt};
+  const {version,walletKey,operationId,paymentId,intentHash,recipientHash,network,route,amountSats,feeLimitSats,state,createdAt,updatedAt}=record;
+  const safeRecord:OperationRecord={version,walletKey,operationId,paymentId,intentHash,recipientHash,network,route,amountSats,feeLimitSats,state,createdAt,updatedAt};
   const serialized=JSON.stringify(safeRecord);
   localStorage.setItem(key(record),serialized);
   if(localStorage.getItem(key(record))!==serialized)throw new Error('Payment status could not be saved; spending is paused');
