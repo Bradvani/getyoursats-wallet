@@ -11,6 +11,7 @@ on:
       - src/services/chain.ts
       - src/services/esplora.ts
       - src/security/recoveryTransport.ts
+      - docs/security-review/release-acceptance-packet-20261026.md
       - .github/workflows/bitcoin-recovery-regtest.yml
   workflow_dispatch:
 permissions:
