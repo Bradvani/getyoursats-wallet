@@ -118,3 +118,12 @@
 @media(prefers-reduced-motion:reduce){
  .gys-rule-fill,.gys-fiat-unit--issued{animation:none;transition:none}
 }
+
+
+/* Only display the self-custody boundary when a user selects wallet help.
+   Keep the ordinary partnership, feedback and press enquiries uncluttered. */
+.gys-enquiry-note:not([hidden]){
+  display:block;margin:1px 0 7px;padding:11px 13px;
+  background:rgba(247,147,26,.055);border:1px solid rgba(247,147,26,.21);
+  border-radius:12px;color:#C8BAA7;font-size:12px;line-height:1.65
+}
