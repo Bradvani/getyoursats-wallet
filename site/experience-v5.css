@@ -677,3 +677,18 @@
   #features .ex-chain-mark{width:49px;height:49px;padding:8px;border-radius:14px}
   #features .ex-chain-label{font-size:clamp(10px,2.5cqw,12px)}
 }
+
+
+/* Narrow displays get intentionally terse ticker labels; accessible full
+   network names remain present in markup for assistive technology. */
+@media(max-width:550px){
+  #features .ex-chain-label[data-short]{font-size:0!important;letter-spacing:0;line-height:1}
+  #features .ex-chain-label[data-short]::after{
+    display:block;
+    content:attr(data-short);
+    font-size:clamp(10px,2.75vw,12px);
+    line-height:1.25;
+    letter-spacing:.045em;
+    font-weight:750;
+  }
+}
