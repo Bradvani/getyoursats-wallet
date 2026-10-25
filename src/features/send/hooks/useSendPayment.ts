@@ -29,7 +29,7 @@ function bareDestination(parsed: InputType): string | null {
  *  that is not a destination at all. */
 const BAD_LOGIN_CODE = /lnurl (missing|contains invalid) k1|lnurl contains unsupported action/;
 
-export type SendStep ='input' | 'amount' | 'workflow' | 'processing' | 'result';
+export type SendStep ='destination' | 'input' | 'amount' | 'workflow' | 'processing' | 'result';
 export type ProcessingPhase = 'sending' | 'converting';
 
 export interface ProcessInputOptions {
@@ -58,6 +58,7 @@ export interface UseSendPaymentReturn {
   amountFixed: boolean;
   tokenIdentifier: string | null;
   // Actions
+  confirmDestination: (input: SendInput) => void;
   clearError: () => void;
   reset: () => void;
   processInput: (input?: string | null, opts?: ProcessInputOptions) => Promise<void>;
@@ -223,7 +224,7 @@ export function useSendPayment(): UseSendPaymentReturn {
         setAmountFixed(false);
         setCurrentStep('amount');
       } else if (effective.type === 'crossChainAddress') {
-        setCurrentStep('amount');
+        setCurrentStep('destination');
       } else if (
         effective.type === 'lnurlPay' ||
         effective.type === 'lightningAddress' ||
@@ -426,6 +427,15 @@ export function useSendPayment(): UseSendPaymentReturn {
     processingPhase,
     amountFixed,
     tokenIdentifier,
+    confirmDestination: useCallback((input: SendInput) => {
+      setPaymentInput(input);
+      setAmount('');
+      setPrepareResponse(null);
+      setError(null);
+      setTokenIdentifier(null);
+      setFeesIncluded(false);
+      setCurrentStep('amount');
+    }, []),
     clearError: useCallback(() => setError(null), []),
     reset,
     processInput,

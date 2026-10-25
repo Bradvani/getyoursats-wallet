@@ -24,8 +24,10 @@ export interface AmountStepProps {
   error: string | null;
   onBack: () => void;
   onNext: (amount: bigint, feesIncluded?: boolean, tokenIdentifier?: string, conversionOptions?: ConversionOptions) => void;
-  /** Show amount input before destination (used for cross-chain) */
+  /** Use USD amount entry for a cross-chain destination already reviewed. */
   amountFirst?: boolean;
+  /** The parent already displays the reviewed asset, network and full address. */
+  destinationReviewed?: boolean;
 }
 
 const AmountStep: React.FC<AmountStepProps> = ({
@@ -38,6 +40,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   onBack,
   onNext,
   amountFirst = false,
+  destinationReviewed = false,
 }) => {
   // USD entry without a stable-balance token, funded from BTC. Cross-chain
   // ("Send USD", amountFirst) starts in USD; plain BTC sends start in sats
@@ -320,7 +323,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
   return (
     <div className="space-y-5">
-      {amountFirst ? <>{amountSection}{destinationSection}</> : <>{destinationSection}{amountSection}</>}
+      {destinationReviewed ? amountSection : amountFirst ? <>{amountSection}{destinationSection}</> : <>{destinationSection}{amountSection}</>}
 
       <FormError error={inlineBalanceError || localError || error} />
 
