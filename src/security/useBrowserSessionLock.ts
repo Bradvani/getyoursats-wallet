@@ -6,8 +6,8 @@
 import {useEffect,useRef,useState} from 'react';
 import {Capacitor} from '@capacitor/core';
 import {isPasskeyMode} from '../services/passkeyService';
-import {hasWebWalletVault,unlockWebWallet} from './webWalletVault';
-import {cancelSpendingApproval,matchesSignerIdentity} from './spendApproval';
+import {hasWebWalletVault,unlockWebWallet,clearUnlockedWebMnemonic} from './webWalletVault';
+import {lockSpendingSession,unlockSpendingSession} from './spendApproval';
 
 export function useBrowserSessionLock(isConnected:boolean){
  const [locked,setLocked]=useState(false);
@@ -16,7 +16,7 @@ export function useBrowserSessionLock(isConnected:boolean){
    if(Capacitor.isNativePlatform()||isPasskeyMode()||!hasWebWalletVault()||!isConnected)return;
    lastActive.current=Date.now();
    const active=()=>{lastActive.current=Date.now()};
-   const lock=()=>{cancelSpendingApproval('Wallet session locked');setLocked(true)};
+   const lock=()=>{lockSpendingSession('Wallet session locked');clearUnlockedWebMnemonic();setLocked(true)};
    const onVisibility=()=>document.visibilityState==='hidden'?lock():active();
    document.addEventListener('visibilitychange',onVisibility);
    window.addEventListener('pointerdown',active);
@@ -33,8 +33,7 @@ export function useBrowserSessionLock(isConnected:boolean){
  },[isConnected]);
  const unlock=async(password:string)=>{
    const mnemonic=await unlockWebWallet(password);
-   if(!await matchesSignerIdentity({type:'mnemonic',mnemonic}))
-     throw new Error('Protected wallet does not match the connected session');
+   await unlockSpendingSession({type:'mnemonic',mnemonic});
    lastActive.current=Date.now();
    setLocked(false);
  };
