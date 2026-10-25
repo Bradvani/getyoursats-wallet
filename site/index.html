@@ -109,7 +109,7 @@
 @media(max-width:830px){.sat-orbit-wheel{width:115px;height:115px}.sat-orbit-inner strong{font-size:39px}.sat-milestone{padding:8px 10px}.screen-summary{padding-top:25px}}
 @media(max-width:550px){.wallet-screen{padding:30px 16px 18px}.screen-top .app-mark img{width:88px;height:57px}.screen-summary{padding-top:17px}.demo-value{font-size:40px}.screen-actions{margin-top:20px}.screen-content{min-height:140px}.wallet-zero{padding:10px}.sat-orbit-wheel{width:105px;height:105px;padding:9px}.sat-orbit-inner strong{font-size:34px}.sat-orbit-inner small{font-size:11px}.pos-invoice-card{padding:16px 10px;gap:12px}.pos-demo-qr{width:99px;height:99px}.pos-invoice-meta strong{font-size:22px}.soon-pill{font-size:7px;margin-left:4px;padding:4px}}
 @media(prefers-reduced-motion:reduce){.sat-orbit-wheel,.wallet-device,.feature-tab,.pos-quick-item{transition:none!important}}
-</style><link rel="stylesheet" href="/experience-v5.css?rev=1"/>
+</style><link rel="stylesheet" href="/experience-v5.css?rev=2"/>
 </head>
 <body>
 <div aria-hidden="true" class="progress" id="reading-progress"></div>
@@ -257,7 +257,20 @@
         <div class="ex-route-node ex-route-node--dest"><span class="ex-route-side-label" id="ex-route-target-label">YOUR BITCOIN</span><span class="ex-node-round ex-node-round--btc" id="ex-target-icon">₿</span><span class="ex-node-caption" id="ex-target-caption">sats</span><small id="ex-target-sub">Your wallet</small></div>
       </div>
       <div class="ex-route-actions"><button type="button" class="ex-quiet-button" id="ex-route-reverse" aria-label="Reverse route direction"><span aria-hidden="true">⇄</span> Reverse route</button><button type="button" class="ex-primary-button" id="ex-route-preview">See the route <span aria-hidden="true">→</span></button></div>
-      <div class="ex-route-note" id="ex-route-note" aria-live="polite"><span class="ex-route-note-mark">✧</span><span>See how supported stablecoins can move into sats. Reverse it to explore sending sats out.</span></div>
+      <div class="ex-route-note" id="ex-route-note" aria-live="polite"><span class="ex-route-note-mark">✧</span><span>Choose a stablecoin and watch the route, including what Flashnet handles on Spark and what settles across chains.</span></div>
+      <section class="ex-route-journey" id="ex-route-journey" aria-label="Inside the Bitcoin-first route" hidden>
+        <div class="ex-route-journey-head"><span><i class="ex-route-live-dot" aria-hidden="true"></i> BEHIND THE SWAP</span><strong id="ex-route-progress">01 / 04</strong></div>
+        <div class="ex-route-steps" role="group" aria-label="Swap journey stages">
+          <button type="button" data-route-step="0" aria-pressed="true"><span class="ex-route-step-icon">◎</span><span>FIND</span></button>
+          <button type="button" data-route-step="1" aria-pressed="false"><span class="ex-route-step-icon">≋</span><span>REVIEW</span></button>
+          <button type="button" data-route-step="2" aria-pressed="false"><span class="ex-route-step-icon">↔</span><span>CONVERT</span></button>
+          <button type="button" data-route-step="3" aria-pressed="false"><span class="ex-route-step-icon">✓</span><span>DELIVER</span></button>
+        </div>
+        <div class="ex-route-journey-visual" aria-hidden="true"><span class="ex-route-journey-asset" id="ex-journey-from">USDC</span><span class="ex-route-journey-line"><i></i></span><span class="ex-route-journey-core"><em>SPARK</em><strong>₿</strong><small>FLASHNET*</small></span><span class="ex-route-journey-line"><i></i></span><span class="ex-route-journey-asset" id="ex-journey-to">SATS</span></div>
+        <div class="ex-route-story" aria-live="polite" aria-atomic="true"><span id="ex-route-step-label">ROUTE DISCOVERY</span><strong id="ex-route-step-title">Find a supported path</strong><p id="ex-route-step-body">The wallet checks available routes and networks.</p></div>
+        <div class="ex-route-journey-footer"><span class="ex-route-provider" id="ex-route-provider">GETYOURSATS + BREEZ SPARK</span><span class="ex-route-stage-status" id="ex-route-stage-status">ILLUSTRATION / NO FUNDS MOVE</span></div>
+        <p class="ex-route-safety">*Flashnet can settle BTC/token conversions atomically <strong>within Spark</strong> when needed. External-chain delivery via a cross-chain provider is a separate step and can remain pending or require a refund. No swap is executed here.</p>
+      </section>
     </div>
     <div class="ex-scene-bottom"><span class="ex-scene-pip"></span><span>Exact provider quotes, networks and fees appear in the wallet before approval.</span></div>
   </div>
@@ -492,6 +505,6 @@ $$('[data-pos-back]').forEach(b=>b.addEventListener('click',()=>setStage(Number(
 $('#bitasha-copy')?.addEventListener('click',async()=>{const button=$('#bitasha-copy'),note=$('#bitasha-copied');try{if(!navigator.clipboard?.writeText)throw Error('No Clipboard API');await navigator.clipboard.writeText('GETYOURSATS');button.textContent='Copied ✓';note.textContent='GETYOURSATS copied. Use it at Bitasha checkout.'}catch{button.textContent='Select code';note.textContent='Select GETYOURSATS and copy it for Bitasha checkout.';const range=document.createRange();range.selectNodeContents($('#bitasha-code'));const sel=getSelection();if(sel){sel.removeAllRanges();sel.addRange(range)}}});
 const year=$('#copyright-year');if(year)year.textContent=String(new Date().getFullYear());
 })();
-</script><script src="/experience-v5.js?rev=1" defer></script>
+</script><script src="/experience-v5.js?rev=2" defer></script>
 </body>
 </html>
