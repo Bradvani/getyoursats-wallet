@@ -90,10 +90,10 @@ export const HOME_COPY: Record<AppLanguage, {
 };
 export function homeCopy(lang:AppLanguage=getAppLanguage()){return HOME_COPY[lang];}
 export const WALLET_COPY:Record<AppLanguage,{
- lightning:string;accept:string;soon:string;history:string;hideHistory:string;send:string;receive:string
+ lightning:string;accept:string;soon:string;history:string;hideHistory:string;send:string;receive:string;scan:string;scanPayment:string;acceptShort:string;posPayment:string
 }> = {
- en:{lightning:'Your Lightning address',accept:'Accept a payment',soon:'Coming soon',history:'History',hideHistory:'Hide history',send:'Send',receive:'Receive'},
- hi:{lightning:'आपका Lightning पता',accept:'भुगतान स्वीकारें',soon:'जल्द आ रहा है',history:'इतिहास',hideHistory:'इतिहास छिपाएँ',send:'भेजें',receive:'प्राप्त करें'},
- es:{lightning:'Tu dirección Lightning',accept:'Aceptar un pago',soon:'Próximamente',history:'Historial',hideHistory:'Ocultar historial',send:'Enviar',receive:'Recibir'},
- pt:{lightning:'O seu endereço Lightning',accept:'Aceitar pagamento',soon:'Em breve',history:'Histórico',hideHistory:'Ocultar histórico',send:'Enviar',receive:'Receber'}
+ en:{lightning:'Your Lightning address',accept:'Accept a payment',soon:'Coming soon',history:'History',hideHistory:'Hide history',send:'Send',receive:'Receive',scan:'Scan',scanPayment:'Scan payment QR',acceptShort:'Accept',posPayment:'Accept a payment in merchant mode'},
+ hi:{lightning:'आपका Lightning पता',accept:'भुगतान स्वीकारें',soon:'जल्द आ रहा है',history:'इतिहास',hideHistory:'इतिहास छिपाएँ',send:'भेजें',receive:'प्राप्त करें',scan:'स्कैन',scanPayment:'भुगतान QR स्कैन करें',acceptShort:'भुगतान लें',posPayment:'व्यापारी मोड में भुगतान लें'},
+ es:{lightning:'Tu dirección Lightning',accept:'Aceptar un pago',soon:'Próximamente',history:'Historial',hideHistory:'Ocultar historial',send:'Enviar',receive:'Recibir',scan:'Escanear',scanPayment:'Escanear QR de pago',acceptShort:'Cobrar',posPayment:'Cobrar en modo comercio'},
+ pt:{lightning:'O seu endereço Lightning',accept:'Aceitar pagamento',soon:'Em breve',history:'Histórico',hideHistory:'Ocultar histórico',send:'Enviar',receive:'Receber',scan:'Ler QR',scanPayment:'Ler código QR de pagamento',acceptShort:'Cobrar',posPayment:'Cobrar no modo comerciante'}
 };

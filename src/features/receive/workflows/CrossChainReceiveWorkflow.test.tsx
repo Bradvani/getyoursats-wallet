@@ -61,11 +61,14 @@ describe('USD receive deposit address', () => {
     fireEvent.click(screen.getByTestId('cross-chain-receive-continue'));
     fireEvent.click(await screen.findByText('Solana'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await screen.findByText('Review this deposit before continuing');
+    await screen.findByText('Your deposit quote');
     expect(screen.queryByTestId('cross-chain-deposit-address')).toBeNull();
-    expect(screen.getByRole('button',{name:'Show deposit details'})).toBeDisabled();
+    expect(screen.getByRole('button',{name:'Continue to deposit QR'})).toBeDisabled();
+    expect(screen.getByTestId('cross-chain-deposit-amount')).toHaveTextContent('10.05 USDC');
+    fireEvent.click(screen.getByText('Cost details'));
+    expect(screen.getByText('0.01 USDC')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('checkbox'));
-    fireEvent.click(screen.getByRole('button',{name:'Show deposit details'}));
+    fireEvent.click(screen.getByRole('button',{name:'Continue to deposit QR'}));
     await screen.findByTestId('cross-chain-deposit-address');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Back' }));
