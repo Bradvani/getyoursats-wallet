@@ -46,7 +46,15 @@ for(const [width,height] of [[1440,900],[390,844],[320,700]]){
     // Static network coverage remains visible as assets and directions change.
     const grid=page.locator('.ex-chain-grid');
     await expect(grid).toBeVisible();
-    await expect(grid.locator('.ex-chain-chip')).toHaveCount(13);
+    await expect(grid.locator('.ex-chain-chip')).toHaveCount(7);
+  const featured=['Ethereum','Solana','Base','BNB Chain','Arbitrum','TRON','Monad'];
+  for(const [index,name] of featured.entries()){
+    const tile=grid.locator('.ex-chain-chip').nth(index);
+    await expect(tile.getByText(name,{exact:true})).toBeVisible();
+    await expect(tile.locator('img')).toHaveAttribute('src',/trustwallet\/assets\/master\/blockchains\/.*\/info\/logo\.png$/);
+  }
+  await expect(page.locator('.ex-network-count')).toContainText('7 FEATURED');
+  await expect(page.locator('.ex-network-footnote')).toContainText('Monad availability is not yet confirmed');
     await expect(page.locator('.ex-network-footnote')).toContainText('Routes vary by asset, direction and provider');
     await expect(page.locator('#ex-route-journey')).toHaveCount(0);
     await expect(page.locator('#ex-route-preview')).toHaveCount(0);
@@ -147,7 +155,7 @@ test('@public-smoke reduced motion keeps the network listing readable without a 
  await page.goto(landing,{waitUntil:'domcontentloaded'});
  await page.locator('#tab-lightning').click();
  await expect(page.locator('.ex-chain-grid .ex-chain-chip').first()).toHaveCSS('animation-name','none');
- await expect(page.locator('.ex-network-count')).toContainText('13 NETWORKS + MORE');
+ await expect(page.locator('.ex-network-count')).toContainText('7 FEATURED');
  await expect(page.locator('#ex-route-journey')).toHaveCount(0);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
