@@ -130,9 +130,15 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
   // drawer panel `duration-100` leave transition below — if that
   // changes, bump this too.
   const DRAWER_LEAVE_MS = 100;
+  const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (navigationTimer.current !== null) clearTimeout(navigationTimer.current);
+  }, []);
   const closeDrawerThen = (fn: () => void) => {
     onClose();
-    setTimeout(fn, DRAWER_LEAVE_MS);
+    if (navigationTimer.current !== null) clearTimeout(navigationTimer.current);
+    const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : DRAWER_LEAVE_MS;
+    navigationTimer.current = setTimeout(() => { navigationTimer.current = null; fn(); }, delay);
   };
 
   // Only actions that work today belong in the primary drawer.
