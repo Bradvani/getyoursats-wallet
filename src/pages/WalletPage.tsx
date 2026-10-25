@@ -152,6 +152,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
   }, []);
 
   const transactionsContainerRef = useRef<HTMLDivElement>(null);
+  const scrollFrame = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
+  }, []);
 
   // A forced sync rather than the 60s timer's, so a deposit sent from another
   // device shows at once. The synced event it fires refreshes the list.
@@ -176,11 +180,12 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const collapseThreshold = 100;
 
   const handleScroll = useCallback(() => {
-    if (transactionsContainerRef.current) {
-      const scrollTop = transactionsContainerRef.current.scrollTop;
-      const progress = Math.min(1, scrollTop / collapseThreshold);
-      setScrollProgress(progress);
-    }
+    if (scrollFrame.current !== null) return;
+    scrollFrame.current = requestAnimationFrame(() => {
+      scrollFrame.current = null;
+      const scrollTop = transactionsContainerRef.current?.scrollTop ?? 0;
+      setScrollProgress(Math.max(0, Math.min(1, scrollTop / collapseThreshold)));
+    });
   }, [collapseThreshold]);
 
   const handlePaymentSelected = useCallback((payment: Payment | ExtendedPayment) => {
