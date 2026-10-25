@@ -232,6 +232,11 @@ html.ios-standalone-bottom-gap .gys-wallet-balance-surface__toolbar{z-index:30}
  .gys-wallet{max-width:none!important;width:100%;padding-left:232px;box-sizing:border-box;height:100dvh;min-height:0}
  .gys-desktop-nav{position:absolute;inset:0 auto 0 0;width:232px;display:flex;flex-direction:column;padding:30px 20px;border-right:1px solid var(--spark-border,#303030);background:var(--spark-dark,#0b0b0b);z-index:35}
  .gys-desktop-nav .gys-brand-wordmark{width:180px;height:auto;max-width:100%}
+ /* Desktop sidebar is the sole navigation. The original mobile menu and
+    wordmark remain available below this breakpoint only. */
+ .gys-wallet-balance-surface__toolbar .gys-app-header__identity{display:none}
+ .gys-wallet-balance-surface__toolbar{height:auto;min-height:0;margin-bottom:12px;justify-content:flex-end}
+ 
  .gys-desktop-nav nav{display:flex;flex-direction:column;gap:8px;margin-top:42px}
  .gys-desktop-nav nav button,.gys-desktop-nav nav a{display:block;text-align:left;min-height:48px;padding:12px 14px;border-radius:12px;color:var(--spark-text-secondary,#aaa);font-weight:600}
  .gys-desktop-nav nav [aria-current=page],.gys-desktop-nav nav button:hover,.gys-desktop-nav nav a:hover{background:var(--spark-surface,#171717);color:var(--spark-primary,#f7931a)}
