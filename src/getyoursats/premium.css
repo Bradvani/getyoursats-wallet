@@ -287,7 +287,6 @@ html[data-ui-hidden] .gys-moment *{animation-play-state:paused!important}
 }
 @media(max-height:600px) and (max-width:1023px){
  .gys-wallet__header{flex:0 0 auto}
- .gys-home-quick-actions{display:none}
  .gys-wallet-balance-surface__content .balance-display{font-size:36px;line-height:1.1}
  .gys-wallet-balance-surface__toolbar{margin-bottom:0}
  .gys-wallet-balance-surface__content>.text-center{margin:0;padding:4px 0}
@@ -295,6 +294,7 @@ html[data-ui-hidden] .gys-moment *{animation-play-state:paused!important}
  .gys-wallet__activity{padding-bottom:90px}
 }
 @media(max-height:600px) and (min-width:600px) and (max-width:1023px){
+ .gys-home-quick-actions{display:none}
  .gys-wallet-balance-surface__content{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;column-gap:16px}
  .gys-wallet-balance-surface__toolbar{grid-column:1;grid-row:1;height:48px}
  .gys-wallet-balance-surface__content>.text-center{grid-column:2;grid-row:1 / 3}
