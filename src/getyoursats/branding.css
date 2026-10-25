@@ -15,7 +15,7 @@
  background:#090a0a;color:#f7f4ee;
  display:flex;flex-direction:column;justify-content:space-between;
  padding:clamp(24px,4vw,42px) clamp(24px,4.8vw,52px) 25px;
- font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+ font-family:var(--gys-locale-font,'Plus Jakarta Sans'),system-ui,sans-serif;
 }
 .gys-welcome__atmosphere{position:absolute;inset:0;z-index:-1;pointer-events:none;
  background:
@@ -307,7 +307,7 @@
 }
 
 /* GetYourSats visual identity shared across landing, wallet and secondary pages. */
-.gys-wordmark{display:inline-flex;align-items:center;gap:9px;max-width:100%;white-space:nowrap;color:#F7931A;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:17px;letter-spacing:-.045em;font-weight:820;line-height:1}
+.gys-wordmark{display:inline-flex;align-items:center;gap:9px;max-width:100%;white-space:nowrap;color:#F7931A;font-family:var(--gys-locale-font,'Plus Jakarta Sans'),system-ui,sans-serif;font-size:17px;letter-spacing:-.045em;font-weight:820;line-height:1}
 .gys-wordmark__mark{height:32px;width:32px;flex:0 0 auto;object-fit:contain;mix-blend-mode:screen;
   -webkit-mask-image:url('/assets/getyoursats-mark.jpg');mask-image:url('/assets/getyoursats-mark.jpg');
   -webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;

@@ -92,6 +92,7 @@ export interface SimpleFeeBreakdownProps {
   amountLabel?: string;
   /** Optional custom label for the fee row */
   feeLabel?: string;
+  totalLabel?: string;
   className?: string;
 }
 
@@ -101,6 +102,7 @@ export const SimpleFeeBreakdown: React.FC<SimpleFeeBreakdownProps> = ({
   useRawStrings = false,
   amountLabel = 'Amount',
   feeLabel = 'Network fee',
+  totalLabel = 'Total',
   className = '',
 }) => {
   if (useRawStrings) {
@@ -124,7 +126,7 @@ export const SimpleFeeBreakdown: React.FC<SimpleFeeBreakdownProps> = ({
       items={[
         { label: amountLabel, value: amount },
         { label: feeLabel, value: fee },
-        { label: 'Total', value: total, highlight: true },
+        { label: totalLabel, value: total, highlight: true },
       ]}
     />
   );

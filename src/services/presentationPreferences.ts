@@ -1,4 +1,6 @@
-export type AppLanguage = 'en' | 'hi' | 'es' | 'pt';
+import {loadLocaleFonts} from '../locales/loadFonts';
+import {ASIAN_LOCALES} from '../locales/asian';
+export type AppLanguage = 'en' | 'hi' | 'es' | 'pt' | keyof typeof ASIAN_LOCALES;
 export type AppearancePreference = 'dark' | 'orange' | 'system';
 export type ResolvedAppearance = 'dark' | 'orange';
 
@@ -6,13 +8,19 @@ export const APP_LANGUAGES: ReadonlyArray<{code: AppLanguage; name: string; subt
   {code:'en',name:'English',subtitle:''},
   {code:'hi',name:'हिन्दी',subtitle:'Hindi'},
   {code:'es',name:'Español',subtitle:'Spanish'},
-  {code:'pt',name:'Português',subtitle:'Portuguese'}
+  {code:'pt',name:'Português',subtitle:'Portuguese'},
+  {code:'ja',name:'日本語',subtitle:'Japanese'},
+  {code:'th',name:'ไทย',subtitle:'Thai'},
+  {code:'vi',name:'Tiếng Việt',subtitle:'Vietnamese'},
+  {code:'ta',name:'தமிழ்',subtitle:'Tamil'},
+  {code:'ar',name:'العربية',subtitle:'Arabic'},
+  {code:'zh-CN',name:'简体中文',subtitle:'Simplified Chinese'}
 ];
 
 const LANGUAGE_KEY='gys:language:v1';
 const APPEARANCE_KEY='gys:appearance:v1';
 const EVENT='gys:presentation-pref-changed';
-const langCodes=new Set<AppLanguage>(['en','hi','es','pt']);
+const langCodes=new Set<AppLanguage>(APP_LANGUAGES.map(item=>item.code));
 const themeCodes=new Set<AppearancePreference>(['dark','orange','system']);
 
 function safeRead(key:string): string|null {
@@ -36,7 +44,7 @@ function publish(): void {
 export function setAppLanguage(value:AppLanguage): void {
   if(!langCodes.has(value))throw new Error('Unsupported language');
   try{localStorage.setItem(LANGUAGE_KEY,value);}catch{/* transient environments */}
-  if(typeof document!=='undefined')document.documentElement.lang=value;
+  applyLanguage(value);
   publish();
 }
 export function applyAppearance(): void {
@@ -64,13 +72,26 @@ export function subscribePresentation(callback:()=>void):()=>void {
   media?.addEventListener?.('change',systemListener);
   return()=>{window.removeEventListener(EVENT,callback);media?.removeEventListener?.('change',systemListener);};
 }
+export function applyLanguage(language:AppLanguage):void {
+  if(typeof document==='undefined')return;
+  if(!['en','es','pt'].includes(language))void loadLocaleFonts();
+  document.documentElement.lang=language;
+  document.documentElement.dir=language==='ar'?'rtl':'ltr';
+}
 export function initPresentation(): void {
   applyAppearance();
-  if(typeof document!=='undefined')document.documentElement.lang=getAppLanguage();
+  applyLanguage(getAppLanguage());
 }
 export const PUBLIC_LANGUAGE_QUERY=(lang:AppLanguage):string=>'?lang='+encodeURIComponent(lang);
 
 const navCopy={
+ 'ja':ASIAN_LOCALES['ja'].nav,
+ 'th':ASIAN_LOCALES['th'].nav,
+ 'vi':ASIAN_LOCALES['vi'].nav,
+ 'ta':ASIAN_LOCALES['ta'].nav,
+ 'ar':ASIAN_LOCALES['ar'].nav,
+ 'zh-CN':ASIAN_LOCALES['zh-CN'].nav,
+
  en:{settings:'Settings',currency:'Currencies',scan:'Scan QR',pointOfSale:'Point of Sale',recurring:'Recurring Buys',buy:'Buy Bitcoin',logout:'Remove wallet from this device',help:'Help & information',privacy:'Privacy',support:'Support',appearance:'Appearance',language:'Language',display:'Display',dark:'Dark',orange:'Orange',system:'System',comingSoon:'Coming soon'},
  hi:{settings:'सेटिंग्स',currency:'मुद्राएँ',scan:'QR स्कैन',pointOfSale:'बिक्री काउंटर',recurring:'नियमित खरीद',buy:'बिटकॉइन खरीदें',logout:'इस डिवाइस से वॉलेट हटाएँ',help:'मदद और जानकारी',privacy:'गोपनीयता',support:'सहायता',appearance:'रूप-रंग',language:'भाषा',display:'डिस्प्ले',dark:'डार्क',orange:'ऑरेंज',system:'सिस्टम',comingSoon:'जल्द आ रहा है'},
  es:{settings:'Ajustes',currency:'Monedas',scan:'Escanear QR',pointOfSale:'Punto de venta',recurring:'Compras periódicas',buy:'Comprar Bitcoin',logout:'Eliminar cartera de este dispositivo',help:'Ayuda e información',privacy:'Privacidad',support:'Soporte',appearance:'Apariencia',language:'Idioma',display:'Pantalla',dark:'Oscuro',orange:'Naranja',system:'Sistema',comingSoon:'Próximamente'},
@@ -83,6 +104,12 @@ export const HOME_COPY: Record<AppLanguage, {
   start:string; restoreQuestion:string; restore:string; passkey:string;
   footOne:string; footTwo:string;
 }> = {
+ 'ja':ASIAN_LOCALES['ja'].home,
+ 'th':ASIAN_LOCALES['th'].home,
+ 'vi':ASIAN_LOCALES['vi'].home,
+ 'ta':ASIAN_LOCALES['ta'].home,
+ 'ar':ASIAN_LOCALES['ar'].home,
+ 'zh-CN':ASIAN_LOCALES['zh-CN'].home,
  en:{scarcity:'21 MILLION. EVER.',eyebrow:'BITCOIN HAS A LIMIT',heading:'Every sat',emphasis:'counts.',subtitle:'Only 21 million bitcoin will ever exist. Keep yours close, move it in seconds, and accept payments over Lightning.',start:'Start',restoreQuestion:'Have a GetYourSats wallet?',restore:'Restore it',passkey:'Create a wallet with a supported device passkey. Your device may use biometrics or a screen lock. Keep your recovery options private in Settings.',footOne:'BITCOIN FIRST.',footTwo:'SATS ARE SCARCE.'},
  hi:{scarcity:'केवल 2.1 करोड़ BTC',eyebrow:'बिटकॉइन की आपूर्ति सीमित है',heading:'हर सैट',emphasis:'मायने रखती है।',subtitle:'बिटकॉइन की अधिकतम आपूर्ति लगभग 2.1 करोड़ BTC है। अपनी सैट सुरक्षित रखें और Lightning से भुगतान करें।',start:'शुरू करें',restoreQuestion:'पहले से वॉलेट है?',restore:'वापस पाएं',passkey:'समर्थित डिवाइस पासकी से वॉलेट बनाएं। सुरक्षित रिकवरी विकल्प Settings में देखें।',footOne:'बिटकॉइन पहले।',footTwo:'सैट सीमित हैं।'},
  es:{scarcity:'21 MILLONES. SIEMPRE.',eyebrow:'BITCOIN TIENE UN LÍMITE',heading:'Cada sat',emphasis:'cuenta.',subtitle:'La oferta de bitcoin tiene un límite cercano a 21 millones. Guárdalos y paga en segundos con Lightning.',start:'Empezar',restoreQuestion:'¿Ya tienes un monedero?',restore:'Restaurar',passkey:'Crea un monedero con una passkey compatible del dispositivo. Consulta tus opciones de recuperación en Ajustes.',footOne:'BITCOIN PRIMERO.',footTwo:'LOS SATS SON ESCASOS.'},
@@ -92,6 +119,12 @@ export function homeCopy(lang:AppLanguage=getAppLanguage()){return HOME_COPY[lan
 export const WALLET_COPY:Record<AppLanguage,{
  lightning:string;accept:string;soon:string;history:string;hideHistory:string;send:string;receive:string;scan:string;scanPayment:string;acceptShort:string;posPayment:string
 }> = {
+ 'ja':ASIAN_LOCALES['ja'].wallet,
+ 'th':ASIAN_LOCALES['th'].wallet,
+ 'vi':ASIAN_LOCALES['vi'].wallet,
+ 'ta':ASIAN_LOCALES['ta'].wallet,
+ 'ar':ASIAN_LOCALES['ar'].wallet,
+ 'zh-CN':ASIAN_LOCALES['zh-CN'].wallet,
  en:{lightning:'Your Lightning address',accept:'Accept a payment',soon:'Coming soon',history:'History',hideHistory:'Hide history',send:'Send',receive:'Receive',scan:'Scan',scanPayment:'Scan payment QR',acceptShort:'Accept',posPayment:'Accept a payment in merchant mode'},
  hi:{lightning:'आपका Lightning पता',accept:'भुगतान स्वीकारें',soon:'जल्द आ रहा है',history:'इतिहास',hideHistory:'इतिहास छिपाएँ',send:'भेजें',receive:'प्राप्त करें',scan:'स्कैन',scanPayment:'भुगतान QR स्कैन करें',acceptShort:'भुगतान लें',posPayment:'व्यापारी मोड में भुगतान लें'},
  es:{lightning:'Tu dirección Lightning',accept:'Aceptar un pago',soon:'Próximamente',history:'Historial',hideHistory:'Ocultar historial',send:'Enviar',receive:'Recibir',scan:'Escanear',scanPayment:'Escanear QR de pago',acceptShort:'Cobrar',posPayment:'Cobrar en modo comercio'},

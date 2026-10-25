@@ -1,3 +1,4 @@
+import {PAYMENT_UX} from '@/locales/paymentUx';
 import React from 'react';
 import {QRCodeContainer,QrPlaceholder,CopyableText} from '../../components/ui';
 import {useToast} from '../../contexts/ToastContext';
@@ -12,7 +13,7 @@ const BitcoinAddressDisplay:React.FC<Props>=({address,isLoading,error,onRetry,se
  return <div className="w-full space-y-3 text-sm text-spark-text-secondary">
    <h3 className="font-semibold text-spark-text-primary">{text.bitcoinDeposit}</h3>
    <p>{text.network}: {network}</p>
-   <p>{text.depositModel}</p><p>{text.depositEconomics}</p>
+   <p>{PAYMENT_UX[language].depositIntro}</p><p>{text.depositEconomics}</p><details className="rounded-xl border border-spark-border p-3"><summary className="cursor-pointer font-medium">{PAYMENT_UX[language].howWalletWorks}</summary><p className="mt-2">{text.depositModel}</p></details>
    {address&&!error&&<CopyableText text={address} truncate showShare label={text.bitcoinDeposit} onCopied={()=>showToast('success',text.copySuccess)} onShareError={()=>showToast('error',text.copyFailure)} data-testid="bitcoin-address-text"/>}
  </div>;
 };

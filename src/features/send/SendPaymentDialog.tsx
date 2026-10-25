@@ -1,3 +1,5 @@
+import {usePresentation} from '@/hooks/usePresentation';
+import {PAYMENT_UX} from '@/locales/paymentUx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { DialogHeader, BottomSheetContainer, BottomSheetCard } from '../../components/ui';
 import { useWallet } from '../../contexts/WalletContext';
@@ -107,9 +109,11 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
     send.setCurrentStep('input');
   };
 
+  const {language}=usePresentation();
+  const ux=PAYMENT_UX[language];
   const dialogTitle = send.currentStep === 'input'
     ? 'Send BTC or USD'
-    : getPaymentMethodName(send.paymentInput);
+    : getLnurlPayRequestDetails(send.paymentInput) ? ux.pay : getPaymentMethodName(send.paymentInput);
 
   // Same resolver as the save prompt, so a scanned LNURL names its recipient
   // (and matches an existing contact) instead of reading as an opaque blob.
@@ -119,7 +123,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
     const address = getSendLightningAddress(send.paymentInput);
     if (!address) return undefined;
     const contact = findContactByAddress(address);
-    return contact ? `Pay to ${contact.name}` : `Pay to ${address}`;
+    return contact ? contact.name : address;
   }, [send.paymentInput, findContactByAddress]);
 
   // The input step is always the send entry point, so it keeps the send icon
