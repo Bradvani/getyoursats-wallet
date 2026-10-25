@@ -4,6 +4,7 @@
  * An authenticated Spark external signer is required for true signing isolation.
  */
 import { Capacitor } from '@capacitor/core';
+import {withCoordinatedVaultMutation as withVaultMutation} from './vaultOperationCoordination';
 import {hasSignerIdentity,matchesSignerIdentity,getSpendingSessionEpoch,assertCurrentSession} from './spendApproval';
 
 export const WEB_VAULT_KEY = 'gys:wallet-vault:v1';
@@ -12,13 +13,6 @@ const RECOVERY_HINT_KEY = 'gys:wallet-vault:recovery-fingerprint:v1';
 const QUARANTINE_PREFIX = 'gys:wallet-vault:preserved-previous:v1:';
 const MANIFEST_QUARANTINE_PREFIX = 'gys:wallet-recovery:preserved-manifest:v1:';
 
-/** Cross-tab exclusive storage mutation. No unsupported-browser fallback to
- * an unsafe localStorage read/write race. Requires a secure context. */
-async function withVaultMutation<T>(operation:()=>Promise<T>):Promise<T>{
-  if(typeof navigator==='undefined'||!navigator.locks?.request)
-    throw new Error('This browser cannot safely update wallet protection. Use an up-to-date browser.');
-  return navigator.locks.request('getyoursats-vault-mutation-v1',{mode:'exclusive'},operation);
-}
 const KDF_ROUNDS = 650_000;
 const KEY_LENGTH = 256;
 const enc = new TextEncoder();
