@@ -6,7 +6,7 @@ from pathlib import Path
 
 def change(path,old,new):
  p=Path(path);s=p.read_text()
- if new in s and old not in s:return
+ if new in s:return
  if s.count(old)!=1:raise RuntimeError(f'Unexpected source: {path}: {old[:100]} ({s.count(old)})')
  p.write_text(s.replace(old,new))
 
@@ -58,4 +58,8 @@ change('src/pages/GetRefundPage.tsx','      removeRejectedDeposit(selectedDeposi
 change('src/pages/GetRefundPage.tsx',"      setRefundStep('confirm');\n    } finally", "      if(getSignedRecovery(wallet)){setIsRefundFlowOpen(false);setError('Check the saved recovery before trying again. No new refund should be created after an uncertain result.');}\n      else setRefundStep('confirm');\n    } finally")
 change('src/pages/GetRefundPage.tsx','      <div className="p-4">','      <WalletRecoveryPanel/>\n      <div className="p-4">')
 change('src/pages/GetRefundPage.tsx','<ResultStep result="success" error={null} onClose={closeRefundFlow} operationType="refund">','<ResultStep result="success" error={null} onClose={closeRefundFlow} operationType="refund">\n                {getSignedRecovery(wallet)&&<p role="status" className="text-sm">Refund submitted. Bitcoin confirmation is still pending. Keep this wallet on the device.</p>}')
+change('src/security/signedRecoveryController.ts',"    r=updateRecovery(r,{state:'uncertain',transactions:r.transactions.map(t=>t.txId===tx.txId?{...t,state:'uncertain'}:t)});", "    updateRecovery(r,{state:'uncertain',transactions:r.transactions.map(t=>t.txId===tx.txId?{...t,state:'uncertain'}:t)});")
+change('src/security/signedRecoveryController.ts',"   }else{live(epoch);ready.add(tx.txId);}", "   }else{\n    live(epoch);\n    if(r.state==='confirmed')r=updateRecovery(r,{state:'uncertain',transactions:[{...tx,state:'uncertain'}]});\n    ready.add(tx.txId);\n   }")
+change('src/security/signedRecoveryController.ts',"state:complete?'confirmed':checked.verdict.type==='redo'?'uncertain':r.state", "state:complete?'confirmed':checked.verdict.type==='redo'||r.state==='confirmed'?'uncertain':r.state")
+change('src/security/signedRecoveryController.ts',"   if(record.state==='confirmed')return record;\n   const checked=await checkRecord", "   // Even a previously confirmed record is freshly checked for reorgs.\n   const checked=await checkRecord")
 print('Recovery gateway, persistence and interface integration applied. Run all acceptance tests before preserving.')
