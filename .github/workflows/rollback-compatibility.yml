@@ -35,7 +35,7 @@ jobs:
       - name: Build a separate non-spending artifact
         run: |
           set -euo pipefail
-          npx tsc --noEmit --target ES2022 --lib ES2022,DOM,DOM.Iterable --module ESNext --moduleResolution bundler --skipLibCheck rollback/reader.ts rollback/main.ts
+          npx tsc --project rollback/tsconfig.json
           npx vite build --config vite.rollback.config.ts
           node scripts/security/package-rollback.mjs
       - run: npx playwright install --with-deps chromium
