@@ -470,6 +470,8 @@ const AppContent: React.FC = () => {
             setRefundAnimationDirection(source === 'icon' ? 'up' : 'left');
             setUserScreen('getRefund');
           }}
+          onReturnToWallet={() => setUserScreen('wallet')}
+          settingsActive={currentScreen !== 'wallet'}
           onOpenSettings={() => setUserScreen('settings')}
           onOpenFiatCurrencies={() => setUserScreen('fiatCurrencies')}
           onOpenDca={() => setUserScreen('dca')}
