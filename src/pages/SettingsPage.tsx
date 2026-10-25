@@ -1,3 +1,4 @@
+import {trustCopy} from '@/getyoursats/trustCopy';
 import { usePresentation } from '@/hooks/usePresentation';
 import { APP_LANGUAGES, setAppLanguage, setAppearancePreference, type AppearancePreference } from '@/services/presentationPreferences';
 import React, { useEffect, useRef, useState } from 'react';
@@ -179,7 +180,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 
   const footer = (
     <PrimaryButton className="w-full" onClick={handleSave} disabled={!enteredFee}>
-      Save Changes
+      {trustCopy(language).savePayment}
     </PrimaryButton>
   );
 
@@ -197,6 +198,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
     <SlideInPage title="Settings" onClose={onBack} slideFrom="left" footer={footer}>
       <div className="p-4">
         <div className="max-w-xl mx-auto w-full space-y-4">
+<p className="text-xs text-spark-text-muted" role="status">{trustCopy(language).autosave}</p>
+          {language!=='en'&&<p className="text-xs text-spark-text-muted">{trustCopy(language).localePartial}</p>}
           {/* Order: page nav, exports, settings, diagnostics, developer
               options, account deletion last. The "Save Changes" footer
               applies the toggles + inputs; the rest commits on tap. */}

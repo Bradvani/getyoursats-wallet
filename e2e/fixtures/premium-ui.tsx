@@ -1,3 +1,4 @@
+import AppShell from '../../src/components/layout/AppShell';
 // Dev-only browser fixture. Vite's production entry never imports this file.
 // All SDK methods are local doubles; no wallet or network payment is created.
 import { useState } from 'react';
@@ -43,6 +44,7 @@ const subscribeToSdkEvents=(listener:(event:SdkEvent)=>void)=>{
   }
 };
 const sdk = new Proxy({
+ parse: async()=>({type:'bolt11Invoice',timestamp:Math.floor(Date.now()/1000),expiry:3600,network:'bitcoin',invoice:{bolt11:merchantInvoice,source:{type:'bolt11'}},amountMsat:1000000}) as unknown as Awaited<ReturnType<BreezSdk['parse']>>,
  getInfo: async () => info,
  listContacts: async () => [],
  addEventListener: async () => 'fixture-listener',
@@ -69,4 +71,4 @@ function Fixture() {
  </ContactsProvider></StableBalanceProvider></FiatDataProvider></WalletInfoProvider></WalletProvider></ToastProvider>;
 }
 initPresentation();
-createRoot(document.getElementById('root')!).render(<Fixture />);
+createRoot(document.getElementById('root')!).render(<AppShell><Fixture /></AppShell>);

@@ -1,3 +1,4 @@
+import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type {
   CrossChainAddressDetails,
@@ -36,7 +37,7 @@ interface CrossChainWorkflowProps {
   feesIncluded: boolean;
   tokenIdentifier?: string | null;
   onBack: () => void;
-  onRun: (runner: () => Promise<void>) => Promise<void>;
+  onRun: (runner: () => Promise<PaymentExecutionResult>) => Promise<void>;
 }
 
 interface ProviderQuote {
@@ -258,7 +259,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
     if (!prepareResponse) return;
     const response = prepareResponse;
     onRun(async () => {
-      await wallet.sendPayment({ prepareResponse: response });
+      return wallet.sendPayment({ prepareResponse: response });
     });
   };
 

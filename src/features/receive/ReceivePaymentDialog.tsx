@@ -1,3 +1,6 @@
+import {useInvoiceExpiry} from '../../hooks/useInvoiceExpiry';
+import {formatMoney} from '@/getyoursats/money';
+import {trustCopy} from '@/getyoursats/trustCopy';
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '../../contexts/ToastContext';
 import PaymentMotion from '../../components/PaymentMotion';
@@ -19,7 +22,6 @@ import {
 import type { PaymentMethod } from '../../types/domain';
 import { useLightningAddress } from './hooks/useLightningAddress';
 import { useReceivePayment, type InvoiceAmount } from './hooks/useReceivePayment';
-import { formatWithSpaces } from '../../utils/formatNumber';
 import { SatAmount } from '../../components/SatAmount';
 import SparkAddressDisplay from './SparkAddressDisplay';
 import BitcoinAddressDisplay from './BitcoinAddressDisplay';
@@ -59,8 +61,11 @@ interface QRCodeDisplayProps {
  *  that was a fiat or stable one, since the invoice is denominated in sats. */
 const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amount }) => {
   const { showToast } = useToast();
+  const expiry=useInvoiceExpiry(paymentData);const text=trustCopy();
+  if(!expiry.usable)return <div className="p-4 text-sm text-spark-text-secondary" role="status">{expiry.checking?text.checking:expiry.expiresAt?text.invoiceExpired:text.invoiceExpiryUnknown}</div>;
   return (
     <div className="pt-4 space-y-6 flex flex-col items-center">
+      <p className="text-xs text-spark-text-muted">{text.expires}: {new Date(expiry.expiresAt!).toLocaleString()}</p>
       {amount && (
         <div className="text-center">
           <p className="text-spark-text-muted text-sm mb-2">Scan to pay</p>
@@ -94,7 +99,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
 
         {feeSats > 0 && (
           <Alert type="warning" className="mt-8">
-            <center>A fee of ₿{formatWithSpaces(feeSats)} is applied to this transaction.</center>
+            <p>{trustCopy().fee}: {formatMoney({kind:'sats',amount:feeSats})}</p>
           </Alert>
         )}
       </div>
@@ -315,6 +320,8 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
     <BitcoinAddressDisplay
       address={receive.bitcoinAddress}
       isLoading={receive.bitcoinLoading}
+      error={receive.error}
+      onRetry={()=>{void receive.generateBitcoinAddress();}}
       section={section}
       qrSize={qrSize}
       qrCardClassName={qrCardClassName}
@@ -326,7 +333,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
       case 'lightning': return 'Lightning Invoice';
       case 'spark': return 'Spark Address';
       case 'bitcoin': return 'Bitcoin Address';
-      case 'usd': return 'USD Transfer';
+      case 'usd': return trustCopy().stablecoins;
       default: return 'Payment Request';
     }
   };
@@ -354,7 +361,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                 </Tab>
                 <Tab isActive={receive.activeTab === 'usd'} onClick={() => handleTabChange('usd')} data-testid="usd-tab">
                   <span className="font-bold text-sm">$</span>
-                  USD
+                  {trustCopy().stablecoins}
                 </Tab>
                 </TabList>
               )}

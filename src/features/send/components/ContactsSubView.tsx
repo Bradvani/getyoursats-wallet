@@ -1,3 +1,5 @@
+import {classifyLookupFailure} from '@/getyoursats/lookupFailure';
+import {trustCopy} from '@/getyoursats/trustCopy';
 import React, { useState, useMemo, useRef } from 'react';
 import type { Contact } from '@breeztech/breez-sdk-spark';
 import { useContactsContext } from '../../../contexts/ContactsContext';
@@ -76,9 +78,11 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
     if (addressChanged) {
       try {
         await wallet.parse(address);
-      } catch {
+      } catch (error) {
         setIsSaving(false);
-        setFormError('Lightning address not found');
+        const text=trustCopy();
+        const kind=classifyLookupFailure(error);
+        setFormError(kind==='syntax'?text.lookupSyntax:kind==='notFound'?text.lookupNotFound:kind==='timeout'?text.lookupTimeout:text.lookupUnavailable);
         return;
       }
     }

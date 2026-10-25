@@ -9,10 +9,15 @@ export interface PosOrder {
   description: string;
   createdAt: number;
   feeSats: number;
+  /** Optional on legacy orders. Never backfill a historical quote using today's rate. */
+  originalAmount?: string;
+  fiatPerBtc?: number;
+  rateAt?: number;
+  expiresAt?: number;
+
 }
 
 const PREFIX = 'gys:merchant:orders:v1:';
-const MAX_ORDERS = 50;
 const walletKey = (key: string): string | null =>
   /^[0-9a-f]{64,130}$/i.test(key) ? PREFIX + key.toLowerCase() : null;
 
@@ -25,7 +30,11 @@ export function isPosOrder(value: unknown): value is PosOrder {
     (x.unit === 'sats' || x.unit === 'BTC' || (typeof x.unit === 'string' && /^[A-Z]{3}$/.test(x.unit))) &&
     typeof x.description === 'string' && x.description.length <= 200 &&
     typeof x.createdAt === 'number' && Number.isSafeInteger(x.createdAt) && x.createdAt > 0 &&
-    typeof x.feeSats === 'number' && Number.isFinite(x.feeSats) && x.feeSats >= 0;
+    typeof x.feeSats === 'number' && Number.isFinite(x.feeSats) && x.feeSats >= 0 &&
+    (x.originalAmount===undefined||(typeof x.originalAmount==='string'&&/^\d+(?:\.\d+)?$/.test(x.originalAmount)&&x.originalAmount.length<=40)) &&
+    (x.fiatPerBtc===undefined||(Number.isFinite(x.fiatPerBtc)&&x.fiatPerBtc>0)) &&
+    (x.rateAt===undefined||(Number.isFinite(x.rateAt)&&x.rateAt>0)) &&
+    (x.expiresAt===undefined||(Number.isFinite(x.expiresAt)&&x.expiresAt>0));
 }
 
 /** The local journal is an untrusted convenience, not merchant accounting.
@@ -37,7 +46,7 @@ export function readPosOrders(identityPubkey: string): PosOrder[] {
   try {
     const raw = localStorage.getItem(key);
     const data: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(data) ? data.filter(isPosOrder).slice(0, MAX_ORDERS) : [];
+    return Array.isArray(data) ? data.filter(isPosOrder) : [];
   } catch { return []; }
 }
 
@@ -45,7 +54,7 @@ export function savePosOrders(identityPubkey: string, orders: PosOrder[]): boole
   const key = walletKey(identityPubkey);
   if (!key) return false;
   try {
-    localStorage.setItem(key, JSON.stringify(orders.filter(isPosOrder).slice(0, MAX_ORDERS)));
+    localStorage.setItem(key, JSON.stringify(orders.filter(isPosOrder)));
     return true;
   } catch { return false; }
 }

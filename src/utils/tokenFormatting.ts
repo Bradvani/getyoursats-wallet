@@ -132,7 +132,7 @@ export function formatTokenAmount(
   const isNegative = amount < 0n;
   const absAmount = isNegative ? -amount : amount;
 
-  const divisor = BigInt(10 ** config.decimals);
+  const divisor = (10n ** BigInt(config.decimals));
   const wholePart = absAmount / divisor;
   const fractionalPart = absAmount % divisor;
 

@@ -1,3 +1,8 @@
+import {useRef,useEffect} from 'react';
+import {useLatest} from '@/hooks/useLatest';
+import {useWalletConnection,useHasPendingConversion} from '@/contexts/WalletContext';
+import {trustCopy} from '@/getyoursats/trustCopy';
+import {runVerifiedRemoval} from '@/getyoursats/removalPolicy';
 import { usePresentation } from '@/hooks/usePresentation';
 import React, { useState, useSyncExternalStore } from 'react';
 import { useAppVersion } from '@/hooks/useAppVersion';
@@ -56,8 +61,9 @@ const getServerSnapshot = (): number | null => null;
 interface SideMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  onLogout: () => void;
+  onLogout: () => void | Promise<void>;
   onOpenSettings: () => void;
+  onOpenHistory?:()=>void;
   onOpenFiatCurrencies?: () => void;
   onOpenDca: () => void;
   onOpenScan?: () => void;
@@ -67,7 +73,7 @@ interface SideMenuProps {
   hasRejectedDeposits?: boolean;
 }
 
-const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSettings, onOpenDca, onOpenScan, onOpenMerchantPos, onOpenPartnerBuy, onOpenRefund, hasRejectedDeposits = false }) => {
+const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSettings, onOpenHistory, onOpenDca, onOpenScan, onOpenMerchantPos, onOpenPartnerBuy, onOpenRefund, hasRejectedDeposits = false }) => {
   // While the drawer is open, push the solid spark-surface tone over
   // the wallet page's glass tint so the status bar matches the drawer
   // panel's solid bg. Tied to isOpen so popping happens on close.
@@ -79,6 +85,16 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     getServerSnapshot
   );
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [recoveryAcknowledged,setRecoveryAcknowledged]=useState(false);
+  const [removalBusy,setRemovalBusy]=useState(false);
+  const [removalError,setRemovalError]=useState('');
+  const removalLatch=useRef(false);
+  const removalEpoch=useRef(0);
+  useEffect(()=>()=>{removalEpoch.current++;},[]);
+  const cancelRemoval=()=>{removalEpoch.current++;setShowLogoutConfirm(false);};
+  const closeMenu=()=>{removalEpoch.current++;onClose();};
+  const {sdk}=useWalletConnection();
+  const hasPendingConversion=useHasPendingConversion();
   const appVersion = useAppVersion();
   const {language, copy} = usePresentation();
 
@@ -94,14 +110,15 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
   // in LIFO order — the logout confirm is registered last, so it's
   // on top of the drawer's own handler when both are showing.
   useBackButton(() => {
-    onClose();
+    closeMenu();
   }, isOpen);
   useBackButton(() => {
-    setShowLogoutConfirm(false);
+    cancelRemoval();
   }, showLogoutConfirm);
 
   const isPasskey = isPasskeyMode();
   const isExitInProgress = useUnilateralExitEngineState().plan !== null;
+  const removalContext=useLatest({sdk,isOpen,showLogoutConfirm,isExitInProgress,hasPendingConversion});
 
   // Close the drawer first, then fire the navigation callback once the
   // drawer's leave animation completes. Kept sequential (not
@@ -119,6 +136,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
   };
 
   const menuItems = [
+    ...(onOpenHistory?[{icon:<ClockIcon/>,label:trustCopy(language).history,onClick:()=>closeDrawerThen(onOpenHistory)}]:[]),
     // Get Refund - only show when there are rejected deposits
     ...(hasRejectedDeposits && onOpenRefund ? [{
       icon: <RefundIcon />,
@@ -156,15 +174,29 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     },
     {
       icon: <LogoutIcon />,
-      label: copy.logout,
-      onClick: () => { setShowLogoutConfirm(true); }
+      label: trustCopy(language).removeTitle,
+      onClick: () => { setRecoveryAcknowledged(false);setRemovalError('');setShowLogoutConfirm(true); }
     }
   ];
 
-  const handleConfirmLogout = () => {
-    setShowLogoutConfirm(false);
-    onClose();
-    onLogout();
+  const handleConfirmLogout = async () => {
+    if(removalLatch.current||!recoveryAcknowledged)return;
+    const text=trustCopy(language);
+    if((isExitInProgress||hasPendingConversion)){setRemovalError(text.removalBlocked);return;}
+    const epoch=++removalEpoch.current;
+    removalLatch.current=true;setRemovalBusy(true);setRemovalError('');
+    try {
+      if(!sdk)throw Error('Wallet unavailable');
+      const outcome=await runVerifiedRemoval({
+        read:offset=>sdk.listPayments({offset,limit:100}),
+        isCurrent:()=>{const current=removalContext.current;return epoch===removalEpoch.current&&current.isOpen&&current.showLogoutConfirm&&current.sdk===sdk&&!current.hasPendingConversion&&!current.isExitInProgress;},
+        erase:onLogout,
+      });
+      if(outcome==='removed'){setShowLogoutConfirm(false);onClose();}
+      else if(outcome==='blocked')setRemovalError(text.removalBlocked);
+      else if(outcome==='unavailable')setRemovalError(text.removalUnavailable);
+    } catch {setRemovalError(text.removalUnavailable);}
+    finally {removalLatch.current=false;setRemovalBusy(false);}
   };
 
   return createPortal(
@@ -183,7 +215,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
         leaveTo="opacity-0"
         className="fixed inset-0"
       >
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={closeMenu} />
       </TransitionChild>
 
       {/* Panel */}
@@ -207,7 +239,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
             <div className="flex items-center justify-between mb-8 pt-6">
               <GetYourSatsWordmark />
               <button
-                onClick={onClose}
+                onClick={closeMenu}
                 className="p-2 -mr-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
                 aria-label="Close"
               >
@@ -282,7 +314,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                 leaveFrom="opacity-100"
                 leaveTo="opacity-0"
                 className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-                onClick={() => setShowLogoutConfirm(false)}
+                onClick={cancelRemoval}
               />
               <div className="fixed inset-0 flex items-center justify-center p-4">
                 <TransitionChild
@@ -303,12 +335,10 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                   </div>
 
                   <h3 className="font-display text-lg font-semibold text-spark-text-primary text-center mb-2">
-                    Logout
+                    {trustCopy(language).removeTitle}
                   </h3>
                   <p className={`text-spark-text-secondary text-sm text-center ${isPasskey ? 'mb-3' : 'mb-6'}`}>
-                    {isPasskey
-                      ? "Logging out deletes all GetYourSats data stored on this device. You'll need your passkey to access your funds again."
-                      : "Logging out deletes all GetYourSats data stored on this device. Make sure you've saved your recovery phrase: you'll need it to access your funds again."}
+                    {trustCopy(language).removeBody}
                   </p>
                   {isPasskey && (
                     <button
@@ -330,18 +360,24 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                     </SimpleAlert>
                   )}
 
+                  <label className="my-4 flex items-start gap-3 text-sm text-spark-text-secondary">
+                    <input type="checkbox" checked={recoveryAcknowledged} disabled={removalBusy} onChange={e=>setRecoveryAcknowledged(e.target.checked)}/>
+                    {trustCopy(language).recoveryCheck}
+                  </label>
+                  {removalError&&<p role="alert" className="mb-3 text-sm text-spark-warning">{removalError}</p>}
                   <div className="flex gap-3">
                     <button
-                      onClick={() => setShowLogoutConfirm(false)}
+                      onClick={cancelRemoval}
                       className="flex-1 px-4 py-3 border border-spark-border text-spark-text-secondary rounded-xl font-medium hover:text-spark-text-primary hover:border-spark-border-light transition-colors"
                     >
                       Cancel
                     </button>
                     <button
-                      onClick={handleConfirmLogout}
+                      onClick={()=>void handleConfirmLogout()}
+                      disabled={!recoveryAcknowledged||removalBusy||isExitInProgress}
                       className="flex-1 px-4 py-3 bg-spark-primary text-black rounded-xl font-medium hover:bg-spark-primary/90 transition-colors"
                     >
-                      Logout
+                      {trustCopy(language).removeTitle}
                     </button>
                   </div>
                 </TransitionChild>

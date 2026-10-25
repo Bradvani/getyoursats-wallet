@@ -218,3 +218,38 @@ html.ios-standalone-bottom-gap .gys-wallet-balance-surface__toolbar{z-index:30}
   border-color:#33312e;transform:none}
 .gys-home-quick-actions__button:disabled:hover{background:#151413;
   border-color:#33312e}
+
+/* Consolidated review: fluid application chrome with bounded reading surfaces. */
+.gys-desktop-nav{display:none}
+.gys-activity__amount{display:block;font-variant-numeric:tabular-nums;font-weight:650;color:var(--spark-text-primary,#faf9f6);margin-top:5px;overflow-wrap:anywhere}
+.gys-market-secondary{padding:16px;margin:16px;border:1px solid var(--spark-border,#303030);border-radius:16px}
+.gys-market-secondary summary{cursor:pointer;color:var(--spark-text-secondary,#aaa)}
+.gys-language-picker select{min-height:44px;border:1px solid var(--spark-border,#333);border-radius:10px;background:var(--spark-surface,#141414);color:var(--spark-text-primary,#faf9f6);padding:8px;max-width:135px}
+.gys-wallet__activity{display:block!important;opacity:1;visibility:visible;min-height:0;overflow:auto;flex:1;transform:none}
+.gys-wallet__history-trigger{display:none}
+@media(min-width:1024px){
+ .main-wrapper #content-root{width:100%;max-width:none;margin:0}
+ .gys-wallet{max-width:none!important;width:100%;padding-left:232px;box-sizing:border-box;height:100dvh;min-height:0}
+ .gys-desktop-nav{position:absolute;inset:0 auto 0 0;width:232px;display:flex;flex-direction:column;padding:30px 20px;border-right:1px solid var(--spark-border,#303030);background:var(--spark-dark,#0b0b0b);z-index:35}
+ .gys-desktop-nav .gys-brand-wordmark{width:180px;height:auto;max-width:100%}
+ .gys-desktop-nav nav{display:flex;flex-direction:column;gap:8px;margin-top:42px}
+ .gys-desktop-nav nav button,.gys-desktop-nav nav a{display:block;text-align:left;min-height:48px;padding:12px 14px;border-radius:12px;color:var(--spark-text-secondary,#aaa);font-weight:600}
+ .gys-desktop-nav nav [aria-current=page],.gys-desktop-nav nav button:hover,.gys-desktop-nav nav a:hover{background:var(--spark-surface,#171717);color:var(--spark-primary,#f7931a)}
+ .gys-desktop-nav p{margin-top:auto;font-size:12px;color:var(--spark-text-muted,#999)}
+ .gys-wallet__header{flex:none;order:1;min-height:0}
+ .gys-wallet__address{order:2;max-width:1080px;width:calc(100% - 56px);align-self:center}
+ .gys-action-dock{order:3;position:relative;left:auto;right:auto;bottom:auto;transform:none;max-width:680px;width:100%;align-self:center;flex:none;margin:8px 0}
+ .gys-home-quick-actions{display:none}
+ .gys-wallet__activity{order:4;padding:0 clamp(20px,4vw,80px) 30px}
+ .gys-activity,.gys-market-secondary{max-width:1100px;margin-inline:auto}
+ .page-layout:has(.gys-wallet)>.gys-slide-layer{left:232px}
+ .gys-wallet-balance-surface__content{max-width:1160px;margin-inline:auto;width:100%}
+}
+@media(min-width:768px) and (max-width:1023px){
+ .main-wrapper #content-root{width:100%;max-width:none}
+ .gys-wallet{max-width:none!important;width:100%}
+}
+@media(max-width:767px){
+ .gys-wallet__activity{padding-bottom:110px}
+ .gys-home-quick-actions{flex:none}
+}

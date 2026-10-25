@@ -36,6 +36,7 @@ describe('USD receive deposit address', () => {
               destinationAsset: 'BTC',
               serviceFeeAmount: 10_000n,
               serviceFeeAsset: 'USDC',
+              serviceFeeAssetDecimals: 6,
               expiresAt: 1_900_000_000,
             },
           }
@@ -60,6 +61,11 @@ describe('USD receive deposit address', () => {
     fireEvent.click(screen.getByTestId('cross-chain-receive-continue'));
     fireEvent.click(await screen.findByText('Solana'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByText('Review this deposit before continuing');
+    expect(screen.queryByTestId('cross-chain-deposit-address')).toBeNull();
+    expect(screen.getByRole('button',{name:'Show deposit details'})).toBeDisabled();
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button',{name:'Show deposit details'}));
     await screen.findByTestId('cross-chain-deposit-address');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Back' }));

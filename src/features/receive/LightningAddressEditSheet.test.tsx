@@ -34,7 +34,7 @@ describe('anonymous Lightning Address personalization', () => {
     await waitForSheetOpen();
     expect(await screen.findByTestId('lightning-address-text')).toBeInTheDocument();
     expect(screen.queryByTitle('Edit Lightning Address')).toBeNull();
-    expect(screen.getByText(/Want yourname@getyoursats.com/)).toBeInTheDocument();
+    expect(screen.getByText(/Personal Lightning addresses are coming soon/)).toBeInTheDocument();
     expect(client.registerLightningAddress).not.toHaveBeenCalled();
   });
 });

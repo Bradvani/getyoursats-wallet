@@ -26,7 +26,7 @@ describe('SDK-backed transaction history', () => {
     const csv = historyToCsv([records[0]]);
     expect(csv).toContain('"123456789","23"');
     expect(csv).toContain('"received-1","receive","lightning","completed"');
-    expect(csv).toContain('Date UTC,Payment ID,Direction,Network,Status,Amount sats,Fee sats');
+    expect(csv).toContain('Date UTC,Payment ID,Direction,Network,Status,Amount base units,Fee base units,Asset,Decimals');
     expect(csv).not.toContain('INR');
   });
   it('escapes untrusted SDK IDs against CSV formulas and cell breaks', () => {

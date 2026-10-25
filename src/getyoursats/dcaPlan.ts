@@ -1,5 +1,5 @@
 import {amountToSats,type Denomination} from './denomination';
-export type DcaFrequency='daily'|'weekly'|'every-two-weeks';
+export type DcaFrequency='daily'|'weekly'|'every-two-weeks'|'monthly';
 export interface DcaDraft {
  denomination:Denomination;enteredAmount:string;estimatedSats:number;
  estimatedFiat:number;fiatCurrency:string;frequency:DcaFrequency;
@@ -18,7 +18,7 @@ export function validateDcaDraft(args:{
    return {error:'A live BTC/'+fiatCurrency+' quote is needed for this draft.'};
  const sats=amountToSats(args.amount,args.denomination,fiatPerBtc);
  if(!sats)return {error:'Enter an amount worth at least one satoshi.'};
- if(!['daily','weekly','every-two-weeks'].includes(args.frequency))
+ if(!['daily','weekly','every-two-weeks','monthly'].includes(args.frequency))
    return {error:'Choose a valid purchase interval.'};
  const estimatedFiat=(sats/100_000_000)*fiatPerBtc;
  if(!Number.isFinite(estimatedFiat)||estimatedFiat<=0)return {error:'Invalid conversion quote.'};

@@ -210,7 +210,7 @@ export const StableBalanceProvider: React.FC<StableBalanceProviderProps> = ({ ch
       // When the conversion amount was adjusted (min limit floor or dust prevention),
       // the token amount doesn't match the payment — show sats instead
       if (payment.conversionDetails?.conversions?.some(c => c.amountAdjustment)) {
-        return `₿${formatWithSpaces(Number(payment.amount))}`;
+        return `${formatWithSpaces(Number(payment.amount))} sats`;
       }
 
       const tokenInfo = getTokenAmountFromPayment(payment);
@@ -220,7 +220,7 @@ export const StableBalanceProvider: React.FC<StableBalanceProviderProps> = ({ ch
         return formatTokenAmount(tokenInfo.amount, withAssetDecimals(base, tokenInfo.metadata.decimals));
       }
 
-      return `₿${formatWithSpaces(Number(payment.amount))}`;
+      return `${formatWithSpaces(Number(payment.amount))} sats`;
     },
     [displayConfig, fiatCurrencies]
   );
