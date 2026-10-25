@@ -45,7 +45,7 @@ describe('direct Spark BTC sending', () => {
 
     fireEvent.change(await screen.findByTestId('payment-input'), { target: { value: ADDRESS } });
     fireEvent.click(screen.getByTestId('continue-button'));
-    fireEvent.change(await screen.findByLabelText('Amount'), { target: { value: '1000' } });
+    fireEvent.change(await screen.findByRole('spinbutton'), { target: { value: '1000' } });
     fireEvent.click(screen.getByText('Continue'));
     const confirm = await screen.findByTestId('send-confirm-button');
     expect(client.prepareSendPayment).toHaveBeenCalledWith(expect.objectContaining({
