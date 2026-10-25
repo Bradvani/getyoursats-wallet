@@ -418,22 +418,50 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
           className="pb-2 flex flex-col items-center gap-4 overflow-y-auto overscroll-y-none touch-pan-y min-h-0"
           style={{ maxHeight: isSheetFull ? '85dvh' : '60dvh' }}
         >
-          <section className="w-full space-y-3 rounded-xl border border-spark-border p-4 text-sm" aria-label={text.quoteReview}>
-            <h3 className="font-semibold text-spark-text-primary">{text.quoteReview}</h3>
-            <dl className="space-y-2 text-spark-text-secondary">
-              <div><dt>{text.requestedAmount}</dt><dd className="font-mono">{usdInput} {resultAssetName}</dd></div>
-              <div><dt>{text.requiredDeposit}</dt><dd className="font-mono text-xl text-spark-text-primary" data-testid="cross-chain-deposit-amount">{resultDepositAmount} {resultAssetName}</dd></div>
-              <div><dt>{text.network}</dt><dd>{resultChainName}</dd></div>
-              <div><dt>{text.expectedOutput}</dt><dd>{resultInfo?formatReceived(resultInfo):text.checking}</dd></div>
-              <div><dt>{text.provider}</dt><dd>{getProviderDisplayName(selectedRoute.provider)}</dd></div>
-              <div><dt>{text.providerFee}</dt><dd>{fee?formatMoney({kind:'token',amount:fee.amount,decimals:fee.decimals,ticker:fee.asset}):text.feeUnavailable}</dd></div>
-              {quote&&quote.difference!==0n&&<div><dt>{text.difference}</dt><dd>{formatMoney({kind:'token',amount:quote.difference,decimals:selectedRoute.decimals,ticker:resultAssetName})}<p>{text.unexplained}</p></dd></div>}
-              <div><dt>{text.expires}</dt><dd>{quote?.expiresAtMs?new Date(quote.expiresAtMs).toLocaleString(language):text.expiryUnavailable}</dd></div>
+          {/* The source asset/network and exact provider quote lead. Optional
+              economics are available without presenting SDK diagnostics as a
+              scary waiver. No differences are called fees without SDK evidence. */}
+          <section className="w-full max-w-xl mx-auto space-y-4 rounded-2xl border border-spark-border bg-spark-dark p-4 sm:p-6 text-sm" aria-label={text.quoteReview}>
+            <div>
+              <h3 className="text-lg font-semibold text-spark-text-primary">{text.quoteReview}</h3>
+              <p className="mt-1 text-spark-text-secondary">{resultAssetName} · {resultChainName} · {getProviderDisplayName(selectedRoute.provider)}</p>
+            </div>
+            <div className="rounded-xl border border-spark-border bg-spark-surface px-4 py-4">
+              <p className="text-xs font-medium text-spark-text-muted">{text.requiredDeposit}</p>
+              <p className="mt-1 break-words font-mono text-2xl sm:text-3xl font-semibold text-spark-text-primary" data-testid="cross-chain-deposit-amount">
+                {resultDepositAmount} <span className="text-lg">{resultAssetName}</span>
+              </p>
+              <p className="mt-2 text-xs text-spark-text-secondary">{text.requestedAmount}: {usdInput} {resultAssetName}</p>
+            </div>
+            <dl className="grid grid-cols-2 gap-x-5 gap-y-3 border-b border-spark-border pb-4">
+              <div className="min-w-0">
+                <dt className="text-xs text-spark-text-muted">{text.expectedOutput}</dt>
+                <dd className="mt-1 break-words font-medium text-spark-text-primary">{resultInfo?formatReceived(resultInfo):text.checking}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-xs text-spark-text-muted">{text.expires}</dt>
+                <dd className="mt-1 text-spark-text-primary">{quote?.expiresAtMs?new Date(quote.expiresAtMs).toLocaleString(language):text.expiryUnavailable}</dd>
+              </div>
             </dl>
-            <p className="text-xs text-spark-text-muted">{text.bufferUnavailable}</p>
-            <p className="text-xs text-spark-text-muted">{text.underpayment}</p>
+            <details className="group text-spark-text-secondary">
+              <summary className="cursor-pointer py-2 font-semibold text-spark-text-primary focus-visible:outline-spark-primary">{text.quoteDetails}</summary>
+              <dl className="space-y-3 pt-2">
+                <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
+                  <dt>{text.providerFee}</dt>
+                  <dd className="font-mono text-spark-text-primary">{fee?formatMoney({kind:'token',amount:fee.amount,decimals:fee.decimals,ticker:fee.asset}):text.feeUnavailable}</dd>
+                </div>
+                {quote&&quote.difference!==0n&&<div className="border-t border-spark-border pt-3">
+                  <dt>{text.difference}</dt>
+                  <dd className="mt-1 font-mono text-spark-text-primary">{formatMoney({kind:'token',amount:quote.difference,decimals:selectedRoute.decimals,ticker:resultAssetName})}</dd>
+                  <p className="mt-1 text-xs text-spark-text-muted">{text.unexplained}</p>
+                </div>}
+                <div className="border-t border-spark-border pt-3 text-xs text-spark-text-muted">
+                  {text.underpayment}
+                </div>
+              </dl>
+            </details>
           </section>
-          {!quoteUsable?<div role="alert" className="w-full space-y-3"><p>{quote?.expiresAtMs?text.expired:text.expiryUnavailable}</p><PrimaryButton onClick={()=>generateOrder(selectedRoute)}>{text.retry}</PrimaryButton></div>:!revealed?<div className="w-full space-y-3">
+          {!quoteUsable?<div role="alert" className="w-full max-w-xl mx-auto space-y-3"><p>{quote?.expiresAtMs?text.expired:text.expiryUnavailable}</p><PrimaryButton onClick={()=>generateOrder(selectedRoute)}>{text.retry}</PrimaryButton></div>:!revealed?<div className="w-full max-w-xl mx-auto space-y-3">
             <label className="flex gap-3 text-sm text-spark-text-secondary"><input type="checkbox" checked={acknowledged} onChange={event=>setAcknowledged(event.target.checked)}/>{text.depositAck}</label>
             <PrimaryButton disabled={!acknowledged} onClick={()=>setRevealed(true)} className="w-full">{text.showDeposit}</PrimaryButton>
           </div>:<>
