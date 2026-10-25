@@ -1,3 +1,5 @@
+import {PAYMENT_UX} from '@/locales/paymentUx';
+import {usePresentation} from '@/hooks/usePresentation';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import GetYourSatsWordmark from '../GetYourSatsWordmark';
 import React, { ReactNode, useState, useRef, useEffect } from 'react';
@@ -44,6 +46,8 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
   slideFrom = 'left',
   footer,
 }) => {
+  const {language}=usePresentation();
+  const direction=language==='ar'&&slideFrom==='left'?'right':language==='ar'&&slideFrom==='right'?'left':slideFrom;
   const desktop = useMediaQuery('(min-width: 1024px)');
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const [isOpen, setIsOpen] = useState(true);
@@ -71,7 +75,7 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
 
   const { from, to } = desktop
     ? { from: 'opacity-0 translate-y-2', to: 'opacity-100 translate-y-0' }
-    : slideTransforms[slideFrom];
+    : slideTransforms[direction];
 
   return (
     // `absolute inset-0` (not the old `relative h-dvh`) so the page
@@ -127,16 +131,16 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
               {closeStyle === 'back' ? (
                 <button
                   onClick={handleClose}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
-                  aria-label="Go back"
+                  className="absolute start-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
+                  aria-label={language==='en'?'Go back':PAYMENT_UX[language].back}
                 >
-                  <BackIcon size="md" />
+                  <BackIcon size="md" className="rtl:rotate-180" />
                 </button>
               ) : (
                 <button
                   onClick={handleClose}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
-                  aria-label="Close"
+                  className="absolute end-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
+                  aria-label={PAYMENT_UX[language].close}
                 >
                   <CloseIcon size="md" />
                 </button>

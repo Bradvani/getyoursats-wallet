@@ -19,13 +19,13 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium firefox webkit
       - name: Verify safe setup, review changes and responsive wallet journeys
-        run: npx playwright test e2e/tests/getyoursats-desktop-navigation.spec.ts e2e/tests/getyoursats-review.spec.ts e2e/tests/getyoursats-setup.spec.ts e2e/tests/getyoursats-landing.spec.ts e2e/tests/getyoursats-premium.spec.ts e2e/tests/getyoursats-orange-audit.spec.ts e2e/tests/getyoursats-scarcity-rulebook.spec.ts e2e/tests/getyoursats-contact-enquiries.spec.ts e2e/tests/getyoursats-site-experience.spec.ts --project chromium
+        run: npx playwright test e2e/tests/payment-locales.spec.ts e2e/tests/getyoursats-desktop-navigation.spec.ts e2e/tests/getyoursats-review.spec.ts e2e/tests/getyoursats-setup.spec.ts e2e/tests/getyoursats-landing.spec.ts e2e/tests/getyoursats-premium.spec.ts e2e/tests/getyoursats-orange-audit.spec.ts e2e/tests/getyoursats-scarcity-rulebook.spec.ts e2e/tests/getyoursats-contact-enquiries.spec.ts e2e/tests/getyoursats-site-experience.spec.ts --project chromium
         env:
           VITE_BREEZ_API_KEY: ''
           VITE_SPARK_LOCAL_CONFIG: ''
           VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
       - name: Verify navigation and motion across browser engines
-        run: npx playwright test e2e/tests/getyoursats-desktop-navigation.spec.ts --project firefox --project webkit
+        run: npx playwright test e2e/tests/payment-locales.spec.ts e2e/tests/getyoursats-desktop-navigation.spec.ts --project firefox --project webkit
         env:
           VITE_BREEZ_API_KEY: ''
           VITE_SPARK_LOCAL_CONFIG: ''

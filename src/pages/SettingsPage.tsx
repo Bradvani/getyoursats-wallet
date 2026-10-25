@@ -1,6 +1,7 @@
+import LanguageSelect from '@/components/LanguageSelect';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import { usePresentation } from '@/hooks/usePresentation';
-import { APP_LANGUAGES, setAppLanguage, setAppearancePreference, type AppearancePreference } from '@/services/presentationPreferences';
+import { setAppearancePreference, type AppearancePreference } from '@/services/presentationPreferences';
 import React, { useEffect, useRef, useState } from 'react';
 import {featureAvailability} from '../getyoursats/featureAvailability';
 import { ConfirmDialog, FormGroup, FormInput, LoadingSpinner, PrimaryButton, Switch } from '../components/ui';
@@ -195,11 +196,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   }
 
   return (
-    <SlideInPage title="Settings" onClose={onBack} slideFrom="left" footer={footer}>
+    <SlideInPage title={copy.settings} onClose={onBack} slideFrom="left" footer={footer}>
       <div className="p-4">
         <div className="max-w-xl mx-auto w-full space-y-4">
 <p className="text-xs text-spark-text-muted" role="status">{trustCopy(language).autosave}</p>
-          {language!=='en'&&<p className="text-xs text-spark-text-muted">{trustCopy(language).localePartial}</p>}
           {/* Order: page nav, exports, settings, diagnostics, developer
               options, account deletion last. The "Save Changes" footer
               applies the toggles + inputs; the rest commits on tap. */}
@@ -315,23 +315,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 </p>
               </div>
               <div className="pt-4 border-t border-spark-border mt-3">
-                <h4 className="text-sm font-semibold text-spark-text-primary mb-2">{copy.language}</h4>
-                <div className="gys-settings-lang" role="group" aria-label={copy.language}>
-                  {APP_LANGUAGES.map(item => (
-                    <button key={item.code} type="button" lang={item.code} aria-pressed={language===item.code}
-                      data-testid={`settings-language-${item.code}`} onClick={() => setAppLanguage(item.code)}
-                      className="gys-settings-choice">
-                      <strong>{item.name} {language===item.code?'✓':''}</strong>
-                      <small>{item.subtitle}</small>
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs text-spark-text-muted leading-relaxed">
-                  {language==='hi'?'नेविगेशन और मार्गदर्शिका अनुवाद उपलब्ध हैं। महत्वपूर्ण भुगतान और रिकवरी निर्देश अभी अंग्रेज़ी में रहते हैं।':
-                   language==='es'?'Menús y guías traducidos. Algunas instrucciones de pagos y recuperación siguen en inglés.':
-                   language==='pt'?'Menus e guias traduzidos. Algumas instruções de pagamentos e recuperação continuam em inglês.':
-                   'Navigation and guides are localized. Some sensitive payment and recovery instructions remain in English pending review.'}
-                </p>
+                <LanguageSelect />
               </div>
               {import.meta.env.VITE_GETYOURSATS_ENABLE_LEGACY_BUY === 'true' && hasBuyProviderSettings() && (
                 <button

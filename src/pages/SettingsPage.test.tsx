@@ -65,7 +65,7 @@ describe('help and app identity', () => {
     expect(screen.queryByTestId('settings-privacy-link')).not.toBeInTheDocument();
     expect(screen.queryByTestId('settings-support-link')).not.toBeInTheDocument();
     expect(screen.getByTestId('settings-appearance-orange')).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByTestId('settings-language-hi')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', {name:'Language'})).toBeInTheDocument();
     expect(screen.getByText('GetYourSats v0.0.0-test')).toBeInTheDocument();
   });
 });

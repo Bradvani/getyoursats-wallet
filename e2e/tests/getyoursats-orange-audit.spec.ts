@@ -120,7 +120,7 @@ test('@public-smoke Orange Settings, Menu and forms retain clear labels',async({
  await expect(page.getByTestId('settings-appearance-orange')).toHaveAttribute('aria-pressed','true');
  await expect(page.getByTestId('settings-appearance-dark')).toBeVisible();
  await expect(page.getByTestId('settings-appearance-system')).toBeVisible();
- await expect(page.getByTestId('settings-language-en')).toBeVisible();
+ await expect(page.getByRole('combobox',{name:'Language',exact:true})).toHaveValue('English');
  await expect(page.getByRole('button',{name:/Currencies/i})).toBeVisible();
  await page.screenshot({path:'test-artifacts/orange-settings.png',animations:'disabled'});
  // The isolated fixture has no #content-root drawer anchor; main Settings controls are tested above.

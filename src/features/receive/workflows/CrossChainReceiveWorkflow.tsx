@@ -1,3 +1,4 @@
+import {PAYMENT_UX} from '@/locales/paymentUx';
 import {formatMoney} from '@/getyoursats/money';
 import {receiveQuoteEvidence} from '@/getyoursats/receiveQuote';
 import {trustCopy} from '@/getyoursats/trustCopy';
@@ -290,7 +291,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
       {step === 'amount' && (
         <div>
           <div>
-            <p className="text-sm text-spark-text-secondary mb-3">{text.stablecoins} · {text.depositModel}</p><label className="block text-sm font-medium text-spark-text-primary mb-2">{text.requestedAmount}</label>
+            <p className="text-sm text-spark-text-secondary mb-3">{PAYMENT_UX[language].stableIntro}</p><label className="block text-sm font-medium text-spark-text-primary mb-2">{PAYMENT_UX[language].depositAmount}</label>
             <input
               type="text"
               inputMode="decimal"
@@ -303,7 +304,9 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
                   if (canContinue) fetchRoutes();
                 }
               }}
-              placeholder="USDT / USDC"
+              placeholder="0.00"
+              dir="ltr"
+              aria-label={PAYMENT_UX[language].depositAmount}
               className={AMOUNT_FIELD_CLASS}
               data-testid="cross-chain-receive-amount-input"
             />

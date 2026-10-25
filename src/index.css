@@ -19,6 +19,7 @@
   font-style: normal;
   font-weight: 300;
   font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-300-normal.woff2') format('woff2');
 }
 @font-face {
@@ -26,6 +27,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff2') format('woff2');
 }
 @font-face {
@@ -33,6 +35,7 @@
   font-style: normal;
   font-weight: 500;
   font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-500-normal.woff2') format('woff2');
 }
 @font-face {
@@ -40,6 +43,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-600-normal.woff2') format('woff2');
 }
 @font-face {
@@ -47,6 +51,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff2') format('woff2');
 }
 @font-face {
@@ -54,6 +59,7 @@
   font-style: normal;
   font-weight: 800;
   font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff2') format('woff2');
 }
 @font-face {
@@ -91,6 +97,7 @@
   font-weight: 300;
   font-display: block;
   unicode-range: U+20BF;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-300-normal.woff2') format('woff2');
 }
 @font-face {
@@ -99,6 +106,7 @@
   font-weight: 400;
   font-display: block;
   unicode-range: U+20BF;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-400-normal.woff2') format('woff2');
 }
 @font-face {
@@ -107,6 +115,7 @@
   font-weight: 500;
   font-display: block;
   unicode-range: U+20BF;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-500-normal.woff2') format('woff2');
 }
 @font-face {
@@ -115,6 +124,7 @@
   font-weight: 600;
   font-display: block;
   unicode-range: U+20BF;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-600-normal.woff2') format('woff2');
 }
 @font-face {
@@ -123,6 +133,7 @@
   font-weight: 700;
   font-display: block;
   unicode-range: U+20BF;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-700-normal.woff2') format('woff2');
 }
 @font-face {
@@ -131,6 +142,7 @@
   font-weight: 800;
   font-display: block;
   unicode-range: U+20BF;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-800-normal.woff2') format('woff2');
 }
 @font-face {
@@ -391,7 +403,7 @@ body,
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: var(--gys-locale-font, 'Plus Jakarta Sans'), system-ui, sans-serif;
   background: var(--spark-void);
   color: var(--spark-text-primary);
   -webkit-font-smoothing: antialiased;
@@ -512,13 +524,13 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: var(--gys-locale-font, 'Plus Jakarta Sans'), system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -0.025em;
 }
 
 .font-display {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: var(--gys-locale-font, 'Plus Jakarta Sans'), system-ui, sans-serif;
 }
 
 /* Balance display - large clean numbers with background glow */
@@ -537,7 +549,7 @@ h6 {
    ============================================ */
 
 .button {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: var(--gys-locale-font, 'Plus Jakarta Sans'), system-ui, sans-serif;
   font-weight: 600;
   padding: 0.75em 2em;
   border-radius: 0.75rem;
@@ -600,7 +612,7 @@ h6 {
   gap: 0.5rem;
   padding: 0.875rem 1rem;
   border-radius: 0.75rem;
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: var(--gys-locale-font, 'Plus Jakarta Sans'), system-ui, sans-serif;
   font-weight: 600;
   font-size: 0.9375rem;
   letter-spacing: 0.01em;
@@ -1504,3 +1516,18 @@ main {
     height: 1.125rem;
   }
 }
+
+/* Script fonts also apply to native language names before a locale is selected. */
+[lang="ja"] { --gys-locale-font: "Noto Sans JP", "Hiragino Kaku Gothic ProN", sans-serif; }
+[lang="th"] { --gys-locale-font: "Noto Sans Thai", "Thonburi", sans-serif; }
+[lang="vi"] { --gys-locale-font: "Plus Jakarta Sans", sans-serif; }
+[lang="ta"] { --gys-locale-font: "Noto Sans Tamil", "Tamil Sangam MN", sans-serif; }
+[lang="ar"] { --gys-locale-font: "Noto Sans Arabic", "Geeza Pro", sans-serif; }
+[lang="hi"] { --gys-locale-font: "Noto Sans Devanagari", sans-serif; }
+[lang="zh-CN"] { --gys-locale-font: "Noto Sans SC", "PingFang SC", sans-serif; }
+html:lang(ja) body, html:lang(th) body, html:lang(vi) body, html:lang(ta) body,
+html:lang(ar) body, html:lang(hi) body, html:lang(zh-CN) body,
+.gys-language-options [lang], .gys-language-picker option { font-family: var(--gys-locale-font, inherit); }
+/* Keep protocol data unambiguous while Arabic interface text flows RTL. */
+[dir="rtl"] .gys-brand-wordmark, [dir="rtl"] .balance-display, [dir="rtl"] .font-mono { direction: ltr; unicode-bidi: isolate; }
+[dir="rtl"] .gys-language-options { text-align: right; }

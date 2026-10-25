@@ -60,7 +60,7 @@ async function payAndClose(input: string) {
   fireEvent.change(await screen.findByTestId('payment-input'), { target: { value: input } });
   fireEvent.click(screen.getByTestId('continue-button'));
 
-  fireEvent.change(await screen.findByPlaceholderText(/Between/i), { target: { value: '1000' } });
+  fireEvent.change(await screen.findByLabelText('Amount'), { target: { value: '1000' } });
   fireEvent.click(screen.getByText('Continue'));
 
   fireEvent.click(await screen.findByTestId('send-confirm-button'));
@@ -135,7 +135,7 @@ describe('save-as-contact prompt after a send', () => {
 
     fireEvent.change(await screen.findByTestId('payment-input'), { target: { value: LNURL } });
     fireEvent.click(screen.getByTestId('continue-button'));
-    fireEvent.change(await screen.findByPlaceholderText(/Between/i), { target: { value: '1000' } });
+    fireEvent.change(await screen.findByLabelText('Amount'), { target: { value: '1000' } });
     fireEvent.click(screen.getByText('Continue'));
 
     const destination = await screen.findByTestId('send-destination');
@@ -147,7 +147,7 @@ describe('save-as-contact prompt after a send', () => {
 
     fireEvent.change(await screen.findByTestId('payment-input'), { target: { value: LNURL } });
     fireEvent.click(screen.getByTestId('continue-button'));
-    fireEvent.change(await screen.findByPlaceholderText(/Between/i), { target: { value: '1000' } });
+    fireEvent.change(await screen.findByLabelText('Amount'), { target: { value: '1000' } });
     fireEvent.click(screen.getByText('Continue'));
 
     const destination = await screen.findByTestId('send-destination');
@@ -164,7 +164,7 @@ describe('save-as-contact prompt after a send', () => {
     fireEvent.change(await screen.findByTestId('payment-input'), { target: { value: LNURL } });
     fireEvent.click(screen.getByTestId('continue-button'));
 
-    expect(await screen.findByText(`Pay to ${ADDRESS}`)).toBeTruthy();
+    expect(await screen.findByText(ADDRESS)).toBeTruthy();
   });
 
   it('names an existing contact when a scanned LNURL resolves to one', async () => {
@@ -180,7 +180,7 @@ describe('save-as-contact prompt after a send', () => {
     fireEvent.change(await screen.findByTestId('payment-input'), { target: { value: LNURL } });
     fireEvent.click(screen.getByTestId('continue-button'));
 
-    expect(await screen.findByText('Pay to Alice')).toBeTruthy();
+    expect(await screen.findByText('Alice')).toBeTruthy();
   });
 
   it('stays quiet for a bare LNURL that resolves to no address', async () => {

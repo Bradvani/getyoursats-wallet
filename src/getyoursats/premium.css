@@ -300,3 +300,16 @@ html[data-ui-hidden] .gys-moment *{animation-play-state:paused!important}
  .gys-wallet-balance-surface__content>.text-center{grid-column:2;grid-row:1 / 3}
  .gys-wallet-balance-surface__content>.flex.justify-center{grid-column:1;grid-row:2;margin:0}
 }
+
+[dir="rtl"] .gys-desktop-nav nav button,
+[dir="rtl"] .gys-desktop-nav nav a,
+[dir="rtl"] .gys-backup-card,
+[dir="rtl"] .gys-inline-install { text-align: start; }
+@media(min-width:1024px){
+ [dir="rtl"] .gys-wallet { padding-left:0; padding-right:232px; }
+ [dir="rtl"] .gys-desktop-nav { inset:0 0 0 auto; border-right:0; border-left:1px solid var(--spark-border,#303030); }
+ [dir="rtl"] .page-layout:has(.gys-wallet)>.gys-slide-layer { left:0; right:232px; }
+}
+
+[dir="rtl"] .gys-page-header__brand { left:auto; right:16px; }
+[dir="rtl"] .gys-page-header__brand--back { right:53px; }
