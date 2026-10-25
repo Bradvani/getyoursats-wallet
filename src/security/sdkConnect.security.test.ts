@@ -21,7 +21,9 @@ describe('browser SDK connection security wiring',()=>{
   const config={network:'mainnet',stableBalanceConfig:{tokens:[]},preferSparkOverLightning:true} as unknown as Config;
   const wallet=await connectSdk({config,seed:{type:'mnemonic',mnemonic:'disposable test seed'},storageDir:'test-only'});
   expect(wallet).not.toBe(mocks.raw);expect(mocks.connect).not.toHaveBeenCalled();
-  expect(()=>wallet.refundDeposit({} as never)).toThrow(/unavailable pending/);
+  // The public refund method now enters the mandatory recovery controller.
+  // Raw signing/publication capabilities remain unavailable.
+  expect(()=>Reflect.get(wallet,'signRefundDeposit')({})).toThrow(/unavailable pending/);
   expect(mocks.raw.refundDeposit).not.toHaveBeenCalled();
   expect(await wallet.getInfo({})).toEqual({balanceSats:1n});
   expect(mocks.config).toHaveBeenCalledWith(expect.objectContaining({stableBalanceConfig:undefined,preferSparkOverLightning:false,backgroundTasksEnabled:false,realTimeSyncServerUrl:undefined,crossChainConfig:undefined,leafOptimizationConfig:expect.objectContaining({autoEnabled:false}),tokenOptimizationConfig:expect.objectContaining({autoEnabled:false})}));

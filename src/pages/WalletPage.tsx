@@ -1,4 +1,5 @@
 import PaymentReconciliationBanner from '../security/PaymentReconciliationBanner';
+import WalletRecoveryPanel from '../security/WalletRecoveryPanel';
 import {isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
 import {trustCopy} from '../getyoursats/trustCopy';
 import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
@@ -389,7 +390,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
       >
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
 
-        <PaymentReconciliationBanner/>
+        <PaymentReconciliationBanner/><WalletRecoveryPanel/>
         <WalletActivityPanel
           view={historyOpen?'history':'activity'} onViewChange={view=>setHistoryOpen(view==='history')}
           transactions={mergeDepositsWithTransactions(transactions, unclaimedDeposits)}

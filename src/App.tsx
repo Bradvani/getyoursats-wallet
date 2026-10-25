@@ -1,6 +1,7 @@
 import UnavailableWalletAction from './security/UnavailableWalletAction';
 import {isRestrictedBrowserWallet} from './security/browserReleasePolicy';
 import WebWalletVaultPage from './security/WebWalletVaultPage';
+import {getSignedRecovery} from './security/signedRecoveryController';
 import {useBrowserSessionLock} from './security/useBrowserSessionLock';
 import {isPasskeyMode} from './services/passkeyService';
 import WebVaultRecoveryPage from './security/WebVaultRecoveryPage';
@@ -660,7 +661,7 @@ const AppContent: React.FC = () => {
         );
 
       case 'getRefund':
-        if(sdk.sdk&&isRestrictedBrowserWallet(sdk.sdk))return <UnavailableWalletAction title="Deposit refund" onBack={()=>setUserScreen('wallet')}/>;
+        if(sdk.sdk&&isRestrictedBrowserWallet(sdk.sdk)&&!getSignedRecovery(sdk.sdk))return <UnavailableWalletAction title="Deposit refund" onBack={()=>setUserScreen('wallet')}/>;
         return (
           <>
             {renderWalletPage()}

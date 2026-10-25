@@ -10,6 +10,7 @@ describe('non-destructive exit persistence',()=>{
   const previous={...plan([tx({txid:'original'})]),exitStateSnapshot:'original-disposable-snapshot'};
   savePlan(wallet,previous);const old=localStorage.getItem(planKey);
   const write=vi.spyOn(localStorage,'setItem').mockImplementationOnce(()=>{throw new DOMException('quota','QuotaExceededError');});
+  write.mockClear();
   expect(()=>savePlan(wallet,{...previous,exitStateSnapshot:'new-snapshot'})).toThrow();
   expect(write).toHaveBeenCalledOnce();expect(localStorage.getItem(planKey)).toBe(old);expect(loadPlan(wallet)).toEqual(previous);
  });

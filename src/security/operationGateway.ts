@@ -14,6 +14,8 @@ import {journalDigest,recipientCommitment,operationWalletKey,readOperations,read
   operationFromPayment,withOperationLock,UncertainPaymentError,type OperationRecord} from './operationJournal';
 
 import {BROWSER_SPENDING_POLICY} from './browserReleasePolicy';
+import {SIGNED_RECOVERY,createSignedRecoveryController} from './signedRecoveryController';
+import {assertNoUnresolvedRecovery} from './signedRecoveryJournal';
 import {observationSdk,verifyObservationWithoutCommit} from './paymentObservation';
 
 const RECONCILIATION=Symbol('wallet-operation-reconciliation');
@@ -112,6 +114,8 @@ export function createOperationGateway(network:Network) {
     })().catch(error=>{walletKeyPromise=null;throw error});
     return walletKeyPromise;
   };
+  const recovery=createSignedRecoveryController({network,walletKey:getWalletKey,assertConnection,
+    raw:()=>{if(!client)throw new Error('Wallet is not connected');return client;}});
   const reconciliation:OperationReconciliation=Object.freeze({
     status:async()=>readOperations(await getWalletKey()),
     observe:async()=>{
@@ -128,6 +132,7 @@ export function createOperationGateway(network:Network) {
       const walletKey=await getWalletKey();
       await withOperationLock(walletKey,async()=>{
         assertConnection();assertUnlocked(epoch);
+        assertNoUnresolvedRecovery();
         const unresolved=readAllOperations().find(isUnresolved);
         if(unresolved)throw new UncertainPaymentError(unresolved.operationId);
         // Hold origin and wallet spend locks through every async removal step. Calling the
@@ -244,6 +249,7 @@ export function createOperationGateway(network:Network) {
       const walletKey=await getWalletKey();
       return await withOperationLock(walletKey,async()=>{
       assertConnection();assertUnlocked(record.epoch);
+      assertNoUnresolvedRecovery(walletKey);
       const unresolved=readOperations(walletKey).find(isUnresolved);
       if(unresolved)throw new UncertainPaymentError(unresolved.operationId);
       const request = frozenCopy(input);
@@ -315,6 +321,8 @@ export function createOperationGateway(network:Network) {
     return new Proxy(Object.create(null) as BreezSdk,{
       get:(_target,key)=>{
         if(key===RECONCILIATION)return reconciliation;
+        if(key===SIGNED_RECOVERY)return recovery;
+        if(key==='refundDeposit')return recovery.refund;
         if(key===BROWSER_SPENDING_POLICY)return true;
         if(key==='getInfo')return async(request:GetInfoRequest={})=>{
           assertConnection();
@@ -339,7 +347,9 @@ export function createOperationGateway(network:Network) {
         if (key === 'prepareSendPayment' || key === 'prepareLnurlPay') return async (input:never)=>{
           assertConnection();
           const epoch = getSpendingSessionEpoch(); assertUnlocked(epoch);
-          const unresolved=readOperations(await getWalletKey()).find(isUnresolved);
+          const currentWallet=await getWalletKey();
+          assertNoUnresolvedRecovery(currentWallet);
+          const unresolved=readOperations(currentWallet).find(isUnresolved);
           assertConnection();assertUnlocked(epoch);
           if(unresolved)throw new UncertainPaymentError(unresolved.operationId);
           const response = await raw[key](frozenCopy(input));

@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useWallet } from '../contexts/WalletContext';
+import {getSignedRecovery} from '../security/signedRecoveryController';
+import WalletRecoveryPanel from '../security/WalletRecoveryPanel';
 import type { DepositInfo, Fee, InputType, SdkEvent } from '@breeztech/breez-sdk-spark';
 import { LoadingSpinner, PrimaryButton, BottomSheetContainer, BottomSheetCard, DialogHeader, CollapsibleCodeField, CopyableRow, PaymentInfoCard } from '../components/ui';
 import { AlertCard, SimpleAlert } from '../components/AlertCard';
@@ -213,7 +215,8 @@ const GetRefundPage: React.FC<GetRefundPageProps> = ({ onBack, animationDirectio
       const result = await wallet.refundDeposit({ txid: selectedDeposit.txid, vout: selectedDeposit.vout, destinationAddress: destination.trim(), fee });
 
       // Remove from rejected list after successful refund
-      removeRejectedDeposit(selectedDeposit.txid, selectedDeposit.vout);
+      // Browser acknowledgement is not confirmation; retain recovery visibility.
+      if(!getSignedRecovery(wallet))removeRejectedDeposit(selectedDeposit.txid, selectedDeposit.vout);
 
       setRefundTxId(result.txId || null);
       setRefundStep('result');
@@ -224,7 +227,8 @@ const GetRefundPage: React.FC<GetRefundPageProps> = ({ onBack, animationDirectio
         error: e instanceof Error ? e.message : String(e),
       });
       setRefundError(e instanceof Error ? e.message : 'Failed to refund deposit');
-      setRefundStep('confirm');
+      if(getSignedRecovery(wallet)){setIsRefundFlowOpen(false);setError('Check the saved recovery before trying again. No new refund should be created after an uncertain result.');}
+      else setRefundStep('confirm');
     } finally {
       setIsProcessing(false);
     }
@@ -239,6 +243,7 @@ const GetRefundPage: React.FC<GetRefundPageProps> = ({ onBack, animationDirectio
 
   return (
     <SlideInPage title="Get Refund" onClose={onBack} slideFrom={animationDirection}>
+      <WalletRecoveryPanel/>
       <div className="p-4">
         <div className="max-w-xl mx-auto w-full space-y-6">
           {/* Content */}
@@ -436,6 +441,7 @@ const GetRefundPage: React.FC<GetRefundPageProps> = ({ onBack, animationDirectio
             {/* Step 5: Result */}
             {refundStep === 'result' && (
               <ResultStep result="success" error={null} onClose={closeRefundFlow} operationType="refund">
+                {getSignedRecovery(wallet)&&<p role="status" className="text-sm">Refund submitted. Bitcoin confirmation is still pending. Keep this wallet on the device.</p>}
                 {refundTxId && (
                   <PaymentInfoCard>
                     <CollapsibleCodeField

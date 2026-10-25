@@ -114,7 +114,7 @@ describe('connection operation gateway',()=>{
   const sending=h.wallet.sendPayment({prepareResponse:p});const rejected=expect(sending).rejects.toThrow(/expired during approval/);
   await approvalReady();vi.setSystemTime(62000);await approve();await rejected;expect(h.send).not.toHaveBeenCalled();
  });
- it.each(['refundDeposit','recoverFunds','getTokenIssuer','createTokenAllowance','pullPayment','sendBatch','publishSignedTransferPackage','signMessage','updateUserSettings','lnurlWithdraw','futureSpendMethod'])('denies unreviewed capability %s',method=>{
+ it.each(['signRefundDeposit','verifyRefundTransaction','inspectRecoveryTransaction','recoverFunds','getTokenIssuer','createTokenAllowance','pullPayment','sendBatch','publishSignedTransferPackage','signMessage','updateUserSettings','lnurlWithdraw','futureSpendMethod'])('denies unreviewed capability %s',method=>{
   const h=harness();expect(()=>Reflect.get(h.wallet,method)({})).toThrow(/unavailable pending/);expect(h.refund).not.toHaveBeenCalled();
  });
  it('does not expose SDK through prototype or property mutation',()=>{

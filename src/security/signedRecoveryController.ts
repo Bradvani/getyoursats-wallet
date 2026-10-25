@@ -63,11 +63,12 @@ export function createSignedRecoveryController(options:{
   const epoch=getSpendingSessionEpoch();live(epoch);const key=await walletKey();live(epoch);
   return withOperationLock(key,async()=>{live(epoch);return run(key,epoch);});
  };
- async function approve(r:Pick<RecoveryRecord,'purpose'|'destination'|'amountSats'|'feeLimitSats'|'transactions'>,epoch:number,action:string){
+ async function approve(r:Pick<RecoveryRecord,'purpose'|'destination'|'amountSats'|'feeLimitSats'|'transactions'|'refund'>,epoch:number,action:string){
   const amount=r.purpose==='refund'?BigInt(r.amountSats)-BigInt(r.feeLimitSats):BigInt(r.amountSats);
   if(amount<=0n)throw new Error('No positive recovery amount');
   await requestSpendingApproval([{paymentId:'recovery',amount,details:{type:'bitcoin',withdrawalAddress:r.destination}}],{
    Action:action,Network:network,Destination:r.destination,
+   ...(r.refund?{'Source outpoint':r.refund.txid+':'+r.refund.vout}:{}),
    'Source value':r.amountSats+' sats','Authorized fee ceiling':r.feeLimitSats+' sats',
    ...(r.transactions.length?{'Signed transaction IDs':r.transactions.map(t=>t.txId).join('\n')}:{}),
    Policy:'Continue only these signed transactions. A changed destination, fee or rebuilt package requires a new authorization.',
@@ -124,7 +125,11 @@ export function createSignedRecoveryController(options:{
    const tx=r.transactions[0];
    if(await chain.confirmed(tx.txId,tx.txHex)){
     live(epoch);r=updateRecovery(r,{state:'confirmed',transactions:[{...tx,state:'confirmed'}]});
-   }else{live(epoch);ready.add(tx.txId);}
+   }else{
+    live(epoch);
+    if(r.state==='confirmed')r=updateRecovery(r,{state:'uncertain',transactions:[{...tx,state:'uncertain'}]});
+    ready.add(tx.txId);
+   }
   }else{
    const recovery=r.recovery!;
    await validateExit(sdk,recovery);live(epoch);
@@ -148,7 +153,7 @@ export function createSignedRecoveryController(options:{
    }
    live(epoch);
    const complete=checked.verdict.type==='done'&&txs.every(t=>t.state==='confirmed');
-   r=updateRecovery(r,{state:complete?'confirmed':checked.verdict.type==='redo'?'uncertain':r.state,transactions:txs});
+   r=updateRecovery(r,{state:complete?'confirmed':checked.verdict.type==='redo'||r.state==='confirmed'?'uncertain':r.state,transactions:txs});
    if(checked.verdict.type==='redo')throw new Error('This exit needs a newly authorized rebuild. Original signed data has been preserved.');
   }
   return {record:r,ready};
@@ -167,7 +172,7 @@ export function createSignedRecoveryController(options:{
    }catch{
     // A timeout/cancellation after submission is uncertain, not proof of failure.
     // Retain exactly the same bytes. Storage errors also retain the earlier guard.
-    r=updateRecovery(r,{state:'uncertain',transactions:r.transactions.map(t=>t.txId===tx.txId?{...t,state:'uncertain'}:t)});
+    updateRecovery(r,{state:'uncertain',transactions:r.transactions.map(t=>t.txId===tx.txId?{...t,state:'uncertain'}:t)});
     throw new Error('Recovery broadcast outcome is uncertain. Resume this same operation; do not create another refund or exit.');
    }
   }
@@ -188,9 +193,10 @@ export function createSignedRecoveryController(options:{
    const amountSats=sats(quote.amountSats),feeLimitSats=sats(request.fee.amount);
    if(BigInt(feeLimitSats)>=BigInt(amountSats))throw new Error('Refund fee consumes the deposit');
    const deadline=Date.now()+60_000;
-   await approve({purpose:'refund',destination:request.destinationAddress,amountSats,feeLimitSats,transactions:[]},epoch,'Authorize deposit refund');
+   await approve({purpose:'refund',destination:request.destinationAddress,amountSats,feeLimitSats,transactions:[],refund:request},epoch,'Authorize deposit refund');
    if(Date.now()>=deadline)throw new Error('Refund preparation expired');
    const intentHash=await journalDigest({network,request,amountSats,feeLimitSats});live(epoch);
+   if(Date.now()>=deadline)throw new Error('Refund preparation expired');
    let record=writeRecovery({version:1,walletKey:key,operationId:crypto.randomUUID(),network,purpose:'refund',destination:request.destinationAddress,
     amountSats,feeLimitSats,intentHash,state:'authorized',revision:0,createdAt:Date.now(),updatedAt:Date.now(),refund:request,transactions:[]});
    try{
@@ -226,7 +232,7 @@ export function createSignedRecoveryController(options:{
   }),
   resume:async(id:string)=>lock(async(key,epoch)=>{
    let record=find(key,id);
-   if(record.state==='confirmed')return record;
+   // Even a previously confirmed record is freshly checked for reorgs.
    const checked=await checkRecord(record,epoch);record=checked.record;live(epoch);
    if(record.state==='confirmed'||!checked.ready.size)return record;
    await approve(record,epoch,'Resume the same signed recovery transactions');
