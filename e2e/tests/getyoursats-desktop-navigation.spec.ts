@@ -19,14 +19,18 @@ for (const width of [1024, 1366, 1920]) {
   });
 }
 
-test('collapsed market panel does not mount its updating content', async ({ page }) => {
+test('market card is visible in Wallet and unmounted in History or Settings', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 936 });
   await page.goto('/e2e/fixtures/premium-ui.html');
-  const content = page.getByRole('region', { name: 'Bitcoin market price' });
-  await expect(content).toHaveCount(0);
-  await page.getByText('Bitcoin market', { exact: true }).click();
-  await expect(content).toBeVisible();
-  await page.getByText('Bitcoin market', { exact: true }).click();
-  await expect(content).toHaveCount(0);
+  const market = page.getByRole('region', { name: 'Bitcoin market price' });
+  const nav = page.getByRole('complementary', { name: 'Wallet navigation' });
+  await expect(market).toBeVisible();
+  await nav.getByRole('button', { name: 'History', exact: true }).click();
+  await expect(market).toHaveCount(0);
+  await nav.getByRole('button', { name: 'Wallet', exact: true }).click();
+  await expect(market).toBeVisible();
+  await nav.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(market).toHaveCount(0);
 });
 
 for (const viewport of [{width:360,height:800}, {width:390,height:844}, {width:768,height:1024}, {width:844,height:390}]) {

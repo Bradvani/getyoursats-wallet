@@ -28,7 +28,17 @@ function safeRead(key:string): string|null {
 }
 export function getAppLanguage(): AppLanguage {
   const value=safeRead(LANGUAGE_KEY) as AppLanguage;
-  return langCodes.has(value)?value:'en';
+  if(value)return langCodes.has(value)?value:'en';
+  return detectAppLanguage(typeof navigator==='undefined'?[]:navigator.languages);
+}
+export function detectAppLanguage(languages:readonly string[]):AppLanguage {
+  for(const raw of languages){
+    const tag=raw.toLowerCase();
+    if(tag==='zh'||tag==='zh-cn'||tag==='zh-sg'||tag.startsWith('zh-hans'))return 'zh-CN';
+    const base=tag.split('-')[0] as AppLanguage;
+    if(langCodes.has(base))return base;
+  }
+  return 'en';
 }
 export function getAppearancePreference(): AppearancePreference {
   const value=safeRead(APPEARANCE_KEY) as AppearancePreference;

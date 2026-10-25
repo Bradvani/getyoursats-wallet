@@ -1,3 +1,5 @@
+import {openExternalUrl} from '@/utils/externalLink';
+import {SUPPORT_URL} from '@/constants/publicPages';
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import React from 'react';
 import {QRCodeContainer,QrPlaceholder,CopyableText} from '../../components/ui';
@@ -13,7 +15,7 @@ const BitcoinAddressDisplay:React.FC<Props>=({address,isLoading,error,onRetry,se
  return <div className="w-full space-y-3 text-sm text-spark-text-secondary">
    <h3 className="font-semibold text-spark-text-primary">{text.bitcoinDeposit}</h3>
    <p>{text.network}: {network}</p>
-   <p>{PAYMENT_UX[language].depositIntro}</p><p>{text.depositEconomics}</p><details className="rounded-xl border border-spark-border p-3"><summary className="cursor-pointer font-medium">{PAYMENT_UX[language].howWalletWorks}</summary><p className="mt-2">{text.depositModel}</p></details>
+   <p>{PAYMENT_UX[language].depositIntro}</p><p>{text.depositEconomics}</p><button type="button" className="min-h-11 text-spark-primary underline" onClick={()=>void openExternalUrl(SUPPORT_URL+'?lang='+language+'#how-your-wallet-works')}>{PAYMENT_UX[language].howWalletWorks}</button>
    {address&&!error&&<CopyableText text={address} truncate showShare label={text.bitcoinDeposit} onCopied={()=>showToast('success',text.copySuccess)} onShareError={()=>showToast('error',text.copyFailure)} data-testid="bitcoin-address-text"/>}
  </div>;
 };

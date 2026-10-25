@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   APP_LANGUAGES,
+  detectAppLanguage,
   HOME_COPY,
   WALLET_COPY,
   appCopy,
@@ -43,4 +44,10 @@ describe('supported language catalogs', () => {
     initPresentation();
     expect(getAppLanguage()).toBe('en');
   });
+});
+
+describe('device language selection',()=>{
+ it.each([['ja-JP','ja'],['th-TH','th'],['vi-VN','vi'],['ta-IN','ta'],['ar-AE','ar'],['zh-Hans-SG','zh-CN'],['zh-TW','en']])('maps %s to %s',(input,expected)=>expect(detectAppLanguage([input])).toBe(expected));
+ it('respects the first supported device preference',()=>expect(detectAppLanguage(['fr-FR','ta-IN','en-US'])).toBe('ta'));
+ it('retains an explicit choice',()=>{setAppLanguage('es');expect(getAppLanguage()).toBe('es')});
 });
