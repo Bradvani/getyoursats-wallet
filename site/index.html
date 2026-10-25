@@ -109,7 +109,7 @@
 @media(max-width:830px){.sat-orbit-wheel{width:115px;height:115px}.sat-orbit-inner strong{font-size:39px}.sat-milestone{padding:8px 10px}.screen-summary{padding-top:25px}}
 @media(max-width:550px){.wallet-screen{padding:30px 16px 18px}.screen-top .app-mark img{width:88px;height:57px}.screen-summary{padding-top:17px}.demo-value{font-size:40px}.screen-actions{margin-top:20px}.screen-content{min-height:140px}.wallet-zero{padding:10px}.sat-orbit-wheel{width:105px;height:105px;padding:9px}.sat-orbit-inner strong{font-size:34px}.sat-orbit-inner small{font-size:11px}.pos-invoice-card{padding:16px 10px;gap:12px}.pos-demo-qr{width:99px;height:99px}.pos-invoice-meta strong{font-size:22px}.soon-pill{font-size:7px;margin-left:4px;padding:4px}}
 @media(prefers-reduced-motion:reduce){.sat-orbit-wheel,.wallet-device,.feature-tab,.pos-quick-item{transition:none!important}}
-</style><link rel="stylesheet" href="/experience-v4.css"/>
+</style><link rel="stylesheet" href="/experience-v4.css?rev=2"/>
 </head>
 <body>
 <div aria-hidden="true" class="progress" id="reading-progress"></div>
@@ -460,6 +460,6 @@ $$('[data-pos-back]').forEach(b=>b.addEventListener('click',()=>setStage(Number(
 $('#bitasha-copy')?.addEventListener('click',async()=>{const button=$('#bitasha-copy'),note=$('#bitasha-copied');try{if(!navigator.clipboard?.writeText)throw Error('No Clipboard API');await navigator.clipboard.writeText('GETYOURSATS');button.textContent='Copied ✓';note.textContent='GETYOURSATS copied. Use it at Bitasha checkout.'}catch{button.textContent='Select code';note.textContent='Select GETYOURSATS and copy it for Bitasha checkout.';const range=document.createRange();range.selectNodeContents($('#bitasha-code'));const sel=getSelection();if(sel){sel.removeAllRanges();sel.addRange(range)}}});
 const year=$('#copyright-year');if(year)year.textContent=String(new Date().getFullYear());
 })();
-</script><script src="/experience-v4.js" defer></script>
+</script><script src="/experience-v4.js?rev=2" defer></script>
 </body>
 </html>
