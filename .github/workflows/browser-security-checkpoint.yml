@@ -1,0 +1,70 @@
+name: Browser security checkpoint
+on:
+  push:
+    branches:
+      - release/browser-pwa-security-localization-20261025
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: browser-security-checkpoint-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  code-and-installed-sdk:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Verify exact source and packaged WASM
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD
+          npm run test:security:wasm
+          npx tsc --noEmit
+          npm run lint
+          npm test -- --reporter=json --outputFile=checkpoint-unit-results.json
+          npm run build
+          git diff --exit-code -- package.json package-lock.json vendor
+      - name: Confirm production remains blocked
+        run: |
+          set -euo pipefail
+          if VERCEL_ENV=production npm run build > /tmp/interlock.log 2>&1; then
+            echo 'Production unexpectedly allowed: refusing this checkpoint.'
+            exit 1
+          fi
+          grep -Ei 'NO-GO|not approved|blocked|production|release' /tmp/interlock.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: checkpoint-unit-${{ github.sha }}
+          path: checkpoint-unit-results.json
+          if-no-files-found: ignore
+          retention-days: 7
+  chromium-security-fixtures:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_BREEZ_API_KEY: ''
+      VITE_SPARK_LOCAL_CONFIG: ''
+      VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
+      VITE_STAGING_PASSWORD: ''
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:security:browser
