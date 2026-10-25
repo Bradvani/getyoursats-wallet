@@ -33,7 +33,7 @@ export function formatMarketFiat(
   if (value === null) return 'Rate unavailable';
   try {
     const fraction = new Intl.NumberFormat(locale, { style: 'currency', currency })
-      .resolvedOptions().minimumFractionDigits;
+      .resolvedOptions().minimumFractionDigits ?? 2;
     return new Intl.NumberFormat(locale, {
       style: 'currency', currency, minimumFractionDigits: fraction,
       maximumFractionDigits: Math.max(fraction, satoshis >= 100_000_000 ? 2 : 4),
