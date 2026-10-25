@@ -258,3 +258,23 @@ html.ios-standalone-bottom-gap .gys-wallet-balance-surface__toolbar{z-index:30}
  .gys-wallet__activity{padding-bottom:110px}
  .gys-home-quick-actions{flex:none}
 }
+
+/* Keep decorative work off background tabs; SDK state remains independent. */
+html[data-ui-hidden] .gys-transfer *,
+html[data-ui-hidden] .gys-brand-reveal *,
+html[data-ui-hidden] .gys-moment *{animation-play-state:paused!important}
+/* Short landscape windows need usable history, not a phone-height masthead. */
+@media(max-height:600px) and (max-width:1023px){
+ .gys-wallet__header{min-height:0}
+ .gys-wallet__address{margin-block:4px;padding-block:6px}
+ .gys-action-dock button{min-height:44px}
+}
+@media(pointer:coarse){
+ .gys-wallet>div.absolute.inset-0{display:none}
+ button,a{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+}
+@media(min-width:1024px){
+ .gys-desktop-nav{overflow-y:auto;overscroll-behavior:contain}
+ .gys-desktop-nav nav{margin-top:clamp(16px,4vh,42px)}
+ .gys-page-surface>div.flex-1{overscroll-behavior:contain}
+}
