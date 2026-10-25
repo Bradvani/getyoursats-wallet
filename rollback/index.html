@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'">
+<title>GetYourSats · Recovery containment</title>
+</head>
+<body>
+<main>
+<header><p class="brand">get your sats</p><span class="badge">Recovery-only build</span></header>
+<h1>Your wallet data stays intact.</h1>
+<p>This containment build does not send payments, connect a wallet SDK, change signing material or delete stored records. Existing encrypted wallets, payment journals, SDK databases and pending exits are retained.</p>
+<section aria-labelledby="state-title"><h2 id="state-title">Stored state</h2><dl id="inventory"></dl><p id="compatibility" role="status"></p></section>
+<section aria-labelledby="unlock-title"><h2 id="unlock-title">Read your original recovery words</h2>
+<p>For encrypted recovery-word wallets only. Passkey credentials and their existing SDK data remain untouched; this build does not derive a replacement wallet or recover a lost passkey.</p>
+<form id="unlock-form" novalidate>
+<label for="password">Wallet password</label><input id="password" type="password" autocomplete="current-password" spellcheck="false" maxlength="256">
+<button type="submit" id="unlock">Unlock recovery words</button>
+</form>
+<p id="message" role="status"></p>
+<div id="revealer" hidden><p>Keep these words private. Do not send them to support or save a screenshot. Restoring elsewhere does not clear unresolved payments or pending exits on this device.</p>
+<label><input id="private" type="checkbox"> I am in a private place and understand that these words control this wallet.</label>
+<button id="reveal" type="button" disabled>Reveal original words</button>
+<pre id="words" aria-label="Original recovery words" hidden></pre>
+<button id="lock" type="button">Lock recovery view</button></div>
+</section>
+<footer><strong>Do not clear site data or remove this browser profile.</strong><p>This is a containment rollback, not a funds-enabled replacement wallet. An operator must verify the signed-off artifact and same-origin deployment before use.</p></footer>
+</main><script type="module" src="/main.ts"></script>
+</body></html>
