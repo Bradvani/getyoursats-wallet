@@ -28,6 +28,15 @@
     $('#feature-number').textContent=copy[key].number;
     $('#feature-name').textContent=copy[key].title;
     $('#feature-copy').textContent=copy[key].detail;
+    const walletLink=$('.feature-display-footer .circle-arrow');
+    if(walletLink){
+      walletLink.hidden=key==='stack';
+      if(key!=='stack')walletLink.setAttribute('aria-label',{
+        wallet:'Open the self-custody wallet',
+        lightning:'Explore Bitcoin-first routes inside the wallet',
+        merchant:'Open the merchant POS inside the wallet'
+      }[key]);
+    }
     if(key==='merchant')showMerchantStage(0);
   }
   $$('.feature-tab').forEach(button=>button.addEventListener('click',()=>activate(button.dataset.feature)));
