@@ -41,6 +41,20 @@ describe('SDK transaction authorization',()=>{
   const p=requestSpendingApproval(payments);
   finishSpendingApproval(getSpendingRequest()!.id,true);await p;
  });
+ it('does not unlock when background locking races asynchronous identity verification',async()=>{
+  lockSpendingSession();
+  const unlocking=unlockSpendingSession({type:'mnemonic',mnemonic:words});
+  lockSpendingSession('Backgrounded while verifying');
+  await expect(unlocking).rejects.toThrow(/session changed/);
+  await expect(requestSpendingApproval(payments)).rejects.toThrow(/locked/);
+ });
+ it('does not let a stale unlock overwrite a newly connected signer',async()=>{
+  lockSpendingSession();
+  const unlocking=unlockSpendingSession({type:'mnemonic',mnemonic:words});
+  clearSignerIdentity();
+  await expect(unlocking).rejects.toThrow(/session changed/);
+  await expect(requestSpendingApproval(payments)).rejects.toThrow(/locked/);
+ });
  it('SDK observer must wait for approval before returning',async()=>{
   const action=vi.fn();
   const promise=createPaymentApprovalObserver().beforeSend(payments).then(action).catch(()=>{});

@@ -46,6 +46,9 @@ describe('browser mnemonic session lock',()=>{
   expect(getUnlockedWebMnemonic()).toBeNull();
   await expect(result.current.unlock('incorrect')).rejects.toThrow();
   expect(result.current.locked).toBe(true);
+  await expect(result.current.unlock('a-long-wallet-password-123')).rejects.toThrow(/session changed/);
+  expect(getUnlockedWebMnemonic()).toBeNull();
+  act(()=>{visibility='visible';document.dispatchEvent(new Event('visibilitychange'))});
   await act(async()=>{await result.current.unlock('a-long-wallet-password-123')});
   expect(result.current.locked).toBe(false);
   expect(isSpendingSessionLocked()).toBe(false);

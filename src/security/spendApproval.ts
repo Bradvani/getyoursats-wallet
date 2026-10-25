@@ -25,6 +25,11 @@ export function subscribeSpendingApproval(listener:()=>void){
 export const getSpendingRequest=():SpendingRequest|null=>pending?.request??null;
 export const getSpendingRequestServerSnapshot=():SpendingRequest|null=>null;
 export const isSpendingSessionLocked=()=>sessionLocked;
+export const getSpendingSessionEpoch=():number=>sessionEpoch;
+export function assertCurrentSession(epoch:number):void{
+ if(epoch!==sessionEpoch || document.visibilityState==='hidden')
+  throw new Error('Wallet session changed during authentication');
+}
 export const hasSignerIdentity=()=>expectedFingerprint!==null;
 
 function seedInput(seed:Seed):string{
@@ -54,10 +59,14 @@ export function lockSpendingSession(reason='Wallet is locked'):void{
  sessionEpoch+=1;
  cancelSpendingApproval(reason);
 }
-export async function unlockSpendingSession(seed:Seed):Promise<void>{
- if(!await matchesSignerIdentity(seed))throw new Error('Vault identity does not match the connected signer');
+export async function unlockSpendingSession(seed:Seed):Promise<number>{
+ const epoch=sessionEpoch;
+ const matches=await matchesSignerIdentity(seed);
+ assertCurrentSession(epoch);
+ if(!matches)throw new Error('Vault identity does not match the connected signer');
  sessionEpoch+=1;
  sessionLocked=false;
+ return sessionEpoch;
 }
 export function clearSignerIdentity():void{
  lockSpendingSession('Wallet session ended');

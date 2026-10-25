@@ -7,7 +7,7 @@ import {useEffect,useRef,useState} from 'react';
 import {Capacitor} from '@capacitor/core';
 import {isPasskeyMode} from '../services/passkeyService';
 import {hasWebWalletVault,unlockWebWallet,clearUnlockedWebMnemonic} from './webWalletVault';
-import {lockSpendingSession,unlockSpendingSession} from './spendApproval';
+import {lockSpendingSession,unlockSpendingSession,assertCurrentSession} from './spendApproval';
 
 export function useBrowserSessionLock(isConnected:boolean){
  const [locked,setLocked]=useState(false);
@@ -32,10 +32,18 @@ export function useBrowserSessionLock(isConnected:boolean){
    };
  },[isConnected]);
  const unlock=async(password:string)=>{
-   const mnemonic=await unlockWebWallet(password);
-   await unlockSpendingSession({type:'mnemonic',mnemonic});
-   lastActive.current=Date.now();
-   setLocked(false);
+   try {
+     const mnemonic=await unlockWebWallet(password);
+     const epoch=await unlockSpendingSession({type:'mnemonic',mnemonic});
+     assertCurrentSession(epoch);
+     lastActive.current=Date.now();
+     setLocked(false);
+   } catch(error) {
+     clearUnlockedWebMnemonic();
+     lockSpendingSession('Unlock did not complete');
+     setLocked(true);
+     throw error;
+   }
  };
  return {locked,unlock};
 }

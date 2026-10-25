@@ -4,7 +4,7 @@
  * An authenticated Spark external signer is required for true signing isolation.
  */
 import { Capacitor } from '@capacitor/core';
-import {hasSignerIdentity,matchesSignerIdentity} from './spendApproval';
+import {hasSignerIdentity,matchesSignerIdentity,getSpendingSessionEpoch,assertCurrentSession} from './spendApproval';
 
 export const WEB_VAULT_KEY = 'gys:wallet-vault:v1';
 const LEGACY_KEY = 'walletMnemonic';
@@ -108,12 +108,15 @@ async function readVault(passphrase: string, raw: string): Promise<string> {
   }
 }
 export async function unlockWebWallet(passphrase: string): Promise<string> {
+  const epoch=getSpendingSessionEpoch();
   const raw = localStorage.getItem(WEB_VAULT_KEY);
   if (!raw) throw new Error('Protected wallet not found. Restore your recovery phrase.');
   const mnemonic = await readVault(passphrase, raw);
   // Never commit a different decrypted wallet over an active signer identity.
   if(hasSignerIdentity() && !await matchesSignerIdentity({type:'mnemonic',mnemonic}))
     throw new Error('Vault identity does not match the connected signer');
+  assertCurrentSession(epoch);
+  if(localStorage.getItem(WEB_VAULT_KEY)!==raw)throw new Error('Wallet vault changed during authentication');
   activeMnemonic = mnemonic;
   return mnemonic;
 }

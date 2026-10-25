@@ -1,14 +1,15 @@
 import {afterEach,beforeEach,describe,expect,it} from 'vitest';
-import {rememberSignerIdentity,clearSignerIdentity} from './spendApproval';
+import {rememberSignerIdentity,clearSignerIdentity,lockSpendingSession} from './spendApproval';
 import {installVaultTestLock} from './vaultTestLock';
 import {enrollWebWallet,unlockWebWallet,checkWebWalletPassword,
-  hasWebWalletVault,removeMatchingLegacyMnemonic,clearUnlockedWebMnemonic,WEB_VAULT_KEY,resetWebWalletPasswordWithWords} from './webWalletVault';
+  getUnlockedWebMnemonic,hasWebWalletVault,removeMatchingLegacyMnemonic,clearUnlockedWebMnemonic,WEB_VAULT_KEY,resetWebWalletPasswordWithWords} from './webWalletVault';
 
 const WORDS='abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
 const OTHER='legal winner thank year wave sausage worth useful legal winner thank yellow';
 beforeEach(()=>{localStorage.clear();clearUnlockedWebMnemonic();clearSignerIdentity();installVaultTestLock()});
 afterEach(()=>{localStorage.clear();clearUnlockedWebMnemonic();clearSignerIdentity()});
-describe('browser phrase vault',()=>{
+// Use the production KDF cost, including on shared CI workers.
+describe('browser phrase vault',{timeout:20_000},()=>{
  it('writes only AES-GCM ciphertext and can unlock with the same phrase',async()=>{
   await enrollWebWallet(WORDS,'very-long-wallet-password-123');
   const raw=localStorage.getItem(WEB_VAULT_KEY)!;
@@ -66,6 +67,23 @@ describe('browser phrase vault',()=>{
   const preserved=keys.filter(k=>k.startsWith('gys:wallet-vault:preserved-previous'));
   expect(preserved).toHaveLength(1);
   expect(localStorage.getItem(preserved[0])).toBe('{broken-json');
+ });
+ it('cannot restore an active phrase after a lock interrupts decryption',async()=>{
+  await enrollWebWallet(WORDS,'long-wallet-password-12345');
+  clearUnlockedWebMnemonic();
+  const unlocking=unlockWebWallet('long-wallet-password-12345');
+  lockSpendingSession('Backgrounded during decryption');
+  await expect(unlocking).rejects.toThrow(/session changed/);
+  expect(getUnlockedWebMnemonic()).toBeNull();
+ });
+ it('rejects a vault replaced during decryption without activating its phrase',async()=>{
+  await enrollWebWallet(WORDS,'long-wallet-password-12345');
+  clearUnlockedWebMnemonic();
+  const unlocking=unlockWebWallet('long-wallet-password-12345');
+  localStorage.setItem(WEB_VAULT_KEY,'changed by another tab');
+  await expect(unlocking).rejects.toThrow(/vault changed/);
+  expect(getUnlockedWebMnemonic()).toBeNull();
+  expect(localStorage.getItem(WEB_VAULT_KEY)).toBe('changed by another tab');
  });
  it('rejects damaged or unknown data without erasing it',async()=>{
   localStorage.setItem(WEB_VAULT_KEY,'{"v":1,"bad":true}');
