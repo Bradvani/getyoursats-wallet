@@ -1,4 +1,5 @@
 import {usePresentation} from '@/hooks/usePresentation';
+import {sendDestinationCopy} from '@/locales/sendDestination';
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import React, { useEffect, useMemo, useState } from 'react';
 import { DialogHeader, BottomSheetContainer, BottomSheetCard } from '../../components/ui';
@@ -6,6 +7,9 @@ import { useWallet } from '../../contexts/WalletContext';
 import { useContactsContext } from '../../contexts/ContactsContext';
 
 import InputStep from './steps/InputStep';
+import StablecoinDestinationStep from './steps/StablecoinDestinationStep';
+import type { StablecoinDestination } from './utils/stablecoinDestination';
+import { formatChainName } from '../../utils/crossChainFormat';
 import Bolt11Workflow from './workflows/Bolt11Workflow';
 import BitcoinWorkflow from './workflows/BitcoinWorkflow';
 import SparkWorkflow from './workflows/SparkWorkflow';
@@ -37,6 +41,7 @@ interface SendPaymentDialogProps {
 
 const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, initialRawInput, onScanQr, onSuccessfulSend }) => {
   const wallet = useWallet();
+  const [destination, setDestination] = useState<StablecoinDestination | null>(null);
   const send = useSendPayment();
   const { findContactByAddress } = useContactsContext();
   const [showContactsView, setShowContactsView] = useState(false);
@@ -106,12 +111,13 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
   // clear it so the stale message doesn't follow the user onto the input screen.
   const backToInput = () => {
     send.clearError();
-    send.setCurrentStep('input');
+    send.setCurrentStep(send.paymentInput?.parsedInput.type === 'crossChainAddress' ? 'destination' : 'input');
   };
 
   const {language}=usePresentation();
   const ux=PAYMENT_UX[language];
-  const dialogTitle = send.currentStep === 'input'
+  const destinationText=sendDestinationCopy(language);
+  const dialogTitle = send.currentStep === 'destination' ? destinationText.title : send.currentStep === 'input'
     ? 'Send BTC or USD'
     : getLnurlPayRequestDetails(send.paymentInput) ? ux.pay : getPaymentMethodName(send.paymentInput);
 
@@ -192,12 +198,33 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
                 error={send.error}
                 onClearError={send.clearError}
                 onContinue={(input, opts) => send.processInput(input, opts)}
+                onStablecoin={() => { setDestination(null); send.reset(); send.setCurrentStep('destination'); }}
                 onScanQr={onScanQr}
                 onOpenContacts={() => {
                   setSelectedContactAddress(null);
                   setShowContactsView(true);
                 }}
               />
+            )}
+
+            {send.currentStep === 'destination' && (
+              <StablecoinDestinationStep
+                initialInput={send.paymentInput?.rawInput ?? ''}
+                initialSelection={destination}
+                onBack={() => { setDestination(null); send.reset(); }}
+                onContinue={selection => {
+                  setDestination(selection);
+                  send.confirmDestination({ rawInput: selection.rawInput, paymentRequest: selection.rawInput,
+                    parsedInput: { ...selection.details, type: 'crossChainAddress' } });
+                }}
+              />
+            )}
+            {destination && (send.currentStep === 'amount' || send.currentStep === 'workflow') && (
+              <div className="mb-4 rounded-xl border border-spark-border p-3 text-sm text-spark-text-primary" data-testid="send-destination-summary">
+                <p>{destinationText.receives}: <strong>{destination.asset} · {formatChainName(destination.chain)}</strong></p>
+                <p dir="ltr" className="mt-1 break-all font-mono text-xs">{destination.details.address}</p>
+                <button type="button" className="mt-2 min-h-11 underline" onClick={() => send.setCurrentStep('destination')}>{destinationText.edit}</button>
+              </div>
             )}
 
             {send.currentStep === 'amount' && (
@@ -211,6 +238,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
                 onBack={backToInput}
                 onNext={send.onAmountNext}
                 amountFirst={send.paymentInput?.parsedInput.type === 'crossChainAddress'}
+                destinationReviewed={!!destination && send.paymentInput?.parsedInput.type === 'crossChainAddress'}
               />
             )}
 
@@ -305,6 +333,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
                 )}
                 {send.paymentInput?.parsedInput.type === 'crossChainAddress' && (
                   <CrossChainWorkflow
+                    destination={destination}
                     addressDetails={send.paymentInput.parsedInput}
                     amountSats={parseInt(send.amount) || 0}
                     feesIncluded={send.feesIncluded}
