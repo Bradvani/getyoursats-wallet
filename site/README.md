@@ -2,11 +2,11 @@
 
 This directory versions the public marketing site hosted separately at `getyoursats.com`. The production wallet remains at `wallet.getyoursats.com` and is not changed by this site release.
 
-## Experience v4
+## Experience v5
 
 - `index.html`: the approved Brand Kit v2 landing page and the four product-specific Experience scenes
-- `experience-v4.css`: scoped responsive product-preview design and motion, with reduced-motion support
-- `experience-v4.js`: isolated UI walkthroughs (self-custody setup, USDC/USDT ↔ sats routes, merchant POS and recurring-buy planning)
+- `experience-v5.css`: scoped responsive product-preview design and motion, with reduced-motion support
+- `experience-v5.js`: isolated UI walkthroughs (self-custody setup, USDC/USDT ↔ sats routes, merchant POS and recurring-buy planning)
 - `assets/favicon-light.svg`: approved alternate light-monogram shape with Bitcoin-orange badge, optimized for browser tabs
 - `scripts/build-favicons.mjs`: regenerates 16/32/48/64/180px PNGs and `favicon.ico` from the unchanged SVG master
 - `support.html`, `privacy.html`, `delete-account.html`, `api/contact.js`: public support pages and contact delivery, kept intact
@@ -23,3 +23,12 @@ The website currently uses a direct Vercel deployment on project `getyoursats-si
 4. Verify `/support`, `/privacy`, `/assets/favicon-light.svg`, `/favicon.ico` and `/api/contact` after deployment.
 
 The favicon asset URLs use `?v=4` to avoid older browser-tab icon caches. The site's other branding and wallet payment code should not be changed as part of this release.
+
+## V5 QA invariants
+
+- A reverse route changes source and destination identity, not just arrow direction; no demo converts real funds.
+- Experience POS is a narrative animation, not a duplicate of the dedicated merchant counter below.
+- Recurring buys use an illustrative, pausable four-contribution rolling timeline and remain labelled Coming soon.
+- The sats slider and wheel are both linear over 1–100,000,000 sats: 25M = 25%, 50M = 50%, 75M = 75%.
+- The hero animates illustrative incoming sats and cross-rail value without inventing a funded user account.
+- Reduced-motion preferences replace automatic animations with completed readable states; keyboard navigation remains usable.
