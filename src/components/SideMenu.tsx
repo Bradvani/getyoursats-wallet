@@ -135,20 +135,20 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     setTimeout(fn, DRAWER_LEAVE_MS);
   };
 
+  // Only actions that work today belong in the primary drawer.
+  // Unavailable products remain behind the existing feature gates, not
+  // disabled, wrapping rows that compete with core wallet navigation.
   const menuItems = [
-    ...(onOpenHistory?[{icon:<ClockIcon/>,label:trustCopy(language).history,onClick:()=>closeDrawerThen(onOpenHistory)}]:[]),
-    // Get Refund - only show when there are rejected deposits
+    ...(onOpenHistory ? [{
+      icon: <ClockIcon />,
+      label: trustCopy(language).history,
+      onClick: () => closeDrawerThen(onOpenHistory)
+    }] : []),
     ...(hasRejectedDeposits && onOpenRefund ? [{
       icon: <RefundIcon />,
       label: 'Refund',
       onClick: () => closeDrawerThen(onOpenRefund),
       highlight: true
-    }] : []),
-    ...(onOpenPartnerBuy ? [{
-      icon: <CurrencyIcon />,
-      label: copy.buy,
-      comingSoon: !featureAvailability.buyBitcoin,
-      onClick: () => closeDrawerThen(onOpenPartnerBuy)
     }] : []),
     ...(onOpenScan ? [{
       icon: <QrCodeIcon />,
@@ -160,23 +160,13 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
       label: copy.pointOfSale,
       onClick: () => closeDrawerThen(onOpenMerchantPos)
     }] : []),
-    {
-      icon: <ClockIcon />,
-      label: copy.recurring,
-      comingSoon: !featureAvailability.recurringBuy,
-      onClick: () => closeDrawerThen(onOpenDca)
-    },
-
-    {
-      icon: <SettingsIcon />,
-      label: copy.settings,
-      onClick: () => closeDrawerThen(onOpenSettings)
-    },
-    {
-      icon: <LogoutIcon />,
-      label: trustCopy(language).removeTitle,
-      onClick: () => { setRecoveryAcknowledged(false);setRemovalError('');setShowLogoutConfirm(true); }
-    }
+    { icon: <SettingsIcon />, label: copy.settings, onClick: () => closeDrawerThen(onOpenSettings) },
+    ...(featureAvailability.buyBitcoin && onOpenPartnerBuy ? [{
+      icon: <CurrencyIcon />, label: copy.buy, onClick: () => closeDrawerThen(onOpenPartnerBuy)
+    }] : []),
+    ...(featureAvailability.recurringBuy ? [{
+      icon: <ClockIcon />, label: copy.recurring, onClick: () => closeDrawerThen(onOpenDca)
+    }] : []),
   ];
 
   const handleConfirmLogout = async () => {
@@ -221,7 +211,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
       {/* Panel */}
       {leftOffset !== null && (
         <div
-          className="fixed top-0 bottom-0 w-72 overflow-hidden"
+          className="fixed top-0 bottom-0 w-[min(88vw,320px)] overflow-hidden"
           style={{ left: leftOffset }}
         >
           <TransitionChild
@@ -232,11 +222,11 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
             leave="transition transform ease-m3-emphasized-accelerate duration-100"
             leaveFrom="translate-x-0"
             leaveTo="-translate-x-full"
-            className="w-72 h-full bg-spark-surface border-r border-spark-border shadow-glass-lg px-6 flex flex-col"
+            className="w-[min(88vw,320px)] h-full bg-spark-surface border-r border-spark-border shadow-glass-lg px-5 flex flex-col"
             style={{ paddingTop: safeAreaTop, paddingBottom: safeAreaBottom }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-8 pt-6">
+            <div className="flex items-center justify-between mb-5 pt-4 shrink-0">
               <GetYourSatsWordmark />
               <button
                 onClick={closeMenu}
@@ -247,54 +237,49 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
               </button>
             </div>
 
-            {/* Navigation */}
-            <nav className="space-y-1 flex-1">
+            {/* Compact navigation: working destinations only. */}
+            <nav className="flex-1 min-h-0 overflow-y-auto space-y-1" aria-label="Wallet menu">
               {menuItems.map((item, index) => (
                 <button
                   key={index}
                   type="button"
-                  disabled={'comingSoon' in item && Boolean(item.comingSoon)}
-                  aria-label={('comingSoon' in item && item.comingSoon) ? item.label + ' coming soon' : item.label}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all disabled:cursor-default disabled:opacity-60 ${
+                  aria-label={item.label}
+                  className={`w-full min-h-12 flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors hover:bg-white/5 hover:text-spark-text-primary ${
                     ('highlight' in item && item.highlight)
-                      ? 'text-spark-warning hover:text-spark-warning hover:bg-spark-warning/10'
-                      : 'text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5'
+                      ? 'text-spark-warning'
+                      : 'text-spark-text-secondary'
                   }`}
                   onClick={item.onClick}
                 >
-                  {item.icon}
-                  <span className="font-display font-medium">{item.label}</span>
-                  {'comingSoon' in item && item.comingSoon && (
-                    <span className="gys-feature-soon ml-auto">Coming soon</span>
-                  )}
+                  <span className="shrink-0 flex h-6 w-6 items-center justify-center" aria-hidden="true">{item.icon}</span>
+                  <span className="min-w-0 text-[15px] leading-5 font-display font-medium">{item.label}</span>
                 </button>
               ))}
             </nav>
 
-            {/* Footer */}
-            <div className="pt-5 pb-6 border-t border-spark-border space-y-3">
-              {/* Buttons rather than anchors: openExternalUrl keeps native
-                  in an in-app browser that returns to the drawer on Done,
-                  and same-origin pages in the PWA's own overlay. */}
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-spark-text-muted text-center mb-2">{copy.help}</p>
-              <div className="flex items-center justify-center gap-3 text-xs text-spark-text-muted">
-                <button
-                  type="button"
+            {/* Destructive action and help remain clearly separate, without
+                boxed links, disabled-product badges or heavy dividers. */}
+            <div className="shrink-0 pb-5 pt-3 space-y-3">
+              <button
+                type="button"
+                onClick={() => { setRecoveryAcknowledged(false); setRemovalError(''); setShowLogoutConfirm(true); }}
+                aria-label={trustCopy(language).removeTitle}
+                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl text-sm text-spark-text-muted hover:text-spark-warning hover:bg-spark-warning/5"
+              >
+                <span className="shrink-0 flex h-6 w-6 items-center justify-center" aria-hidden="true"><LogoutIcon /></span>
+                <span className="leading-5">{trustCopy(language).removeTitle}</span>
+              </button>
+              <div className="flex items-center justify-start gap-5 pl-3 text-xs text-spark-text-muted">
+                <button type="button"
                   onClick={() => { void openExternalUrl(PRIVACY_POLICY_URL + '?lang=' + language); }}
-                  className="rounded-lg px-3 py-2 border border-spark-border hover:border-spark-primary/50 hover:text-spark-text-secondary transition-colors"
-                >
-                  {copy.privacy}
-                </button>
-                <span aria-hidden="true">&middot;</span>
-                <button
-                  type="button"
+                  className="min-h-10 hover:text-spark-text-primary">{copy.privacy}</button>
+                <button type="button"
                   onClick={() => { void openExternalUrl(SUPPORT_URL + '?lang=' + language); }}
-                  className="hover:text-spark-text-secondary transition-colors"
-                >
-                  {copy.support}
-                </button>
+                  className="min-h-10 hover:text-spark-text-primary">{copy.support}</button>
               </div>
-              <p data-testid="menu-app-version" className="text-xs text-spark-text-muted text-center mt-3">GetYourSats · v{appVersion}</p>
+              <p data-testid="menu-app-version" className="pl-3 text-[11px] text-spark-text-muted">
+                GetYourSats · v{appVersion}
+              </p>
             </div>
 
             {/* Logout Confirmation Dialog.
