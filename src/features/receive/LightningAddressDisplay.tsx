@@ -1,3 +1,5 @@
+import {trustCopy} from '@/getyoursats/trustCopy';
+import {featureAvailability} from '@/getyoursats/featureAvailability';
 import React, { type ReactNode } from 'react';
 import type { LightningAddressInfo } from '@breeztech/breez-sdk-spark';
 import { AlertCard } from '../../components/AlertCard';
@@ -108,7 +110,7 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
       />
 
       <p className="text-xs text-center text-spark-text-muted max-w-xs">
-        Want yourname@getyoursats.com? After optional email verification, claim your name from Settings → Account identity. No activity thresholds.
+        {featureAvailability.emailVerification?'Personalize your address in Settings after email verification.':trustCopy().personalSoon}
       </p>
       {amountLink('mt-2')}
     </div>

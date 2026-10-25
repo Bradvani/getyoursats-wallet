@@ -260,7 +260,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
                       return await wallet.prepareLnurlPay(prepareRequest);
                     }}
                     onPay={async (prepareResponse) => {
-                      await wallet.lnurlPay({ prepareResponse });
+                      return wallet.lnurlPay({ prepareResponse });
                     }}
                   />
                 )}
@@ -318,7 +318,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
 
             {send.currentStep === 'result' && (
               <ResultStep
-                result={send.paymentResult === 'success' ? 'success' : 'failure'}
+                result={send.paymentResult ?? 'unknown'}
                 error={send.error}
                 onClose={handleClose}
               />

@@ -1,4 +1,7 @@
-import { useState, useCallback, useMemo } from 'react';
+import {classifyLookupFailure} from '@/getyoursats/lookupFailure';
+import {trustCopy} from '@/getyoursats/trustCopy';
+import {paymentOutcome,type PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import type { PrepareSendPaymentResponse, FeePolicy, SendPaymentOptions, SdkEvent, ConversionOptions, InputType } from '@breeztech/breez-sdk-spark';
 import type { SendInput } from '@/types/domain';
 import { useWallet, useWalletInfo } from '../../../contexts/WalletContext';
@@ -44,7 +47,7 @@ export interface UseSendPaymentReturn {
   error: string | null;
   isLoading: boolean;
   prepareResponse: PrepareSendPaymentResponse | null;
-  paymentResult: 'success' | 'failure' | null;
+  paymentResult: 'success' | 'failure' | 'unknown' | null;
   balanceSats: number | undefined;
   tokenBalance: bigint | undefined;
   feesIncluded: boolean;
@@ -60,13 +63,14 @@ export interface UseSendPaymentReturn {
   processInput: (input?: string | null, opts?: ProcessInputOptions) => Promise<void>;
   onAmountNext: (amount: bigint, includeFees?: boolean, tokenIdentifier?: string, conversionOptions?: ConversionOptions) => Promise<void>;
   handleSend: (options?: SendPaymentOptions) => Promise<void>;
-  handleRun: (runner: () => Promise<void>, hasConversion?: boolean) => Promise<void>;
+  handleRun: (runner: () => Promise<PaymentExecutionResult>, hasConversion?: boolean) => Promise<void>;
   setCurrentStep: (step: SendStep) => void;
   backToAmount: () => void;
 }
 
 export function useSendPayment(): UseSendPaymentReturn {
   const wallet = useWallet();
+  const executionStarted = useRef(false);
   const walletInfo = useWalletInfo();
   const stableBalance = useStableBalance();
 
@@ -76,7 +80,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [prepareResponse, setPrepareResponse] = useState<PrepareSendPaymentResponse | null>(null);
-  const [paymentResult, setPaymentResult] = useState<'success' | 'failure' | null>(null);
+  const [paymentResult, setPaymentResult] = useState<'success' | 'failure' | 'unknown' | null>(null);
   const [feesIncluded, setFeesIncluded] = useState(false);
   const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('sending');
   const [amountFixed, setAmountFixed] = useState(false);
@@ -134,6 +138,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   }, [wallet]);
 
   const processInput = useCallback(async (input: string | null = null, opts?: ProcessInputOptions) => {
+    if (executionStarted.current) return;
     const currentInput = (input || paymentInput?.rawInput)?.trim();
     if (!currentInput) {
       setError('Please enter a payment destination');
@@ -232,9 +237,14 @@ export function useSendPayment(): UseSendPaymentReturn {
       }
     } catch (err) {
       logger.warn(LogCategory.PAYMENT, 'Failed to parse payment input', { error: formatError(err) });
+      if(/^[^\s@]+@[^\s@]+$/.test(currentInput)){
+        const kind=classifyLookupFailure(err),text=trustCopy();
+        setError(kind==='syntax'?text.lookupSyntax:kind==='notFound'?text.lookupNotFound:kind==='timeout'?text.lookupTimeout:text.lookupUnavailable);
+      }else{
       setError(destinationErrorMessage(err, BAD_LOGIN_CODE.test(formatError(err))
         ? 'This login code is not valid. Refresh the site for a new one.'
         : 'Invalid payment destination'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -271,7 +281,8 @@ export function useSendPayment(): UseSendPaymentReturn {
   }, [paymentInput?.paymentRequest, parsedInputType, prepareSend]);
 
   const handleSend = useCallback(async (options?: SendPaymentOptions) => {
-    if (!prepareResponse) return;
+    if (!prepareResponse || executionStarted.current) return;
+    executionStarted.current = true;
     const hasConversion = !!prepareResponse.conversionEstimate;
     logger.info(LogCategory.PAYMENT, 'handleSend called', {
       hasConversion,
@@ -308,12 +319,13 @@ export function useSendPayment(): UseSendPaymentReturn {
     }
 
     try {
-      await wallet.sendPayment({ prepareResponse, options });
-      setPaymentResult('success');
+      const outcome = await wallet.sendPayment({ prepareResponse, options });
+      setPaymentResult(paymentOutcome(outcome));
     } catch (err) {
       logger.error(LogCategory.PAYMENT, 'Payment failed', { error: formatError(err) });
       setError(`Payment failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      setPaymentResult('failure');
+      // An exception is not proof that a payment failed to settle.
+      setPaymentResult('unknown');
     } finally {
       if (listenerId) {
         wallet.removeEventListener(listenerId).catch(() => {});
@@ -324,7 +336,9 @@ export function useSendPayment(): UseSendPaymentReturn {
     }
   }, [wallet, prepareResponse]);
 
-  const handleRun = useCallback(async (runner: () => Promise<void>, hasConversion?: boolean) => {
+  const handleRun = useCallback(async (runner: () => Promise<PaymentExecutionResult>, hasConversion?: boolean) => {
+    if (executionStarted.current) return;
+    executionStarted.current = true;
     setProcessingPhase(hasConversion ? 'converting' : 'sending');
     setCurrentStep('processing');
     setIsLoading(true);
@@ -356,12 +370,13 @@ export function useSendPayment(): UseSendPaymentReturn {
     }
 
     try {
-      await runner();
-      setPaymentResult('success');
+      const outcome = await runner();
+      setPaymentResult(paymentOutcome(outcome));
     } catch (err) {
       logger.error(LogCategory.PAYMENT, 'Operation failed during payment flow', { error: formatError(err) });
       setError(`Operation failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      setPaymentResult('failure');
+      // An exception is not proof that a payment failed to settle.
+      setPaymentResult('unknown');
     } finally {
       if (listenerId) {
         wallet.removeEventListener(listenerId).catch(() => {});
@@ -373,6 +388,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   }, [wallet]);
 
   const reset = useCallback(() => {
+    executionStarted.current = false;
     setCurrentStep('input');
     setAmount('');
     setPrepareResponse(null);

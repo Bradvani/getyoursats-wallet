@@ -48,7 +48,7 @@ export default function DcaPage({onBack}:{onBack:()=>void}){
    <p className="gys-dca__sub">Conversion shown in {quoteCurrency}. Provider minimums and fees are not available until activation.</p>
    <label htmlFor="gys-dca-frequency">Purchase frequency</label>
    <select id="gys-dca-frequency" value={frequency} onChange={e=>setFrequency(e.target.value as DcaFrequency)}>
-    <option value="daily">Daily</option><option value="weekly">Weekly</option><option value="every-two-weeks">Every two weeks</option>
+    <option value="daily">Daily</option><option value="weekly">Weekly</option><option value="every-two-weeks">Every two weeks</option><option value="monthly">Monthly</option>
    </select>
    <button type="button" className="gys-primary" onClick={save}>Save Plan Draft</button>
    {message&&<p role="status" className="gys-dca__message">{message}</p>}

@@ -1,0 +1,545 @@
+{
+  "baseline": "2c848e8666a415f216fb6a813b107a228345d156",
+  "scope": "Application TypeScript call sites. Dynamic dispatch, compiled SDK internals, native plugins and hardware behavior require additional validation.",
+  "callSites": [
+    {
+      "file": "src/App.tsx",
+      "line": 172,
+      "method": "retrieveSeed",
+      "expression": "deviceOnlyStorage.retrieveSeed",
+      "sourceSha256": "bba9d171de5a1dc1d7560da3ad52b61f64429687b29b0edfd9652b2cccafd431"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 180,
+      "method": "connectWallet",
+      "expression": "sdk.connectWallet",
+      "sourceSha256": "bba9d171de5a1dc1d7560da3ad52b61f64429687b29b0edfd9652b2cccafd431"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 187,
+      "method": "storeSeed",
+      "expression": "deviceOnlyStorage.storeSeed",
+      "sourceSha256": "bba9d171de5a1dc1d7560da3ad52b61f64429687b29b0edfd9652b2cccafd431"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 190,
+      "method": "retrieveSeed",
+      "expression": "deviceOnlyStorage.retrieveSeed",
+      "sourceSha256": "bba9d171de5a1dc1d7560da3ad52b61f64429687b29b0edfd9652b2cccafd431"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 196,
+      "method": "connectWallet",
+      "expression": "sdk.connectWallet",
+      "sourceSha256": "bba9d171de5a1dc1d7560da3ad52b61f64429687b29b0edfd9652b2cccafd431"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 254,
+      "method": "connectWallet",
+      "expression": "sdk.connectWallet",
+      "sourceSha256": "bba9d171de5a1dc1d7560da3ad52b61f64429687b29b0edfd9652b2cccafd431"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 269,
+      "method": "connectWallet",
+      "expression": "sdk.connectWallet",
+      "sourceSha256": "bba9d171de5a1dc1d7560da3ad52b61f64429687b29b0edfd9652b2cccafd431"
+    },
+    {
+      "file": "src/components/PinEntry.tsx",
+      "line": 146,
+      "method": "setPin",
+      "expression": "setPin",
+      "sourceSha256": "61145e8b8eb13922fa15037c6c308680aec46468f07bb66f5effb344bb4c4a08"
+    },
+    {
+      "file": "src/components/PinEntry.tsx",
+      "line": 158,
+      "method": "setPin",
+      "expression": "setPin",
+      "sourceSha256": "61145e8b8eb13922fa15037c6c308680aec46468f07bb66f5effb344bb4c4a08"
+    },
+    {
+      "file": "src/components/PinEntry.tsx",
+      "line": 179,
+      "method": "setPin",
+      "expression": "setPin",
+      "sourceSha256": "61145e8b8eb13922fa15037c6c308680aec46468f07bb66f5effb344bb4c4a08"
+    },
+    {
+      "file": "src/components/PinEntry.tsx",
+      "line": 180,
+      "method": "setPin",
+      "expression": "setPin",
+      "sourceSha256": "61145e8b8eb13922fa15037c6c308680aec46468f07bb66f5effb344bb4c4a08"
+    },
+    {
+      "file": "src/contexts/StableBalanceContext.tsx",
+      "line": 106,
+      "method": "updateUserSettings",
+      "expression": "sdk.updateUserSettings",
+      "sourceSha256": "d83db6798b51f725a9e39c054ff4b54c7b43f0fb24d306f1a2db3122008a5cc4"
+    },
+    {
+      "file": "src/contexts/StableBalanceContext.tsx",
+      "line": 189,
+      "method": "updateUserSettings",
+      "expression": "sdk.updateUserSettings",
+      "sourceSha256": "d83db6798b51f725a9e39c054ff4b54c7b43f0fb24d306f1a2db3122008a5cc4"
+    },
+    {
+      "file": "src/contexts/StableBalanceContext.tsx",
+      "line": 196,
+      "method": "updateUserSettings",
+      "expression": "sdk.updateUserSettings",
+      "sourceSha256": "d83db6798b51f725a9e39c054ff4b54c7b43f0fb24d306f1a2db3122008a5cc4"
+    },
+    {
+      "file": "src/features/buy/hooks/useBuyBitcoin.ts",
+      "line": 188,
+      "method": "buyBitcoin",
+      "expression": "sdk.buyBitcoin",
+      "sourceSha256": "0e3d8f323c83b20fbeb15430e1cf97d8d922b4755b7ff22cfdafe523647963d5"
+    },
+    {
+      "file": "src/features/send/SendPaymentDialog.tsx",
+      "line": 263,
+      "method": "lnurlPay",
+      "expression": "wallet.lnurlPay",
+      "sourceSha256": "7c0e974458066e437fe852e9a81b27278249704bc597e7f463a25983187fb451"
+    },
+    {
+      "file": "src/features/send/SendPaymentDialog.tsx",
+      "line": 271,
+      "method": "lnurlAuth",
+      "expression": "wallet.lnurlAuth",
+      "sourceSha256": "7c0e974458066e437fe852e9a81b27278249704bc597e7f463a25983187fb451"
+    },
+    {
+      "file": "src/features/send/SendPaymentDialog.tsx",
+      "line": 280,
+      "method": "lnurlWithdraw",
+      "expression": "wallet.lnurlWithdraw",
+      "sourceSha256": "7c0e974458066e437fe852e9a81b27278249704bc597e7f463a25983187fb451"
+    },
+    {
+      "file": "src/features/send/hooks/useSendPayment.ts",
+      "line": 322,
+      "method": "sendPayment",
+      "expression": "wallet.sendPayment",
+      "sourceSha256": "e0421f79539bd5ee0a0ebb8f26549f5d6ee01328a78813205f5444f855000de8"
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 262,
+      "method": "sendPayment",
+      "expression": "wallet.sendPayment",
+      "sourceSha256": "feb6b658cbcd33fae18e9620f612a4de760c3584a63805754cfad908d332e3b6"
+    },
+    {
+      "file": "src/features/unilateral-exit/driver.ts",
+      "line": 614,
+      "method": "broadcastPackage",
+      "expression": "chain.broadcastPackage",
+      "sourceSha256": "b7492c0eea5fb4edc936c8c9fef656456d59f8250701e57d0cd0a0e0b5d4ed1f"
+    },
+    {
+      "file": "src/features/unilateral-exit/driver.ts",
+      "line": 615,
+      "method": "broadcast",
+      "expression": "chain.broadcast",
+      "sourceSha256": "b7492c0eea5fb4edc936c8c9fef656456d59f8250701e57d0cd0a0e0b5d4ed1f"
+    },
+    {
+      "file": "src/features/unilateral-exit/funding.ts",
+      "line": 87,
+      "method": "retrieveSeed",
+      "expression": "store.retrieveSeed",
+      "sourceSha256": "2b97380e04ad5ed802636c7f14f97862b47a955ab4ce51148b076f2a7db15b03"
+    },
+    {
+      "file": "src/hooks/useAppLock.ts",
+      "line": 88,
+      "method": "clearPin",
+      "expression": "clearPin",
+      "sourceSha256": "1ebe80b50319583eac4f7606cdf1405c8d9433e70600b6f18b63f4df7af9fa13"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 514,
+      "method": "storeSeed",
+      "expression": "deviceOnlyStorage.storeSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 524,
+      "method": "clearMnemonic",
+      "expression": "clearMnemonic",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 526,
+      "method": "saveMnemonic",
+      "expression": "saveMnemonic",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 603,
+      "method": "clearMnemonic",
+      "expression": "clearMnemonic",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 622,
+      "method": "clearSeed",
+      "expression": "secureStorage.clearSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 625,
+      "method": "clearSeed",
+      "expression": "deviceOnlyStorage.clearSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 630,
+      "method": "clearPin",
+      "expression": "clearPin",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 641,
+      "method": "wipeAllLocalData",
+      "expression": "wipeAllLocalData",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 787,
+      "method": "clearSeed",
+      "expression": "secureStorage.clearSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 812,
+      "method": "storeSeed",
+      "expression": "deviceOnlyStorage.storeSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 864,
+      "method": "reconnectWithDerivedWallet",
+      "expression": "reconnectWithDerivedWallet",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 878,
+      "method": "reconnectWithDerivedWallet",
+      "expression": "reconnectWithDerivedWallet",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 925,
+      "method": "clearSeed",
+      "expression": "secureStorage.clearSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 981,
+      "method": "connectWallet",
+      "expression": "connectWallet",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1001,
+      "method": "retrieveSeed",
+      "expression": "deviceOnlyStorage.retrieveSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1002,
+      "method": "connectWallet",
+      "expression": "connectWallet",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1006,
+      "method": "retrieveSeed",
+      "expression": "secureStorage.retrieveSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1007,
+      "method": "connectWallet",
+      "expression": "connectWallet",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1015,
+      "method": "storeSeed",
+      "expression": "deviceOnlyStorage.storeSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1016,
+      "method": "clearSeed",
+      "expression": "secureStorage.clearSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1037,
+      "method": "clearSeed",
+      "expression": "secureStorage.clearSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1097,
+      "method": "buyBitcoin",
+      "expression": "sdk.buyBitcoin",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1189,
+      "method": "migrateLegacyMnemonicIfNeeded",
+      "expression": "migrateLegacyMnemonicIfNeeded",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1201,
+      "method": "getSavedMnemonic",
+      "expression": "getSavedMnemonic",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1203,
+      "method": "clearSeed",
+      "expression": "secureStorage.clearSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1249,
+      "method": "retrieveSeed",
+      "expression": "deviceOnlyStorage.retrieveSeed",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1250,
+      "method": "connectWallet",
+      "expression": "connectWallet",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1276,
+      "method": "clearMnemonic",
+      "expression": "clearMnemonic",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1278,
+      "method": "getSavedMnemonic",
+      "expression": "getSavedMnemonic",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1282,
+      "method": "connectWallet",
+      "expression": "connectWallet",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/hooks/useBreezSdk.ts",
+      "line": 1323,
+      "method": "connectWallet",
+      "expression": "connectWallet",
+      "sourceSha256": "e49f3c7f8c1e8e90e154e4dbdd684704313275d8b0d5a247ed566a3e9cfcf395"
+    },
+    {
+      "file": "src/pages/BackupPage.tsx",
+      "line": 81,
+      "method": "retrieveSeed",
+      "expression": "deviceOnlyStorage.retrieveSeed",
+      "sourceSha256": "1138ee0a9fb7537be8d4946b6078cee440c811eed3543b7a6c1953c1e95782f2"
+    },
+    {
+      "file": "src/pages/BackupPage.tsx",
+      "line": 193,
+      "method": "retrieveSeed",
+      "expression": "store.retrieveSeed",
+      "sourceSha256": "1138ee0a9fb7537be8d4946b6078cee440c811eed3543b7a6c1953c1e95782f2"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 47,
+      "method": "signMessage",
+      "expression": "sdk.signMessage",
+      "sourceSha256": "ee3303a75dadc37954a895b720a746ee7491b71de3e38d8ada75aa3cdcfc7b03"
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 213,
+      "method": "refundDeposit",
+      "expression": "wallet.refundDeposit",
+      "sourceSha256": "8fdd5a8713a022b88e1d221cc161afb0b263ee9745471c6ac35afdae8194cdd1"
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 42,
+      "method": "signMessage",
+      "expression": "sdk.signMessage",
+      "sourceSha256": "4cc9fd38a007b1b79fcf90b326499048ef35db47caf0d31fbcb5ecbf404f23d8"
+    },
+    {
+      "file": "src/pages/SecurityPage.tsx",
+      "line": 104,
+      "method": "setPin",
+      "expression": "setPin",
+      "sourceSha256": "4d3121469fb79eaffc14bb0e000ce4a05c1680b0edd7caa85541eff5b3a9c09a"
+    },
+    {
+      "file": "src/pages/SecurityPage.tsx",
+      "line": 110,
+      "method": "clearPin",
+      "expression": "clearPin",
+      "sourceSha256": "4d3121469fb79eaffc14bb0e000ce4a05c1680b0edd7caa85541eff5b3a9c09a"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 375,
+      "method": "claimDeposit",
+      "expression": "wallet.claimDeposit",
+      "sourceSha256": "e35fa1c304d3284c313f7e4dbc504e6798a019ba8d6ab48422ab07781f341b4a"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 514,
+      "method": "claimDeposit",
+      "expression": "wallet.claimDeposit",
+      "sourceSha256": "e35fa1c304d3284c313f7e4dbc504e6798a019ba8d6ab48422ab07781f341b4a"
+    },
+    {
+      "file": "src/services/legacyMnemonicMigration.ts",
+      "line": 28,
+      "method": "getSavedMnemonic",
+      "expression": "getSavedMnemonic",
+      "sourceSha256": "78c646055f7cfa8d52ebc391af2faf1f8e9dcda1782cba646f8d4cbc8240bde1"
+    },
+    {
+      "file": "src/services/legacyMnemonicMigration.ts",
+      "line": 32,
+      "method": "retrieveSeed",
+      "expression": "deviceOnlyStorage.retrieveSeed",
+      "sourceSha256": "78c646055f7cfa8d52ebc391af2faf1f8e9dcda1782cba646f8d4cbc8240bde1"
+    },
+    {
+      "file": "src/services/legacyMnemonicMigration.ts",
+      "line": 41,
+      "method": "clearMnemonic",
+      "expression": "clearMnemonic",
+      "sourceSha256": "78c646055f7cfa8d52ebc391af2faf1f8e9dcda1782cba646f8d4cbc8240bde1"
+    },
+    {
+      "file": "src/services/legacyMnemonicMigration.ts",
+      "line": 45,
+      "method": "storeSeed",
+      "expression": "deviceOnlyStorage.storeSeed",
+      "sourceSha256": "78c646055f7cfa8d52ebc391af2faf1f8e9dcda1782cba646f8d4cbc8240bde1"
+    },
+    {
+      "file": "src/services/legacyMnemonicMigration.ts",
+      "line": 46,
+      "method": "clearMnemonic",
+      "expression": "clearMnemonic",
+      "sourceSha256": "78c646055f7cfa8d52ebc391af2faf1f8e9dcda1782cba646f8d4cbc8240bde1"
+    },
+    {
+      "file": "src/services/passkeyMigrationService.ts",
+      "line": 122,
+      "method": "sendPayment",
+      "expression": "from.sendPayment",
+      "sourceSha256": "2f30f85a31e742b8275fc681e2b31d9c1949a3e87584fc6efa024a7c1016cc08"
+    },
+    {
+      "file": "src/services/passkeyMigrationService.ts",
+      "line": 142,
+      "method": "sendPayment",
+      "expression": "from.sendPayment",
+      "sourceSha256": "2f30f85a31e742b8275fc681e2b31d9c1949a3e87584fc6efa024a7c1016cc08"
+    },
+    {
+      "file": "src/services/passkeyMigrationService.ts",
+      "line": 255,
+      "method": "updateUserSettings",
+      "expression": "sdk.updateUserSettings",
+      "sourceSha256": "2f30f85a31e742b8275fc681e2b31d9c1949a3e87584fc6efa024a7c1016cc08"
+    },
+    {
+      "file": "src/services/secureStorage.ts",
+      "line": 540,
+      "method": "clearSeed",
+      "expression": "getNativeVault().clearSeed",
+      "sourceSha256": "d4e611160426799681305230a9cf4a5baecfda2858be57cec5325e698592558b"
+    },
+    {
+      "file": "src/services/secureStorage.ts",
+      "line": 590,
+      "method": "clearSeed",
+      "expression": "getNativeVault().clearSeed",
+      "sourceSha256": "d4e611160426799681305230a9cf4a5baecfda2858be57cec5325e698592558b"
+    },
+    {
+      "file": "src/services/secureStorage.ts",
+      "line": 647,
+      "method": "retrieveSeed",
+      "expression": "getNativeVault().retrieveSeed",
+      "sourceSha256": "d4e611160426799681305230a9cf4a5baecfda2858be57cec5325e698592558b"
+    },
+    {
+      "file": "src/services/secureStorage.ts",
+      "line": 660,
+      "method": "clearSeed",
+      "expression": "getNativeVault().clearSeed",
+      "sourceSha256": "d4e611160426799681305230a9cf4a5baecfda2858be57cec5325e698592558b"
+    },
+    {
+      "file": "src/services/settings.ts",
+      "line": 225,
+      "method": "updateUserSettings",
+      "expression": "sdk.updateUserSettings",
+      "sourceSha256": "7274cfb0c81c3a79082ad91adba88f52812286b1c25d9739bfc7f5d0c0730f95"
+    }
+  ]
+}

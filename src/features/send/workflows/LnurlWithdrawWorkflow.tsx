@@ -62,9 +62,9 @@ const LnurlWithdrawWorkflow: React.FC<LnurlWithdrawWorkflowProps> = ({ parsed, o
     : !isInteger
       ? 'Enter a whole number of sats'
       : amountNum < minSats
-        ? `Amount must be at least ₿${formatWithSpaces(minSats)}`
+        ? `Amount must be at least ${formatWithSpaces(minSats)} sats`
         : amountNum > maxSats
-          ? `Amount must be at most ₿${formatWithSpaces(maxSats)}`
+          ? `Amount must be at most ${formatWithSpaces(maxSats)} sats`
           : null;
 
   // Reached only with a valid, in-range amount: the Receive button is disabled

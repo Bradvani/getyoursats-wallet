@@ -184,7 +184,7 @@ export function useReceivePayment(): UseReceivePaymentReturn {
       return;
     }
     if (amountSats < BigInt(LIGHTNING_INVOICE_MIN_SATS)) {
-      setError(`Amount must be at least ₿${formatWithSpaces(LIGHTNING_INVOICE_MIN_SATS)}`);
+      setError(`Amount must be at least ${formatWithSpaces(LIGHTNING_INVOICE_MIN_SATS)} sats`);
       return;
     }
 

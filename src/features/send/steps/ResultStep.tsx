@@ -1,10 +1,12 @@
+import {trustCopy} from '@/getyoursats/trustCopy';
+import {usePresentation} from '@/hooks/usePresentation';
 import React, { useEffect, type ReactNode } from 'react';
 import { PrimaryButton } from '../../../components/ui';
 import PaymentMotion from '../../../components/PaymentMotion';
 import { hapticLight } from '@/utils/haptics';
 
 export interface ResultStepProps {
-  result: 'success' | 'failure';
+  result: 'success' | 'failure' | 'unknown';
   error: string | null;
   onClose: () => void;
   /** Operation type to customize messaging (default: 'payment') */
@@ -17,6 +19,8 @@ export interface ResultStepProps {
 
 const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operationType = 'payment', description, children }) => {
   const isSuccess = result === 'success';
+  const {language}=usePresentation();
+  const copy=trustCopy(language);
 
   useEffect(() => {
     if (isSuccess) {
@@ -50,6 +54,11 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
     return 'There was an error processing your payment. Please try again.';
   };
 
+  if(result==='unknown') return <div className="gys-payment-stage" data-testid="payment-unknown" role="status">
+    <h3 className="font-display text-2xl font-bold text-spark-text-primary">{copy.unknownTitle}</h3>
+    <p className="text-sm text-spark-text-secondary leading-relaxed">{copy.unknownBody}</p>
+    <PrimaryButton onClick={onClose} className="w-full">{copy.close}</PrimaryButton>
+  </div>;
   if (!isSuccess) {
     // Payment failure: circular error icon with glow
     return (

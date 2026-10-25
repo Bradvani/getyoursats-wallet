@@ -1,3 +1,7 @@
+import {invoiceExpiresAt} from './invoiceExpiry';
+import {useInvoiceExpiry} from '../hooks/useInvoiceExpiry';
+import {trustCopy} from './trustCopy';
+import {usePresentation} from '../hooks/usePresentation';
 import {useEffect,useRef,useState} from 'react';
 import BrandedQrCode from '../components/BrandedQrCode';
 import PaymentMotion from '../components/PaymentMotion';
@@ -18,6 +22,7 @@ const isFiat=(unit:Denomination)=>unit!=='sats'&&unit!=='BTC';
  * The amount is entered exclusively by an accessible in-app keypad. */
 export default function PosPage({onClose}:{onClose:()=>void}){
   const sdk=useWallet();
+  const {language}=usePresentation();const text=trustCopy(language);
   const {fiatRates,fetchedAt,refreshFiatData}=useFiatData();
   const root=useRef<HTMLDivElement|null>(null);
   const [unit,setUnit]=useState<Denomination>(getDenomination);
@@ -25,6 +30,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
   const [note,setNote]=useState('');
   const [editingNote,setEditingNote]=useState(false);
   const [invoice,setInvoice]=useState('');
+  const expiry=useInvoiceExpiry(invoice);
   const [invoiceSats,setInvoiceSats]=useState(0);
   const [invoiceUnit,setInvoiceUnit]=useState<Denomination>('sats');
   const [fee,setFee]=useState(0);
@@ -77,12 +83,23 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     // A successful SDK event, never an editable local flag, confirms paid.
     void loadHistory();
   });
+  const loadAllReceipts=async()=>{
+    const payments:Payment[]=[];const seen=new Set<string>();
+    for(let page=0;page<100;page++){
+      const result=await sdk.listPayments({typeFilter:['receive'],statusFilter:['completed'],offset:page*100,limit:100});
+      if(!Array.isArray(result.payments))throw Error('Payment status unavailable');
+      for(const payment of result.payments)if(!seen.has(payment.id)){seen.add(payment.id);payments.push(payment);}
+      if(result.payments.length<100)return {payments};
+    }
+    throw Error('History exceeds the beta reconciliation limit. Contact support; records were not deleted.');
+  };
   const loadHistory=async()=>{
     setHistoryBusy(true);
     try{
-      const result=await sdk.listPayments({typeFilter:['receive'],statusFilter:['completed'],offset:0,limit:50});
-      setHistory(result.payments);
+      const result=await loadAllReceipts();
+
       const matches=reconcilePosOrders(orders,result.payments);
+      setHistory([...matches.values()]);
       setConfirmedIds(new Set(matches.keys()));
       if(invoice && orders.some(order=>order.invoice.toLowerCase()===invoice.toLowerCase() && matches.has(order.id))){
         if(checkedExistingReceiptsRef.current && !settled) setFreshlyConfirmed(true);
@@ -118,10 +135,10 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     if(busy||!priceSats)return;
     setBusy(true);setError('');setPaid(false);setFreshlyConfirmed(false);
     try {
-      let rate=validRate;
+      let rate=validRate;let quotedAt=fetchedAt;
       if(isFiat(unit)){
         const latest=await refreshFiatData();
-        rate=latest.fiatRates.find(r=>r.coin===unit)?.value;
+        rate=latest.fiatRates.find(r=>r.coin===unit)?.value;quotedAt=latest.fetchedAt;
         if(!rate||!latest.fetchedAt||Date.now()-latest.fetchedAt>120_000)
           throw new Error('A fresh '+unit+' Bitcoin quote is unavailable. Try sats or BTC.');
       }
@@ -132,12 +149,16 @@ export default function PosPage({onClose}:{onClose:()=>void}){
         type:'bolt11Invoice',description:(note.trim()||'Payment').slice(0,200),amountSats:sats
       }});
       const validated=validatePosInvoiceResponse(response);
+      const parsed=await sdk.parse(validated.invoice);
+      const expiresAt=invoiceExpiresAt(parsed);
+      if(!expiresAt||expiresAt<=Date.now())throw Error(text.invoiceExpiryUnknown);
       const order:PosOrder={
         id:crypto.randomUUID(),invoice:validated.invoice,amountSats:sats,unit,
         description:(note.trim()||'Payment').slice(0,200),
-        createdAt:Date.now(),feeSats:validated.feeSats,
+        createdAt:Date.now(),feeSats:validated.feeSats,originalAmount:amount,
+        ...(isFiat(unit)&&rate&&quotedAt?{fiatPerBtc:rate,rateAt:quotedAt}:{}),expiresAt,
       };
-      const updated=[order,...orders].slice(0,50);
+      const updated=[order,...orders];
       if(!savePosOrders(walletIdentity,updated)){
         setJournalWarning('This invoice was created, but its local order history could not be saved. Copy the invoice before closing.');
       }
@@ -154,6 +175,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     void loadHistory();
   };
   const copy=async()=>{
+    if(!expiry.usable)return;
     try{await navigator.clipboard.writeText(invoice)}catch{setError('Could not copy invoice')}
   };
   const reset=()=>{
@@ -195,10 +217,11 @@ export default function PosPage({onClose}:{onClose:()=>void}){
           <button type="button" onClick={onClose} aria-label="Close point of sale">✕</button>
         </div>
       </header>
+      <p className="gys-pos-terminal__muted" role="note">{text.betaMerchant}</p>
       {showHistory?<section className="gys-pos-terminal__history">
-        <div className="gys-pos-terminal__row"><h2>Wallet receipts</h2>
+        <div className="gys-pos-terminal__row"><h2>Merchant sales</h2>
           <button type="button" onClick={()=>setShowHistory(false)}>Back</button></div>
-        <p className="gys-pos-terminal__muted">Only completed incoming payments verified by the connected wallet are listed.</p>
+        <p className="gys-pos-terminal__muted">Only completed payments matching invoices in this device’s merchant records are listed.</p>
         {historyBusy?<p role="status">Syncing wallet history…</p>:
           history.length===0?<p>No completed incoming payments found.</p>:
           <ol>{history.map(payment=><li key={payment.id}>
@@ -206,22 +229,24 @@ export default function PosPage({onClose}:{onClose:()=>void}){
             <strong>{formatWithSpaces(payment.amount)} 丰</strong>
           </li>)}</ol>}
       </section>:invoice?<section className="gys-pos-terminal__invoice" aria-live="polite">
-        <h2 className="gys-pos-terminal__invoice-title">{settled?'Charge complete':'Scan to pay'}</h2>
+        <h2 className="gys-pos-terminal__invoice-title">{settled?'Charge complete':expiry.checking?text.checking:expiry.usable?'Scan to pay':text.invoiceExpired}</h2>
         {settled ? <div className="gys-pos-terminal__success" data-testid="pos-received-motion" role="status">
           <PaymentMotion state="received" animate={freshlyConfirmed} />
           <span className="gys-pos-terminal__success-title">Payment received</span>
-        </div> : <div className="gys-pos-terminal__qr" data-testid="pos-invoice-qr"
+        </div> : !expiry.usable?<p role="status">{expiry.checking?text.checking:expiry.expiresAt?text.invoiceExpired:text.invoiceExpiryUnknown}</p>:<div className="gys-pos-terminal__qr" data-testid="pos-invoice-qr"
           aria-label="Scan this Lightning invoice to pay">
           <PosQrBoundary key={invoice}>
             <BrandedQrCode value={invoice.toUpperCase()} size={288} label="Lightning invoice QR code" />
           </PosQrBoundary>
         </div>}
         <h2>{formatWithSpaces(invoiceSats)} <span>丰 sats</span></h2>
-        <p>Requested in {invoiceUnit} · Receives Lightning sats</p>
+        <p>{text.requestedAmount}: {orders.find(order=>order.invoice===invoice)?.originalAmount??'Not recorded'} {invoiceUnit}</p>
+        <p>Receives Lightning sats</p>
+        {expiry.expiresAt&&<p>{text.expires}: {new Date(expiry.expiresAt).toLocaleString(language)}</p>}
         <strong className={settled?'gys-pos-paid':'gys-pos-pending'}>
-          {settled?'Payment confirmed by the wallet':'Waiting for payment confirmation'}
+          {settled?'Payment confirmed by the wallet':expiry.usable?'Waiting for payment confirmation':text.invoiceExpired}
         </strong>
-        {!settled && <>
+        {!settled && expiry.usable && <>
           <small>Estimated receiver fee: {fee} sats</small>
           <button type="button" className="gys-pos-terminal__secondary" onClick={()=>void copy()}>Copy invoice</button>
         </>}

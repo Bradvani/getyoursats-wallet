@@ -1,0 +1,25 @@
+import {test,expect} from '@playwright/test';
+for(const width of [360,390,768,1024,1366,1920])test(`wallet layout and history at ${width}px`,async({page})=>{
+ await page.setViewportSize({width,height:936});
+ await page.goto('/e2e/fixtures/premium-ui.html');
+ await expect(page.getByTestId('send-button')).toBeVisible();
+ await expect(page.getByTestId('receive-button')).toBeVisible();
+ await expect(page.getByText('+5 000 sats')).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+ if(width>=1024){
+  await expect(page.getByRole('complementary',{name:'Wallet navigation'})).toBeVisible();
+  const box=await page.locator('.gys-wallet').boundingBox();expect(box!.width).toBeGreaterThan(width*.95);
+  await page.getByRole('navigation').getByRole('button',{name:'History',exact:true}).first().click();
+ }else{await page.getByRole('button',{name:/View full transaction history/}).click();}
+ await expect(page.getByRole('heading',{name:'History',exact:true})).toBeVisible();
+ await page.screenshot({path:`test-artifacts/review-wallet-${width}.png`,fullPage:true});
+});
+test('language choice is available before credentials are created',async({page})=>{
+ await page.goto('/');await page.getByLabel('Language',{exact:true}).selectOption('hi');
+ await expect(page.locator('html')).toHaveAttribute('lang','hi');
+});
+test('two-hundred-percent viewport-equivalent layout retains primary actions',async({page})=>{
+ await page.setViewportSize({width:683,height:468});await page.goto('/e2e/fixtures/premium-ui.html');
+ await expect(page.getByTestId('send-button')).toBeVisible();await expect(page.getByTestId('receive-button')).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+});
