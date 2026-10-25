@@ -21,9 +21,8 @@ describe('browser SDK connection security wiring',()=>{
   const config={network:'mainnet',stableBalanceConfig:{tokens:[]},preferSparkOverLightning:true} as unknown as Config;
   const wallet=await connectSdk({config,seed:{type:'mnemonic',mnemonic:'disposable test seed'},storageDir:'test-only'});
   expect(wallet).not.toBe(mocks.raw);expect(mocks.connect).not.toHaveBeenCalled();
-  // The public refund method now enters the mandatory recovery controller.
-  // Raw signing/publication capabilities remain unavailable.
-  expect(()=>Reflect.get(wallet,'signRefundDeposit')({})).toThrow(/unavailable pending/);
+  // A valid-shaped request must still be denied when it bypasses the controller.
+  expect(()=>wallet.signRefundDeposit({txid:'00'.repeat(32),vout:0,destinationAddress:'bc1qdisposable',fee:{type:'fixed',amount:100}})).toThrow(/unavailable pending/);
   expect(mocks.raw.refundDeposit).not.toHaveBeenCalled();
   expect(await wallet.getInfo({})).toEqual({balanceSats:1n});
   expect(mocks.config).toHaveBeenCalledWith(expect.objectContaining({stableBalanceConfig:undefined,preferSparkOverLightning:false,backgroundTasksEnabled:false,realTimeSyncServerUrl:undefined,crossChainConfig:undefined,leafOptimizationConfig:expect.objectContaining({autoEnabled:false}),tokenOptimizationConfig:expect.objectContaining({autoEnabled:false})}));
@@ -53,5 +52,4 @@ describe('browser SDK connection security wiring',()=>{
   expect(mocks.connect).not.toHaveBeenCalled();
   expect(mocks.config).not.toHaveBeenCalled();
  });
-
 });
