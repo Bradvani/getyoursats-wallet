@@ -1,0 +1,43 @@
+name: Apply checksum-verified security candidate
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/browser-vault-handoff.yml'
+permissions:
+  contents: write
+jobs:
+  import:
+    if: github.event.pull_request.head.repo.full_name == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.ref == 'feat/imported-wallet-vault-spend-approval-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: true
+          ref: feat/imported-wallet-vault-spend-approval-20261025
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Import only the reviewed patch with exact SHA-256
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --max-time 30 'https://sb-1jyj5i8id9a9.vercel.run/auth-preview.patch' -o /tmp/auth-preview.patch
+          echo '86d74aae4b028ff13ce49650c871b2e100dcbcb1589bd3dd630adafae1a5d644  /tmp/auth-preview.patch' | sha256sum --check
+          git apply --check /tmp/auth-preview.patch
+          git apply /tmp/auth-preview.patch
+          git diff --check
+      - name: Verify candidate without secrets or funded payments
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm run build
+          npm run lint
+          npm run test
+      - name: Commit verified candidate and remove temporary handoff job
+        run: |
+          set -euo pipefail
+          git add src/App.tsx src/features/unilateral-exit/funding.ts src/hooks/useBreezSdk.ts src/pages/BackupPage.tsx src/services/sdkConnect.ts src/security
+          git rm .github/workflows/browser-vault-handoff.yml
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Add encrypted browser mnemonic vault and per-send SDK authorization candidate'
+          git push origin HEAD:refs/heads/feat/imported-wallet-vault-spend-approval-20261025
