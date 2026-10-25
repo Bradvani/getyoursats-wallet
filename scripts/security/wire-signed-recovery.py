@@ -62,4 +62,25 @@ change('src/security/signedRecoveryController.ts',"    r=updateRecovery(r,{state
 change('src/security/signedRecoveryController.ts',"   }else{live(epoch);ready.add(tx.txId);}", "   }else{\n    live(epoch);\n    if(r.state==='confirmed')r=updateRecovery(r,{state:'uncertain',transactions:[{...tx,state:'uncertain'}]});\n    ready.add(tx.txId);\n   }")
 change('src/security/signedRecoveryController.ts',"state:complete?'confirmed':checked.verdict.type==='redo'?'uncertain':r.state", "state:complete?'confirmed':checked.verdict.type==='redo'||r.state==='confirmed'?'uncertain':r.state")
 change('src/security/signedRecoveryController.ts',"   if(record.state==='confirmed')return record;\n   const checked=await checkRecord", "   // Even a previously confirmed record is freshly checked for reorgs.\n   const checked=await checkRecord")
+# Replace obsolete assertions; retain stronger denial and preservation requirements.
+change('src/security/sdkConnect.security.test.ts',"  expect(()=>wallet.refundDeposit({} as never)).toThrow(/unavailable pending/);", "  // The public refund method now enters the mandatory recovery controller.\n  // Raw signing/publication capabilities remain unavailable.\n  expect(()=>Reflect.get(wallet,'signRefundDeposit')({})).toThrow(/unavailable pending/);")
+change('src/features/unilateral-exit/durablePersistence.test.ts',"  expect(()=>savePlan(wallet,{...previous,exitStateSnapshot:'new-snapshot'})).toThrow();", "  write.mockClear();\n  expect(()=>savePlan(wallet,{...previous,exitStateSnapshot:'new-snapshot'})).toThrow();")
+p=Path('src/features/unilateral-exit/driver.test.ts');s=p.read_text()
+old="describe('savePlan when the snapshot outgrows storage', () => {"
+if "it('rejects the write without dropping the original snapshot'" not in s:
+ start=s.index(old);end=s.index("describe('destinationAddressOf'",start)
+ s=s[:start]+'''describe('savePlan when the snapshot outgrows storage', () => {
+  it('rejects the write without dropping the original snapshot', () => {
+    const owner = { identityPubkey: 'snapshot-owner', network: 'regtest' };
+    const original = plan([tx({ txid: 'original' })], { exitStateSnapshot: 'original-snapshot' });
+    savePlan(owner, original);
+    vi.mocked(localStorage.setItem).mockImplementationOnce(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+    expect(() => savePlan(owner, plan([tx({ txid: 'new' })], { exitStateSnapshot: 'huge-snapshot' }))).toThrow();
+    expect(loadPlan(owner)).toEqual(original);
+  });
+});
+
+'''+s[end:];p.write_text(s)
 print('Recovery gateway, persistence and interface integration applied. Run all acceptance tests before preserving.')
