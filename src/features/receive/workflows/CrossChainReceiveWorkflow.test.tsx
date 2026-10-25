@@ -67,6 +67,12 @@ describe('USD receive deposit address', () => {
     expect(screen.getByTestId('cross-chain-deposit-amount')).toHaveTextContent('10.05 USDC');
     fireEvent.click(screen.getByText('Cost details'));
     expect(screen.getByText('0.01 USDC')).toBeInTheDocument();
+    // The SDK's service-fee asset differs from the source asset on some
+    // routes. Never mislabel their arithmetic difference as chain gas.
+    expect(screen.getByText('Cross-chain service fee')).toBeInTheDocument();
+    expect(screen.getByText('Additional quoted deposit')).toBeInTheDocument();
+    expect(screen.queryByText('Cross-Chain Network Fee')).toBeNull();
+
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button',{name:'Continue to deposit QR'}));
     await screen.findByTestId('cross-chain-deposit-address');

@@ -244,8 +244,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   Why is this unavailable?
                 </summary>
                 <p className="mt-2 text-xs text-spark-text-muted leading-relaxed">
-                  A new passkey must not generate a different wallet or silently replace your existing recovery words.
-                  Secure same-wallet protection needs independent verification before it can be offered.
+                  Passkeys are available when creating a new wallet. They cannot be added to an existing wallet restored from recovery words.
                 </p>
               </details>
             </section>

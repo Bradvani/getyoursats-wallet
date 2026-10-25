@@ -50,6 +50,15 @@ describe('unilateral exit on the settings page', () => {
   });
 });
 
+describe('wallet accessibility and honest platform protection', () => {
+  it('restores Orange as the display option and describes imported passkey limits plainly', () => {
+    renderSettings();
+    expect(screen.getByRole('button', { name: /Orange/ })).toBeInTheDocument();
+    expect(screen.getByText(/Passkeys are available when creating a new wallet/)).toBeInTheDocument();
+    expect(screen.getByText(/They cannot be added to an existing wallet restored from recovery words/)).toBeInTheDocument();
+  });
+});
+
 describe('help and app identity', () => {
   it('shows direct Privacy and Support entries and the shared build version', () => {
     renderSettings();
