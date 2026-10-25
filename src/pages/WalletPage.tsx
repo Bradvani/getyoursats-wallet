@@ -453,10 +453,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
           className="gys-action-dock__receive"><ArrowDownIcon/><span>{wc.receive}</span></button>
         <button type="button" onClick={openSendDialog} data-testid="send-button" aria-label="Send Bitcoin"
           className="gys-action-dock__send"><ArrowUpIcon/><span>{wc.send}</span></button>
-        <button type="button" onClick={()=>setIsQrScannerOpen(true)} data-testid="scan-button" aria-label="Scan payment QR"
-          className="gys-action-dock__utility"><QrCodeIcon/><span>Scan</span></button>
-        <button type="button" onClick={()=>setGysPosOpen(true)} data-testid="pos-button" aria-label="Accept payment using POS"
-          className="gys-action-dock__accept gys-action-dock__utility"><span className="gys-action-dock__bitcoin" aria-hidden="true">₿</span><span>Accept</span></button>
+        <button type="button" onClick={()=>setIsQrScannerOpen(true)} data-testid="scan-button" aria-label={wc.scanPayment}
+          className="gys-action-dock__utility"><QrCodeIcon/><span>{wc.scan}</span></button>
+        <button type="button" onClick={()=>setGysPosOpen(true)} data-testid="pos-button" aria-label={wc.posPayment}
+          className="gys-action-dock__accept gys-action-dock__utility"><span className="gys-action-dock__bitcoin" aria-hidden="true">₿</span><span>{wc.acceptShort}</span></button>
       </nav>
 
       {/* Save Contact Dialog */}
