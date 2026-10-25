@@ -6,6 +6,12 @@ const root=path.resolve('dist-rollback');
 const vite=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port','5185','--strictPort'],{stdio:'ignore',env:{...process.env,VITE_STAGING_PASSWORD:''}});
 const server=http.createServer(async(req,res)=>{
  const pathname=new URL(req.url??'/', 'http://127.0.0.1').pathname;
+ if(pathname==='/rollback-control-worker.js'){
+  // Test-only worker: exercises a real late takeover without touching wallet storage.
+  res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store','Service-Worker-Allowed':'/'});
+  res.end("self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));");
+  return;
+ }
  if(pathname.startsWith('/recovery-rollback/')){
   try{
    const relative=decodeURIComponent(pathname.slice('/recovery-rollback/'.length))||'index.html';

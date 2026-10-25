@@ -18,7 +18,7 @@ function refreshInventory(){
   element('compatibility').textContent=state.unrecognizedRecords?
    'Some records are damaged or from another version. They have been retained unchanged. Do not delete them.':
    'Records are retained in place. Reading this page does not mark any payment complete or retry any transaction.';
-  unlock.disabled=state.vault!=='supported';
+  unlock.disabled=state.vault!=='supported'||controlledByOldWorker();
  }catch{unlock.disabled=true;element('compatibility').textContent='Browser storage could not be read. Nothing has been removed or replaced.';}
 }
 function controlledByOldWorker():boolean{return !!navigator.serviceWorker?.controller;}
@@ -37,12 +37,23 @@ element<HTMLFormElement>('unlock-form').addEventListener('submit',async event=>{
 });
 privateCheck.addEventListener('change',()=>{reveal.disabled=!privateCheck.checked||secret===null;});
 reveal.addEventListener('click',()=>{
+ if(controlledByOldWorker()){lock('Rollback cutover is not complete. Recovery view locked.');refreshInventory();return;}
  if(!privateCheck.checked||secret===null||document.visibilityState!=='visible')return;
  words.textContent=secret;words.hidden=false;
 });
 element('lock').addEventListener('click',()=>lock());
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')lock();});
 window.addEventListener('pagehide',()=>lock());
+navigator.serviceWorker?.addEventListener('controllerchange',()=>{
+ // A worker can claim an already-open page. Revoke in-flight decryption and
+ // revealed secrets immediately, even if the page was uncontrolled at startup.
+ lock('Service worker control changed. Complete rollback cutover and reload before unlocking.');
+ refreshInventory();
+});
+window.addEventListener('pageshow',()=>{
+ if(controlledByOldWorker())lock('Rollback cutover is not complete. Recovery view locked.');
+ refreshInventory();
+});
 window.addEventListener('storage',()=>{lock('Wallet storage changed in another tab. Re-authentication is required.');refreshInventory();});
 refreshInventory();
 if(controlledByOldWorker()){unlock.disabled=true;message.textContent='Rollback cutover is not complete: an existing service worker still controls this page. Do not clear wallet storage.';}

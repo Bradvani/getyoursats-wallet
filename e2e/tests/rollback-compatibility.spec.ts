@@ -71,6 +71,56 @@ test('concurrent encrypted exit backups retain one shared key and both snapshots
  const result=await page.evaluate(()=>((window as unknown as {rollbackFixture:{verifyConcurrentBackups:()=>Promise<string[]>}}).rollbackFixture.verifyConcurrentBackups()));
  expect(result).toEqual(['exit-a','exit-b']);
 });
+
+async function installControllingWorker(page:Page){
+ await page.evaluate(async()=>{
+  const controlled=new Promise<void>(resolve=>{
+   navigator.serviceWorker.addEventListener('controllerchange',()=>resolve(),{once:true});
+  });
+  await navigator.serviceWorker.register('/rollback-control-worker.js',{scope:'/'});
+  if(!navigator.serviceWorker.controller)await controlled;
+ });
+}
+test('late service-worker takeover clears already revealed words and keeps unlock disabled',async({page,context})=>{
+ const before=await migrate(page);await page.goto(rollback);
+ await page.getByLabel('Wallet password',{exact:true}).fill(password);
+ await page.getByRole('button',{name:'Unlock recovery words',exact:true}).click();
+ await expect(page.locator('#revealer')).toBeVisible();
+ await page.getByLabel(/I am in a private place/).check();
+ await page.getByRole('button',{name:'Reveal original words',exact:true}).click();
+ await expect(page.locator('#words')).toHaveText(words);
+ const installer=await context.newPage();await installer.goto(fixture);
+ await installControllingWorker(installer);
+ await expect.poll(()=>page.evaluate(()=>!!navigator.serviceWorker.controller)).toBe(true);
+ await expect(page.locator('#words')).toHaveText('');
+ await expect(page.locator('#words')).toBeHidden();
+ await expect(page.locator('#revealer')).toBeHidden();
+ await expect(page.locator('#password')).toHaveValue('');
+ // Inventory refresh must not re-enable the button while still controlled.
+ await page.evaluate(()=>window.dispatchEvent(new Event('storage')));
+ await expect(page.locator('#unlock')).toBeDisabled();
+ await verifyPreserved(page,before);
+});
+test('an existing worker blocks recovery until explicit unregister and reload, preserving all wallet state',async({page})=>{
+ const before=await migrate(page);await installControllingWorker(page);
+ await page.goto(rollback);
+ await expect(page.locator('#unlock')).toBeDisabled();
+ await page.evaluate(()=>window.dispatchEvent(new Event('storage')));
+ await expect(page.locator('#unlock')).toBeDisabled();
+ await expect(page.locator('#words')).toHaveText('');
+ // Simulate an operator's disposable-origin cutover, not an app auto-unregister.
+ await page.evaluate(async()=>{
+  const registrations=await navigator.serviceWorker.getRegistrations();
+  for(const registration of registrations)await registration.unregister();
+ });
+ await page.reload();
+ expect(await page.evaluate(()=>navigator.serviceWorker.controller)).toBeNull();
+ await expect(page.locator('#unlock')).toBeEnabled();
+ await page.getByLabel('Wallet password',{exact:true}).fill(password);
+ await page.getByRole('button',{name:'Unlock recovery words',exact:true}).click();
+ await expect(page.locator('#revealer')).toBeVisible();
+ await verifyPreserved(page,before);
+});
 test('an aborted IndexedDB commit rejects the save and preserves the old exit backup',async({page})=>{
  await page.goto(fixture);
  const result=await page.evaluate(()=>((window as unknown as {rollbackFixture:{verifyAbortedBackup:()=>Promise<{rejected:boolean;retained:string}>}}).rollbackFixture.verifyAbortedBackup()));

@@ -58,7 +58,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci --ignore-scripts
-      - name: Record advisories; do not auto-upgrade wallet dependencies
+      - name: Record advisories and reject unresolved vulnerabilities
         run: |
           mkdir -p /tmp/dependency-evidence
           npm audit --json > /tmp/dependency-evidence/all.json || true
@@ -72,9 +72,12 @@ jobs:
               console.log(JSON.stringify({scope,name,severity:item.severity,range:item.range,direct:item.isDirect,fix:item.fixAvailable,via:item.via}));
             }
             if(data.error)throw new Error('Audit registry lookup failed; missing evidence is not a pass');
+            const total=data.metadata?.vulnerabilities?.total;
+            if(!Number.isSafeInteger(total)||total!==0)throw new Error(scope+' dependency audit is not clean');
           }
           JS
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
         with:
           name: dependency-evidence-${{ github.sha }}
           path: /tmp/dependency-evidence/
