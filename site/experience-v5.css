@@ -660,3 +660,20 @@
 @media(prefers-reduced-motion:reduce){
   #features .ex-chain-chip{animation:none;transition:none}
 }
+
+
+/* Collapse by the gallery's real usable width, not just the device viewport.
+   The Experience panel occupies a column even on a wide laptop. */
+#features .ex-network-showcase {container-type:inline-size}
+@container (max-width:545px){
+  #features .ex-chain-grid{
+    display:flex;flex-wrap:wrap;align-items:stretch;justify-content:center;gap:0;
+  }
+  #features .ex-chain-chip,
+  #features .ex-chain-chip:nth-child(5),
+  #features .ex-chain-chip:last-child{
+    flex:0 0 25%;width:25%;min-height:94px;padding:10px 2px;
+  }
+  #features .ex-chain-mark{width:49px;height:49px;padding:8px;border-radius:14px}
+  #features .ex-chain-label{font-size:clamp(10px,2.5cqw,12px)}
+}
