@@ -4,6 +4,7 @@ on:
     branches: [release/browser-pwa-security-localization-20261025]
     paths:
       - scripts/security/add-signed-recovery-sdk.py
+      - scripts/security/verify-observation-extension.mjs
       - .github/workflows/build-signed-recovery-sdk.yml
   workflow_dispatch:
 permissions:
