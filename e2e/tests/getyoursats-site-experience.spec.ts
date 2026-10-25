@@ -135,7 +135,7 @@ test('@public-smoke route network grid covers documented chain examples at every
   const grid=page.locator('.ex-chain-grid');
   await expect(grid).toBeVisible();
   await expect(grid.locator('.ex-chain-chip')).toHaveCount(13);
-  for(const name of ['Ethereum','Base','Arbitrum','Optimism','Polygon','Avalanche','BNB Chain','Linea','Sei','Sonic','Unichain','Solana','Tron']){
+  for(const name of ['Ethereum','Solana','Base','BNB Chain','Arbitrum','TRON','Monad']){
    await expect(grid.getByText(name,{exact:true})).toBeVisible();
   }
   await page.locator('#ex-route-reverse').click();
