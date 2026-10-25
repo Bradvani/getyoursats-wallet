@@ -38,7 +38,7 @@ for (const viewport of [{width:360,height:800}, {width:390,height:844}, {width:7
     await page.getByTestId('menu-button').click();
     await page.getByRole('navigation', { name: 'Wallet menu' }).getByRole('button', { name: 'Settings', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Close', exact: true }).click();
+    await page.locator('.gys-slide-layer').getByRole('button', { name: 'Close', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: `test-artifacts/layout-${test.info().project.name}-${viewport.width}.png` });
@@ -51,7 +51,7 @@ test('reduced-motion Settings navigation remains responsive', async ({ page }) =
   await page.goto('/e2e/fixtures/premium-ui.html');
   const nav = page.getByRole('complementary', { name: 'Wallet navigation' });
   await nav.getByRole('button', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.locator('.gys-slide-layer').getByRole('button', { name: 'Close', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toHaveCount(0);
   await nav.getByRole('button', { name: 'History', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'History', exact: true })).toBeVisible();
