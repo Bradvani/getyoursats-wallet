@@ -21,7 +21,8 @@ import { StableBalanceProvider, useStableBalance } from './contexts/StableBalanc
 
 import HomePage from './pages/HomePage';
 import EmailVerificationPage from './pages/EmailVerificationPage';
-import WalletPage from './pages/WalletPage';
+const loadWalletPage = () => import('./pages/WalletPage');
+const WalletPage = lazy(loadWalletPage);
 import RestorePage from './pages/RestorePage';
 import GeneratePage from './pages/GeneratePage';
 import GetRefundPage from './pages/GetRefundPage';
@@ -105,6 +106,7 @@ const AppContent: React.FC = () => {
     return false;
   };
   const handleGetYourSatsRestore=()=>{
+    void loadWalletPage().catch(() => {});
     if(requireWalletService())setUserScreen('restore');
   };
   const [refundAnimationDirection, setRefundAnimationDirection] = useState<'left' | 'up'>('left');
@@ -156,6 +158,7 @@ const AppContent: React.FC = () => {
   // recoverable device backup has been validated across reinstall.
   // Until then, preserve the upstream mnemonic/backup ceremony.
   const handleGetYourSatsStart = async () => {
+    void loadWalletPage().catch(() => {});
     if (!requireWalletService()) return;
 
     // Native-only instant wallet: keys are generated with a cryptographic
@@ -456,6 +459,7 @@ const AppContent: React.FC = () => {
         );
       }
       return (
+        <Suspense fallback={<GlobalLoadingOverlay />}>
         <WalletPage
           walletInfo={sdk.walletInfo}
           transactions={sdk.transactions}
@@ -470,6 +474,8 @@ const AppContent: React.FC = () => {
             setRefundAnimationDirection(source === 'icon' ? 'up' : 'left');
             setUserScreen('getRefund');
           }}
+          onReturnToWallet={() => setUserScreen('wallet')}
+          settingsActive={currentScreen !== 'wallet'}
           onOpenSettings={() => setUserScreen('settings')}
           onOpenFiatCurrencies={() => setUserScreen('fiatCurrencies')}
           onOpenDca={() => setUserScreen('dca')}
@@ -478,6 +484,7 @@ const AppContent: React.FC = () => {
           network={sdk.config?.network}
           onDepositChanged={sdk.fetchUnclaimedDeposits}
         />
+        </Suspense>
       );
     };
 

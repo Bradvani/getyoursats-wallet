@@ -1,5 +1,6 @@
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import GetYourSatsWordmark from '../GetYourSatsWordmark';
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useRef, useEffect } from 'react';
 import { Transition, TransitionChild } from '@headlessui/react';
 import { CloseIcon, BackIcon } from '../Icons';
 import { safeAreaTop, safeAreaBottom } from '../../utils/safeAreaInsets';
@@ -43,7 +44,13 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
   slideFrom = 'left',
   footer,
 }) => {
+  const desktop = useMediaQuery('(min-width: 1024px)');
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const [isOpen, setIsOpen] = useState(true);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+  }, []);
 
   // Slide-in pages (Settings, Backup, Buy Providers, etc.) use a
   // solid spark-surface background, so pin the system bars to match
@@ -52,14 +59,19 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
   useStatusBarColor(STATUS_BAR_SURFACE);
 
   const handleClose = () => {
+    if (closeTimer.current !== null) return;
     setIsOpen(false);
     // Matches the `duration-200` on leave below + ~20ms padding so
     // the unmount (which kills the animation mid-flight if it's still
     // running) lands just after the slide completes.
-    setTimeout(onClose, 220);
+    // Reduced motion should not wait for an invisible animation.
+    const delay = reducedMotion ? 0 : desktop ? 160 : 220;
+    closeTimer.current = setTimeout(onClose, delay);
   };
 
-  const { from, to } = slideTransforms[slideFrom];
+  const { from, to } = desktop
+    ? { from: 'opacity-0 translate-y-2', to: 'opacity-100 translate-y-0' }
+    : slideTransforms[slideFrom];
 
   return (
     // `absolute inset-0` (not the old `relative h-dvh`) so the page
@@ -89,10 +101,10 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
           // deliberate slide rather than a pop. Sits one token above
           // the drawer (150/100) so the motion hierarchy scales with
           // the surface size.
-          enter="transform transition ease-m3-emphasized-decelerate duration-250"
+          enter={`transition-[transform,opacity] motion-reduce:transition-none ease-m3-emphasized-decelerate ${desktop ? 'duration-150' : 'duration-250'}`}
           enterFrom={from}
           enterTo={to}
-          leave="transform transition ease-m3-emphasized-accelerate duration-200"
+          leave={`transition-[transform,opacity] motion-reduce:transition-none ease-m3-emphasized-accelerate ${desktop ? 'duration-150' : 'duration-200'}`}
           leaveFrom={to}
           leaveTo={from}
           className="gys-page-surface absolute inset-0 flex flex-col bg-spark-surface"

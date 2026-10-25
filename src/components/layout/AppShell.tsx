@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { usePlatform } from '../../hooks/usePlatform';
 
 interface AppShellProps {
@@ -11,6 +11,15 @@ interface AppShellProps {
  * by individual components (e.g. bottom-bar, SideMenu).
  */
 const AppShell: React.FC<AppShellProps> = ({ children }) => {
+  useEffect(() => {
+    const sync = () => document.documentElement.toggleAttribute('data-ui-hidden', document.hidden);
+    sync();
+    document.addEventListener('visibilitychange', sync);
+    return () => {
+      document.removeEventListener('visibilitychange', sync);
+      document.documentElement.removeAttribute('data-ui-hidden');
+    };
+  }, []);
   const { isStandalone, isIOS, isAndroid } = usePlatform();
 
   return (

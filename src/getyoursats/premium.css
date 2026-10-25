@@ -258,3 +258,45 @@ html.ios-standalone-bottom-gap .gys-wallet-balance-surface__toolbar{z-index:30}
  .gys-wallet__activity{padding-bottom:110px}
  .gys-home-quick-actions{flex:none}
 }
+
+/* Keep decorative work off background tabs; SDK state remains independent. */
+html[data-ui-hidden] .gys-transfer *,
+html[data-ui-hidden] .gys-brand-reveal *,
+html[data-ui-hidden] .gys-moment *{animation-play-state:paused!important}
+/* Short landscape windows need usable history, not a phone-height masthead. */
+@media(max-height:600px) and (max-width:1023px){
+ .gys-wallet__header{min-height:0}
+ .gys-wallet__address{margin-block:4px;padding-block:6px}
+ .gys-action-dock button{min-height:44px}
+}
+@media(pointer:coarse){
+ .gys-wallet>div.absolute.inset-0{display:none}
+ button,a{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+}
+@media(min-width:1024px){
+ .gys-desktop-nav{overflow-y:auto;overscroll-behavior:contain}
+ .gys-desktop-nav nav{margin-top:clamp(16px,4vh,42px)}
+ .gys-page-surface>div.flex-1{overscroll-behavior:contain}
+}
+/* Give activity a real viewport instead of sharing remaining height with the header. */
+@media(max-width:767px){
+ .gys-wallet__header{flex:0 0 auto;min-height:0}
+ .gys-wallet-balance-surface__content{min-height:0}
+ .gys-wallet-balance-surface__content>.text-center{margin:0;padding:8px 0 12px}
+ .gys-wallet-balance-surface__content>.h-4{display:none}
+}
+@media(max-height:600px) and (max-width:1023px){
+ .gys-wallet__header{flex:0 0 auto}
+ .gys-wallet-balance-surface__content .balance-display{font-size:36px;line-height:1.1}
+ .gys-wallet-balance-surface__toolbar{margin-bottom:0}
+ .gys-wallet-balance-surface__content>.text-center{margin:0;padding:4px 0}
+ .gys-wallet-balance-surface__content>.h-4{display:none}
+ .gys-wallet__activity{padding-bottom:90px}
+}
+@media(max-height:600px) and (min-width:600px) and (max-width:1023px){
+ .gys-home-quick-actions{display:none}
+ .gys-wallet-balance-surface__content{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;column-gap:16px}
+ .gys-wallet-balance-surface__toolbar{grid-column:1;grid-row:1;height:48px}
+ .gys-wallet-balance-surface__content>.text-center{grid-column:2;grid-row:1 / 3}
+ .gys-wallet-balance-surface__content>.flex.justify-center{grid-column:1;grid-row:2;margin:0}
+}
