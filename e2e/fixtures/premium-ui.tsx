@@ -61,8 +61,10 @@ function Fixture() {
  const [screen,setScreen]=useState(new URLSearchParams(location.search).get('screen') || 'wallet');
  const close=()=>setScreen('wallet');
  return <ToastProvider><WalletProvider client={sdk} isConnected subscribeToSdkEvents={subscribeToSdkEvents}><WalletInfoProvider walletInfo={info}><FiatDataProvider><StableBalanceProvider><ContactsProvider>
-  {screen==='wallet' ? <WalletPage walletInfo={info} transactions={[received]} unclaimedDeposits={[]} refreshWalletData={async()=>true} isSyncing={false} error={null} onClearError={()=>{}} onLogout={close} hasRejectedDeposits={false} onOpenGetRefund={()=>{}} onOpenSettings={()=>setScreen('settings')} onOpenDca={()=>setScreen('dca')} onOpenUnilateralExit={()=>{}} onBuyBitcoin={async()=>{}} />
-  : screen==='settings' ? <SettingsPage onBack={close} config={null} onOpenFiatCurrencies={()=>{}} onOpenBuyProviders={()=>{}} onOpenPasskeySettings={()=>{}} onOpenSecurity={()=>{}} onOpenBackup={()=>setScreen('backup')} onOpenEmail={()=>{}} onOpenUnilateralExit={()=>{}} />
+  {['wallet','settings'].includes(screen) && <WalletPage walletInfo={info} transactions={[received]} unclaimedDeposits={[]} refreshWalletData={async()=>true} isSyncing={false} error={null} onClearError={()=>{}} onLogout={close} hasRejectedDeposits={false} onOpenGetRefund={()=>{}} onReturnToWallet={close} settingsActive={screen!=='wallet'} onOpenSettings={()=>setScreen('settings')} onOpenDca={()=>setScreen('dca')} onOpenUnilateralExit={()=>{}} onBuyBitcoin={async()=>{}} />
+  }
+  {screen==='settings' ? <SettingsPage onBack={close} config={null} onOpenFiatCurrencies={()=>{}} onOpenBuyProviders={()=>{}} onOpenPasskeySettings={()=>{}} onOpenSecurity={()=>{}} onOpenBackup={()=>setScreen('backup')} onOpenEmail={()=>{}} onOpenUnilateralExit={()=>{}} />
+  : screen==='wallet' ? null
   : screen==='dca' ? <h1>Recurring Buys entry reached</h1>
   : screen==='backup' ? <h1>Recovery entry reached</h1>
   : screen==='received' ? <PaymentCelebration payment={received} onClose={close}/>
