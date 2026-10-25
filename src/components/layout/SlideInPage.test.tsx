@@ -31,7 +31,7 @@ describe('slide page navigation lifecycle', () => {
 
   it('does not wait 220ms when reduced motion is requested', () => {
     vi.useFakeTimers();
-    vi.mocked(window.matchMedia).mockReturnValue({ matches: true } as MediaQueryList);
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() } as unknown as MediaQueryList);
     const onClose = vi.fn();
     render(<SlideInPage title="Settings" onClose={onClose}>Preferences</SlideInPage>);
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
