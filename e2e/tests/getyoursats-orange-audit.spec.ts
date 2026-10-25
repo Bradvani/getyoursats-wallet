@@ -60,11 +60,11 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
   if(width<=720){
    // The compact action dock intentionally keeps only Send / Receive.
    await expect(page.getByRole('button',{name:'Open Point of Sale'})).toBeVisible();
-   await expect(page.getByRole('button',{name:'Accept payment using POS'})).toBeHidden();
+   await expect(page.getByRole('button',{name:'Accept a payment in merchant mode'})).toBeHidden();
    await expect(page.getByRole('button',{name:'Scan payment QR'})).toBeHidden();
   }else{
    await expect(page.getByRole('button',{name:'Scan payment QR'})).toBeVisible();
-   await expect(page.getByRole('button',{name:'Accept payment using POS'})).toBeVisible();
+   await expect(page.getByRole('button',{name:'Accept a payment in merchant mode'})).toBeVisible();
   }
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);
   expect(overflow).toBe(false);
