@@ -38,13 +38,14 @@ import {
 import { LEGACY_RP_ID, SHARED_RP_ID, rpId as defaultRpId } from '../services/passkeyPrfProvider';
 import { secureStorage, deviceOnlyStorage, SecureStorageError, resetSecureStorageInit } from '../services/secureStorage';
 import {
-  saveMnemonic,
   getSavedMnemonic,
   clearMnemonic,
   migrateLegacyMnemonicIfNeeded,
 } from '../services/legacyMnemonicMigration';
 import { isSendSheetOpen } from '../features/send/sendSheetVisibility';
 import { clearPin, isAppLockSupported } from '../services/appLock';
+import {hasWebWalletVault,hasLegacyWebMnemonic,clearUnlockedWebMnemonic} from '../security/webWalletVault';
+import {rememberSignerIdentity,clearSignerIdentity} from '../security/spendApproval';
 import { hasConversionInFlight } from '../contexts/WalletContext';
 import { isConversionPayment } from '../utils/paymentDescription';
 import {newlyCompletedReceive,rememberPaymentId} from '../getyoursats/paymentMomentPolicy';
@@ -109,6 +110,8 @@ export type StartupState =
   | 'no-wallet'
   | 'native-unlocking'
   | 'native-locked'
+  | 'web-vault-enroll'
+  | 'web-vault-locked'
   | 'connected';
 
 export interface BreezSdkState {
@@ -448,6 +451,11 @@ export function useBreezSdk(
         return;
       }
 
+      // Browser manual wallets must have a verified encrypted vault before
+      // SDK connection. Never silently fall back to plaintext persistence.
+      if (!Capacitor.isNativePlatform() && passkeyLabel == null
+        && seed.type === 'mnemonic' && !hasWebWalletVault())
+        throw new Error('Protect the wallet with a password before connecting.');
       setIsLoading(true);
       setIsSyncing(restore);
       setError(null);
@@ -476,6 +484,7 @@ export function useBreezSdk(
       // publish was already kicked off, fire-and-forget, inside register()).
       connectedSdk = await logger.time('[onboarding] sdk.connect', () =>
         connectSdk({ config: cfg, seed, storageDir: 'spark-wallet-example' }));
+      await rememberSignerIdentity(seed);
       setSdk(connectedSdk);
 
       logger.sdkInitialized();
@@ -523,7 +532,9 @@ export function useBreezSdk(
           // Web passkey mode: never cache the PRF-derived seed.
           clearMnemonic();
         } else if (seed.type === 'mnemonic') {
-          saveMnemonic(seed.mnemonic);
+          if (!hasWebWalletVault()) throw new Error('Wallet password protection is required');
+          // Browser vault is already encrypted and verified by onboarding.
+          // Do not persist the plaintext mnemonic.
         }
       }
 
@@ -598,6 +609,8 @@ export function useBreezSdk(
   const handleLogout = useCallback(async () => {
     setIsLoading(true);
 
+    clearSignerIdentity();
+    clearUnlockedWebMnemonic();
     // Wipe reconnect signals first so a hung sdk.disconnect() can't
     // strand the user with a wallet that auto-reconnects on refresh.
     clearMnemonic();
@@ -1276,7 +1289,11 @@ export function useBreezSdk(
           clearMnemonic();
         }
         const savedMnemonic = !isPasskeyMode() ? getSavedMnemonic() : null;
-        if (savedMnemonic) {
+        if (!Capacitor.isNativePlatform() && !isPasskeyMode()
+          && (hasWebWalletVault() || hasLegacyWebMnemonic())) {
+          setStartupState(hasWebWalletVault() ? 'web-vault-locked' : 'web-vault-enroll');
+          setIsLoading(false);
+        } else if (savedMnemonic) {
           try {
             setIsLoading(true);
             await connectWallet({ type: 'mnemonic', mnemonic: savedMnemonic }, false);

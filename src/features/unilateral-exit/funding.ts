@@ -1,3 +1,4 @@
+import {getUnlockedWebMnemonic} from '../../security/webWalletVault';
 import { LogCategory, logger } from '@/services/logger';
 import { deviceOnlyStorage, secureStorage } from '@/services/secureStorage';
 import { ripemd160 } from '@noble/hashes/legacy';
@@ -92,7 +93,7 @@ const stored = async (): Promise<string | null> => {
       });
     }
   }
-  return localStorage.getItem('walletMnemonic');
+  return getUnlockedWebMnemonic() ?? localStorage.getItem('walletMnemonic');
 };
 
 /**

@@ -10,6 +10,9 @@ import {
   type Seed,
 } from '@breeztech/breez-sdk-spark';
 import { getSettings } from './settings';
+import { createPaymentApprovalObserver } from '../security/spendApproval';
+import {hasWebWalletVault} from '../security/webWalletVault';
+import {Capacitor} from '@capacitor/core';
 import { logger, LogCategory } from './logger';
 import { formatError } from '../utils/formatError';
 import { USDB_TOKEN_IDENTIFIER, USDB_TICKER } from '../constants/stableBalance';
@@ -114,9 +117,20 @@ export async function connectSdk(params: {
 }): Promise<BreezSdk> {
   const { config, seed, storageDir } = params;
   const chainApiUrl = import.meta.env.VITE_ESPLORA_BASE_URL;
+  // Scoped first release: protect browser mnemonic wallets without changing
+  // the existing native and passkey signing lifecycles. Those need separate
+  // platform-specific end-to-end approval verification.
+  const guardedWebPhrase = !Capacitor.isNativePlatform()
+    && seed.type === 'mnemonic' && hasWebWalletVault();
+  if (guardedWebPhrase) {
+    let builder = SdkBuilder.new(config, seed).withPaymentObserver(createPaymentApprovalObserver());
+    if (chainApiUrl && config.apiKey == null && config.sparkConfig)
+      builder = builder.withRestChainService(chainApiUrl, 'esplora');
+    return (await builder.withDefaultStorage(storageDir)).build();
+  }
   if (chainApiUrl && config.apiKey == null && config.sparkConfig) {
     const builder = SdkBuilder.new(config, seed).withRestChainService(chainApiUrl, 'esplora');
     return (await builder.withDefaultStorage(storageDir)).build();
   }
-  return connect({ config, seed, storageDir });
+  return connect({config,seed,storageDir});
 }
