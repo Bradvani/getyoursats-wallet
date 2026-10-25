@@ -7,7 +7,7 @@
   if(!shell||!panel)return;
   const $=(selector,root=document)=>root.querySelector(selector);
   const $$=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
-  const state={active:'wallet',custodyStep:0,recovery:'passkey',asset:'USDC',reverse:false,routeReviewed:false,sale:4.5,item:'Coffee',merchantStage:0,frequency:'week'};
+  const state={active:'wallet',custodyStep:0,recovery:'passkey',asset:'USDC',reverse:false,sale:4.5,item:'Coffee',merchantStage:0,frequency:'week'};
   const copy={
     wallet:{status:'100% SELF-CUSTODY',number:'01 — 04',title:'Your keys. Your bitcoin. Period.',detail:'Choose how to secure your wallet. Your signing keys stay under your control, and your recovery choices remain yours.'},
     lightning:{status:'BITCOIN-FIRST ROUTES',number:'02 — 04',title:'Move value into Bitcoin. And back.',detail:'Explore USDC/USDT into sats and sats out to supported stablecoin destinations. Review live routes and fees inside the wallet.'},
@@ -108,81 +108,42 @@
   });
   $('#ex-custody-reset').addEventListener('click',()=>{state.custodyStep=0;renderCustody()});
 
-  /* Marketing preview: route discovery, review, conditional on-Spark conversion
-     and separately tracked external settlement. Never a payable swap. */
-  const journey=$('#ex-route-journey');
-  const journeyButton=$('#ex-route-preview');
-  const journeySteps=$$('[data-route-step]');
-  const reducedJourney=window.matchMedia('(prefers-reduced-motion: reduce)');
-  let routeTimer=null;
-  const stopRoute=()=>{if(routeTimer!==null){clearTimeout(routeTimer);routeTimer=null}};
-  function routeStages(){
-    const from=state.reverse?'sats':state.asset,to=state.reverse?state.asset:'sats';
-    return [
-      {tag:'01 / ROUTE DISCOVERY',title:'Find '+from+' → '+to,body:'GetYourSats checks SDK route availability for the selected asset, network and supported providers. No fixed route is assumed.',source:'GETYOURSATS / BREEZ SPARK'},
-      {tag:'02 / REVIEW BEFORE APPROVAL',title:'Know the terms before you approve.',body:'The wallet prepares a provider quote. Review the receive amount, fees, selected network, limits and quote expiry before authorizing funds.',source:'QUOTE · FEES · EXPIRY'},
-      {tag:'03 / ON SPARK',title:'Flashnet conversion, if required.',body:state.reverse
-        ? 'Your self-custodial Spark wallet funds the authorized route. If it needs a BTC ↔ Spark-token conversion, Flashnet settles that on-Spark leg atomically.'
-        : 'The provider-managed stablecoin deposit routes toward Spark. If a BTC ↔ Spark-token conversion is required, Flashnet settles that on-Spark leg atomically.',source:'SPARK + FLASHNET · CONDITIONAL'},
-      {tag:'04 / CROSS-CHAIN DELIVERY',title:state.reverse?'Deliver '+state.asset+' on the chosen network.':'Receive sats in your wallet.',body:state.reverse
-        ? 'Orchestra or another supported provider handles external-network delivery. The order can remain pending until confirmed, and failures may need a refund.'
-        : 'The cross-chain provider monitors the source deposit and credits a supported Spark destination. The wallet tracks pending delivery and any refund.',source:'PROVIDER DELIVERY · TRACKED STATUS'}
-    ];
-  }
-  function routeStep(index){
-    const n=Math.min(3,Math.max(0,index)),stage=routeStages()[n];
-    journey.dataset.step=String(n);
-    $('#ex-route-progress').textContent=String(n+1).padStart(2,'0')+' / 04';
-    $('#ex-route-step-label').textContent=stage.tag;
-    $('#ex-route-step-title').textContent=stage.title;
-    $('#ex-route-step-body').textContent=stage.body;
-    $('#ex-route-provider').textContent=stage.source;
-    $('#ex-route-stage-status').textContent=n===3?'DESTINATION STATUS TRACKED':'ILLUSTRATION / NO FUNDS MOVE';
-    journeySteps.forEach((b,i)=>{b.setAttribute('aria-pressed',String(i===n));b.classList.toggle('is-complete',i<n)});
-  }
-  function playJourney(){
-    stopRoute();journey.hidden=false;$('#ex-route-note').hidden=true;
-    journeyButton.setAttribute('aria-expanded','true');journeyButton.textContent='Replay journey ↻';
-    routeStep(reducedJourney.matches?3:0);
-    if(reducedJourney.matches)return;
-    function next(n){
-      if(journey.hidden||state.active!=='lightning'||document.hidden)return;
-      routeStep(n);
-      routeTimer=n<3?setTimeout(()=>next(n+1),1700):null;
-    }
-    routeTimer=setTimeout(()=>next(1),1700);
-  }
+  /* Simple product-language network showcase.
+     The real SDK discovers route availability at runtime by asset, direction,
+     destination and provider. The website never makes a firm route promise. */
   function renderRoute(){
-    const [from,to]=state.reverse?['sats',state.asset]:[state.asset,'sats'];
-    $('#ex-source-caption').textContent=from;$('#ex-target-caption').textContent=to;
-    $('#ex-source-sub').textContent=from==='sats'?'Your wallet':'Supported chain';
+    const from=state.reverse?'sats':state.asset;
+    const to=state.reverse?state.asset:'sats';
+    $('#ex-source-caption').textContent=from;
+    $('#ex-target-caption').textContent=to;
+    $('#ex-source-sub').textContent=from==='sats'?'Your wallet':'Supported network';
     $('#ex-target-sub').textContent=to==='sats'?'Your wallet':'Supported destination';
     $('#ex-source-icon').textContent=from==='sats'?'₿':from==='USDT'?'₮':'$';
     $('#ex-target-icon').textContent=to==='sats'?'₿':to==='USDT'?'₮':'$';
     $('#ex-source-icon').className='ex-node-round '+(from==='sats'?'ex-node-round--btc':from==='USDT'?'ex-node-round--usdt':'ex-node-round--token');
     $('#ex-target-icon').className='ex-node-round '+(to==='sats'?'ex-node-round--btc':to==='USDT'?'ex-node-round--usdt':'ex-node-round--token');
-    $('#ex-route-track').classList.remove('is-reversed');
-    $('#ex-route-track').dataset.direction=state.reverse?'sats-out':'stable-in';
+    const track=$('#ex-route-track');
+    track.classList.remove('is-reversed');
+    track.dataset.direction=state.reverse?'sats-out':'stable-in';
     $('#ex-arc-label').textContent=state.reverse?'SEND BTC VALUE':'RECEIVE AS SATS';
     $('#ex-route-context').textContent=state.reverse?'SEND FROM YOUR SATS BALANCE':'RECEIVE INTO YOUR SATS BALANCE';
     $('#ex-route-pair').textContent=from.toUpperCase()+'  →  '+to.toUpperCase();
     $('#ex-route-stage').dataset.direction=state.reverse?'outbound':'inbound';
     $('#ex-route-source-label').textContent=from==='sats'?'YOUR BITCOIN':'SUPPORTED STABLECOIN';
     $('#ex-route-target-label').textContent=to==='sats'?'YOUR BITCOIN':'SUPPORTED STABLECOIN';
-    $('#ex-journey-from').textContent=from.toUpperCase();
-    $('#ex-journey-to').textContent=to.toUpperCase();
-    $$('[data-ex-asset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.exAsset===state.asset)));
-    if(!journey.hidden)playJourney();
+    $('#ex-route-description').textContent=state.reverse
+      ? 'Send sats as '+state.asset+' on supported networks'
+      : 'Receive '+state.asset+' value as sats';
+    $$('[data-ex-asset]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.exAsset===state.asset)));
   }
-  $$('[data-ex-asset]').forEach(b=>b.addEventListener('click',()=>{state.asset=b.dataset.exAsset;renderRoute()}));
-  $('#ex-route-reverse').addEventListener('click',()=>{state.reverse=!state.reverse;renderRoute()});
-  journeyButton.setAttribute('aria-controls','ex-route-journey');
-  journeyButton.setAttribute('aria-expanded','false');
-  journeyButton.addEventListener('click',playJourney);
-  journeySteps.forEach(b=>b.addEventListener('click',()=>{stopRoute();if(journey.hidden){journey.hidden=false;$('#ex-route-note').hidden=true;journeyButton.setAttribute('aria-expanded','true');journeyButton.textContent='Replay journey ↻'}routeStep(Number(b.dataset.routeStep))}));
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)stopRoute()});
-  reducedJourney.addEventListener?.('change',()=>{if(!journey.hidden){stopRoute();routeStep(reducedJourney.matches?3:0)}});
-  $$('.feature-tab').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.feature!=='lightning')stopRoute()}));
+  $$('[data-ex-asset]').forEach(btn=>btn.addEventListener('click',()=>{
+    state.asset=btn.dataset.exAsset;
+    renderRoute();
+  }));
+  $('#ex-route-reverse').addEventListener('click',()=>{
+    state.reverse=!state.reverse;
+    renderRoute();
+  });
   renderRoute();
 
   /* 03 / cinematic merchant journey: narrative, not a second POS interface.
