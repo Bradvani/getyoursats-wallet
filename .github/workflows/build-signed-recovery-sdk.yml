@@ -1,0 +1,113 @@
+name: Build signed recovery SDK
+on:
+  push:
+    branches: [release/browser-pwa-security-localization-20261025]
+    paths:
+      - scripts/security/add-signed-recovery-sdk.py
+      - .github/workflows/build-signed-recovery-sdk.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: signed-recovery-sdk
+  cancel-in-progress: true
+jobs:
+  build:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_PROFILE_TEST_DEBUG: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CC_wasm32_unknown_unknown: clang
+      AR_wasm32_unknown_unknown: llvm-ar
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 100
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Prepare isolated source and pinned toolchain
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y clang llvm libclang-dev protobuf-compiler
+          rustup toolchain install 1.95.0 --profile minimal --target wasm32-unknown-unknown
+          rustup default 1.95.0
+          mkdir -p /tmp/recovery-sdk-evidence
+          git clone --no-checkout --filter=blob:none https://github.com/breez/spark-sdk.git /tmp/recovery-sdk
+          git -C /tmp/recovery-sdk checkout 57c5b9e5f0749f97ffe5d93bce21c994f6957cf4
+          git -C /tmp/recovery-sdk apply --check "$GITHUB_WORKSPACE/vendor/patches/0002-observation-only-wallet-state.patch"
+          git -C /tmp/recovery-sdk apply "$GITHUB_WORKSPACE/vendor/patches/0002-observation-only-wallet-state.patch"
+          python3 scripts/security/add-signed-recovery-sdk.py /tmp/recovery-sdk
+          git -C /tmp/recovery-sdk add -N crates/breez-sdk/core/src/sdk/signed_recovery.rs
+          git -C /tmp/recovery-sdk diff --full-index --binary > vendor/patches/0003-signed-recovery-continuation.patch
+          git -C /tmp/recovery-sdk diff --check
+          cargo install wasm-bindgen-cli --version 0.2.120 --locked --root /tmp/recovery-bindgen
+      - name: Compile and test Rust envelope validation, identity and observation
+        working-directory: /tmp/recovery-sdk
+        run: |
+          set -euo pipefail
+          cargo test --locked -p breez-sdk-spark signed_recovery_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/refund-rust-tests.log
+          cargo test --locked -p breez-sdk-spark seed_factory --lib 2>&1 | tee /tmp/recovery-sdk-evidence/seed-rust-tests.log
+          cargo test --locked -p breez-sdk-spark observation_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/observation-rust-tests.log
+          cargo build --locked -p breez-sdk-spark-wasm --target wasm32-unknown-unknown --release 2>&1 | tee /tmp/recovery-sdk-evidence/wasm-build.log
+      - name: Package reproducible SDK and lock dependency
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/security/package-seed-signer-sdk.py');s=p.read_text()
+          assert "0.1.0-getyoursats.observe.1" in s
+          s=s.replace("0.1.0-getyoursats.observe.1","0.1.0-getyoursats.recovery.1")
+          s=s.replace("'observeWalletState', 'observePayment'","'observeWalletState', 'observePayment', 'signRefundDeposit', 'verifyRefundTransaction', 'inspectRecoveryTransaction'")
+          s=s.replace("'observation-only-wallet-state-v1']","'observation-only-wallet-state-v1', 'signed-recovery-v1']")
+          p.write_text(s)
+          p=Path('scripts/security/build-seed-signer-sdk.sh');s=p.read_text().replace('0002-observation-only-wallet-state.patch','0003-signed-recovery-continuation.patch')
+          needle='cargo test --locked -p breez-sdk-spark observation_ --lib';assert needle in s
+          s=s.replace(needle,needle+'\ncargo test --locked -p breez-sdk-spark signed_recovery_ --lib');p.write_text(s)
+          PY
+          git show d7b88b33defd4edc44d67060c9584093f9e5e97d:vendor/breeztech-breez-sdk-spark.tgz > /tmp/original-sdk.tgz
+          python3 scripts/security/package-seed-signer-sdk.py --source /tmp/recovery-sdk --baseline /tmp/original-sdk.tgz --wasm /tmp/recovery-sdk/target/wasm32-unknown-unknown/release/breez_sdk_spark_wasm.wasm --bindgen /tmp/recovery-bindgen/bin/wasm-bindgen --output vendor/breeztech-breez-sdk-spark.tgz --patch vendor/patches/0003-signed-recovery-continuation.patch > /tmp/recovery-sdk-evidence/package.json
+          npm install --ignore-scripts --package-lock-only ./vendor/breeztech-breez-sdk-spark.tgz
+          npm ci --ignore-scripts
+          npm run test:security:wasm
+          npx tsc --noEmit
+          git add package-lock.json vendor/breeztech-breez-sdk-spark.tgz vendor/getyoursats-sdk-build.json vendor/patches/0003-signed-recovery-continuation.patch scripts/security/package-seed-signer-sdk.py scripts/security/build-seed-signer-sdk.sh
+          git diff --cached --check
+          git diff --cached --binary --full-index > /tmp/recovery-sdk-evidence/sdk.patch
+          git rev-parse HEAD > /tmp/recovery-sdk-evidence/base.txt
+          cp vendor/getyoursats-sdk-build.json /tmp/recovery-sdk-evidence/artifact-manifest.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: recovery-sdk-${{ github.sha }}
+          path: /tmp/recovery-sdk-evidence/
+          retention-days: 14
+  preserve:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: release/browser-pwa-security-localization-20261025
+          fetch-depth: 100
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: recovery-sdk-${{ github.sha }}
+          path: /tmp/recovery-sdk-evidence
+      - name: Preserve only the compiled SDK package on the existing branch
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$(cat /tmp/recovery-sdk-evidence/base.txt)" HEAD
+          git apply --3way --index /tmp/recovery-sdk-evidence/sdk.patch
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat(security): compiled sign-before-broadcast refund and recovery transaction inspection'
+          git push origin HEAD:refs/heads/release/browser-pwa-security-localization-20261025
+          git rev-parse HEAD
