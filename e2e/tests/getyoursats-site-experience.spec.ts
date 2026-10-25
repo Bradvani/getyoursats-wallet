@@ -45,6 +45,12 @@ for(const [width,height] of [[1440,900],[390,844],[320,700]]){
    await expect(page.locator('#ex-merchant-sale')).toBeVisible();
    await page.locator('#tab-stack').click();
    await expect(page.locator('[data-ex-scene=stack]')).toBeVisible();
+   // Upcoming recurring buys must not advertise a functioning wallet CTA.
+   await expect(page.locator('#features .feature-display-footer .circle-arrow')).toBeHidden();
+   await page.locator('#tab-merchant').click();
+   await expect(page.locator('#features .feature-display-footer .circle-arrow')).toBeVisible();
+   await expect(page.locator('#features .feature-display-footer .circle-arrow')).toHaveAttribute('aria-label','Open the merchant POS inside the wallet');
+   await page.locator('#tab-stack').click();
    await page.locator('#ex-stack-slider').evaluate((element:HTMLInputElement)=>{
      element.value='100';element.dispatchEvent(new Event('input',{bubbles:true}));
    });
