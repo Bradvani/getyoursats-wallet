@@ -11,9 +11,10 @@ import {cancelSpendingApproval,matchesSignerIdentity} from './spendApproval';
 
 export function useBrowserSessionLock(isConnected:boolean){
  const [locked,setLocked]=useState(false);
- const lastActive=useRef(Date.now());
+ const lastActive=useRef(0);
  useEffect(()=>{
    if(Capacitor.isNativePlatform()||isPasskeyMode()||!hasWebWalletVault()||!isConnected)return;
+   lastActive.current=Date.now();
    const active=()=>{lastActive.current=Date.now()};
    const lock=()=>{cancelSpendingApproval('Wallet session locked');setLocked(true)};
    const onVisibility=()=>document.visibilityState==='hidden'?lock():active();
