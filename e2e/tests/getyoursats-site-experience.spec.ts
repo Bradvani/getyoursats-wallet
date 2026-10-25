@@ -4,11 +4,12 @@ import {readFileSync,mkdirSync} from 'node:fs';
 const landing='http://localhost:5173/site/index.html';
 // The production site is a separate Vercel project. Route its root-level
 // static assets to source-controlled site files in the wallet repo's Vite QA.
+// Match optional cache-busting querystrings (e.g. ?rev=2) as well.
 test.beforeEach(async({page})=>{
- await page.route('**/experience-v4.js',route=>route.fulfill({
+ await page.route('**/experience-v4.js*',route=>route.fulfill({
    contentType:'application/javascript',body:readFileSync('site/experience-v4.js','utf8')
  }));
- await page.route('**/experience-v4.css',route=>route.fulfill({
+ await page.route('**/experience-v4.css*',route=>route.fulfill({
    contentType:'text/css',body:readFileSync('site/experience-v4.css','utf8')
  }));
 });
