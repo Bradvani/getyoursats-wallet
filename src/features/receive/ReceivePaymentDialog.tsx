@@ -416,7 +416,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                               address={receive.sparkAddress}
                               isLoading={receive.sparkLoading}
                               error={receive.error}
-                              onRetry={() => { void receive.generateSparkAddress(); }}
+                              onRetry={() => handleTabChange('spark')}
                             />
                             <button
                               type="button"
