@@ -1,3 +1,5 @@
+import {isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
+import {DialogContainer,DialogCard} from './ui';
 import React, { useState, useEffect, useCallback } from 'react';
 import type { ConversionEstimate } from '@breeztech/breez-sdk-spark';
 import { useWallet } from '../contexts/WalletContext';
@@ -29,6 +31,7 @@ const StableBalanceToggleFlow: React.FC<StableBalanceToggleFlowProps> = ({
   restorePrompt,
 }) => {
   const wallet = useWallet();
+  const unavailable=isRestrictedBrowserWallet(wallet);
   const stableBalance = useStableBalance();
   const { refreshFiatData } = useFiatData();
 
@@ -136,7 +139,7 @@ const StableBalanceToggleFlow: React.FC<StableBalanceToggleFlowProps> = ({
   // open is a fresh mount with all useState at defaults. We only need to
   // route into the right initial step on first mount.
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen||unavailable) return;
     if (restorePromptRef.current || !hasAcceptedStableDisclaimer()) {
       setStep('disclaimer');
     } else {
@@ -228,6 +231,11 @@ const StableBalanceToggleFlow: React.FC<StableBalanceToggleFlowProps> = ({
   }, [executeToggle]);
 
   if (!isOpen) return null;
+  if(unavailable)return <DialogContainer><DialogCard maxWidth="sm">
+    <h3 className="text-lg font-bold text-spark-text-primary">Balance conversion unavailable</h3>
+    <p className="my-4 text-sm text-spark-text-secondary">Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.</p>
+    <button type="button" onClick={onCancel} className="min-h-11 w-full rounded-xl border border-spark-border text-spark-text-primary">Close</button>
+  </DialogCard></DialogContainer>;
 
   if (step === 'disclaimer') {
     return (

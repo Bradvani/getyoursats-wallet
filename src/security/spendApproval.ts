@@ -14,6 +14,11 @@ export type SpendingRequest = Readonly<{
 }>;
 type Pending={request:SpendingRequest; resolve:()=>void; reject:(e:Error)=>void;timeout:ReturnType<typeof setTimeout>};
 const listeners=new Set<()=>void>();
+const lockListeners=new Set<()=>void>();
+export function subscribeSpendingSessionLock(listener:()=>void){
+ lockListeners.add(listener);
+ return()=>{lockListeners.delete(listener)};
+}
 let pending:Pending|null=null;
 let version=0,sessionEpoch=0;
 let sessionLocked=true;
@@ -62,6 +67,7 @@ export function lockSpendingSession(reason='Wallet is locked'):void{
  sessionLocked=true;
  sessionEpoch+=1;
  cancelSpendingApproval(reason);
+ lockListeners.forEach(listener=>listener());
 }
 export async function unlockSpendingSession(seed:Seed):Promise<number>{
  const epoch=sessionEpoch;

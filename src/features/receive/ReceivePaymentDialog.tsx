@@ -1,4 +1,6 @@
 import {useInvoiceExpiry} from '../../hooks/useInvoiceExpiry';
+import {useWalletConnection} from '../../contexts/WalletContext';
+import {isRestrictedBrowserWallet} from '../../security/browserReleasePolicy';
 import {formatMoney} from '@/getyoursats/money';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import React, { useState, useEffect, useRef } from 'react';
@@ -108,6 +110,8 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
 };
 
 const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onClose }) => {
+  const {sdk:policyWallet}=useWalletConnection();
+  const restrictedBrowser=policyWallet?isRestrictedBrowserWallet(policyWallet):false;
   const receive = useReceivePayment();
   const [showChangeConfirm, setShowChangeConfirm] = useState<boolean>(false);
   // The tabs belong to choosing, not to what you have made with the choice:
@@ -374,10 +378,12 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                   too much to lose to a stray tap on BTC. Unkeyed for the same
                   reason, since `resetCount` is bumped by closing the amount
                   panel, which has nothing to do with this flow. */}
-              <CrossChainReceiveWorkflow
+              {restrictedBrowser ? (receive.activeTab === 'usd' && <Alert type="warning" className="mt-4">
+                Stablecoin receiving is temporarily unavailable in this security preview. No deposit address has been created.
+              </Alert>) : <CrossChainReceiveWorkflow
                 active={receive.activeTab === 'usd'}
                 onRestingChange={setUsdResting}
-              />
+              />}
               {receive.activeTab !== 'usd' && (
                 <StepContainer>
                   <>

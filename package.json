@@ -12,6 +12,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:security:browser": "playwright test --config=playwright.security.config.ts",
+    "test:security:wasm": "node scripts/security/verify-installed-wasm-signers.mjs",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "regtest:up": "node local-regtest/up.mjs",

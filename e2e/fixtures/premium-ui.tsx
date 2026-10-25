@@ -1,4 +1,5 @@
 import AppShell from '../../src/components/layout/AppShell';
+import {BROWSER_SPENDING_POLICY} from '../../src/security/browserReleasePolicy';
 // Dev-only browser fixture. Vite's production entry never imports this file.
 // All SDK methods are local doubles; no wallet or network payment is created.
 import { useState } from 'react';
@@ -56,7 +57,10 @@ const sdk = new Proxy({
  getTokensMetadata: async () => ({tokensMetadata: []}),
  receivePayment: async () => ({ paymentRequest: merchantInvoice, fee: 0n }),
  listPayments: async () => ({ payments: merchantPaid ? [posReceived,received] : [received] }),
-} satisfies Partial<BreezSdk>, { get(target, key) { return target[key as keyof typeof target] ?? (async () => ({})); } }) as unknown as BreezSdk;
+} satisfies Partial<BreezSdk>, { get(target, key) {
+ if(key===BROWSER_SPENDING_POLICY)return new URLSearchParams(location.search).get('securityPreview')==='yes';
+ return target[key as keyof typeof target] ?? (async () => ({}));
+} }) as unknown as BreezSdk;
 function Fixture() {
  const [screen,setScreen]=useState(new URLSearchParams(location.search).get('screen') || 'wallet');
  const close=()=>setScreen('wallet');

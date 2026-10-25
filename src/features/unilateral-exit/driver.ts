@@ -12,6 +12,7 @@ import { logger, LogCategory } from '@/services/logger';
 import { outputTotalSat } from '@/utils/rawTx';
 import { loadExitState, restoreExitState, saveExitState } from './exitState';
 import { deriveFundingKey, MnemonicNeedsPasskeyError, readWalletMnemonic, type FundingKey } from './funding';
+import {EXIT_PLAN_STORAGE_PREFIX,EXIT_PENDING_STORAGE_PREFIX} from './removalProtection';
 
 /**
  * `complete` is the sdk's `done` verdict. `redo` is its `redo`: the chain no
@@ -66,7 +67,7 @@ export interface PlanMeta {
 }
 
 const storageKey = ({ identityPubkey, network }: WalletKey): string =>
-  `recovery-plan:${identityPubkey.slice(0, 16)}:${network}`;
+  `${EXIT_PLAN_STORAGE_PREFIX}${identityPubkey.slice(0, 16)}:${network}`;
 
 export function planFromExitResponse(exit: RecoverFundsResponse, meta: PlanMeta): UnilateralExitPlan {
   return { version: PLAN_VERSION, ...meta, exit, refusals: {}, phase: 'active' };
@@ -210,7 +211,7 @@ export interface PendingExit {
 }
 
 const pendingKey = ({ identityPubkey, network }: WalletKey): string =>
-  `unilateral-exit-pending:${identityPubkey.slice(0, 16)}:${network}`;
+  `${EXIT_PENDING_STORAGE_PREFIX}${identityPubkey.slice(0, 16)}:${network}`;
 
 export function savePendingExit(wallet: WalletKey, pending: PendingExit): void {
   try {

@@ -10,6 +10,7 @@ export const WEB_VAULT_KEY = 'gys:wallet-vault:v1';
 const LEGACY_KEY = 'walletMnemonic';
 const RECOVERY_HINT_KEY = 'gys:wallet-vault:recovery-fingerprint:v1';
 const QUARANTINE_PREFIX = 'gys:wallet-vault:preserved-previous:v1:';
+const MANIFEST_QUARANTINE_PREFIX = 'gys:wallet-recovery:preserved-manifest:v1:';
 
 /** Cross-tab exclusive storage mutation. No unsupported-browser fallback to
  * an unsafe localStorage read/write race. Requires a secure context. */
@@ -64,6 +65,37 @@ function encodeBase64(data: Uint8Array): string {
 function decodeBase64(data: string): Uint8Array {
   const bytes = atob(data);
   return Uint8Array.from(bytes, c => c.charCodeAt(0));
+}
+function validFingerprint(raw:string|null):string|null {
+  if(raw===null)return null;
+  try {
+    const decoded=decodeBase64(raw);
+    return decoded.length===32&&encodeBase64(decoded)===raw?raw:null;
+  } catch {return null;}
+}
+function recordFingerprint(raw:string):string|null {
+  try {
+    const record:unknown=JSON.parse(raw);
+    if(!record||typeof record!=='object')return null;
+    const value=(record as {recoveryFingerprint?:unknown}).recoveryFingerprint;
+    return typeof value==='string'?validFingerprint(value):null;
+  } catch {return null;}
+}
+/** Restore only our hint write if a synchronous storage commit fails. The
+ * vault write is the commit point; localStorage setItem is atomic per key. */
+function commitVaultWithHint(serialized:string,hint:string,previousHint:string|null):void {
+  try {
+    localStorage.setItem(RECOVERY_HINT_KEY,hint);
+    localStorage.setItem(WEB_VAULT_KEY,serialized);
+  } catch(error) {
+    if(localStorage.getItem(WEB_VAULT_KEY)!==serialized && localStorage.getItem(RECOVERY_HINT_KEY)===hint){
+      try {
+        if(previousHint===null)localStorage.removeItem(RECOVERY_HINT_KEY);
+        else localStorage.setItem(RECOVERY_HINT_KEY,previousHint);
+      } catch {/* Previous vault and any plaintext remain available even if hint rollback fails. */}
+    }
+    throw error;
+  }
 }
 function asBufferSource(bytes: Uint8Array): BufferSource {
   return bytes as BufferSource;
@@ -169,10 +201,9 @@ export async function enrollWebWallet(mnemonic: string, passphrase: string): Pro
   const existingHint=localStorage.getItem(RECOVERY_HINT_KEY);
   if(existingHint && existingHint!==hint)throw new Error('Different wallet recovery identity already exists on this device.');
   assertCurrentSession(epoch);
-  localStorage.setItem(RECOVERY_HINT_KEY,hint);
   if(localStorage.getItem(WEB_VAULT_KEY)!==null)
     throw new Error('Another wallet was enrolled. No wallet record was replaced.');
-  localStorage.setItem(WEB_VAULT_KEY, serialized);
+  commitVaultWithHint(serialized,hint,existingHint);
   if ((await readVault(passphrase, localStorage.getItem(WEB_VAULT_KEY)!)) !== mnemonic)
     throw new Error('Wallet vault could not be verified after saving.');
   if(hasSignerIdentity() && !await matchesSignerIdentity({type:'mnemonic',mnemonic}))
@@ -204,16 +235,16 @@ export async function resetWebWalletPasswordWithWords(
   return withVaultMutation(async()=>{
   assertCurrentSession(epoch);
   const existing=localStorage.getItem(WEB_VAULT_KEY);
-  if(!existing)throw new Error('There is no wallet to recover on this device.');
+  if(existing===null)throw new Error('There is no wallet to recover on this device.');
   // Corrupted ciphertext metadata must not block recovery when a durable
   // independent recovery fingerprint was written during enrollment.
-  let fingerprintFromRecord:string|null=null;
-  try{fingerprintFromRecord=validateRecord(JSON.parse(existing)).recoveryFingerprint;}catch{/* preserve broken bytes */}
+  const fingerprintFromRecord=recordFingerprint(existing);
   const manifest=localStorage.getItem(RECOVERY_HINT_KEY);
-  if(manifest && fingerprintFromRecord && manifest!==fingerprintFromRecord)
+  const fingerprintFromManifest=validFingerprint(manifest);
+  if(fingerprintFromManifest && fingerprintFromRecord && fingerprintFromManifest!==fingerprintFromRecord)
     throw new Error('Conflicting wallet recovery records. No data has changed.');
-  const expected=manifest??fingerprintFromRecord;
-  if(!expected)throw new Error('Cannot verify wallet identity from damaged storage. Use the original phrase in the separate recovery flow; the saved record was preserved.');
+  const expected=fingerprintFromManifest??fingerprintFromRecord;
+  if(!expected)throw new Error('This browser cannot verify the original wallet identity. Keep its data and restore your original recovery words in GetYourSats on another device or a separate browser profile. Verify the restored wallet before changing this browser.');
   const normalized=mnemonic.trim().toLowerCase().replace(/\s+/g,' ');
   if(await recoveryFingerprint(normalized)!==expected)
     throw new Error('These recovery words do not match this device’s existing wallet. No data was changed.');
@@ -239,12 +270,23 @@ export async function resetWebWalletPasswordWithWords(
   assertCurrentSession(epoch);
   if(localStorage.getItem(WEB_VAULT_KEY)!==existing)
     throw new Error('Wallet vault changed during recovery. No data has changed.');
+  if(localStorage.getItem(RECOVERY_HINT_KEY)!==manifest)
+    throw new Error('Wallet recovery identity changed during recovery. No data has changed.');
   // Preserve the full previous record (including malformed ciphertext) until
   // explicit future cleanup, so rollback never needs to write plaintext.
-  const backupKey=QUARANTINE_PREFIX+crypto.randomUUID();
+  // Repeated failed attempts reuse the same preservation slots rather than
+  // filling storage with duplicate ciphertext records.
+  const backupDigest=new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(JSON.stringify({vault:existing,hint:manifest}))));
+  const backupId=Array.from(backupDigest,byte=>byte.toString(16).padStart(2,'0')).join('');
+  assertCurrentSession(epoch);
+  if(localStorage.getItem(WEB_VAULT_KEY)!==existing||localStorage.getItem(RECOVERY_HINT_KEY)!==manifest)
+    throw new Error('Wallet storage changed before recovery commit. No data has changed.');
+  const backupKey=QUARANTINE_PREFIX+backupId;
   localStorage.setItem(backupKey,existing);
-  if(!manifest)localStorage.setItem(RECOVERY_HINT_KEY,expected);
-  localStorage.setItem(WEB_VAULT_KEY,serialized);
+  // Preserve damaged hints too: a rollback investigation must see the exact
+  // old bytes. Backup failure aborts before replacing either live record.
+  localStorage.setItem(MANIFEST_QUARANTINE_PREFIX+backupId,JSON.stringify({hint:manifest}));
+  commitVaultWithHint(serialized,expected,manifest);
   if(await readVault(newPassword,localStorage.getItem(WEB_VAULT_KEY)!)!==normalized)
     throw new Error('Failed to verify saved wallet protection.');
   assertCurrentSession(epoch);

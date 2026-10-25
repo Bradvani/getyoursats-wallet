@@ -2,7 +2,7 @@ import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {act,renderHook} from '@testing-library/react';
 import {useBrowserSessionLock} from './useBrowserSessionLock';
 import {WEB_VAULT_KEY,enrollWebWallet,clearUnlockedWebMnemonic,getUnlockedWebMnemonic} from './webWalletVault';
-import {rememberSignerIdentity,clearSignerIdentity,requestSpendingApproval,isSpendingSessionLocked,lockSpendingSession} from './spendApproval';
+import {rememberSignerIdentity,clearSignerIdentity,requestSpendingApproval,isSpendingSessionLocked,lockSpendingSession,getSpendingSessionEpoch} from './spendApproval';
 import {installVaultTestLock} from './vaultTestLock';
 const passkeyMock=vi.hoisted(()=>({enabled:false,signIn:vi.fn()}));
 vi.mock('../services/passkeyService',()=>({isPasskeyMode:()=>passkeyMock.enabled,getPasskeyLabel:()=>null,signInPinnedToActiveCredential:passkeyMock.signIn}));
@@ -27,6 +27,22 @@ describe('browser mnemonic session lock',()=>{
   expect(result.current.locked).toBe(true);
   passkeyMock.signIn.mockResolvedValueOnce({wallet:{seed:{type:'mnemonic',mnemonic:words}}});
   await act(async()=>{await result.current.unlock('')});expect(result.current.locked).toBe(false);
+ });
+ it('keeps the UI locked if authenticated SDK reconnection fails',async()=>{
+  passkeyMock.enabled=true;await rememberSignerIdentity({type:'mnemonic',mnemonic:words});
+  const resume=vi.fn(async()=>{throw new Error('reconnection failed')});
+  const {result}=renderHook(()=>useBrowserSessionLock(true,resume));
+  passkeyMock.signIn.mockResolvedValueOnce({wallet:{seed:{type:'mnemonic',mnemonic:words}}});
+  await act(async()=>{await expect(result.current.unlock('')).rejects.toThrow(/reconnection failed/)});
+  expect(resume).toHaveBeenCalledOnce();expect(result.current.locked).toBe(true);expect(isSpendingSessionLocked()).toBe(true);
+ });
+ it('rejects a reconnection completed after another background lock',async()=>{
+  passkeyMock.enabled=true;await rememberSignerIdentity({type:'mnemonic',mnemonic:words});
+  const resume=vi.fn(async()=>{const epoch=getSpendingSessionEpoch();lockSpendingSession();return epoch});
+  const {result}=renderHook(()=>useBrowserSessionLock(true,resume));
+  passkeyMock.signIn.mockResolvedValueOnce({wallet:{seed:{type:'mnemonic',mnemonic:words}}});
+  await act(async()=>{await expect(result.current.unlock('')).rejects.toThrow(/session changed/)});
+  expect(result.current.locked).toBe(true);expect(isSpendingSessionLocked()).toBe(true);
  });
  it('does not accept a passkey ceremony interrupted by another lock',async()=>{
   passkeyMock.enabled=true;await rememberSignerIdentity({type:'mnemonic',mnemonic:words});

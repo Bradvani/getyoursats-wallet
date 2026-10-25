@@ -6,12 +6,15 @@ import {
   SparkConfig,
   connect,
   defaultConfig,
+  defaultExternalSigners,
   type BreezSdk,
   type Seed,
 } from '@breeztech/breez-sdk-spark';
 import { getSettings } from './settings';
 import {createOperationGateway} from '../security/operationGateway';
-import {rememberSignerIdentity} from '../security/spendApproval';
+import {rememberSignerIdentity,assertCurrentSession,getSpendingSessionEpoch} from '../security/spendApproval';
+import {createBrowserSdkLifetime,registerBrowserSdkLifetime,waitForBrowserSdkShutdowns,SdkLifecycleError} from '../security/browserSdkLifetime';
+import {guardExternalSigners} from '../security/guardedExternalSigners';
 import {Capacitor} from '@capacitor/core';
 import { logger, LogCategory } from './logger';
 import { formatError } from '../utils/formatError';
@@ -119,13 +122,39 @@ export async function connectSdk(params: {
   await rememberSignerIdentity(seed);
   const chainApiUrl = import.meta.env.VITE_ESPLORA_BASE_URL;
   if (!Capacitor.isNativePlatform()) {
+    const epoch=getSpendingSessionEpoch();
+    await waitForBrowserSdkShutdowns();
+    assertCurrentSession(epoch);
     const gateway = createOperationGateway(config.network);
+    // The SDK's mnemonic factory keeps the same phrase, passphrase and account.
+    // Entropy/passkey wallets need an SDK seed-based external-signer factory;
+    // never derive a replacement mnemonic as an application workaround.
+    const signers=seed.type==='mnemonic'
+      ? guardExternalSigners(defaultExternalSigners(seed.mnemonic,seed.passphrase,config.network,undefined))
+      : undefined;
+    const lifetime = createBrowserSdkLifetime(signers);
     // No autonomous stable-balance conversions until bounded mandates exist.
-    const browserConfig = {...config, stableBalanceConfig:undefined, preferSparkOverLightning:false};
-    let builder = SdkBuilder.new(browserConfig, seed).withPaymentObserver(gateway.observer);
-    if (chainApiUrl && config.apiKey == null && config.sparkConfig)
-      builder = builder.withRestChainService(chainApiUrl, 'esplora');
-    return gateway.protect(await (await builder.withDefaultStorage(storageDir)).build());
+    const browserConfig = {...config, stableBalanceConfig:undefined, preferSparkOverLightning:false,
+      backgroundTasksEnabled:false,realTimeSyncServerUrl:undefined,crossChainConfig:undefined,
+      leafOptimizationConfig:{...config.leafOptimizationConfig,autoEnabled:false},
+      tokenOptimizationConfig:{...config.tokenOptimizationConfig,autoEnabled:false},
+    };
+    try {
+      let builder = (signers
+        ? SdkBuilder.newWithSigner(browserConfig,signers.breezSigner,signers.sparkSigner)
+        : SdkBuilder.new(browserConfig, seed)).withPaymentObserver(gateway.observer);
+      if (chainApiUrl && config.apiKey == null && config.sparkConfig)
+        builder = builder.withRestChainService(chainApiUrl, 'esplora');
+      const raw=await (await builder.withDefaultStorage(storageDir)).build();
+      const wallet=gateway.protect(await lifetime.attach(raw));
+      registerBrowserSdkLifetime(wallet,lifetime);
+      return wallet;
+    }catch(error){
+      try{await lifetime.stop();}catch(cleanupError){
+        throw new SdkLifecycleError('SDK connection failed and cleanup did not complete',{cause:error,additionalErrors:[cleanupError]});
+      }
+      throw error;
+    }
   }
   if (chainApiUrl && config.apiKey == null && config.sparkConfig) {
     const builder = SdkBuilder.new(config, seed).withRestChainService(chainApiUrl, 'esplora');

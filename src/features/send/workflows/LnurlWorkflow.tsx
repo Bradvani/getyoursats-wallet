@@ -1,3 +1,4 @@
+import {isRestrictedBrowserWallet,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
 import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
 import React, { useMemo, useState } from 'react';
 import type { LnurlPayRequestDetails, PrepareLnurlPayRequest, PrepareLnurlPayResponse } from '@breeztech/breez-sdk-spark';
@@ -13,7 +14,7 @@ import { SatAmount } from '../../../components/SatAmount';
 import { formatWithSpaces } from '../../../utils/formatNumber';
 import { useAmountInput, useFiatOverride } from '../../../hooks/useAmountInput';
 import { useBalanceValidation } from '../hooks/useBalanceValidation';
-import { useHasPendingConversion } from '../../../contexts/WalletContext';
+import { useHasPendingConversion, useWalletConnection } from '../../../contexts/WalletContext';
 import { getLnurlPayAddress } from '../utils';
 
 interface LnurlWorkflowProps {
@@ -52,6 +53,8 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
 
   const balance = useBalanceValidation(isTokenMode, setIsTokenMode, balanceSats, tokenBalance, fiatOverride);
   const hasPendingConversion = useHasPendingConversion();
+  const {sdk:policyWallet}=useWalletConnection();
+  const maxUnavailable=!!policyWallet&&isRestrictedBrowserWallet(policyWallet);
 
   const [step, setStep] = useState<PaymentStep>('amount');
   const [feesIncluded, setFeesIncluded] = useState(false);
@@ -364,10 +367,10 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
                 }
                 setFeesIncluded(true);
               }}
-              disabled={tokenSendAllBelowThreshold || hasPendingConversion}
-              title={hasPendingConversion ? 'Balance is updating. Try again in a moment.' : undefined}
+              disabled={maxUnavailable || tokenSendAllBelowThreshold || hasPendingConversion}
+              title={maxUnavailable?UNAVAILABLE_MAX_MESSAGE:hasPendingConversion ? 'Balance is updating. Try again in a moment.' : undefined}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                tokenSendAllBelowThreshold || hasPendingConversion
+                maxUnavailable || tokenSendAllBelowThreshold || hasPendingConversion
                   ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
                   : isSendAll
                     ? 'bg-spark-primary text-white'

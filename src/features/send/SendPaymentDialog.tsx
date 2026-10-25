@@ -1,3 +1,4 @@
+import {isRestrictedBrowserWallet,UNAVAILABLE_PAYMENT_MESSAGE,UNAVAILABLE_MAX_MESSAGE} from '../../security/browserReleasePolicy';
 import React, { useEffect, useMemo, useState } from 'react';
 import { DialogHeader, BottomSheetContainer, BottomSheetCard } from '../../components/ui';
 import { useWallet } from '../../contexts/WalletContext';
@@ -257,6 +258,8 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
                     onBack={() => send.setCurrentStep('input')}
                     onRun={send.handleRun}
                     onPrepare={async (prepareRequest: PrepareLnurlPayRequest) => {
+                      if(isRestrictedBrowserWallet(wallet)&&(prepareRequest.tokenIdentifier||prepareRequest.conversionOptions||prepareRequest.feePolicy==='feesIncluded'))
+                        throw new Error(prepareRequest.feePolicy==='feesIncluded'?UNAVAILABLE_MAX_MESSAGE:UNAVAILABLE_PAYMENT_MESSAGE);
                       return await wallet.prepareLnurlPay(prepareRequest);
                     }}
                     onPay={async (prepareResponse) => {

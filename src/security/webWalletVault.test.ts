@@ -58,15 +58,15 @@ describe('browser phrase vault',{timeout:20_000},()=>{
   const decrypted=await unlockWebWallet('shared-test-password-12345');
   expect([WORDS,OTHER]).toContain(decrypted);
  });
- it('repairs damaged vault metadata with matching words while retaining prior record',async()=>{
+ it.each(['{broken-json',''])('repairs damaged vault metadata %j with matching words while retaining prior record',async damaged=>{
   await enrollWebWallet(WORDS,'old-wallet-password-12345');
-  localStorage.setItem(WEB_VAULT_KEY,'{broken-json');
+  localStorage.setItem(WEB_VAULT_KEY,damaged);
   await resetWebWalletPasswordWithWords(WORDS,'replacement-wallet-password-6789');
   expect(await unlockWebWallet('replacement-wallet-password-6789')).toBe(WORDS);
   const keys=Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)??'');
   const preserved=keys.filter(k=>k.startsWith('gys:wallet-vault:preserved-previous'));
   expect(preserved).toHaveLength(1);
-  expect(localStorage.getItem(preserved[0])).toBe('{broken-json');
+  expect(localStorage.getItem(preserved[0])).toBe(damaged);
  });
  it('cannot restore an active phrase after a lock interrupts decryption',async()=>{
   await enrollWebWallet(WORDS,'long-wallet-password-12345');
@@ -106,6 +106,71 @@ describe('browser phrase vault',{timeout:20_000},()=>{
    await expect(resetWebWalletPasswordWithWords(WORDS,'replacement-wallet-password-12345')).rejects.toThrow(/session changed/);
    expect(localStorage.getItem(WEB_VAULT_KEY)).toBe(previous);expect(getUnlockedWebMnemonic()).toBeNull();
   } finally {spy.mockRestore();}
+ });
+ it('recovers when a malformed recovery hint has a surviving record fingerprint',async()=>{
+  await enrollWebWallet(WORDS,'old-wallet-password-12345');
+  const original=localStorage.getItem(WEB_VAULT_KEY)!;
+  const damaged=JSON.parse(original);damaged.iv='broken';
+  localStorage.setItem(WEB_VAULT_KEY,JSON.stringify(damaged));
+  localStorage.setItem('gys:wallet-vault:recovery-fingerprint:v1','invalid-base64!');
+  clearUnlockedWebMnemonic();
+  await resetWebWalletPasswordWithWords(WORDS,'new-wallet-password-67890');
+  expect(await unlockWebWallet('new-wallet-password-67890')).toBe(WORDS);
+  const manifestBackups=Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)??'').filter(key=>key.startsWith('gys:wallet-recovery:preserved-manifest:'));
+  expect(manifestBackups).toHaveLength(1);
+  expect(JSON.parse(localStorage.getItem(manifestBackups[0])!)).toEqual({hint:'invalid-base64!'});
+  expect(JSON.parse(localStorage.getItem(WEB_VAULT_KEY)!).v).toBe(1);
+ });
+ it('preserves both damaged records and gives a real separate-device recovery route',async()=>{
+  localStorage.setItem(WEB_VAULT_KEY,'{damaged');
+  localStorage.setItem('gys:wallet-vault:recovery-fingerprint:v1','damaged-hint');
+  await expect(resetWebWalletPasswordWithWords(WORDS,'new-wallet-password-12345')).rejects.toThrow(/another device or a separate browser profile/);
+  expect(localStorage.getItem(WEB_VAULT_KEY)).toBe('{damaged');
+  expect(localStorage.getItem('gys:wallet-vault:recovery-fingerprint:v1')).toBe('damaged-hint');
+  expect(getUnlockedWebMnemonic()).toBeNull();
+ });
+ it('refuses two different valid recovery identity records',async()=>{
+  await enrollWebWallet(WORDS,'old-wallet-password-12345');
+  const raw=localStorage.getItem(WEB_VAULT_KEY);
+  localStorage.setItem('gys:wallet-vault:recovery-fingerprint:v1',btoa('a'.repeat(32)));
+  await expect(resetWebWalletPasswordWithWords(WORDS,'new-wallet-password-12345')).rejects.toThrow(/Conflicting/);
+  expect(localStorage.getItem(WEB_VAULT_KEY)).toBe(raw);
+ });
+ it.each(['backup','hint','vault'])('preserves the live wallet when %s storage fails during password recovery',async phase=>{
+  await enrollWebWallet(WORDS,'old-wallet-password-12345');clearUnlockedWebMnemonic();
+  const raw=localStorage.getItem(WEB_VAULT_KEY);
+  const hintKey='gys:wallet-vault:recovery-fingerprint:v1';
+  // Repair would change this hint, so a failed vault write must restore it.
+  localStorage.setItem(hintKey,'malformed-original-hint');
+  const write=vi.mocked(localStorage.setItem).getMockImplementation()!;
+  let failed=false;
+  const spy=vi.mocked(localStorage.setItem).mockImplementation((key,value)=>{
+   const matches=phase==='backup'?key.startsWith('gys:wallet-vault:preserved-previous:'):phase==='hint'?key===hintKey:key===WEB_VAULT_KEY;
+   if(matches&&!failed){failed=true;throw new DOMException('Storage quota exceeded','QuotaExceededError');}
+   write(key,value);
+  });
+  try {
+   await expect(resetWebWalletPasswordWithWords(WORDS,'new-wallet-password-12345')).rejects.toThrow(/quota/);
+   expect(failed).toBe(true);expect(localStorage.getItem(WEB_VAULT_KEY)).toBe(raw);
+   expect(localStorage.getItem(hintKey)).toBe('malformed-original-hint');expect(getUnlockedWebMnemonic()).toBeNull();
+   const storageEntries=localStorage.length;failed=false;
+   await expect(resetWebWalletPasswordWithWords(WORDS,'new-wallet-password-12345')).rejects.toThrow(/quota/);
+   expect(localStorage.length).toBe(storageEntries);expect(localStorage.getItem(WEB_VAULT_KEY)).toBe(raw);
+  } finally {spy.mockImplementation(write);}
+  expect(await unlockWebWallet('old-wallet-password-12345')).toBe(WORDS);
+ });
+ it('retains legacy words and rolls back the hint if initial encrypted save runs out of space',async()=>{
+  localStorage.setItem('walletMnemonic',WORDS);
+  const write=vi.mocked(localStorage.setItem).getMockImplementation()!;
+  const spy=vi.mocked(localStorage.setItem).mockImplementation((key,value)=>{
+   if(key===WEB_VAULT_KEY)throw new DOMException('Storage quota exceeded','QuotaExceededError');
+   write(key,value);
+  });
+  try {
+   await expect(enrollWebWallet(WORDS,'new-wallet-password-12345')).rejects.toThrow(/quota/);
+   expect(localStorage.getItem('walletMnemonic')).toBe(WORDS);expect(localStorage.getItem(WEB_VAULT_KEY)).toBeNull();
+   expect(localStorage.getItem('gys:wallet-vault:recovery-fingerprint:v1')).toBeNull();expect(getUnlockedWebMnemonic()).toBeNull();
+  } finally {spy.mockImplementation(write);}
  });
  it('rejects damaged or unknown data without erasing it',async()=>{
   localStorage.setItem(WEB_VAULT_KEY,'{"v":1,"bad":true}');

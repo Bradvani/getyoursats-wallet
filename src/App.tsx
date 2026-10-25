@@ -1,3 +1,5 @@
+import UnavailableWalletAction from './security/UnavailableWalletAction';
+import {isRestrictedBrowserWallet} from './security/browserReleasePolicy';
 import WebWalletVaultPage from './security/WebWalletVaultPage';
 import {useBrowserSessionLock} from './security/useBrowserSessionLock';
 import {isPasskeyMode} from './services/passkeyService';
@@ -65,7 +67,7 @@ import { STATUS_BAR_LOADING } from './utils/statusBarManager';
 import { useBackButton } from './hooks/useBackButton';
 import type { Seed, Payment, BreezSdk } from '@breeztech/breez-sdk-spark';
 
-const PASSKEY_MIGRATION_ENABLED = true;
+const PASSKEY_MIGRATION_ENABLED = Capacitor.isNativePlatform();
 
 type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'email' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit' | 'web-vault-setup' | 'web-vault-locked' | 'web-vault-recover';
 
@@ -142,15 +144,20 @@ const AppContent: React.FC = () => {
   useIOSViewportFix();
 
   const sdk = useBreezSdk(showToast);
-  const browserSessionLock=useBrowserSessionLock(sdk.isConnected);
+  const browserSessionLock=useBrowserSessionLock(sdk.isConnected, sdk.resumeBrowserWallet);
   // App lock overlays everything (including the unlock/backup screens)
   // while locked; rendered last in the tree so it stacks on top.
   const appLock = useAppLock();
 
-  // An in-flight recovery has to keep moving even when its page is
-  // closed: each step only becomes broadcastable once the one before it
-  // confirms, and those waits run for days.
-  useUnilateralExitEngineLifecycle(sdk.walletInfo?.identityPubkey, sdk.config?.network, sdk.sdk);
+  // Persisted exits broadcast outside the SDK gateway. Preserve their data but
+  // do not start that engine in the browser security preview until its bounded
+  // continuation policy is implemented. This is a production release blocker.
+  const browserExitUnavailable=!!sdk.sdk&&isRestrictedBrowserWallet(sdk.sdk);
+  useUnilateralExitEngineLifecycle(
+    browserExitUnavailable?undefined:sdk.walletInfo?.identityPubkey,
+    browserExitUnavailable?undefined:sdk.config?.network,
+    browserExitUnavailable?null:sdk.sdk,
+  );
 
   // SDK startup state takes precedence; otherwise the user's screen
   // wins, with one exception: an SDK auto-reconnect (saved mnemonic /
@@ -345,7 +352,8 @@ const AppContent: React.FC = () => {
   // fresh shared passkey) or 'handled' (migration ran or the user cancelled).
   const requestMigrationCheck = useCallback((): Promise<MigrationOutcome> => {
     if (!PASSKEY_MIGRATION_ENABLED) {
-      return Promise.resolve('proceed');
+      if(!Capacitor.isNativePlatform())showToast('info','Wallet migration unavailable','Your existing wallet has not changed. Use its original sign-in or recovery words.');
+      return Promise.resolve(Capacitor.isNativePlatform()?'proceed':'handled');
     }
 
     return new Promise<MigrationOutcome>((resolve) => {
@@ -354,7 +362,7 @@ const AppContent: React.FC = () => {
       setMigrationModalOpen(true);
       setMigrationEverOpened(true);
     });
-  }, []);
+  }, [showToast]);
 
   const handleMigrationClose = useCallback((outcome: MigrationOutcome) => {
     setMigrationModalOpen(false);
@@ -372,9 +380,13 @@ const AppContent: React.FC = () => {
   }, [sdk]);
 
   const handleLogout = async () => {
-    setUserScreen('home');
-    hasAutoOpenedMigrationRef.current = false;
-    await sdk.handleLogout();
+    try {
+      await sdk.handleLogout();
+      setUserScreen('home');
+      hasAutoOpenedMigrationRef.current = false;
+    } catch(error) {
+      showToast('error','Wallet removal paused',error instanceof Error?error.message:'Check pending payments before removing this wallet.');
+    }
   };
 
   // Android hardware back button — screen navigation fallback at the
@@ -648,6 +660,7 @@ const AppContent: React.FC = () => {
         );
 
       case 'getRefund':
+        if(sdk.sdk&&isRestrictedBrowserWallet(sdk.sdk))return <UnavailableWalletAction title="Deposit refund" onBack={()=>setUserScreen('wallet')}/>;
         return (
           <>
             {renderWalletPage()}
@@ -690,6 +703,7 @@ const AppContent: React.FC = () => {
         );
 
       case 'unilateralExit':
+        if(sdk.sdk&&isRestrictedBrowserWallet(sdk.sdk))return <UnavailableWalletAction title="Recover to Bitcoin" onBack={()=>setUserScreen('wallet')}/>;
         return (
           <>
             {renderWalletPage()}

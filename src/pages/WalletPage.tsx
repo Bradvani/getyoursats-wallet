@@ -1,3 +1,5 @@
+import PaymentReconciliationBanner from '../security/PaymentReconciliationBanner';
+import {isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
 import {trustCopy} from '../getyoursats/trustCopy';
 import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
 import {SUPPORT_URL} from '../constants/publicPages';
@@ -76,6 +78,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
   onDepositChanged,
 }) => {
   const wallet = useWallet();
+  const restrictedBrowser = isRestrictedBrowserWallet(wallet);
   const {language,copy}=usePresentation();
   const wc=WALLET_COPY[language];
   const { showToast } = useToast();
@@ -151,12 +154,17 @@ const WalletPage: React.FC<WalletPageProps> = ({
   // A forced sync rather than the 60s timer's, so a deposit sent from another
   // device shows at once. The synced event it fires refreshes the list.
   const syncNow = useCallback(async () => {
+    if (restrictedBrowser) {
+      await refreshWalletData(false);
+      showToast('info', 'This security preview shows cached wallet data. Live synchronization is unavailable until payment recovery is verified.');
+      return;
+    }
     try {
       await wallet.syncWallet({});
     } catch (e) {
       logger.warn(LogCategory.SDK, 'Pull to refresh failed', { error: e instanceof Error ? e.message : String(e) });
     }
-  }, [wallet]);
+  }, [wallet, restrictedBrowser, refreshWalletData, showToast]);
 
   const exitState = useUnilateralExitEngineState();
   const exitEntries = useMemo(() => unilateralExitEntries(exitState), [exitState]);
@@ -336,6 +344,11 @@ const WalletPage: React.FC<WalletPageProps> = ({
         />
       </div>
 
+      {restrictedBrowser && <aside role="status" className="mx-4 my-3 rounded-xl border border-spark-warning p-3 text-sm text-spark-text-primary">
+        <strong>Security preview — live synchronization unavailable.</strong>{' '}
+        Balance and history may be out of date. Use disposable test wallets only.
+      </aside>}
+
       {/* Lightning address: ready on first wallet screen, not a hidden signup step. */}
       <div className="gys-address-banner gys-wallet__address" role="status" aria-live="polite">
         <span className="gys-address-banner__label">⚡ {wc.lightning}</span>
@@ -376,6 +389,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
       >
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
 
+        <PaymentReconciliationBanner/>
         <WalletActivityPanel
           view={historyOpen?'history':'activity'} onViewChange={view=>setHistoryOpen(view==='history')}
           transactions={mergeDepositsWithTransactions(transactions, unclaimedDeposits)}

@@ -1,3 +1,4 @@
+import {isRestrictedBrowserWallet,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
 import {useFiatData} from '../../../contexts/FiatDataContext';
 import DenominationTabs from '../../../getyoursats/DenominationTabs';
 import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
@@ -10,7 +11,7 @@ import { formatQuickAmount, pickQuickAmounts } from '../../../utils/tokenFormatt
 import CurrencySwitcher from '../../../components/ui/CurrencySwitcher';
 import { useAmountInput, useFiatOverride } from '../../../hooks/useAmountInput';
 import { useBalanceValidation } from '../hooks/useBalanceValidation';
-import { useHasPendingConversion } from '../../../contexts/WalletContext';
+import { useHasPendingConversion, useWalletConnection } from '../../../contexts/WalletContext';
 import { dismissKeyboard } from '../../../utils/keyboard';
 import { SatAmount } from '../../../components/SatAmount';
 import {getDisplayFiatCurrency} from '../../../services/settings';
@@ -70,6 +71,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
   const balance = useBalanceValidation(isTokenMode, setIsTokenMode, balanceSats, tokenBalance, fiatOverride);
   const hasPendingConversion = useHasPendingConversion();
+  const {sdk:policyWallet}=useWalletConnection();
+  const maxUnavailable=!!policyWallet&&isRestrictedBrowserWallet(policyWallet);
   useSheetBack(isLoading ? undefined : onBack);
 
   const [feesIncluded, setFeesIncluded] = useState(false);
@@ -296,10 +299,10 @@ const AmountStep: React.FC<AmountStepProps> = ({
                 setFeesIncluded(true);
                 setLocalError(null);
               }}
-              disabled={tokenSendAllBelowThreshold || hasPendingConversion}
-              title={hasPendingConversion ? 'Balance is updating. Try again in a moment.' : undefined}
+              disabled={maxUnavailable || tokenSendAllBelowThreshold || hasPendingConversion}
+              title={maxUnavailable?UNAVAILABLE_MAX_MESSAGE:hasPendingConversion ? 'Balance is updating. Try again in a moment.' : undefined}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                tokenSendAllBelowThreshold || hasPendingConversion
+                maxUnavailable || tokenSendAllBelowThreshold || hasPendingConversion
                   ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
                   : isSendAll
                     ? 'bg-spark-primary text-white'

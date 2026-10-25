@@ -1,5 +1,8 @@
 # Browser/PWA operation gateway implementation checkpoint
 
+Historical checkpoint at `1501110`. For the subsequent implementation, current
+release blockers and verification receipt, see `browser-continuation-release.md`.
+
 Date: 26 October 2026 (Asia/Kolkata)
 Branch: `release/browser-pwa-security-localization-20261025`
 Starting commit: `3470599` (on top of PR #39 head `7db6629`).

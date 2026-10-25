@@ -45,11 +45,15 @@ import {
 import { isSendSheetOpen } from '../features/send/sendSheetVisibility';
 import { clearPin, isAppLockSupported } from '../services/appLock';
 import {hasWebWalletVault,hasLegacyWebMnemonic,clearUnlockedWebMnemonic} from '../security/webWalletVault';
-import {clearSignerIdentity} from '../security/spendApproval';
+import {clearSignerIdentity,assertCurrentSession,getSpendingSessionEpoch,matchesSignerIdentity,lockSpendingSession} from '../security/spendApproval';
+import {stopBrowserSdk} from '../security/browserSdkLifetime';
+import {getOperationReconciliation} from '../security/operationGateway';
+import {isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
 import { hasConversionInFlight } from '../contexts/WalletContext';
 import { isConversionPayment } from '../utils/paymentDescription';
 import {newlyCompletedReceive,rememberPaymentId} from '../getyoursats/paymentMomentPolicy';
 import { unsettledDeposits } from '../utils/depositHelpers';
+import {assertNoExitRecordsForRemoval} from '../features/unilateral-exit/removalProtection';
 
 // ============================================
 // Payment filtering
@@ -159,6 +163,8 @@ export type SdkEventUnsubscribe = () => void;
 export type ConnectSeedSource = 'onboarding' | 'secureStorage';
 
 export interface BreezSdkActions {
+  /** Reconnect a locked browser SDK with freshly authenticated, identical seed material. */
+  resumeBrowserWallet:(seed:Seed)=>Promise<number>;
   connectWallet: (
     seed: Seed,
     restore: boolean,
@@ -289,7 +295,7 @@ export function useBreezSdk(
     try {
       if (showLoading) setIsLoading(true);
       const [info, txns] = await Promise.all([
-        s.getInfo({}),
+        s.getInfo({ensureSynced:false}),
         s.listPayments({ offset: 0, limit: 100 }),
       ]);
       setWalletInfo(info);
@@ -546,7 +552,7 @@ export function useBreezSdk(
       try {
         const [info, txns] = await logger.time('[onboarding] sdk.getInfoAndPayments', () =>
           Promise.all([
-            connectedSdk!.getInfo({}),
+            connectedSdk!.getInfo({ensureSynced:false}),
             connectedSdk!.listPayments({ offset: 0, limit: 100 }),
           ]));
         setWalletInfo(info);
@@ -605,23 +611,64 @@ export function useBreezSdk(
     }
   }, [sdk, showToast]);
 
+  const browserResumeInFlightRef=useRef(false);
+  const resumeBrowserWallet=useCallback(async(seed:Seed):Promise<number>=>{
+    if(Capacitor.isNativePlatform())throw new Error('Browser resume is unavailable on native');
+    if(browserResumeInFlightRef.current)throw new Error('Wallet reconnection is already in progress');
+    browserResumeInFlightRef.current=true;
+    let next:BreezSdk|undefined;
+    try {
+      const previous=sdkRef.current;
+      if(!previous)throw new Error('No browser wallet session to resume');
+      const epoch=getSpendingSessionEpoch();
+      if(!await matchesSignerIdentity(seed))throw new Error('Unlock credential does not match this wallet');
+      assertCurrentSession(epoch);
+      // Keep SDK storage and cached UI state. Never use logout to implement locking.
+      await stopBrowserSdk(previous);
+      assertCurrentSession(epoch);
+      const cfg=buildConnectConfig();
+      next=await connectSdk({config:cfg,seed,storageDir:'spark-wallet-example'});
+      const resumedEpoch=getSpendingSessionEpoch();
+      const [info,history]=await Promise.all([
+        next.getInfo({ensureSynced:false}),next.listPayments({offset:0,limit:100}),
+      ]);
+      assertCurrentSession(resumedEpoch);
+      // Verify the public identity too, before adopting the reconnected SDK.
+      if(walletInfo&&info.identityPubkey!==walletInfo.identityPubkey)
+        throw new Error('Reconnected wallet identity does not match the locked wallet');
+      sdkRef.current=next;
+      setSdk(next);
+      setWalletInfo(info);
+      setTransactions(filterOngoingConversionPayments(history.payments));
+      setConfig(cfg);
+      setError(null);
+      return resumedEpoch;
+    }catch(error){
+      if(next)await next.disconnect().catch(()=>{});
+      lockSpendingSession('Browser reconnection did not complete');
+      throw error;
+    }finally{browserResumeInFlightRef.current=false;}
+  },[sdkRef,walletInfo]);
+
   const handleLogout = useCallback(async () => {
+    const remove=async()=>{
+    // Runs inside the browser spend/removal lock before any destructive action.
+    // The device wipe includes other wallets, so their exit records count too.
+    assertNoExitRecordsForRemoval();
     setIsLoading(true);
 
     clearSignerIdentity();
     clearUnlockedWebMnemonic();
-    // Wipe reconnect signals first so a hung sdk.disconnect() can't
-    // strand the user with a wallet that auto-reconnects on refresh.
-    clearMnemonic();
-    clearPasskeyMode();
-
     try {
       if (sdk) {
         await sdk.disconnect();
       }
     } catch (e) {
       logger.error(LogCategory.SDK, 'SDK disconnect failed', { error: formatError(e) });
+      if(!Capacitor.isNativePlatform()){setIsLoading(false);throw e;}
     }
+    clearMnemonic();
+    clearPasskeyMode();
     try {
       await logger.endSession();
     } catch (e) {
@@ -658,7 +705,7 @@ export function useBreezSdk(
     resetSecureStorageInit();
     logger.clear();
 
-    // Always reset all state, even if disconnect threw.
+    // Browser shutdown must succeed before local data and state are removed.
     setSdk(null);
     setCachedStableTicker(null);
     clearStableRestorePrompted();
@@ -680,6 +727,14 @@ export function useBreezSdk(
     setStartupState('no-wallet');
     clearNetworkOverride();
     showToast('success', 'Successfully logged out');
+    };
+    if(!Capacitor.isNativePlatform()){
+      if(!sdk)throw new Error('Unlock and reconnect this wallet before removing it. Wallet data was preserved.');
+      const reconciliation=getOperationReconciliation(sdk);
+      if(!reconciliation)throw new Error('Cannot verify payment recovery records. Wallet data was preserved.');
+      return reconciliation.withWalletRemovalLock(remove);
+    }
+    return remove();
   }, [sdk, showToast]);
 
   const adoptMigratedSdk = useCallback(async (newSdk: BreezSdk, label: string): Promise<void> => {
@@ -713,7 +768,7 @@ export function useBreezSdk(
 
     try {
       const [info, txns] = await Promise.all([
-        newSdk.getInfo({}),
+        newSdk.getInfo({ensureSynced:false}),
         newSdk.listPayments({ offset: 0, limit: 100 }),
       ]);
       setWalletInfo(info);
@@ -830,7 +885,7 @@ export function useBreezSdk(
       }
 
       const [info, txns] = await Promise.all([
-        connectedSdk.getInfo({}),
+        connectedSdk.getInfo({ensureSynced:false}),
         connectedSdk.listPayments({ offset: 0, limit: 100 }),
       ]);
       setWalletInfo(info);
@@ -1397,11 +1452,9 @@ export function useBreezSdk(
     };
   }, [startupStateRef, retryUnlockRef]);
 
-  // Force a sync when the app returns to the foreground: any tab/window
-  // visibility return, not just PWA resume. The motivating case is iOS
-  // standalone PWAs, which resume a days-old page instead of reloading;
-  // a failed background sync is silent (synced never fires), so without
-  // this the UI keeps showing cached data.
+  // Refresh on foreground. Restricted browser previews read cached status only:
+  // SDK syncWallet also claims deposits and resumes sends. A reviewed foreground
+  // synchronization/claim policy is still required before production release.
   const resyncInFlightRef = useRef(false);
   const foregroundResync = useCallback(async () => {
     if (resyncInFlightRef.current) return;
@@ -1418,11 +1471,11 @@ export function useBreezSdk(
         try {
           // 30s cap so a hung SDK call cannot wedge resyncInFlightRef
           // forever (the PWA page never reloads, so nothing else would
-          // clear it). The race releases the guard without cancelling
-          // the call; a zombie sync finishing late is harmless.
+          // clear it). This timer does not cancel an already-started SDK call.
+          // Restricted browser previews never start effectful synchronization.
           await Promise.race([
             (async () => {
-              await s.syncWallet({});
+              if(!isRestrictedBrowserWallet(s))await s.syncWallet({});
               // The fetchers absorb their SDK errors and report them as
               // `false`, so a failed read retries the same way a
               // syncWallet throw does.
@@ -1501,6 +1554,7 @@ export function useBreezSdk(
     startupState,
     // Actions
     connectWallet,
+    resumeBrowserWallet,
     refreshWalletData,
     fetchUnclaimedDeposits,
     handleLogout,

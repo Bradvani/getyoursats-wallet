@@ -1,3 +1,4 @@
+import {browserPaymentRestriction,isRestrictedBrowserWallet,UNAVAILABLE_PAYMENT_MESSAGE,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
 import {classifyLookupFailure} from '@/getyoursats/lookupFailure';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {paymentOutcome,type PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
@@ -109,6 +110,9 @@ export function useSendPayment(): UseSendPaymentReturn {
     // surfaces on the confirm step (with the send action disabled) instead.
     errorStep: SendStep = 'amount',
   ) => {
+    if(isRestrictedBrowserWallet(wallet)&&(tokenIdentifier||conversionOptions||feePolicy==='feesIncluded')){
+      setError(feePolicy==='feesIncluded'?UNAVAILABLE_MAX_MESSAGE:UNAVAILABLE_PAYMENT_MESSAGE);return;
+    }
     if (amount <= 0n) {
       setError('Please enter a valid amount');
       return;
@@ -185,6 +189,8 @@ export function useSendPayment(): UseSendPaymentReturn {
       // BIP21 URI, or the `lightning:` prefix a QR code carries) reaches the
       // decoder and fails there (breez/glow-app#168). `rawInput` keeps the original text so
       // the input field still shows it on back-navigation.
+      const restriction=browserPaymentRestriction(wallet,effective);
+      if(restriction){setError(restriction);setCurrentStep('input');return;}
       const paymentRequest = bareDestination(effective) ?? currentInput;
 
       const parsed: SendInput = { rawInput: currentInput, paymentRequest, parsedInput: effective };

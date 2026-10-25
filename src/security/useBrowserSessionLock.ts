@@ -1,15 +1,16 @@
 /**
- * Privacy screen for a browser mnemonic wallet. This only protects the UI on
- * background/idle; the Breez SDK remains connected for incoming payments.
+ * Browser privacy lock plus same-wallet reauthentication and SDK reconnection.
+ * SDK lifetime revocation is owned by the connection service.
  * Never describe this as key-isolated biometric signing.
  */
 import {useEffect,useRef,useState} from 'react';
+import type {Seed} from '@breeztech/breez-sdk-spark';
 import {Capacitor} from '@capacitor/core';
 import {isPasskeyMode,getPasskeyLabel,signInPinnedToActiveCredential} from '../services/passkeyService';
 import {hasWebWalletVault,unlockWebWallet,clearUnlockedWebMnemonic} from './webWalletVault';
 import {lockSpendingSession,unlockSpendingSession,assertCurrentSession,getSpendingSessionEpoch,isSpendingSessionLocked} from './spendApproval';
 
-export function useBrowserSessionLock(isConnected:boolean){
+export function useBrowserSessionLock(isConnected:boolean,resume?:(seed:Seed)=>Promise<number>){
  const [locked,setLocked]=useState(false);
  const lastActive=useRef(0);
  useEffect(()=>{
@@ -46,7 +47,9 @@ export function useBrowserSessionLock(isConnected:boolean){
        ? (await signInPinnedToActiveCredential(getPasskeyLabel()??undefined)).wallet.seed
        : {type:'mnemonic' as const,mnemonic:await unlockWebWallet(password)};
      assertCurrentSession(startedEpoch);
-     const epoch=await unlockSpendingSession(seed);
+     const verifiedEpoch=await unlockSpendingSession(seed);
+     assertCurrentSession(verifiedEpoch);
+     const epoch=resume?await resume(seed):verifiedEpoch;
      assertCurrentSession(epoch);
      lastActive.current=Date.now();
      setLocked(false);
