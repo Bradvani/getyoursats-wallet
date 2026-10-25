@@ -129,7 +129,9 @@ export async function checkWebWalletPassword(passphrase: string): Promise<boolea
 }
 /** Enroll without changing wallet identity. Existing vaults cannot be overwritten. */
 export async function enrollWebWallet(mnemonic: string, passphrase: string): Promise<void> {
+  const epoch=getSpendingSessionEpoch();
   return withVaultMutation(async()=>{
+  assertCurrentSession(epoch);
   if (Capacitor.isNativePlatform()) throw new Error('Browser vault is only available on the web.');
   if (passphrase.length < 12 || passphrase.length > 256) throw new Error('Use a password of at least 12 characters.');
   if (!crypto.subtle) throw new Error('Secure browser encryption is not available.');
@@ -139,6 +141,8 @@ export async function enrollWebWallet(mnemonic: string, passphrase: string): Pro
   if (existing) {
     const old = await readVault(passphrase, existing);
     if (old !== mnemonic) throw new Error('This device already holds a different protected wallet.');
+    assertCurrentSession(epoch);
+    if(localStorage.getItem(WEB_VAULT_KEY)!==existing)throw new Error('Wallet vault changed during enrollment.');
     activeMnemonic = mnemonic;
     return;
   }
@@ -164,6 +168,7 @@ export async function enrollWebWallet(mnemonic: string, passphrase: string): Pro
     throw new Error('Connected signer changed during vault enrollment.');
   const existingHint=localStorage.getItem(RECOVERY_HINT_KEY);
   if(existingHint && existingHint!==hint)throw new Error('Different wallet recovery identity already exists on this device.');
+  assertCurrentSession(epoch);
   localStorage.setItem(RECOVERY_HINT_KEY,hint);
   if(localStorage.getItem(WEB_VAULT_KEY)!==null)
     throw new Error('Another wallet was enrolled. No wallet record was replaced.');
@@ -172,15 +177,20 @@ export async function enrollWebWallet(mnemonic: string, passphrase: string): Pro
     throw new Error('Wallet vault could not be verified after saving.');
   if(hasSignerIdentity() && !await matchesSignerIdentity({type:'mnemonic',mnemonic}))
     throw new Error('Vault identity does not match the connected signer');
+  assertCurrentSession(epoch);
+  if(localStorage.getItem(WEB_VAULT_KEY)!==serialized)throw new Error('Wallet vault changed after enrollment.');
   activeMnemonic = mnemonic;
   });
 }
 /** Remove plaintext only after verified encrypted storage has the SAME phrase. */
 export async function removeMatchingLegacyMnemonic(passphrase: string): Promise<void> {
+  const epoch=getSpendingSessionEpoch();
   const legacy = legacyWebMnemonic();
   if (!legacy) return;
   const saved = await unlockWebWallet(passphrase);
   if (saved !== legacy) throw new Error('The encrypted wallet does not match this device’s existing wallet. No recovery words were deleted.');
+  assertCurrentSession(epoch);
+  if(legacyWebMnemonic()!==legacy)throw new Error('Legacy wallet changed during migration. No recovery words were deleted.');
   localStorage.removeItem(LEGACY_KEY);
 }
 
@@ -190,7 +200,9 @@ export async function removeMatchingLegacyMnemonic(passphrase: string): Promise<
 export async function resetWebWalletPasswordWithWords(
   mnemonic:string,newPassword:string
 ):Promise<void> {
+  const epoch=getSpendingSessionEpoch();
   return withVaultMutation(async()=>{
+  assertCurrentSession(epoch);
   const existing=localStorage.getItem(WEB_VAULT_KEY);
   if(!existing)throw new Error('There is no wallet to recover on this device.');
   // Corrupted ciphertext metadata must not block recovery when a durable
@@ -209,7 +221,7 @@ export async function resetWebWalletPasswordWithWords(
     throw new Error('Recovery words do not match the connected signer.');
   // Retain previous ciphertext until the replacement has been encrypted and
   // authenticated locally. enrollWebWallet normally refuses overwrites.
-  if(newPassword.length<12)throw new Error('Use a password of at least 12 characters.');
+  if(newPassword.length<12||newPassword.length>256)throw new Error('Use a password between 12 and 256 characters.');
   const salt=crypto.getRandomValues(new Uint8Array(16));
   const iv=crypto.getRandomValues(new Uint8Array(12));
   const key=await derive(newPassword,salt);
@@ -224,6 +236,7 @@ export async function resetWebWalletPasswordWithWords(
   const serialized=JSON.stringify(replacement);
   if(await readVault(newPassword,serialized)!==normalized)
     throw new Error('Failed to validate the replacement wallet vault.');
+  assertCurrentSession(epoch);
   if(localStorage.getItem(WEB_VAULT_KEY)!==existing)
     throw new Error('Wallet vault changed during recovery. No data has changed.');
   // Preserve the full previous record (including malformed ciphertext) until
@@ -234,6 +247,8 @@ export async function resetWebWalletPasswordWithWords(
   localStorage.setItem(WEB_VAULT_KEY,serialized);
   if(await readVault(newPassword,localStorage.getItem(WEB_VAULT_KEY)!)!==normalized)
     throw new Error('Failed to verify saved wallet protection.');
+  assertCurrentSession(epoch);
+  if(localStorage.getItem(WEB_VAULT_KEY)!==serialized)throw new Error('Wallet vault changed after recovery.');
   activeMnemonic=normalized;
   });
 }

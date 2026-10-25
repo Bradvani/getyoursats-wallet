@@ -45,7 +45,7 @@ import {
 import { isSendSheetOpen } from '../features/send/sendSheetVisibility';
 import { clearPin, isAppLockSupported } from '../services/appLock';
 import {hasWebWalletVault,hasLegacyWebMnemonic,clearUnlockedWebMnemonic} from '../security/webWalletVault';
-import {rememberSignerIdentity,clearSignerIdentity} from '../security/spendApproval';
+import {clearSignerIdentity} from '../security/spendApproval';
 import { hasConversionInFlight } from '../contexts/WalletContext';
 import { isConversionPayment } from '../utils/paymentDescription';
 import {newlyCompletedReceive,rememberPaymentId} from '../getyoursats/paymentMomentPolicy';
@@ -484,7 +484,6 @@ export function useBreezSdk(
       // publish was already kicked off, fire-and-forget, inside register()).
       connectedSdk = await logger.time('[onboarding] sdk.connect', () =>
         connectSdk({ config: cfg, seed, storageDir: 'spark-wallet-example' }));
-      await rememberSignerIdentity(seed);
       setSdk(connectedSdk);
 
       logger.sdkInitialized();

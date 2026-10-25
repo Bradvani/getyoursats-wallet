@@ -10,6 +10,7 @@ export type SpendingRequest = Readonly<{
   payments:ReadonlyArray<Readonly<ProvisionalPayment>>;
   sessionEpoch:number;
   deadlineAt:number;
+  intent?:Readonly<Record<string,string>>;
 }>;
 type Pending={request:SpendingRequest; resolve:()=>void; reject:(e:Error)=>void;timeout:ReturnType<typeof setTimeout>};
 const listeners=new Set<()=>void>();
@@ -17,6 +18,8 @@ let pending:Pending|null=null;
 let version=0,sessionEpoch=0;
 let sessionLocked=true;
 let expectedFingerprint:string|null=null;
+let signerIdentityToken:object|null=null;
+export const getSignerIdentityToken=()=>signerIdentityToken;
 const emit=()=>listeners.forEach(listener=>listener());
 export function subscribeSpendingApproval(listener:()=>void){
   listeners.add(listener);
@@ -49,8 +52,9 @@ export async function rememberSignerIdentity(seed:Seed):Promise<void>{
  lockSpendingSession('Wallet identity changed');
  const lockedEpoch=sessionEpoch;
  const next=await fingerprint(seed);
- if(sessionEpoch!==lockedEpoch)throw new Error('Signer initialization superseded by another session');
+ assertCurrentSession(lockedEpoch);
  expectedFingerprint=next;
+ signerIdentityToken=Object.freeze({});
  sessionEpoch+=1;
  sessionLocked=false;
 }
@@ -71,6 +75,7 @@ export async function unlockSpendingSession(seed:Seed):Promise<number>{
 export function clearSignerIdentity():void{
  lockSpendingSession('Wallet session ended');
  expectedFingerprint=null;
+ signerIdentityToken=null;
 }
 function snapshot(payments:ProvisionalPayment[]):ReadonlyArray<Readonly<ProvisionalPayment>>{
  // SDK callback values are intentionally copied to sever mutable aliases.
@@ -98,13 +103,14 @@ export function finishSpendingApproval(id:number,approved:boolean,reason?:string
 export function cancelSpendingApproval(reason='Payment authorization cancelled'):void{
  if(pending)finishSpendingApproval(pending.request.id,false,reason);
 }
-export function requestSpendingApproval(payments:ProvisionalPayment[]):Promise<void>{
+export function requestSpendingApproval(payments:ProvisionalPayment[],intent?:Readonly<Record<string,string>>):Promise<void>{
  if(pending)return Promise.reject(new Error('Another transaction is awaiting approval'));
  if(sessionLocked||expectedFingerprint===null)return Promise.reject(new Error('Wallet session is locked'));
  if(!Array.isArray(payments)||payments.length===0)return Promise.reject(new Error('Transaction approval details missing'));
  if(document.visibilityState==='hidden')return Promise.reject(new Error('Wallet is not in the foreground'));
  const id=++version;
- const request:SpendingRequest=Object.freeze({id,payments:snapshot(payments),sessionEpoch,deadlineAt:Date.now()+90_000});
+ const request:SpendingRequest=Object.freeze({id,payments:snapshot(payments),sessionEpoch,deadlineAt:Date.now()+90_000,
+  intent:intent&&Object.freeze({...intent})});
  return new Promise<void>((resolve,reject)=>{
   const timeout=setTimeout(()=>finishSpendingApproval(id,false,'Approval timed out'),90_000);
   pending={request,resolve,reject,timeout};
@@ -120,5 +126,10 @@ export function createPaymentApprovalObserver():PaymentObserver {
 if(typeof document!=='undefined'){
  document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='hidden')lockSpendingSession('Wallet backgrounded during approval');
+ });
+ window.addEventListener('pagehide',()=>lockSpendingSession('Wallet page suspended'));
+ window.addEventListener('storage',event=>{
+  if(event.key===null || event.key.startsWith('gys:wallet-vault:') || event.key==='walletMnemonic')
+   lockSpendingSession('Wallet storage changed in another tab');
  });
 }

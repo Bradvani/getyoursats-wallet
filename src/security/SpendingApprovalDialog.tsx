@@ -41,6 +41,11 @@ function ApprovalPrompt({pending}:{pending:SpendingRequest}){
      <p className="text-sm text-spark-text-secondary">Check the amount and full destination. This verification is an additional safeguard, not hardware-backed signing.</p>
     </header>
     <div className="max-h-56 overflow-y-auto space-y-3 rounded-xl bg-spark-dark p-3">
+      {pending.intent&&<dl className="space-y-2 text-sm text-spark-text-secondary">
+       {Object.entries(pending.intent).map(([label,value])=><div key={label}>
+        <dt className="font-semibold">{label}</dt><dd className="break-all" dir="ltr">{value}</dd>
+       </div>)}
+      </dl>}
       {pending.payments.map(p=><div key={p.paymentId} className="space-y-2 text-spark-text-secondary">
        <p className="text-sm font-semibold text-spark-text-primary">{p.amount.toString()} {p.details.type==='token'?'token base units':'sats'} · {p.details.type}</p>
        {'tokenId' in p.details && <p className="text-xs break-all"><strong>Token:</strong> {p.details.tokenId}</p>}
@@ -59,7 +64,7 @@ function ApprovalPrompt({pending}:{pending:SpendingRequest}){
     </label>}
     {error&&<p role="alert" className="text-sm text-spark-warning">{error}</p>}
     <div className="grid grid-cols-2 gap-3">
-     <button type="button" disabled={busy} onClick={()=>{setPassword('');finishSpendingApproval(id,false);}}
+     <button type="button" onClick={()=>{setPassword('');finishSpendingApproval(id,false);}}
        className="min-h-12 rounded-xl border border-spark-border text-spark-text-secondary font-semibold">Cancel</button>
      <button type="button" disabled={busy||(!native&&!passkey&&!password)} onClick={()=>void submit()}
        className="min-h-12 rounded-xl bg-[#F7931A] text-black font-bold disabled:opacity-40">

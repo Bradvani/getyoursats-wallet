@@ -10,8 +10,8 @@ import {
   type Seed,
 } from '@breeztech/breez-sdk-spark';
 import { getSettings } from './settings';
-import { createPaymentApprovalObserver } from '../security/spendApproval';
-import {hasWebWalletVault} from '../security/webWalletVault';
+import {createOperationGateway} from '../security/operationGateway';
+import {rememberSignerIdentity} from '../security/spendApproval';
 import {Capacitor} from '@capacitor/core';
 import { logger, LogCategory } from './logger';
 import { formatError } from '../utils/formatError';
@@ -116,17 +116,16 @@ export async function connectSdk(params: {
   storageDir: string;
 }): Promise<BreezSdk> {
   const { config, seed, storageDir } = params;
+  await rememberSignerIdentity(seed);
   const chainApiUrl = import.meta.env.VITE_ESPLORA_BASE_URL;
-  // Scoped first release: protect browser mnemonic wallets without changing
-  // the existing native and passkey signing lifecycles. Those need separate
-  // platform-specific end-to-end approval verification.
-  const guardedWebPhrase = !Capacitor.isNativePlatform()
-    && seed.type === 'mnemonic' && hasWebWalletVault();
-  if (guardedWebPhrase) {
-    let builder = SdkBuilder.new(config, seed).withPaymentObserver(createPaymentApprovalObserver());
+  if (!Capacitor.isNativePlatform()) {
+    const gateway = createOperationGateway(config.network);
+    // No autonomous stable-balance conversions until bounded mandates exist.
+    const browserConfig = {...config, stableBalanceConfig:undefined, preferSparkOverLightning:false};
+    let builder = SdkBuilder.new(browserConfig, seed).withPaymentObserver(gateway.observer);
     if (chainApiUrl && config.apiKey == null && config.sparkConfig)
       builder = builder.withRestChainService(chainApiUrl, 'esplora');
-    return (await builder.withDefaultStorage(storageDir)).build();
+    return gateway.protect(await (await builder.withDefaultStorage(storageDir)).build());
   }
   if (chainApiUrl && config.apiKey == null && config.sparkConfig) {
     const builder = SdkBuilder.new(config, seed).withRestChainService(chainApiUrl, 'esplora');

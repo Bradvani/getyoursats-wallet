@@ -2,18 +2,39 @@ import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {act,renderHook} from '@testing-library/react';
 import {useBrowserSessionLock} from './useBrowserSessionLock';
 import {WEB_VAULT_KEY,enrollWebWallet,clearUnlockedWebMnemonic,getUnlockedWebMnemonic} from './webWalletVault';
-import {rememberSignerIdentity,clearSignerIdentity,requestSpendingApproval,isSpendingSessionLocked} from './spendApproval';
+import {rememberSignerIdentity,clearSignerIdentity,requestSpendingApproval,isSpendingSessionLocked,lockSpendingSession} from './spendApproval';
 import {installVaultTestLock} from './vaultTestLock';
+const passkeyMock=vi.hoisted(()=>({enabled:false,signIn:vi.fn()}));
+vi.mock('../services/passkeyService',()=>({isPasskeyMode:()=>passkeyMock.enabled,getPasskeyLabel:()=>null,signInPinnedToActiveCredential:passkeyMock.signIn}));
 const words='abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
 let visibility='visible';
 beforeEach(()=>{
- localStorage.clear();visibility='visible';installVaultTestLock();
+ localStorage.clear();visibility='visible';installVaultTestLock();passkeyMock.enabled=false;passkeyMock.signIn.mockReset();
  Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>visibility});
 });
 afterEach(()=>{
  vi.useRealTimers();clearSignerIdentity();clearUnlockedWebMnemonic();localStorage.clear();
 });
 describe('browser mnemonic session lock',()=>{
+ it('locks passkey wallets on background and unlocks only the same identity',async()=>{
+  passkeyMock.enabled=true;await rememberSignerIdentity({type:'mnemonic',mnemonic:words});
+  const {result}=renderHook(()=>useBrowserSessionLock(true));
+  act(()=>{visibility='hidden';document.dispatchEvent(new Event('visibilitychange'))});
+  expect(result.current.locked).toBe(true);
+  act(()=>{visibility='visible';document.dispatchEvent(new Event('visibilitychange'))});
+  passkeyMock.signIn.mockResolvedValueOnce({wallet:{seed:{type:'mnemonic',mnemonic:'wrong identity'}}});
+  await act(async()=>{await expect(result.current.unlock('')).rejects.toThrow(/does not match/)});
+  expect(result.current.locked).toBe(true);
+  passkeyMock.signIn.mockResolvedValueOnce({wallet:{seed:{type:'mnemonic',mnemonic:words}}});
+  await act(async()=>{await result.current.unlock('')});expect(result.current.locked).toBe(false);
+ });
+ it('does not accept a passkey ceremony interrupted by another lock',async()=>{
+  passkeyMock.enabled=true;await rememberSignerIdentity({type:'mnemonic',mnemonic:words});
+  const {result}=renderHook(()=>useBrowserSessionLock(true));
+  passkeyMock.signIn.mockImplementationOnce(async()=>{lockSpendingSession('another lock');return {wallet:{seed:{type:'mnemonic',mnemonic:words}}}});
+  await act(async()=>{await expect(result.current.unlock('')).rejects.toThrow(/session changed/)});
+  expect(result.current.locked).toBe(true);
+ });
  it('does not lock browser wallets without an enrolled encrypted vault',()=>{
   const {result}=renderHook(()=>useBrowserSessionLock(true));
   act(()=>{visibility='hidden';document.dispatchEvent(new Event('visibilitychange'))});

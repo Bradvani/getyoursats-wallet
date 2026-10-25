@@ -1,4 +1,4 @@
-import {afterEach,beforeEach,describe,expect,it} from 'vitest';
+import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {rememberSignerIdentity,clearSignerIdentity,lockSpendingSession} from './spendApproval';
 import {installVaultTestLock} from './vaultTestLock';
 import {enrollWebWallet,unlockWebWallet,checkWebWalletPassword,
@@ -84,6 +84,28 @@ describe('browser phrase vault',{timeout:20_000},()=>{
   await expect(unlocking).rejects.toThrow(/vault changed/);
   expect(getUnlockedWebMnemonic()).toBeNull();
   expect(localStorage.getItem(WEB_VAULT_KEY)).toBe('changed by another tab');
+ });
+ it('does not enroll or activate a phrase when backgrounding interrupts encryption',async()=>{
+  const encrypt=crypto.subtle.encrypt.bind(crypto.subtle);
+  const spy=vi.spyOn(crypto.subtle,'encrypt').mockImplementationOnce(async(...args)=>{
+   const result=await encrypt(...args);lockSpendingSession('Background during encryption');return result;
+  });
+  try {
+   await expect(enrollWebWallet(WORDS,'long-wallet-password-12345')).rejects.toThrow(/session changed/);
+   expect(localStorage.getItem(WEB_VAULT_KEY)).toBeNull();expect(getUnlockedWebMnemonic()).toBeNull();
+  } finally {spy.mockRestore();}
+ });
+ it('preserves the old ciphertext when lock interrupts password replacement',async()=>{
+  await enrollWebWallet(WORDS,'old-wallet-password-12345');clearUnlockedWebMnemonic();
+  const previous=localStorage.getItem(WEB_VAULT_KEY);
+  const encrypt=crypto.subtle.encrypt.bind(crypto.subtle);
+  const spy=vi.spyOn(crypto.subtle,'encrypt').mockImplementationOnce(async(...args)=>{
+   const result=await encrypt(...args);lockSpendingSession('Background during reset');return result;
+  });
+  try {
+   await expect(resetWebWalletPasswordWithWords(WORDS,'replacement-wallet-password-12345')).rejects.toThrow(/session changed/);
+   expect(localStorage.getItem(WEB_VAULT_KEY)).toBe(previous);expect(getUnlockedWebMnemonic()).toBeNull();
+  } finally {spy.mockRestore();}
  });
  it('rejects damaged or unknown data without erasing it',async()=>{
   localStorage.setItem(WEB_VAULT_KEY,'{"v":1,"bad":true}');

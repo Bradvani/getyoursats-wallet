@@ -441,8 +441,8 @@ const AppContent: React.FC = () => {
   // Render screens
   const renderCurrentScreen = () => {
     // Do not render private wallet pages during the browser vault privacy lock.
-    if(browserSessionLock.locked&&!Capacitor.isNativePlatform()&&sdk.isConnected&&!isPasskeyMode()){
-      return <WebWalletVaultPage mode="unlock" isLoading={false} onSubmit={browserSessionLock.unlock}/>;
+    if(browserSessionLock.locked&&!Capacitor.isNativePlatform()&&sdk.isConnected){
+      return <WebWalletVaultPage mode="unlock" passkey={isPasskeyMode()} isLoading={false} onSubmit={browserSessionLock.unlock}/>;
     }
     // Startup-state overlays take precedence and are derived directly
     // from `sdk.startupState`. The `currentScreen` memo above already
