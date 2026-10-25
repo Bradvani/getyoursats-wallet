@@ -8,6 +8,9 @@ for(const width of [360,390,768,1024,1366,1920])test(`wallet layout and history 
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
  if(width>=1024){
   await expect(page.getByRole('complementary',{name:'Wallet navigation'})).toBeVisible();
+  await expect(page.getByTestId('menu-button')).not.toBeVisible();
+  await expect(page.locator('.gys-desktop-nav .gys-brand-wordmark')).toBeVisible();
+  await expect(page.locator('.gys-wallet-balance-surface__toolbar .gys-app-header__identity')).not.toBeVisible();
   const box=await page.locator('.gys-wallet').boundingBox();expect(box!.width).toBeGreaterThan(width*.95);
   await page.getByRole('navigation').getByRole('button',{name:'History',exact:true}).first().click();
  }else{await page.getByRole('button',{name:/View full transaction history/}).click();}
@@ -22,4 +25,14 @@ test('two-hundred-percent viewport-equivalent layout retains primary actions',as
  await page.setViewportSize({width:683,height:468});await page.goto('/e2e/fixtures/premium-ui.html');
  await expect(page.getByTestId('send-button')).toBeVisible();await expect(page.getByTestId('receive-button')).toBeVisible();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+});
+
+test('Scan and merchant Accept follow active wallet language',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.addInitScript(()=>localStorage.setItem('gys:language:v1','es'));
+ await page.goto('/e2e/fixtures/premium-ui.html');
+ await expect(page.getByTestId('scan-button')).toHaveText('Escanear');
+ await expect(page.getByTestId('scan-button')).toHaveAttribute('aria-label','Escanear QR de pago');
+ await expect(page.getByTestId('pos-button')).toHaveText('Cobrar');
+ await expect(page.getByTestId('pos-button')).toHaveAttribute('aria-label','Cobrar en modo comercio');
 });
