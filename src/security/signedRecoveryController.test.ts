@@ -108,4 +108,22 @@ describe('signed refund and exit continuation',()=>{
   writeRecovery(r);const h=harness();await expect(h.controller.resume(r.operationId)).rejects.toThrow(/does not belong/);
   expect(getSpendingRequest()).toBeNull();expect(h.chain.broadcast).not.toHaveBeenCalled();
  });
+ it('keeps a refund unresolved if refreshing its old confirmation fails',async()=>{
+  const h=harness(),result=h.controller.refund(request);await approve();await result;
+  const id=readRecoveries(key)[0].operationId;
+  h.chain.confirmed.mockResolvedValue(true);await h.controller.check(id);
+  expect(readRecoveries(key)[0].state).toBe('confirmed');
+  h.chain.confirmed.mockRejectedValueOnce(new Error('offline'));
+  await expect(h.controller.check(id)).rejects.toThrow('offline');
+  expect(readRecoveries(key)[0].state).toBe('uncertain');
+ });
+ it('expires a recovery approval without broadcasting or resigning',async()=>{
+  const h=harness(),result=h.controller.refund(request);await approve();await result;
+  const id=readRecoveries(key)[0].operationId;
+  const resumed=h.controller.resume(id),rejected=expect(resumed).rejects.toThrow(/expired/);
+  await prompt();const later=Date.now()+60_001;vi.spyOn(Date,'now').mockReturnValue(later);
+  await approve();await rejected;
+  expect(h.chain.broadcast).toHaveBeenCalledOnce();expect(h.sdk.signRefundDeposit).toHaveBeenCalledOnce();
+ });
+
 });

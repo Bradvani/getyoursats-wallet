@@ -7,6 +7,9 @@ on:
       - scripts/security/wire-signed-recovery.py
       - src/security/bitcoinRegtest.integration.test.ts
       - src/security/signedRecoveryController.ts
+      - src/security/signedRecoveryJournal.ts
+      - src/services/chain.ts
+      - src/services/esplora.ts
       - src/security/recoveryTransport.ts
       - .github/workflows/bitcoin-recovery-regtest.yml
   workflow_dispatch:
@@ -49,15 +52,14 @@ jobs:
           VITE_MEMPOOL_BASE_URL: http://127.0.0.1:3002
         run: |
           set -euo pipefail
-          python3 scripts/security/wire-signed-recovery.py
-          git diff --check
+          git diff --exit-code
           python3 scripts/security/bitcoin-regtest-server.py > /tmp/bitcoin-regtest-server.log 2>&1 &
           server=$!
           trap 'kill $server || true' EXIT
           for n in $(seq 1 100); do if curl -fsS http://127.0.0.1:3002/test/state >/dev/null; then break; fi; sleep .2; done
           npx vitest run src/security/bitcoinRegtest.integration.test.ts --reporter=default --reporter=json --outputFile=/tmp/bitcoin-evidence/tests.json
           git rev-parse HEAD > /tmp/bitcoin-evidence/source.txt
-          git diff --binary > /tmp/bitcoin-evidence/integration.patch
+          git diff --exit-code
           curl -fsS http://127.0.0.1:3002/test/state > /tmp/bitcoin-evidence/disposable-settlement.json
       - name: Stop disposable node
         if: always()

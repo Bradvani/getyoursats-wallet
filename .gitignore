@@ -11,6 +11,7 @@ lint_output.txt
 
 # Test outputs
 test-results/
+test-artifacts/
 playwright-report/
 playwright/.cache/
 coverage/
@@ -33,3 +34,6 @@ local-regtest/cluster/target/
 /demo/
 /e2e/demo/
 /playwright.demo.config.ts
+
+# Read-only rollback build output
+dist-rollback/

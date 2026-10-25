@@ -119,7 +119,10 @@ export function createSignedRecoveryController(options:{
  }
  async function checkRecord(record:RecoveryRecord,epoch:number):Promise<{record:RecoveryRecord;ready:Set<string>}>{
   const sdk=asRecoverySdk(raw());const chain=transport();live(epoch);
-  let r=record;const ready=new Set<string>();
+  // Confirmation is a point-in-time observation. A failed fresh check must
+  // never leave an earlier terminal state usable as permission for new spending.
+  let r=record.state==='confirmed'?updateRecovery(record,{state:'uncertain',transactions:record.transactions.map(t=>({...t,state:'uncertain'}))}):record;
+  const ready=new Set<string>();
   if(r.purpose==='refund'){
    r=await hydrateRefund(r,sdk);live(epoch);
    const tx=r.transactions[0];
@@ -132,7 +135,12 @@ export function createSignedRecoveryController(options:{
    }
   }else{
    const recovery=r.recovery!;
-   await validateExit(sdk,recovery);live(epoch);
+   if(await exitCommitment(recovery)!==r.intentHash)throw new Error('Saved exit commitment does not match its authorization');
+   live(epoch);
+   const signed=await validateExit(sdk,recovery);live(epoch);
+   if(signed.length!==r.transactions.length||signed.some((tx,i)=>{
+    const saved=r.transactions[i];return tx.txId!==saved.txId||tx.txHex!==saved.txHex||tx.childHex!==saved.childHex;
+   }))throw new Error('Signed exit bytes differ from the preserved plan');
    const checked=await sdk.checkRecoverFunds({recovery:structuredClone(recovery)});live(epoch);
    // SDK checks may remove a CPFP child once the parent confirms. Compare its
    // absence only for confirmed transactions; never adopt a replacement child.
@@ -152,7 +160,10 @@ export function createSignedRecoveryController(options:{
     if(tx.status.type==='ready'&&checked.verdict.type==='valid')ready.add(tx.txid);
    }
    live(epoch);
-   const complete=checked.verdict.type==='done'&&txs.every(t=>t.state==='confirmed');
+   // Intermediate refunds/fanouts can all confirm while the final sweep still
+   // needs a separately authorized build. They must not release the spend guard.
+   const hasPayout=recovery.transactions.some(t=>t.kind==='sweep'||t.kind==='cooperative');
+   const complete=hasPayout&&checked.verdict.type==='done'&&txs.every(t=>t.state==='confirmed');
    r=updateRecovery(r,{state:complete?'confirmed':checked.verdict.type==='redo'||r.state==='confirmed'?'uncertain':r.state,transactions:txs});
    if(checked.verdict.type==='redo')throw new Error('This exit needs a newly authorized rebuild. Original signed data has been preserved.');
   }
@@ -217,6 +228,7 @@ export function createSignedRecoveryController(options:{
    }
   }),
   adoptPendingExit:async()=>lock(async(key,epoch)=>{
+   if(readOperations(key).some(isUnresolved))throw new Error('Resolve the previous payment before authorizing an exit');
    const sdk=asRecoverySdk(raw());const info=await sdk.getInfo({ensureSynced:false});live(epoch);
    const plan=loadPlan({identityPubkey:info.identityPubkey,network});
    if(!plan||plan.network!==network||plan.destination!==plan.exit.destination)throw new Error('No matching saved signed exit plan is available');
@@ -235,7 +247,9 @@ export function createSignedRecoveryController(options:{
    // Even a previously confirmed record is freshly checked for reorgs.
    const checked=await checkRecord(record,epoch);record=checked.record;live(epoch);
    if(record.state==='confirmed'||!checked.ready.size)return record;
+   const deadline=Date.now()+60_000;
    await approve(record,epoch,'Resume the same signed recovery transactions');
+   if(Date.now()>=deadline)throw new Error('Recovery authorization expired. The saved transactions are unchanged.');
    return broadcast(record,checked.ready,epoch);
   }),
   check:async(id:string)=>lock(async(key,epoch)=>(await checkRecord(find(key,id),epoch)).record),

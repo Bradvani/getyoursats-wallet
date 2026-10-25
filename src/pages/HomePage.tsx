@@ -1,3 +1,4 @@
+import {loadLocaleFonts} from '@/locales/loadFonts';
 import {usePresentation} from '@/hooks/usePresentation';
 import {homeCopy,APP_LANGUAGES,setAppLanguage,type AppLanguage} from '@/services/presentationPreferences';
 import {useId,useRef} from 'react';
@@ -47,7 +48,7 @@ export default function HomePage({onCreateNewWallet,onRestoreWallet,setupIssue}:
     <div className="gys-welcome__atmosphere" aria-hidden="true"/>
     <header className="gys-welcome__header">
       <span className="gys-welcome__scarcity-pill">{tr.scarcity}</span>
-      <label className="gys-language-picker"><span className="sr-only">Language</span><select aria-label="Language" value={language} onChange={event=>setAppLanguage(event.target.value as AppLanguage)}>{APP_LANGUAGES.map(item=><option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
+      <label className="gys-language-picker"><span className="sr-only">Language</span><select onFocus={()=>void loadLocaleFonts()} onPointerEnter={()=>void loadLocaleFonts()} aria-label="Language" value={language} onChange={event=>setAppLanguage(event.target.value as AppLanguage)}>{APP_LANGUAGES.map(item=><option lang={item.code} dir={item.code==='ar'?'rtl':'ltr'} key={item.code} value={item.code}>{item.name}</option>)}</select></label>
     </header>
     <div className="gys-welcome__stage">
       <div className="gys-welcome__content">

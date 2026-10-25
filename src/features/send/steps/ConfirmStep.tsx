@@ -1,3 +1,6 @@
+import {usePresentation} from '@/hooks/usePresentation';
+import {trustCopy} from '@/getyoursats/trustCopy';
+import {PAYMENT_UX} from '@/locales/paymentUx';
 import React from 'react';
 import { CopyableRow, PrimaryButton, FormError } from '../../../components/ui';
 import { useSheetBack } from '../../../components/ui/sheets/BottomSheetCardContext';
@@ -36,6 +39,9 @@ export interface ConfirmStepProps {
 }
 
 const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncluded, conversionEstimate, balanceSats, tokenBalance, destination, error, isLoading, disableConfirm, onBack, onConfirm }) => {
+  const {language}=usePresentation();
+  const text=trustCopy(language);
+  const ux=PAYMENT_UX[language];
   const stableBalance = useStableBalance();
   const isTokenMode = stableBalance.isActive && !!stableBalance.displayConfig && !!conversionEstimate;
   const balance = useBalanceValidation(isTokenMode, undefined, balanceSats, tokenBalance);
@@ -56,7 +62,7 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
   const insufficientBalance = !disableConfirm && (totalSats === null
     ? true
     : balance.checkInsufficientFunds({ totalSats, conversionEstimate }));
-  const balanceError = insufficientBalance ? 'Insufficient funds' : null;
+  const balanceError = insufficientBalance ? ux.exceeds : null;
 
   // Token-formatted values from conversion estimate
   const tokenAmount = isTokenMode && balance.config
@@ -70,7 +76,7 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
     <div className="space-y-6">
       {/* Total amount display — always show sats */}
       <div className="text-center py-4">
-        <p className="text-spark-text-muted text-sm mb-2">You're sending</p>
+        <p className="text-spark-text-muted text-sm mb-2">{text.totalDeducted}</p>
         <div className="flex items-baseline justify-center gap-2">
           <span className="text-4xl font-mono font-bold text-spark-text-primary">
             <SatAmount sats={total} />
@@ -88,15 +94,23 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
       )}
 
       {/* Sats breakdown */}
-      <SimpleFeeBreakdown amount={feesIncluded ? amount - fee : amount} fee={fee} amountLabel={feesIncluded ? 'Recipient gets' : 'Amount'} />
+      {feesSat === null ? (
+        <FeeBreakdownCard items={[
+          { label: feesIncluded ? text.recipientReceives : ux.amount, value: amount, pending: !!feesIncluded },
+          { label: text.networkFee, pending: true },
+          { label: ux.total, pending: true, highlight: true },
+        ]} />
+      ) : (
+        <SimpleFeeBreakdown amount={feesIncluded ? amount - fee : amount} fee={fee} feeLabel={text.networkFee} totalLabel={ux.total} amountLabel={feesIncluded ? text.recipientReceives : ux.amount} />
+      )}
 
       {/* Token conversion details */}
       {isTokenMode && tokenAmount && tokenFee && (
         <FeeBreakdownCard
           useRawStrings
           items={[
-            { label: 'Conversion amount', value: tokenAmount },
-            { label: 'Conversion fee', value: tokenFee },
+            { label: ux.conversionAmount, value: tokenAmount },
+            { label: ux.conversionFee, value: tokenFee },
           ]}
         />
       )}
@@ -112,10 +126,10 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
             <SpinnerIcon size="md" />
-            Processing...
+            {ux.processing}
           </span>
         ) : (
-          'Send'
+          text.confirmSend
         )}
       </PrimaryButton>
     </div>

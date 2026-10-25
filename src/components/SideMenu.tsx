@@ -130,9 +130,15 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
   // drawer panel `duration-100` leave transition below — if that
   // changes, bump this too.
   const DRAWER_LEAVE_MS = 100;
+  const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (navigationTimer.current !== null) clearTimeout(navigationTimer.current);
+  }, []);
   const closeDrawerThen = (fn: () => void) => {
     onClose();
-    setTimeout(fn, DRAWER_LEAVE_MS);
+    if (navigationTimer.current !== null) clearTimeout(navigationTimer.current);
+    const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : DRAWER_LEAVE_MS;
+    navigationTimer.current = setTimeout(() => { navigationTimer.current = null; fn(); }, delay);
   };
 
   // Only actions that work today belong in the primary drawer.
@@ -212,17 +218,17 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
       {leftOffset !== null && (
         <div
           className="fixed top-0 bottom-0 w-[min(88vw,320px)] overflow-hidden"
-          style={{ left: leftOffset }}
+          style={language==='ar'?{right:leftOffset}:{left:leftOffset}}
         >
           <TransitionChild
             as="div"
             enter="transition transform ease-m3-emphasized-decelerate duration-150"
-            enterFrom="-translate-x-full"
+            enterFrom={language==='ar'?'translate-x-full':'-translate-x-full'}
             enterTo="translate-x-0"
             leave="transition transform ease-m3-emphasized-accelerate duration-100"
             leaveFrom="translate-x-0"
-            leaveTo="-translate-x-full"
-            className="w-[min(88vw,320px)] h-full bg-spark-surface border-r border-spark-border shadow-glass-lg px-5 flex flex-col"
+            leaveTo={language==='ar'?'translate-x-full':'-translate-x-full'}
+            className="w-[min(88vw,320px)] h-full bg-spark-surface border-e border-spark-border shadow-glass-lg px-5 flex flex-col"
             style={{ paddingTop: safeAreaTop, paddingBottom: safeAreaBottom }}
           >
             {/* Header */}
@@ -244,7 +250,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                   key={index}
                   type="button"
                   aria-label={item.label}
-                  className={`w-full min-h-12 flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors hover:bg-white/5 hover:text-spark-text-primary ${
+                  className={`w-full min-h-12 flex items-center gap-3 px-3 py-2.5 rounded-xl text-start transition-colors hover:bg-white/5 hover:text-spark-text-primary ${
                     ('highlight' in item && item.highlight)
                       ? 'text-spark-warning'
                       : 'text-spark-text-secondary'
@@ -264,7 +270,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                 type="button"
                 onClick={() => { setRecoveryAcknowledged(false); setRemovalError(''); setShowLogoutConfirm(true); }}
                 aria-label={trustCopy(language).removeTitle}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl text-sm text-spark-text-muted hover:text-spark-warning hover:bg-spark-warning/5"
+                className="w-full flex items-center gap-3 px-3 py-2 text-start rounded-xl text-sm text-spark-text-muted hover:text-spark-warning hover:bg-spark-warning/5"
               >
                 <span className="shrink-0 flex h-6 w-6 items-center justify-center" aria-hidden="true"><LogoutIcon /></span>
                 <span className="leading-5">{trustCopy(language).removeTitle}</span>
@@ -339,7 +345,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                   {/* Logout wipes the plan and the backup an exit needs, and the
                       phrase alone cannot finish it: only saved exit data can. */}
                   {isExitInProgress && (
-                    <SimpleAlert variant="warning" hideIcon className="mb-6 text-left">
+                    <SimpleAlert variant="warning" hideIcon className="mb-6 text-start">
                       A unilateral exit is in progress, and logging out deletes what it needs to
                       finish. Save its exit data first, from the exit&apos;s Advanced section.
                     </SimpleAlert>

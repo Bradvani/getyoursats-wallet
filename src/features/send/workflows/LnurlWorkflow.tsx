@@ -1,4 +1,6 @@
 import {isRestrictedBrowserWallet,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
+import {usePresentation} from '@/hooks/usePresentation';
+import {PAYMENT_UX} from '@/locales/paymentUx';
 import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
 import React, { useMemo, useState } from 'react';
 import type { LnurlPayRequestDetails, PrepareLnurlPayRequest, PrepareLnurlPayResponse } from '@breeztech/breez-sdk-spark';
@@ -29,6 +31,9 @@ interface LnurlWorkflowProps {
 }
 
 const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, balanceSats, tokenBalance, onBack, onRun, onPrepare, onPay }) => {
+  const {language}=usePresentation();
+  const text=PAYMENT_UX[language];
+  const balanceKnown=balanceSats!==undefined;
   // USD as a secondary entry option on BTC sends (#253): starts in sats,
   // toggleable to USD, converted to sats client-side.
   const fiatOverride = useFiatOverride();
@@ -123,8 +128,10 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
   // setError is only called in onAmountNext, so step changes don't
   // need a clearing effect; the confirm-back handler clears inline.
   const onAmountNext = async () => {
+    if (!balanceKnown || hasPendingConversion) {setError(text.updating);return;}
+    if (feesIncluded && !isSendAllToken && balance.exceedsBalance(Number(amount))) {setError(text.exceeds);return;}
     if (commentAllowed && commentMaxLen && comment.length > commentMaxLen) {
-      setError(`Comment must be at most ${commentMaxLen} characters`);
+      setError(`${text.comment}: ${comment.length}/${commentMaxLen}`);
       return;
     }
 
@@ -185,7 +192,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
     // Validate input and balance
     const validationError = balance.validateAmount(amount, feesIncluded);
     if (validationError) {
-      setError(validationError);
+      setError(validationError === 'Amount exceeds available balance' ? text.exceeds : validationError);
       return;
     }
 
@@ -197,11 +204,11 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
     // (token mode without stable balance) computes exact sats, so check it.
     if (!isTokenMode || !isStableBalanceActive) {
       if (minSats && sats < minSats) {
-        setError(`Amount must be at least ${formatWithSpaces(minSats)} sats`);
+        setError(`${text.recipientLimits}: ${formatWithSpaces(minSats)} … ${formatWithSpaces(maxSats)} sats`);
         return;
       }
       if (maxSats && sats > maxSats) {
-        setError(`Amount must be at most ${formatWithSpaces(maxSats)} sats`);
+        setError(`${text.recipientLimits}: ${formatWithSpaces(minSats)} … ${formatWithSpaces(maxSats)} sats`);
         return;
       }
     }
@@ -250,7 +257,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
       ? BigInt(prepareResponse.amountSats)
       : BigInt(balance.parseInputToSats(amount) || 0);
     return (
-      <ConfirmStep amountSats={confirmAmountSats} feesSat={feesSat} feesIncluded={feesIncluded} conversionEstimate={conversionEstimate} balanceSats={balanceSats} tokenBalance={tokenBalance} destination={{ label: 'To', value: getLnurlPayAddress(parsed) ?? parsed.domain }} error={error} isLoading={isLoading} onBack={() => { setPrepareResponse(null); setError(null); setStep('amount'); }} onConfirm={onConfirm} />
+      <ConfirmStep amountSats={confirmAmountSats} feesSat={feesSat} feesIncluded={feesIncluded} conversionEstimate={conversionEstimate} balanceSats={balanceSats} tokenBalance={tokenBalance} destination={{ label: text.recipient, value: getLnurlPayAddress(parsed) ?? parsed.domain }} error={error} isLoading={isLoading} onBack={() => { setPrepareResponse(null); setError(null); setStep('amount'); }} onConfirm={onConfirm} />
     );
   }
 
@@ -265,8 +272,9 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
   // user types instead of waiting for Continue. Computed inline (not via
   // useMemo) because we're past the early-return for the confirm step and
   // can't add a Hook here without violating rules-of-hooks.
-  const inlineBalanceError = amountNum > 0 && !isSendAll && balance.exceedsBalance(amountNum)
-    ? 'Amount exceeds available balance'
+  const balanceBelowMinimum = balanceKnown && !hasTokenBalance && balanceSats < minSats;
+  const inlineBalanceError = amountNum > 0 && !isSendAllToken && balance.exceedsBalance(amountNum)
+    ? text.exceeds
     : null;
 
   // Quick amounts answer to the request's own send limits as well as the
@@ -288,20 +296,27 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
         <p className="text-spark-text-primary font-medium">{recipientLabel ?? description}</p>
       </div>
 
+      <div id="lnurl-balance" role="status" aria-live="polite" className="rounded-xl bg-spark-surface border border-spark-border p-3">
+        <p className="text-sm text-spark-text-secondary">{text.available}</p>
+        <p className="text-lg font-semibold text-spark-text-primary" data-testid="lnurl-available-balance">
+          {balanceKnown ? <bdi dir="ltr">{formatWithSpaces(balanceSats)} sats</bdi> : text.balanceLoading}
+        </p>
+        {isStableBalanceActive && tokenBalanceDisplay && tokenSymbol && <p className="text-sm text-spark-text-primary"><bdi dir="ltr">{tokenBalanceDisplay} {tokenSymbol}</bdi></p>}
+        <p className="text-xs text-spark-text-muted">{hasPendingConversion ? text.updating : text.beforeFees}</p>
+      </div>
       {/* Amount input */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium text-spark-text-primary">
-            Amount
+          <label htmlFor="lnurl-amount" className="block text-sm font-medium text-spark-text-primary">
+            {text.amount}
           </label>
-          {!isTokenMode && (
-            <span className="text-xs text-spark-text-secondary">
-              {formatWithSpaces(minSats)} – {formatWithSpaces(maxSats)}
-            </span>
-          )}
+
         </div>
         <div className="relative">
           <input
+            id="lnurl-amount"
+            dir="ltr"
+            aria-describedby="lnurl-balance lnurl-limits lnurl-fees"
             type={isTokenMode ? 'text' : 'number'}
             inputMode={isTokenMode ? 'decimal' : 'numeric'}
             value={amount}
@@ -309,26 +324,25 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
               setAmount(e.target.value);
               setFeesIncluded(false);
             }}
-            placeholder={isTokenMode && config
-              ? `Enter amount in ${config.currencyCode}`
-              : `Between ${formatWithSpaces(minSats)} and ${formatWithSpaces(maxSats)} sats`
-            }
+            placeholder={text.enterAmount}
             className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none read-only:cursor-not-allowed`}
             disabled={isLoading}
             readOnly={isSendAll}
             min={isTokenMode ? undefined : minSats}
             max={isTokenMode ? undefined : maxSats}
           />
-          {tokenSymbol && (
+          {tokenSymbol ? (
             <CurrencySwitcher
               isTokenMode={isTokenMode}
               tokenSymbol={tokenSymbol}
               onSwitch={handleToggleDenomination}
               disabled={isLoading}
             />
-          )}
+          ) : <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-spark-text-secondary" dir="ltr">sats</span>}
         </div>
 
+        <p id="lnurl-limits" className="mt-2 text-xs text-spark-text-muted">{text.recipientLimits}: <bdi dir="ltr">{formatWithSpaces(minSats)} … {formatWithSpaces(maxSats)} sats</bdi></p>
+        <p id="lnurl-fees" className="mt-1 text-xs text-spark-text-muted">{text.feesHint}</p>
         {/* Quick amount buttons */}
         <div className="flex gap-2 mt-3">
           {quickAmounts.map((quickAmount) => {
@@ -336,6 +350,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
             return (
               <button
                 key={quickAmount}
+                disabled={isLoading || hasPendingConversion}
                 onClick={() => { setAmountInput(String(quickAmount)); setFeesIncluded(false); }}
                 className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                   isSelected
@@ -367,10 +382,10 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
                 }
                 setFeesIncluded(true);
               }}
-              disabled={maxUnavailable || tokenSendAllBelowThreshold || hasPendingConversion}
-              title={maxUnavailable?UNAVAILABLE_MAX_MESSAGE:hasPendingConversion ? 'Balance is updating. Try again in a moment.' : undefined}
+              disabled={maxUnavailable || isLoading || !balanceKnown || tokenSendAllBelowThreshold || hasPendingConversion}
+              title={maxUnavailable ? UNAVAILABLE_MAX_MESSAGE : hasPendingConversion ? text.updating : text.feesHint}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                maxUnavailable || tokenSendAllBelowThreshold || hasPendingConversion
+                maxUnavailable || isLoading || !balanceKnown || tokenSendAllBelowThreshold || hasPendingConversion
                   ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
                   : isSendAll
                     ? 'bg-spark-primary text-white'
@@ -380,9 +395,9 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
               {hasPendingConversion ? (
                 <span className="inline-flex items-center justify-center gap-1.5">
                   <SpinnerIcon size="xs" />
-                  Send All
+                  {text.max}
                 </span>
-              ) : 'Send All'}
+              ) : text.max}
             </button>
           )}
         </div>
@@ -392,13 +407,14 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
       {commentAllowed && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-spark-text-primary">Comment (optional)</label>
+            <label className="block text-sm font-medium text-spark-text-primary" htmlFor="lnurl-comment">{text.comment}</label>
             <span className="text-xs text-spark-text-secondary">{comment.length}/{commentMaxLen}</span>
           </div>
           <textarea
+            id="lnurl-comment"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Add a message..."
+            placeholder={text.message}
             className={`${AMOUNT_FIELD_CLASS} resize-none`}
             rows={3}
             maxLength={commentMaxLen}
@@ -407,15 +423,15 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
         </div>
       )}
 
-      <FormError error={inlineBalanceError || error} />
+      <FormError error={inlineBalanceError || (balanceBelowMinimum ? text.recipientBelow : null) || error} />
 
-      <PrimaryButton onClick={onAmountNext} disabled={isLoading || !validAmount || !!inlineBalanceError} className="w-full">
+      <PrimaryButton onClick={onAmountNext} disabled={isLoading || !balanceKnown || hasPendingConversion || !validAmount || balanceBelowMinimum || !!inlineBalanceError} className="w-full">
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
             <SpinnerIcon />
-            Processing...
+            {text.processing}
           </span>
-        ) : 'Continue'}
+        ) : text.continue}
       </PrimaryButton>
     </div>
   );

@@ -1,5 +1,8 @@
+import {PAYMENT_UX} from '@/locales/paymentUx';
+import {usePresentation} from '@/hooks/usePresentation';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 import GetYourSatsWordmark from '../GetYourSatsWordmark';
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useRef, useEffect } from 'react';
 import { Transition, TransitionChild } from '@headlessui/react';
 import { CloseIcon, BackIcon } from '../Icons';
 import { safeAreaTop, safeAreaBottom } from '../../utils/safeAreaInsets';
@@ -43,7 +46,15 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
   slideFrom = 'left',
   footer,
 }) => {
+  const {language}=usePresentation();
+  const direction=language==='ar'&&slideFrom==='left'?'right':language==='ar'&&slideFrom==='right'?'left':slideFrom;
+  const desktop = useMediaQuery('(min-width: 1024px)');
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const [isOpen, setIsOpen] = useState(true);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+  }, []);
 
   // Slide-in pages (Settings, Backup, Buy Providers, etc.) use a
   // solid spark-surface background, so pin the system bars to match
@@ -52,14 +63,19 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
   useStatusBarColor(STATUS_BAR_SURFACE);
 
   const handleClose = () => {
+    if (closeTimer.current !== null) return;
     setIsOpen(false);
     // Matches the `duration-200` on leave below + ~20ms padding so
     // the unmount (which kills the animation mid-flight if it's still
     // running) lands just after the slide completes.
-    setTimeout(onClose, 220);
+    // Reduced motion should not wait for an invisible animation.
+    const delay = reducedMotion ? 0 : desktop ? 160 : 220;
+    closeTimer.current = setTimeout(onClose, delay);
   };
 
-  const { from, to } = slideTransforms[slideFrom];
+  const { from, to } = desktop
+    ? { from: 'opacity-0 translate-y-2', to: 'opacity-100 translate-y-0' }
+    : slideTransforms[direction];
 
   return (
     // `absolute inset-0` (not the old `relative h-dvh`) so the page
@@ -89,10 +105,10 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
           // deliberate slide rather than a pop. Sits one token above
           // the drawer (150/100) so the motion hierarchy scales with
           // the surface size.
-          enter="transform transition ease-m3-emphasized-decelerate duration-250"
+          enter={`transition-[transform,opacity] motion-reduce:transition-none ease-m3-emphasized-decelerate ${desktop ? 'duration-150' : 'duration-250'}`}
           enterFrom={from}
           enterTo={to}
-          leave="transform transition ease-m3-emphasized-accelerate duration-200"
+          leave={`transition-[transform,opacity] motion-reduce:transition-none ease-m3-emphasized-accelerate ${desktop ? 'duration-150' : 'duration-200'}`}
           leaveFrom={to}
           leaveTo={from}
           className="gys-page-surface absolute inset-0 flex flex-col bg-spark-surface"
@@ -115,16 +131,16 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
               {closeStyle === 'back' ? (
                 <button
                   onClick={handleClose}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
-                  aria-label="Go back"
+                  className="absolute start-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
+                  aria-label={language==='en'?'Go back':PAYMENT_UX[language].back}
                 >
-                  <BackIcon size="md" />
+                  <BackIcon size="md" className="rtl:rotate-180" />
                 </button>
               ) : (
                 <button
                   onClick={handleClose}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
-                  aria-label="Close"
+                  className="absolute end-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
+                  aria-label={PAYMENT_UX[language].close}
                 >
                   <CloseIcon size="md" />
                 </button>

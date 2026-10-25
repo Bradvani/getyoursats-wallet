@@ -1,5 +1,7 @@
 # Browser/PWA continuation: implementation and release decision
 
+> Latest combined takeover: [takeover-20261026.md](takeover-20261026.md). The historical implementation details below are superseded where that report records newer work. Production remains NO-GO.
+
 Date: 26 October 2026, Asia/Kolkata (25 October UTC).
 
 **Decision: NO-GO for production. The implementation builds, but this is a restricted security candidate.** No PR was merged, production deployment performed, existing wallet migrated, user seed used or funded transaction initiated.

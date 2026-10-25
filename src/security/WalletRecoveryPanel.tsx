@@ -16,7 +16,7 @@ function hasPrefix(prefix:string):boolean{
 }
 export default function WalletRecoveryPanel(){
  const wallet=useWallet(),controller=getSignedRecovery(wallet);
- const {language}=usePresentation(),copy=COPY[language]??COPY.en;
+ const {language}=usePresentation(),copy=COPY[language as keyof typeof COPY]??COPY.en;
  const [records,setRecords]=useState<ReadonlyArray<RecoveryRecord>>([]),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  useEffect(()=>{
   if(!controller)return;

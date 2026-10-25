@@ -13,15 +13,15 @@ import SendPaymentDialog from './SendPaymentDialog';
 const ADDRESS = 'spark1testaddress123456789';
 
 describe('direct Spark BTC sending', () => {
-  it('prepares and sends directly to a Spark address without LNURL-Pay', async () => {
+  it.each([0n, 7n])('shows the quoted %s sat fee and sends directly without LNURL-Pay', async (fee) => {
     const client = createMockClient() as BreezSdk;
     const prepared = {
-      paymentMethod: { type: 'sparkAddress', address: ADDRESS },
+      paymentMethod: { type: 'sparkAddress', address: ADDRESS, fee },
       amount: 1000n,
     } as unknown as PrepareSendPaymentResponse;
     client.prepareSendPayment = vi.fn().mockResolvedValue(prepared);
     client.sendPayment = vi.fn().mockResolvedValue({
-      payment: createMockPayment('send', { amount: 1000n, fees: 0n }),
+      payment: createMockPayment('send', { amount: 1000n, fees: fee }),
     });
 
     render(
@@ -53,6 +53,7 @@ describe('direct Spark BTC sending', () => {
       amount: 1000n,
     }));
 
+    expect(screen.getByText('Network fee').parentElement).toHaveTextContent(fee.toString());
     fireEvent.click(confirm);
     await waitFor(() => expect(client.sendPayment).toHaveBeenCalledWith({
       prepareResponse: prepared,

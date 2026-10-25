@@ -2,10 +2,6 @@ name: Release security engine matrix
 on:
   push:
     branches: [release/browser-pwa-security-localization-20261025]
-    paths:
-      - playwright.release-security.config.ts
-      - playwright.release-rollback.config.ts
-      - .github/workflows/release-security-matrix.yml
   workflow_dispatch:
 permissions:
   contents: read
@@ -32,20 +28,23 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: mkdir -p /tmp/engine-evidence
       - name: Encrypted vault, cross-tab concurrency and restricted previews
-        run: npx playwright test --config playwright.release-security.config.ts --project ${{ matrix.browser }}
+        run: PLAYWRIGHT_JSON_OUTPUT_FILE=/tmp/engine-evidence/security.json npx playwright test --config playwright.release-security.config.ts --project ${{ matrix.browser }} --reporter=line,json
       - name: Build containment artifact and verify same-origin preservation
         run: |
           set -euo pipefail
           npx tsc --project rollback/tsconfig.json
           npx vite build --config vite.rollback.config.ts
           node scripts/security/package-rollback.mjs
-          npx playwright test --config playwright.release-rollback.config.ts --project ${{ matrix.browser }}
+          PLAYWRIGHT_JSON_OUTPUT_FILE=/tmp/engine-evidence/rollback.json npx playwright test --config playwright.release-rollback.config.ts --project ${{ matrix.browser }} --reporter=line,json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: engine-evidence-${{ matrix.browser }}-${{ github.sha }}
-          path: dist-rollback/rollback-manifest.json
+          path: |
+            dist-rollback/rollback-manifest.json
+            /tmp/engine-evidence/
           retention-days: 30
   dependency-evidence:
     runs-on: ubuntu-latest

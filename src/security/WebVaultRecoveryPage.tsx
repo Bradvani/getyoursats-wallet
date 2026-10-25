@@ -15,7 +15,7 @@ const recoveryHelp={
  pt:{title:'Se este navegador não conseguir verificar a carteira original',keep:'Mantenha este perfil do navegador e os dados da carteira. Não remova a carteira nem limpe os dados do site.',restore:'Abra wallet.getyoursats.com noutro dispositivo de confiança ou num perfil de navegador separado. Escolha Restaurar e introduza as palavras de recuperação originais.',verify:'Verifique a identidade, o saldo e o histórico de pagamentos da carteira restaurada antes de alterar o navegador original.',privacy:'As palavras de recuperação ficam no seu dispositivo. Nunca as envie ao suporte. O restauro não recupera palavras que já perdeu.'},
 } as const;
 export default function WebVaultRecoveryPage({onSubmit,onBack,busy}:Props){
- const {language}=usePresentation(),c=copy[language]??copy.en,help=recoveryHelp[language]??recoveryHelp.en;
+ const {language}=usePresentation(),c=copy[language as keyof typeof copy]??copy.en,help=recoveryHelp[language as keyof typeof recoveryHelp]??recoveryHelp.en;
  const [words,setWords]=useState(''),[password,setPassword]=useState(''),[confirm,setConfirm]=useState(''),[error,setError]=useState('');
  const inFlight=useRef(false);
  const [submitting,setSubmitting]=useState(false);

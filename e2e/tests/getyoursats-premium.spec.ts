@@ -35,6 +35,39 @@ for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
   expect(errors).toEqual([]);
  });
 }
+test('@public-smoke Bitcoin market is visible before transactions with scrollable sats prices',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto(fixture);
+ const market=page.getByTestId('bitcoin-market');
+ await expect(market).toBeVisible();
+ // The market reference now appears before activity in DOM/visual order,
+ // instead of a collapsed <details> after the transaction list.
+ const beforeActivity=await page.evaluate(()=>{
+   const market=document.querySelector('[data-testid="bitcoin-market"]');
+   const activity=document.querySelector('.gys-activity');
+   return Boolean(market&&activity&&(market.compareDocumentPosition(activity)&Node.DOCUMENT_POSITION_FOLLOWING));
+ });
+ expect(beforeActivity).toBe(true);
+ await expect(market.getByTestId('market-quote-price')).toHaveText('$90,000.00');
+ const units=market.locator('.gys-market-pulse__denominations');
+ await expect(units).toBeVisible();
+ await market.getByTestId('market-unit-1k').click();
+ await expect(market.getByTestId('market-quote-price')).toHaveText('$0.90');
+ await market.getByTestId('market-unit-10k').click();
+ await expect(market.getByTestId('market-quote-price')).toHaveText('$9.00');
+ await market.getByTestId('market-unit-100k').click();
+ await expect(market.getByTestId('market-quote-price')).toHaveText('$90.00');
+ await market.getByTestId('market-unit-1m').click();
+ await expect(market.getByTestId('market-quote-price')).toHaveText('$900.00');
+ await market.getByTestId('market-unit-10m').click();
+ await expect(market.getByTestId('market-quote-price')).toHaveText('$9,000.00');
+ await expect(market.getByTestId('market-unit-10m')).toHaveAttribute('aria-pressed','true');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ await page.reload();
+ await expect(page.getByTestId('market-unit-10m')).toHaveAttribute('aria-pressed','true');
+ await expect(page.getByTestId('market-quote-price')).toHaveText('$9,000.00');
+});
+
 test('@public-smoke merchant shows lightning flash only after an SDK confirmed receipt',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);

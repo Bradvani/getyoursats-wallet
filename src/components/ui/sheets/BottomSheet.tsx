@@ -9,6 +9,7 @@ import React, {
   useState,
 } from 'react';
 import { Sheet, useVirtualKeyboard, type SheetRef } from 'react-modal-sheet';
+import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { animate } from 'motion/react';
 import { usePreventScroll } from '@react-aria/overlays';
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
@@ -137,6 +138,8 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
   showBackdrop = false,
   zIndex = 50,
 }) => {
+  const desktopPointer = useMediaQuery('(min-width: 1024px) and (pointer: fine)');
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const sheetRef = useRef<SheetRef>(null);
   const [contentPx, setContentPx] = useState<number | null>(null);
   const currentSnap = useRef(1);
@@ -295,7 +298,7 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
       const targetY = Math.min(restY, Math.max(0, window.innerHeight - 96));
       if (lastReposTargetRef.current === targetY) return;
       lastReposTargetRef.current = targetY;
-      if (animated) {
+      if (animated && !reducedMotion) {
         animate(sheet.y, targetY, {
           type: 'tween',
           ease: 'easeOut',
@@ -482,7 +485,9 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
       avoidKeyboard={false}
       // While typing, drags would fight the keyboard inset and the
       // focused field; the built-in avoidance had the same lockout.
-      disableDrag={isKeyboardOpen}
+      disableDrag={isKeyboardOpen || desktopPointer}
+      prefersReducedMotion={reducedMotion}
+      tweenConfig={{ ease: 'easeOut', duration: desktopPointer ? 0.18 : 0.25 }}
       // The vendored lock is replaced by usePreventScroll above.
       disableScrollLocking
       // Drop the library's decorative styles (white card, grey pills);
@@ -499,7 +504,7 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
       // whole window. The old hand-rolled sheet was absolute inside the
       // column and inherited this for free. The backdrop is a separate
       // fixed child and still covers the full viewport.
-      style={{ zIndex, maxWidth: '56rem', marginInline: 'auto' }}
+      style={{ zIndex, maxWidth: desktopPointer && !fullHeight ? '42.5rem' : '56rem', marginInline: 'auto' }}
       // Portal into #root, not document.body: the web viewport
       // manager pins #root against Safari's focus pan, and sheets
       // portaled outside it stayed uncompensated. That is what let a

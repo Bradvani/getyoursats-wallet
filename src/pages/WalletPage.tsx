@@ -1,6 +1,7 @@
 import PaymentReconciliationBanner from '../security/PaymentReconciliationBanner';
 import WalletRecoveryPanel from '../security/WalletRecoveryPanel';
 import {isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
+import { useWalletNavigation } from '../hooks/useWalletNavigation';
 import {trustCopy} from '../getyoursats/trustCopy';
 import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
 import {SUPPORT_URL} from '../constants/publicPages';
@@ -53,6 +54,8 @@ interface WalletPageProps {
   hasRejectedDeposits: boolean;
   onOpenGetRefund: (source?: 'menu' | 'icon') => void;
   onOpenSettings: () => void;
+  onReturnToWallet: () => void;
+  settingsActive: boolean;
   onOpenFiatCurrencies?: () => void;
   onOpenDca: () => void;
   onOpenUnilateralExit: () => void;
@@ -71,6 +74,8 @@ const WalletPage: React.FC<WalletPageProps> = ({
   hasRejectedDeposits,
   onOpenGetRefund,
   onOpenSettings,
+  onReturnToWallet,
+  settingsActive,
   onOpenFiatCurrencies,
   onOpenDca,
   onOpenUnilateralExit,
@@ -92,9 +97,8 @@ const WalletPage: React.FC<WalletPageProps> = ({
   useStatusBarColor(STATUS_BAR_WALLET_GLASS);
 
   const [scrollProgress, setScrollProgress] = useState<number>(0);
-  const [gysPosOpen,setGysPosOpen] = useState(false);
+  const { historyOpen, setHistoryOpen, gysPosOpen, setGysPosOpen, navigate } = useWalletNavigation(onReturnToWallet, onOpenSettings);
   const [partnerBuyOpen,setPartnerBuyOpen] = useState(false);
-  const [historyOpen,setHistoryOpen] = useState(false);
   const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
@@ -151,6 +155,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
   }, []);
 
   const transactionsContainerRef = useRef<HTMLDivElement>(null);
+  const scrollFrame = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
+  }, []);
 
   // A forced sync rather than the 60s timer's, so a deposit sent from another
   // device shows at once. The synced event it fires refreshes the list.
@@ -180,11 +188,12 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const collapseThreshold = 100;
 
   const handleScroll = useCallback(() => {
-    if (transactionsContainerRef.current) {
-      const scrollTop = transactionsContainerRef.current.scrollTop;
-      const progress = Math.min(1, scrollTop / collapseThreshold);
-      setScrollProgress(progress);
-    }
+    if (scrollFrame.current !== null) return;
+    scrollFrame.current = requestAnimationFrame(() => {
+      scrollFrame.current = null;
+      const scrollTop = transactionsContainerRef.current?.scrollTop ?? 0;
+      setScrollProgress(Math.max(0, Math.min(1, scrollTop / collapseThreshold)));
+    });
   }, [collapseThreshold]);
 
   const handlePaymentSelected = useCallback((payment: Payment | ExtendedPayment) => {
@@ -306,10 +315,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
       <aside className="gys-desktop-nav" aria-label="Wallet navigation">
         <GetYourSatsWordmark compact/>
         <nav>
-          <button type="button" aria-current={!historyOpen?'page':undefined} onClick={()=>setHistoryOpen(false)}>{trustCopy(language).wallet}</button>
-          <button type="button" aria-current={historyOpen?'page':undefined} onClick={()=>setHistoryOpen(true)}>{trustCopy(language).history}</button>
-          <button type="button" onClick={()=>setGysPosOpen(true)}>{trustCopy(language).merchant}</button>
-          <button type="button" onClick={onOpenSettings}>{copy.settings}</button>
+          <button type="button" aria-current={!settingsActive&&!historyOpen&&!gysPosOpen?'page':undefined} onClick={()=>navigate('wallet')}>{trustCopy(language).wallet}</button>
+          <button type="button" aria-current={!settingsActive&&historyOpen&&!gysPosOpen?'page':undefined} onClick={()=>navigate('history')}>{trustCopy(language).history}</button>
+          <button type="button" aria-current={!settingsActive&&gysPosOpen?'page':undefined} onClick={()=>navigate('merchant')}>{trustCopy(language).merchant}</button>
+          <button type="button" aria-current={settingsActive?'page':undefined} onClick={()=>navigate('settings')}>{copy.settings}</button>
           <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">{trustCopy(language).help}</a>
         </nav>
         <p>Bitcoin first. Every sat counts.</p>
@@ -391,6 +400,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
 
         <PaymentReconciliationBanner/><WalletRecoveryPanel/>
+        {/* One-glance market context belongs above transactions, never below
+            a long activity list or behind a collapsed disclosure. */}
+        {!historyOpen && !settingsActive && <MarketPulse />}
+
         <WalletActivityPanel
           view={historyOpen?'history':'activity'} onViewChange={view=>setHistoryOpen(view==='history')}
           transactions={mergeDepositsWithTransactions(transactions, unclaimedDeposits)}
@@ -400,7 +413,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
           onExitSelected={handleExitSelected}
           onRefresh={() => { void syncNow(); }}
         />
-        {!historyOpen&&<details className="gys-market-secondary"><summary>Bitcoin market</summary><MarketPulse/></details>}
       </div>
 
       {/* Send Payment Dialog - always mounted for instant response */}

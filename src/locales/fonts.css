@@ -1,0 +1,10 @@
+/* Unicode subsets are self-hosted and requested only when their glyphs are used. */
+@import '@fontsource/noto-sans-jp/400.css';
+@import '@fontsource/noto-sans-thai/400.css';
+@import '@fontsource/noto-sans-tamil/400.css';
+@import '@fontsource/noto-sans-arabic/400.css';
+@import '@fontsource/noto-sans-sc/400.css';
+@import '@fontsource/noto-sans-devanagari/400.css';
+@import '@fontsource/plus-jakarta-sans/vietnamese-400.css';
+@import '@fontsource/plus-jakarta-sans/vietnamese-600.css';
+@import '@fontsource/plus-jakarta-sans/vietnamese-700.css';

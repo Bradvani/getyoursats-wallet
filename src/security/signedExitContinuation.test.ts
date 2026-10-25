@@ -1,7 +1,7 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
 import type {RecoverFundsResponse} from '@breeztech/breez-sdk-spark';
 import {createSignedRecoveryController,type RecoverySdk} from './signedRecoveryController';
-import {readRecoveries} from './signedRecoveryJournal';
+import {readRecoveries,RECOVERY_JOURNAL_PREFIX} from './signedRecoveryJournal';
 import {rememberSignerIdentity,clearSignerIdentity,getSpendingRequest,finishSpendingApproval,lockSpendingSession} from './spendApproval';
 import type {RecoveryTransport} from './recoveryTransport';
 const seed={type:'mnemonic' as const,mnemonic:'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'};
@@ -66,4 +66,34 @@ describe('saved signed exit continuation',()=>{
   await h.controller.check(r.operationId);expect(readRecoveries(key)[0].state).not.toBe('confirmed');
   h.chain.confirmed.mockResolvedValue(true);await h.controller.check(r.operationId);expect(readRecoveries(key)[0].state).toBe('confirmed');
  });
+ it('rejects changed journal broadcast bytes even when the preserved plan is valid',async()=>{
+  const h=harness(),adopting=h.controller.adoptPendingExit();await approve();const r=await adopting;
+  const storageKey=RECOVERY_JOURNAL_PREFIX+key+':'+r.operationId;
+  localStorage.setItem(storageKey,JSON.stringify({...r,transactions:[{...r.transactions[0],txHex:'0200'}]}));
+  await expect(h.controller.check(r.operationId)).rejects.toThrow(/signed.*(bytes|plan)|incompatible|damaged/i);expect(h.chain.broadcast).not.toHaveBeenCalled();
+ });
+ it('rejects a modified preserved plan whose commitment no longer matches',async()=>{
+  const h=harness(),adopting=h.controller.adoptPendingExit();await approve();const r=await adopting;
+  const storageKey=RECOVERY_JOURNAL_PREFIX+key+':'+r.operationId;
+  localStorage.setItem(storageKey,JSON.stringify({...r,recovery:{...r.recovery,feeRateSatPerVbyte:999}}));
+  await expect(h.controller.check(r.operationId)).rejects.toThrow(/commitment/);
+  expect(h.sdk.checkRecoverFunds).not.toHaveBeenCalled();
+ });
+ it('does not finish an intermediate-only package even if the checker calls it done',async()=>{
+  const h=harness();const original=JSON.parse(localStorage.getItem(planKey)!);
+  original.exit.transactions[0].kind='refund';localStorage.setItem(planKey,JSON.stringify(original));
+  const adopting=h.controller.adoptPendingExit();await approve();const r=await adopting;
+  h.sdk.checkRecoverFunds.mockImplementation(async({recovery:r})=>({recovery:{...r,transactions:r.transactions.map(t=>({...t,status:{type:'confirmed',blockHeight:1}}))},verdict:{type:'done'}}));
+  h.chain.confirmed.mockResolvedValue(true);await h.controller.check(r.operationId);
+  expect(readRecoveries(key)[0].state).not.toBe('confirmed');
+ });
+ it('invalidates old confirmation before a failed fresh chain check',async()=>{
+  const h=harness(),adopting=h.controller.adoptPendingExit();await approve();const r=await adopting;
+  h.sdk.checkRecoverFunds.mockImplementation(async({recovery:r})=>({recovery:{...r,transactions:r.transactions.map(t=>({...t,status:{type:'confirmed',blockHeight:1}}))},verdict:{type:'done'}}));
+  h.chain.confirmed.mockResolvedValue(true);await h.controller.check(r.operationId);
+  h.chain.confirmed.mockRejectedValueOnce(new Error('chain unavailable'));
+  await expect(h.controller.check(r.operationId)).rejects.toThrow('chain unavailable');
+  expect(readRecoveries(key)[0].state).toBe('uncertain');
+ });
+
 });

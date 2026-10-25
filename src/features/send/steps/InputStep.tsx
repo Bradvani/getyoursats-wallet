@@ -18,13 +18,14 @@ export interface InputStepProps {
   error: string | null;
   onClearError?: () => void;
   onContinue: (paymentInput: string, opts?: { requireReview?: boolean }) => void;
+  onStablecoin?: () => void;
   onScanQr?: () => void;
   onOpenContacts?: () => void;
 }
 
 // Parent (SendPaymentDialog) keys this on `selectedContactAddress` so
 // a fresh contact pick remounts and lazy-init re-reads the props.
-const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddress, isLoading, error, onClearError, onContinue, onScanQr, onOpenContacts }) => {
+const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddress, isLoading, error, onClearError, onContinue, onScanQr, onOpenContacts, onStablecoin }) => {
   const { contacts } = useContactsContext();
   const [localPaymentInput, setLocalPaymentInput] = useState<string>(() =>
     selectedContactAddress || paymentInput || ''
@@ -231,7 +232,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
               type="button"
               aria-pressed={preferredRail === rail}
               disabled={isLoading}
-              onClick={() => { setPreferredRail(rail); inputRef.current?.focus(); }}
+              onClick={() => { setPreferredRail(rail); if (rail === 'stablecoin' && onStablecoin) onStablecoin(); else inputRef.current?.focus(); }}
               className={preferredRail === rail
                 ? 'min-h-11 rounded-xl border border-[#F7931A] bg-[#2A2117] px-2 py-2 text-xs font-semibold text-[#F7931A]'
                 : 'min-h-11 rounded-xl border border-spark-border bg-spark-surface px-2 py-2 text-xs font-semibold text-spark-text-secondary hover:border-[#F7931A]'}

@@ -29,9 +29,12 @@ import {
 } from '../../../utils/crossChainRoutes';
 import { formatError } from '@/utils/formatError';
 
+import { matchesDestination, quoteMatchesDestination, quoteIsCurrent, type StablecoinDestination } from '../utils/stablecoinDestination';
+
 type WorkflowStep = 'loading' | 'asset' | 'chain' | 'provider' | 'confirm';
 
 interface CrossChainWorkflowProps {
+  destination: StablecoinDestination | null;
   addressDetails: CrossChainAddressDetails;
   amountSats: number;
   feesIncluded: boolean;
@@ -49,6 +52,7 @@ interface ProviderQuote {
 
 const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
   addressDetails,
+  destination,
   amountSats,
   feesIncluded,
   tokenIdentifier,
@@ -95,13 +99,17 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
 
   // Prepare a single route
   const prepareRoute = useCallback(async (route: CrossChainRoutePair): Promise<PrepareSendPaymentResponse> => {
-    return wallet.prepareSendPayment({
+    const response = await wallet.prepareSendPayment({
       paymentRequest: { type: 'crossChain', address: addressDetails.address, route },
       amount: effectiveAmount,
       feePolicy: feesIncluded ? 'feesIncluded' : undefined,
       tokenIdentifier: effectiveTokenId,
     });
-  }, [wallet, addressDetails.address, effectiveAmount, effectiveTokenId, feesIncluded]);
+    if (!destination || !quoteMatchesDestination(response, destination)) {
+      throw new Error('Quote does not match the selected recipient, asset and network. Review the destination.');
+    }
+    return response;
+  }, [wallet, addressDetails.address, effectiveAmount, effectiveTokenId, feesIncluded, destination]);
 
   // Prepare all providers in parallel for provider step
   const prepareAllProviders = useCallback((providerRoutes: CrossChainRoutePair[]) => {
@@ -177,14 +185,16 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
     let cancelled = false;
     (async () => {
       try {
-        const fetched: CrossChainRoutePair[] = await wallet.getCrossChainRoutes({
+        const available: CrossChainRoutePair[] = await wallet.getCrossChainRoutes({
           type: 'send',
           addressDetails,
         });
         if (cancelled) return;
+        const fetched = destination && destination.details.address === addressDetails.address
+          ? available.filter(r => matchesDestination(r, destination)) : [];
 
         if (!fetched || fetched.length === 0) {
-          setError('No cross-chain routes available for this address');
+          setError('The selected asset and network are unavailable. Go back and review the destination.');
           setStep('asset');
           return;
         }
@@ -226,6 +236,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
   };
 
   const goBackFromProvider = () => {
+    if (destination) { onBack(); return; }
     setSelectedChain(null);
     setPrepareResponse(null);
     setProviderQuotes(new Map());
@@ -258,6 +269,10 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
   const handleSend = () => {
     if (!prepareResponse) return;
     const response = prepareResponse;
+    if (!destination || !quoteMatchesDestination(response, destination) || !quoteIsCurrent(response)) {
+      setError('This quote has expired or no longer matches the destination. Go back to request and review a new quote.');
+      return;
+    }
     onRun(async () => {
       return wallet.sendPayment({ prepareResponse: response });
     });

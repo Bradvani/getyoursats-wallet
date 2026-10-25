@@ -8,7 +8,7 @@ const copy={
  pt:{title:'Proteja a sua carteira',unlock:'Desbloquear carteira',body:'Crie uma palavra-passe para cifrar a frase de recuperação neste dispositivo. A carteira e as palavras de recuperação não mudam.',return:'Introduza a palavra-passe desta carteira neste navegador.',password:'Palavra-passe da carteira',again:'Confirmar palavra-passe',submit:'Cifrar e continuar',open:'Desbloquear',minimum:'Use pelo menos 12 caracteres.',mismatch:'As palavras-passe não coincidem.',help:'Se esquecer a palavra-passe, recupere a carteira com a frase original. Nunca partilhe a frase.',back:'Voltar',forgot:'Recuperar com a frase original'},
 } as const;
 export default function WebWalletVaultPage({mode,isLoading,onSubmit,error,onBack,onRecover,passkey=false}:Props){
- const {language}=usePresentation();const c=copy[language]??copy.en;
+ const {language}=usePresentation();const c=copy[language as keyof typeof copy]??copy.en;
  const [password,setPassword]=useState('');const [confirm,setConfirm]=useState('');const [localError,setLocalError]=useState('');
  const [submitting,setSubmitting]=useState(false);
  const enroll=mode==='enroll';

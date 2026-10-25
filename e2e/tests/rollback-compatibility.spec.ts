@@ -65,3 +65,14 @@ test('containment CSP blocks network calls and the build has no wallet SDK',asyn
  expect(blocked).toBe(true);
  await expect(page.locator('body')).not.toContainText('Send payment');
 });
+
+test('concurrent encrypted exit backups retain one shared key and both snapshots',async({page})=>{
+ await page.goto(fixture);
+ const result=await page.evaluate(()=>((window as unknown as {rollbackFixture:{verifyConcurrentBackups:()=>Promise<string[]>}}).rollbackFixture.verifyConcurrentBackups()));
+ expect(result).toEqual(['exit-a','exit-b']);
+});
+test('an aborted IndexedDB commit rejects the save and preserves the old exit backup',async({page})=>{
+ await page.goto(fixture);
+ const result=await page.evaluate(()=>((window as unknown as {rollbackFixture:{verifyAbortedBackup:()=>Promise<{rejected:boolean;retained:string}>}}).rollbackFixture.verifyAbortedBackup()));
+ expect(result).toEqual({rejected:true,retained:'original-exit'});
+});

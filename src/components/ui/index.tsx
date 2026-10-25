@@ -1,3 +1,5 @@
+import { usePresentation } from '@/hooks/usePresentation';
+import { PAYMENT_UX } from '@/locales/paymentUx';
 import React, { ReactNode, forwardRef, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { logger, LogCategory } from '@/services/logger';
@@ -107,6 +109,8 @@ export const DialogHeader: React.FC<{
   onBack?: () => void;
   icon?: ReactNode;
 }> = ({ title, onClose, onBack, icon }) => {
+  const { language } = usePresentation();
+  const text = PAYMENT_UX[language];
   // Without an explicit onBack, the step on screen can lend one (useSheetBack).
   const stepBack = useContext(SheetBackContext);
   const back = onBack ?? stepBack;
@@ -115,10 +119,10 @@ export const DialogHeader: React.FC<{
       {back && (
         <button
           onClick={back}
-          aria-label="Back"
-          className="absolute left-0 top-1/2 -translate-y-1/2 py-2 pl-6 pr-2 -ml-6 text-spark-text-muted hover:text-spark-text-primary transition-colors rounded-lg hover:bg-white/5"
+          aria-label={text.back}
+          className="absolute start-0 top-1/2 -translate-y-1/2 py-2 ps-6 pe-2 -ms-6 text-spark-text-muted hover:text-spark-text-primary transition-colors rounded-lg hover:bg-white/5"
         >
-          <BackIcon />
+          <BackIcon className="rtl:rotate-180" />
         </button>
       )}
       <div className="flex items-center gap-2 min-w-0 max-w-full">
@@ -128,8 +132,8 @@ export const DialogHeader: React.FC<{
       </div>
       <button
         onClick={onClose}
-        aria-label="Close"
-        className="absolute right-0 top-1/2 -translate-y-1/2 py-2 pl-2 pr-6 -mr-6 text-spark-text-muted hover:text-spark-primary-light transition-colors rounded-lg hover:bg-white/5"
+        aria-label={text.close}
+        className="absolute end-0 top-1/2 -translate-y-1/2 py-2 ps-2 pe-6 -me-6 text-spark-text-muted hover:text-spark-primary-light transition-colors rounded-lg hover:bg-white/5"
       >
         <CloseIcon />
       </button>
