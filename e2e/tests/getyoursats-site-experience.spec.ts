@@ -43,16 +43,14 @@ for(const [width,height] of [[1440,900],[390,844],[320,700]]){
     await page.locator('[data-ex-asset=USDT]').click();
     await expect(page.locator('#ex-target-caption')).toHaveText('USDT');
     await expect(page.locator('#ex-target-icon')).toHaveText('₮');
-    await page.locator('#ex-route-preview').click();
-    await expect(page.locator('#ex-route-journey')).toBeVisible();
-    await expect(page.locator('#ex-route-note')).toBeHidden();
-    await expect(page.locator('#ex-route-step-title')).toContainText('Find sats → USDT');
-    await page.locator('[data-route-step="2"]').click();
-    await expect(page.locator('#ex-route-step-title')).toContainText('Flashnet');
-    await expect(page.locator('#ex-route-step-body')).toContainText('on-Spark leg atomically');
-    await page.locator('[data-route-step="3"]').click();
-    await expect(page.locator('#ex-route-step-body')).toContainText('pending');
-    await expect(page.locator('.ex-route-safety')).toContainText('External-chain delivery');
+    // Static network coverage remains visible as assets and directions change.
+    const grid=page.locator('.ex-chain-grid');
+    await expect(grid).toBeVisible();
+    await expect(grid.locator('.ex-chain-chip')).toHaveCount(13);
+    await expect(page.locator('.ex-network-footnote')).toContainText('Routes vary by asset, direction and provider');
+    await expect(page.locator('#ex-route-journey')).toHaveCount(0);
+    await expect(page.locator('#ex-route-preview')).toHaveCount(0);
+    await expect(page.locator('#ex-route-description')).toContainText('Send sats as USDT');
 
     // This is a distinct, non-payable story; the real counter is below.
     await page.locator('#tab-merchant').click();
@@ -120,45 +118,36 @@ test('@public-smoke reduced motion, accessible feature tabs and CTA accuracy',as
   await expect(page.locator('.ex-stack-motion-coin')).toHaveCSS('animation-name','none');
 });
 
-test('@public-smoke Bitcoin-first route storyboard separates atomic Spark conversion from external delivery',async({page})=>{
-  await page.setViewportSize({width:390,height:844});
-  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+test('@public-smoke route network grid covers documented chain examples at every viewport',async({page})=>{
+ const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+ for(const [width,height] of [[1440,900],[390,844],[320,700]]){
+  await page.setViewportSize({width,height});
   await page.goto(landing,{waitUntil:'domcontentloaded'});
   await page.locator('#tab-lightning').click();
-  const panel=page.locator('#ex-route-journey');
-  await expect(panel).toBeHidden();
-  await page.locator('#ex-route-preview').click();
-  await expect(panel).toBeVisible();
-  await expect(page.locator('#ex-route-preview')).toHaveAttribute('aria-expanded','true');
-  await expect(page.locator('#ex-route-progress')).toHaveText('01 / 04');
-  await expect(page.locator('#ex-route-step-title')).toContainText('USDC → sats');
-  await expect(page.locator('#ex-route-progress')).toHaveText('04 / 04',{timeout:7600});
-  await expect(page.locator('#ex-route-step-body')).toContainText('pending');
+  const grid=page.locator('.ex-chain-grid');
+  await expect(grid).toBeVisible();
+  await expect(grid.locator('.ex-chain-chip')).toHaveCount(13);
+  for(const name of ['Ethereum','Base','Arbitrum','Optimism','Polygon','Avalanche','BNB Chain','Linea','Sei','Sonic','Unichain','Solana','Tron']){
+   await expect(grid.getByText(name,{exact:true})).toBeVisible();
+  }
   await page.locator('#ex-route-reverse').click();
-  await expect(page.locator('#ex-journey-from')).toHaveText('SATS');
-  await expect(page.locator('#ex-journey-to')).toHaveText('USDC');
-  await page.locator('[data-ex-asset=USDT]').click();
-  await expect(page.locator('#ex-journey-to')).toHaveText('USDT');
-  await page.locator('[data-route-step="2"]').click();
-  await expect(page.locator('[data-route-step="2"]')).toHaveAttribute('aria-pressed','true');
-  await expect(page.locator('#ex-route-provider')).toContainText('FLASHNET');
-  await expect(page.locator('#ex-route-step-body')).toContainText('atomically');
-  await page.locator('#ex-route-preview').click();
-  await expect(page.locator('#ex-route-progress')).toHaveText('01 / 04');
+  await expect(page.locator('#ex-route-pair')).toHaveText('SATS  →  USDC');
+  await page.locator('[data-ex-asset="USDT"]').click();
+  await expect(page.locator('#ex-route-pair')).toHaveText('SATS  →  USDT');
+  await expect(grid.locator('.ex-chain-chip')).toHaveCount(13);
+  await expect(page.locator('.ex-network-footnote a')).toHaveAttribute('href','https://wallet.getyoursats.com/');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
-  expect(errors).toEqual([]);
+ }
+ expect(errors).toEqual([]);
 });
 
-test('@public-smoke reduced motion shows readable final delivery stage without autoplay',async({page})=>{
-  await page.emulateMedia({reducedMotion:'reduce'});
-  await page.setViewportSize({width:320,height:700});
-  await page.goto(landing,{waitUntil:'domcontentloaded'});
-  await page.locator('#tab-lightning').click();
-  await page.locator('#ex-route-preview').click();
-  await expect(page.locator('#ex-route-progress')).toHaveText('04 / 04');
-  await expect(page.locator('.ex-route-journey-line i').first()).toHaveCSS('animation-name','none');
-  await page.locator('[data-route-step="1"]').click();
-  await expect(page.locator('#ex-route-progress')).toHaveText('02 / 04');
-  await expect(page.locator('#ex-route-step-title')).toContainText('approve');
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+test('@public-smoke reduced motion keeps the network listing readable without a timeline',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.setViewportSize({width:320,height:700});
+ await page.goto(landing,{waitUntil:'domcontentloaded'});
+ await page.locator('#tab-lightning').click();
+ await expect(page.locator('.ex-chain-grid .ex-chain-chip').first()).toHaveCSS('animation-name','none');
+ await expect(page.locator('.ex-network-count')).toContainText('13 NETWORKS + MORE');
+ await expect(page.locator('#ex-route-journey')).toHaveCount(0);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
