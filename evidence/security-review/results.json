@@ -1,0 +1,100 @@
+{
+  "application_commit": "ada10691540d0e1492cd26a4466e00adab33e360",
+  "declared_sdk_source_commit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+  "review_date": "2026-10-25",
+  "test_file": "src/security/independentReview.test.tsx",
+  "test_sha256": "58da61c34076780c9eba6e20528d24000beaa468ddf266413990479e92fec979",
+  "typescript_check_exit_code": 0,
+  "funded_transactions": false,
+  "native_device_verification": false,
+  "suites": {
+    "baseline-tests": {
+      "numTotalTests": 812,
+      "numPassedTests": 812,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "independent-tests": {
+      "numTotalTests": 17,
+      "numPassedTests": 17,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    },
+    "expanded-tests": {
+      "numTotalTests": 829,
+      "numPassedTests": 829,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    }
+  },
+  "independent_cases": [
+    {
+      "name": "Independent PR35 characterization and negative controls control: actual installed WASM derives the same identity before migration, after unlock and after password reset",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls control: actual installed WASM changes identity with a BIP39 passphrase but shares the identity across these networks",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls control: an identified observer waits and cancellation prevents a simulated irreversible call",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls control: timeout rejects pending approval and a late completion cannot execute it",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls control: ciphertext tampering rejects the password without removing the stored record",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls finding: approval details are mutable and contain no fee or quote binding",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls finding: elapsed deadline is not checked when a delayed timer has not run",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls finding: the same payment identifier can be submitted again after approval",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls finding: background lock retains the plaintext mnemonic and permits new observer requests on return",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls finding: returning null preserves a password across externally cancelled approval requests",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls finding: token approval hides token identity and all fee and network context",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls finding: password check can validate a different vault than the connected signer",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls finding: a failed identity-checking unlock leaves the mismatching mnemonic active",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls finding: concurrent enrollments can both write despite the no-overwrite promise",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls finding: original words cannot use the reset path when vault JSON is damaged",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls control: correctly shaped entropy seeds have distinct signer fingerprints",
+      "status": "passed"
+    },
+    {
+      "name": "Independent PR35 characterization and negative controls control: wrong password leaves the observer unapproved",
+      "status": "passed"
+    }
+  ]
+}
