@@ -1,4 +1,6 @@
 import WebWalletVaultPage from './security/WebWalletVaultPage';
+import {useBrowserSessionLock} from './security/useBrowserSessionLock';
+import {isPasskeyMode} from './services/passkeyService';
 import WebVaultRecoveryPage from './security/WebVaultRecoveryPage';
 import SpendingApprovalDialog from './security/SpendingApprovalDialog';
 import {hasWebWalletVault,legacyWebMnemonic,enrollWebWallet,unlockWebWallet,removeMatchingLegacyMnemonic,resetWebWalletPasswordWithWords} from './security/webWalletVault';
@@ -140,6 +142,7 @@ const AppContent: React.FC = () => {
   useIOSViewportFix();
 
   const sdk = useBreezSdk(showToast);
+  const browserSessionLock=useBrowserSessionLock(sdk.isConnected);
   // App lock overlays everything (including the unlock/backup screens)
   // while locked; rendered last in the tree so it stacks on top.
   const appLock = useAppLock();
@@ -437,6 +440,10 @@ const AppContent: React.FC = () => {
 
   // Render screens
   const renderCurrentScreen = () => {
+    // Do not render private wallet pages during the browser vault privacy lock.
+    if(browserSessionLock.locked&&!Capacitor.isNativePlatform()&&sdk.isConnected&&!isPasskeyMode()){
+      return <WebWalletVaultPage mode="unlock" isLoading={false} onSubmit={browserSessionLock.unlock}/>;
+    }
     // Startup-state overlays take precedence and are derived directly
     // from `sdk.startupState`. The `currentScreen` memo above already
     // maps these to 'unlocking' / 'unlock', but the explicit early
@@ -840,14 +847,14 @@ const AppContent: React.FC = () => {
                   celebration auto-dismisses on a timer, so mounting it
                   behind the lock screen would burn it unseen. Deferring
                   the mount plays it in full after unlock. */}
-              {sdk.celebrationPayment !== null && !appLock.locked && (
+              {sdk.celebrationPayment !== null && !appLock.locked && !browserSessionLock.locked && (
                 <PaymentCelebration
                   key={sdk.celebrationPayment.id}
                   payment={sdk.celebrationPayment}
                   onClose={sdk.dismissCelebration}
                 />
               )}
-              {migrationEverOpened && (
+              {migrationEverOpened && !browserSessionLock.locked && (
                 <Suspense fallback={null}>
                   <PasskeyMigrationModal
                     isOpen={migrationModalOpen}
