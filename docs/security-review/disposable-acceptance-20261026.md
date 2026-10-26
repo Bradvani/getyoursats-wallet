@@ -2,7 +2,7 @@
 
 **Product acceptance is BLOCKED, not complete. Production remains NO-GO.**
 
-The source continuation starts at `4664c6d1358ecc2389f0b9df3df18b84ab27a192` on PR #43. This work does not merge PR #43 or #46, deploy production, or authorize use of user funds. The public-regtest run used two newly generated disposable wallet identities, the actual compiled browser SDK, encrypted browser vaults and the operation gateway. It supplied no Breez API key or user credentials. No funded send, claim, refund or exit was reached.
+The source continuation starts at `4664c6d1358ecc2389f0b9df3df18b84ab27a192` on PR #43. This work does not merge PR #43 or #46, deploy production, or authorize use of user funds. The public-regtest run used two newly generated disposable wallet identities, the actual compiled browser SDK, encrypted browser vaults and the operation gateway. It supplied no Breez API key or user credentials. That initial run reached no funded send, claim, refund or exit. Later human-funded attempts are recorded below.
 
 ## Implemented and compiled
 
@@ -32,7 +32,7 @@ Receipt: `evidence/disposable-spark-acceptance-20261026.json`, SHA-256 `602bf5d5
 4. The runner exited with a blocked result. It did not pass debit/credit conservation, zero-fee settlement, restart balance/history, return transfer or exit acceptance.
 5. Both profiles were closed. **Do not fund the addresses in the receipt.** They are evidence of discarded disposable test identities.
 
-The receipt pins the exact fixture/runner hashes used for that attempt. The later human-assisted funding mode and additional progress/deadline reporting were syntax/type checked, but no funded run of that mode has occurred. Fixture approval uses the application approval API; it is not physical-device biometric/passkey UI acceptance.
+The receipt pins the exact fixture/runner hashes used for that attempt. At that checkpoint the human-assisted funding mode and additional progress/deadline reporting had only been syntax/type checked. Subsequent human-funded attempts are recorded below. Fixture approval uses the application approval API; it is not physical-device biometric/passkey UI acceptance.
 
 ## Verification
 
@@ -54,3 +54,14 @@ The runner creates fresh profiles and prints one new `sparkrt1…` address. A hu
 ## Remaining release blockers
 
 New/rebuilt exits still require a durable SDK build-intent/result contract, authorization of all funding inputs/fees/destination, original passkey seed-compatible funding signatures, interruption recovery and actual exit acceptance. Mature/early deposit claims and Lightning receiving need separate bounded execution and reconciliation. The new direct Spark claim path itself still needs funded operator acceptance. Physical iPhone/Android recovery, cross-device restoration, original-origin service-worker/rollback rehearsal, complete security-copy localization and independent review remain open. There is no justified production launch date yet.
+
+## Human funding follow-up (26 October 2026)
+
+The human-assisted faucet step succeeded twice, according to the operator's displayed confirmations reported by the tester:
+
+- First request reference: `01a1774a-0352-99c5-0000-f41ddbee61ff`. Receipt `evidence/human-faucet-first-20261026.json` (SHA-256 `baff65b033701517a0c9540ae95bf95c44ae294c78fd3a3cea35a17b38025d00`) records a claim-approval timeout. The old runner hid a rejected claim behind its approval wait and discarded both temporary profiles. Settlement was not verified.
+- Second request reference: `01a1774d-8c7b-99c5-0000-1690f7df3f21`. Receipt `evidence/human-faucet-second-20261026.json` (SHA-256 `9dece62faa56f2fb3368dd16f22ceadc65d597dc0e3f26120c8d16b36a1ad339`) records a pending 10,000-regtest-sat receive transfer `01a1774d-8c7b-7b67-bc9c-cf4e56703876`, zero spendable balance and no incoming or outgoing journal entries. The SDK rejected observation before approval with `Transfer is not the authorized direct BTC receipt`. The faucet request reference and observed transfer ID differ; neither their equivalence nor the reason for the amount difference has been established.
+
+The runner now preserves disposable browser profiles locally, reports an operation's rejection immediately instead of hiding it behind an approval timeout and records read-only observations on failure. `GYS_ACCEPTANCE_RESUME=1` reuses those profiles without another faucet request. It refuses to repeat an acceptance sequence after a send has been submitted. Do not publish the profiles, fund historical addresses or use this fixture for real funds. Approval is still through the test fixture, not human biometric UI acceptance.
+
+A diagnostic rebuild of the same checks isolated the second rejection to `Incoming transfer involves the SSP identity`. The corrective source accepts an ordinary `Transfer` sent by an SSP identity, while still rejecting attached SSP requests, preimage requests, every other transfer type and mismatched ID, recipient, direction or amount. Claim approval, one-attempt persistence and fresh completion evidence remain required. Sixteen native Rust claim tests and seventeen application claim-controller tests passed. The corrected source is awaiting compiled-browser settlement evidence; these checks do not establish acceptance.

@@ -200,10 +200,10 @@ index 36c837c0e27731646a8e191fdece96bba5456974..55ce5a8c01d6a832fa36406d64c43725
          request: RefundDepositRequest,
 diff --git a/crates/breez-sdk/core/src/sdk/incoming_claim.rs b/crates/breez-sdk/core/src/sdk/incoming_claim.rs
 new file mode 100644
-index 0000000000000000000000000000000000000000..31a97f0748a9b1997896eb1a9323aa7fafa0d4d3
+index 0000000000000000000000000000000000000000..b5d962cf8a6e956b8a7ddcdc28d7a505c906a802
 --- /dev/null
 +++ b/crates/breez-sdk/core/src/sdk/incoming_claim.rs
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,140 @@
 +//! Explicit, single-transfer BTC claims. Never a bulk sync or standing mandate.
 +use std::str::FromStr;
 +use spark_wallet::{ListTransfersRequest, TransferId, TransferStatus, TransferType, TransferDirection, WalletTransfer};
@@ -221,11 +221,16 @@ index 0000000000000000000000000000000000000000..31a97f0748a9b1997896eb1a9323aa7f
 +    Ok(())
 +}
 +fn exact_transfer(t: &WalletTransfer, request: &IncomingTransferRequest) -> Result<(), SdkError> {
-+    if t.id.to_string() != request.payment_id || t.receiver_id.to_string() != request.identity_pubkey ||
-+        t.direction != TransferDirection::Incoming || t.transfer_type != TransferType::Transfer ||
-+        t.total_value_sat != request.amount_sats || t.is_ssp_transfer || t.user_request.is_some() || t.htlc_preimage_request.is_some() {
-+        return Err(invalid("Transfer is not the authorized direct BTC receipt"));
-+    }
++    if t.id.to_string() != request.payment_id { return Err(invalid("Incoming transfer id differs from authorization")); }
++    if t.receiver_id.to_string() != request.identity_pubkey { return Err(invalid("Incoming transfer receiver differs from this wallet")); }
++    if t.direction != TransferDirection::Incoming { return Err(invalid("Incoming transfer direction is not receive")); }
++    if t.transfer_type != TransferType::Transfer { return Err(invalid("Incoming transfer is not a plain transfer")); }
++    if t.total_value_sat != request.amount_sats { return Err(invalid("Incoming transfer amount differs from authorization")); }
++    // An SSP identity can send an ordinary BTC transfer (including the faucet).
++    // Classify the operation by its protocol type and attached obligations, not
++    // by the sender's identity. Never allow an SSP request or HTLC through here.
++    if t.user_request.is_some() { return Err(invalid("Incoming transfer has an SSP user request")); }
++    if t.htlc_preimage_request.is_some() { return Err(invalid("Incoming transfer has an HTLC preimage request")); }
 +    Ok(())
 +}
 +#[cfg_attr(feature = "uniffi", uniffi::export(async_runtime = "tokio"))]
@@ -294,6 +299,50 @@ index 0000000000000000000000000000000000000000..31a97f0748a9b1997896eb1a9323aa7f
 +    #[test] fn incoming_claim_standing_mandate_rejected() { assert!(validate_intent(&request(), "disposable", Network::Regtest, 59).is_err()); }
 +    #[test] fn incoming_claim_zero_amount() { let mut r=request(); r.amount_sats=0; assert!(validate_intent(&r,"disposable",Network::Regtest,100).is_err()); }
 +    #[test] fn incoming_claim_invalid_transfer_id() { let mut r=request(); r.payment_id="not-a-transfer".into(); assert!(validate_intent(&r,"disposable",Network::Regtest,100).is_err()); }
++    fn receipt(from_ssp: bool) -> (WalletTransfer, IncomingTransferRequest) {
++        use spark_wallet::{PublicKey, Transfer};
++        let pk = |fill: u8| { let mut b = [fill; 33]; b[0] = 2; PublicKey::from_slice(&b).unwrap() };
++        let (ours, other, ssp) = (pk(1), pk(7), pk(2));
++        let r = IncomingTransferRequest { identity_pubkey: ours.to_string(), ..request() };
++        let t = Transfer { id: TransferId::from_str(&r.payment_id).unwrap(),
++            sender_identity_public_key: if from_ssp { ssp } else { other }, receiver_identity_public_key: ours,
++            status: TransferStatus::SenderKeyTweaked, total_value: r.amount_sats, expiry_time: None,
++            leaves: Vec::new(), created_time: None, updated_time: None,
++            transfer_type: TransferType::Transfer, spark_invoice: None };
++        (WalletTransfer::from_transfer(t, None, None, ours, ssp), r)
++    }
++    #[test] fn incoming_claim_plain_peer_receipt() { let (t,r)=receipt(false); assert!(exact_transfer(&t,&r).is_ok()); }
++    #[test] fn incoming_claim_plain_ssp_receipt() { let (t,r)=receipt(true); assert!(t.is_ssp_transfer); assert!(exact_transfer(&t,&r).is_ok()); }
++    #[test] fn incoming_claim_wrong_receiver() { let (t,mut r)=receipt(true); r.identity_pubkey=t.sender_id.to_string(); assert!(exact_transfer(&t,&r).is_err()); }
++    #[test] fn incoming_claim_wrong_transfer_id() { let (t,mut r)=receipt(true); r.payment_id=TransferId::generate().to_string(); assert!(exact_transfer(&t,&r).is_err()); }
++    #[test] fn incoming_claim_wrong_direction() { let (mut t,r)=receipt(true); t.direction=TransferDirection::Outgoing; assert!(exact_transfer(&t,&r).is_err()); }
++    #[test] fn incoming_claim_wrong_amount() { let (t,mut r)=receipt(true); r.amount_sats+=1; assert!(exact_transfer(&t,&r).is_err()); }
++    #[test] fn incoming_claim_rejects_other_protocols() {
++        for ty in [TransferType::PreimageSwap,TransferType::CooperativeExit,TransferType::UtxoSwap,
++            TransferType::Swap,TransferType::CounterSwap,TransferType::PrimarySwapV3,TransferType::CounterSwapV3,TransferType::Unknown] {
++            let (mut t,r)=receipt(true);t.transfer_type=ty;assert!(exact_transfer(&t,&r).is_err());
++        }
++    }
++    #[test] fn incoming_claim_rejects_htlc_on_plain_transfer() {
++        use bitcoin::hashes::{sha256,Hash};
++        let (mut t,r)=receipt(true);
++        t.htlc_preimage_request=Some(spark_wallet::PreimageRequest { payment_hash:sha256::Hash::hash(b"test"),
++            status:spark_wallet::PreimageRequestStatus::WaitingForPreimage,
++            created_time:platform_utils::time::UNIX_EPOCH,expiry_time:platform_utils::time::UNIX_EPOCH,preimage:None });
++        assert!(exact_transfer(&t,&r).is_err());
++    }
++    #[test] fn incoming_claim_rejects_ssp_request_on_plain_transfer() {
++        use spark_wallet::{SspUserRequest,LightningSendRequest,LightningSendRequestStatus,BitcoinNetwork,CurrencyAmount,CurrencyUnit};
++        let (mut t,r)=receipt(true);
++        t.user_request=Some(SspUserRequest::LightningSendRequest(LightningSendRequest {
++            id:"request".into(),created_at:chrono::Utc::now(),updated_at:chrono::Utc::now(),network:BitcoinNetwork::Regtest,
++            encoded_invoice:"not an invoice".into(),fee:CurrencyAmount { original_value:0,original_unit:CurrencyUnit::Satoshi,
++                preferred_currency_unit:CurrencyUnit::Satoshi,preferred_currency_value_rounded:0 },
++            idempotency_key:"test".into(),status:LightningSendRequestStatus::LightningPaymentSucceeded,
++            transfer:None,lightning_send_payment_preimage:None }));
++        assert!(exact_transfer(&t,&r).is_err());
++    }
++
 +}
 diff --git a/crates/breez-sdk/core/src/sdk/mod.rs b/crates/breez-sdk/core/src/sdk/mod.rs
 index ca49aaaf806894e1873a04527eef2383d9ba6e18..f3a39216e6b7fb81ba1387f95d1e4c4e9ddf0d16 100644
