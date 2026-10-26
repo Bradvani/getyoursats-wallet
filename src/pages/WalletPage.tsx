@@ -130,7 +130,8 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const selectedDeposit = selectedOutpoint
     ? unclaimedDeposits.find(d => `${d.txid}:${d.vout}` === selectedOutpoint) ?? null
     : null;
-  const [paymentInput, setPaymentInput] = useState<string | null>(null);
+  const [paymentInput, setPaymentInput] = useState<{raw: string; id: number} | null>(null);
+  const paymentInputSequence = useRef(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBuyBitcoinOpen, setIsBuyBitcoinOpen] = useState(false);
   const [isBuyLoading, setIsBuyLoading] = useState(false);
@@ -150,15 +151,14 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const [sendDialogSession, setSendDialogSession] = useState(0);
   const [receiveDialogSession, setReceiveDialogSession] = useState(0);
   const [buyBitcoinSession, setBuyBitcoinSession] = useState(0);
-  const tourRequested = Boolean(walletSetup?.scope && walletSetup.progress.tourStatus === 'active' &&
-    setupTourAllowed && !settingsActive);
-  const showHistory = historyOpen && !tourRequested;
-  const showTour = tourRequested && !isSendDialogOpen && !isReceiveDialogOpen && !isQrScannerOpen &&
-    !isMenuOpen && !isBuyBitcoinOpen && !partnerBuyOpen && !gysPosOpen && !selectedPayment &&
-    !selectedDeposit && !selectedExitId && !saveContactAddress;
+  const tourRequested = Boolean(walletSetup?.scope && walletSetup.progress.tourStatus === 'active');
+  const showHistory = historyOpen;
+  const setupPaused = !setupTourAllowed || settingsActive || isSendDialogOpen || isReceiveDialogOpen || isQrScannerOpen ||
+    isMenuOpen || isBuyBitcoinOpen || partnerBuyOpen || gysPosOpen || Boolean(selectedPayment) ||
+    Boolean(selectedDeposit) || Boolean(selectedExitId) || Boolean(saveContactAddress);
   const startTour = () => { navigate('wallet'); walletSetup?.beginTour(); };
-  const nextTourStep = () => { navigate('wallet'); walletSetup?.next(); };
-  const skipTour = () => { navigate('wallet'); walletSetup?.skip(); };
+  const nextTourStep = () => { walletSetup?.next(); };
+  const skipTour = () => { walletSetup?.skip(); };
 
   const openSendDialog = useCallback(() => {
     setSendDialogSession(s => s + 1);
@@ -281,48 +281,37 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   const handleQrScannerClose = useCallback(() => {
     setIsQrScannerOpen(false);
-    // If scanner was opened from Send dialog, reopen it
-    if (scannerOpenedFromSend) {
-      setScannerOpenedFromSend(false);
-      openSendDialog();
+    setScannerOpenedFromSend(false);
+    if (!scannerOpenedFromSend) {
+      setIsSendDialogOpen(false);
+      setPaymentInput(null);
     }
-  }, [scannerOpenedFromSend, openSendDialog]);
+  }, [scannerOpenedFromSend]);
 
   const handleScanFromSendDialog = useCallback(() => {
-    setIsSendDialogOpen(false);
-    setPaymentInput(null);
     setScannerOpenedFromSend(true);
     setIsQrScannerOpen(true);
   }, []);
 
-  // A tapped lightning: / bitcoin: / lnurlp: / lnurlw: / keyauth: / glow: link
-  // opens the send sheet on it. Unlike the QR path there is no pre-parse: the OS just
-  // switched the user into Glow, so an unreadable link has to say so on screen
-  // rather than land on the home page having apparently done nothing. The
-  // sheet parses `initialRawInput` itself and surfaces its own error.
+  const handleScanFromWallet = useCallback(() => {
+    setPaymentInput(null);
+    setScannerOpenedFromSend(false);
+    openSendDialog();
+    setIsQrScannerOpen(true);
+  }, [openSendDialog]);
+
+  // Links and scans share Send's parser and review gates. The request ID lets
+  // another intentional scan of the same QR start a fresh resolution.
   useEffect(() => onDeepLink((input) => {
-    setPaymentInput(input);
+    setPaymentInput({raw: input, id: ++paymentInputSequence.current});
     openSendDialog();
   }), [openSendDialog]);
 
-  const handleQrScan = async (data: string | null) => {
-    if (!data) return;
-
-    try {
-      const parseResult = await wallet.parse(data);
-      logger.debug(LogCategory.UI, 'Parsed QR result', {
-        resultType: parseResult.type,
-      });
-      setIsQrScannerOpen(false);
-      setScannerOpenedFromSend(false);
-      setPaymentInput(data);
-      openSendDialog();
-    } catch (error) {
-      logger.error(LogCategory.UI, 'Failed to parse QR code', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  };
+  const handleQrScan = useCallback((data: string) => {
+    setPaymentInput({raw: data, id: ++paymentInputSequence.current});
+    setScannerOpenedFromSend(false);
+    setIsQrScannerOpen(false);
+  }, []);
 
   return (
     <div className={`gys-wallet ${showHistory ? "gys-wallet--history-open" : ""} flex flex-col h-[calc(100dvh)] relative overflow-hidden`}>
@@ -408,8 +397,22 @@ const WalletPage: React.FC<WalletPageProps> = ({
       >
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
 
-        {!showHistory && !settingsActive && walletSetup?.scope && onReviewRecovery && (
-          <WalletSetupCard setup={walletSetup} onReviewRecovery={onReviewRecovery} onStartTour={startTour}/>
+        {!showHistory && walletSetup?.scope && onReviewRecovery && (
+          tourRequested && onPersonalizeAddress ? (
+            <WalletSetupTour
+              step={walletSetup.progress.step}
+              recoveryMethod={recoveryMethod}
+              recoveryStatus={walletSetup.progress.recoveryStatus}
+              hasNativeAddress={primaryLightningAddress.address?.lightningAddress.endsWith('@getyoursats.com') ?? false}
+              paused={setupPaused}
+              onNext={nextTourStep}
+              onSkip={skipTour}
+              onReviewRecovery={onReviewRecovery}
+              onPersonalize={onPersonalizeAddress}
+              onOpenReceive={openReceiveDialog}
+              onOpenPos={() => setGysPosOpen(true)}
+            />
+          ) : <WalletSetupCard setup={walletSetup} paused={setupPaused} onReviewRecovery={onReviewRecovery} onStartTour={startTour}/>
         )}
 
         {/* One-glance market context belongs above transactions, never below
@@ -432,7 +435,9 @@ const WalletPage: React.FC<WalletPageProps> = ({
         key={`send-${sendDialogSession}`}
         isOpen={isSendDialogOpen}
         onClose={handleSendDialogClose}
-        initialRawInput={paymentInput}
+        initialRawInput={paymentInput?.raw}
+        initialInputId={paymentInput?.id}
+        coveredByScanner={isQrScannerOpen}
         onScanQr={handleScanFromSendDialog}
         onSuccessfulSend={handleSuccessfulSend}
       />
@@ -454,13 +459,12 @@ const WalletPage: React.FC<WalletPageProps> = ({
       />
 
       {/* QR Scanner Dialog */}
-      {isQrScannerOpen && (
-        <QrScannerDialog
-          isOpen={isQrScannerOpen}
-          onClose={handleQrScannerClose}
-          onScan={handleQrScan}
-        />
-      )}
+      <QrScannerDialog
+        isOpen={isQrScannerOpen}
+        onClose={handleQrScannerClose}
+        onScan={handleQrScan}
+        zIndex={60}
+      />
 
       {/* Payment Details Dialog */}
       {selectedPayment && (
@@ -492,7 +496,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
           className="gys-action-dock__receive"><ArrowDownIcon/><span>{wc.receive}</span></button>
         <button type="button" onClick={openSendDialog} data-testid="send-button" aria-label="Send Bitcoin"
           className="gys-action-dock__send"><ArrowUpIcon/><span>{wc.send}</span></button>
-        <button type="button" onClick={()=>setIsQrScannerOpen(true)} data-testid="scan-button" aria-label={wc.scanPayment}
+        <button type="button" onClick={handleScanFromWallet} data-testid="scan-button" aria-label={wc.scanPayment}
           className="gys-action-dock__utility"><QrCodeIcon/><span>{wc.scan}</span></button>
         <button type="button" onClick={()=>setGysPosOpen(true)} data-testid="pos-button" aria-label={wc.posPayment}
           className="gys-action-dock__accept gys-action-dock__utility"><span className="gys-action-dock__bitcoin" aria-hidden="true">₿</span><span>{wc.acceptShort}</span></button>
@@ -517,24 +521,12 @@ const WalletPage: React.FC<WalletPageProps> = ({
         onOpenSettings={onOpenSettings}
         onOpenFiatCurrencies={onOpenFiatCurrencies}
         onOpenDca={onOpenDca}
-        onOpenScan={()=>setIsQrScannerOpen(true)}
+        onOpenScan={handleScanFromWallet}
         onOpenMerchantPos={()=>setGysPosOpen(true)}
         onOpenPartnerBuy={()=>setPartnerBuyOpen(true)}
         onOpenRefund={() => onOpenGetRefund('menu')}
         hasRejectedDeposits={hasRejectedDeposits}
       />
-      {showTour && walletSetup && onReviewRecovery && onPersonalizeAddress && (
-        <WalletSetupTour
-          step={walletSetup.progress.step}
-          recoveryMethod={recoveryMethod}
-          recoveryStatus={walletSetup.progress.recoveryStatus}
-          hasNativeAddress={primaryLightningAddress.address?.lightningAddress.endsWith('@getyoursats.com') ?? false}
-          onNext={nextTourStep}
-          onSkip={skipTour}
-          onReviewRecovery={onReviewRecovery}
-          onPersonalize={onPersonalizeAddress}
-        />
-      )}
     </div>
   );
 };

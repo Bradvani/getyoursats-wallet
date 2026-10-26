@@ -29,9 +29,9 @@ describe('wallet setup subscriptions and actions', () => {
     act(() => first.result.current.skip());
     first.unmount();
     const restored = renderHook(() => useWalletSetup(identityA, 'mainnet'));
-    expect(restored.result.current.progress).toMatchObject({tourStatus: 'skipped', step: 'balance', recoveryStatus: 'pending'});
+    expect(restored.result.current.progress).toMatchObject({tourStatus: 'skipped', step: 'protect', recoveryStatus: 'pending'});
     act(() => restored.result.current.beginTour());
-    expect(restored.result.current.progress).toMatchObject({tourStatus: 'active', step: 'balance'});
+    expect(restored.result.current.progress).toMatchObject({tourStatus: 'active', step: 'protect'});
   });
 
   it('uses the next wallet scope immediately and preserves each wallet independently', () => {
@@ -42,11 +42,11 @@ describe('wallet setup subscriptions and actions', () => {
     act(() => confirmWalletRecovery(scopeA, 'phrase-verified'));
     rerender({identity: identityB});
     expect(result.current.scope).toBe(scopeB);
-    expect(result.current.progress).toMatchObject({tourStatus: 'not-started', step: 'protect', recoveryStatus: 'pending'});
+    expect(result.current.progress).toMatchObject({tourStatus: 'not-started', step: 'language', recoveryStatus: 'pending'});
     act(() => result.current.beginTour());
     act(() => result.current.skip());
     rerender({identity: identityA});
-    expect(result.current.progress).toMatchObject({tourStatus: 'active', step: 'balance', recoveryStatus: 'phrase-verified'});
+    expect(result.current.progress).toMatchObject({tourStatus: 'active', step: 'protect', recoveryStatus: 'phrase-verified'});
     expect(readWalletSetup(scopeB)).toMatchObject({tourStatus: 'skipped', recoveryStatus: 'pending'});
   });
 
@@ -65,11 +65,11 @@ describe('wallet setup subscriptions and actions', () => {
   it('keeps Next, Skip and replay separate from backup evidence', () => {
     const {result} = renderHook(() => useWalletSetup(identityA, 'mainnet'));
     act(() => result.current.beginTour());
-    for (let step = 0; step < 4; step++) act(() => result.current.next());
+    for (let step = 0; step < 6; step++) act(() => result.current.next());
     expect(result.current.progress).toMatchObject({tourStatus: 'completed', recoveryStatus: 'pending'});
     act(() => result.current.beginTour(true));
     act(() => result.current.skip());
-    expect(result.current.progress).toMatchObject({tourStatus: 'skipped', step: 'protect', recoveryStatus: 'pending'});
+    expect(result.current.progress).toMatchObject({tourStatus: 'skipped', step: 'language', recoveryStatus: 'pending'});
   });
 
   it('keeps the current session usable when persistent storage rejects writes', () => {
@@ -77,9 +77,9 @@ describe('wallet setup subscriptions and actions', () => {
     const {result} = renderHook(() => useWalletSetup(identityA, 'mainnet'));
     act(() => result.current.beginTour());
     act(() => result.current.next());
-    expect(result.current.progress).toMatchObject({tourStatus: 'active', step: 'balance'});
+    expect(result.current.progress).toMatchObject({tourStatus: 'active', step: 'protect'});
     act(() => result.current.skip());
-    expect(result.current.progress).toMatchObject({tourStatus: 'skipped', step: 'balance', recoveryStatus: 'pending'});
+    expect(result.current.progress).toMatchObject({tourStatus: 'skipped', step: 'protect', recoveryStatus: 'pending'});
   });
 });
 

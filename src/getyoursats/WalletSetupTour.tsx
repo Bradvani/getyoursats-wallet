@@ -1,311 +1,188 @@
-import {Dialog, DialogDescription, DialogPanel, DialogTitle} from '@headlessui/react';
-import {useLayoutEffect, useRef, useState, type CSSProperties} from 'react';
-import {PrimaryButton, SecondaryButton} from '../components/ui/buttons';
-import {useBackButton} from '../hooks/useBackButton';
-import {safeAreaBottom, safeAreaTop} from '../utils/safeAreaInsets';
+import {useId, useSyncExternalStore} from 'react';
+import {motion} from 'motion/react';
+import {
+  ArrowDownIcon, CheckIcon, ChevronRightIcon, EditPencilIcon, KeyIcon,
+  LightningBoltIcon, QrCodeIcon, ShieldCheckIcon, WalletIcon,
+} from '../components/Icons';
+import LanguageSelect from '../components/LanguageSelect';
+import {PrimaryButton} from '../components/ui/buttons';
+import {usePresentation} from '../hooks/usePresentation';
+import {walletSetupCopy, type WalletSetupCopy} from '../locales/walletSetup';
+import {APP_LANGUAGES, type AppLanguage} from '../services/presentationPreferences';
+import {getDisplayFiatCurrency} from '../services/settings';
+import {WALLET_TOUR_STEPS, type WalletTourStep, type WalletRecoveryMethod, type WalletRecoveryStatus} from './walletSetupState';
 import './walletSetup.css';
 
-export type WalletTourStep = 'protect' | 'balance' | 'receive' | 'identity';
+export type {WalletTourStep} from './walletSetupState';
+
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+function subscribeReducedMotion(onChange: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION_QUERY);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
+
+function getReducedMotion() {
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
+}
+
+const getServerReducedMotion = () => false;
 
 interface WalletSetupTourProps {
   step: WalletTourStep;
-  recoveryMethod: 'passkey' | 'phrase' | 'device';
-  recoveryStatus: 'pending' | 'passkey-reviewed' | 'phrase-verified';
+  recoveryMethod: WalletRecoveryMethod;
+  recoveryStatus: WalletRecoveryStatus;
   hasNativeAddress: boolean;
+  paused?: boolean;
   onNext: () => void;
   onSkip: () => void;
   onReviewRecovery: () => void;
   onPersonalize: () => void;
+  onOpenReceive: () => void;
+  onOpenPos: () => void;
 }
 
-interface Rect {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-}
-
-interface TourLayout {
-  anchor: Rect | null;
-  panel: Rect;
-  placement: 'above' | 'below' | 'beside' | 'center';
-}
-
-const steps: WalletTourStep[] = ['protect', 'balance', 'receive', 'identity'];
-const stepNames = ['Recovery', 'Balance', 'Receive', 'Your name'];
-
-function viewport(): Rect {
-  const view = window.visualViewport;
-  return {
-    left: view?.offsetLeft ?? 0,
-    top: view?.offsetTop ?? 0,
-    width: view?.width || window.innerWidth,
-    height: view?.height || window.innerHeight,
-  };
-}
-
-function centeredLayout(): TourLayout {
-  const view = viewport();
-  const width = Math.max(0, Math.min(408, view.width - 32));
-  const height = Math.max(0, Math.min(354, view.height - 32));
-  return {
-    anchor: null,
-    panel: {
-      left: view.left + (view.width - width) / 2,
-      top: view.top + (view.height - height) / 2,
-      width,
-      height,
-    },
-    placement: 'center',
-  };
-}
-
-function visibleTarget(target: HTMLElement, view: Rect): Rect | null {
-  const rect = target.getBoundingClientRect();
-  if (rect.width <= 0 || rect.height <= 0) return null;
-  let left = Math.max(view.left + 4, rect.left - 6);
-  let top = Math.max(view.top + 4, rect.top - 6);
-  let right = Math.min(view.left + view.width - 4, rect.right + 6);
-  let bottom = Math.min(view.top + view.height - 4, rect.bottom + 6);
-  for (let parent = target.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
-    const css = getComputedStyle(parent);
-    const bounds = parent.getBoundingClientRect();
-    if (bounds.width <= 0 || bounds.height <= 0) continue;
-    if (/auto|scroll|hidden|clip/.test(css.overflowX)) {
-      left = Math.max(left, bounds.left + parent.clientLeft);
-      right = Math.min(right, bounds.left + parent.clientLeft + parent.clientWidth);
-    }
-    if (/auto|scroll|hidden|clip/.test(css.overflowY)) {
-      top = Math.max(top, bounds.top + parent.clientTop);
-      bottom = Math.min(bottom, bounds.top + parent.clientTop + parent.clientHeight);
-    }
-  }
-  return right - left >= 20 && bottom - top >= 20
-    ? {left, top, width: right - left, height: bottom - top}
-    : null;
-}
-
-function recoveryCopy(method: WalletSetupTourProps['recoveryMethod'], status: WalletSetupTourProps['recoveryStatus']) {
-  if (status === 'phrase-verified') {
-    return {
-      title: 'Your backup comes first',
-      body: 'You checked your recovery words. Keep the handwritten backup somewhere private, separate from this device.',
-      detail: 'Offline backup confirmed',
-    };
-  }
-  if (method === 'passkey' && status === 'passkey-reviewed') {
-    return {
-      title: 'Your way back in',
-      body: 'You reviewed access to your passkey. An independent offline backup is still available in Settings.',
-      detail: 'Passkey recovery reviewed',
-    };
-  }
-  if (method === 'passkey') {
-    return {
-      title: 'Start with recovery',
-      body: 'Your passkey opens this wallet. Review where it is saved and how you will get back in if you change devices.',
-      detail: 'An offline backup is optional.',
-    };
-  }
-  return {
-    title: 'Start with recovery',
-    body: method === 'device'
-      ? 'This device holds your wallet keys. An offline recovery backup gives you a way back if it is lost or replaced.'
-      : 'Your recovery words are the way back to this wallet. Check your offline backup before adding more sats.',
-    detail: 'Your recovery words stay private.',
-  };
+function FeaturePreview({step, language, text, verified, named}: {
+  step: WalletTourStep; language: AppLanguage; text: WalletSetupCopy; verified: boolean; named: boolean;
+}) {
+  return (
+    <div className={`gys-wallet-guide__visual gys-wallet-guide__visual--${step}`} aria-hidden="true" data-guide-visual={step}>
+      <span className="gys-wallet-guide__preview-label">{text.preview}</span>
+      {step === 'language' && (
+        <div className="gys-wallet-guide__language-scene">
+          <span className="gys-wallet-guide__language-tile gys-wallet-guide__language-tile--back" lang="es">es</span>
+          <span className="gys-wallet-guide__language-tile gys-wallet-guide__language-tile--front" lang="pt">pt</span>
+          <div className="gys-wallet-guide__language-main">
+            <span className="gys-wallet-guide__language-glyph">Aa</span>
+            <strong lang={language}>{APP_LANGUAGES.find(item => item.code === language)?.name}</strong>
+          </div>
+        </div>
+      )}
+      {step === 'protect' && (
+        <div className="gys-wallet-guide__recovery-scene" data-verified={verified}>
+          <span className="gys-wallet-guide__paper-shadow" />
+          <div className="gys-wallet-guide__paper">
+            <div className="gys-wallet-guide__paper-title"><KeyIcon size="sm"/><span>{text.stepNames.protect}</span></div>
+            <div className="gys-wallet-guide__paper-lines"><i/><i/><i/><i/></div>
+            <span className="gys-wallet-guide__paper-mark">{verified ? <CheckIcon/> : <EditPencilIcon/>}</span>
+          </div>
+          <div className="gys-wallet-guide__recovery-caption">
+            <span><span>01</span>{text.recoveryChecklist[0]}</span>
+            <span><span>02</span>{text.recoveryChecklist[1]}</span>
+          </div>
+        </div>
+      )}
+      {step === 'balance' && (
+        <div className="gys-wallet-guide__balance-scene">
+          <div className="gys-wallet-guide__balance-mark"><WalletIcon size="xl"/></div>
+          <div className="gys-wallet-guide__balance-units" dir="ltr">
+            <span>sats</span><span>BTC</span><span>{getDisplayFiatCurrency()}</span>
+          </div>
+          <div className="gys-wallet-guide__balance-rule"><i/><i/><i/><i/><i/><i/><i/><i/><i/></div>
+        </div>
+      )}
+      {step === 'receive' && (
+        <div className="gys-wallet-guide__receive-scene">
+          <div className="gys-wallet-guide__receive-orbit"/>
+          <div className="gys-wallet-guide__receive-card">
+            <QrCodeIcon size="xl" className="gys-wallet-guide__qr-symbol"/>
+            <span><LightningBoltIcon size="xs"/>Lightning</span>
+          </div>
+          <span className="gys-wallet-guide__receive-token"><ArrowDownIcon size="lg"/></span>
+        </div>
+      )}
+      {step === 'pos' && (
+        <div className="gys-wallet-guide__pos-scene">
+          <div className="gys-wallet-guide__pos-device">
+            <span className="gys-wallet-guide__pos-screen"><QrCodeIcon size="xl"/></span>
+            <div className="gys-wallet-guide__pos-keys"><i/><i/><i/><i/><i/><i/></div>
+          </div>
+          <div className="gys-wallet-guide__pos-stages">
+            {text.posStages.map((label, index) => <span key={label}><i>{index + 1}</i>{label}</span>)}
+          </div>
+        </div>
+      )}
+      {step === 'identity' && (
+        <div className="gys-wallet-guide__identity-scene">
+          <span className="gys-wallet-guide__identity-at">@</span>
+          <div className="gys-wallet-guide__identity-card">
+            <strong>{text.stepNames.identity}</strong>
+            <span dir="ltr">@getyoursats.com</span>
+          </div>
+          {named && <span className="gys-wallet-guide__identity-check"><CheckIcon/></span>}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function WalletSetupTour({
-  step, recoveryMethod, recoveryStatus, hasNativeAddress,
-  onNext, onSkip, onReviewRecovery, onPersonalize,
+  step, recoveryMethod, recoveryStatus, hasNativeAddress, paused = false,
+  onNext, onSkip, onReviewRecovery, onPersonalize, onOpenReceive, onOpenPos,
 }: WalletSetupTourProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const boundsRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const bodyRef = useRef<HTMLDivElement>(null);
-  const footerRef = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState(false);
-  const [layout, setLayout] = useState<TourLayout>(centeredLayout);
-  const index = steps.indexOf(step);
-  const content = step === 'protect' ? recoveryCopy(recoveryMethod, recoveryStatus)
-    : step === 'balance' ? {
-      title: 'Your sats, at a glance',
-      body: 'Use the tabs below your balance to view sats, BTC or your display currency. Choose your currency in Settings.',
-      detail: 'Display preferences do not move your funds.',
-    }
-    : step === 'receive' ? {
-      title: 'Receive your first sats',
-      body: 'Open Receive to show your QR or copy your Lightning address. Share it with someone sending you sats.',
-      detail: 'Your wallet is ready to use while setup is unfinished.',
-    }
-    : hasNativeAddress ? {
-      title: 'Your name is ready',
-      body: 'Copy your GetYourSats address from Home or Receive whenever someone wants to send you sats.',
-      detail: 'You can revisit this tour in Settings.',
-    } : {
-      title: 'Make your address yours',
-      body: 'Verify an email in Settings to choose an available name for your GetYourSats address.',
-      detail: 'Email is optional and does not recover your wallet.',
-    };
-
-  // Let Dialog discover its application root before enabling modal isolation.
-  useLayoutEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Headless UI needs a committed closed render to identify the background root.
-    setReady(true);
-  }, []);
-
-  useBackButton(onSkip, ready);
-
-  useLayoutEffect(() => {
-    if (!ready) return;
-    let frame: number | null = null;
-    const target = document.querySelector<HTMLElement>(`[data-wallet-tour="${step}"]`);
-    const measure = () => {
-      frame = null;
-      const view = viewport();
-      const bounds = boundsRef.current;
-      const css = bounds ? getComputedStyle(bounds) : null;
-      const inset = (side: 'Top' | 'Right' | 'Bottom' | 'Left') => {
-        const value = Number.parseFloat(css?.[`padding${side}`] ?? '');
-        return Number.isFinite(value) ? Math.max(12, value) : 16;
-      };
-      const left = view.left + inset('Left');
-      const top = view.top + inset('Top');
-      const right = view.left + view.width - inset('Right');
-      const bottom = view.top + view.height - inset('Bottom');
-      const width = Math.max(0, Math.min(408, right - left));
-      const fullHeight = Math.max(0, bottom - top);
-      const measuredHeight = (headerRef.current?.offsetHeight ?? 0)
-        + (bodyRef.current?.scrollHeight ?? 0)
-        + (footerRef.current?.offsetHeight ?? 0) + 2;
-      const desiredHeight = Math.min(fullHeight, measuredHeight > 40 ? measuredHeight : 354);
-      const found = document.querySelector<HTMLElement>(`[data-wallet-tour="${step}"]`);
-      let anchor = found ? visibleTarget(found, view) : null;
-      let placement: TourLayout['placement'] = 'center';
-      let panel: Rect = {
-        left: left + (right - left - width) / 2,
-        top: top + (fullHeight - desiredHeight) / 2,
-        width,
-        height: desiredHeight,
-      };
-      const gap = 14;
-      if (anchor) {
-        const roomBelow = bottom - anchor.top - anchor.height - gap;
-        const roomAbove = anchor.top - top - gap;
-        const roomRight = right - anchor.left - anchor.width - gap;
-        const roomLeft = anchor.left - left - gap;
-        if (view.width >= 760 && (roomRight >= width || roomLeft >= width)) {
-          placement = 'beside';
-          panel = {
-            ...panel,
-            left: roomRight >= width ? anchor.left + anchor.width + gap : anchor.left - width - gap,
-            top: Math.max(top, Math.min(bottom - desiredHeight, anchor.top)),
-          };
-        } else if (Math.max(roomBelow, roomAbove) >= desiredHeight) {
-          const below = roomBelow >= desiredHeight;
-          placement = below ? 'below' : 'above';
-          panel = {
-            ...panel,
-            left: Math.max(left, Math.min(right - width, anchor.left + anchor.width / 2 - width / 2)),
-            top: below ? anchor.top + anchor.height + gap : anchor.top - desiredHeight - gap,
-          };
-        } else {
-          // Center the full card when a separate spotlight would hide actions.
-          anchor = null;
-        }
-      }
-      const next = {anchor, panel, placement};
-      setLayout(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next);
-    };
-    const schedule = () => {
-      if (frame === null) frame = requestAnimationFrame(measure);
-    };
-    if (target) {
-      const rect = target.getBoundingClientRect();
-      const view = viewport();
-      const visible = visibleTarget(target, view);
-      if (!visible || visible.height < rect.height || visible.width < rect.width) {
-        target.scrollIntoView?.({block: 'nearest', inline: 'nearest', behavior: 'instant'});
-      }
-    }
-    measure();
-    const resize = new ResizeObserver(schedule);
-    for (const element of [target, panelRef.current, boundsRef.current]) {
-      if (element) resize.observe(element);
-    }
-    const mutation = new MutationObserver(schedule);
-    const wallet = target?.closest('.gys-wallet');
-    if (wallet) mutation.observe(wallet, {childList: true, subtree: true});
-    window.addEventListener('resize', schedule);
-    window.addEventListener('scroll', schedule, true);
-    window.visualViewport?.addEventListener('resize', schedule);
-    window.visualViewport?.addEventListener('scroll', schedule);
-    return () => {
-      if (frame !== null) cancelAnimationFrame(frame);
-      resize.disconnect();
-      mutation.disconnect();
-      window.removeEventListener('resize', schedule);
-      window.removeEventListener('scroll', schedule, true);
-      window.visualViewport?.removeEventListener('resize', schedule);
-      window.visualViewport?.removeEventListener('scroll', schedule);
-    };
-  }, [ready, step, recoveryMethod, recoveryStatus, hasNativeAddress]);
-
-  const panelStyle: CSSProperties = {
-    left: layout.panel.left,
-    top: layout.panel.top,
-    width: layout.panel.width,
-    maxHeight: layout.panel.height,
-  };
-  const boundsStyle = {
-    '--gys-tour-safe-top': safeAreaTop,
-    '--gys-tour-safe-bottom': safeAreaBottom,
-  } as CSSProperties;
+  const {language} = usePresentation();
+  const text = walletSetupCopy(language);
+  // Motion's hook snapshots the preference at mount. Subscribe here so a device
+  // preference change also stops previews and chapter movement already on screen.
+  const reducedMotion = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, getServerReducedMotion);
+  const titleId = useId();
+  const index = WALLET_TOUR_STEPS.indexOf(step);
+  const verified = recoveryStatus === 'phrase-verified';
+  const content = step === 'protect' && verified ? text.verified
+    : step === 'identity' && hasNativeAddress ? text.named : text.steps[step];
+  const detail = step === 'protect' && !verified
+    ? recoveryMethod === 'passkey' ? text.passkeyDetail
+      : recoveryMethod === 'device' ? text.deviceDetail : content.detail
+    : content.detail;
+  const action = step === 'protect' && !verified ? {label: text.backupAction, run: onReviewRecovery}
+    : step === 'receive' ? {label: text.receiveAction, run: onOpenReceive}
+    : step === 'pos' ? {label: text.posAction, run: onOpenPos}
+    : step === 'identity' && !hasNativeAddress ? {label: text.nameAction, run: onPersonalize}
+    : null;
 
   return (
-    <Dialog open={ready} onClose={onSkip} className="gys-wallet-tour" aria-label="Wallet tour">
-      <div ref={boundsRef} className="gys-wallet-tour__bounds" style={boundsStyle} aria-hidden="true" />
-      {layout.anchor
-        ? <div className="gys-wallet-tour__spotlight" style={layout.anchor} aria-hidden="true" />
-        : <div className="gys-wallet-tour__scrim" aria-hidden="true" />}
-      <DialogPanel ref={panelRef} className="gys-wallet-tour__panel" style={panelStyle}
-        data-wallet-tour-step={step} data-placement={layout.placement}>
-        <div ref={headerRef} className="gys-wallet-tour__header">
-          <div className="gys-wallet-tour__eyebrow">
-            <DialogTitle as="span">Wallet tour</DialogTitle><span>{index + 1} of {steps.length}</span>
+    <section className="gys-wallet-guide" aria-label={text.guideLabel} dir={language === 'ar' ? 'rtl' : 'ltr'}
+      inert={paused || undefined} aria-hidden={paused || undefined} data-testid="wallet-setup-guide" data-wallet-tour-step={step}
+      data-paused={paused} data-motion={reducedMotion ? 'reduced' : 'full'}>
+      <header className="gys-wallet-guide__header">
+        <div className="gys-wallet-guide__label"><span className="gys-wallet-guide__brand-tick"/>{text.guideLabel}</div>
+        <button type="button" className="gys-wallet-guide__skip" onClick={onSkip} data-testid="wallet-setup-skip">{text.skip}</button>
+      </header>
+      <div className="gys-wallet-guide__progress-row">
+        <div className="gys-wallet-guide__progress" role="progressbar" aria-label={text.progressLabel}
+          aria-valuemin={1} aria-valuemax={WALLET_TOUR_STEPS.length} aria-valuenow={index + 1}
+          aria-valuetext={`${index + 1}/${WALLET_TOUR_STEPS.length}: ${text.stepNames[step]}`}>
+          {WALLET_TOUR_STEPS.map((item, position) => <span key={item} data-passed={position <= index}/>) }
+        </div>
+        <span className="gys-wallet-guide__count" aria-hidden="true">{index + 1}<span>/ {WALLET_TOUR_STEPS.length}</span></span>
+      </div>
+      <motion.div key={step} className="gys-wallet-guide__chapter"
+        initial={reducedMotion || paused ? false : {opacity: 0, y: 10}}
+        animate={{opacity: 1, y: 0}}
+        transition={{duration: reducedMotion || paused ? 0 : .24, ease: [.22, 1, .36, 1]}}>
+        <FeaturePreview step={step} language={language} text={text} verified={verified} named={hasNativeAddress}/>
+        <div className="gys-wallet-guide__copy">
+          <div className="gys-wallet-guide__heading">
+            <p className="gys-wallet-guide__chapter-label">{text.stepNames[step]}</p>
+            <h2 id={titleId}>{content.title}</h2>
           </div>
-          <div className="gys-wallet-tour__progress" role="progressbar" aria-label="Tour progress"
-            aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={index + 1}
-            aria-valuetext={`Step ${index + 1} of ${steps.length}: ${stepNames[index]}`}>
-            {steps.map((item, position) => <span key={item} data-passed={position <= index} />)}
-          </div>
+          <p className="gys-wallet-guide__description">{content.body}</p>
+          {step === 'language' && <div className="gys-wallet-guide__language-choice"><LanguageSelect/></div>}
+          {step !== 'language' && <p className="gys-wallet-guide__detail">
+            {step === 'protect' && verified && <ShieldCheckIcon size="sm"/>}{detail}
+          </p>}
         </div>
-        <div ref={bodyRef} className="gys-wallet-tour__body">
-          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-            Step {index + 1} of {steps.length}: {content.title}
-          </p>
-          <h2 className="gys-wallet-tour__title">{content.title}</h2>
-          <DialogDescription className="gys-wallet-tour__description">{content.body}</DialogDescription>
-          <p className="gys-wallet-tour__detail">{content.detail}</p>
-          {step === 'protect' && recoveryStatus !== 'phrase-verified' && (
-            <SecondaryButton className="gys-wallet-tour__context-action" onClick={onReviewRecovery}>
-              Review Recovery
-            </SecondaryButton>
-          )}
-          {step === 'identity' && !hasNativeAddress && (
-            <SecondaryButton className="gys-wallet-tour__context-action" onClick={onPersonalize}>
-              Choose My Name
-            </SecondaryButton>
-          )}
-        </div>
-        <div ref={footerRef} className="gys-wallet-tour__footer">
-          <PrimaryButton className="gys-wallet-tour__next" onClick={onNext} autoFocus data-autofocus>
-            {step === 'identity' ? 'Finish Tour' : 'Next'}
-          </PrimaryButton>
-          <button type="button" className="gys-wallet-tour__skip" onClick={onSkip}>Skip for now</button>
-        </div>
-      </DialogPanel>
-    </Dialog>
+      </motion.div>
+      <footer className="gys-wallet-guide__actions">
+        {action && <PrimaryButton key="context" className="gys-wallet-guide__action" data-testid="wallet-setup-action" onClick={action.run}>{action.label}</PrimaryButton>}
+        <PrimaryButton key="next" className="gys-wallet-guide__next" data-secondary={Boolean(action)}
+          data-testid="wallet-setup-next" onClick={onNext}>
+          <span>{step === WALLET_TOUR_STEPS[WALLET_TOUR_STEPS.length - 1] ? text.finish : text.next}</span>
+          <ChevronRightIcon size="sm" className="rtl:rotate-180"/>
+        </PrimaryButton>
+      </footer>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{index + 1}/{WALLET_TOUR_STEPS.length}: {content.title}</p>
+    </section>
   );
 }

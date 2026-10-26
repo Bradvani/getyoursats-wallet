@@ -1,7 +1,7 @@
 import {classifyLookupFailure} from '@/getyoursats/lookupFailure';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {paymentOutcome,type PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
 import type { PrepareSendPaymentResponse, FeePolicy, SendPaymentOptions, SdkEvent, ConversionOptions, InputType } from '@breeztech/breez-sdk-spark';
 import type { SendInput } from '@/types/domain';
 import { useWallet, useWalletInfo } from '../../../contexts/WalletContext';
@@ -61,6 +61,7 @@ export interface UseSendPaymentReturn {
   confirmDestination: (input: SendInput) => void;
   clearError: () => void;
   reset: () => void;
+  cancelPendingInput: () => void;
   processInput: (input?: string | null, opts?: ProcessInputOptions) => Promise<void>;
   onAmountNext: (amount: bigint, includeFees?: boolean, tokenIdentifier?: string, conversionOptions?: ConversionOptions) => Promise<void>;
   handleSend: (options?: SendPaymentOptions) => Promise<void>;
@@ -72,6 +73,7 @@ export interface UseSendPaymentReturn {
 export function useSendPayment(): UseSendPaymentReturn {
   const wallet = useWallet();
   const executionStarted = useRef(false);
+  const inputGeneration = useRef(0);
   const walletInfo = useWalletInfo();
   const stableBalance = useStableBalance();
 
@@ -87,6 +89,12 @@ export function useSendPayment(): UseSendPaymentReturn {
   const [amountFixed, setAmountFixed] = useState(false);
   const [tokenIdentifier, setTokenIdentifier] = useState<string | null>(null);
 
+  // An unmounted sheet or changed wallet cannot resume previous input work.
+  useLayoutEffect(() => () => {inputGeneration.current += 1;}, [wallet]);
+
+  const isCurrentInput = useCallback((generation: number) =>
+    generation === inputGeneration.current && !executionStarted.current, []);
+
   // Balance is read live from the wallet info context, which is auto-refreshed
   // by useBreezSdk on `synced`/`paymentSucceeded`/`claimedDeposits` events. We
   // don't snapshot it locally — that was the bug that caused validation to use
@@ -100,6 +108,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   }, [walletInfo, stableBalance.isActive, stableBalance.tokenIdentifier]);
 
   const prepareSend = useCallback(async (
+    generation: number,
     paymentRequest: string,
     amount: bigint,
     feePolicy?: FeePolicy,
@@ -110,6 +119,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     // surfaces on the confirm step (with the send action disabled) instead.
     errorStep: SendStep = 'amount',
   ) => {
+    if (!isCurrentInput(generation)) return;
     if (amount <= 0n) {
       setError('Please enter a valid amount');
       return;
@@ -124,9 +134,11 @@ export function useSendPayment(): UseSendPaymentReturn {
         tokenIdentifier,
         conversionOptions,
       });
+      if (!isCurrentInput(generation)) return;
       setPrepareResponse(response);
       setCurrentStep('workflow');
     } catch (err) {
+      if (!isCurrentInput(generation)) return;
       logger.error(LogCategory.PAYMENT, 'Failed to prepare payment', { error: formatError(err) });
       setError(`Failed to prepare payment: ${err instanceof Error ? err.message : 'Unknown error'}`);
       // Clear any stale response so the confirm step renders its prepare-failed
@@ -134,15 +146,17 @@ export function useSendPayment(): UseSendPaymentReturn {
       setPrepareResponse(null);
       setCurrentStep(errorStep);
     } finally {
-      setIsLoading(false);
+      if (isCurrentInput(generation)) setIsLoading(false);
     }
-  }, [wallet]);
+  }, [wallet, isCurrentInput]);
 
   const processInput = useCallback(async (input: string | null = null, opts?: ProcessInputOptions) => {
     if (executionStarted.current) return;
+    const generation = ++inputGeneration.current;
     const currentInput = (input || paymentInput?.rawInput)?.trim();
     if (!currentInput) {
       setError('Please enter a payment destination');
+      setIsLoading(false);
       return;
     }
 
@@ -158,6 +172,7 @@ export function useSendPayment(): UseSendPaymentReturn {
 
     try {
       const parseResult = await wallet.parse(currentInput);
+      if (!isCurrentInput(generation)) return;
 
       // Unwrap a BIP21 URI (bitcoin:<addr>?amount=&label=) to its underlying
       // payment method. The URI amount (sats) is used as the exact send amount.
@@ -219,7 +234,7 @@ export function useSendPayment(): UseSendPaymentReturn {
         }
         setAmountFixed(true);
         setAmount(String(fixedSats));
-        await prepareSend(paymentRequest, BigInt(fixedSats), undefined, undefined, undefined, 'workflow');
+        await prepareSend(generation, paymentRequest, BigInt(fixedSats), undefined, undefined, undefined, 'workflow');
       } else if (isPayableAmountType) {
         setAmountFixed(false);
         setCurrentStep('amount');
@@ -237,6 +252,7 @@ export function useSendPayment(): UseSendPaymentReturn {
         setCurrentStep('input');
       }
     } catch (err) {
+      if (!isCurrentInput(generation)) return;
       logger.warn(LogCategory.PAYMENT, 'Failed to parse payment input', { error: formatError(err) });
       if(/^[^\s@]+@[^\s@]+$/.test(currentInput)){
         const kind=classifyLookupFailure(err),text=trustCopy();
@@ -247,9 +263,9 @@ export function useSendPayment(): UseSendPaymentReturn {
         : 'Invalid payment destination'));
       }
     } finally {
-      setIsLoading(false);
+      if (isCurrentInput(generation)) setIsLoading(false);
     }
-  }, [wallet, paymentInput?.rawInput, prepareSend]);
+  }, [wallet, paymentInput?.rawInput, prepareSend, isCurrentInput]);
 
   const parsedInputType = paymentInput?.parsedInput.type;
   const onAmountNext = useCallback(async (
@@ -258,8 +274,11 @@ export function useSendPayment(): UseSendPaymentReturn {
     tokenIdentifier?: string,
     conversionOptions?: ConversionOptions,
   ) => {
+    if (executionStarted.current) return;
+    const generation = ++inputGeneration.current;
     if (amount <= 0n) {
       setError('Please enter a valid amount');
+      setIsLoading(false);
       return;
     }
     setFeesIncluded(!!includeFees);
@@ -273,6 +292,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     }
 
     await prepareSend(
+      generation,
       paymentInput?.paymentRequest || '',
       amount,
       includeFees ? 'feesIncluded' : undefined,
@@ -389,7 +409,9 @@ export function useSendPayment(): UseSendPaymentReturn {
   }, [wallet]);
 
   const reset = useCallback(() => {
-    executionStarted.current = false;
+    // Recipient changes can cancel lookups, never an authorized payment.
+    if (executionStarted.current) return;
+    inputGeneration.current += 1;
     setCurrentStep('input');
     setAmount('');
     setPrepareResponse(null);
@@ -401,6 +423,12 @@ export function useSendPayment(): UseSendPaymentReturn {
     setProcessingPhase('sending');
     setAmountFixed(false);
     setTokenIdentifier(null);
+  }, []);
+
+  const cancelPendingInput = useCallback(() => {
+    if (executionStarted.current) return;
+    inputGeneration.current += 1;
+    setIsLoading(false);
   }, []);
 
   // Return to the amount step from the cross-chain workflow. Clears `amount`
@@ -428,16 +456,20 @@ export function useSendPayment(): UseSendPaymentReturn {
     amountFixed,
     tokenIdentifier,
     confirmDestination: useCallback((input: SendInput) => {
+      if (executionStarted.current) return;
+      inputGeneration.current += 1;
       setPaymentInput(input);
       setAmount('');
       setPrepareResponse(null);
       setError(null);
+      setIsLoading(false);
       setTokenIdentifier(null);
       setFeesIncluded(false);
       setCurrentStep('amount');
     }, []),
     clearError: useCallback(() => setError(null), []),
     reset,
+    cancelPendingInput,
     processInput,
     onAmountNext,
     handleSend,

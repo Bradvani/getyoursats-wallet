@@ -100,6 +100,7 @@ const AppContent: React.FC = () => {
   const [userScreen, setUserScreen] = useState<Screen>('home');
   const [walletActionReturn, setWalletActionReturn] = useState<'wallet' | 'settings'>('settings');
   const [newWalletSetup, setNewWalletSetup] = useState<NewWalletSetup | null>(null);
+  const [walletGuideReplay, setWalletGuideReplay] = useState(0);
   const setupAttempt = useRef(0);
   const [setupIssue,setSetupIssue]=useState<string|null>(null);
   const serviceConfigured=isWalletServiceConfigured(
@@ -488,6 +489,7 @@ const AppContent: React.FC = () => {
       return (
         <Suspense fallback={<GlobalLoadingOverlay />}>
         <WalletPage
+          key={walletGuideReplay}
           walletInfo={sdk.walletInfo}
           transactions={sdk.transactions}
           unclaimedDeposits={sdk.unclaimedDeposits}
@@ -535,7 +537,11 @@ const AppContent: React.FC = () => {
         onOpenSecurity={() => setUserScreen('security')}
         onOpenBackup={() => { setWalletActionReturn('settings'); setUserScreen('backup'); }}
         onOpenEmail={() => { setWalletActionReturn('settings'); setUserScreen('email'); }}
-        onOpenWalletTour={walletSetup.scope ? () => { walletSetup.beginTour(true); setUserScreen('wallet'); } : undefined}
+        onOpenWalletTour={walletSetup.scope ? () => {
+          walletSetup.beginTour(true);
+          setWalletGuideReplay(value => value + 1);
+          setUserScreen('wallet');
+        } : undefined}
         onOpenUnilateralExit={() => setUserScreen('unilateralExit')}
       />
     );

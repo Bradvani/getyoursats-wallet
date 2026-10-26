@@ -2,6 +2,7 @@ import {usePresentation} from '@/hooks/usePresentation';
 import {sendDestinationCopy} from '@/locales/sendDestination';
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import React, { useEffect, useMemo, useState } from 'react';
+import {motion, useReducedMotion} from 'motion/react';
 import { DialogHeader, BottomSheetContainer, BottomSheetCard } from '../../components/ui';
 import { useWallet } from '../../contexts/WalletContext';
 import { useContactsContext } from '../../contexts/ContactsContext';
@@ -27,7 +28,8 @@ import { holdIdleLock } from '@/services/appLock';
 import { PrepareLnurlPayRequest } from '@breeztech/breez-sdk-spark';
 import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
-import { ArrowUpIcon, ArrowDownIcon } from '@/components/Icons';
+import { ArrowUpIcon, ArrowDownIcon, SpinnerIcon } from '@/components/Icons';
+import {trustCopy} from '@/getyoursats/trustCopy';
 import { useSendPayment } from './hooks/useSendPayment';
 import { getPaymentMethodName, getLnurlPayRequestDetails, getSendLightningAddress, getLnurlAuthRequestDetails, getLnurlWithdrawRequestDetails } from './utils';
 
@@ -35,17 +37,25 @@ interface SendPaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   initialRawInput?: string | null;
+  initialInputId?: number;
+  coveredByScanner?: boolean;
   onScanQr?: () => void;
   onSuccessfulSend?: (lightningAddress?: string) => void;
 }
 
-const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, initialRawInput, onScanQr, onSuccessfulSend }) => {
+const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
+  isOpen, onClose, initialRawInput, initialInputId, coveredByScanner = false, onScanQr, onSuccessfulSend,
+}) => {
   const wallet = useWallet();
   const [destination, setDestination] = useState<StablecoinDestination | null>(null);
   const send = useSendPayment();
   const { findContactByAddress } = useContactsContext();
   const [showContactsView, setShowContactsView] = useState(false);
   const [selectedContactAddress, setSelectedContactAddress] = useState<string | null>(null);
+  const [resolvedInput, setResolvedInput] = useState<string | number | null>(null);
+  const inputRequest = initialRawInput ? initialInputId ?? initialRawInput : null;
+  const resolvingInput = inputRequest !== null && resolvedInput !== inputRequest;
+  const reducedMotion = useReducedMotion();
 
   // Publish sheet visibility so the SDK event handler knows whether this
   // sheet is still around to report the payment outcome (it is dismissible
@@ -53,10 +63,10 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
   // dialog closed, so a mount-scoped flag would read as open for the whole
   // session and suppress the outcome report it exists to trigger.
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || coveredByScanner) return;
     setSendSheetOpen(true);
     return () => setSendSheetOpen(false);
-  }, [isOpen]);
+  }, [isOpen, coveredByScanner]);
 
   // Hold the idle lock while the sheet is up: reading the recipient and
   // fee before confirming, and waiting out a payment in flight, are both
@@ -66,23 +76,33 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
     return holdIdleLock();
   }, [isOpen]);
 
-  // Parent (WalletPage) bumps `sendDialogSession` on every open and passes
-  // it as `key`, so each open is a fresh mount: hooks re-init, useState
-  // returns defaults, no reset-in-effect needed. We only need an effect
-  // to consume `initialRawInput` on first mount.
+  // The sheet stays mounted beneath the camera. A request ID distinguishes
+  // deliberate rescans while its resolving state replaces the entry form.
   useEffect(() => {
-    if (!initialRawInput) return;
+    if (!isOpen || !initialRawInput || inputRequest === null) return;
+    let active = true;
     void (async () => {
       try {
+        // A failed rescan must not reveal a recipient or workflow from before
+        // the camera opened. The resolving view already covers this reset.
+        send.reset();
         await send.processInput(initialRawInput, { requireReview: true });
       } catch (err) {
         logger.error(LogCategory.PAYMENT, 'Failed to process initial payment input', {
           error: formatError(err),
         });
+      } finally {
+        if (active) {
+          setSelectedContactAddress(null);
+          setShowContactsView(false);
+          setDestination(null);
+          setResolvedInput(inputRequest);
+        }
       }
     })();
+    return () => {active = false;};
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialRawInput]);
+  }, [isOpen, initialRawInput, inputRequest]);
 
   // A successful send to a lightning address that isn't a contact yet, for
   // the save prompt. Keyed on whatever the destination RESOLVED to, not on
@@ -101,6 +121,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
   }, [send.paymentResult, send.paymentInput, findContactByAddress]);
 
   const handleClose = () => {
+    send.cancelPendingInput();
     if (lightningAddressForSave) {
       onSuccessfulSend?.(lightningAddressForSave);
     }
@@ -117,7 +138,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
   const {language}=usePresentation();
   const ux=PAYMENT_UX[language];
   const destinationText=sendDestinationCopy(language);
-  const dialogTitle = send.currentStep === 'destination' ? destinationText.title : send.currentStep === 'input'
+  const dialogTitle = resolvingInput ? ux.recipient : send.currentStep === 'destination' ? destinationText.title : send.currentStep === 'input'
     ? 'Send BTC or USD'
     : getLnurlPayRequestDetails(send.paymentInput) ? ux.pay : getPaymentMethodName(send.paymentInput);
 
@@ -135,7 +156,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
   // The input step is always the send entry point, so it keeps the send icon
   // even when a scanned LNURL is still in paymentInput (e.g. after Back). Past
   // it, withdraw reads as a receive and a login moves no money at all.
-  const workflowType = send.currentStep === 'input' ? null : send.paymentInput?.parsedInput.type;
+  const workflowType = resolvingInput || send.currentStep === 'input' ? null : send.paymentInput?.parsedInput.type;
   const headerIcon = workflowType === 'lnurlWithdraw' ? <ArrowDownIcon /> : workflowType === 'lnurlAuth' ? undefined : <ArrowUpIcon />;
 
   const lnurlPayDetails = getLnurlPayRequestDetails(send.paymentInput);
@@ -151,7 +172,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
   return (
     <BottomSheetContainer isOpen={isOpen} onClose={handleClose} showBackdrop>
       <BottomSheetCard>
-        <div className="relative overflow-x-clip">
+        <div className="relative overflow-x-clip" data-testid="send-flow" inert={coveredByScanner} aria-hidden={coveredByScanner || undefined}>
           {/* Contacts sub-view — slides in from right */}
           <div
             className={`transition-all duration-200 ease-out ${
@@ -185,6 +206,24 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
               icon={headerIcon}
             />
 
+            <motion.div key={resolvingInput ? 'resolving' : send.currentStep}
+              data-send-stage={resolvingInput ? 'resolving' : send.currentStep}
+              initial={reducedMotion ? false : {opacity: 0, y: 6}}
+              animate={{opacity: 1, y: 0}}
+              transition={{duration: reducedMotion ? 0 : 0.18, ease: 'easeOut'}}>
+            {resolvingInput ? (
+              <div className="flex min-h-72 flex-col justify-center gap-6 py-8" role="status" aria-busy="true" data-testid="send-resolving-input">
+                <div className="flex items-center justify-center gap-3 text-sm text-spark-text-secondary">
+                  <SpinnerIcon className="animate-spin motion-reduce:animate-none text-spark-primary"/>
+                  <span>{trustCopy(language).checking}</span>
+                </div>
+                <div className="space-y-3 rounded-2xl border border-spark-border bg-spark-dark p-5" aria-hidden="true">
+                  <div className="h-3 w-24 rounded-full bg-spark-border animate-pulse motion-reduce:animate-none"/>
+                  <div className="h-8 w-2/3 rounded-lg bg-spark-border/60 animate-pulse motion-reduce:animate-none"/>
+                  <div className="h-3 w-1/2 rounded-full bg-spark-border/60 animate-pulse motion-reduce:animate-none"/>
+                </div>
+              </div>
+            ) : <>
             {send.currentStep === 'input' && (
               <InputStep
                 // Remount on contact-selection change so InputStep
@@ -194,12 +233,13 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
                 // here for review shows the payload it scanned.
                 paymentInput={send.paymentInput?.rawInput || initialRawInput || ''}
                 selectedContactAddress={selectedContactAddress}
+                suspended={coveredByScanner || !isOpen}
                 isLoading={send.isLoading}
                 error={send.error}
                 onClearError={send.clearError}
                 onContinue={(input, opts) => send.processInput(input, opts)}
                 onStablecoin={() => { setDestination(null); send.reset(); send.setCurrentStep('destination'); }}
-                onScanQr={onScanQr}
+                onScanQr={onScanQr ? () => {send.cancelPendingInput(); onScanQr();} : undefined}
                 onOpenContacts={() => {
                   setSelectedContactAddress(null);
                   setShowContactsView(true);
@@ -356,6 +396,8 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({ isOpen, onClose, 
                 onClose={handleClose}
               />
             )}
+            </>}
+            </motion.div>
           </div>
         </div>
       </BottomSheetCard>
