@@ -54,6 +54,7 @@ jobs:
           set -euo pipefail
           cargo test --locked -p breez-sdk-spark incoming_claim_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/incoming-rust-tests.log
           cargo test --locked -p breez-sdk-spark mature_deposit_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/mature-deposit-rust-tests.log
+          cargo test --locked -p breez-sdk-spark outspend_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/outspend-rust-tests.log
           cargo test --locked -p breez-sdk-spark signed_recovery_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/refund-rust-tests.log
           cargo test --locked -p breez-sdk-spark seed_factory --lib 2>&1 | tee /tmp/recovery-sdk-evidence/seed-rust-tests.log
           cargo test --locked -p breez-sdk-spark observation_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/observation-rust-tests.log

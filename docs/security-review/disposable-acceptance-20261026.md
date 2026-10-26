@@ -1,6 +1,6 @@
 # Disposable-wallet acceptance continuation — 26 October 2026
 
-**Direct Spark regtest settlement acceptance passed. Full product acceptance remains incomplete and production remains NO-GO.**
+**Direct Spark settlement and a cooperative Bitcoin exit passed on public regtest. Full product acceptance remains incomplete and production remains NO-GO.**
 
 The source continuation starts at `4664c6d1358ecc2389f0b9df3df18b84ab27a192` on PR #43. This work does not merge PR #43 or #46, deploy production, or authorize use of user funds. The public-regtest run used two newly generated disposable wallet identities, the actual compiled browser SDK, encrypted browser vaults and the operation gateway. It supplied no Breez API key or user credentials. That initial run reached no funded send, claim, refund or exit. Later human-funded attempts are recorded below.
 
@@ -85,3 +85,20 @@ Tested package SHA-256: `59db0896e6d7913c5c7002d158a3dbb5321cdcbf1720d44f0094927
 Tested browser WASM SHA-256: `02c67174cda118f747fe2da5fc1ac3729e20557a2bc3cb0b5c6084d7ce2152b8`.
 
 The result is deliberately `PASS_DIRECT_SPARK_ACCEPTANCE_ONLY`, with `fullProductAcceptance: false`. Approval was supplied by the regtest fixture. This run does not establish exit/refund/deposit/Lightning acceptance, biometric approval, a fresh-device seed restore, physical iPhone/Android behavior, rollback acceptance or independent security approval. The retained profiles contain only disposable valueless-regtest wallets and are not published. Do not fund their historical addresses.
+
+## Cooperative Bitcoin exit and mature-deposit continuation
+
+Source commit `ac6aea94eee86db378f52f6430c631e81ae01aa9` adds a separate bounded mature-deposit SDK method, foreground authorization, durable browser and SDK attempt records, and read-only receipt reconciliation. It checks the exact outpoint, identity, network, amount, confirmation depth, fee ceiling and expiry. It never invokes the general deposit-claim API, early credit or a saved fee mandate. The browser exposes this controller only in development on regtest. Production deposit claims remain disabled.
+
+The application suite passed **1,155 tests with 1 skipped**, TypeScript and the preview build. Lint had zero errors and nine existing warnings. Eleven mature-deposit Rust checks and the compiled signer/API/hash checks passed in the sandbox. These checks are distinct from the pending GitHub rebuild of the package.
+
+The retained sender withdrew **5,000 regtest sats** to the second wallet's Bitcoin address, paying **2,430 sats**. Payment `5cb42e09-27bc-4c1d-829c-9075dfa65e1f` links to confirmed transaction `c49b23b1e762fcf7add88f0e8741c7d6c54f3ae5ff83a5a719d45c65ba2a2b6c`, output 0, block 3657960. The sender balance became 2,520 sats. Its history and durable outgoing journal both subsequently became completed. The first immediate journal check was still pending; a fresh observation after restarting reconciled it without another send. The runner now polls reconciliation and supports continuing from the saved withdrawal receipt without submitting another withdrawal.
+
+- Initial receipt: `evidence/cooperative-exit-first-20261026.json`, SHA-256 `093ea5d6b8b751c2b43d0bee62672eb82db69c30f468b37a85380e7d659b97dd`.
+- Resumed receipt: `evidence/cooperative-exit-deposit-blocked-20261026.json`, SHA-256 `b56fa75ff5aa206bd760908887dde19140e630c27581b3ec479c5573e8616f73`. Its cooperative-exit step is PASS; its overall result is BLOCKED because the mature-deposit claim did not settle.
+
+The deposit quoted a 99-sat fee and 4,901-sat credit at seven confirmations. After one explicit approval, the browser retained an uncertain record; no completed operator receipt or spendable credit was observed. Read-only inspection found no SDK attempt marker and no matching deposit receipt. The browser record was preserved, and the claim was not resubmitted. This is not a successful interruption-recovery test or proof that clearing an uncertain record would be safe.
+
+Read-only backend diagnostics found HTTP 404 at `/tx/<txid>/outspend/0`, while `/tx/<txid>/outspends` returned a valid array identifying output 0 as unspent. The SDK requires the former check before persisting its attempt marker. The compatibility correction falls back to the transaction-wide response only after a 404, selects the exact output index, and rejects missing, malformed, spent or unavailable evidence. Five new Rust cases plus one related existing case passed. This source correction requires a new compiled package and fresh funded acceptance. Diagnostic evidence is in `evidence/deposit-readonly-diagnostic-20261026.log`.
+
+The receipts pin the sandbox's actual SDK artifacts, not a later GitHub rebuild. The first mature package is `1cd66fea863c4e8989b713f6acf84ad75bac572c29640f0ec1fc260f374e6d64`; its source patch is `a5e0a2261470a91eeeab2fcc4f3e92d069006bcf207b47b8daae5646d55282ad`. Fixture approval is not physical-device biometric acceptance. The original uncertain deposit remains quarantined; fresh/rebuilt unilateral exits, bounded Lightning receiving, physical-device recovery, rollback acceptance and independent security approval remain open.

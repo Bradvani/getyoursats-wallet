@@ -24,6 +24,7 @@ cargo test --locked -p breez-sdk-spark observation_ --lib
 cargo test --locked -p breez-sdk-spark signed_recovery_ --lib
 cargo test --locked -p breez-sdk-spark incoming_claim_ --lib
 cargo test --locked -p breez-sdk-spark mature_deposit_ --lib
+cargo test --locked -p breez-sdk-spark outspend_ --lib
 cargo build --locked -p breez-sdk-spark-wasm --target wasm32-unknown-unknown --release
 baseline=$(mktemp)
 trap 'rm -f "$baseline"' EXIT

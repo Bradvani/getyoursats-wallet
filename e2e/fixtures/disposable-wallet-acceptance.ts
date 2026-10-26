@@ -45,14 +45,15 @@ const fixture={
   if(p.paymentMethod.type!=='bitcoinAddress')throw Error('Expected a Bitcoin quote');
   return p.paymentMethod.feeQuote;
  },
- async bitcoinSend(input:{address:string;amount:number;maxFeeSats:number}){
+ async bitcoinSend(input:{address:string;amount:number;maxFeeSats:number;speed?:'fast'|'slow'}){
   const w=current(),{address,amount,maxFeeSats}=input;
+  const speed=input.speed??'fast';if(speed!=='fast'&&speed!=='slow')throw Error('Invalid disposable confirmation speed');
   if(!address.startsWith('bcrt1')||!Number.isSafeInteger(amount)||amount<=0||amount>5000||!Number.isSafeInteger(maxFeeSats)||maxFeeSats<0||maxFeeSats>3000)throw Error('Invalid disposable withdrawal');
   const p=await w.prepareSendPayment({paymentRequest:{type:'input',input:address},amount:BigInt(amount),feePolicy:'feesExcluded'});
   if(p.paymentMethod.type!=='bitcoinAddress'||p.paymentMethod.feeQuote.isEstimate)throw Error('An exact Bitcoin quote is required');
-  const q=p.paymentMethod.feeQuote.speedFast;
+  const q=speed==='slow'?p.paymentMethod.feeQuote.speedSlow:p.paymentMethod.feeQuote.speedFast;
   if(q.userFeeSat+q.l1BroadcastFeeSat>maxFeeSats)throw Error('Disposable withdrawal exceeds its fee cap');
-  const r=await w.sendPayment({prepareResponse:p,options:{type:'bitcoinAddress',confirmationSpeed:'fast'}});
+  const r=await w.sendPayment({prepareResponse:p,options:{type:'bitcoinAddress',confirmationSpeed:speed}});
   return {id:r.payment.id,amount:String(r.payment.amount),fee:String(r.payment.fees),status:r.payment.status};
  },
  async depositAddress(){

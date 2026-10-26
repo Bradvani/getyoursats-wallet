@@ -1,3 +1,73 @@
+diff --git a/crates/breez-sdk/core/src/chain/rest_client.rs b/crates/breez-sdk/core/src/chain/rest_client.rs
+index 849e45ecee29eb14abde96e74acdd908c5a6f52c..ad5e55b2c2b33dfef3e66f04c65cffc0dda72fbe 100644
+--- a/crates/breez-sdk/core/src/chain/rest_client.rs
++++ b/crates/breez-sdk/core/src/chain/rest_client.rs
+@@ -423,10 +423,21 @@ impl RestClientChainServiceInner {
+         txid: String,
+         vout: u32,
+     ) -> Result<Outspend, ChainServiceError> {
+-        let outspend = self
++        match self
+             .get_response_json::<Outspend>(format!("/tx/{txid}/outspend/{vout}").as_str())
+-            .await?;
+-        Ok(outspend)
++            .await
++        {
++            Ok(outspend) => Ok(outspend),
++            // Some Esplora-compatible backends expose only the transaction-wide
++            // endpoint. A 404 is never itself evidence that an output is unspent.
++            Err(ChainServiceError::NotFound(_)) => {
++                let outputs = self.get_response_json::<Vec<Outspend>>(
++                    format!("/tx/{txid}/outspends").as_str()).await?;
++                outputs.into_iter().nth(vout as usize).ok_or_else(||
++                    ChainServiceError::NotFound("Outspend response omits the requested output".into()))
++            },
++            Err(error) => Err(error),
++        }
+     }
+ 
+     /// Safe to retry: a re-broadcast of a transaction the server did accept is
+@@ -528,6 +539,40 @@ mod tests {
+     #[cfg(test)]
+     use breez_sdk_common::test_utils::mock_rest_client::{MockResponse, MockRestClient};
+ 
++    async fn outspend_service(responses: Vec<(u16, &str)>) -> RestClientChainService {
++        let mock = MockRestClient::new();
++        for (status, body) in responses { mock.add_response(MockResponse::new(status, body.into())); }
++        RestClientChainService::new("http://localhost:8080".into(), Network::Regtest, 0,
++            Arc::new(mock), None, ChainApiType::Esplora)
++    }
++    #[async_test_all]
++    async fn outspend_404_falls_back_to_exact_bulk_index() {
++        let service = outspend_service(vec![(404,"missing route"),(200,r#"[{"spent":true,"txid":"other","vin":0,"status":{"confirmed":false}},{"spent":false}]"#)]).await;
++        assert_eq!(service.get_outspend("funding".into(),1).await.unwrap(),Outspend::Unspent);
++    }
++    #[async_test_all]
++    async fn outspend_404_never_implies_unspent() {
++        for body in ["[]", "{}", r#"[{"spent":true}]"#] {
++            let service = outspend_service(vec![(404,"missing route"),(200,body)]).await;
++            assert!(service.get_outspend("funding".into(),0).await.is_err());
++        }
++    }
++    #[async_test_all]
++    async fn outspend_fallback_preserves_spent_evidence() {
++        let service = outspend_service(vec![(404,"missing route"),(200,r#"[{"spent":true,"txid":"spending","vin":2,"status":{"confirmed":false}}]"#)]).await;
++        assert!(matches!(service.get_outspend("funding".into(),0).await.unwrap(),Outspend::Spent{vin:2,..}));
++    }
++    #[async_test_all]
++    async fn outspend_connectivity_error_is_not_a_fallback() {
++        let service = outspend_service(vec![(503,"offline"),(200,r#"[{"spent":false}]"#)]).await;
++        assert!(service.get_outspend("funding".into(),0).await.is_err());
++    }
++    #[async_test_all]
++    async fn outspend_primary_result_does_not_need_fallback() {
++        let service = outspend_service(vec![(200,r#"{"spent":false}"#)]).await;
++        assert_eq!(service.get_outspend("funding".into(),0).await.unwrap(),Outspend::Unspent);
++    }
++
+     #[async_test_all]
+     async fn test_get_address_utxos() {
+         // Mock JSON response from the actual API call
 diff --git a/crates/breez-sdk/core/src/lib.rs b/crates/breez-sdk/core/src/lib.rs
 index c6647728ca00b05a4e247a78f956daeec7b85245..83e5f77234434f9efaa399ad6409780e0a6ba14b 100644
 --- a/crates/breez-sdk/core/src/lib.rs
