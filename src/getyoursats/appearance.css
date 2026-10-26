@@ -150,61 +150,79 @@
  color:#9A4B00;font-weight:780;overflow-wrap:anywhere;text-align:left;
 }
 :root[data-gys-theme="orange"] .gys-wallet__address .gys-address-banner__pending{color:#65584D}
+/* Home cards use the same warm surfaces as the balance and address. */
 :root[data-gys-theme="orange"] .gys-home-quick-actions__button:not(:disabled){
- background:#141311;border-color:#141311;color:#FAF9F6;
- box-shadow:0 8px 20px rgba(25,18,11,.13);
+ background:var(--gys-paper);border-color:var(--gys-line);color:var(--gys-dark-text);
+ box-shadow:0 7px 24px rgba(68,47,18,.055);
 }
 :root[data-gys-theme="orange"] .gys-home-quick-actions__button:not(:disabled):hover{
- background:#292019;border-color:#F7931A;
+ background:#FFF1DD;border-color:#D4781B;
 }
-:root[data-gys-theme="orange"] .gys-home-quick-actions__button:not(:disabled)
- .gys-home-quick-actions__text small{color:#C8C0B6}
-:root[data-gys-theme="orange"] .gys-home-quick-actions__button:not(:disabled)
- .gys-home-quick-actions__icon{background:#312314;color:#F7931A}
+:root[data-gys-theme="orange"] .gys-home-quick-actions__text small{color:var(--gys-muted-text)}
+:root[data-gys-theme="orange"] .gys-home-quick-actions__icon{background:#FBE8CE;color:#9A4B00}
 :root[data-gys-theme="orange"] .gys-home-quick-actions__button:disabled,
 :root[data-gys-theme="orange"] .gys-home-quick-actions__button:disabled:hover{
  opacity:1;transform:none;cursor:not-allowed;
- color:#554A40;background:#ECE3D8;border-color:#D6CABE;
- box-shadow:none;
+ color:#554A40;background:#ECE3D8;border-color:#D6CABE;box-shadow:none;
 }
 :root[data-gys-theme="orange"] .gys-home-quick-actions__button:disabled
  .gys-home-quick-actions__icon{background:#E1D1BE;color:#9F601E}
 :root[data-gys-theme="orange"] .gys-home-quick-actions__button:disabled
  .gys-home-quick-actions__text small{color:#756557}
-/* Two editorial dark islands create contrast within the warm shell.
-   Their components retain light foreground tokens, so nested tabs/inputs
-   never inherit dark text from the surrounding Orange palette. */
+:root[data-gys-theme="orange"] .gys-activity{
+ --color-spark-success:#17683F;--color-spark-electric:#9A4B00;
+}
 :root[data-gys-theme="orange"] .gys-activity,
 :root[data-gys-theme="orange"] .gys-market-pulse{
- --color-spark-text-primary:#F8F6F1;--color-spark-text-secondary:#D4CDC3;
- --color-spark-text-muted:#AAA398;--color-spark-dark:#191817;
- --color-spark-surface:#1F1E1B;--color-spark-border:#44413C;
- color:#F7F3EC;border:1px solid #292522;
- background:linear-gradient(155deg,#242321,#141413 86%);
- box-shadow:0 16px 36px rgba(39,28,12,.17);
+ color:var(--gys-dark-text);border:1px solid var(--gys-line);
+ background:var(--gys-paper);box-shadow:0 7px 24px rgba(68,47,18,.055);
 }
 :root[data-gys-theme="orange"] .gys-activity__heading h2,
 :root[data-gys-theme="orange"] .gys-activity__event-text strong,
+:root[data-gys-theme="orange"] .gys-activity__amount,
 :root[data-gys-theme="orange"] .gys-activity__empty strong,
-:root[data-gys-theme="orange"] .gys-market-pulse__price{
- color:#FAF9F6;
-}
-:root[data-gys-theme="orange"] .gys-activity__tabs{background:#0E0E0E;border:1px solid #32302C}
-:root[data-gys-theme="orange"] .gys-activity__tabs button{color:#CAC2B7}
+:root[data-gys-theme="orange"] .gys-market-pulse__price{color:var(--gys-dark-text)}
+:root[data-gys-theme="orange"] .gys-activity__tabs{background:#F3ECE0;border:1px solid var(--gys-line)}
+:root[data-gys-theme="orange"] .gys-activity__tabs button{color:var(--gys-muted-text)}
 :root[data-gys-theme="orange"] .gys-activity__tabs button[aria-selected=true]{
- color:#FDB65D;background:#302415;border-color:#775122;
+ color:#803C00;background:#FBE8CE;border-color:#D8AD78;box-shadow:none;
 }
+:root[data-gys-theme="orange"] .gys-activity__tabs button span{background:#E8D5BA;color:#493B2D}
 :root[data-gys-theme="orange"] .gys-activity__summary,
-:root[data-gys-theme="orange"] .gys-activity__event-text small{
- color:#B7B0A6;
-}
+:root[data-gys-theme="orange"] .gys-activity__event-text small,
+:root[data-gys-theme="orange"] .gys-activity__status,
+:root[data-gys-theme="orange"] .gys-activity__empty p,
+:root[data-gys-theme="orange"] .gys-history-controls label,
+:root[data-gys-theme="orange"] .gys-history-controls__footer,
+:root[data-gys-theme="orange"] .gys-history-controls__empty,
+:root[data-gys-theme="orange"] .gys-market-pulse__unit,
+:root[data-gys-theme="orange"] .gys-market-pulse__bottom{color:var(--gys-muted-text)}
+:root[data-gys-theme="orange"] .gys-activity__eyebrow,
+:root[data-gys-theme="orange"] .gys-activity__heading h2 span,
+:root[data-gys-theme="orange"] .gys-activity__status--pending,
+:root[data-gys-theme="orange"] .gys-activity__event-icon,
+:root[data-gys-theme="orange"] .gys-activity__empty>span,
+:root[data-gys-theme="orange"] .gys-activity__history-link,
+:root[data-gys-theme="orange"] .gys-history-controls__footer button,
+:root[data-gys-theme="orange"] .gys-history-controls__empty button,
+:root[data-gys-theme="orange"] .gys-market-pulse__tag,
+:root[data-gys-theme="orange"] .gys-market-pulse__bottom button{color:#9A4B00}
+:root[data-gys-theme="orange"] .gys-activity__event-icon--in{color:#17683F;background:#E5F2E8}
+:root[data-gys-theme="orange"] .gys-activity__feed li,
+:root[data-gys-theme="orange"] .gys-activity__history-link,
+:root[data-gys-theme="orange"] .gys-market-pulse__bottom{border-color:var(--gys-line)}
+:root[data-gys-theme="orange"] .gys-activity__feed li button:hover,
+:root[data-gys-theme="orange"] .gys-activity__feed li button:focus-visible{background:#F3ECE0}
+:root[data-gys-theme="orange"] .gys-activity__refresh{color:#9A4B00;background:#FFF1DD;border-color:var(--gys-line)}
 :root[data-gys-theme="orange"] .gys-activity .gys-history-controls input,
 :root[data-gys-theme="orange"] .gys-activity .gys-history-controls select{
- color:#FAF9F6;background:#151514;border-color:#5F5041;
+ color:var(--gys-dark-text);background:var(--gys-paper);border-color:#CFC2B1;
 }
-:root[data-gys-theme="orange"] .gys-activity .gys-history-controls input::placeholder{color:#A39B90}
-:root[data-gys-theme="orange"] .gys-market-pulse__switches button{color:#EEE3D0;background:#302A22;border-color:#62513D}
-:root[data-gys-theme="orange"] .gys-market-pulse__bottom{color:#BAB4A9}
+:root[data-gys-theme="orange"] .gys-activity .gys-history-controls input::placeholder{color:var(--gys-muted-text)}
+:root[data-gys-theme="orange"] .gys-market-pulse__switches button,
+:root[data-gys-theme="orange"] .gys-market-pulse__denominations button:not([aria-pressed=true]){
+ color:#493B2D;background:#F3ECE0;border-color:var(--gys-line);
+}
 :root[data-gys-theme="orange"] .gys-action-dock{
  background:#FFFAF2;border-top:1px solid #DCCBB6;
  box-shadow:0 -11px 30px rgba(53,37,16,.09);
@@ -331,10 +349,4 @@
 @media(prefers-reduced-motion:reduce){
  :root[data-gys-theme="orange"] .gys-action-dock button,
  :root[data-gys-theme="orange"] .gys-home-quick-actions__button{transition:none}
-}
-
-/* Activity is deliberately dark in the warm theme: its figures must not
-   inherit the surrounding light-surface foreground color. */
-:root[data-gys-theme="orange"] .gys-activity .gys-activity__amount{
- color:#FAF9F6;
 }

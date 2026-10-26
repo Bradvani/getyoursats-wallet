@@ -11,6 +11,7 @@
  * here: a render bug must never be a route to deleting an account.
  */
 
+import StartupLogo from '@/components/StartupLogo';
 import React from 'react';
 import { logger, LogCategory } from '../services/logger';
 
@@ -41,7 +42,7 @@ class AppErrorBoundary extends React.Component<Props, State> {
 
     return (
       <div className="min-h-dvh w-full flex flex-col items-center justify-center gap-6 bg-spark-surface px-6 text-center">
-        <img src="/brand/wordmark-stacked-dark.svg" alt="GetYourSats" className="w-24 h-24 object-contain" />
+        <StartupLogo className="w-24 h-24 object-contain" />
         <div className="space-y-2">
           <h1 className="font-display text-xl font-bold text-spark-text-primary">
             Something went wrong

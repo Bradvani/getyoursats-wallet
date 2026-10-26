@@ -42,6 +42,11 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
     send:get('.gys-action-dock__send'),
     activity:get('.gys-activity'),
     activityTitle:get('.gys-activity__heading h2'),
+    market:get('.gys-market-pulse'),
+    price:get('.gys-market-pulse__price'),
+    marketUnit:get('.gys-market-pulse__unit'),
+    amount:get('.gys-activity__amount'),
+    status:get('.gys-activity__status'),
     unit:get('.gys-unit-switch button[aria-pressed="true"]'),
    };
   });
@@ -51,8 +56,15 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
   expect(contrast(styles.receive.color,styles.receive.background)).toBeGreaterThan(4.5);
   expect(contrast(styles.send.color,styles.send.background)).toBeGreaterThan(4.5);
   expect(contrast(styles.unit.color,styles.unit.background)).toBeGreaterThan(4.5);
+  expect(styles.market.background).toBe(styles.activity.background);
+  expect(contrast(styles.price.color,styles.market.background)).toBeGreaterThan(7);
+  expect(contrast(styles.marketUnit.color,styles.market.background)).toBeGreaterThan(4.5);
+  expect(contrast(styles.amount.color,styles.activity.background)).toBeGreaterThan(7);
+  expect(contrast(styles.status.color,styles.activity.background)).toBeGreaterThan(4.5);
   expect(styles.veil.background).not.toBe('rgb(11, 11, 11)');
-  expect(styles.activity.image).toContain('gradient');
+  expect(styles.activity.image).toBe('none');
+  expect(styles.activity.background).toBe(styles.merchant.background);
+  expect(contrast(styles.activityTitle.color,styles.activity.background)).toBeGreaterThan(7);
   await expect(page.locator('.gys-wallet-balance-surface__toolbar img.gys-brand-wordmark--compact'))
     .toHaveAttribute('src','/brand/wordmark-horizontal-light.svg');
   await expect(page.getByRole('button',{name:'Send Bitcoin'})).toBeVisible();

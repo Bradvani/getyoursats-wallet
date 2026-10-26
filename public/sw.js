@@ -1,16 +1,17 @@
 const CACHE_PREFIX = 'getyoursats-static-';
 const CACHE_NAME = CACHE_PREFIX + '__GETYOURSATS_RELEASE__';
-const LEGACY_CACHE = 'getyoursats-brand-v4';
+const LEGACY_CACHES = new Set(['getyoursats-brand-v4', 'getyoursats-brand-v5']);
 const MAX_ENTRIES = 192;
 const STATIC_ASSETS = [
-  '/', '/index.html', '/manifest.json',
+  '/', '/index.html', '/manifest.json', '/theme-bootstrap.js',
   '/brand/wordmark-stacked-dark.svg', '/brand/wordmark-horizontal-dark.svg',
   '/brand/wordmark-stacked-light.svg', '/brand/wordmark-horizontal-light.svg',
   '/brand/wordmark-top.svg', '/brand/wordmark-bottom.svg', '/brand/wordmark-coin.svg',
+  '/brand/wordmark-top-light.svg', '/brand/wordmark-bottom-light.svg',
   '/brand/wordmark-3d-transparent.png', '/brand/app-icon.svg', '/brand/monogram.svg',
   '/brand/favicon-48.png', '/brand/app-icon-180.png', '/brand/app-icon-192.png', '/brand/app-icon-512.png',
 ];
-const ownedCache = (name) => name.startsWith(CACHE_PREFIX) || name === LEGACY_CACHE;
+const ownedCache = (name) => name.startsWith(CACHE_PREFIX) || LEGACY_CACHES.has(name);
 const isHashedAsset = (path) => /^\/assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(js|mjs|css|wasm|woff2?|ttf)$/.test(path);
 const canCache = (response) => response.status === 200 && response.type !== 'opaque'
   && !/(?:^|,)\s*(?:no-store|private)(?:\s*(?:=|,|$))/i.test(response.headers.get('Cache-Control') || '');
