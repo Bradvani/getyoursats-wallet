@@ -17,6 +17,7 @@
  * on the same codebase, they share a visual language.
  */
 
+import StartupLogo from '@/components/StartupLogo';
 import React, { useEffect, useState } from 'react';
 import { PrimaryButton, SecondaryButton, ConfirmDialog } from '../components/ui';
 import { FaceIdIcon, FingerprintIcon, PasskeyIcon } from '../components/Icons';
@@ -83,11 +84,7 @@ const UnlockPage: React.FC<UnlockPageProps> = ({
         <div className="max-w-sm w-full space-y-8">
           {/* Logo + headline */}
           <div className="flex flex-col items-center gap-4">
-            <img
-              src="/brand/wordmark-stacked-dark.svg"
-              alt="GetYourSats"
-              className="w-36 h-36 object-contain"
-            />
+            <StartupLogo className="w-36 h-36 object-contain" />
             <h1 className="font-display text-2xl font-bold text-spark-text-primary">
               Welcome back
             </h1>
