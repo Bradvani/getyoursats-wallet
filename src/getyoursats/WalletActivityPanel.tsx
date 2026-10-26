@@ -89,12 +89,13 @@ export default function WalletActivityPanel({
   return <section className="gys-activity" aria-label="Wallet activity and transaction history">
     <div className="gys-activity__heading">
       <div>
-        {view==='history'&&<button type="button" className="gys-activity__back" onClick={()=>setTab('activity')} data-testid="history-back-to-wallet">
-          <span aria-hidden="true"><BackIcon size="sm"/></span>
-          <span>{BACK_TO_WALLET[language]}</span>
-        </button>}
         <span className="gys-activity__eyebrow">YOUR WALLET · ON CHAIN & LIGHTNING</span>
-        <h2>{tab==='history'?text.history:text.recent}</h2>
+        <div className="gys-activity__title-row">
+          {view==='history'&&<button type="button" className="gys-activity__back" aria-label={BACK_TO_WALLET[language]} title={BACK_TO_WALLET[language]} onClick={()=>setTab('activity')} data-testid="history-back-to-wallet">
+            <span aria-hidden="true"><BackIcon size="md"/></span>
+          </button>}
+          <h2>{tab==='history'?text.history:text.recent}</h2>
+        </div>
       </div>
       <button className="gys-activity__refresh" type="button"
         onClick={onRefresh} aria-label="Sync wallet activity">↻</button>
