@@ -68,6 +68,20 @@ const revision = suppliedRevision || localRevision;
 if (process.env.VERCEL_ENV === 'production' && !revision) throw new Error('A production build requires a source revision');
 const sourceStatus = localRevision ? git('status', '--porcelain', '--untracked-files=normal') : null;
 if (process.env.VERCEL_ENV === 'production' && localRevision && (sourceStatus === null || sourceStatus)) {
+  console.error('Release source status:', JSON.stringify(sourceStatus === null ? null : sourceStatus.split('\n')));
+  if (process.env.VERCEL === '1') {
+    const comparisons = [];
+    for (const currentPath of ['vercel.json', 'site/vercel.json']) {
+      for (const committedPath of ['vercel.json', 'site/vercel.json']) {
+        try {
+          const committed = execFileSync('git', ['show', `HEAD:${committedPath}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+          const current = await read(currentPath);
+          comparisons.push({ currentPath, committedPath, bytesMatch: committed.equals(current), valuesMatch: isDeepStrictEqual(JSON.parse(committed.toString()), JSON.parse(current.toString())) });
+        } catch { comparisons.push({ currentPath, committedPath, comparisonUnavailable: true }); }
+      }
+    }
+    console.error('Release configuration comparisons:', JSON.stringify(comparisons));
+  }
   throw new Error('A production build requires a clean source checkout');
 }
 const sdkRevision = site ? null : (await read('vendor/SOURCE_COMMIT')).toString().trim();
