@@ -5,6 +5,7 @@ import type {AppLanguage} from '../services/presentationPreferences';
 import {useMemo, useState} from 'react';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 import TransactionList from '../components/TransactionList';
+import {BackIcon} from '../components/Icons';
 import type {UnilateralExitEntry} from '../features/unilateral-exit/listEntries';
 import {historyToCsv, selectHistory, type HistoryDirection, type HistoryStatus} from './historyRecords';
 
@@ -89,9 +90,7 @@ export default function WalletActivityPanel({
     <div className="gys-activity__heading">
       <div>
         {view==='history'&&<button type="button" className="gys-activity__back" onClick={()=>setTab('activity')} data-testid="history-back-to-wallet">
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6"/><path d="M9 12h11"/>
-          </svg>
+          <span aria-hidden="true"><BackIcon size="sm"/></span>
           <span>{BACK_TO_WALLET[language]}</span>
         </button>}
         <span className="gys-activity__eyebrow">YOUR WALLET · ON CHAIN & LIGHTNING</span>
