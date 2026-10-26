@@ -27,6 +27,10 @@ function safeRead(key:string): string|null {
   try {return localStorage.getItem(key);}catch{return null;}
 }
 export function getAppLanguage(): AppLanguage {
+  if(typeof window!=='undefined'){
+    const requested=new URLSearchParams(window.location.search).get('lang') as AppLanguage;
+    if(langCodes.has(requested)){try{localStorage.setItem(LANGUAGE_KEY,requested);}catch{/* optional preference storage */}return requested;}
+  }
   const value=safeRead(LANGUAGE_KEY) as AppLanguage;
   if(value)return langCodes.has(value)?value:'en';
   return detectAppLanguage(typeof navigator==='undefined'?[]:navigator.languages);
@@ -54,6 +58,9 @@ function publish(): void {
 export function setAppLanguage(value:AppLanguage): void {
   if(!langCodes.has(value))throw new Error('Unsupported language');
   try{localStorage.setItem(LANGUAGE_KEY,value);}catch{/* transient environments */}
+  if(typeof window!=='undefined' && new URLSearchParams(window.location.search).has('lang')){
+    const url=new URL(window.location.href);url.searchParams.set('lang',value);window.history.replaceState(null,'',url);
+  }
   applyLanguage(value);
   publish();
 }
@@ -103,7 +110,7 @@ const navCopy={
  'zh-CN':ASIAN_LOCALES['zh-CN'].nav,
 
  en:{settings:'Settings',currency:'Currencies',scan:'Scan QR',pointOfSale:'Point of Sale',recurring:'Recurring Buys',buy:'Buy Bitcoin',logout:'Remove wallet from this device',help:'Help & information',privacy:'Privacy',support:'Support',appearance:'Appearance',language:'Language',display:'Display',dark:'Dark',orange:'Orange',system:'System',comingSoon:'Coming soon'},
- hi:{settings:'सेटिंग्स',currency:'मुद्राएँ',scan:'QR स्कैन',pointOfSale:'बिक्री काउंटर',recurring:'नियमित खरीद',buy:'बिटकॉइन खरीदें',logout:'इस डिवाइस से वॉलेट हटाएँ',help:'मदद और जानकारी',privacy:'गोपनीयता',support:'सहायता',appearance:'रूप-रंग',language:'भाषा',display:'डिस्प्ले',dark:'डार्क',orange:'ऑरेंज',system:'सिस्टम',comingSoon:'जल्द आ रहा है'},
+ hi:{settings:'सेटिंग्स',currency:'मुद्राएँ',scan:'QR स्कैन',pointOfSale:'बिक्री काउंटर',recurring:'नियमित खरीद',buy:'Bitcoin खरीदें',logout:'इस डिवाइस से वॉलेट हटाएँ',help:'मदद और जानकारी',privacy:'गोपनीयता',support:'सहायता',appearance:'रूप-रंग',language:'भाषा',display:'डिस्प्ले',dark:'डार्क',orange:'ऑरेंज',system:'सिस्टम',comingSoon:'जल्द आ रहा है'},
  es:{settings:'Ajustes',currency:'Monedas',scan:'Escanear QR',pointOfSale:'Punto de venta',recurring:'Compras periódicas',buy:'Comprar Bitcoin',logout:'Eliminar cartera de este dispositivo',help:'Ayuda e información',privacy:'Privacidad',support:'Soporte',appearance:'Apariencia',language:'Idioma',display:'Pantalla',dark:'Oscuro',orange:'Naranja',system:'Sistema',comingSoon:'Próximamente'},
  pt:{settings:'Definições',currency:'Moedas',scan:'Ler QR',pointOfSale:'Ponto de venda',recurring:'Compras recorrentes',buy:'Comprar Bitcoin',logout:'Remover carteira deste dispositivo',help:'Ajuda e informações',privacy:'Privacidade',support:'Suporte',appearance:'Aparência',language:'Idioma',display:'Ecrã',dark:'Escuro',orange:'Laranja',system:'Sistema',comingSoon:'Em breve'}
 } as const;
@@ -121,7 +128,7 @@ export const HOME_COPY: Record<AppLanguage, {
  'ar':ASIAN_LOCALES['ar'].home,
  'zh-CN':ASIAN_LOCALES['zh-CN'].home,
  en:{scarcity:'21 MILLION. EVER.',eyebrow:'BITCOIN HAS A LIMIT',heading:'Every sat',emphasis:'counts.',subtitle:'Only 21 million bitcoin will ever exist. Keep yours close, move it in seconds, and accept payments over Lightning.',start:'Start',restoreQuestion:'Have a GetYourSats wallet?',restore:'Restore it',passkey:'Create a wallet with a supported device passkey. Your device may use biometrics or a screen lock. Keep your recovery options private in Settings.',footOne:'BITCOIN FIRST.',footTwo:'SATS ARE SCARCE.'},
- hi:{scarcity:'केवल 2.1 करोड़ BTC',eyebrow:'बिटकॉइन की आपूर्ति सीमित है',heading:'हर सैट',emphasis:'मायने रखती है।',subtitle:'बिटकॉइन की अधिकतम आपूर्ति लगभग 2.1 करोड़ BTC है। अपनी सैट सुरक्षित रखें और Lightning से भुगतान करें।',start:'शुरू करें',restoreQuestion:'पहले से वॉलेट है?',restore:'वापस पाएं',passkey:'समर्थित डिवाइस पासकी से वॉलेट बनाएं। सुरक्षित रिकवरी विकल्प Settings में देखें।',footOne:'बिटकॉइन पहले।',footTwo:'सैट सीमित हैं।'},
+ hi:{scarcity:'केवल 2.1 करोड़ BTC',eyebrow:'Bitcoin की आपूर्ति सीमित है',heading:'हर sat',emphasis:'मायने रखता है।',subtitle:'Bitcoin की अधिकतम आपूर्ति लगभग 2.1 करोड़ BTC है। अपने sats सुरक्षित रखें और Lightning से भुगतान करें।',start:'शुरू करें',restoreQuestion:'पहले से वॉलेट है?',restore:'वापस पाएं',passkey:'समर्थित डिवाइस पासकी से वॉलेट बनाएं। सेटिंग्स में रिकवरी के सुरक्षित विकल्प देखें।',footOne:'Bitcoin पहले।',footTwo:'sats सीमित हैं।'},
  es:{scarcity:'21 MILLONES. SIEMPRE.',eyebrow:'BITCOIN TIENE UN LÍMITE',heading:'Cada sat',emphasis:'cuenta.',subtitle:'La oferta de bitcoin tiene un límite cercano a 21 millones. Guárdalos y paga en segundos con Lightning.',start:'Empezar',restoreQuestion:'¿Ya tienes un monedero?',restore:'Restaurar',passkey:'Crea un monedero con una passkey compatible del dispositivo. Consulta tus opciones de recuperación en Ajustes.',footOne:'BITCOIN PRIMERO.',footTwo:'LOS SATS SON ESCASOS.'},
  pt:{scarcity:'21 MILHÕES. SEMPRE.',eyebrow:'BITCOIN TEM UM LIMITE',heading:'Cada sat',emphasis:'conta.',subtitle:'A oferta de bitcoin aproxima-se de um máximo de 21 milhões. Proteja os seus sats e pague rapidamente com Lightning.',start:'Começar',restoreQuestion:'Já tem carteira?',restore:'Restaurar',passkey:'Crie uma carteira com uma passkey suportada pelo dispositivo. Consulte as opções de recuperação nas Definições.',footOne:'BITCOIN PRIMEIRO.',footTwo:'SATS SÃO ESCASSOS.'}
 };

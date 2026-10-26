@@ -1,0 +1,7 @@
+import ts from 'typescript';
+import {execFileSync} from 'node:child_process';
+import fs from 'node:fs';import path from 'node:path';
+const rows=[];
+function walk(dir){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,entry.name);if(entry.isDirectory())walk(p);else if(p.endsWith('.tsx')&&!p.includes('.test.')){const text=fs.readFileSync(p,'utf8'),s=ts.createSourceFile(p,text,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);function visit(n){let value;if(ts.isJsxText(n))value=n.text.trim();if(ts.isJsxAttribute(n)&&['title','placeholder','aria-label'].includes(n.name.getText(s))&&n.initializer&&ts.isStringLiteral(n.initializer))value=n.initializer.text;if(value&&/[a-zA-Z]{3}/.test(value))rows.push({file:p,line:s.getLineAndCharacterOfPosition(n.pos).line+1,text:value.replace(/\s+/g,' ').slice(0,220)});ts.forEachChild(n,visit)}visit(s)}}}
+walk('src');fs.writeFileSync('docs/audits/localization-static-text-inventory.json',JSON.stringify({baseline:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),note:'Static JSX candidates, manually triage before translation. Excludes dynamic strings; not a complete untranslated-word count.',candidates:rows},null,2)+'\n');
+console.log(JSON.stringify({candidates:rows.length,files:new Set(rows.map(x=>x.file)).size,top:Object.entries(rows.reduce((a,x)=>(a[x.file]=(a[x.file]||0)+1,a),{})).sort((a,b)=>b[1]-a[1]).slice(0,15)}));

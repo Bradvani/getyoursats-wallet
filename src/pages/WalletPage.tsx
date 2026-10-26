@@ -322,7 +322,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
           <button type="button" aria-current={!settingsActive&&showHistory&&!gysPosOpen?'page':undefined} onClick={()=>navigate('history')}>{trustCopy(language).history}</button>
           <button type="button" aria-current={!settingsActive&&gysPosOpen?'page':undefined} onClick={()=>navigate('merchant')}>{trustCopy(language).merchant}</button>
           <button type="button" aria-current={settingsActive?'page':undefined} onClick={()=>navigate('settings')}>{copy.settings}</button>
-          <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">{trustCopy(language).help}</a>
+          <a href={SUPPORT_URL+'?lang='+language} target="_blank" rel="noopener noreferrer">{trustCopy(language).help}</a>
         </nav>
         <p>Bitcoin first. Every sat counts.</p>
       </aside>
