@@ -20,7 +20,7 @@ async function fixture(t, withGit = true) {
     writeFile(join(root, 'vendor/SOURCE_COMMIT'), 'a'.repeat(40) + '\n'),
     writeFile(join(root, 'vendor/breeztech-breez-sdk-spark.tgz'), 'disposable package fixture'),
     writeFile(join(root, 'package-lock.json'), '{"name":"disposable-fixture","lockfileVersion":3}\n'),
-    writeFile(join(root, '.gitignore'), 'dist/\n'),
+    writeFile(join(root, '.gitignore'), 'dist/\nsite/release-manifest.json\n'),
     writeFile(join(root, 'dist/index.html'), '<html><script type="module" src="/assets/entry-12345678.js"></script></html>'),
     writeFile(join(root, 'dist/assets/entry-12345678.js'), 'export const fixture = true;\n'),
     writeFile(join(root, 'dist/.private-fixture'), 'excluded disposable metadata'),
@@ -34,13 +34,13 @@ async function fixture(t, withGit = true) {
   return {
     root,
     git,
-    run(extraEnv = {}) {
-      return execFileSync(process.execPath, ['scripts/write-release-manifest.mjs'], {
+    run(extraEnv = {}, args = []) {
+      return execFileSync(process.execPath, ['scripts/write-release-manifest.mjs', ...args], {
         cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
         env: {...process.env, VERCEL: '', VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_SHA: '', GETYOURSATS_SOURCE_REVISION: '', ...extraEnv},
       });
     },
-    async manifest() { return JSON.parse(await readFile(join(root, 'dist/release-manifest.json'), 'utf8')); },
+    async manifest(site = false) { return JSON.parse(await readFile(join(root, site ? 'site' : 'dist', 'release-manifest.json'), 'utf8')); },
   };
 }
 
@@ -120,3 +120,114 @@ test('Vercel-only configuration formatting is restored without accepting changed
   assert.throws(() => app.run({VERCEL: '1', VERCEL_ENV: 'production'}), /clean source/);
   assert.equal(await readFile(join(app.root, 'vercel.json'), 'utf8'), changed);
 });
+
+async function siteFixture(t) {
+  const app = await fixture(t);
+  const repositoryConfig = await readFile(new URL('../vercel.json', import.meta.url), 'utf8');
+  const siteConfig = await readFile(new URL('../site/vercel.json', import.meta.url), 'utf8');
+  await mkdir(join(app.root, 'site'));
+  await Promise.all([
+    writeFile(join(app.root, 'vercel.json'), repositoryConfig),
+    writeFile(join(app.root, 'site/vercel.json'), siteConfig),
+    writeFile(join(app.root, 'site/index.html'), '<html>Disposable public site</html>'),
+  ]);
+  app.git('add', 'vercel.json', 'site');
+  app.git('-c', 'user.name=Disposable Test', '-c', 'user.email=disposable@example.invalid', 'commit', '-qm', 'Disposable site fixture');
+  return { ...app, repositoryConfig, siteConfig };
+}
+
+const productionVercel = {VERCEL: '1', VERCEL_ENV: 'production'};
+const projection = [{path: 'vercel.json', projectedFrom: 'site/vercel.json'}];
+
+test('Vercel site builds restore the observed committed site-to-root projection and bind the site artifacts', async t => {
+  const app = await siteFixture(t);
+  await writeFile(join(app.root, 'vercel.json'), app.siteConfig);
+  app.run(productionVercel, ['--site']);
+  const manifest = await app.manifest(true);
+  assert.equal(await readFile(join(app.root, 'vercel.json'), 'utf8'), app.repositoryConfig);
+  assert.equal(await readFile(join(app.root, 'site/vercel.json'), 'utf8'), app.siteConfig);
+  assert.equal(app.git('status', '--porcelain'), '');
+  assert.equal(manifest.product, 'getyoursats-site');
+  assert.equal(manifest.sourceRevision, app.git('rev-parse', 'HEAD'));
+  assert.equal(manifest.sourceDirty, false);
+  assert.equal(manifest.sdk, null);
+  assert.deepEqual(manifest.restoredConfigFormatting, []);
+  assert.deepEqual(manifest.restoredConfigProjections, projection);
+  assert.deepEqual(manifest.artifacts.map(x => x.path).sort(), ['index.html', 'vercel.json']);
+  for (const artifact of manifest.artifacts) {
+    const bytes = await readFile(join(app.root, 'site', artifact.path));
+    assert.equal(artifact.bytes, bytes.length);
+    assert.equal(artifact.sha256, hash(bytes));
+  }
+});
+
+test('site projection and same-path formatting are recorded separately before hashing', async t => {
+  const app = await siteFixture(t);
+  const reformatted = JSON.stringify(Object.fromEntries(Object.entries(JSON.parse(app.siteConfig)).reverse()));
+  await Promise.all([
+    writeFile(join(app.root, 'vercel.json'), reformatted),
+    writeFile(join(app.root, 'site/vercel.json'), reformatted),
+  ]);
+  app.run(productionVercel, ['--site']);
+  const manifest = await app.manifest(true);
+  assert.deepEqual(manifest.restoredConfigFormatting, ['site/vercel.json']);
+  assert.deepEqual(manifest.restoredConfigProjections, projection);
+  assert.equal(manifest.artifacts.find(x => x.path === 'vercel.json').sha256, hash(app.siteConfig));
+  assert.equal(app.git('status', '--porcelain'), '');
+});
+
+for (const [name, env, args] of [
+  ['non-Vercel site builds', {VERCEL_ENV: 'production'}, ['--site']],
+  ['non-exact Vercel flag', {VERCEL: 'true', VERCEL_ENV: 'production'}, ['--site']],
+  ['wallet builds', productionVercel, []],
+]) {
+  test(`site projection is rejected for ${name}`, async t => {
+    const app = await siteFixture(t);
+    await writeFile(join(app.root, 'vercel.json'), app.siteConfig);
+    assert.throws(() => app.run(env, args), /clean source/);
+    assert.equal(await readFile(join(app.root, 'vercel.json'), 'utf8'), app.siteConfig);
+  });
+}
+
+const changedSiteConfig = source => {
+  const parsed = JSON.parse(source);
+  parsed.headers[0].headers[0].value = 'changed-disposable-header';
+  return JSON.stringify(parsed);
+};
+
+for (const [name, mutate] of [
+  ['changed projected header', async app => writeFile(join(app.root, 'vercel.json'), changedSiteConfig(app.siteConfig))],
+  ['added projected setting', async app => writeFile(join(app.root, 'vercel.json'), JSON.stringify({...JSON.parse(app.siteConfig), additionalSetting: true}))],
+  ['changed selected site header', async app => writeFile(join(app.root, 'site/vercel.json'), changedSiteConfig(app.siteConfig))],
+  ['matching but uncommitted root and site values', async app => Promise.all(['vercel.json', 'site/vercel.json'].map(path => writeFile(join(app.root, path), changedSiteConfig(app.siteConfig))))],
+  ['invalid projected JSON', async app => writeFile(join(app.root, 'vercel.json'), '{invalid')],
+  ['invalid selected site JSON', async app => writeFile(join(app.root, 'site/vercel.json'), '{invalid')],
+  ['missing root configuration', async app => rm(join(app.root, 'vercel.json'))],
+  ['missing site configuration', async app => rm(join(app.root, 'site/vercel.json'))],
+  ['untracked selected site configuration', async app => app.git('rm', '--cached', 'site/vercel.json')],
+]) {
+  test(`site projection preserves the clean-source failure for ${name}`, async t => {
+    const app = await siteFixture(t);
+    await writeFile(join(app.root, 'vercel.json'), app.siteConfig);
+    await mutate(app);
+    assert.throws(() => app.run(productionVercel, ['--site']), /clean source/);
+    assert.notEqual(app.git('status', '--porcelain'), '');
+    await assert.rejects(app.manifest(true), {code: 'ENOENT'});
+  });
+}
+
+for (const [name, mutate] of [
+  ['changed tracked input', async app => writeFile(join(app.root, 'site/index.html'), '<html>Uncommitted source change</html>')],
+  ['new untracked input', async app => writeFile(join(app.root, 'unexpected-input.js'), 'export const unexpected = true;\n')],
+  ['staged configuration change', async app => app.git('add', 'vercel.json')],
+]) {
+  test(`valid site projection cannot conceal ${name}`, async t => {
+    const app = await siteFixture(t);
+    await writeFile(join(app.root, 'vercel.json'), app.siteConfig);
+    await mutate(app);
+    assert.throws(() => app.run(productionVercel, ['--site']), /clean source/);
+    assert.equal(await readFile(join(app.root, 'vercel.json'), 'utf8'), app.repositoryConfig);
+    assert.notEqual(app.git('status', '--porcelain'), '');
+    await assert.rejects(app.manifest(true), {code: 'ENOENT'});
+  });
+}
