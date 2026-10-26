@@ -1,0 +1,196 @@
+.gys-wallet-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  color: var(--spark-text-primary);
+  isolation: isolate;
+}
+
+.gys-wallet-tour__bounds {
+  position: fixed;
+  inset: 0;
+  padding: calc(16px + var(--gys-tour-safe-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+    calc(16px + var(--gys-tour-safe-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  pointer-events: none;
+}
+
+.gys-wallet-tour__spotlight {
+  position: fixed;
+  border: 1px solid var(--spark-primary);
+  border-radius: 16px;
+  box-shadow: 0 0 0 150vmax rgb(0 0 0 / .76);
+  pointer-events: none;
+}
+
+.gys-wallet-tour__scrim {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / .76);
+  pointer-events: none;
+}
+
+.gys-wallet-tour__panel {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--spark-border-light);
+  border-radius: 24px;
+  background: var(--spark-surface);
+  box-shadow: 0 24px 80px rgb(0 0 0 / .38);
+  text-align: start;
+  animation: gys-wallet-tour-enter 180ms ease-out both;
+}
+
+.gys-wallet-tour__header {
+  flex: none;
+  padding: 20px 22px 0;
+}
+
+.gys-wallet-tour__eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--spark-text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .11em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.gys-wallet-tour__eyebrow > :last-child {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+}
+
+.gys-wallet-tour__progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  padding-block: 14px 0;
+}
+
+.gys-wallet-tour__progress span {
+  height: 3px;
+  border-radius: 8px;
+  background: var(--spark-border-light);
+}
+
+.gys-wallet-tour__progress span[data-passed='true'] {
+  background: var(--spark-primary);
+}
+
+.gys-wallet-tour__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 22px 6px;
+  scrollbar-width: thin;
+}
+
+.gys-wallet-tour__title {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(22px, 4vw, 27px);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -.035em;
+  color: var(--spark-text-primary);
+  text-wrap: balance;
+}
+
+.gys-wallet-tour__description {
+  margin: 12px 0 0;
+  color: var(--spark-text-secondary);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.gys-wallet-tour__detail {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--spark-border);
+  border-radius: 12px;
+  background: var(--spark-dark);
+  color: var(--spark-text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.gys-wallet-tour__context-action {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.gys-wallet-tour__footer {
+  flex: none;
+  padding: 14px 22px 8px;
+  background: var(--spark-surface);
+}
+
+.gys-wallet-tour__next.button {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: var(--spark-primary);
+  color: #111;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.gys-wallet-tour__skip {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  color: var(--spark-text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.gys-wallet-tour button:focus-visible {
+  outline: 2px solid var(--spark-primary);
+  outline-offset: 3px;
+}
+
+.gys-wallet-tour__skip:hover {
+  color: var(--spark-text-primary);
+}
+
+@keyframes gys-wallet-tour-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 359px), (max-height: 460px) {
+  .gys-wallet-tour__header { padding: 16px 18px 0; }
+  .gys-wallet-tour__body { padding: 16px 18px 4px; }
+  .gys-wallet-tour__footer { padding: 12px 18px 6px; }
+  .gys-wallet-tour__title { font-size: 22px; }
+  .gys-wallet-tour__description { font-size: 13px; }
+}
+
+@media (max-height: 460px) {
+  .gys-wallet-tour__header { padding-top: 12px; }
+  .gys-wallet-tour__progress { padding-top: 8px; }
+  .gys-wallet-tour__body { padding-top: 12px; padding-bottom: 0; }
+  .gys-wallet-tour__title { line-height: 1.16; }
+  .gys-wallet-tour__description { margin-top: 8px; line-height: 1.5; }
+  .gys-wallet-tour__detail { margin-top: 8px; padding: 6px 10px; font-size: 11px; line-height: 1.45; }
+  .gys-wallet-tour__context-action { margin-top: 8px; }
+  .gys-wallet-tour__footer { padding-top: 8px; padding-bottom: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gys-wallet-tour__panel { animation: none; }
+}

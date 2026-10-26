@@ -29,6 +29,7 @@ interface SettingsPageProps {
   onOpenSecurity: () => void;
   onOpenBackup: () => void;
   onOpenEmail: () => void;
+  onOpenWalletTour?: () => void;
   onOpenUnilateralExit: () => void;
 }
 
@@ -41,6 +42,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onOpenSecurity,
   onOpenBackup,
   onOpenEmail,
+  onOpenWalletTour,
   onOpenUnilateralExit,
 }) => {
   const wallet = useWallet();
@@ -247,6 +249,17 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   Passkeys are available when creating a new wallet. They cannot be added to an existing wallet restored from recovery words.
                 </p>
               </details>
+            </section>
+          )}
+
+          {onOpenWalletTour && (
+            <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-3" aria-label="Getting started">
+              <h3 className="font-display font-semibold text-spark-text-primary">Getting started</h3>
+              <button type="button" onClick={onOpenWalletTour}
+                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-spark-border px-4 py-3 text-sm font-medium text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5">
+                <span>Wallet Tour</span><ChevronRightIcon size="md"/>
+              </button>
+              <p className="text-xs text-spark-text-muted">Revisit recovery, receiving and your personal address.</p>
             </section>
           )}
 

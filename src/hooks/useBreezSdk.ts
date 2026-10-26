@@ -165,7 +165,7 @@ export interface BreezSdkActions {
     restore: boolean,
     passkeyLabel?: string,
     source?: ConnectSeedSource,
-  ) => Promise<void>;
+  ) => Promise<BreezSdk | null>;
   /** Resolve false when the SDK read failed; both log internally and keep last-known state. */
   refreshWalletData: (showLoading?: boolean) => Promise<boolean>;
   fetchUnclaimedDeposits: () => Promise<boolean>;
@@ -485,7 +485,7 @@ export function useBreezSdk(
       logger.info(LogCategory.SDK, 'Initiating wallet connection', { restore });
       if (sdk) {
         logger.debug(LogCategory.SDK, 'Wallet already connected; skipping');
-        return;
+        return null;
       }
       const connectionEpoch = ++nativeWalletEpochRef.current;
 
@@ -619,6 +619,7 @@ export function useBreezSdk(
           logger.warn(LogCategory.SDK, 'Failed to fetch unclaimed deposits', { error: formatError(e) });
         }
       })();
+      return connectedSdk;
     } catch (e) {
       const errorMsg = formatError(e);
       logger.error(LogCategory.SDK, 'Error connecting wallet', { error: errorMsg });

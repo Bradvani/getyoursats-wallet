@@ -1,0 +1,122 @@
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {
+  EMPTY_WALLET_SETUP, advanceWalletTour, beginWalletTour, clearWalletSetupMemory,
+  confirmWalletRecovery, initializeNewWalletSetup, readWalletSetup, skipWalletTour,
+  subscribeWalletSetup, walletSetupScope,
+} from './walletSetupState';
+
+const identityA = `02${'a'.repeat(64)}`;
+const identityB = `03${'b'.repeat(64)}`;
+const scopeA = walletSetupScope(identityA, 'mainnet')!;
+const scopeB = walletSetupScope(identityB, 'mainnet')!;
+
+beforeEach(() => {
+  vi.restoreAllMocks();
+  localStorage.clear();
+  clearWalletSetupMemory();
+});
+
+describe('wallet-scoped setup progress', () => {
+  it('waits for a valid identity and network without creating a global fallback', () => {
+    expect(walletSetupScope(null, 'mainnet')).toBeNull();
+    expect(walletSetupScope(identityA, null)).toBeNull();
+    expect(walletSetupScope('unknown', 'mainnet')).toBeNull();
+    expect(walletSetupScope(identityA, 'unknown')).toBeNull();
+    initializeNewWalletSetup(null, true);
+    expect(localStorage.length).toBe(0);
+    expect(walletSetupScope(identityA.toUpperCase(), 'mainnet')).toBe(scopeA);
+  });
+
+  it('does not auto-enroll an unseen restored wallet', () => {
+    expect(readWalletSetup(scopeA)).toEqual(EMPTY_WALLET_SETUP);
+    expect(localStorage.length).toBe(0);
+  });
+
+  it('starts fresh wallets at recovery while keeping an actual phrase check', () => {
+    initializeNewWalletSetup(scopeA, true);
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'active', step: 'protect', recoveryStatus: 'phrase-verified'});
+    initializeNewWalletSetup(scopeB, false);
+    expect(readWalletSetup(scopeB).recoveryStatus).toBe('pending');
+  });
+
+  it('isolates different wallets and the same public identity on another network', () => {
+    initializeNewWalletSetup(scopeA, true);
+    advanceWalletTour(scopeA);
+    expect(readWalletSetup(scopeB)).toEqual(EMPTY_WALLET_SETUP);
+    expect(readWalletSetup(walletSetupScope(identityA, 'regtest'))).toEqual(EMPTY_WALLET_SETUP);
+  });
+
+  it('persists the exact skipped step and resumes without confirming recovery', () => {
+    initializeNewWalletSetup(scopeA, false);
+    advanceWalletTour(scopeA);
+    skipWalletTour(scopeA);
+    clearWalletSetupMemory();
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'skipped', step: 'balance', recoveryStatus: 'pending'});
+    beginWalletTour(scopeA);
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'active', step: 'balance', recoveryStatus: 'pending'});
+  });
+
+  it('finishing and replaying a tour never confirms backup', () => {
+    beginWalletTour(scopeA);
+    for (let index = 0; index < 4; index++) advanceWalletTour(scopeA);
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'completed', recoveryStatus: 'pending'});
+    skipWalletTour(scopeA);
+    expect(readWalletSetup(scopeA).tourStatus).toBe('completed');
+    beginWalletTour(scopeA);
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'active', step: 'protect', recoveryStatus: 'pending'});
+  });
+
+  it('does not reset existing progress when a creation event is repeated', () => {
+    initializeNewWalletSetup(scopeA, false);
+    advanceWalletTour(scopeA);
+    skipWalletTour(scopeA);
+    initializeNewWalletSetup(scopeA, false);
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'skipped', step: 'balance'});
+  });
+
+  it('records a passkey review separately and never downgrades verified words', () => {
+    confirmWalletRecovery(scopeA, 'passkey-reviewed');
+    expect(readWalletSetup(scopeA).recoveryStatus).toBe('passkey-reviewed');
+    confirmWalletRecovery(scopeA, 'phrase-verified');
+    confirmWalletRecovery(scopeA, 'passkey-reviewed');
+    expect(readWalletSetup(scopeA).recoveryStatus).toBe('phrase-verified');
+    expect(readWalletSetup(scopeB).recoveryStatus).toBe('pending');
+  });
+
+  it.each(['{', 'null', '[]', '{"version":99}', JSON.stringify({version: 1, tourStatus: ['completed'], step: 'protect', recoveryStatus: 'phrase-verified'})])(
+    'treats malformed persisted progress as unknown: %s', raw => {
+      localStorage.setItem(scopeA, raw);
+      expect(readWalletSetup(scopeA)).toEqual(EMPTY_WALLET_SETUP);
+    },
+  );
+
+  it('remains usable when persistence is blocked and does not leak state to another wallet', () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('Blocked'); });
+    initializeNewWalletSetup(scopeA, false);
+    advanceWalletTour(scopeA);
+    skipWalletTour(scopeA);
+    expect(readWalletSetup(scopeA)).toMatchObject({step: 'balance', tourStatus: 'skipped'});
+    expect(readWalletSetup(scopeB)).toEqual(EMPTY_WALLET_SETUP);
+    setItem.mockRestore();
+    beginWalletTour(scopeA);
+    clearWalletSetupMemory();
+    expect(readWalletSetup(scopeA)).toMatchObject({step: 'balance', tourStatus: 'active'});
+  });
+
+  it('notifies only subscribers for the changed wallet and accepts cross-tab updates', () => {
+    const listenerA = vi.fn();
+    const listenerB = vi.fn();
+    const stopA = subscribeWalletSetup(scopeA, listenerA);
+    const stopB = subscribeWalletSetup(scopeB, listenerB);
+    initializeNewWalletSetup(scopeA, false);
+    expect(listenerA).toHaveBeenCalledTimes(1);
+    expect(listenerB).not.toHaveBeenCalled();
+    localStorage.setItem(scopeA, JSON.stringify({...EMPTY_WALLET_SETUP, tourStatus: 'completed'}));
+    window.dispatchEvent(new StorageEvent('storage', {key: scopeA}));
+    expect(readWalletSetup(scopeA).tourStatus).toBe('completed');
+    expect(listenerA).toHaveBeenCalledTimes(2);
+    expect(listenerB).not.toHaveBeenCalled();
+    stopA();
+    stopB();
+  });
+});

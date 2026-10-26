@@ -17,6 +17,10 @@ import CollapsingWalletHeader from '../components/CollapsingWalletHeader';
 import SideMenu from '../components/SideMenu';
 import MarketPulse from '../getyoursats/MarketPulse';
 import WalletActivityPanel from '../getyoursats/WalletActivityPanel';
+import WalletSetupCard from '../getyoursats/WalletSetupCard';
+import WalletSetupTour from '../getyoursats/WalletSetupTour';
+import type {WalletSetupController} from '../hooks/useWalletSetup';
+import type {WalletRecoveryMethod} from '../getyoursats/walletSetupState';
 import PullToRefresh from '../components/PullToRefresh';
 import { GetInfoResponse, Payment, DepositInfo, Network } from '@breeztech/breez-sdk-spark';
 import type { BuyBitcoinProvider } from '../services/settings';
@@ -59,6 +63,11 @@ interface WalletPageProps {
   onBuyBitcoin: (provider: BuyBitcoinProvider) => Promise<void>;
   network?: Network;
   onDepositChanged?: () => void;
+  walletSetup?: WalletSetupController;
+  recoveryMethod?: WalletRecoveryMethod;
+  setupTourAllowed?: boolean;
+  onReviewRecovery?: () => void;
+  onPersonalizeAddress?: () => void;
 }
 
 const WalletPage: React.FC<WalletPageProps> = ({
@@ -79,6 +88,11 @@ const WalletPage: React.FC<WalletPageProps> = ({
   onBuyBitcoin,
   network,
   onDepositChanged,
+  walletSetup,
+  recoveryMethod = 'phrase',
+  setupTourAllowed = true,
+  onReviewRecovery,
+  onPersonalizeAddress,
 }) => {
   const wallet = useWallet();
   const {language,copy}=usePresentation();
@@ -136,6 +150,15 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const [sendDialogSession, setSendDialogSession] = useState(0);
   const [receiveDialogSession, setReceiveDialogSession] = useState(0);
   const [buyBitcoinSession, setBuyBitcoinSession] = useState(0);
+  const tourRequested = Boolean(walletSetup?.scope && walletSetup.progress.tourStatus === 'active' &&
+    setupTourAllowed && !settingsActive);
+  const showHistory = historyOpen && !tourRequested;
+  const showTour = tourRequested && !isSendDialogOpen && !isReceiveDialogOpen && !isQrScannerOpen &&
+    !isMenuOpen && !isBuyBitcoinOpen && !partnerBuyOpen && !gysPosOpen && !selectedPayment &&
+    !selectedDeposit && !selectedExitId && !saveContactAddress;
+  const startTour = () => { navigate('wallet'); walletSetup?.beginTour(); };
+  const nextTourStep = () => { navigate('wallet'); walletSetup?.next(); };
+  const skipTour = () => { navigate('wallet'); walletSetup?.skip(); };
 
   const openSendDialog = useCallback(() => {
     setSendDialogSession(s => s + 1);
@@ -302,12 +325,12 @@ const WalletPage: React.FC<WalletPageProps> = ({
   };
 
   return (
-    <div className={`gys-wallet ${historyOpen ? "gys-wallet--history-open" : ""} flex flex-col h-[calc(100dvh)] relative overflow-hidden`}>
+    <div className={`gys-wallet ${showHistory ? "gys-wallet--history-open" : ""} flex flex-col h-[calc(100dvh)] relative overflow-hidden`}>
       <aside className="gys-desktop-nav" aria-label="Wallet navigation">
         <GetYourSatsWordmark compact/>
         <nav>
-          <button type="button" aria-current={!settingsActive&&!historyOpen&&!gysPosOpen?'page':undefined} onClick={()=>navigate('wallet')}>{trustCopy(language).wallet}</button>
-          <button type="button" aria-current={!settingsActive&&historyOpen&&!gysPosOpen?'page':undefined} onClick={()=>navigate('history')}>{trustCopy(language).history}</button>
+          <button type="button" aria-current={!settingsActive&&!showHistory&&!gysPosOpen?'page':undefined} onClick={()=>navigate('wallet')}>{trustCopy(language).wallet}</button>
+          <button type="button" aria-current={!settingsActive&&showHistory&&!gysPosOpen?'page':undefined} onClick={()=>navigate('history')}>{trustCopy(language).history}</button>
           <button type="button" aria-current={!settingsActive&&gysPosOpen?'page':undefined} onClick={()=>navigate('merchant')}>{trustCopy(language).merchant}</button>
           <button type="button" aria-current={settingsActive?'page':undefined} onClick={()=>navigate('settings')}>{copy.settings}</button>
           <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">{trustCopy(language).help}</a>
@@ -321,7 +344,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
       </div>
 
       {/* Fixed header */}
-      <div className="gys-wallet__header sticky top-0 z-10">
+      <div className="gys-wallet__header sticky top-0 z-10" data-wallet-tour="balance">
         <CollapsingWalletHeader
           walletInfo={walletInfo}
           scrollProgress={scrollProgress}
@@ -346,7 +369,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
       </div>
 
       {/* Lightning address: ready on first wallet screen, not a hidden signup step. */}
-      <div className="gys-address-banner gys-wallet__address" role="status" aria-live="polite">
+      <div className="gys-address-banner gys-wallet__address" role="status" aria-live="polite" data-wallet-tour="identity">
         <span className="gys-address-banner__label">⚡ {wc.lightning}</span>
         {primaryLightningAddress.address ? (
           <button type="button" className="gys-address-banner__value"
@@ -380,17 +403,21 @@ const WalletPage: React.FC<WalletPageProps> = ({
       {/* Live SDK market quotes and wallet-verified activity. */}
       <div
         ref={transactionsContainerRef}
-        id="gys-wallet-history" className={`gys-wallet__activity grow overflow-y-auto relative z-0 scrollbar-hidden ${historyOpen ? "gys-wallet__activity--open" : ""}`}
+        id="gys-wallet-history" className={`gys-wallet__activity grow overflow-y-auto relative z-0 scrollbar-hidden ${showHistory ? "gys-wallet__activity--open" : ""}`}
         onScroll={handleScroll}
       >
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
 
+        {!showHistory && !settingsActive && walletSetup?.scope && onReviewRecovery && (
+          <WalletSetupCard setup={walletSetup} onReviewRecovery={onReviewRecovery} onStartTour={startTour}/>
+        )}
+
         {/* One-glance market context belongs above transactions, never below
             a long activity list or behind a collapsed disclosure. */}
-        {!historyOpen && !settingsActive && <MarketPulse />}
+        {!showHistory && !settingsActive && <MarketPulse />}
 
         <WalletActivityPanel
-          view={historyOpen?'history':'activity'} onViewChange={view=>setHistoryOpen(view==='history')}
+          view={showHistory?'history':'activity'} onViewChange={view=>setHistoryOpen(view==='history')}
           transactions={mergeDepositsWithTransactions(transactions, unclaimedDeposits)}
           onPaymentSelected={handlePaymentSelected}
           isSyncing={isSyncing}
@@ -461,7 +488,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
       {/* Receive and Send stay dominant; scanning and POS stay available in the menu. */}
       <nav className="gys-action-dock" aria-label="Wallet actions">
-        <button type="button" onClick={openReceiveDialog} data-testid="receive-button" aria-label="Receive Bitcoin"
+        <button type="button" onClick={openReceiveDialog} data-testid="receive-button" aria-label="Receive Bitcoin" data-wallet-tour="receive"
           className="gys-action-dock__receive"><ArrowDownIcon/><span>{wc.receive}</span></button>
         <button type="button" onClick={openSendDialog} data-testid="send-button" aria-label="Send Bitcoin"
           className="gys-action-dock__send"><ArrowUpIcon/><span>{wc.send}</span></button>
@@ -496,6 +523,18 @@ const WalletPage: React.FC<WalletPageProps> = ({
         onOpenRefund={() => onOpenGetRefund('menu')}
         hasRejectedDeposits={hasRejectedDeposits}
       />
+      {showTour && walletSetup && onReviewRecovery && onPersonalizeAddress && (
+        <WalletSetupTour
+          step={walletSetup.progress.step}
+          recoveryMethod={recoveryMethod}
+          recoveryStatus={walletSetup.progress.recoveryStatus}
+          hasNativeAddress={primaryLightningAddress.address?.lightningAddress.endsWith('@getyoursats.com') ?? false}
+          onNext={nextTourStep}
+          onSkip={skipTour}
+          onReviewRecovery={onReviewRecovery}
+          onPersonalize={onPersonalizeAddress}
+        />
+      )}
     </div>
   );
 };
