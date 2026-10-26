@@ -1,282 +1,39 @@
-# Cross-Chain Payments Testing Plan
+# Cross-chain verification
 
-## Overview
+GetYourSats has sending and receiving workflows for supported USDC/USDT routes. Treat the installed SDK's route and quote responses as authoritative. Do not hardcode a network count or infer an active route from a logo, address family or older test record.
 
-Cross-chain payments in Glow allow sending BTC or USDB from your Spark wallet to stablecoins (USDC, USDT) on external blockchains. This is **outbound only** — you cannot receive funds from external chains into Glow via this feature.
+## Test safely
 
-**Providers:** Flashnet (Orchestra) and Boltz
-**Availability:** Mainnet only
+Start with mocked SDK responses and disposable fixtures. Use regtest only for operations the SDK and providers actually support there. Mainnet settlement requires explicit approval of the route, destination, amount and maximum cost.
 
-### Supported Chains & Assets
+Use a recipient address copied from a disposable wallet controlled by the tester. **A token contract or mint address is not a recipient wallet address.** This guide deliberately provides no pasteable destination addresses. Confirm the recipient's asset and network independently before any funded test.
 
-Available routes are **discovered dynamically** per destination address by querying the providers — the set of chains is broad and evolves over time (Ethereum, Base, Arbitrum, Optimism, Polygon, Avalanche, BSC, Linea, Sei, Sonic, Unichain, Solana, Tron, and many more). Glow detects the chain family from the address format:
+Never use a customer's recovery phrase, credentials or funds. Do not place secrets, payable credentials or unredacted wallet data in screenshots or CI artifacts.
 
-| Chain Family | Address Format |
-|---|---|
-| EVM | `0x` + 40 hex chars |
-| Solana | Base58, 32–44 chars |
-| Tron | `T` prefix, 34 chars |
+## Sending
 
-**Assets:** Glow surfaces only USD-denominated stablecoins — **USDC** and **USDT**. `USDT0` routes are grouped under **USDT**, and bridged/wrapped variants (`PathUSD`, `USDC.e`) are hidden.
+1. Choose the destination asset, enter or scan the recipient address and confirm an available network before entering the amount.
+2. Check the complete destination, asset and network. EVM-shaped addresses alone do not identify a specific EVM network; Solana and Tron recipients still need explicit network confirmation.
+3. Prepare a quote. Confirm the source asset and spend, recipient output, provider/network costs, any limits and expiry.
+4. Review the exact transaction and satisfy the applicable authorization policy before execution. A displayed confirmation screen alone is not proof of authorization coverage.
+5. Reconcile the SDK payment result and destination settlement. Pending or unknown is not failure and must not invite blind repayment.
 
----
+Test malformed addresses, family/network mismatches, ambiguous EVM routes, no routes, provider timeout, expired quotes, insufficient balance including fees, changed destination/asset/network, repeated clicks and reload during execution.
 
-## Prerequisites
+## Receiving
 
-- Glow wallet connected on **mainnet** with BTC or USDB balance
-- At least one destination wallet set up (see below)
+1. Select the supported source token and network from a fresh route response.
+2. Request the intended amount and prepare the quote.
+3. Before showing funding instructions, disclose the exact required deposit, source chain/token, destination asset, expected wallet credit, provider costs, any overpayment buffer and expiry.
+4. Verify that the deposit address and QR payload belong to that quote and network.
+5. Reconcile the deposit, conversion and resulting wallet credit. A generated address is not evidence of settlement.
 
----
+Do not label the entire difference between requested and deposited value as a fee without the provider's breakdown. Test stale responses after network changes, quote expiry, under/overpayment behavior supported by the provider, delayed settlement, interruption and safe recovery.
 
-## 1. Setting Up Destination Wallets
+## Record evidence
 
-### EVM (Ethereum, Base, Arbitrum, etc.)
+For each case, record the application SHA, SDK revision, environment, route/provider response, sanitized quote details, expected behavior and result. Distinguish mocked behavior, browser layout tests, regtest execution and authorized live settlement. A supported-chain list is not a test matrix.
 
-**Recommended wallet:** [MetaMask](https://metamask.io/)
+Suggested matrix columns: direction, source asset, source network, destination asset/network, address family, quote expiry, authorization outcome, execution outcome, reload recovery and settlement evidence. Mark unsupported or untested combinations explicitly.
 
-1. Install MetaMask browser extension or mobile app
-2. Create or import a wallet — save your seed phrase securely
-3. Your address appears at the top of the wallet (e.g., `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`)
-
-**Adding networks:**
-
-MetaMask defaults to Ethereum mainnet. To receive on other EVM chains, add the network:
-
-| Network | Chain ID | RPC | Explorer |
-|---|---|---|---|
-| Base | 8453 | https://mainnet.base.org | https://basescan.org |
-| Arbitrum One | 42161 | https://arb1.arbitrum.io/rpc | https://arbiscan.io |
-| Optimism | 10 | https://mainnet.optimism.io | https://optimistic.etherscan.io |
-| Polygon | 137 | https://polygon-rpc.com | https://polygonscan.com |
-
-In MetaMask: Settings → Networks → Add Network → enter the details above.
-
-**Adding tokens for visibility:**
-
-After receiving USDC/USDT, you may need to add the token contract to see your balance:
-
-| Token | Ethereum | Base | Arbitrum |
-|---|---|---|---|
-| USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
-| USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | — | `0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9` |
-
-In MetaMask: scroll down → "Import tokens" → paste the contract address.
-
-> **Note:** You'll need a small amount of the chain's native token (ETH on Ethereum/Base/Arbitrum/Optimism, MATIC on Polygon) to move tokens after receiving them.
-
----
-
-### Solana
-
-**Recommended wallet:** [Phantom](https://phantom.app/)
-
-1. Install Phantom browser extension or mobile app
-2. Create or import a wallet
-3. Your address is a base58-encoded string (e.g., `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`)
-4. Copy it from the top of the wallet or via Settings → your account
-
-**Token accounts:**
-
-Solana requires a token account to hold SPL tokens. Phantom creates these automatically when you receive USDC/USDT for the first time, but this costs a small SOL fee (~0.002 SOL). Ensure you have a tiny SOL balance.
-
-| Token | Mint Address |
-|---|---|
-| USDC | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` | 
-| USDT | `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB` |
-
-**Explorer:** [Solscan](https://solscan.io/) — search your address to verify receipt.
-
----
-
-### Tron
-
-**Recommended wallet:** [TronLink](https://www.tronlink.org/)
-
-1. Install TronLink browser extension or mobile app
-2. Create or import a wallet
-3. Your address starts with `T` and is 34 characters (e.g., `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`)
-
-**Token visibility:**
-
-TRC-20 tokens usually appear automatically in TronLink. If not, add manually:
-
-| Token | Contract |
-|---|---|
-| USDC | `TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8` |
-| USDT | `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t` |
-
-> **Note:** Moving TRC-20 tokens requires TRX for energy/bandwidth. Keep a small TRX balance.
-
-**Explorer:** [Tronscan](https://tronscan.org/) — search your address to verify receipt.
-
----
-
-## 2. Getting an Address to Send To
-
-### Bare Addresses
-
-The simplest method — copy your address directly from the destination wallet:
-
-- **EVM:** `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
-- **Solana:** `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`
-- **Tron:** `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`
-
-Paste the bare address into Glow's send screen. Glow will detect the chain family automatically and offer available routes.
-
-### EIP-681 URIs (Advanced)
-
-EIP-681 URIs encode chain, token, recipient, and amount into a single string. These can be generated by dApps, payment processors, or constructed manually.
-
-**Native ETH send:**
-```
-ethereum:0xRecipientAddress@8453?value=1000000000000000000
-```
-- `@8453` = Base chain ID
-- `value` is in wei (1 ETH = 10^18 wei)
-
-**ERC-20 token transfer (most common for cross-chain):**
-```
-ethereum:0xTokenContract@8453/transfer?address=0xRecipient&uint256=1000000
-```
-- The address after `ethereum:` is the **token contract**, not the recipient
-- `address` param = recipient
-- `uint256` param = amount in token base units (USDC has 6 decimals, so 1000000 = 1 USDC)
-
-**Example — Send 10 USDC to an address on Base:**
-```
-ethereum:0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913@8453/transfer?address=0xYourAddress&uint256=10000000
-```
-
-**Solana URI with SPL token:**
-```
-solana:RecipientAddress?amount=10&spl-token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-```
-
-**Tron URI with TRC-20 token:**
-```
-tron:RecipientAddress?amount=10&token=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
-```
-
-When pasting a URI into Glow, the chain, token, and amount are pre-filled from the URI.
-
----
-
-## 3. Sending Cross-Chain from Glow
-
-### Step-by-Step
-
-1. **Open Send screen** in Glow
-2. **Paste** the destination address or EIP-681 URI
-3. Glow parses the input and identifies it as a cross-chain address
-4. **Enter amount** in sats (or USDB if paying from token balance) — for cross-chain the amount is collected *before* the destination details
-5. **Pick the destination** via a short wizard (any step with a single option is skipped automatically):
-   - **Asset** — USDC or USDT
-   - **Chain** — e.g. Base, Arbitrum, Solana (only the chains that offer the chosen asset)
-   - **Provider** — Flashnet or Boltz, each shown with its own live quote (receiving amount + fee); pick the one you prefer
-   - If you used an EIP-681 URI with a contract address, routes are filtered to match
-6. **Review and confirm** — the confirm screen shows:
-   - The amount you're sending (₿ sats or USDB)
-   - **Receiving** — estimated output (e.g., "~95.43 USDC")
-   - **Chain**, **Provider**, destination **Address**, and **Fee**
-7. **Send**
-8. Glow transfers funds internally to the provider's deposit address / invoice, then submits the cross-chain order
-
-### What to Expect
-
-- The payment appears immediately in your transaction list as **pending**
-- The provider (Flashnet or Boltz) processes the swap and sends tokens on the destination chain
-- Status updates automatically via background polling (~30 seconds)
-- The transaction shows final status: **completed**, **failed**, or **refund needed**
-
----
-
-## 4. Managing Funds on the Destination Chain
-
-### Verifying Receipt
-
-After the payment shows **completed** in Glow, check the destination chain:
-
-| Chain | Explorer | URL |
-|---|---|---|
-| Ethereum | Etherscan | https://etherscan.io/address/YOUR_ADDRESS |
-| Base | Basescan | https://basescan.org/address/YOUR_ADDRESS |
-| Arbitrum | Arbiscan | https://arbiscan.io/address/YOUR_ADDRESS |
-| Optimism | OP Etherscan | https://optimistic.etherscan.io/address/YOUR_ADDRESS |
-| Solana | Solscan | https://solscan.io/account/YOUR_ADDRESS |
-| Tron | Tronscan | https://tronscan.org/#/address/YOUR_ADDRESS |
-
-### If Tokens Don't Appear in Wallet
-
-- **MetaMask:** Import the token contract address (see tables above)
-- **Phantom:** Tokens usually auto-detect; if not, go to Settings → Token List → search for USDC/USDT
-- **TronLink:** TRC-20 tokens usually appear automatically; if not, add token via contract address
-
-### Gas for Moving Tokens
-
-Received tokens sit in your wallet but you need native gas tokens to transfer or swap them:
-
-| Chain | Gas Token | Approx. Cost to Transfer |
-|---|---|---|
-| Ethereum | ETH | ~$1–5 |
-| Base | ETH | ~$0.01–0.05 |
-| Arbitrum | ETH | ~$0.05–0.20 |
-| Optimism | ETH | ~$0.01–0.10 |
-| Solana | SOL | ~$0.001 |
-| Tron | TRX (energy) | ~$1–3 |
-
-### Common Next Steps
-
-- **Hold:** Leave tokens in your wallet
-- **Swap:** Use a DEX (Uniswap, Jupiter, SunSwap) to swap to another token
-- **Bridge back:** Use a bridge (Across, Wormhole) to move tokens to a different chain
-- **Off-ramp:** Send to an exchange to convert to fiat
-
----
-
-## 5. Tracking & Troubleshooting
-
-### Payment Statuses
-
-| Status | Meaning | Action |
-|---|---|---|
-| **Pending** | Order submitted, waiting for the provider to process | Wait — status updates every ~30 seconds |
-| **Completed** | Tokens delivered to destination address | Verify on explorer |
-| **Failed** | Order could not be completed | Funds should be returned to Spark wallet |
-| **Refund Needed** | Spark transfer succeeded but the provider submission failed | Refund will be processed in the background |
-| **Refunded** | Funds returned to Spark wallet after failure | Check Spark balance |
-
-### Resumption After Backgrounding / Killing the App
-
-Cross-chain orders settle off-device, so a send can stay in-flight (**pending**) long after you leave the app. The SDK persists in-flight orders and, on each connect/load, resumes its background monitor — it queries stored pending orders and polls the provider until each reaches a terminal state. These tests confirm an interruption never loses an order or strands it on **pending**.
-
-> **Setup:** start a real cross-chain send with a small amount and wait until it shows **pending** in the transaction list before interrupting. Note the payment so you can find it again after relaunch.
-
-- **Background mid-pending** — with a payment **pending**, send the app to the background (mobile: home / app switcher; web: switch tabs or minimize) for at least ~60s, then return. Verify monitoring resumes (or never stalled) and the status advances to a terminal state (**completed** / **failed** / **refunded**) without a manual refresh.
-- **Force-kill mid-pending** — with a payment **pending**, force-quit the app so the process is fully terminated (mobile: swipe it out of the app switcher; web: close the tab/window). Relaunch, unlock, and wait. Verify the SDK resumes monitoring on load and the payment reaches the **correct terminal status** — not stuck on pending.
-- **Kill right after confirming, before submit** — tap **Send**, then kill the app as fast as possible (around the internal transfer + order submission). Relaunch and verify funds are not stranded: the payment resolves to **completed**, or to **failed** / **refund needed** → **refunded** with the sats credited back to the Spark balance.
-- **Web hard reload mid-pending** — while **pending**, hard-refresh the browser tab (Cmd/Ctrl+Shift+R). The WASM SDK re-initializes; verify it picks the pending order back up and drives it to a terminal status.
-- **Offline interruption** — background or kill the app, go offline (airplane mode / disconnect) for a minute or two, then reopen online. Verify the monitor catches up and reconciles to the terminal status.
-
-For every case, after resumption confirm: the **transaction list** and **payment details** show the correct terminal status and conversion info, and the **Spark balance** reconciles (full refund credited on failure, debited on success). For **completed** sends, cross-check the destination chain on the relevant explorer.
-
-### Test Checklist
-
-- [ ] **EVM bare address** — paste a 0x address, pick asset/chain, send
-- [ ] **EVM with chain selection** — paste same address, pick different chains (Base vs Arbitrum)
-- [ ] **Provider selection** — on an asset/chain offered by both, verify Flashnet and Boltz quotes both load and either can be selected
-- [ ] **Single-option auto-skip** — confirm the wizard skips the asset/chain/provider step when only one option exists
-- [ ] **EIP-681 native send** — paste `ethereum:<addr>@<chainId>?value=<amount>`
-- [ ] **EIP-681 ERC-20** — paste `ethereum:<contract>@<chainId>/transfer?address=<recipient>&uint256=<amount>`
-- [ ] **Solana bare address** — paste base58 address, send
-- [ ] **Solana URI** — paste `solana:<addr>?amount=<amt>&spl-token=<mint>`
-- [ ] **Tron bare address** — paste T-address, send
-- [ ] **Tron URI** — paste `tron:<addr>?amount=<amt>&token=<contract>`
-- [ ] **USDB source** — send from USDB balance instead of BTC
-- [ ] **Quote expiry** — wait past a quote's validity, then send, and verify it's handled gracefully (re-quote or a clear error rather than a silent failure)
-- [ ] **Verify on explorer** — confirm tokens arrived on each chain tested
-- [ ] **Token visibility** — confirm tokens appear in destination wallet (may need import)
-- [ ] **Transaction list** — verify cross-chain payments show correct conversion info in Glow
-- [ ] **Background mid-pending** — background the app while pending, return, verify it reaches the correct terminal status without a manual refresh
-- [ ] **Force-kill mid-pending** — kill the app while pending, relaunch, verify the SDK resumes monitoring and shows the correct terminal status
-- [ ] **Web hard reload mid-pending** — hard-refresh the tab while pending, verify resumption to a terminal status
-- [ ] **Offline interruption** — background/kill while offline, reopen online, verify the monitor reconciles
+See [release readiness](maintainers/release-readiness.md) for authorization, recovery and rollback gates.

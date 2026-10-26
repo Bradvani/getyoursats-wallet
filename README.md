@@ -1,41 +1,59 @@
-# GetYourSats Wallet
+# GetYourSats
 
-Standalone GetYourSats Bitcoin/Lightning wallet foundation, forked from the MIT-licensed [Breez Glow web reference implementation](https://github.com/breez/glow-web). Upstream copyright and license notices are retained.
+**Bitcoin for everyday payments.**
 
-## Current release status
+GetYourSats brings sending, receiving and merchant payments into one Bitcoin wallet. This repository contains the React browser/PWA application and the public website.
 
-This repository builds and runs a Breez Spark-backed React wallet. **This is not yet a funds-enabled public beta**. The wallet depends on an approved Breez API key and independent device/web security and recovery testing. The web PWA has the upstream recovery-phrase storage security trade-offs.
+[Open the wallet](https://wallet.getyoursats.com) · [Explore GetYourSats](https://getyoursats.com) · [Get help](https://getyoursats.com/support)
 
-GetYourSats-specific features: official brand, one-button Start, SDK-backed Lightning merchant POS, and build/test CI. See [GETYOURSATS.md](GETYOURSATS.md) for implementation boundaries.
+## What you can do
 
-### Run locally
+- Send and receive Bitcoin through supported Lightning, Bitcoin and Spark routes.
+- Review the recipient, asset, network, amount and quoted costs before a payment.
+- Use available USDC/USDT routes to move between supported networks and your wallet balance.
+- Request a Lightning payment with Merchant Point of Sale and check its settlement status.
+- View recent payments, transaction details and available history exports.
+- Choose your display currency, language and appearance.
+
+Route availability depends on the asset, network, direction, provider and destination. The wallet's live quote is authoritative; a network illustration on the website is not a promise of an available route. Buy Bitcoin, recurring purchases and personal Lightning addresses depend on separately enabled services. See the [product boundaries](GETYOURSATS.md).
+
+## Your wallet and recovery
+
+GetYourSats uses the Breez Spark SDK for wallet and payment infrastructure. Bitcoin received through an on-chain deposit is credited through Spark; this is not a separate native Bitcoin UTXO wallet. [How your wallet works](https://getyoursats.com/support#how-your-wallet-works) explains the distinction.
+
+Keep the recovery method for your existing wallet safe. Email and support cannot recover lost keys. Browser, passkey and native protections differ: read the [security guidance](SECURITY.md) before using or modifying the wallet. A successful build or an available website is not a security certification.
+
+## Develop locally
+
+Use Node.js 22, matching CI, and npm.
 
 ```sh
 npm ci
 cp example.env .env.local
-# Replace tutorial placeholders in .env.local with an approved Breez SDK key.
+# Configure an approved, browser-distributable Breez SDK key locally.
 npm run dev
 ```
 
-### Deploy to Vercel
+All `VITE_` variables are embedded in browser code. Never put a private server credential in one. Request a suitable SDK key through [Breez](https://breez.technology/sdk/) and follow its [SDK setup documentation](https://sdk-doc-spark.breez.technology/guide/getting_started.html).
 
-- Import `Bradvani/getyoursats-wallet` as a **single Vite project** from the repository root `./`.
-- Build command: `npm run build`; output directory: `dist`.
-- Configure **VITE_BREEZ_API_KEY** for the relevant environments with a provider-approved *browser-distributable SDK key*. Vite embeds it into client JavaScript; do not use a private server API secret here.
-- Deploy to a protected preview until the funds-enabled release gates pass.
-- Domain setup and LNURL are separate from wallet host/domain; a username under GetYourSats requires verified email ownership and an approved LNURL domain.
+For changes, tests and review expectations, start with [CONTRIBUTING.md](CONTRIBUTING.md). Use disposable fixtures for development; real-value testing requires a separately agreed test plan.
 
-Official setup instructions: https://sdk-doc-spark.breez.technology/guide/getting_started.html
+## Repository guide
 
-To request an API key, use the contact form on https://breez.technology/sdk/ (the `/contact/apikey` path is a programmatic POST endpoint, **not** an ordinary browser page).
+| Area | Contents |
+| --- | --- |
+| `src/` | Wallet application, payment flows and local preferences |
+| `api/`, `server/` | Wallet service endpoints and server-side integrations |
+| `public/` | Wallet static assets, PWA resources and public help pages |
+| `site/` | Public website and its contact endpoint; deployed separately |
+| `e2e/`, `tests/` | Browser and service tests |
+| `vendor/` | Pinned Breez SDK distribution and source reference |
+| [docs/](docs/README.md) | Architecture, contributor guidance and dated engineering records |
 
-### Release blockers
+## Support and contributions
 
-- Real funded Lightning send/receive, Spark deposit/withdrawal and restore testing
-- Verified merchant POS settlement and crash/reload recovery
-- Independent wallet security assessment and signed native builds
-- Email account linking and unique LNURL username claims
-- Contracted Indian fiat/UPI/exchange APIs, KYC/compliance and tax reporting
-- Verified Vercel environment/deployment logs (different account scopes may apply)
+For wallet or payment help, use [GetYourSats Support](https://getyoursats.com/support#contact). Report vulnerabilities privately using [SECURITY.md](SECURITY.md). For non-sensitive bugs and improvements, include reproduction steps and the affected commit in a GitHub issue or pull request. Never include recovery words, private keys, credentials or unredacted wallet logs.
 
-Do not treat green TypeScript/unit tests as wallet acceptance certification.
+## Open-source foundation
+
+GetYourSats builds on the MIT-licensed [Breez Glow web implementation](https://github.com/breez/glow-web) and [Breez Spark SDK](https://github.com/breez/spark-sdk). Upstream copyright and license notices are retained. See [LICENSE](LICENSE).
