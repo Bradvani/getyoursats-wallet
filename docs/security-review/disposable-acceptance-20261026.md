@@ -1,6 +1,6 @@
 # Disposable-wallet acceptance continuation — 26 October 2026
 
-**Direct Spark settlement and a cooperative Bitcoin exit passed on public regtest. Full product acceptance remains incomplete and production remains NO-GO.**
+**Direct Spark settlement, cooperative Bitcoin exits and mature-deposit settlement passed on public regtest. Full product acceptance remains incomplete and production remains NO-GO.**
 
 The source continuation starts at `4664c6d1358ecc2389f0b9df3df18b84ab27a192` on PR #43. This work does not merge PR #43 or #46, deploy production, or authorize use of user funds. The public-regtest run used two newly generated disposable wallet identities, the actual compiled browser SDK, encrypted browser vaults and the operation gateway. It supplied no Breez API key or user credentials. That initial run reached no funded send, claim, refund or exit. Later human-funded attempts are recorded below.
 
@@ -53,7 +53,7 @@ The runner creates fresh profiles and prints one new `sparkrt1…` address. A hu
 
 ## Remaining release blockers
 
-New/rebuilt exits still require a durable SDK build-intent/result contract, authorization of all funding inputs/fees/destination, original passkey seed-compatible funding signatures, interruption recovery and actual exit acceptance. Mature/early deposit claims and Lightning receiving need separate bounded execution and reconciliation. The direct Spark claim path now has funded operator acceptance as recorded below. Physical iPhone/Android recovery, cross-device restoration, original-origin service-worker/rollback rehearsal, complete security-copy localization and independent review remain open. There is no justified production launch date yet.
+New/rebuilt unilateral exits still require a durable SDK build-intent/result contract, authorization of all funding inputs/fees/destination, original passkey seed-compatible funding signatures, interruption recovery and actual exit acceptance. Mature deposits now have bounded execution and funded happy-path acceptance, but safe resolution of an uncertain claim remains open. Early deposits and Lightning receiving need separate bounded execution and reconciliation. The direct Spark claim path has funded operator acceptance as recorded below. Physical iPhone/Android recovery, cross-device restoration, original-origin service-worker/rollback rehearsal, complete security-copy localization and independent review remain open. There is no justified production launch date yet.
 
 ## Human funding follow-up (26 October 2026)
 
@@ -102,3 +102,24 @@ The deposit quoted a 99-sat fee and 4,901-sat credit at seven confirmations. Aft
 Read-only backend diagnostics found HTTP 404 at `/tx/<txid>/outspend/0`, while `/tx/<txid>/outspends` returned a valid array identifying output 0 as unspent. The SDK requires the former check before persisting its attempt marker. The compatibility correction falls back to the transaction-wide response only after a 404, selects the exact output index, and rejects missing, malformed, spent or unavailable evidence. Five new Rust cases plus one related existing case passed. This source correction requires a new compiled package and fresh funded acceptance. Diagnostic evidence is in `evidence/deposit-readonly-diagnostic-20261026.log`.
 
 The receipts pin the sandbox's actual SDK artifacts, not a later GitHub rebuild. The first mature package is `1cd66fea863c4e8989b713f6acf84ad75bac572c29640f0ec1fc260f374e6d64`; its source patch is `a5e0a2261470a91eeeab2fcc4f3e92d069006bcf207b47b8daae5646d55282ad`. Fixture approval is not physical-device biometric acceptance. The original uncertain deposit remains quarantined; fresh/rebuilt unilateral exits, bounded Lightning receiving, physical-device recovery, rollback acceptance and independent security approval remain open.
+
+## Fresh mature deposit and restart: PASS
+
+Receipt: `evidence/mature-deposit-pass-20261026.json`, SHA-256 `847218cc850836d996e844dc4a57d70178e247494ae9060a532041c9e62943f7`.
+
+The corrected SDK was compiled, installed and checked in the retained sandbox. The run completed at **15:02:30 UTC on 26 October 2026**. Every recorded application file hash and the complete SDK source-patch hash match source commit `34fd5a5e36bc4100698ac4affd7cb5e2d3772d7c`; the receipt retains the actual checkout base `6c87074`. It uses a third newly generated disposable wallet, C, and the remaining regtest balance in A. No further faucet request was needed. The earlier uncertain claim in B was preserved without resubmission.
+
+| Check | Result |
+| --- | --- |
+| Cooperative withdrawal A to C | 500 regtest sats, exact 1,950-sat slow-quote fee, payment `138f7dd3-78d3-4c31-8ef4-63e31e8669b3` |
+| Confirmed Bitcoin payout | Transaction `9f68b1b53928d1b2e00c82302d7583e3afb4ffe6dda554fc16a6f39ae9a3c80c`, output 0, block 3657997; exact destination/value verified |
+| Sender reconciliation | Payment linked to the payout transaction; outgoing journal completed; balance 2,520 to 70 sats |
+| Mature deposit approval | At least one regtest confirmation, exact 99-sat maximum fee, minimum 401-sat credit |
+| Deposit settlement | Completed receipt `01a178bb-ef8c-7408-85eb-ba4650b112c3`, 401-sat credit plus 99-sat fee equals the 500-sat deposit; durable claim journal settled |
+| Receiver restart | Same encrypted profile and identity; 401-sat balance retained |
+
+Tested package SHA-256: `54f7df72456e25e00930901b871575ee6e23212df6143e19db21848907c4a73d`.
+Tested browser WASM SHA-256: `31cdd63915b8f0bf71bed79f20deffc1a5981e3c3413d9a347098c5f30fc9203`.
+Tested source-patch SHA-256: `280e182624968ddb5755103d28dd0a9a07f867c37cd6b7f0d4ff9c1025da3f55`.
+
+The result is `PASS_COOPERATIVE_EXIT_AND_MATURE_DEPOSIT_ONLY`, with `fullProductAcceptance: false`. This proves a successful bounded mature claim and same-profile restart, not interrupted-claim resolution, seed restoration or physical-device authentication. The original 5,000-sat deposit in B remains associated with an uncertain browser record. The production claim route stays disabled. Do not fund addresses recorded in these historical receipts.
