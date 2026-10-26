@@ -1,4 +1,4 @@
-export type WalletTourStep = 'protect' | 'balance' | 'receive' | 'identity';
+export type WalletTourStep = 'language' | 'protect' | 'balance' | 'receive' | 'pos' | 'identity';
 export type WalletRecoveryMethod = 'passkey' | 'phrase' | 'device';
 export type WalletRecoveryStatus = 'pending' | 'passkey-reviewed' | 'phrase-verified';
 export type WalletTourStatus = 'not-started' | 'active' | 'skipped' | 'completed';
@@ -10,9 +10,9 @@ export interface WalletSetupProgress {
   readonly recoveryStatus: WalletRecoveryStatus;
 }
 
-export const WALLET_TOUR_STEPS: readonly WalletTourStep[] = ['protect', 'balance', 'receive', 'identity'];
+export const WALLET_TOUR_STEPS: readonly WalletTourStep[] = ['language', 'protect', 'balance', 'receive', 'pos', 'identity'];
 export const EMPTY_WALLET_SETUP: WalletSetupProgress = Object.freeze({
-  version: 1, tourStatus: 'not-started', step: 'protect', recoveryStatus: 'pending',
+  version: 1, tourStatus: 'not-started', step: 'language', recoveryStatus: 'pending',
 });
 
 const PREFIX = 'gys:wallet-setup:v1:';
@@ -116,7 +116,7 @@ export function initializeNewWalletSetup(scope: string | null, phraseVerified: b
 export function beginWalletTour(scope: string | null, restart = false) {
   changeWalletSetup(scope, current => ({
     ...current, tourStatus: 'active',
-    step: restart || current.tourStatus === 'completed' ? 'protect' : current.step,
+    step: restart || current.tourStatus === 'completed' ? 'language' : current.step,
   }));
 }
 

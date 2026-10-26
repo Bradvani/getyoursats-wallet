@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import type { InputType } from '@breeztech/breez-sdk-spark';
+import type { InputType, PrepareSendPaymentResponse } from '@breeztech/breez-sdk-spark';
 import { WalletProvider } from '@/contexts/WalletContext';
 import { FiatDataProvider } from '@/contexts/FiatDataContext';
 import { StableBalanceProvider } from '@/contexts/StableBalanceContext';
@@ -29,6 +29,13 @@ function renderSendPayment(parse: (input: string) => Promise<InputType>) {
     </WalletProvider>
   );
   return { client, ...renderHook(() => useSendPayment(), { wrapper }) };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: Error) => void;
+  const promise = new Promise<T>((done, fail) => {resolve = done; reject = fail;});
+  return {promise, resolve, reject};
 }
 
 describe('processInput destinations', () => {
@@ -123,5 +130,108 @@ describe('processInput destinations', () => {
         expect.objectContaining({ paymentRequest: { type: 'input', input: paid } }),
       ),
     );
+  });
+});
+
+describe('input request isolation', () => {
+  const nextAddress = 'bc1qnext';
+  const parsedNext = {type: 'bitcoinAddress', address: nextAddress, network: 'bitcoin'} as InputType;
+
+  it.each(['resolve', 'reject'] as const)('ignores an older parse %s while the scanned input is pending', async outcome => {
+    const older = deferred<InputType>();
+    const current = deferred<InputType>();
+    const {client, result} = renderSendPayment(input => input === BOLT11 ? older.promise : current.promise);
+    let olderRun!: Promise<void>;
+    let currentRun!: Promise<void>;
+    act(() => {olderRun = result.current.processInput(BOLT11);});
+    act(() => {
+      result.current.reset();
+      currentRun = result.current.processInput(nextAddress, {requireReview: true});
+    });
+    await act(async () => {
+      if (outcome === 'resolve') older.resolve(bolt11Details(BOLT11));
+      else older.reject(new Error('Older lookup failed'));
+      await olderRun;
+    });
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.error).toBeNull();
+    expect(result.current.paymentInput).toBeNull();
+    expect(client.prepareSendPayment).not.toHaveBeenCalled();
+    await act(async () => {current.resolve(parsedNext); await currentRun;});
+    expect(result.current.paymentInput?.rawInput).toBe(nextAddress);
+    expect(result.current.currentStep).toBe('amount');
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('keeps the newer destination when an older parse resolves after it', async () => {
+    const older = deferred<InputType>();
+    const {client, result} = renderSendPayment(input => input === BOLT11 ? older.promise : Promise.resolve(parsedNext));
+    let olderRun!: Promise<void>;
+    act(() => {olderRun = result.current.processInput(BOLT11);});
+    await act(() => result.current.processInput(nextAddress, {requireReview: true}));
+    await act(async () => {older.resolve(bolt11Details(BOLT11)); await olderRun;});
+    expect(result.current.paymentInput?.rawInput).toBe(nextAddress);
+    expect(result.current.currentStep).toBe('amount');
+    expect(result.current.prepareResponse).toBeNull();
+    expect(client.prepareSendPayment).not.toHaveBeenCalled();
+  });
+
+  it.each(['resolve', 'reject'] as const)('ignores a previous preparation %s after a new recipient starts', async outcome => {
+    const preparation = deferred<PrepareSendPaymentResponse>();
+    const current = deferred<InputType>();
+    const {client, result} = renderSendPayment(input => input === BOLT11 ? Promise.resolve(bolt11Details(input)) : current.promise);
+    vi.mocked(client.prepareSendPayment).mockReturnValueOnce(preparation.promise);
+    let olderRun!: Promise<void>;
+    let currentRun!: Promise<void>;
+    act(() => {olderRun = result.current.processInput(BOLT11);});
+    await waitFor(() => expect(client.prepareSendPayment).toHaveBeenCalledOnce());
+    act(() => {
+      result.current.reset();
+      currentRun = result.current.processInput(nextAddress, {requireReview: true});
+    });
+    await act(async () => {
+      if (outcome === 'resolve') preparation.resolve({amount: 10n} as PrepareSendPaymentResponse);
+      else preparation.reject(new Error('Older preparation failed'));
+      await olderRun;
+    });
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.error).toBeNull();
+    expect(result.current.prepareResponse).toBeNull();
+    await act(async () => {current.resolve(parsedNext); await currentRun;});
+    expect(result.current.paymentInput?.rawInput).toBe(nextAddress);
+    expect(result.current.currentStep).toBe('amount');
+    expect(client.sendPayment).not.toHaveBeenCalled();
+  });
+
+  it('does not resume a pending parse after its wallet view unmounts', async () => {
+    const parsing = deferred<InputType>();
+    const {client, result, unmount} = renderSendPayment(() => parsing.promise);
+    let operation!: Promise<void>;
+    act(() => {operation = result.current.processInput(BOLT11);});
+    unmount();
+    await act(async () => {parsing.resolve(bolt11Details(BOLT11)); await operation;});
+    expect(client.prepareSendPayment).not.toHaveBeenCalled();
+    expect(client.sendPayment).not.toHaveBeenCalled();
+  });
+
+  it('never cancels or unlocks an authorized payment through input reset', async () => {
+    const payment = deferred<void>();
+    const runner = vi.fn(() => payment.promise);
+    const {client, result} = renderSendPayment(async () => parsedNext);
+    let operation!: Promise<void>;
+    act(() => {operation = result.current.handleRun(runner);});
+    await act(async () => {
+      result.current.reset();
+      result.current.cancelPendingInput();
+      await result.current.processInput(nextAddress);
+      await result.current.handleRun(runner);
+    });
+    expect(runner).toHaveBeenCalledOnce();
+    expect(client.parse).not.toHaveBeenCalled();
+    expect(result.current.currentStep).toBe('processing');
+    expect(result.current.isLoading).toBe(true);
+    await act(async () => {payment.resolve(); await operation;});
+    expect(result.current.currentStep).toBe('result');
+    expect(result.current.paymentResult).toBe('unknown');
   });
 });

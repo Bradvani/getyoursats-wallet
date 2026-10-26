@@ -6,7 +6,7 @@ import '../../src/getyoursats/premium.css';
 import '../../src/getyoursats/appearance.css';
 import AppShell from '../../src/components/layout/AppShell';
 import SlideInPage from '../../src/components/layout/SlideInPage';
-import {PrimaryButton} from '../../src/components/ui/buttons';
+import {PrimaryButton, SecondaryButton} from '../../src/components/ui/buttons';
 import {WalletProvider, WalletInfoProvider} from '../../src/contexts/WalletContext';
 import {ToastProvider} from '../../src/contexts/ToastContext';
 import {FiatDataProvider} from '../../src/contexts/FiatDataContext';
@@ -20,11 +20,13 @@ import {confirmWalletRecovery, type WalletRecoveryMethod} from '../../src/getyou
 
 // The production entry never imports this fixture. No key, credential or SDK connection exists here.
 const identities = {a: `02${'a'.repeat(64)}`, b: `03${'b'.repeat(64)}`} as const;
+const unexpectedSdkCalls: string[] = [];
 type FixtureWallet = keyof typeof identities;
 type FixtureScreen = 'wallet' | 'settings' | 'recovery' | 'identity';
 type FixtureControls = {
   selectWallet: (wallet: FixtureWallet) => void;
   setTourAllowed: (allowed: boolean) => void;
+  unexpectedSdkCalls: readonly string[];
 };
 type FixtureWindow = Window & {__gysWalletSetupFixture?: FixtureControls};
 
@@ -46,12 +48,24 @@ function createReadOnlySdk(info: GetInfoResponse): BreezSdk {
     getUserSettings: async () => ({sparkPrivateModeEnabled: false}),
     getTokensMetadata: async () => ({tokensMetadata: []}),
     listPayments: async () => ({payments: []}),
+    receivePayment: async request => {
+      // Receive preloads its Bitcoin address. Keep the response synthetic and
+      // reject invoice creation so the POS preview cannot create a payment.
+      if (request.paymentMethod.type === 'bitcoinAddress') {
+        return {paymentRequest: 'fixture-bitcoin-address', fee: 0n};
+      }
+      unexpectedSdkCalls.push(`receivePayment:${request.paymentMethod.type}`);
+      throw new Error('Payment creation is unavailable in the isolated setup fixture');
+    },
   } satisfies Partial<BreezSdk>;
   return new Proxy(reads, {
     get(target, key) {
       if (key === 'then') return undefined;
       if (key in target) return target[key as keyof typeof target];
-      return async () => {throw new Error('SDK mutations are unavailable in the isolated setup fixture');};
+      return async () => {
+        unexpectedSdkCalls.push(String(key));
+        throw new Error('SDK mutations are unavailable in the isolated setup fixture');
+      };
     },
   }) as unknown as BreezSdk;
 }
@@ -62,6 +76,7 @@ function Fixture() {
   const fresh = parameters.get('entry') !== 'existing';
   const [wallet, setWallet] = useState<FixtureWallet>('a');
   const [screen, setScreen] = useState<FixtureScreen>('wallet');
+  const [guideReplay, setGuideReplay] = useState(0);
   const [tourAllowed, setTourAllowed] = useState(parameters.get('covered') !== '1');
   const preferredAddress = useMemo<LightningAddressInfo | null>(() => parameters.get('named') === '1' ? {
     description: 'Synthetic named wallet', username: 'setupfixture', lightningAddress: 'setupfixture@getyoursats.com',
@@ -85,24 +100,26 @@ function Fixture() {
         setWallet(next);
       },
       setTourAllowed,
+      unexpectedSdkCalls,
     };
     (window as FixtureWindow).__gysWalletSetupFixture = controls;
     return () => {delete (window as FixtureWindow).__gysWalletSetupFixture;};
   }, []);
 
-  const confirmFixtureRecovery = () => {
-    confirmWalletRecovery(setup.scope, recoveryMethod === 'passkey' ? 'passkey-reviewed' : 'phrase-verified');
+  const confirmFixtureRecovery = (status: 'passkey-reviewed' | 'phrase-verified') => {
+    confirmWalletRecovery(setup.scope, status);
     close();
   };
   const openTour = () => {
     setup.beginTour(true);
+    setGuideReplay(value => value + 1);
     close();
   };
 
   return (
     <ToastProvider><WalletProvider client={sdk} isConnected preferredLightningAddress={preferredAddress}><WalletInfoProvider walletInfo={info}>
       <FiatDataProvider><StableBalanceProvider><ContactsProvider>
-        <WalletPage walletInfo={info} transactions={[]} unclaimedDeposits={[]}
+        <WalletPage key={guideReplay} walletInfo={info} transactions={[]} unclaimedDeposits={[]}
           refreshWalletData={async () => true} isSyncing={false} error={null} onClearError={() => {}}
           onLogout={close} hasRejectedDeposits={false} onOpenGetRefund={() => {}}
           onReturnToWallet={close} settingsActive={screen !== 'wallet'} onOpenSettings={() => setScreen('settings')}
@@ -115,7 +132,11 @@ function Fixture() {
           onOpenEmail={() => setScreen('identity')} onOpenUnilateralExit={() => {}}
           onOpenWalletTour={openTour}/>}
         {screen === 'recovery' && <SlideInPage title="Recovery Fixture" onClose={close}
-          footer={<PrimaryButton className="w-full" onClick={confirmFixtureRecovery}>Confirm Fixture Recovery</PrimaryButton>}>
+          footer={<div className="space-y-2">
+            <PrimaryButton className="w-full" onClick={() => confirmFixtureRecovery('phrase-verified')}>Confirm Fixture Backup</PrimaryButton>
+            {recoveryMethod === 'passkey' && <SecondaryButton className="w-full"
+              onClick={() => confirmFixtureRecovery('passkey-reviewed')}>Confirm Fixture Passkey Review</SecondaryButton>}
+          </div>}>
           <div className="p-6 text-spark-text-primary">
             <p>This isolated test destination models a completed recovery review. It never opens recovery words or a passkey prompt.</p>
             <button type="button" className="min-h-11" onClick={close}>Cancel Fixture Recovery</button>

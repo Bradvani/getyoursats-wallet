@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { WarningIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
+import { EyeIcon, EyeOffIcon } from '../components/Icons';
 import { Capacitor } from '@capacitor/core';
 import SlideInPage from '../components/layout/SlideInPage';
 import { PinGate } from '../components/PinEntry';
@@ -13,9 +13,11 @@ import {
   isPasskeyMode,
   signInPinnedToActiveCredential,
 } from '@/services/passkeyService';
-import { deviceOnlyStorage, secureStorage, getBiometryInfo, BiometryInfo } from '@/services/secureStorage';
+import { deviceOnlyStorage, secureStorage } from '@/services/secureStorage';
 import { logger, LogCategory } from '@/services/logger';
 import { useScreenCaptureProtection } from '@/utils/screenSecurity';
+import { usePresentation } from '@/hooks/usePresentation';
+import { backupSetupCopy } from '@/locales/backupSetup';
 
 interface BackupPageProps {
   onBack: () => void;
@@ -28,6 +30,8 @@ interface BackupPageProps {
 const BackupPage: React.FC<BackupPageProps> = ({
   onBack, closeStyle = 'close', recoveryStatus = 'pending', onRecoveryConfirmed,
 }) => {
+  const {language} = usePresentation();
+  const text = backupSetupCopy(language);
   const [mnemonic, setMnemonic] = useState<string | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [privateViewing, setPrivateViewing] = useState(false);
@@ -155,19 +159,6 @@ const BackupPage: React.FC<BackupPageProps> = ({
     return () => { cancelled = true; };
   }, [isPasskey, passkeyAttemptFailed]);
 
-  // Resolved at mount: label ('Face ID', 'Touch ID', 'fingerprint'…)
-  // for the fallback tiles' copy, kind ('face' | 'fingerprint') for
-  // their icon. Null on web or when no biometry is enrolled; the copy
-  // degrades gracefully and the icon falls back to fingerprint.
-  const [biometry, setBiometry] = useState<BiometryInfo | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    getBiometryInfo().then((info) => {
-      if (!cancelled) setBiometry(info);
-    });
-    return () => { cancelled = true; };
-  }, []);
-
   const handleRevealPasskey = async () => {
     setIsLoading(true);
     setError(null);
@@ -256,7 +247,7 @@ const BackupPage: React.FC<BackupPageProps> = ({
       setIsRevealed(false);
       setStage('verify');
     } catch {
-      setVerificationError('Could not start the backup check. Hide the words and try again.');
+      setVerificationError(text.startFailed);
     }
   };
 
@@ -268,7 +259,7 @@ const BackupPage: React.FC<BackupPageProps> = ({
   const verifyBackup = () => {
     if (gate !== 'open' || stage !== 'verify' || !challenge || !mnemonic) return;
     if (answers.some((answer, index) => answer.trim().toLowerCase() !== words[challenge[index]])) {
-      setVerificationError('Those words do not match. Check your handwritten backup and try again.');
+      setVerificationError(text.mismatch);
       return;
     }
     setAnswers(['', '']);
@@ -288,33 +279,46 @@ const BackupPage: React.FC<BackupPageProps> = ({
     onBack();
   };
 
+  const phraseAvailable = Boolean(mnemonic || (!isPasskey && biometricSeedPresent) ||
+    (isPasskey && (!passkeyAttemptFailed || fallbackTier === 'biometric' || fallbackTier === 'device')));
+  const revealWords = () => {
+    if (gate !== 'open' || !canReveal || isLoading || isRevealed) return;
+    if (mnemonic) setIsRevealed(true);
+    else if (isPasskey && !passkeyAttemptFailed) void handleRevealPasskey();
+    else if (isPasskey && (fallbackTier === 'biometric' || fallbackTier === 'device')) void revealFromVault(fallbackTier);
+    else if (!isPasskey && biometricSeedPresent) void revealFromVault('biometric');
+  };
+
   const footer = gate !== 'open' ? undefined : stage === 'verify' ? (
     <div className="space-y-2">
       <PrimaryButton className="w-full" disabled={!answers[0].trim() || !answers[1].trim()}
-        onClick={verifyBackup}>Verify Offline Backup</PrimaryButton>
-      <SecondaryButton className="w-full" onClick={cancelVerification}>Return to Backup</SecondaryButton>
+        onClick={verifyBackup}>{text.verify}</PrimaryButton>
+      <SecondaryButton className="w-full" onClick={cancelVerification}>{text.return}</SecondaryButton>
     </div>
   ) : stage === 'complete' ? (
-    <PrimaryButton className="w-full" onClick={closeBackup}>Done</PrimaryButton>
+    <PrimaryButton className="w-full" onClick={closeBackup}>{text.done}</PrimaryButton>
   ) : isRevealed && mnemonic ? (
     <PrimaryButton className="w-full" disabled={!handwritten} onClick={beginVerification}>
-      Check My Handwritten Backup
+      {text.check}
     </PrimaryButton>
-  ) : isPasskey && !passkeyReviewed && !phraseVerified ? (
-    <PrimaryButton className="w-full" disabled={!passkeyAcknowledged} onClick={reviewPasskey}>
-      Keep Using My Passkey
-    </PrimaryButton>
-  ) : passkeyReviewed || phraseVerified ? (
-    <PrimaryButton className="w-full" onClick={closeBackup}>Done</PrimaryButton>
+  ) : phraseAvailable ? (
+    <div className="space-y-2">
+      <PrimaryButton className="w-full" disabled={isLoading || !canReveal} onClick={revealWords}
+        aria-busy={isLoading} data-testid="backup-reveal">
+        <span className="inline-flex items-center justify-center gap-2">
+          <EyeIcon size="sm"/>{isLoading ? text.authenticating : text.reveal}
+        </span>
+      </PrimaryButton>
+      {phraseVerified && <SecondaryButton className="w-full" onClick={closeBackup}>{text.done}</SecondaryButton>}
+    </div>
+  ) : phraseVerified ? (
+    <PrimaryButton className="w-full" onClick={closeBackup}>{text.done}</PrimaryButton>
   ) : undefined;
 
   return (
-    <SlideInPage title="Backup" onClose={closeBackup} slideFrom="left" closeStyle={closeStyle} footer={footer}>
-      {/* min-h-full + flexed chain so the PIN gate (the sole child
-          while it shows) can split the viewport 1/3 header / 2/3
-          input; the card views flow from the top as before. */}
+    <SlideInPage title={text.title} onClose={closeBackup} slideFrom="left" closeStyle={closeStyle} footer={footer}>
       <div className="p-4 min-h-full flex flex-col">
-        <div className="max-w-xl mx-auto w-full space-y-6 flex-1 flex flex-col">
+        <div className="max-w-xl mx-auto w-full space-y-5 flex-1 flex flex-col">
           {gate === 'checking' && (
             <div className="flex justify-center py-16">
               <LoadingSpinner size="small" />
@@ -322,31 +326,29 @@ const BackupPage: React.FC<BackupPageProps> = ({
           )}
 
           {gate === 'locked' && (
-            <PinGate reason="Unlock Backup" onUnlocked={() => setGate('open')} />
+            <PinGate reason={text.unlock} onUnlocked={() => setGate('open')} />
           )}
 
           {gate === 'open' && stage === 'complete' && (
             <section className="rounded-2xl border border-spark-border bg-spark-dark p-5 space-y-3"
-              role="status" aria-label="Offline backup verification complete">
-              <h2 className="font-display text-lg font-semibold text-spark-text-primary">Offline backup verified</h2>
-              <p className="text-sm text-spark-text-secondary">
-                Your two-word check is complete. Keep the full handwritten phrase somewhere secure and separate from your device.
-              </p>
-              <p className="text-xs text-spark-text-muted">Your recovery words were checked on this device and were not sent anywhere.</p>
+              role="status" aria-label={text.completeTitle} data-testid="backup-complete">
+              <h2 className="font-display text-lg font-semibold text-spark-text-primary">{text.completeTitle}</h2>
+              <p className="text-sm text-spark-text-secondary">{text.completeBody}</p>
+              <p className="text-xs text-spark-text-muted">{text.completeLocal}</p>
             </section>
           )}
 
           {gate === 'open' && stage === 'verify' && (
             <section className="rounded-2xl border border-spark-border bg-spark-dark p-5 space-y-5"
-              aria-label="Verify handwritten backup">
+              aria-label={text.checkTitle}>
               <div className="space-y-2">
-                <h2 className="font-display text-lg font-semibold text-spark-text-primary">Check your handwritten backup</h2>
-                <p className="text-sm text-spark-text-secondary">Your recovery words are hidden. Enter the two requested words from your offline copy.</p>
+                <h2 className="font-display text-lg font-semibold text-spark-text-primary">{text.checkTitle}</h2>
+                <p className="text-sm text-spark-text-secondary">{text.checkBody}</p>
               </div>
               {challenge?.map((position, index) => (
                 <label key={position} className="block space-y-2">
-                  <span className="text-sm font-medium text-spark-text-secondary">Word {position + 1}</span>
-                  <input type="text" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+                  <span className="text-sm font-medium text-spark-text-secondary">{text.word} {position + 1}</span>
+                  <input type="text" dir="ltr" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false}
                     className={`${FIELD_BASE_CLASS} p-3`} value={answers[index]}
                     onChange={event => {
                       setAnswers(previous => index === 0 ? [event.target.value, previous[1]] : [previous[0], event.target.value]);
@@ -354,232 +356,140 @@ const BackupPage: React.FC<BackupPageProps> = ({
                     }}/>
                 </label>
               ))}
-              {verificationError && <AlertCard variant="error" title="Try again">{verificationError}</AlertCard>}
-              <p className="text-xs text-spark-text-muted">This check happens only on your device.</p>
+              {verificationError && <AlertCard variant="error" title={text.tryAgain}>{verificationError}</AlertCard>}
+              <p className="text-xs text-spark-text-muted">{text.localCheck}</p>
             </section>
           )}
 
           {gate === 'open' && stage === 'view' && (
-          <>
-          {isPasskey && (
-            <section className="bg-spark-dark border border-spark-border rounded-2xl p-5 space-y-3"
-              aria-label="Passkey recovery review">
-              <h2 className="font-display font-semibold text-spark-text-primary">Know how to recover with your passkey</h2>
-              <p className="text-spark-text-secondary text-sm">
-                On another compatible device, use the same passkey and wallet label: <strong>{passkeyLabel}</strong>.
-                {' '}Keep access to the password manager and account where you saved that passkey.
-              </p>
-              <p className="text-spark-text-muted text-sm">
-                GetYourSats cannot verify that your passkey has synced. Syncing and account recovery depend on your provider.
-              </p>
-              {!passkeyReviewed && !phraseVerified ? (
-                <label className="flex min-h-11 items-start gap-3 text-sm text-spark-text-secondary">
-                  <input type="checkbox" checked={passkeyAcknowledged}
-                    onChange={event => setPasskeyAcknowledged(event.target.checked)} className="mt-1 accent-spark-primary"/>
-                  <span>I know which password manager and account hold my passkey, and I understand I need the same passkey and wallet label to recover this wallet.</span>
-                </label>
-              ) : passkeyReviewed && !phraseVerified ? (
-                <p className="text-sm font-medium text-spark-text-primary" role="status">Passkey recovery reviewed</p>
-              ) : null}
-              <p className="text-spark-text-muted text-sm">
-                A handwritten recovery phrase is an optional, independent backup. You can create and check that copy below when you are somewhere private.
-              </p>
-            </section>
-          )}
+            <>
+              {!isRevealed && (
+                <section className="rounded-2xl border border-spark-border bg-spark-dark p-5 space-y-3"
+                  aria-label={phraseVerified ? text.completeTitle : text.introTitle}>
+                  <h2 className="font-display text-xl font-semibold tracking-tight text-spark-text-primary">
+                    {phraseVerified ? text.completeTitle : text.introTitle}
+                  </h2>
+                  {phraseVerified
+                    ? <p className="text-sm text-spark-text-secondary" role="status">{text.verified}</p>
+                    : <>
+                      <p className="text-sm leading-relaxed text-spark-text-secondary">{text.introBody}</p>
+                      {isPasskey && <p className="text-sm leading-relaxed text-spark-text-muted">{text.passkeyBackup}</p>}
+                    </>}
+                </section>
+              )}
 
-          {phraseVerified && <p className="rounded-xl border border-spark-border bg-spark-dark p-4 text-sm text-spark-text-primary"
-            role="status">Offline backup verified on this device</p>}
-
-
-          {!isPasskey && mnemonic && !Capacitor.isNativePlatform() && (
-            <aside className="rounded-xl border border-spark-border bg-spark-dark p-4 space-y-2" aria-label="Browser wallet recovery guidance">
-              <p className="text-sm font-medium text-spark-text-primary">Keep your recovery words private</p>
-              <p className="text-sm text-spark-text-secondary">
-                Anyone who sees these words can control your wallet. Use a secure, offline backup before adding real funds.
-              </p>
-              <details className="text-xs text-spark-text-muted">
-                <summary className="cursor-pointer font-medium text-spark-text-secondary">About browser storage</summary>
-                <p className="mt-2 leading-relaxed">
-                  Browser extensions or a compromised website may be able to expose recovery words stored in a browser.
-                  Avoid untrusted extensions and do not store your phrase in screenshots, cloud notes or messages.
-                </p>
-              </details>
-            </aside>
-          )}
-
-          {!isRevealed && <section aria-label="Private recovery phrase viewing checklist"
-            className="rounded-2xl border border-spark-border bg-spark-dark p-5 space-y-3">
-            <h3 className="font-semibold text-spark-text-primary">Before you view recovery words</h3>
-            <p className="text-sm text-spark-text-secondary">
-              The phrase is hidden by default. {isPasskey
-                ? 'A handwritten copy is optional for passkey wallets, but can provide another recovery path.'
-                : 'For a recovery-word wallet, these are the words that restore access to your funds.'}
-              {' '}Never photograph or share them.
-            </p>
-            <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
-              <input type="checkbox" checked={privateViewing} onChange={e=>setPrivateViewing(e.target.checked)}
-                className="mt-1 accent-spark-primary"/>
-              <span>I am in a private space away from cameras or people who could read my screen.</span>
-            </label>
-            <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
-              <input type="checkbox" checked={paperReady} onChange={e=>setPaperReady(e.target.checked)}
-                className="mt-1 accent-spark-primary"/>
-              <span>I understand these words control my wallet, and I will never screenshot, store online or share them.</span>
-            </label>
-            {!canReveal && <p className="text-xs text-spark-text-muted">Complete both checks to enable viewing.</p>}
-          </section>}
-
-          {/* Reveal button (passkey mode, happy path). After a failed
-              passkey attempt, the fallback card below replaces this
-              one and folds the error + Face ID retry into one tile. */}
-          {isPasskey && !isRevealed && !mnemonic && !passkeyAttemptFailed && (
-            <button
-              onClick={handleRevealPasskey}
-              disabled={isLoading || !canReveal}
-              className="w-full bg-spark-dark border border-spark-border rounded-2xl p-8 flex flex-col items-center gap-4 hover:border-spark-border-light transition-colors disabled:opacity-50"
-            >
-              <span className="font-display font-semibold text-spark-text-primary">
-                <span className="inline-flex items-center gap-2"><EyeIcon size="sm"/> {isLoading ? 'Authenticating...' : 'Reveal words privately'}</span>
-              </span>
-              <span className="text-sm text-spark-text-muted">
-                {isLoading ? 'Complete passkey authentication' : 'Requires passkey authentication'}
-              </span>
-            </button>
-          )}
-
-          {/* Reveal button for an already-loaded phrase, whichever auth
-              mode the account uses. A legacy biometric-bound seed has
-              not been read yet, so that tap triggers an OS prompt
-              first. App-lock protection happens at page entry via the
-              PIN gate above. */}
-          {!isRevealed && (mnemonic || (!isPasskey && biometricSeedPresent)) && (
-            <button
-              onClick={mnemonic
-                ? () => setIsRevealed(true)
-                : () => { void revealFromVault('biometric'); }}
-              disabled={isLoading || !canReveal}
-              className="w-full bg-spark-dark border border-spark-border rounded-2xl p-8 flex flex-col items-center gap-4 hover:border-spark-border-light transition-colors disabled:opacity-50"
-            >
-              <span className="font-display font-semibold text-spark-text-primary">
-                <span className="inline-flex items-center gap-2"><EyeIcon size="sm"/> {isLoading ? 'Authenticating...' : 'Reveal words privately'}</span>
-              </span>
-              <span className="text-sm text-spark-text-muted">
-                {mnemonic
-                  ? 'Make sure no one is watching'
-                  : isLoading
-                    ? `Complete ${biometry?.label ?? 'biometric'} authentication`
-                    : `Requires ${biometry?.label ?? 'biometric authentication'}`}
-              </span>
-            </button>
-          )}
-
-          {/* Mnemonic-mode error: passkey-mode errors are now folded
-              into the fallback card below, so this only renders for
-              non-passkey edge cases. */}
-          {error && !isPasskey && (
-            <div className="bg-spark-warn-surface border border-spark-warn-border rounded-xl p-4 text-center">
-              <p className="text-spark-warn-text text-sm">{error}</p>
-            </div>
-          )}
-
-          {/* Biometric fallback (passkey only, native). Single card that
-              replaces both the original reveal tile and the error
-              banner once the passkey attempt has failed. Visually
-              mirrors the happy-path tile: same title, swap the
-              "Requires passkey authentication" subtitle for "Requires
-              {biometric}". The label-driven biometric naming matches
-              the convention used elsewhere (UnlockPage). */}
-          {isPasskey && passkeyAttemptFailed && !isRevealed && !mnemonic
-            && (fallbackTier === 'biometric' || fallbackTier === 'device') && (
-            <button
-              onClick={() => { if (canReveal) void revealFromVault(fallbackTier); }}
-              disabled={isLoading || !canReveal}
-              className="w-full bg-spark-dark border border-spark-border rounded-2xl p-8 flex flex-col items-center gap-4 hover:border-spark-border-light transition-colors disabled:opacity-50"
-            >
-              <span className="font-display font-semibold text-spark-text-primary">
-                <span className="inline-flex items-center gap-2"><EyeIcon size="sm"/> {isLoading ? 'Authenticating...' : 'Reveal words privately'}</span>
-              </span>
-              <span className="text-sm text-spark-text-muted">
-                {fallbackTier === 'device'
-                  ? 'Stored securely on this device'
-                  : isLoading
-                    ? `Complete ${biometry?.label ?? 'biometric'} authentication`
-                    : `Requires ${biometry?.label ?? 'biometric authentication'}`}
-              </span>
-            </button>
-          )}
-
-          {/* Dead-end card (passkey mode): web has no cached copy at
-              all, and a native install can lack one too (persist
-              failed, vault cleared). Without it the fallback tile
-              would be a button that always errors. */}
-          {isPasskey && passkeyAttemptFailed && !isRevealed && !mnemonic
-            && (!secureStorage.isSupported() || fallbackTier === 'none') && (
-            <div className="bg-spark-dark border border-spark-border rounded-2xl p-8 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-spark-primary/20 flex items-center justify-center mx-auto mb-4">
-                <WarningIcon size="xl" className="text-spark-primary" />
-              </div>
-              <h3 className="font-display font-semibold text-spark-text-primary mb-2">Passkey Unavailable</h3>
-              <p className="text-spark-text-muted text-sm">
-                Your recovery phrase is derived from your passkey. Without it, the phrase cannot be retrieved on this device. Sign in on a device where the passkey is still available to view it.
-              </p>
-            </div>
-          )}
-
-          {/* Mnemonic word grid (shared) */}
-          {isRevealed && mnemonic && (
-            <div className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-spark-text-secondary">Recovery Phrase</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleHide}
-                    aria-label="Hide recovery words"
-                    className="px-3 py-1.5 text-sm font-medium text-spark-text-muted hover:text-spark-text-primary border border-spark-border rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    <span className="inline-flex items-center gap-2"><EyeOffIcon size="sm"/> Hide words</span>
-                  </button>
-
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {words.map((word, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 bg-spark-surface rounded-lg px-3 py-2"
-                  >
-                    <span className="text-spark-text-muted text-xs font-mono w-5 text-right">
-                      {index + 1}.
-                    </span>
-                    <span className="text-spark-text-primary font-mono text-sm font-medium">
-                      {word}
-                    </span>
+              {!isRevealed && (
+                <section aria-label={text.privacyTitle}
+                  className="rounded-2xl border border-spark-border bg-spark-dark p-5 space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-spark-text-primary">{text.privacyTitle}</h3>
+                    <p className="text-sm leading-relaxed text-spark-text-secondary">{text.privacyBody}</p>
                   </div>
-                ))}
-              </div>
-              <label className="flex min-h-11 items-start gap-3 border-t border-spark-border pt-4 text-sm text-spark-text-secondary">
-                <input type="checkbox" checked={handwritten} onChange={event => setHandwritten(event.target.checked)}
-                  className="mt-1 accent-spark-primary"/>
-                <span>I have written down every word in order and kept the copy offline in a secure, private place.</span>
-              </label>
-              {verificationError && <AlertCard variant="error" title="Backup check unavailable">{verificationError}</AlertCard>}
-            </div>
-          )}
+                  <label className="flex min-h-11 items-start gap-3 text-sm text-spark-text-secondary">
+                    <input type="checkbox" checked={privateViewing} onChange={e => setPrivateViewing(e.target.checked)}
+                      className="mt-1 accent-spark-primary"/>
+                    <span>{text.privateCheck}</span>
+                  </label>
+                  <label className="flex min-h-11 items-start gap-3 text-sm text-spark-text-secondary">
+                    <input type="checkbox" checked={paperReady} onChange={e => setPaperReady(e.target.checked)}
+                      className="mt-1 accent-spark-primary"/>
+                    <span>{text.paperCheck}</span>
+                  </label>
+                  <p className="text-xs leading-relaxed text-spark-text-muted">
+                    {!canReveal ? text.privacyHint : mnemonic ? text.screenPrivate : isPasskey && !passkeyAttemptFailed
+                      ? text.passkeyAuth : text.deviceAuth}
+                  </p>
+                </section>
+              )}
 
-          {/* No backup found (mnemonic mode only) */}
-          {!isPasskey && !mnemonic && !biometricSeedPresent && (
-            <div className="bg-spark-dark border border-spark-border rounded-2xl p-8 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-spark-primary/20 flex items-center justify-center mx-auto mb-4">
-                <WarningIcon size="xl" className="text-spark-primary" />
-              </div>
-              <h3 className="font-display font-semibold text-spark-text-primary mb-2">No Backup Found</h3>
-              <p className="text-spark-text-muted text-sm">
-                Could not find a recovery phrase for this wallet.
-              </p>
-            </div>
-          )}
-          </>
+              {error && !isPasskey && (
+                <div className="bg-spark-warn-surface border border-spark-warn-border rounded-xl p-4 text-center" role="alert">
+                  <p className="text-spark-warn-text text-sm">{error}</p>
+                </div>
+              )}
+
+              {isPasskey && passkeyAttemptFailed && !isRevealed && !mnemonic
+                && (!secureStorage.isSupported() || fallbackTier === 'none') && (
+                  <section className="bg-spark-dark border border-spark-border rounded-2xl p-5 space-y-2" role="alert">
+                    <h3 className="font-display font-semibold text-spark-text-primary">{text.passkeyUnavailableTitle}</h3>
+                    <p className="text-spark-text-secondary text-sm leading-relaxed">{text.passkeyUnavailableBody}</p>
+                  </section>
+                )}
+
+              {isRevealed && mnemonic && (
+                <div className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-spark-text-secondary">{text.phrase}</span>
+                    <button onClick={handleHide}
+                      className="min-h-11 px-3 py-2 text-sm font-medium text-spark-text-muted hover:text-spark-text-primary border border-spark-border rounded-lg hover:bg-white/5 transition-colors">
+                      <span className="inline-flex items-center gap-2"><EyeOffIcon size="sm"/> {text.hide}</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2" dir="ltr" data-testid="recovery-word-grid">
+                    {words.map((word, index) => (
+                      <div key={index} className="flex items-center gap-2 bg-spark-surface rounded-lg px-3 py-2">
+                        <span className="text-spark-text-muted text-xs font-mono w-5 text-right">{index + 1}.</span>
+                        <span className="text-spark-text-primary font-mono text-sm font-medium">{word}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <label className="flex min-h-11 items-start gap-3 border-t border-spark-border pt-4 text-sm text-spark-text-secondary">
+                    <input type="checkbox" checked={handwritten} onChange={event => setHandwritten(event.target.checked)}
+                      className="mt-1 accent-spark-primary"/>
+                    <span>{text.handwritten}</span>
+                  </label>
+                  {verificationError && <AlertCard variant="error" title={text.unavailable}>{verificationError}</AlertCard>}
+                </div>
+              )}
+
+              {isPasskey && !isRevealed && (
+                <details className="rounded-2xl border border-spark-border bg-spark-dark p-5" data-testid="passkey-recovery-details">
+                  <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-spark-text-secondary">
+                    {text.passkeyTitle}
+                  </summary>
+                  <div className="mt-3 space-y-3">
+                    <p className="text-sm leading-relaxed text-spark-text-secondary">
+                      {text.passkeyLabel} <strong><bdi>{passkeyLabel}</bdi></strong>
+                    </p>
+                    <p className="text-sm leading-relaxed text-spark-text-secondary">{text.passkeyAccess}</p>
+                    <p className="text-xs leading-relaxed text-spark-text-muted">{text.passkeySync}</p>
+                    {!passkeyReviewed && !phraseVerified ? (
+                      <>
+                        <label className="flex min-h-11 items-start gap-3 text-sm text-spark-text-secondary">
+                          <input type="checkbox" checked={passkeyAcknowledged}
+                            onChange={event => setPasskeyAcknowledged(event.target.checked)} className="mt-1 accent-spark-primary"/>
+                          <span>{text.passkeyCheck}</span>
+                        </label>
+                        <SecondaryButton className="w-full" disabled={!passkeyAcknowledged} onClick={reviewPasskey}>
+                          {text.review}
+                        </SecondaryButton>
+                      </>
+                    ) : passkeyReviewed && !phraseVerified ? (
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-spark-text-primary" role="status">{text.reviewed}</p>
+                        <p className="text-xs text-spark-text-muted">{text.reviewedHint}</p>
+                      </div>
+                    ) : null}
+                  </div>
+                </details>
+              )}
+
+              {!isPasskey && mnemonic && !Capacitor.isNativePlatform() && !isRevealed && (
+                <details className="rounded-2xl border border-spark-border bg-spark-dark p-5">
+                  <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-spark-text-secondary">
+                    {text.browserTitle}
+                  </summary>
+                  <p className="mt-3 text-xs leading-relaxed text-spark-text-muted">{text.browserBody}</p>
+                </details>
+              )}
+
+              {!isPasskey && !mnemonic && !biometricSeedPresent && (
+                <section className="bg-spark-dark border border-spark-border rounded-2xl p-5 space-y-2" role="alert">
+                  <h3 className="font-display font-semibold text-spark-text-primary">{text.noBackupTitle}</h3>
+                  <p className="text-spark-text-secondary text-sm">{text.noBackupBody}</p>
+                </section>
+              )}
+            </>
           )}
         </div>
       </div>

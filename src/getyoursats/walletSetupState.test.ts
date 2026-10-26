@@ -32,9 +32,9 @@ describe('wallet-scoped setup progress', () => {
     expect(localStorage.length).toBe(0);
   });
 
-  it('starts fresh wallets at recovery while keeping an actual phrase check', () => {
+  it('starts fresh wallets with language while keeping an actual phrase check', () => {
     initializeNewWalletSetup(scopeA, true);
-    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'active', step: 'protect', recoveryStatus: 'phrase-verified'});
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'active', step: 'language', recoveryStatus: 'phrase-verified'});
     initializeNewWalletSetup(scopeB, false);
     expect(readWalletSetup(scopeB).recoveryStatus).toBe('pending');
   });
@@ -51,19 +51,19 @@ describe('wallet-scoped setup progress', () => {
     advanceWalletTour(scopeA);
     skipWalletTour(scopeA);
     clearWalletSetupMemory();
-    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'skipped', step: 'balance', recoveryStatus: 'pending'});
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'skipped', step: 'protect', recoveryStatus: 'pending'});
     beginWalletTour(scopeA);
-    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'active', step: 'balance', recoveryStatus: 'pending'});
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'active', step: 'protect', recoveryStatus: 'pending'});
   });
 
   it('finishing and replaying a tour never confirms backup', () => {
     beginWalletTour(scopeA);
-    for (let index = 0; index < 4; index++) advanceWalletTour(scopeA);
+    for (let index = 0; index < 6; index++) advanceWalletTour(scopeA);
     expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'completed', recoveryStatus: 'pending'});
     skipWalletTour(scopeA);
     expect(readWalletSetup(scopeA).tourStatus).toBe('completed');
     beginWalletTour(scopeA);
-    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'active', step: 'protect', recoveryStatus: 'pending'});
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'active', step: 'language', recoveryStatus: 'pending'});
   });
 
   it('does not reset existing progress when a creation event is repeated', () => {
@@ -71,7 +71,7 @@ describe('wallet-scoped setup progress', () => {
     advanceWalletTour(scopeA);
     skipWalletTour(scopeA);
     initializeNewWalletSetup(scopeA, false);
-    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'skipped', step: 'balance'});
+    expect(readWalletSetup(scopeA)).toMatchObject({tourStatus: 'skipped', step: 'protect'});
   });
 
   it('records a passkey review separately and never downgrades verified words', () => {
@@ -83,7 +83,17 @@ describe('wallet-scoped setup progress', () => {
     expect(readWalletSetup(scopeB).recoveryStatus).toBe('pending');
   });
 
-  it.each(['{', 'null', '[]', '{"version":99}', JSON.stringify({version: 1, tourStatus: ['completed'], step: 'protect', recoveryStatus: 'phrase-verified'})])(
+  it('resumes older guide progress and reaches POS without forcing a restart', () => {
+    localStorage.setItem(scopeA, JSON.stringify({version: 1, tourStatus: 'skipped', step: 'receive', recoveryStatus: 'passkey-reviewed'}));
+    beginWalletTour(scopeA);
+    expect(readWalletSetup(scopeA)).toMatchObject({step: 'receive', recoveryStatus: 'passkey-reviewed'});
+    advanceWalletTour(scopeA);
+    expect(readWalletSetup(scopeA).step).toBe('pos');
+    beginWalletTour(scopeA, true);
+    expect(readWalletSetup(scopeA)).toMatchObject({step: 'language', recoveryStatus: 'passkey-reviewed'});
+  });
+
+  it.each(['{', 'null', '[]', '{"version":99}', JSON.stringify({version: 1, tourStatus: ['completed'], step: 'language', recoveryStatus: 'phrase-verified'})])(
     'treats malformed persisted progress as unknown: %s', raw => {
       localStorage.setItem(scopeA, raw);
       expect(readWalletSetup(scopeA)).toEqual(EMPTY_WALLET_SETUP);
@@ -95,12 +105,12 @@ describe('wallet-scoped setup progress', () => {
     initializeNewWalletSetup(scopeA, false);
     advanceWalletTour(scopeA);
     skipWalletTour(scopeA);
-    expect(readWalletSetup(scopeA)).toMatchObject({step: 'balance', tourStatus: 'skipped'});
+    expect(readWalletSetup(scopeA)).toMatchObject({step: 'protect', tourStatus: 'skipped'});
     expect(readWalletSetup(scopeB)).toEqual(EMPTY_WALLET_SETUP);
     setItem.mockRestore();
     beginWalletTour(scopeA);
     clearWalletSetupMemory();
-    expect(readWalletSetup(scopeA)).toMatchObject({step: 'balance', tourStatus: 'active'});
+    expect(readWalletSetup(scopeA)).toMatchObject({step: 'protect', tourStatus: 'active'});
   });
 
   it('notifies only subscribers for the changed wallet and accepts cross-tab updates', () => {
