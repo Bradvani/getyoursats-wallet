@@ -9,6 +9,9 @@ export function normalizeEmail(value) {
   const email=value.trim().toLowerCase();
   if(email.length>254||!/^[a-z0-9.!#$%&'*+\-/=?^_`{|}~]{1,64}@[a-z0-9](?:[a-z0-9.-]{0,250}[a-z0-9])?\.[a-z]{2,63}$/.test(email)
     ||email.includes('..')||email.includes('\r')||email.includes('\n'))throw new Error('Invalid email');
+  const [local,domain]=email.split('@');
+  if(local.startsWith('.')||local.endsWith('.')||domain.split('.').some(label=>
+    label.length>63||!(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label))))throw new Error('Invalid email');
   return email;
 }
 export function digest(secret,value) {

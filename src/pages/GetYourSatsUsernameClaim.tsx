@@ -1,113 +1,158 @@
-import {useEffect,useState} from 'react';
-import {useWallet} from '../contexts/WalletContext';
-import {selectedNetwork} from '../services/sdkConnect';
+import {useEffect, useRef, useState} from 'react';
+import type {LightningAddressInfo} from '@breeztech/breez-sdk-spark';
+import SlideInPage from '../components/layout/SlideInPage';
+import {PrimaryButton, SecondaryButton} from '../components/ui/buttons';
+import {FIELD_BASE_CLASS} from '../components/ui/forms';
+import {copyToClipboard} from '../utils/clipboard';
+import {nativeLightningLookupUrl, NATIVE_LIGHTNING_DOMAIN as DOMAIN} from '../services/nativeLightningAddress';
 
-interface Reply{error?:string}
-interface Challenge{challengeId:string;message:string}
-interface Claimed{claimed:boolean;username:string|null;lightningAddress:string|null;sourceAddress?:string|null}
-async function post<T>(body:Record<string,unknown>):Promise<T>{
- const response=await fetch('/api/account/handle',{method:'POST',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify(body),cache:'no-store',credentials:'omit'});
- const result=await response.json() as Reply;
- if(!response.ok)throw new Error(result.error||'Lightning username service unavailable');
- return result as T;
+interface Props {
+  email: string;
+  onBack: () => void;
+  nativeAddress?: LightningAddressInfo | null;
+  onClaimNativeAddress?: (username: string) => Promise<LightningAddressInfo>;
 }
 
-export default function GetYourSatsUsernameClaim(){
- const sdk=useWallet();
- const [available,setAvailable]=useState(false);
- const [loading,setLoading]=useState(true);
- const [username,setUsername]=useState('');
- const [claimed,setClaimed]=useState<Claimed|null>(null);
- const [message,setMessage]=useState('');
- const [busy,setBusy]=useState(false);
+async function confirmPublicAddress(address: LightningAddressInfo, signal: AbortSignal) {
+  const lookupUrl = nativeLightningLookupUrl(address);
+  const response = await fetch(lookupUrl, {
+    cache: 'no-store', credentials: 'omit', redirect: 'error', signal,
+  });
+  const result = await response.json() as {tag?: string; callback?: string};
+  if (!response.ok || result.tag !== 'payRequest'
+    || result.callback !== `https://${DOMAIN}/lnurlp/${address.username}/invoice`) {
+    throw new Error('Your name is registered, but its payment link is not ready. Please check it again before sharing.');
+  }
+}
 
- useEffect(()=>{
-   let live=true;
-   void fetch('/api/account/handle',{cache:'no-store'})
-     .then(r=>r.json() as Promise<{available:boolean;domain:string}>)
-     .then(r=>{if(live)setAvailable(r.available===true&&r.domain==='getyoursats.com')})
-     .catch(()=>{if(live)setAvailable(false)})
-     .finally(()=>{if(live)setLoading(false)});
-   return()=>{live=false};
- },[]);
+export default function GetYourSatsUsernameClaim({email, onBack, nativeAddress, onClaimNativeAddress}: Props) {
+  const [username, setUsername] = useState('');
+  const [address, setAddress] = useState<LightningAddressInfo | null>(nativeAddress ?? null);
+  const [confirmed, setConfirmed] = useState(false);
+  const [busy, setBusy] = useState(!!nativeAddress);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
+  const active = useRef(false);
+  const request = useRef<AbortController | null>(null);
 
- async function sign(purpose:'status'|'claim',name='',address=''){
-   if(selectedNetwork()!=='mainnet')throw new Error('Lightning username claims require mainnet');
-   const info=await sdk.getInfo({ensureSynced:false});
-   const pub=info.identityPubkey;
-   if(!pub)throw new Error('Wallet identity not available');
-   const challenge=await post<Challenge>({action:'challenge',purpose,walletPubkey:pub,
-     ...(purpose==='claim'?{username:name,sourceAddress:address}:{})});
-   const proof=await sdk.signMessage({message:challenge.message,compact:true});
-   if(proof.pubkey.toLowerCase()!==pub.toLowerCase())throw new Error('Wallet identity changed');
-   return {challengeId:challenge.challengeId,signature:proof.signature};
- }
- async function check(){
-   setBusy(true);setMessage('');
-   try{
-     const proof=await sign('status');
-     setClaimed(await post<Claimed>({action:'status',...proof}));
-   }catch(e){setMessage(e instanceof Error?e.message:'Cannot check claim');}
-   finally{setBusy(false);}
- }
- async function claim(){
-   if(busy)return;
-   setBusy(true);setMessage('');
-   try{
-     const name=username.trim().toLowerCase();
-     if(!/^[a-z][a-z0-9]{2,23}$/.test(name))throw new Error('Enter 3–24 lowercase letters and numbers, starting with a letter');
-     // Source comes directly from this connected wallet's SDK. Never let a user
-     // type an arbitrary third-party payout address in the claim UI.
-     const addressInfo=await sdk.getLightningAddress();
-     const source=addressInfo?.lightningAddress;
-     if(!source||!source.toLowerCase().endsWith('@breez.tips'))
-       throw new Error('Open Receive first to activate your anonymous Lightning Address');
-     const proof=await sign('claim',name,source);
-     const result=await post<Claimed>({action:'claim',...proof});
-     setClaimed(result);
-     // Claim storage alone does not prove that the root LNURL endpoint works.
-     const verify=await fetch('https://getyoursats.com/.well-known/lnurlp/'+encodeURIComponent(name),
-       {cache:'no-store'});
-     const lookup=await verify.json() as {tag?:string};
-     setMessage(verify.ok&&lookup.tag==='payRequest'
-       ? 'Address resolves. Confirm with a small external payment before sharing.'
-       : 'Username reserved but network resolution is not ready. Do not share it yet.');
-   }catch(e){setMessage(e instanceof Error?e.message:'Unable to claim username');}
-   finally{setBusy(false);}
- }
- return <section aria-label="Your Lightning username" className="bg-spark-dark border border-spark-border rounded-2xl p-5 space-y-3">
-   <h2 className="font-display text-xl font-semibold text-spark-text-primary">Choose your Lightning name</h2>
-   <p className="text-sm text-spark-text-secondary">
-     Keep your anonymous Breez address and claim a memorable GetYourSats name after verifying email.
-     No payment, transaction count or activity threshold is required.
-   </p>
-   {loading?<p role="status" className="text-sm text-spark-text-muted">Checking availability…</p>
-    :!available?<p role="status" className="text-sm text-spark-text-muted">
-       Custom usernames are not active yet. Domain and verified-email services must be enabled first.
-     </p>
-    :claimed?.claimed?<div className="rounded-xl border border-spark-border bg-spark-surface p-3 space-y-1">
-       <p className="text-xs text-spark-text-muted">Reserved GetYourSats name</p>
-       <strong className="break-all">{claimed.lightningAddress}</strong>
-       <p className="text-xs text-spark-text-muted">Payments forward to your existing Lightning wallet.</p>
-     </div>
-    :<>
-       <label className="block text-sm text-spark-text-secondary" htmlFor="gys-claim-name">Username</label>
-       <div className="flex items-center rounded-xl bg-spark-surface border border-spark-border overflow-hidden">
-         <input id="gys-claim-name" className="flex-1 min-w-0 p-3 bg-transparent outline-none"
-           value={username} disabled={busy} maxLength={24} autoComplete="off"
-           autoCapitalize="none" spellCheck={false} placeholder="yourname"
-           onChange={e=>setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g,''))}/>
-         <span className="text-xs shrink-0 text-spark-text-muted pr-3">@getyoursats.com</span>
-       </div>
-       <button type="button" className="w-full rounded-xl bg-spark-primary text-spark-dark p-3 font-semibold"
-         disabled={busy||!username} onClick={()=>void claim()}>
-         {busy?'Verifying wallet…':'Claim username'}
-       </button>
-     </>}
-   {available&&<button type="button" className="text-sm underline text-spark-primary" disabled={busy}
-      onClick={()=>void check()}>Check existing username</button>}
-   {!!message&&<p role="status" className="text-xs text-spark-text-secondary">{message}</p>}
-   <p className="text-xs text-spark-text-muted">Email identifies your account; it cannot restore Bitcoin without your wallet recovery keys.</p>
- </section>;
+  useEffect(() => {
+    active.current = true;
+    if (nativeAddress) {
+      const controller = new AbortController();
+      request.current = controller;
+      void confirmPublicAddress(nativeAddress, controller.signal).then(() => {
+        if (!controller.signal.aborted) setConfirmed(true);
+      }).catch(cause => {
+        if (!controller.signal.aborted) {
+          setError(cause instanceof Error ? cause.message : 'Could not check your payment link. Please try again.');
+        }
+      }).finally(() => {
+        if (request.current === controller) {
+          request.current = null;
+          if (!controller.signal.aborted) setBusy(false);
+        }
+      });
+    }
+    return () => {
+      active.current = false;
+      request.current?.abort();
+      request.current = null;
+    };
+  }, [nativeAddress]);
+
+  async function run(operation: (signal: AbortSignal) => Promise<void>) {
+    if (!active.current || request.current) return;
+    const controller = new AbortController();
+    request.current = controller;
+    setBusy(true);
+    setError('');
+    try {
+      await operation(controller.signal);
+    } catch (cause) {
+      if (!controller.signal.aborted && active.current) {
+        setError(cause instanceof Error ? cause.message : 'Could not set up your Lightning name. Please try again.');
+      }
+    } finally {
+      if (request.current === controller) {
+        request.current = null;
+        if (active.current) setBusy(false);
+      }
+    }
+  }
+
+  const claim = () => void run(async signal => {
+    if (!onClaimNativeAddress || address) return;
+    const name = username.trim().toLowerCase();
+    if (!/^[a-z][a-z0-9]{2,23}$/.test(name)) {
+      throw new Error('Enter 3 to 24 lowercase letters and numbers, starting with a letter.');
+    }
+    const registered = await onClaimNativeAddress(name);
+    signal.throwIfAborted();
+    nativeLightningLookupUrl(registered);
+    setAddress(registered);
+    await confirmPublicAddress(registered, signal);
+    signal.throwIfAborted();
+    setConfirmed(true);
+  });
+
+  const check = () => void run(async signal => {
+    if (!address) return;
+    await confirmPublicAddress(address, signal);
+    signal.throwIfAborted();
+    setConfirmed(true);
+  });
+
+  const copy = () => void run(async signal => {
+    if (!address || !confirmed) return;
+    await copyToClipboard(address.lightningAddress);
+    signal.throwIfAborted();
+    setCopied(true);
+  });
+
+  const footer = address ? (
+    <div className="space-y-2">
+      <PrimaryButton className="w-full" disabled={busy} onClick={confirmed ? copy : check}>
+        {busy ? 'Checking...' : confirmed ? (copied ? 'Copied' : 'Copy Address') : 'Check Payment Link'}
+      </PrimaryButton>
+      <SecondaryButton className="w-full" disabled={busy} onClick={onBack}>Done</SecondaryButton>
+    </div>
+  ) : onClaimNativeAddress ? (
+    <PrimaryButton className="w-full" disabled={busy || !username.trim()} onClick={claim}>
+      {busy ? 'Setting up...' : 'Claim Name'}
+    </PrimaryButton>
+  ) : null;
+
+  return <SlideInPage title="Your Lightning Name" onClose={onBack} closeStyle="back" footer={footer}>
+    <div className="max-w-xl mx-auto w-full p-5 space-y-5">
+      <section className="bg-spark-dark border border-spark-border rounded-2xl p-5 space-y-2" aria-label="Verified email">
+        <h2 className="font-display font-semibold text-spark-text-primary">Email verified</h2>
+        <p className="text-sm text-spark-text-secondary break-words">{email}</p>
+        <p className="text-xs text-spark-text-muted">Email cannot restore your wallet. Keep your recovery words or passkey safe.</p>
+      </section>
+      <section aria-label="Your Lightning username" className="bg-spark-dark border border-spark-border rounded-2xl p-5 space-y-4">
+        <h2 className="font-display text-xl font-semibold text-spark-text-primary">{confirmed ? 'Your GetYourSats address' : 'Choose your Lightning name'}</h2>
+        <p className="text-sm text-spark-text-secondary">
+          Your existing Breez address continues to receive into this wallet. No purchase or activity requirement applies to your new name.
+        </p>
+        {!onClaimNativeAddress && !address ? <p role="status" className="text-sm text-spark-text-muted">
+          Personalized GetYourSats names are not available yet. You can keep using your current Lightning address.
+        </p> : address ? <div className="rounded-xl border border-spark-border bg-spark-surface p-3 space-y-2">
+          <strong className="break-all text-spark-text-primary">{address.lightningAddress}</strong>
+          <p role="status" className="text-xs text-spark-text-secondary">{confirmed ? 'Ready to receive payments.' : 'Checking the payment link before sharing.'}</p>
+        </div> : <div className="space-y-2">
+          <label className="block text-sm text-spark-text-secondary" htmlFor="gys-claim-name">Username</label>
+          <div className="relative">
+            <input id="gys-claim-name" className={`${FIELD_BASE_CLASS} p-3 pr-32`} value={username}
+              disabled={busy} maxLength={24} autoComplete="off" autoCapitalize="none" spellCheck={false}
+              placeholder="yourname" aria-describedby="gys-name-domain gys-name-rules"
+              onChange={event => setUsername(event.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+              onKeyDown={event => {if (event.key === 'Enter' && username.trim()) claim();}}/>
+            <span id="gys-name-domain" className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-spark-text-muted">@getyoursats.com</span>
+          </div>
+          <p id="gys-name-rules" className="text-xs text-spark-text-muted">3 to 24 letters and numbers, starting with a letter. If this wallet already has a GetYourSats name, we will restore it.</p>
+        </div>}
+        {error ? <p role="alert" className="text-sm text-spark-warning">{error}</p> : null}
+      </section>
+    </div>
+  </SlideInPage>;
 }

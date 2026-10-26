@@ -16,6 +16,7 @@ import StagingGate from './components/StagingGate';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import AppShell from './components/layout/AppShell';
 import { useBreezSdk } from './hooks/useBreezSdk';
+import {featureAvailability} from './getyoursats/featureAvailability';
 import { FiatDataProvider } from './contexts/FiatDataContext';
 import { StableBalanceProvider, useStableBalance } from './contexts/StableBalanceContext';
 
@@ -715,7 +716,11 @@ const AppContent: React.FC = () => {
           <>
             {renderWalletPage()}
             {renderSettingsPage()}
-            <EmailVerificationPage onBack={() => setUserScreen('settings')}/>
+            <EmailVerificationPage
+              onBack={() => setUserScreen('settings')}
+              nativeAddress={sdk.nativeLightningAddress}
+              onClaimNativeAddress={featureAvailability.nativeLightningAddress ? sdk.claimNativeLightningAddress : undefined}
+            />
           </>
         );
 
@@ -773,7 +778,8 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <WalletProvider client={sdk.sdk} isConnected={sdk.isConnected} subscribeToSdkEvents={sdk.subscribeToSdkEvents}>
+    <WalletProvider client={sdk.sdk} isConnected={sdk.isConnected} subscribeToSdkEvents={sdk.subscribeToSdkEvents}
+      preferredLightningAddress={sdk.nativeLightningAddress}>
       <WalletInfoProvider walletInfo={sdk.walletInfo}>
         <WalletStatusProvider hasPendingConversion={sdk.hasPendingConversion}>
           <FiatDataProvider>

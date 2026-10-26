@@ -18,9 +18,11 @@ Preview illustrations **do not** create wallets, sign transactions, generate pay
 The website currently uses a direct Vercel deployment on project `getyoursats-site`; it is not yet Git-connected. Do not deploy the wallet Vercel project in place of the marketing site. For a fresh deployment of this folder:
 
 1. Run `npm ci` from repository root and `node site/scripts/build-favicons.mjs` to generate binary assets from the approved SVG.
-2. Deploy the contents of `site/` as static files, retaining `api/contact.js` as the serverless endpoint.
+2. Deploy the contents of `site/` as static files, retaining `api/contact.js`, `api/breez-lnurl.js` and `server/breezLnurlProxy.mjs`. Preserve the security headers, `robots.txt`, `sitemap.xml` and LNURL rewrites in `vercel.json`.
 3. Keep the server-side encrypted Vercel environment variables `RESEND_API_KEY`, `GETYOURSATS_SUPPORT_FROM` and `GETYOURSATS_SUPPORT_TO` in the marketing-site project's Production environment.
 4. Verify `/support`, `/privacy`, `/assets/favicon-light.svg`, `/favicon.ico` and `/api/contact` after deployment.
+
+The native Lightning-address proxy additionally uses server-only `BREEZ_LNURL_PROXY_SECRET`. Keep new registrations disabled until the shared verified-email database and wallet integration are ready. See [the native address rollout](../docs/native-lightning-domain-rollout.md) for deployment and rollback checks. If files are uploaded directly after local favicon generation, set the uploaded build/install commands to empty without changing the committed reproducible build commands.
 
 The favicon asset URLs use `?v=4` to avoid older browser-tab icon caches. The site's other branding and wallet payment code should not be changed as part of this release.
 
