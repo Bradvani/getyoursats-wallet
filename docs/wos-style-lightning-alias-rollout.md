@@ -1,5 +1,7 @@
 # WoS-style custom Lightning aliases — release and security notes
-Date: 2026-10-24. **Implemented behind disabled flags. Not enabled for funded users.**
+Date: 2026-10-24. **Superseded design. Keep the legacy alias flags disabled.**
+
+Breez has registered the native GetYourSats domain. Follow [the native Lightning-domain rollout](native-lightning-domain-rollout.md) for the current architecture and activation steps. The notes below describe the older forwarding-alias experiment and are retained for context, not as release instructions.
 
 ## UX
 1. Anonymous self-custody wallet opens immediately without email registration.

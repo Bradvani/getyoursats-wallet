@@ -3,5 +3,10 @@
   "framework": null,
   "installCommand": "cd .. && npm ci",
   "buildCommand": "node scripts/build-favicons.mjs",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "rewrites": [
+    {"source": "/.well-known/lnurlp/(.*)", "destination": "/api/breez-lnurl"},
+    {"source": "/lnurlp/(.*)", "destination": "/api/breez-lnurl"},
+    {"source": "/lnurlpay/(.*)", "destination": "/api/breez-lnurl"}
+  ]
 }

@@ -2,6 +2,8 @@
 
 Status: **draft, disabled unless verified provider infrastructure exists**, October 2026.
 
+The current username integration uses [Breez-native custom-domain registration](native-lightning-domain-rollout.md). Its proxy reads this service's verified wallet records. Keep the older `GETYOURSATS_HANDLE_ENABLED` forwarding-alias route disabled.
+
 The new `Settings → Account identity → Verify email address` screen requires **server confirmation**. This is deliberately not an email-as-wallet-login design: a user still needs their Bitcoin wallet keys/passkey/phrase.
 
 ## Architecture

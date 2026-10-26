@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { LightningAddressInfo, BreezSdk } from '@breeztech/breez-sdk-spark';
-import { useWallet } from '../../../contexts/WalletContext';
+import { useSdkEvents, useWallet } from '../../../contexts/WalletContext';
 import { generateRandomName } from '../../../utils/randomName';
 import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
-import { useLatest } from '../../../hooks/useLatest';
 
 export interface UseLightningAddress {
   address: LightningAddressInfo | null;
@@ -21,217 +20,226 @@ export interface UseLightningAddress {
   reset: () => void;
 }
 
-// The SDK surfaces every failure here as one opaque string — an unreachable
-// LNURL server reads as `TypeError: Load failed`, a registration rate limit
-// and a name lost in a race both read as `Network error (status ...)`. None of
-// that is actionable, so the user gets one generic line and the raw error goes
-// to the log viewer via the `logger.error` calls below.
-// ponytail: one message for every failure; split it per case once the SDK
-// gives us a typed error to branch on.
 const LOAD_FAILED_MESSAGE = "Couldn't load your Lightning address. Please try again.";
 const SAVE_FAILED_MESSAGE = "Couldn't save your Lightning address. Please try again.";
 
-
-/**
- * Coordinate address registration across WalletPage and ReceivePaymentDialog.
- * Both screens can mount together. Registration must run at most once per
- * wallet SDK instance to avoid allocating two random addresses in a race.
- */
-const registrationBySdk = new WeakMap<BreezSdk, Promise<LightningAddressInfo|null>>();
-async function ensureLightningAddress(sdk:BreezSdk):Promise<LightningAddressInfo|null>{
-  const existing=registrationBySdk.get(sdk);
-  if(existing)return existing;
-  const task=(async()=>{
-    let result=await sdk.getLightningAddress();
-    if(result)return result;
-    const base=generateRandomName();
-    for(let i=0;i<3;i++){
-      const username=base+(i===0?'':String(Math.floor(1000+Math.random()*9000)));
-      if(!(await sdk.checkLightningAddressAvailable({username})))continue;
-      await sdk.registerLightningAddress({username,description:`Pay to ${username}@breez.tips`});
-      result=await sdk.getLightningAddress();
-      if(result)return result;
-    }
-    return null;
-  })();
-  registrationBySdk.set(sdk,task);
-  try{return await task;}finally{registrationBySdk.delete(sdk)}
+interface AddressSnapshot {
+  address: LightningAddressInfo | null;
+  isLoading: boolean;
+  error: string | null;
+  isSupported: boolean;
 }
 
-export const useLightningAddress = (): UseLightningAddress => {
-  const wallet = useWallet();
+interface AddressState {
+  snapshot: AddressSnapshot;
+  listeners: Set<() => void>;
+  pending: Promise<void> | null;
+  revision: number;
+  eventConsumers: number;
+  unsubscribeEvents: (() => void) | null;
+  getSnapshot: () => AddressSnapshot;
+  subscribe: (listener: () => void) => () => void;
+}
 
-  const [address, setAddress] = useState<LightningAddressInfo | null>(null);
-  // Default to `true` so the first paint of the Receive sheet shows
-  // the Lightning-address loading spinner instead of the
-  // `!address` fallback ("Create Lightning Address"
-  // button). Without this, users briefly see the Create button flash
-  // between the sheet opening and `load()`'s `setIsLoading(true)`
-  // landing on the next tick — confusing on first-launch passkey
-  // onboarding where the address is being auto-registered. `load()`
-  // always sets it back to `false` in its `finally` block.
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [editValue, setEditValue] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [isSupported, setIsSupported] = useState<boolean>(true);
+// Home and Receive share the address and registration operation. A new SDK
+// gets a new state, so an old wallet's late response cannot reach the new one.
+const addressesBySdk = new WeakMap<BreezSdk, AddressState>();
 
-  const markUnsupported = useCallback(() => {
-    setIsSupported(false);
-    setIsEditing(false);
-    setEditValue('');
-    setError(null);
-  }, []);
-
-  const extractUsername = (value: string): string => {
-    if (!value) return '';
-    return value.includes('@') ? value.split('@')[0] : value;
+function addressState(wallet: BreezSdk): AddressState {
+  const existing = addressesBySdk.get(wallet);
+  if (existing) return existing;
+  const state: AddressState = {
+    snapshot: { address: null, isLoading: true, error: null, isSupported: true },
+    listeners: new Set(),
+    pending: null,
+    revision: 0,
+    eventConsumers: 0,
+    unsubscribeEvents: null,
+    getSnapshot: () => state.snapshot,
+    subscribe: listener => {
+      state.listeners.add(listener);
+      return () => { state.listeners.delete(listener); };
+    },
   };
+  addressesBySdk.set(wallet, state);
+  return state;
+}
 
-  // Ref lets `load` short-circuit when the address is already cached
-  // without depending on `address` in its closure — keeps the
-  // callback reference stable across address updates so effects +
-  // consumers don't re-fire every time the address changes.
-  const addressRef = useLatest(address);
-  // Parallel in-flight guard. Without it the auto-load on mount can
-  // race with the `loadLightningAddress()` the Receive dialog fires
-  // from its isOpen useEffect — both start their own SDK roundtrip
-  // because neither sees a cached address yet. The second call's
-  // setAddress overwrites the first with the same value, but the
-  // second auto-register collision branch is genuinely wasteful.
-  const loadInFlightRef = useRef(false);
+function update(state: AddressState, changes: Partial<AddressSnapshot>): void {
+  state.snapshot = { ...state.snapshot, ...changes };
+  state.listeners.forEach(listener => listener());
+}
 
-  const load = useCallback(async () => {
-    if (!isSupported) return;
-    // Already loaded from a prior call — skip the SDK roundtrip.
-    // `load()` fires on every Receive-dialog open + every Lightning
-    // tab switch; without this short-circuit each reopening pays
-    // for another `getLightningAddress` roundtrip, which shows up
-    // as a flash of the loading spinner + a small stall while the
-    // SDK call resolves. The auto-load on mount (below) seeds the
-    // cache once so first-ever open is fast too.
-    if (addressRef.current) return;
-    if (loadInFlightRef.current) return;
-    loadInFlightRef.current = true;
+function failed(state: AddressState, error: unknown, message: string): void {
+  if (error instanceof Error && /lnurl server is not configured/i.test(error.message)) {
+    update(state, { isSupported: false, error: null });
+  } else {
+    update(state, { error: message });
+  }
+}
 
-    setIsLoading(true);
+function current(state: AddressState, revision: number): boolean {
+  return state.revision === revision && state.listeners.size > 0;
+}
+
+function loadAddress(wallet: BreezSdk, state: AddressState): Promise<void> {
+  if (state.pending) return state.pending;
+  if (!state.snapshot.isSupported) return Promise.resolve();
+  const revision = ++state.revision;
+  update(state, { isLoading: !state.snapshot.address, error: null });
+
+  const task = (async () => {
     try {
-      const addr = await ensureLightningAddress(wallet);
-      setAddress(addr ?? null);
-    } catch (err) {
-      logger.error(LogCategory.PAYMENT, 'Failed to load Lightning address', {
-        error: formatError(err),
-      });
-      if (err instanceof Error && /lnurl server is not configured/i.test(err.message)) {
-        markUnsupported();
-      } else {
-        setError(LOAD_FAILED_MESSAGE);
-      }
-    } finally {
-      setIsLoading(false);
-      loadInFlightRef.current = false;
-    }
-  }, [wallet, isSupported, markUnsupported, addressRef]);
-
-  // Pre-load the Lightning address as soon as the hook mounts (which
-  // happens on WalletPage mount, well before the user taps Receive).
-  // Moves the cold `getLightningAddress` SDK roundtrip (plus any
-  // auto-registration chain for a fresh passkey label: `checkAvailable`
-  // then `register` then `getAddress` again) out of the Receive-open
-  // animation critical path. Without this, the user sees a visible
-  // dead window between tapping Receive and the sheet sliding up on
-  // first launch while the WASM bridge + network calls complete. The
-  // `hasAttemptedMountLoad` ref guards against React 18 Strict-Mode
-  // double-invocation in dev + re-fires on dep changes.
-  //
-  // The fetch runs inside an async IIFE so all setStates fire after
-  // `await load()` resolves, satisfying react-hooks/set-state-in-effect.
-  const hasAttemptedMountLoad = useRef(false);
-  useEffect(() => {
-    if (hasAttemptedMountLoad.current) return;
-    if (!isSupported) return;
-    hasAttemptedMountLoad.current = true;
-    void (async () => {
-      await load();
-    })();
-  }, [isSupported, load]);
-
-  const beginEdit = useCallback((currentAddress?: LightningAddressInfo | null) => {
-    if (!isSupported) {
-      return;
-    }
-    const addrStr = currentAddress?.lightningAddress ?? address?.lightningAddress ?? '';
-    const initial = extractUsername(addrStr);
-    setEditValue(initial);
-    setIsEditing(true);
-    setError(null);
-  }, [address, isSupported]);
-
-  const cancelEdit = useCallback(() => {
-    setIsEditing(false);
-    setEditValue('');
-    setError(null);
-  }, []);
-
-  const save = useCallback(async () => {
-    if (!isSupported) {
-      markUnsupported();
-      return;
-    }
-    const username = extractUsername(editValue.trim());
-    if (!username) {
-      setError('Please enter a username');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const isAvailable = await wallet.checkLightningAddressAvailable({ username });
-      if (!isAvailable) {
-        setError('This username is not available');
-        setIsLoading(false);
+      const existing = await wallet.getLightningAddress();
+      if (!current(state, revision)) return;
+      if (existing) {
+        update(state, { address: existing });
         return;
       }
 
-      await wallet.registerLightningAddress({ username, description: `Pay to ${username}@breez.tips` });
-      const actualInfo = await wallet.getLightningAddress();
-      setAddress(actualInfo ?? null);
-      setIsEditing(false);
-      setEditValue('');
-    } catch (err) {
-      logger.error(LogCategory.PAYMENT, 'Failed to save Lightning address', {
-        error: formatError(err),
-      });
-      if (err instanceof Error && /lnurl server is not configured/i.test(err.message)) {
-        markUnsupported();
-      } else {
-        setError(SAVE_FAILED_MESSAGE);
+      const base = generateRandomName();
+      for (let i = 0; i < 3; i++) {
+        const username = base + (i === 0 ? '' : String(Math.floor(1000 + Math.random() * 9000)));
+        const available = await wallet.checkLightningAddressAvailable({ username });
+        if (!current(state, revision)) return;
+        if (!available) continue;
+        // The SDK derives the description from its registered domain and
+        // returns the actual payable address, including its LNURL QR data.
+        const registered = await wallet.registerLightningAddress({ username });
+        if (current(state, revision)) update(state, { address: registered ?? null });
+        return;
+      }
+    } catch (error) {
+      if (current(state, revision)) {
+        logger.error(LogCategory.PAYMENT, 'Failed to load Lightning address', { error: formatError(error) });
+        failed(state, error, LOAD_FAILED_MESSAGE);
       }
     } finally {
-      setIsLoading(false);
+      if (state.revision === revision) update(state, { isLoading: false });
     }
-  }, [editValue, wallet, isSupported, markUnsupported]);
+  })();
+  state.pending = task;
+  void task.finally(() => { if (state.pending === task) state.pending = null; });
+  return task;
+}
 
-  const reset = useCallback(() => {
-    setIsEditing(false);
-    setEditValue('');
-    setError(null);
-  }, []);
+function observeAddressChanges(
+  wallet: BreezSdk,
+  state: AddressState,
+  subscribe: ReturnType<typeof useSdkEvents>,
+): () => void {
+  state.eventConsumers++;
+  if (!state.unsubscribeEvents) {
+    state.unsubscribeEvents = subscribe(event => {
+      if (event.type !== 'lightningAddressChanged') return;
+      const revision = ++state.revision;
+      // The app event bus has no SDK identity tag. Read this SDK's cache
+      // instead of applying a payload that could arrive from an old session.
+      // A remote deletion clears the address without allocating a new name.
+      void wallet.getLightningAddress().then(address => {
+        if (current(state, revision)) {
+          update(state, { address: address ?? null, isLoading: false, error: null, isSupported: true });
+        }
+      }).catch(error => {
+        if (current(state, revision)) {
+          failed(state, error, LOAD_FAILED_MESSAGE);
+          update(state, { isLoading: false });
+        }
+      });
+    });
+  }
+  return () => {
+    if (--state.eventConsumers === 0) {
+      state.unsubscribeEvents?.();
+      state.unsubscribeEvents = null;
+    }
+  };
+}
+
+async function saveAddress(wallet: BreezSdk, state: AddressState, username: string): Promise<boolean> {
+  if (!state.snapshot.isSupported || state.pending) return false;
+  if (!username) {
+    update(state, { error: 'Please enter a username' });
+    return false;
+  }
+  const revision = ++state.revision;
+  update(state, { isLoading: true, error: null });
+  let saved = false;
+  const task = (async () => {
+    try {
+      const available = await wallet.checkLightningAddressAvailable({ username });
+      if (!current(state, revision)) return;
+      if (!available) {
+        update(state, { error: 'This username is not available' });
+        return;
+      }
+      const registered = await wallet.registerLightningAddress({ username });
+      saved = true;
+      if (current(state, revision)) update(state, { address: registered ?? null });
+    } catch (error) {
+      if (current(state, revision)) {
+        logger.error(LogCategory.PAYMENT, 'Failed to save Lightning address', { error: formatError(error) });
+        failed(state, error, SAVE_FAILED_MESSAGE);
+      }
+    } finally {
+      if (state.revision === revision) update(state, { isLoading: false });
+    }
+  })();
+  state.pending = task;
+  try { await task; } finally { if (state.pending === task) state.pending = null; }
+  return saved;
+}
+
+const extractUsername = (value: string): string => value.split('@')[0];
+
+export const useLightningAddress = (): UseLightningAddress => {
+  const wallet = useWallet();
+  const subscribeEvents = useSdkEvents();
+  const state = useMemo(() => addressState(wallet), [wallet]);
+  const snapshot = useSyncExternalStore(state.subscribe, state.getSnapshot, state.getSnapshot);
+  const [editor, setEditor] = useState({ wallet, isEditing: false, value: '' });
+  const isEditing = editor.wallet === wallet && editor.isEditing && snapshot.isSupported;
+  const editValue = editor.wallet === wallet ? editor.value : '';
+
+  const load = useCallback(() => loadAddress(wallet, state), [wallet, state]);
+
+  useEffect(() => {
+    const unsubscribe = observeAddressChanges(wallet, state, subscribeEvents);
+    void load();
+    return unsubscribe;
+  }, [wallet, state, subscribeEvents, load]);
+
+  const beginEdit = useCallback((address?: LightningAddressInfo | null) => {
+    if (!state.snapshot.isSupported) return;
+    setEditor({ wallet, isEditing: true, value: extractUsername((address ?? state.snapshot.address)?.lightningAddress ?? '') });
+    update(state, { error: null });
+  }, [wallet, state]);
+
+  const cancelEdit = useCallback(() => {
+    setEditor({ wallet, isEditing: false, value: '' });
+    update(state, { error: null });
+  }, [wallet, state]);
+
+  const setEditValue = useCallback((value: string) => {
+    setEditor(previous => ({ wallet, isEditing: previous.wallet === wallet && previous.isEditing, value }));
+  }, [wallet]);
+
+  const save = useCallback(async () => {
+    const username = extractUsername(editValue.trim());
+    if (await saveAddress(wallet, state, username)) {
+      setEditor(previous => previous.wallet === wallet ? { wallet, isEditing: false, value: '' } : previous);
+    }
+  }, [editValue, wallet, state]);
 
   return {
-    address,
-    isLoading,
+    ...snapshot,
     isEditing,
     editValue,
-    error,
-    isSupported,
     load,
     beginEdit,
     cancelEdit,
     setEditValue,
     save,
-    reset,
+    reset: cancelEdit,
   };
 };
