@@ -2,13 +2,15 @@ import {invoiceExpiresAt} from './invoiceExpiry';
 import {useInvoiceExpiry} from '../hooks/useInvoiceExpiry';
 import {trustCopy} from './trustCopy';
 import {usePresentation} from '../hooks/usePresentation';
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import BrandedQrCode from '../components/BrandedQrCode';
 import PaymentMotion from '../components/PaymentMotion';
-import type {Payment} from '@breeztech/breez-sdk-spark';
+import type {BreezSdk,Payment} from '@breeztech/breez-sdk-spark';
 import {useWallet} from '../contexts/WalletContext';
 import {useFiatData} from '../contexts/FiatDataContext';
 import {useInvoicePaid} from '../hooks/useInvoicePaid';
+import {useLatest} from '../hooks/useLatest';
+import {readPaymentHistory} from '../services/paymentHistory';
 import {formatWithSpaces} from '../utils/formatNumber';
 import {getDisplayFiatCurrency} from '../services/settings';
 import {amountToSats,getDenomination,saveDenomination,satsToAmount,type Denomination} from './denomination';
@@ -42,24 +44,32 @@ export default function PosPage({onClose}:{onClose:()=>void}){
   const [showHistory,setShowHistory]=useState(false);
   const [history,setHistory]=useState<Payment[]>([]);
   const [historyBusy,setHistoryBusy]=useState(false);
-  const [walletIdentity,setWalletIdentity]=useState('');
+  const [walletSession,setWalletSession]=useState<{sdk:BreezSdk;identity:string}|null>(null);
+  const walletIdentity=walletSession?.sdk===sdk?walletSession.identity:'';
   const [orders,setOrders]=useState<PosOrder[]>([]);
   const [confirmedIds,setConfirmedIds]=useState<Set<string>>(()=>new Set());
   const [journalWarning,setJournalWarning]=useState('');
+  const ordersRef=useLatest(orders);
+  const invoiceRef=useLatest(invoice);
+  const paidRef=useLatest(paid);
+  const historyRequestRef=useRef<AbortController|null>(null);
   // The journal stores PUBLIC invoices only, scoped by the connected wallet's identity.
   // A separate authenticated merchant backend is still required for cross-device records.
   useEffect(()=>{
     let mounted=true;
+    checkedExistingReceiptsRef.current=false;
     void sdk.getInfo({ensureSynced:false}).then(info=>{
       if(!mounted)return;
+      setOrders([]);setConfirmedIds(new Set());setHistory([]);
+      setInvoice('');setPaid(false);setFreshlyConfirmed(false);setHistoryBusy(false);
       const identity=info.identityPubkey;
       if(!identity){setJournalWarning('Wallet identity is unavailable. Charges cannot be tracked yet.');return;}
       const previous=readPosOrders(identity);
       // Preserve the device journal, but never auto-resume a previous invoice.
       // Older orders can be opened explicitly from History if needed.
-      setWalletIdentity(identity);setOrders(previous);
+      setWalletSession({sdk,identity});setOrders(previous);
     }).catch(()=>{if(mounted)setJournalWarning('Cannot read wallet identity for POS records.');});
-    return()=>{mounted=false};
+    return()=>{mounted=false;historyRequestRef.current?.abort()};
   },[sdk]);
   const fiatCode=isFiat(unit)?unit:getDisplayFiatCurrency();
   const fiatRate=fiatRates.find(r=>r.coin===fiatCode)?.value;
@@ -77,38 +87,42 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     update();viewport?.addEventListener('resize',update);viewport?.addEventListener('scroll',update);
     return()=>{viewport?.removeEventListener('resize',update);viewport?.removeEventListener('scroll',update)};
   },[]);
-  useInvoicePaid(invoice,()=>{
+  const loadAllReceipts=useCallback((signal?:AbortSignal)=>
+    readPaymentHistory(sdk,{typeFilter:['receive'],signal}),[sdk]);
+  const applyReceipts=useCallback((payments:Payment[])=>{
+    const currentInvoice=invoiceRef.current.toLowerCase();
+    const matches=reconcilePosOrders(ordersRef.current,payments);
+    setHistory([...matches.values()]);
+    setConfirmedIds(new Set(matches.keys()));
+    const matchingCurrent=ordersRef.current.some(order=>
+      order.invoice.toLowerCase()===currentInvoice && matches.has(order.id));
+    if(matchingCurrent){
+      if(checkedExistingReceiptsRef.current && !paidRef.current)setFreshlyConfirmed(true);
+      setPaid(true);
+    }else if(currentInvoice && payments.some(payment=>payment.details?.type==='lightning' &&
+      payment.details.invoice?.toLowerCase()===currentInvoice)){
+      setPaid(false);setFreshlyConfirmed(false);
+    }
+    checkedExistingReceiptsRef.current=true;
+  },[ordersRef,invoiceRef,paidRef]);
+  const loadHistory=useCallback(async()=>{
+    if(!walletIdentity)return;
+    historyRequestRef.current?.abort();
+    const controller=new AbortController();
+    historyRequestRef.current=controller;
+    setHistoryBusy(true);
+    try{
+      const result=await loadAllReceipts(controller.signal);
+      if(!controller.signal.aborted)applyReceipts(result.payments);
+    }catch{if(!controller.signal.aborted)setError('Unable to load wallet payments right now.')}
+    finally{if(!controller.signal.aborted)setHistoryBusy(false)}
+  },[walletIdentity,loadAllReceipts,applyReceipts]);
+  useInvoicePaid(walletIdentity?invoice:'',()=>{
     setFreshlyConfirmed(true);
     setPaid(true);
     // A successful SDK event, never an editable local flag, confirms paid.
     void loadHistory();
   });
-  const loadAllReceipts=async()=>{
-    const payments:Payment[]=[];const seen=new Set<string>();
-    for(let page=0;page<100;page++){
-      const result=await sdk.listPayments({typeFilter:['receive'],statusFilter:['completed'],offset:page*100,limit:100});
-      if(!Array.isArray(result.payments))throw Error('Payment status unavailable');
-      for(const payment of result.payments)if(!seen.has(payment.id)){seen.add(payment.id);payments.push(payment);}
-      if(result.payments.length<100)return {payments};
-    }
-    throw Error('History exceeds the beta reconciliation limit. Contact support; records were not deleted.');
-  };
-  const loadHistory=async()=>{
-    setHistoryBusy(true);
-    try{
-      const result=await loadAllReceipts();
-
-      const matches=reconcilePosOrders(orders,result.payments);
-      setHistory([...matches.values()]);
-      setConfirmedIds(new Set(matches.keys()));
-      if(invoice && orders.some(order=>order.invoice.toLowerCase()===invoice.toLowerCase() && matches.has(order.id))){
-        if(checkedExistingReceiptsRef.current && !settled) setFreshlyConfirmed(true);
-        setPaid(true);
-      }
-      checkedExistingReceiptsRef.current=true;
-    }catch{setError('Unable to load wallet payments right now.')}
-    finally{setHistoryBusy(false)}
-  };
   const selectUnit=(next:Denomination)=>{
     if(busy)return;
     const nextRate=isFiat(next)?fiatRates.find(r=>r.coin===next)?.value:undefined;
@@ -185,29 +199,29 @@ export default function PosPage({onClose}:{onClose:()=>void}){
   };
   useEffect(()=>{
     if(!walletIdentity || !orders.length)return;
-    let active=true;
+    const controller=new AbortController();
+    let inFlight=false;
     const reconcile=async()=>{
+      if(inFlight)return;
+      inFlight=true;
       try{
-        const result=await sdk.listPayments({typeFilter:['receive'],statusFilter:['completed'],offset:0,limit:100});
-        if(!active)return;
-        const matches=reconcilePosOrders(orders,result.payments);
-        setConfirmedIds(new Set(matches.keys()));
-        // A passive SDK event can be missed when a PWA is backgrounded.
-        // Initial reconciliation is silent; only later newly completed
-        // receipts for the actively displayed charge get a fresh flash.
-        const matchingCurrent = orders.find(order =>
-          order.invoice.toLowerCase()===invoice.toLowerCase() && matches.has(order.id));
-        if(matchingCurrent && !paid) {
-          if(checkedExistingReceiptsRef.current) setFreshlyConfirmed(true);
-          setPaid(true);
-        }
-        checkedExistingReceiptsRef.current=true;
+        const result=await loadAllReceipts(controller.signal);
+        if(!controller.signal.aborted)applyReceipts(result.payments);
       }catch{/* Never synthesize settlement when the SDK is unavailable. */}
+      finally{inFlight=false}
     };
     void reconcile();
     const timer=window.setInterval(()=>void reconcile(),20_000);
-    return()=>{active=false;window.clearInterval(timer)};
-  },[sdk,walletIdentity,orders,invoice,paid]);
+    return()=>{controller.abort();window.clearInterval(timer)};
+  },[walletIdentity,orders.length,loadAllReceipts,applyReceipts]);
+  if(!walletIdentity)return <div ref={root} role="dialog" aria-modal="true" aria-label="Merchant point of sale" className="gys-pos gys-pos--terminal">
+    <div className="gys-pos-terminal">
+      <header className="gys-pos-terminal__header"><strong>Point of Sale</strong>
+        <button type="button" onClick={onClose} aria-label="Close point of sale">✕</button>
+      </header>
+      <p role="status">{journalWarning || 'Checking your wallet’s merchant records…'}</p>
+    </div>
+  </div>;
   return <div ref={root} role="dialog" aria-modal="true" aria-label="Merchant point of sale" className="gys-pos gys-pos--terminal">
     <div className="gys-pos-terminal">
       <header className="gys-pos-terminal__header">

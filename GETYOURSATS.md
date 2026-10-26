@@ -1,29 +1,32 @@
-# GetYourSats integration build
-Forked from Breez Glow (MIT). Original upstream license retained. This branch replaces onboarding and core branding, adds a merchant POS using the actual Spark SDK invoice method and preserves upstream Bitcoin/Lightning send/receive/recovery.
+# Product capabilities and boundaries
 
-## Important boundaries
-- All Start paths currently route through the upstream mnemonic backup screen, including native. Immediate anonymous access without proven recovery is an explicit release blocker, not a completed feature.
-- A Spark Bitcoin deposit address is not independently controlled on-chain UTXO custody.
-- Merchant POS creates invoices, **not settlement receipts**; do not release goods without verified payment status.
-- Email login, Lightning Address domain services, Indian exchange partner ramps, UPI AutoPay, income tax integrations and multi-tenant APIs remain unconnected.
-- Need approved VITE_BREEZ_API_KEY for mainnet; Vite variables are bundled into client and require an explicitly client-shareable provider key.
-- This branch requires CI TypeScript/build/unit/e2e validation, testnet/regtest payments, independent security review and regulatory signoff before funds-enabled release.
+This guide describes the implementation in this repository. Actual availability also depends on the deployed commit, feature gates, platform and provider response. It is not a release approval or a guarantee of settlement.
 
-## Branded Lightning address integration
-Breez Spark supports custom hosted Lightning Address domains. The branded domain configuration is **deliberately disabled** until verified email ownership, backend username entitlement checks, and Breez DNS/domain approval are live. The wallet continues using the upstream LNURL domain. Before activating: own/control the DNS, register the domain and SDK API key with Breez, arrange CNAME or LNURL proxy and complete email verification plus entitlement checks for username claims. The environment configuration is implemented here, **not the identity verification nor DNS setup**.
-Docs: https://sdk-doc-spark.breez.technology/guide/custom_domain.html
+| Capability | Implementation and boundary |
+| --- | --- |
+| Bitcoin and Lightning payments | SDK-backed send/receive and payment details. Review costs and destination; reconcile uncertain outcomes before paying again. |
+| On-chain Bitcoin deposits | Deposits are credited through Spark with applicable confirmation and claim rules. This is not a separate native UTXO wallet. |
+| USDC/USDT routes | Sending and receiving workflows use SDK-discovered routes and quotes. Availability varies by token, network, direction and destination. |
+| Merchant Point of Sale | Requests Lightning payment and matches incoming wallet records. A QR code or payer screenshot is not proof of settlement. The local sale record is not a cloud accounting backup. |
+| History | Reads paginated SDK payment records through a displayed time cutoff before connected-wallet export. A page failure blocks export; selected filters define the exported scope. Loaded-record fixtures are explicitly labelled. Provider sync and local merchant order metadata are separate from payment-history coverage. |
+| Recovery | Supports compatible passkey and recovery-phrase paths. Compatibility depends on wallet derivation, platform and passkey origin; arbitrary BIP39 imports are not a promise of balance discovery. |
+| Languages | Language controls and translated journeys are present. Coverage and native-language verification must be checked per journey; a selector alone does not establish complete localization. |
+| Buy Bitcoin and recurring buys | Conditional integrations. Planning UI or a coming-soon label does not establish an executable purchase, mandate or scheduled payment. |
+| Personal Lightning addresses | Optional names under GetYourSats use wallet-bound email verification and provider-confirmed registration/recovery. Preserve existing addresses and recovery when pausing new registrations; availability depends on the deployed client and server configuration. |
+| Native builds | Platform adapters are present. Native storage, biometric and recovery guarantees require verification in signed builds on real devices. |
 
-## API key request and deployed preview
-Use [Breez SDK official form](https://breez.technology/sdk/) to contact Breez for a client-distributable key. [SDK onboarding docs](https://sdk-doc-spark.breez.technology/guide/getting_started.html). The previously shared `https://breez.technology/contact/apikey` is meant for programmatic POST, not browsing.
+## Brand and terminology
 
-The web PWA is a demo/reference foundation; the upstream project explicitly says its web demo is not intended for production use. No public real-funds release without security and recovery sign-off. Exact Vercel deployment needs auditing in the owning Vercel team (not the separate previously connected account).
+Lead everyday interactions with **GetYourSats**. Use Bitcoin, sats, Lightning, the selected stablecoin and the selected network when they help users understand a payment. Explain Spark and provider dependencies in [How your wallet works](https://getyoursats.com/support#how-your-wallet-works) and at decisions where custody or settlement differs. Branding must not obscure those distinctions.
 
-## Recovery-first passkey onboarding (2026-10-23)
-- A single **Start** button selects Breez's existing PRF-derived passkey onboarding if the device supports PRF and an explicit stable, audited origin is configured.
-- Required for browser: `VITE_GETYOURSATS_PASSKEY_ORIGIN=https://the-canonical-wallet-host`. Preview branch URLs and unapproved origins fail closed to handwritten BIP39 setup.
-- Native builds also require `VITE_GETYOURSATS_NATIVE_PASSKEY_READY=true` only after Associated Domains / Digital Asset Links, native passkey plugin support and cross-device recovery have been verified. This flag is **not** permission to skip testing.
-- Passkey wallets derive their Bitcoin seed via WebAuthn PRF, not via a custodial email identity. The existing Backup page can re-derive and display the *same* wallet mnemonic after passkey authentication. This manual backup is **optional** but strongly recommended because losing a passkey without backup can lose funds.
-- **Removed** mnemonic clipboard export in onboarding and Backup. Manual setup now requires an offline two-word verification check before connecting the wallet. Native phrase screens request OS screenshot protection when supported; web browsers cannot enforce blocking screenshots or browser extensions.
-- This is not a GetYourSats cloud-backup server: account/email linking, provider sync diagnostics, authenticated restore on a second device and RP migration still require testing/implementation. PRF-compatible synced passkeys work according to the provider and domain configuration.
-- Never enable a passkey relying party on temporary Vercel PR hostnames. A future custom-domain change needs credential migration strategy.
-- Reference: https://sdk-doc-spark.breez.technology/guide/passkey.html .
+Display exact asset units. A fiat estimate is not a purchase quote; a recipient's LNURL limit is not the user's available balance; a provider's deposit buffer is not automatically a fee. Keep those values separate.
+
+## Implementation references
+
+- Feature gates: `src/getyoursats/featureAvailability.ts` and relevant server-side configuration.
+- Wallet connection and refresh: `src/hooks/useBreezSdk.ts`.
+- Send and receive journeys: `src/features/send/` and `src/features/receive/`.
+- Merchant requests and local records: `src/getyoursats/PosPage.tsx` and `src/getyoursats/posLedger.ts`.
+- [Security boundaries](SECURITY.md), [cross-chain verification](docs/cross-chain-testing.md) and [release readiness](docs/maintainers/release-readiness.md).
+
+Earlier implementation notes are preserved as [dated historical evidence](docs/archive/integration-notes-20261023.md). They do not describe the current release state.

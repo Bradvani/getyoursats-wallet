@@ -10,7 +10,7 @@ test('@public-smoke scarcity rulebook simulator teaches the two mechanisms witho
  }));
  await page.setViewportSize({width:390,height:844});
  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
- await page.goto('http://localhost:5173/site/support.html?lang=en');
+ await page.goto('http://localhost:5173/site/learn.html?lang=en');
  const section=page.locator('.gys-rule-simulator');
  await expect(section).toBeVisible();
  await expect(section.getByText('Maximum issuance stays ≈21M BTC')).toBeVisible();

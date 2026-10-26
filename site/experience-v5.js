@@ -9,7 +9,7 @@
   const $$=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
   const state={active:'wallet',custodyStep:0,recovery:'passkey',asset:'USDC',reverse:false,sale:4.5,item:'Coffee',merchantStage:0,frequency:'week'};
   const copy={
-    wallet:{status:'100% SELF-CUSTODY',number:'01 — 04',title:'Your keys. Your bitcoin. Period.',detail:'Choose how to secure your wallet. Your signing keys stay under your control, and your recovery choices remain yours.'},
+    wallet:{status:'YOUR KEYS. YOUR WALLET.',number:'01 — 04',title:'Your keys. Your bitcoin. Period.',detail:'Choose a supported recovery method and keep an independent backup. Your signing keys control your wallet.'},
     lightning:{status:'BITCOIN-FIRST ROUTES',number:'02 — 04',title:'Move value into Bitcoin. And back.',detail:'Explore USDC/USDT into sats and sats out to supported stablecoin destinations. Review live routes and fees inside the wallet.'},
     merchant:{status:'LIGHTNING MERCHANT POS',number:'03 — 04',title:'Checkout without the friction.',detail:'From a simple request to a confirmed Lightning receipt. See the complete counter experience in the section below.'},
     stack:{status:'FIAT DCA · COMING SOON',number:'04 — 04',title:'Small moves. A lasting habit.',detail:'Small, regular contributions, elegantly automated when recurring Bitcoin purchases launch.'}

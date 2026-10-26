@@ -4,7 +4,7 @@
   "trailingSlash": false,
   "framework": null,
   "installCommand": "cd .. && npm ci",
-  "buildCommand": "node scripts/build-favicons.mjs",
+  "buildCommand": "node scripts/build-favicons.mjs && node ../scripts/write-release-manifest.mjs --site",
   "outputDirectory": ".",
   "headers": [
     {"source": "/(.*)", "headers": [
