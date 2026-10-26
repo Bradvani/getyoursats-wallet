@@ -7,5 +7,6 @@
 export const featureAvailability={
   buyBitcoin:false,
   recurringBuy:false,
-  emailVerification:false,
+  emailVerification:true,
+  nativeLightningAddress:true,
 } as const;

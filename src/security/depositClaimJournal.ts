@@ -5,8 +5,8 @@ export const CLAIM_JOURNAL_PREFIX='gys:deposit-claim:v1:';
 export type StoredClaim=Readonly<ClaimRecord&{version:1;walletKey:string;revision:number}>;
 function valid(r:StoredClaim):boolean{
  const i=r?.intent;
- return !!i&&r.version===1&&/^[0-9a-f]{64}$/.test(r.walletKey)&&Number.isSafeInteger(r.revision)&&r.revision>=0&&
- ['mainnet','regtest','signet'].includes(i.network)&&/^[0-9a-f]{64}$/.test(i.txid)&&Number.isSafeInteger(i.vout)&&i.vout>=0&&i.vout<=0xffffffff&&
+ return !!i&&r.version===1&&typeof r.walletKey==='string'&&/^[0-9a-f]{64}$/.test(r.walletKey)&&Number.isSafeInteger(r.revision)&&r.revision>=0&&
+ ['mainnet','regtest','signet'].includes(i.network)&&typeof i.txid==='string'&&/^[0-9a-f]{64}$/.test(i.txid)&&Number.isSafeInteger(i.vout)&&i.vout>=0&&i.vout<=0xffffffff&&
  Number.isSafeInteger(i.amountSats)&&i.amountSats>0&&i.amountSats<=2_100_000_000_000_000&&
  Number.isSafeInteger(i.maxFeeSats)&&i.maxFeeSats>=0&&i.maxFeeSats<i.amountSats&&i.minimumCreditSats===i.amountSats-i.maxFeeSats&&
  Number.isSafeInteger(i.expiresAt)&&i.expiresAt>=60_000&&['submitting','uncertain','settled'].includes(r.state)&&

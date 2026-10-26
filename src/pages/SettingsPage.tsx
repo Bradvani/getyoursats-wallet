@@ -1,6 +1,7 @@
 import LanguageSelect from '@/components/LanguageSelect';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import { usePresentation } from '@/hooks/usePresentation';
+import { walletSetupCopy } from '@/locales/walletSetup';
 import { setAppearancePreference, type AppearancePreference } from '@/services/presentationPreferences';
 import React, { useEffect, useRef, useState } from 'react';
 import {featureAvailability} from '../getyoursats/featureAvailability';
@@ -29,6 +30,7 @@ interface SettingsPageProps {
   onOpenSecurity: () => void;
   onOpenBackup: () => void;
   onOpenEmail: () => void;
+  onOpenWalletTour?: () => void;
   onOpenUnilateralExit: () => void;
 }
 
@@ -41,11 +43,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onOpenSecurity,
   onOpenBackup,
   onOpenEmail,
+  onOpenWalletTour,
   onOpenUnilateralExit,
 }) => {
   const wallet = useWallet();
   const appVersion = useAppVersion();
   const { language, appearance, copy } = usePresentation();
+  const setupCopy = walletSetupCopy(language);
   const {
     handleTap: devTap,
     activated: isDevMode,
@@ -274,10 +278,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               disabled={!featureAvailability.emailVerification}
               onClick={featureAvailability.emailVerification ? onOpenEmail : undefined}
               className="flex w-full items-center justify-between rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary transition-colors disabled:cursor-default disabled:opacity-70">
-              <span>Verify email address</span>
+              <span>Verify Email Address</span>
               {featureAvailability.emailVerification ? <ChevronRightIcon size="md"/> : <span className="gys-feature-soon">Coming soon</span>}
             </button>
-            <p className="text-xs text-spark-text-muted">Available after the verified email service launches. Email is not a wallet backup.</p>
+            <p className="text-xs text-spark-text-muted">{featureAvailability.emailVerification
+              ? 'Link an email to your wallet. Keep your recovery words or passkey safe.'
+              : 'Email verification is coming soon. Keep your recovery words or passkey safe.'}</p>
           </div>
 
           {/* Display */}
@@ -524,6 +530,18 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               Use this only if Spark stops operating. This is a last-resort action.
             </p>
           </div>
+          )}
+
+          {onOpenWalletTour && (
+            <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-3"
+              aria-label={copy.help} data-testid="settings-wallet-guide">
+              <h3 className="font-display font-semibold text-spark-text-primary">{copy.help}</h3>
+              <button type="button" onClick={onOpenWalletTour}
+                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-spark-border px-4 py-3 text-sm font-medium text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5">
+                <span>{setupCopy.replay}</span><ChevronRightIcon size="md"/>
+              </button>
+              <p className="text-xs leading-relaxed text-spark-text-muted">{setupCopy.replayDescription}</p>
+            </section>
           )}
 
           {/* Account deletion (App Store 5.1.1(v)): opens the guide

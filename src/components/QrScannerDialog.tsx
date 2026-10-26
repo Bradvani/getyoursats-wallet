@@ -6,10 +6,13 @@ import { logger, LogCategory } from '@/services/logger';
 import { holdIdleLock } from '@/services/appLock';
 import { CameraFlipIcon, ImageIcon, AlertTriangleIcon } from './Icons';
 import { useLatest } from '../hooks/useLatest';
+import { usePresentation } from '../hooks/usePresentation';
+import { trustCopy } from '../getyoursats/trustCopy';
 
 interface QrScannerDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  /** The owner advances the flow or closes the scanner after accepting a payload. */
   onScan: (data: string) => void;
   /** Raise it past a sheet it was opened from, which would otherwise cover it. */
   zIndex?: number;
@@ -22,27 +25,20 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [galleryError, setGalleryError] = useState<string | null>(null);
+  const [isReadingImage, setIsReadingImage] = useState(false);
+  const acceptedScan = useRef(false);
+  const galleryRequest = useRef(0);
+  const isOpenRef = useLatest(isOpen);
+  const {language} = usePresentation();
 
   const handleScan = useCallback((data: string) => {
-    onScan(data);
-    onClose();
-  }, [onScan, onClose]);
-
-  const handleGalleryPick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    if (!isOpenRef.current || acceptedScan.current) return;
+    acceptedScan.current = true;
+    galleryRequest.current += 1;
+    setIsReadingImage(false);
     setGalleryError(null);
-    try {
-      const result = await QrScanner.scanImage(file);
-      onScan(result);
-      onClose();
-    } catch {
-      setGalleryError('No QR code found in image');
-      setTimeout(() => setGalleryError(null), 3000);
-    }
-    // Reset so the same file can be re-selected
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [onScan, onClose]);
+    onScan(data);
+  }, [onScan, isOpenRef]);
 
   const {
     videoRef,
@@ -56,6 +52,27 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
     toggleCamera,
     clearError,
   } = useQrScanner({ onScan: handleScan });
+
+  const handleGalleryPick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || acceptedScan.current || !isOpenRef.current) return;
+    const request = ++galleryRequest.current;
+    setGalleryError(null);
+    setIsReadingImage(true);
+    try {
+      const result = await QrScanner.scanImage(file);
+      if (request !== galleryRequest.current || !isOpenRef.current) return;
+      stopScanning();
+      handleScan(result);
+    } catch {
+      if (request === galleryRequest.current && isOpenRef.current) {
+        setGalleryError('No QR code found in image. Try another image or use the camera.');
+      }
+    } finally {
+      if (request === galleryRequest.current) setIsReadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }, [handleScan, stopScanning, isOpenRef]);
 
   // Aiming a camera produces no pointer or key events, so the idle
   // timer would run to completion mid-scan and lock the screen the
@@ -74,7 +91,9 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
     // function that was current when the effect began, not whatever
     // happens to be in the ref at unmount time.
     const stop = stopScanningRef.current;
+    galleryRequest.current += 1;
     if (isOpen) {
+      acceptedScan.current = false;
       // Wait for the transition to complete (300ms) plus a buffer
       const timer = setTimeout(() => {
         logger.debug(LogCategory.UI, 'Checking video element after transition', {
@@ -89,6 +108,8 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
 
       return () => {
         clearTimeout(timer);
+        galleryRequest.current += 1;
+        acceptedScan.current = true;
         stop();
       };
     } else {
@@ -97,6 +118,10 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
   }, [isOpen, videoRef, startScanningRef, stopScanningRef]);
 
   const handleClose = () => {
+    acceptedScan.current = true;
+    galleryRequest.current += 1;
+    setIsReadingImage(false);
+    setGalleryError(null);
     stopScanning();
     clearError();
     onClose();
@@ -174,16 +199,16 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
               </div>
             </div>
 
-            {isInitializing && (
-              <div className="absolute inset-0 flex items-center justify-center bg-spark-surface/70">
+            {(isInitializing || isReadingImage) && (
+              <div className="absolute inset-0 flex items-center justify-center bg-spark-surface/70" role="status">
                 <div className="text-center text-white p-4">
-                  <div className="animate-spin rounded-full h-10 w-10 border-2 border-spark-primary border-t-transparent mx-auto mb-3"></div>
-                  <p className="text-sm text-spark-text-secondary">Initializing camera...</p>
+                  <div className="animate-spin motion-reduce:animate-none rounded-full h-10 w-10 border-2 border-spark-primary border-t-transparent mx-auto mb-3"></div>
+                  <p className="text-sm text-spark-text-secondary">{isReadingImage ? trustCopy(language).checking : 'Initializing camera...'}</p>
                 </div>
               </div>
             )}
 
-            {!isScanning && !isInitializing && error && (
+            {!isScanning && !isInitializing && !isReadingImage && error && (
               <div className="absolute inset-0 flex items-center justify-center bg-spark-surface/80">
                 <div className="text-center text-white p-6 max-w-xs">
                   <div className="w-16 h-16 rounded-full bg-spark-primary/20 flex items-center justify-center mx-auto mb-4">
@@ -201,6 +226,7 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
           {hasMultipleCameras && (
             <FloatingIconButton
               onClick={toggleCamera}
+              disabled={isReadingImage}
               className="absolute top-4 left-4 z-20"
               aria-label="Switch camera"
               icon={
@@ -212,6 +238,7 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
           {/* Gallery picker button (top right of the viewport). */}
           <FloatingIconButton
             onClick={() => fileInputRef.current?.click()}
+            disabled={isReadingImage}
             className="absolute top-4 right-4 z-20"
             aria-label="Pick image from gallery"
             icon={

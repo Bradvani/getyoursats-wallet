@@ -2,8 +2,8 @@ import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
 import type {BreezSdk,PrepareSendPaymentResponse,ProvisionalPayment,PrepareLnurlPayResponse,SendPaymentRequest,ReceivePaymentRequest,Network} from '@breeztech/breez-sdk-spark';
 import {createOperationGateway,getOperationReconciliation} from './operationGateway';
 import {getDepositClaims} from './depositClaimController';
-import {writeOperation,operationWalletKey,readAllOperations} from './operationJournal';
-import type {ObservationSdk} from './paymentObservation';
+import {writeOperation,updateOperation,operationWalletKey,readAllOperations} from './operationJournal';
+import type {ObservationSdk,PaymentObservation} from './paymentObservation';
 import {rememberSignerIdentity,clearSignerIdentity,getSpendingRequest,finishSpendingApproval,cancelSpendingApproval,lockSpendingSession} from './spendApproval';
 const seed={type:'mnemonic' as const,mnemonic:'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'};
 const response=():PrepareSendPaymentResponse=>({amount:100n,feePolicy:'feesExcluded',paymentMethod:{type:'sparkAddress',address:'spark-recipient',fee:0n}});
@@ -21,7 +21,12 @@ function harness(override?:ProvisionalPayment[],network:Network='mainnet') {
  const send=vi.fn(async(_request:SendPaymentRequest)=>{const expected=override?.[0]??transfer;await gate.observer.beforeSend(override??[transfer]);return {payment:payment(expected.paymentId,expected.details.type==='bitcoin'?'withdraw':expected.details.type as 'spark'|'lightning')}});
  const prepare=vi.fn(async()=>response());
  const refund=vi.fn();
- const raw={prepareSendPayment:prepare,sendPayment:send,refundDeposit:refund,parse:vi.fn(async()=>({type:'sparkAddress',address:'spark-recipient',identityPublicKey:'02'+'11'.repeat(32),network:network==='mainnet'?'bitcoin':network,source:{}})),getInfo:vi.fn(async()=>({identityPubkey:'wallet-identity-fixture',balanceSats:200n})),getPayment:vi.fn(async()=>{throw new Error('cached lookup must not be used')}),observeWalletState:vi.fn(async()=>({identityPubkey:'wallet-identity-fixture',balanceSats:200n})),observePayment:vi.fn(async()=>{throw new Error('not found')})} as unknown as ObservationSdk;
+ const observePayment=vi.fn(async(request:{paymentId:string;recipientCommitment:string}):Promise<PaymentObservation>=>{
+  const expected=override?.[0]??transfer;
+  return {paymentId:request.paymentId,recipientCommitment:request.recipientCommitment,identityPubkey:'wallet-identity-fixture',network,
+   observedAt:Math.floor(Date.now()/1000),outcome:'completed',payment:payment(request.paymentId,expected.details.type==='bitcoin'?'withdraw':expected.details.type as 'spark'|'lightning')};
+ });
+ const raw={prepareSendPayment:prepare,sendPayment:send,refundDeposit:refund,parse:vi.fn(async()=>({type:'sparkAddress',address:'spark-recipient',identityPublicKey:'02'+'11'.repeat(32),network:network==='mainnet'?'bitcoin':network,source:{}})),getInfo:vi.fn(async()=>({identityPubkey:'wallet-identity-fixture',balanceSats:200n})),getPayment:vi.fn(async()=>{throw new Error('cached lookup must not be used')}),observeWalletState:vi.fn(async()=>({identityPubkey:'wallet-identity-fixture',balanceSats:200n})),observePayment} as unknown as ObservationSdk;
  return {gate,wallet:gate.protect(raw),send,prepare,refund,raw};
 }
 async function approvalReady(){await vi.waitFor(()=>expect(getSpendingRequest()).not.toBeNull());}
@@ -127,7 +132,7 @@ describe('connection operation gateway',()=>{
   const sending=h.wallet.sendPayment({prepareResponse:p});const rejected=expect(sending).rejects.toThrow(/expired during approval/);
   await approvalReady();vi.setSystemTime(62000);await approve();await rejected;expect(h.send).not.toHaveBeenCalled();
  });
- it.each(['signRefundDeposit','verifyRefundTransaction','inspectRecoveryTransaction','recoverFunds','getTokenIssuer','createTokenAllowance','pullPayment','sendBatch','publishSignedTransferPackage','signMessage','updateUserSettings','lnurlWithdraw','futureSpendMethod'])('denies unreviewed capability %s',method=>{
+ it.each(['signRefundDeposit','verifyRefundTransaction','inspectRecoveryTransaction','recoverFunds','getTokenIssuer','createTokenAllowance','pullPayment','sendBatch','publishSignedTransferPackage','updateUserSettings','lnurlWithdraw','futureSpendMethod'])('denies unreviewed capability %s',method=>{
   const h=harness();expect(()=>Reflect.get(h.wallet,method)({})).toThrow(/unavailable pending/);expect(h.refund).not.toHaveBeenCalled();
  });
  it('does not expose SDK through prototype or property mutation',()=>{
@@ -172,6 +177,7 @@ describe('connection operation gateway',()=>{
   const sending=h.wallet.sendPayment({prepareResponse:p});const rejected=expect(sending).rejects.toThrow(/outcome is unknown/);
   await approve();await rejected;
   const controller=getOperationReconciliation(h.wallet)!;
+  vi.mocked(h.raw.observePayment).mockRejectedValueOnce(new Error('not found'));
   const record=(await controller.reconcile())[0];expect(record.state).toBe('unknown');
   vi.mocked(h.raw.observePayment).mockResolvedValueOnce({paymentId:record.paymentId,identityPubkey:'wallet-identity-fixture',network:'mainnet',observedAt:Math.floor(Date.now()/1000),outcome:'unresolved',recipientCommitment:record.recipientHash,payment:{...payment(record.paymentId),status:'failed'}});
   expect((await controller.reconcile())[0].state).toBe('unknown');
@@ -229,7 +235,7 @@ describe('connection operation gateway',()=>{
   const h=harness();
   const foreign=writeOperation({version:1,walletKey:await operationWalletKey('regtest','different-wallet'),
    operationId:crypto.randomUUID(),paymentId:'foreign-payment',intentHash:'b'.repeat(64),network:'regtest',
-   route:'spark',amountSats:'100',feeLimitSats:'0',state:'unknown',createdAt:1000,updatedAt:1000});
+   route:'spark',amountSats:'100',feeLimitSats:'0',state:'submitting',createdAt:1000,updatedAt:1000});
   const remove=vi.fn(async()=>{localStorage.clear()});
   await expect(getOperationReconciliation(h.wallet)!.withWalletRemovalLock(remove)).rejects.toThrow(/outcome is unknown/);
   expect(remove).not.toHaveBeenCalled();expect(readAllOperations()).toEqual([foreign]);
@@ -242,9 +248,10 @@ describe('connection operation gateway',()=>{
  });
  it('removal permits completed records and unrelated archived vault data',async()=>{
   const h=harness();
-  writeOperation({version:1,walletKey:await operationWalletKey('regtest','different-wallet'),
+  const completed=writeOperation({version:1,walletKey:await operationWalletKey('regtest','different-wallet'),
    operationId:crypto.randomUUID(),paymentId:'completed-payment',intentHash:'b'.repeat(64),network:'regtest',
-   route:'spark',amountSats:'100',feeLimitSats:'0',state:'completed',createdAt:1000,updatedAt:1000});
+   route:'spark',amountSats:'100',feeLimitSats:'0',state:'submitting',createdAt:1000,updatedAt:1000});
+  updateOperation(completed,{state:'completed'});
   localStorage.setItem('gys:vault-archive:fixture','encrypted-disposable-fixture');
   const remove=vi.fn(async()=>{localStorage.clear()});
   await getOperationReconciliation(h.wallet)!.withWalletRemovalLock(remove);
@@ -301,8 +308,7 @@ describe('connection operation gateway',()=>{
  });
  it.each([
   {type:'sparkAddress'}, {type:'sparkInvoice',amount:100n},
-  {type:'bitcoinAddress'}, {type:'bolt11Invoice',description:'Disposable fixture',amountSats:100},
- ])('copies and permits the reviewed Bitcoin receiving request %#',async paymentMethod=>{
+ ])('copies and permits direct Spark receiving request %#',async paymentMethod=>{
   const gate=createOperationGateway('mainnet'),receive=vi.fn(async(_request:ReceivePaymentRequest)=>({paymentRequest:'fixture',fee:0n}));
   const wallet=gate.protect({receivePayment:receive} as unknown as BreezSdk);
   const request={paymentMethod} as ReceivePaymentRequest;
@@ -310,6 +316,33 @@ describe('connection operation gateway',()=>{
   expect(receive.mock.calls[0][0]).toEqual(request);
   expect(receive.mock.calls[0][0]).not.toBe(request);
   expect(Object.isFrozen(receive.mock.calls[0][0])).toBe(true);
+ });
+ it.each(['mainnet','signet','regtest'] as const)('does not create Lightning invoices on %s without a bounded claim primitive',async network=>{
+  vi.stubEnv('DEV',true);
+  const gate=createOperationGateway(network),receive=vi.fn();
+  const wallet=gate.protect({receivePayment:receive} as unknown as BreezSdk);
+  await expect(wallet.receivePayment({paymentMethod:{type:'bolt11Invoice',description:'fixture',amountSats:100}})).rejects.toThrow(/Lightning receiving is unavailable/);
+  expect(receive).not.toHaveBeenCalled();
+ });
+ it.each([
+  {network:'mainnet',dev:true},{network:'signet',dev:true},
+  {network:'mainnet',dev:false},{network:'regtest',dev:false},
+ ] as const)('does not create a Bitcoin address when mature claims are disabled: $network, dev=$dev',async({network,dev})=>{
+  vi.stubEnv('DEV',dev);
+  const gate=createOperationGateway(network),receive=vi.fn();
+  const wallet=gate.protect({receivePayment:receive} as unknown as BreezSdk);
+  await expect(wallet.receivePayment({paymentMethod:{type:'bitcoinAddress',newAddress:true}})).rejects.toThrow(/Bitcoin receiving is unavailable/);
+  expect(receive).not.toHaveBeenCalled();
+ });
+ it('retains only valueless development regtest Bitcoin receive without initiating a claim',async()=>{
+  vi.stubEnv('DEV',true);
+  const gate=createOperationGateway('regtest');
+  const receive=vi.fn(async()=>({paymentRequest:'bcrt1-disposable-fixture',fee:0n}));
+  const claim=vi.fn();
+  const wallet=gate.protect({receivePayment:receive,claimMatureDepositOnce:claim} as unknown as BreezSdk);
+  await expect(wallet.receivePayment({paymentMethod:{type:'bitcoinAddress',newAddress:true}})).resolves.toMatchObject({paymentRequest:'bcrt1-disposable-fixture'});
+  expect(getDepositClaims(wallet)).not.toBeNull();
+  expect(receive).toHaveBeenCalledTimes(1);expect(claim).not.toHaveBeenCalled();
  });
  it('rejects receiving results if the session locks during SDK creation',async()=>{
   const gate=createOperationGateway('mainnet');
@@ -340,7 +373,11 @@ describe('connection operation gateway',()=>{
   const gate=createOperationGateway('mainnet');
   const p={amountSats:100,feeSats:2,feePolicy:'feesExcluded',comment:'hello',payRequest:{domain:'recipient.example'},invoiceDetails:{invoice:{bolt11:'lnbc-test'},network:'bitcoin',timestamp:Date.now()/1000,expiry:3600}} as PrepareLnurlPayResponse;
   const send=vi.fn(async()=>{await gate.observer.beforeSend([{...transfer,details:{type:'lightning',invoice:'lnbc-test'}}]);return {payment:payment('sdk-id','lightning')}});
-  const wallet=gate.protect({getInfo:async()=>({identityPubkey:'wallet-lnurl-fixture'}),prepareLnurlPay:async()=>p,lnurlPay:send} as unknown as BreezSdk);
+  const wallet=gate.protect({getInfo:async()=>({identityPubkey:'wallet-lnurl-fixture'}),prepareLnurlPay:async()=>p,lnurlPay:send,
+   observeWalletState:vi.fn(),observePayment:async(request:{paymentId:string;recipientCommitment:string})=>({
+    ...request,identityPubkey:'wallet-lnurl-fixture',network:'mainnet',observedAt:Math.floor(Date.now()/1000),outcome:'completed',payment:payment(request.paymentId,'lightning'),
+   }),
+  } as unknown as BreezSdk);
   const prep=await wallet.prepareLnurlPay({} as never);const sending=wallet.lnurlPay({prepareResponse:prep});
   expect(send).not.toHaveBeenCalled();await approvalReady();expect(getSpendingRequest()?.intent).toMatchObject({Recipient:'recipient.example',Invoice:'lnbc-test','Maximum debit':'102 sats',Comment:'hello'});
   await approve();await sending;expect(send).toHaveBeenCalledOnce();

@@ -1,6 +1,6 @@
 import {useInvoiceExpiry} from '../../hooks/useInvoiceExpiry';
 import {useWalletConnection} from '../../contexts/WalletContext';
-import {isRestrictedBrowserWallet} from '../../security/browserReleasePolicy';
+import {browserReceivingRestriction,isRestrictedBrowserWallet,REGTEST_DEPOSIT_RECEIVE_MESSAGE} from '../../security/browserReleasePolicy';
 import {formatMoney} from '@/getyoursats/money';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import React, { useState, useEffect, useRef } from 'react';
@@ -112,6 +112,8 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
 const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onClose }) => {
   const {sdk:policyWallet}=useWalletConnection();
   const restrictedBrowser=policyWallet?isRestrictedBrowserWallet(policyWallet):false;
+  const lightningRestriction=policyWallet?browserReceivingRestriction(policyWallet,'bolt11Invoice'):null;
+  const bitcoinRestriction=policyWallet?browserReceivingRestriction(policyWallet,'bitcoinAddress'):null;
   const receive = useReceivePayment();
   const [showChangeConfirm, setShowChangeConfirm] = useState<boolean>(false);
   // The tabs belong to choosing, not to what you have made with the choice:
@@ -186,19 +188,19 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
   // open even when the user never switches — harmless, because rotating
   // archives the previous address rather than invalidating it.
   useEffect(() => {
-    if (!isContentReady) return;
+    if (!isContentReady || bitcoinRestriction) return;
     const id = window.setTimeout(() => { void receive.generateBitcoinAddress(); }, 300);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isContentReady]);
+  }, [isContentReady,bitcoinRestriction]);
 
   // Re-trigger bitcoin address generation after reset clears the address
   useEffect(() => {
-    if (isOpen && receive.activeTab === 'bitcoin' && !receive.bitcoinAddress && !receive.bitcoinLoading && !receive.error) {
+    if (isOpen && !bitcoinRestriction && receive.activeTab === 'bitcoin' && !receive.bitcoinAddress && !receive.bitcoinLoading && !receive.error) {
       receive.generateBitcoinAddress();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, receive.activeTab, receive.bitcoinAddress, receive.bitcoinLoading, receive.error]);
+  }, [isOpen, receive.activeTab, receive.bitcoinAddress, receive.bitcoinLoading, receive.error,bitcoinRestriction]);
 
   const handleTabChange = (tab: PaymentMethod) => {
     receive.handleTabChange(tab, loadLightningAddress);
@@ -270,7 +272,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
   const switchBtcMode = (mode: BtcMode) => {
     handleTabChange(mode);
     clearTurnTimers();
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if ((mode==='lightning'?lightningRestriction:bitcoinRestriction) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setPendingMode(null);
       setShownMode(mode);
       setTurning(null);
@@ -309,7 +311,10 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
   // Under 400px the code shrinks so the switch and label have room beside its corners.
   const qrSize = window.innerWidth < 400 ? 184 : 200;
   const qrCardClassName = `${turning === 'out' ? 'animate-qr-turn-out' : turning === 'close' ? 'qr-turn-close' : turning === 'in' ? 'animate-qr-turn-in' : pendingMode ? 'qr-turn-wait' : ''} motion-reduce:animate-none`;
-  const btcView = (section: 'qr' | 'details') => (shownMode === 'lightning' ? (
+  const shownRestriction=shownMode==='lightning'?lightningRestriction:bitcoinRestriction;
+  const btcView = (section: 'qr' | 'details') => shownRestriction ? (section==='qr' ? (
+    <div style={{width:qrSize+32}}><Alert type="warning">{shownRestriction}</Alert></div>
+  ):null) : (shownMode === 'lightning' ? (
     <LightningAddressDisplay
       address={lightningAddress}
       isLoading={lightningAddressLoading}
@@ -399,6 +404,9 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                               <SideCaption shown={shownMode} mode={btcMode} onChange={switchBtcMode} />
                             </div>
                             {btcView('details')}
+                            {restrictedBrowser && shownMode==='bitcoin' && !bitcoinRestriction && (
+                              <Alert type="warning">{REGTEST_DEPOSIT_RECEIVE_MESSAGE}</Alert>
+                            )}
                             <button
                               type="button"
                               data-testid="direct-spark-receive-entry"
@@ -407,7 +415,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                             >
                               Pay me directly on Spark · 0 sats transfer fee
                               <span className="mt-1 block text-xs font-normal text-spark-text-secondary">
-                                Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.
+                                {restrictedBrowser?'Use disposable test wallets only.':'Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.'}
                               </span>
                             </button>
                           </div>
@@ -429,7 +437,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                               onClick={() => { handleTabChange('lightning'); setShownMode('lightning'); }}
                               className="rounded-lg border border-spark-border px-4 py-2 text-sm text-spark-text-primary"
                             >
-                              Back to Lightning
+                              {restrictedBrowser?'Back to receive options':'Back to Lightning'}
                             </button>
                           </div>
                         )}
@@ -442,13 +450,13 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                       </div>
                     )}
 
-                    {receive.currentStep === 'qr' && (
+                    {receive.currentStep === 'qr' && (lightningRestriction ? <Alert type="warning">{lightningRestriction}</Alert> : (
                       <QRCodeDisplay
                         paymentData={receive.paymentData}
                         feeSats={receive.feeSats}
                         amount={receive.invoiceAmount}
                       />
-                    )}
+                    ))}
                   </>
                 </StepContainer>
               )}
@@ -497,7 +505,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
       </BottomSheetContainer>
 
       <AmountPanel
-        isOpen={isOpen && receive.activeTab === 'lightning' && receive.showAmountPanel}
+        isOpen={isOpen && !lightningRestriction && receive.activeTab === 'lightning' && receive.showAmountPanel}
         amountSats={receive.amountSats}
         setAmountSats={receive.setAmountSats}
         setAmountDisplay={receive.setAmountDisplay}
@@ -511,7 +519,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
       />
 
       <LightningAddressEditSheet
-        isOpen={isOpen && isEditingLightningAddress}
+        isOpen={isOpen && !lightningRestriction && isEditingLightningAddress}
         address={lightningAddress}
         editValue={lightningAddressEditValue}
         error={lightningAddressError}

@@ -13,6 +13,22 @@ describe('durable signed recovery journal',()=>{
   const key=RECOVERY_JOURNAL_PREFIX+'damaged';localStorage.setItem(key,'{broken');
   expect(()=>readRecoveries()).toThrow(/damaged/);expect(localStorage.getItem(key)).toBe('{broken');
  });
+ it.each(['gys:signed-recovery:v2:future','gys:signed-recovery:unknown'])('preserves and rejects an unrecognized recovery format %s',key=>{
+  localStorage.setItem(key,'{}');
+  expect(()=>readRecoveries()).toThrow(/incompatible|damaged/);
+  expect(()=>assertNoUnresolvedRecovery()).toThrow(/incompatible|damaged/);
+  expect(localStorage.getItem(key)).toBe('{}');
+ });
+ it('does not ignore a damaged unknown-format record when filtering another wallet',()=>{
+  const key='gys:signed-recovery:v3:foreign-wallet';localStorage.setItem(key,'{broken');
+  expect(()=>readRecoveries('a'.repeat(64))).toThrow(/damaged/);
+  expect(localStorage.getItem(key)).toBe('{broken');
+ });
+ it.each([{operationId:[record().operationId]},{operationId:'-'.repeat(36)}])('rejects a malformed recovery operation identifier %#',({operationId})=>{
+  const malformed={...record(),operationId},key=RECOVERY_JOURNAL_PREFIX+malformed.walletKey+':'+operationId,bytes=JSON.stringify(malformed);
+  localStorage.setItem(key,bytes);expect(()=>readRecoveries()).toThrow(/incompatible|damaged/);
+  expect(localStorage.getItem(key)).toBe(bytes);
+ });
  it('rejects duplicate operation creation',()=>{
   writeRecovery(record());expect(()=>writeRecovery(record())).toThrow(/already exists/);
  });

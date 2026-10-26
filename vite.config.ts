@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import wasm from 'vite-plugin-wasm';
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import pkg from './package.json' with { type: 'json' }
+import { execFileSync } from 'node:child_process';
 
 // https://vitejs.dev/config/
 // A locally-run Spark cluster is reached over plain http on localhost, which
@@ -38,6 +39,13 @@ export default defineConfig(({ mode }) => {
       wasm(),
       nodePolyfills(),
       allowLocalClusterCsp(),
+      {
+        name: 'getyoursats-release-manifest',
+        apply: 'build',
+        closeBundle() {
+          execFileSync(process.execPath, ['scripts/write-release-manifest.mjs'], { stdio: 'inherit' });
+        },
+      },
     ],
     server: {
       host: env.VITE_SERVER_HOST || 'localhost',

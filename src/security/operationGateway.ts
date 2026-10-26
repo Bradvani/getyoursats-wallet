@@ -14,7 +14,7 @@ import {
 import {journalDigest,recipientCommitment,operationWalletKey,readOperations,readAllOperations,isUnresolved,writeOperation,updateOperation,
   operationFromPayment,withOperationLock,UncertainPaymentError,type OperationRecord} from './operationJournal';
 
-import {BROWSER_SPENDING_POLICY} from './browserReleasePolicy';
+import {BROWSER_SPENDING_POLICY,browserReceivingRouteRestriction} from './browserReleasePolicy';
 import {SIGNED_RECOVERY,createSignedRecoveryController} from './signedRecoveryController';
 import {assertNoUnresolvedRecovery} from './signedRecoveryJournal';
 import {observationSdk,verifyObservationWithoutCommit} from './paymentObservation';
@@ -309,11 +309,25 @@ export function createOperationGateway(network:Network) {
       // including disconnect, missing callbacks and failures after a remote commit.
       try {
         const result=await run(executable);
+        assertConnection();assertUnlocked(record.epoch);
         // A missing observer or mismatched receipt is an integration anomaly.
         // The operation may already have moved funds, so retain the retry guard.
         if(!active.observed)throw new Error('SDK execution skipped the payment observer');
-        operationFromPayment(activeOperation,result.payment);
-        return result;
+        activeOperation=operationFromPayment(activeOperation,result.payment);
+        if(result.payment.status==='pending')return result;
+        // A send response is not independent settlement evidence. Use the same
+        // exact-identity/recipient proof required after restart before releasing
+        // the retry guard or returning success to the UI.
+        const requestedAt=Date.now();
+        const observation=await observationSdk(client!).observePayment({
+          paymentId:activeOperation.paymentId,recipientCommitment:activeOperation.recipientHash!,
+        });
+        assertConnection();assertUnlocked(record.epoch);
+        const state=await verifyObservationWithoutCommit(activeOperation,observation,requestedAt);
+        assertConnection();assertUnlocked(record.epoch);
+        if(state!=='completed'&&state!=='returned')throw new Error('Payment settlement remains unresolved');
+        activeOperation=updateOperation(activeOperation,{state});
+        return {...result,payment:observation.payment!};
       } catch {
         try{activeOperation=updateOperation(activeOperation,{state:'unknown'})}catch{/* submitting still blocks retries */}
         throw new UncertainPaymentError(activeOperation.operationId);
@@ -334,6 +348,19 @@ export function createOperationGateway(network:Network) {
         if(key===SIGNED_RECOVERY)return recovery;
         if(key==='refundDeposit')return recovery.refund;
         if(key===BROWSER_SPENDING_POLICY)return true;
+        if(key==='signMessage')return async(request:Parameters<BreezSdk['signMessage']>[0])=>{
+          assertConnection();const epoch=getSpendingSessionEpoch();assertUnlocked(epoch);
+          const input=frozenCopy(request);
+          const match=typeof input.message==='string'&&/^gys-email-v1:(send|status):((?:02|03)[0-9a-f]{64}):[0-9a-f]{36}$/.exec(input.message);
+          if(!match||input.compact!==true)throw new Error('This wallet only signs its scoped email-verification challenges');
+          const info=await raw.getInfo({ensureSynced:false});
+          assertConnection();assertUnlocked(epoch);
+          if(info.identityPubkey?.toLowerCase()!==match[2])throw new Error('Email challenge belongs to a different wallet');
+          const result=await raw.signMessage({message:input.message,compact:true});
+          assertConnection();assertUnlocked(epoch);
+          if(result.pubkey.toLowerCase()!==match[2])throw new Error('Email proof belongs to a different wallet');
+          return result;
+        };
         if(key==='getInfo')return async(request:GetInfoRequest={})=>{
           assertConnection();
           if(request.ensureSynced)await reconciliation.observe();
@@ -347,8 +374,9 @@ export function createOperationGateway(network:Network) {
         if(key==='receivePayment')return async(input:ReceivePaymentRequest)=>{
           assertConnection();const epoch=getSpendingSessionEpoch();assertUnlocked(epoch);
           const request=frozenCopy(input),method=request.paymentMethod;
-          if(!['sparkAddress','sparkInvoice','bitcoinAddress','bolt11Invoice'].includes(method.type)||
-             (method.type==='sparkInvoice'&&method.tokenIdentifier!==undefined))
+          const restriction=browserReceivingRouteRestriction(method.type,import.meta.env.DEV&&network==='regtest');
+          if(restriction)throw new Error(restriction);
+          if(method.type==='sparkInvoice'&&method.tokenIdentifier!==undefined)
             throw new Error('This receiving route is unavailable pending security review');
           const response=await raw.receivePayment(request);
           assertConnection();assertUnlocked(epoch);

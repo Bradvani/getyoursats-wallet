@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { SimpleAlert } from '../../../components/AlertCard';
 import { PrimaryButton, FIELD_BASE_CLASS } from '../../../components/ui';
 import ContactAutocomplete from '../components/ContactAutocomplete';
@@ -10,11 +10,13 @@ import type { Contact } from '@breeztech/breez-sdk-spark';
 import { dismissKeyboard } from '../../../utils/keyboard';
 import { Capacitor } from '@capacitor/core';
 import { Clipboard } from '@capacitor/clipboard';
+import { useLatest } from '../../../hooks/useLatest';
 
 export interface InputStepProps {
   paymentInput: string;
   selectedContactAddress?: string | null;
   isLoading: boolean;
+  suspended?: boolean;
   error: string | null;
   onClearError?: () => void;
   onContinue: (paymentInput: string, opts?: { requireReview?: boolean }) => void;
@@ -25,7 +27,7 @@ export interface InputStepProps {
 
 // Parent (SendPaymentDialog) keys this on `selectedContactAddress` so
 // a fresh contact pick remounts and lazy-init re-reads the props.
-const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddress, isLoading, error, onClearError, onContinue, onScanQr, onOpenContacts, onStablecoin }) => {
+const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddress, isLoading, suspended = false, error, onClearError, onContinue, onScanQr, onOpenContacts, onStablecoin }) => {
   const { contacts } = useContactsContext();
   const [localPaymentInput, setLocalPaymentInput] = useState<string>(() =>
     selectedContactAddress || paymentInput || ''
@@ -43,6 +45,22 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
   const autocompleteContacts = useMemo(() => searchContacts(contacts, localPaymentInput), [contacts, localPaymentInput]);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputAction = useRef(0);
+  const canSubmit = useLatest(!suspended && !isLoading);
+  useLayoutEffect(() => {
+    inputAction.current += 1;
+    return () => {inputAction.current += 1;};
+  }, [suspended]);
+
+  const handleContinue = async () => {
+    if (!canSubmit.current) return;
+    const action = ++inputAction.current;
+    await dismissKeyboard();
+    if (action === inputAction.current && canSubmit.current && localPaymentInput.trim()) {
+      onContinue(localPaymentInput);
+    }
+  };
+
   const recipientPlaceholder = preferredRail === 'bitcoin'
     ? 'Bitcoin address (bc1...)'
     : preferredRail === 'lightning'
@@ -52,6 +70,8 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
         : 'Lightning address, invoice, Bitcoin or stablecoin destination';
 
   const handlePaste = async () => {
+    if (!canSubmit.current) return;
+    const action = ++inputAction.current;
     try {
       // Read via the native Clipboard plugin in the Capacitor app: the
       // WebView's navigator.clipboard is blocked on Android and shows
@@ -68,12 +88,14 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
         inputRef.current?.focus();
         return;
       }
+      if (action !== inputAction.current || !canSubmit.current) return;
       if (text?.trim()) {
         setLocalPaymentInput(text);
         setSelectedContact(null);
         onContinue(text, { requireReview: true });
       }
     } catch (err) {
+      if (action !== inputAction.current || !canSubmit.current) return;
       logger.error(LogCategory.UI, 'Failed to read clipboard contents', {
         error: err instanceof Error ? err.message : String(err),
       });
@@ -82,6 +104,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
   };
 
   const handleContactSelect = (paymentIdentifier: string) => {
+    inputAction.current += 1;
     const match = contacts.find(c => c.paymentIdentifier === paymentIdentifier);
     if (match) {
       setSelectedContact(match);
@@ -92,6 +115,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
   };
 
   const handleClearContact = () => {
+    inputAction.current += 1;
     setSelectedContact(null);
     setLocalPaymentInput('');
     onClearError?.();
@@ -105,7 +129,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={onScanQr}
+            onClick={() => {inputAction.current += 1; onScanQr?.();}}
             disabled={isLoading || !onScanQr}
             className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-[#F7931A] bg-[#F7931A] px-3 py-3 text-sm font-semibold text-[#0B0B0B] hover:bg-[#FFB25E] disabled:opacity-50"
           >
@@ -159,7 +183,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
             <textarea
               ref={inputRef}
               value={localPaymentInput}
-              onChange={(e) => setLocalPaymentInput(e.target.value)}
+              onChange={(e) => {inputAction.current += 1; setLocalPaymentInput(e.target.value);}}
               onPaste={(e) => {
                 // A user-initiated paste fills the field but doesn't
                 // advance. Auto-advance so it matches the Paste button.
@@ -168,6 +192,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
                 const text = e.clipboardData.getData('text');
                 if (text?.trim()) {
                   e.preventDefault();
+                  inputAction.current += 1;
                   setLocalPaymentInput(text);
                   setSelectedContact(null);
                   onContinue(text, { requireReview: true });
@@ -175,7 +200,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
               }}
               onFocus={() => setIsInputFocused(true)}
               onBlur={() => setTimeout(() => setIsInputFocused(false), 100)}
-              onKeyDown={async (e) => {
+              onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   // Always dismiss the keyboard on Enter, even when
@@ -185,10 +210,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
                   // shortcut buttons underneath. Only advance to
                   // the next step if there's actually content to
                   // submit.
-                  await dismissKeyboard();
-                  if (localPaymentInput.trim() && !isLoading) {
-                    onContinue(localPaymentInput);
-                  }
+                  void handleContinue();
                 }
               }}
               enterKeyHint="go"
@@ -232,7 +254,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
               type="button"
               aria-pressed={preferredRail === rail}
               disabled={isLoading}
-              onClick={() => { setPreferredRail(rail); if (rail === 'stablecoin' && onStablecoin) onStablecoin(); else inputRef.current?.focus(); }}
+              onClick={() => { inputAction.current += 1; setPreferredRail(rail); if (rail === 'stablecoin' && onStablecoin) onStablecoin(); else inputRef.current?.focus(); }}
               className={preferredRail === rail
                 ? 'min-h-11 rounded-xl border border-[#F7931A] bg-[#2A2117] px-2 py-2 text-xs font-semibold text-[#F7931A]'
                 : 'min-h-11 rounded-xl border border-spark-border bg-spark-surface px-2 py-2 text-xs font-semibold text-spark-text-secondary hover:border-[#F7931A]'}
@@ -245,7 +267,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
       </div>
       <button
         type="button"
-        onClick={onOpenContacts}
+        onClick={() => {inputAction.current += 1; onOpenContacts?.();}}
         disabled={isLoading || !onOpenContacts}
         className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-spark-border bg-spark-surface px-3 py-2 text-sm font-medium text-spark-text-secondary hover:text-spark-text-primary"
       >
@@ -255,12 +277,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
 
       {/* Continue button */}
       <PrimaryButton
-        onClick={async () => {
-          // Dismiss the keyboard so the parsing / amount-entry step
-          // has the full viewport to work with.
-          await dismissKeyboard();
-          onContinue(localPaymentInput);
-        }}
+        onClick={handleContinue}
         disabled={isLoading || !localPaymentInput.trim()}
         className="w-full"
         data-testid="continue-button"

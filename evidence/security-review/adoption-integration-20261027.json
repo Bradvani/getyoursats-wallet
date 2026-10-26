@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "verificationDateUTC": "2026-10-26",
+  "kind": "implementer-local-candidate-integration",
+  "sourceCommit": "c5e2b2eb6c4756c97bec04b920b20a40e883874f",
+  "sourceTree": "2b2162ba964b90fbeabe2be3c88f2e2271fe22a4",
+  "sourceInputs": {
+    "securityPr43": "63e155f640761f172b583f865b0e9d85b7834d7d",
+    "journalIntegrity": "30a20f67e6d46f6b7a138a09a699aa5bce706e33",
+    "main": "b914523ce283d4bd7d3974dcb213cba0531056a6"
+  },
+  "productionDecision": "NO_GO",
+  "deployed": false,
+  "realFundsUsed": false,
+  "networkSettlementRepeated": false,
+  "independentReview": false,
+  "physicalDeviceAcceptance": false,
+  "fullProductAcceptance": false,
+  "checks": {
+    "journalRegressionBefore": {
+      "failed": 14,
+      "exitCode": 1
+    },
+    "journalGatewayObservationAfter": {
+      "passed": 110,
+      "exitCode": 0
+    },
+    "units": {
+      "command": "npm test -- --maxWorkers=2",
+      "passed": 1395,
+      "skipped": 1,
+      "failed": 0,
+      "unhandledErrors": 0,
+      "testFilesPassed": 142,
+      "testFilesSkipped": 1,
+      "exitCode": 0
+    },
+    "types": {
+      "command": "npx tsc --noEmit",
+      "exitCode": 0
+    },
+    "lint": {
+      "command": "npm run lint",
+      "errors": 0,
+      "warnings": 9,
+      "exitCode": 0
+    },
+    "previewBuild": {
+      "command": "npm run build",
+      "exitCode": 0
+    },
+    "chromiumSecurity": {
+      "passed": 7,
+      "failed": 0,
+      "exitCode": 0,
+      "fixtureState": "disposable",
+      "sdkResponses": "mocked",
+      "localOrigin": "http://127.0.0.1:5197"
+    },
+    "chromiumRollback": {
+      "passed": 9,
+      "failed": 0,
+      "exitCode": 0,
+      "fixtureState": "disposable",
+      "builtArtifact": true,
+      "localOrigin": "http://127.0.0.1:5184"
+    },
+    "chromiumSend": {
+      "passed": 7,
+      "failed": 0,
+      "exitCode": 0,
+      "sourceTest": "e2e/tests/getyoursats-scan-send.spec.ts",
+      "onlyTemporaryAdaptation": "origin localhost:5173 to127.0.0.1:5198",
+      "externalNetworkBlocked": true,
+      "sdkMutations": 0,
+      "pageErrors": 0
+    },
+    "installedSdk": {
+      "command": "npm run test:security:wasm",
+      "mnemonicIdentityComparisons": 36,
+      "rawSeedDerivationComparisons": 108,
+      "guardAssertions": 18,
+      "artifactApiChecks": 12,
+      "pbkdf2Comparisons": 17,
+      "networkConnections": false,
+      "exitCode": 0
+    },
+    "productionInterlock": {
+      "command": "VERCEL_ENV=production npx vite build",
+      "expectedExitCode": 1,
+      "actualExitCode": 1,
+      "expectedError": "Browser wallet security release is not approved."
+    }
+  },
+  "sdk": {
+    "packageSha256": "cbb19e1e16760d63e8cba74a33e21ec75dac6684bc8d389da6c9921b8ba58505",
+    "browserWasmSha256": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+    "sourcePatchSha256": "280e182624968ddb5755103d28dd0a9a07f867c37cd6b7f0d4ff9c1025da3f55"
+  },
+  "testEnvironmentCorrection": {
+    "initialRun": "1394 assertions passed,1 skipped,but61 unhandled happy-dom21 animation AbortErrors and exit1",
+    "correction": "Use Motion JavaScript fallback in DOM-emulator unit tests; retain unhandled-rejection failure detection; verify real-browser Send independently",
+    "subsequentSourceChange": "One additional encryption-failure onboarding regression gives1395 final passing tests"
+  },
+  "remainingReleaseBoundaries": [
+    "fresh and rebuilt unilateral exit authorization and interruption recovery",
+    "bounded Lightning and early-deposit claims",
+    "definitive uncertain-operation reconciliation",
+    "exact final source and SDK protocol acceptance",
+    "physical iPhone and Android including original passkey and phrase restoration",
+    "separate-device identity balance and history recovery",
+    "original-origin old/new client and service-worker rollout",
+    "complete sensitive-copy localization and RTL",
+    "qualified independent security approval"
+  ],
+  "evidenceFileSha256": {
+    "evidence/security-review/adoption-integration-20261027/unit-final.log": "bf8b8e6c72d07ebc8779be58ebdb983c69751aa03aedf9b406f0db51c2b333f8",
+    "evidence/security-review/adoption-integration-20261027/browser-security.log": "5d4b8b4573223c8e94b185b3a225b8646e447b859bd4b843db1831bacc00bc4a",
+    "evidence/security-review/adoption-integration-20261027/browser-rollback.log": "7e0fa38d938719b274e8aaaea469b6d4acb09e54bb51cdce7d6509a06126a7d7",
+    "evidence/security-review/adoption-integration-20261027/browser-send.log": "95962a75d75e6d45279e2c26e2c3fa822b6c7454e731a9c13ab001980cd41ad4",
+    "evidence/security-review/adoption-integration-20261027/preview-build.log": "beca08c60a00666dee337487490da0d3c99748aec7587abe09ace8ca2caf5e53",
+    "evidence/security-review/adoption-integration-20261027/lint.log": "229742f60b556448e661b06dd8afc9b2489dbc228b75d7aabdf7ffa64bd1bc88",
+    "evidence/security-review/adoption-integration-20261027/production-interlock.log": "f2c864515551f31da49ff931d0526f9dd43a136bb03574c3e2469f4369b70fb3",
+    "evidence/security-review/adoption-integration-20261027/journal-before.log": "15aaf6f3667f0777d75ca6209c3039e9e2bbe0c7c2d0af2c43db4e81cb5b8c78",
+    "evidence/security-review/adoption-integration-20261027/rollback-manifest.json": "2cf962ecee897a8cf325071664312f3afe38b1834bdba0e884801c46e4702aa8"
+  },
+  "retainedLogNormalization": "Only redundant empty lines at the end were removed."
+}

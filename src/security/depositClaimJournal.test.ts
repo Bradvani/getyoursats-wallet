@@ -26,6 +26,15 @@ it('fails closed on corrupted and future-version records',()=>{
  localStorage.setItem(CLAIM_JOURNAL_PREFIX+'bad','null');expect(()=>readDepositClaims()).toThrow();
  localStorage.clear();localStorage.setItem('gys:deposit-claim:v2:future','{}');expect(()=>readDepositClaims()).toThrow();
 });
+it.each(['walletKey','txid'] as const)('rejects array-valued deposit %s before filtering wallet records',field=>{
+ const r=saveDepositClaim(wallet,record(),null);
+ const malformed=field==='walletKey'?{...r,walletKey:[r.walletKey]}:{...r,intent:{...r.intent,txid:[r.intent.txid]}};
+ const storageKey=CLAIM_JOURNAL_PREFIX+wallet+':'+r.intent.txid+':'+r.intent.vout,bytes=JSON.stringify(malformed);
+ localStorage.setItem(storageKey,bytes);
+ expect(()=>readDepositClaims()).toThrow(/incompatible/);
+ expect(()=>assertNoUnresolvedRecovery(wallet)).toThrow(/incompatible/);
+ expect(localStorage.getItem(storageKey)).toBe(bytes);
+});
 it('strips extra fields and freezes read-back intent',()=>{
  const r=saveDepositClaim(wallet,{...record(),secret:'must not persist'} as ClaimRecord,null);
  expect(JSON.stringify(localStorage)).not.toContain('secret');expect(Object.isFrozen(r.intent)).toBe(true);

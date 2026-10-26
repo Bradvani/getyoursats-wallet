@@ -12,6 +12,8 @@ import { useContactsContext } from '../contexts/ContactsContext';
 import { getPaymentDescription, getProviderDisplayName, isCrossChainPayment } from '../utils/paymentDescription';
 import { formatChainName, getCrossChainDestination, getCrossChainSendOutcome, formatReceiveAmount } from '../utils/crossChainFormat';
 import { explorerTxUrl, chainExplorerTxUrl } from '../utils/explorer';
+import {useWalletConnection} from '../contexts/WalletContext';
+import {browserReceivingRestriction} from '../security/browserReleasePolicy';
 
 interface PaymentDetailsDialogProps {
   optionalPayment: Payment | null;
@@ -39,6 +41,8 @@ const getDefaultVisibleFields = () => ({
 });
 
 const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPayment, onClose }) => {
+  const {sdk}=useWalletConnection();
+  const lightningRestriction=sdk?browserReceivingRestriction(sdk,'bolt11Invoice'):null;
   // Parent unmounts/remounts this component on payment selection change
   // (`{selectedPayment && <PaymentDetailsDialog ... />}`), so lazy init is
   // sufficient — no reset-in-effect needed.
@@ -110,6 +114,7 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
     : baseDisplayConfig;
   const hasTokenDisplay = !isAmountAdjusted && !!tokenInfo && !!tokenDisplayConfig;
   const isReceive = payment.paymentType === 'receive';
+  const unresolvedLightningReceive=!!lightningRestriction&&isReceive&&payment.status!=='completed'&&payment.details?.type==='lightning';
   const sign = isReceive ? '+' : '-';
   const amountDisplay = hasTokenDisplay
     ? `${sign} ${formatTokenAmount(tokenInfo.amount, tokenDisplayConfig)}`
@@ -289,7 +294,8 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
               );
             })()}
 
-            {payment.details?.type === 'lightning' && payment.details.invoice && (
+            {unresolvedLightningReceive&&<p role="status" className="text-sm text-spark-text-secondary">{lightningRestriction}</p>}
+            {!unresolvedLightningReceive && payment.details?.type === 'lightning' && payment.details.invoice && (
               <CollapsibleCodeField
                 label="Invoice"
                 value={payment.details.invoice}

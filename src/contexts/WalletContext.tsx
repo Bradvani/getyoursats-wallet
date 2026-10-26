@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react';
-import type { BreezSdk, GetInfoResponse, Payment } from '@breeztech/breez-sdk-spark';
+import type { BreezSdk, GetInfoResponse, LightningAddressInfo, Payment } from '@breeztech/breez-sdk-spark';
 import type { SdkEventHandler, SdkEventUnsubscribe } from '../hooks/useBreezSdk';
 import { selectedNetwork } from '../services/sdkConnect';
 import { withNetworkCheckedParse } from '../utils/destinationAddress';
@@ -32,6 +32,7 @@ interface WalletContextValue {
   sdk: BreezSdk | null;
   isConnected: boolean;
   subscribeToSdkEvents: SubscribeToSdkEvents;
+  preferredLightningAddress: LightningAddressInfo | null;
 }
 
 const noopSubscribe: SubscribeToSdkEvents = () => () => {};
@@ -40,6 +41,7 @@ const WalletContext = createContext<WalletContextValue>({
   sdk: null,
   isConnected: false,
   subscribeToSdkEvents: noopSubscribe,
+  preferredLightningAddress: null,
 });
 
 // Live wallet info (balance, token balances) lives in its own context so that
@@ -57,14 +59,18 @@ export const WalletProvider: React.FC<{
   client: BreezSdk | null;
   isConnected?: boolean;
   subscribeToSdkEvents?: SubscribeToSdkEvents;
-}> = ({ children, client, isConnected = false, subscribeToSdkEvents = noopSubscribe }) => {
+  preferredLightningAddress?: LightningAddressInfo | null;
+}> = ({ children, client, isConnected = false, subscribeToSdkEvents = noopSubscribe,
+  preferredLightningAddress = null }) => {
+  const checkedClient = useMemo(() => client && withNetworkCheckedParse(client, selectedNetwork()), [client]);
   const value = useMemo(
     () => ({
-      sdk: client && withNetworkCheckedParse(client, selectedNetwork()),
+      sdk: checkedClient,
       isConnected,
       subscribeToSdkEvents,
+      preferredLightningAddress,
     }),
-    [client, isConnected, subscribeToSdkEvents]
+    [checkedClient, isConnected, subscribeToSdkEvents, preferredLightningAddress]
   );
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 };

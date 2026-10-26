@@ -46,6 +46,7 @@ export function fullResolutionScanRegion(video: HTMLVideoElement): QrScanner.Sca
 export const useQrScanner = ({ onScan, onError }: UseQrScannerOptions): UseQrScannerReturn => {
   const videoRef = useRef<HTMLVideoElement>(null!);
   const qrScannerRef = useRef<QrScanner | null>(null);
+  const scanSession = useRef(0);
 
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -58,15 +59,18 @@ export const useQrScanner = ({ onScan, onError }: UseQrScannerOptions): UseQrSca
   }, []);
 
   const stopScanning = useCallback(() => {
+    scanSession.current += 1;
     if (qrScannerRef.current) {
       qrScannerRef.current.stop();
       qrScannerRef.current.destroy();
       qrScannerRef.current = null;
     }
     setIsScanning(false);
+    setIsInitializing(false);
   }, []);
 
   const startScanning = useCallback(async () => {
+    const session = ++scanSession.current;
     try {
       setError(null);
       setIsInitializing(true);
@@ -82,6 +86,7 @@ export const useQrScanner = ({ onScan, onError }: UseQrScannerOptions): UseQrSca
 
       // Check if camera is available
       const hasCamera = await QrScanner.hasCamera();
+      if (session !== scanSession.current) return;
       if (!hasCamera) {
         const errorMsg = 'No camera found on this device';
         setError(errorMsg);
@@ -90,15 +95,16 @@ export const useQrScanner = ({ onScan, onError }: UseQrScannerOptions): UseQrSca
         return;
       }
 
-      qrScannerRef.current = new QrScanner(
+      const scanner = new QrScanner(
         videoRef.current,
         (result) => {
+          if (session !== scanSession.current) return;
           logger.debug(LogCategory.UI, 'QR code detected', {
             length: result.data.length,
           });
           void hapticLight();
-          onScan(result.data);
           stopScanning();
+          onScan(result.data);
         },
         {
           onDecodeError: (decodeError) => {
@@ -118,7 +124,13 @@ export const useQrScanner = ({ onScan, onError }: UseQrScannerOptions): UseQrSca
         }
       );
 
-      await qrScannerRef.current.start();
+      qrScannerRef.current = scanner;
+      await scanner.start();
+      if (session !== scanSession.current) {
+        scanner.stop();
+        scanner.destroy();
+        return;
+      }
       logger.info(LogCategory.UI, 'QR scanner started successfully');
       setIsInitializing(false);
       setIsScanning(true);
@@ -127,6 +139,7 @@ export const useQrScanner = ({ onScan, onError }: UseQrScannerOptions): UseQrSca
       // check may have returned stale results before the user allowed access
       try {
         const cameras = await QrScanner.listCameras(false);
+        if (session !== scanSession.current) return;
         logger.debug(LogCategory.UI, 'Cameras after permission', {
           count: cameras.length,
         });
@@ -138,6 +151,7 @@ export const useQrScanner = ({ onScan, onError }: UseQrScannerOptions): UseQrSca
         });
       }
     } catch (err) {
+      if (session !== scanSession.current) return;
       logger.error(LogCategory.UI, 'Failed to start QR scanner', {
         error: formatError(err),
       });

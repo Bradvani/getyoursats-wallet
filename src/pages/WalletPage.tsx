@@ -1,7 +1,7 @@
 import IncomingPaymentsPanel from '../security/IncomingPaymentsPanel';
 import PaymentReconciliationBanner from '../security/PaymentReconciliationBanner';
 import WalletRecoveryPanel from '../security/WalletRecoveryPanel';
-import {isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
+import {browserReceivingRestriction,isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
 import { useWalletNavigation } from '../hooks/useWalletNavigation';
 import {trustCopy} from '../getyoursats/trustCopy';
 import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
@@ -21,6 +21,10 @@ import CollapsingWalletHeader from '../components/CollapsingWalletHeader';
 import SideMenu from '../components/SideMenu';
 import MarketPulse from '../getyoursats/MarketPulse';
 import WalletActivityPanel from '../getyoursats/WalletActivityPanel';
+import WalletSetupCard from '../getyoursats/WalletSetupCard';
+import WalletSetupTour from '../getyoursats/WalletSetupTour';
+import type {WalletSetupController} from '../hooks/useWalletSetup';
+import type {WalletRecoveryMethod} from '../getyoursats/walletSetupState';
 import PullToRefresh from '../components/PullToRefresh';
 import { GetInfoResponse, Payment, DepositInfo, Network } from '@breeztech/breez-sdk-spark';
 import type { BuyBitcoinProvider } from '../services/settings';
@@ -63,6 +67,11 @@ interface WalletPageProps {
   onBuyBitcoin: (provider: BuyBitcoinProvider) => Promise<void>;
   network?: Network;
   onDepositChanged?: () => void;
+  walletSetup?: WalletSetupController;
+  recoveryMethod?: WalletRecoveryMethod;
+  setupTourAllowed?: boolean;
+  onReviewRecovery?: () => void;
+  onPersonalizeAddress?: () => void;
 }
 
 const WalletPage: React.FC<WalletPageProps> = ({
@@ -83,9 +92,15 @@ const WalletPage: React.FC<WalletPageProps> = ({
   onBuyBitcoin,
   network,
   onDepositChanged,
+  walletSetup,
+  recoveryMethod = 'phrase',
+  setupTourAllowed = true,
+  onReviewRecovery,
+  onPersonalizeAddress,
 }) => {
   const wallet = useWallet();
   const restrictedBrowser = isRestrictedBrowserWallet(wallet);
+  const lightningRestriction=browserReceivingRestriction(wallet,'bolt11Invoice');
   const {language,copy}=usePresentation();
   const wc=WALLET_COPY[language];
   const { showToast } = useToast();
@@ -121,7 +136,8 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const selectedDeposit = selectedOutpoint
     ? unclaimedDeposits.find(d => `${d.txid}:${d.vout}` === selectedOutpoint) ?? null
     : null;
-  const [paymentInput, setPaymentInput] = useState<string | null>(null);
+  const [paymentInput, setPaymentInput] = useState<{raw: string; id: number} | null>(null);
+  const paymentInputSequence = useRef(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBuyBitcoinOpen, setIsBuyBitcoinOpen] = useState(false);
   const [isBuyLoading, setIsBuyLoading] = useState(false);
@@ -141,6 +157,14 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const [sendDialogSession, setSendDialogSession] = useState(0);
   const [receiveDialogSession, setReceiveDialogSession] = useState(0);
   const [buyBitcoinSession, setBuyBitcoinSession] = useState(0);
+  const tourRequested = Boolean(walletSetup?.scope && walletSetup.progress.tourStatus === 'active');
+  const showHistory = historyOpen;
+  const setupPaused = !setupTourAllowed || settingsActive || isSendDialogOpen || isReceiveDialogOpen || isQrScannerOpen ||
+    isMenuOpen || isBuyBitcoinOpen || partnerBuyOpen || gysPosOpen || Boolean(selectedPayment) ||
+    Boolean(selectedDeposit) || Boolean(selectedExitId) || Boolean(saveContactAddress);
+  const startTour = () => { navigate('wallet'); walletSetup?.beginTour(); };
+  const nextTourStep = () => { walletSetup?.next(); };
+  const skipTour = () => { walletSetup?.skip(); };
 
   const openSendDialog = useCallback(() => {
     setSendDialogSession(s => s + 1);
@@ -177,7 +201,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
   }, [wallet, restrictedBrowser, refreshWalletData, showToast]);
 
   const exitState = useUnilateralExitEngineState();
-  const exitEntries = useMemo(() => unilateralExitEntries(exitState), [exitState]);
+  const exitEntries = useMemo(() => unilateralExitEntries(exitState,restrictedBrowser), [exitState,restrictedBrowser]);
   const selectedExit = exitState.archive.find(exit => exit.id === selectedExitId) ?? null;
   const handleExitSelected = useCallback((entry: UnilateralExitEntry) => {
     if (entry.isActive) onOpenUnilateralExit();
@@ -268,56 +292,45 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   const handleQrScannerClose = useCallback(() => {
     setIsQrScannerOpen(false);
-    // If scanner was opened from Send dialog, reopen it
-    if (scannerOpenedFromSend) {
-      setScannerOpenedFromSend(false);
-      openSendDialog();
+    setScannerOpenedFromSend(false);
+    if (!scannerOpenedFromSend) {
+      setIsSendDialogOpen(false);
+      setPaymentInput(null);
     }
-  }, [scannerOpenedFromSend, openSendDialog]);
+  }, [scannerOpenedFromSend]);
 
   const handleScanFromSendDialog = useCallback(() => {
-    setIsSendDialogOpen(false);
-    setPaymentInput(null);
     setScannerOpenedFromSend(true);
     setIsQrScannerOpen(true);
   }, []);
 
-  // A tapped lightning: / bitcoin: / lnurlp: / lnurlw: / keyauth: / glow: link
-  // opens the send sheet on it. Unlike the QR path there is no pre-parse: the OS just
-  // switched the user into Glow, so an unreadable link has to say so on screen
-  // rather than land on the home page having apparently done nothing. The
-  // sheet parses `initialRawInput` itself and surfaces its own error.
+  const handleScanFromWallet = useCallback(() => {
+    setPaymentInput(null);
+    setScannerOpenedFromSend(false);
+    openSendDialog();
+    setIsQrScannerOpen(true);
+  }, [openSendDialog]);
+
+  // Links and scans share Send's parser and review gates. The request ID lets
+  // another intentional scan of the same QR start a fresh resolution.
   useEffect(() => onDeepLink((input) => {
-    setPaymentInput(input);
+    setPaymentInput({raw: input, id: ++paymentInputSequence.current});
     openSendDialog();
   }), [openSendDialog]);
 
-  const handleQrScan = async (data: string | null) => {
-    if (!data) return;
-
-    try {
-      const parseResult = await wallet.parse(data);
-      logger.debug(LogCategory.UI, 'Parsed QR result', {
-        resultType: parseResult.type,
-      });
-      setIsQrScannerOpen(false);
-      setScannerOpenedFromSend(false);
-      setPaymentInput(data);
-      openSendDialog();
-    } catch (error) {
-      logger.error(LogCategory.UI, 'Failed to parse QR code', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  };
+  const handleQrScan = useCallback((data: string) => {
+    setPaymentInput({raw: data, id: ++paymentInputSequence.current});
+    setScannerOpenedFromSend(false);
+    setIsQrScannerOpen(false);
+  }, []);
 
   return (
-    <div className={`gys-wallet ${historyOpen ? "gys-wallet--history-open" : ""} flex flex-col h-[calc(100dvh)] relative overflow-hidden`}>
+    <div className={`gys-wallet ${showHistory ? "gys-wallet--history-open" : ""} flex flex-col h-[calc(100dvh)] relative overflow-hidden`}>
       <aside className="gys-desktop-nav" aria-label="Wallet navigation">
         <GetYourSatsWordmark compact/>
         <nav>
-          <button type="button" aria-current={!settingsActive&&!historyOpen&&!gysPosOpen?'page':undefined} onClick={()=>navigate('wallet')}>{trustCopy(language).wallet}</button>
-          <button type="button" aria-current={!settingsActive&&historyOpen&&!gysPosOpen?'page':undefined} onClick={()=>navigate('history')}>{trustCopy(language).history}</button>
+          <button type="button" aria-current={!settingsActive&&!showHistory&&!gysPosOpen?'page':undefined} onClick={()=>navigate('wallet')}>{trustCopy(language).wallet}</button>
+          <button type="button" aria-current={!settingsActive&&showHistory&&!gysPosOpen?'page':undefined} onClick={()=>navigate('history')}>{trustCopy(language).history}</button>
           <button type="button" aria-current={!settingsActive&&gysPosOpen?'page':undefined} onClick={()=>navigate('merchant')}>{trustCopy(language).merchant}</button>
           <button type="button" aria-current={settingsActive?'page':undefined} onClick={()=>navigate('settings')}>{copy.settings}</button>
           <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">{trustCopy(language).help}</a>
@@ -331,7 +344,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
       </div>
 
       {/* Fixed header */}
-      <div className="gys-wallet__header sticky top-0 z-10">
+      <div className="gys-wallet__header sticky top-0 z-10" data-wallet-tour="balance">
         <CollapsingWalletHeader
           walletInfo={walletInfo}
           scrollProgress={scrollProgress}
@@ -361,9 +374,9 @@ const WalletPage: React.FC<WalletPageProps> = ({
       </aside>}
 
       {/* Lightning address: ready on first wallet screen, not a hidden signup step. */}
-      <div className="gys-address-banner gys-wallet__address" role="status" aria-live="polite">
+      <div className="gys-address-banner gys-wallet__address" role="status" aria-live="polite" data-wallet-tour="identity">
         <span className="gys-address-banner__label">⚡ {wc.lightning}</span>
-        {primaryLightningAddress.address ? (
+        {lightningRestriction ? <span className="gys-address-banner__pending">{lightningRestriction}</span> : primaryLightningAddress.address ? (
           <button type="button" className="gys-address-banner__value"
             onClick={()=>void navigator.clipboard.writeText(primaryLightningAddress.address!.lightningAddress).then(()=>showToast('success',trustCopy(language).copySuccess)).catch(()=>showToast('error',trustCopy(language).copyFailure))}
             aria-label="Copy your Lightning address"
@@ -395,18 +408,36 @@ const WalletPage: React.FC<WalletPageProps> = ({
       {/* Live SDK market quotes and wallet-verified activity. */}
       <div
         ref={transactionsContainerRef}
-        id="gys-wallet-history" className={`gys-wallet__activity grow overflow-y-auto relative z-0 scrollbar-hidden ${historyOpen ? "gys-wallet__activity--open" : ""}`}
+        id="gys-wallet-history" className={`gys-wallet__activity grow overflow-y-auto relative z-0 scrollbar-hidden ${showHistory ? "gys-wallet__activity--open" : ""}`}
         onScroll={handleScroll}
       >
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
 
         <PaymentReconciliationBanner/><WalletRecoveryPanel/><IncomingPaymentsPanel/>
+        {!showHistory && walletSetup?.scope && onReviewRecovery && (
+          tourRequested && onPersonalizeAddress ? (
+            <WalletSetupTour
+              step={walletSetup.progress.step}
+              recoveryMethod={recoveryMethod}
+              recoveryStatus={walletSetup.progress.recoveryStatus}
+              hasNativeAddress={primaryLightningAddress.address?.lightningAddress.endsWith('@getyoursats.com') ?? false}
+              paused={setupPaused}
+              onNext={nextTourStep}
+              onSkip={skipTour}
+              onReviewRecovery={onReviewRecovery}
+              onPersonalize={onPersonalizeAddress}
+              onOpenReceive={openReceiveDialog}
+              onOpenPos={() => setGysPosOpen(true)}
+            />
+          ) : <WalletSetupCard setup={walletSetup} paused={setupPaused} onReviewRecovery={onReviewRecovery} onStartTour={startTour}/>
+        )}
+
         {/* One-glance market context belongs above transactions, never below
             a long activity list or behind a collapsed disclosure. */}
-        {!historyOpen && !settingsActive && <MarketPulse />}
+        {!showHistory && !settingsActive && <MarketPulse />}
 
         <WalletActivityPanel
-          view={historyOpen?'history':'activity'} onViewChange={view=>setHistoryOpen(view==='history')}
+          view={showHistory?'history':'activity'} onViewChange={view=>setHistoryOpen(view==='history')}
           transactions={mergeDepositsWithTransactions(transactions, unclaimedDeposits)}
           onPaymentSelected={handlePaymentSelected}
           isSyncing={isSyncing}
@@ -421,7 +452,9 @@ const WalletPage: React.FC<WalletPageProps> = ({
         key={`send-${sendDialogSession}`}
         isOpen={isSendDialogOpen}
         onClose={handleSendDialogClose}
-        initialRawInput={paymentInput}
+        initialRawInput={paymentInput?.raw}
+        initialInputId={paymentInput?.id}
+        coveredByScanner={isQrScannerOpen}
         onScanQr={handleScanFromSendDialog}
         onSuccessfulSend={handleSuccessfulSend}
       />
@@ -443,13 +476,12 @@ const WalletPage: React.FC<WalletPageProps> = ({
       />
 
       {/* QR Scanner Dialog */}
-      {isQrScannerOpen && (
-        <QrScannerDialog
-          isOpen={isQrScannerOpen}
-          onClose={handleQrScannerClose}
-          onScan={handleQrScan}
-        />
-      )}
+      <QrScannerDialog
+        isOpen={isQrScannerOpen}
+        onClose={handleQrScannerClose}
+        onScan={handleQrScan}
+        zIndex={60}
+      />
 
       {/* Payment Details Dialog */}
       {selectedPayment && (
@@ -460,7 +492,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
       )}
 
       {selectedExit && (
-        <ArchivedExitDialog exit={selectedExit} onClose={() => setSelectedExitId(null)} />
+        <ArchivedExitDialog exit={selectedExit} onClose={() => setSelectedExitId(null)} fundingUnavailable={restrictedBrowser} />
       )}
 
       {/* Keyed on deposit identity so the page remounts on a new
@@ -477,11 +509,11 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
       {/* Receive and Send stay dominant; scanning and POS stay available in the menu. */}
       <nav className="gys-action-dock" aria-label="Wallet actions">
-        <button type="button" onClick={openReceiveDialog} data-testid="receive-button" aria-label="Receive Bitcoin"
+        <button type="button" onClick={openReceiveDialog} data-testid="receive-button" aria-label="Receive Bitcoin" data-wallet-tour="receive"
           className="gys-action-dock__receive"><ArrowDownIcon/><span>{wc.receive}</span></button>
         <button type="button" onClick={openSendDialog} data-testid="send-button" aria-label="Send Bitcoin"
           className="gys-action-dock__send"><ArrowUpIcon/><span>{wc.send}</span></button>
-        <button type="button" onClick={()=>setIsQrScannerOpen(true)} data-testid="scan-button" aria-label={wc.scanPayment}
+        <button type="button" onClick={handleScanFromWallet} data-testid="scan-button" aria-label={wc.scanPayment}
           className="gys-action-dock__utility"><QrCodeIcon/><span>{wc.scan}</span></button>
         <button type="button" onClick={()=>setGysPosOpen(true)} data-testid="pos-button" aria-label={wc.posPayment}
           className="gys-action-dock__accept gys-action-dock__utility"><span className="gys-action-dock__bitcoin" aria-hidden="true">₿</span><span>{wc.acceptShort}</span></button>
@@ -506,7 +538,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
         onOpenSettings={onOpenSettings}
         onOpenFiatCurrencies={onOpenFiatCurrencies}
         onOpenDca={onOpenDca}
-        onOpenScan={()=>setIsQrScannerOpen(true)}
+        onOpenScan={handleScanFromWallet}
         onOpenMerchantPos={()=>setGysPosOpen(true)}
         onOpenPartnerBuy={()=>setPartnerBuyOpen(true)}
         onOpenRefund={() => onOpenGetRefund('menu')}

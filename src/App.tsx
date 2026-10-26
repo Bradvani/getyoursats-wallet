@@ -3,7 +3,6 @@ import {isRestrictedBrowserWallet} from './security/browserReleasePolicy';
 import WebWalletVaultPage from './security/WebWalletVaultPage';
 import {getSignedRecovery} from './security/signedRecoveryController';
 import {useBrowserSessionLock} from './security/useBrowserSessionLock';
-import {isPasskeyMode} from './services/passkeyService';
 import WebVaultRecoveryPage from './security/WebVaultRecoveryPage';
 import SpendingApprovalDialog from './security/SpendingApprovalDialog';
 import {hasWebWalletVault,legacyWebMnemonic,enrollWebWallet,unlockWebWallet,removeMatchingLegacyMnemonic,resetWebWalletPasswordWithWords} from './security/webWalletVault';
@@ -13,7 +12,7 @@ import {deviceOnlyStorage, SecureStorageError} from './services/secureStorage';
 import {isWalletServiceConfigured} from './getyoursats/walletReadiness';
 import {Capacitor} from '@capacitor/core';
 import {chooseWalletOnboarding, approvedGetYourSatsOrigin, shouldDiscoverExistingPasskey} from './getyoursats/onboardingPolicy';
-import {prfAvailability} from './services/passkeyService';
+import {prfAvailability, isPasskeyMode, clearPasskeyMode} from './services/passkeyService';
 import SetupOptionsPage from './getyoursats/SetupOptionsPage';
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react';
 import { WalletProvider, WalletInfoProvider, WalletStatusProvider } from './contexts/WalletContext';
@@ -25,6 +24,10 @@ import StagingGate from './components/StagingGate';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import AppShell from './components/layout/AppShell';
 import { useBreezSdk } from './hooks/useBreezSdk';
+import {useLatest} from './hooks/useLatest';
+import {useWalletSetup, useNewWalletSetup, type NewWalletSetup} from './hooks/useWalletSetup';
+import {clearWalletSetupMemory, confirmWalletRecovery, type WalletRecoveryMethod} from './getyoursats/walletSetupState';
+import {featureAvailability} from './getyoursats/featureAvailability';
 import { FiatDataProvider } from './contexts/FiatDataContext';
 import { StableBalanceProvider, useStableBalance } from './contexts/StableBalanceContext';
 
@@ -107,6 +110,10 @@ const AppContent: React.FC = () => {
   // only in React memory until the browser encrypts it. No plaintext write.
   const [pendingWebSeed,setPendingWebSeed] = useState<{mnemonic:string;restore:boolean}|null>(null);
 
+  const [walletActionReturn, setWalletActionReturn] = useState<'wallet' | 'settings'>('settings');
+  const [newWalletSetup, setNewWalletSetup] = useState<NewWalletSetup | null>(null);
+  const [walletGuideReplay, setWalletGuideReplay] = useState(0);
+  const setupAttempt = useRef(0);
   const [setupIssue,setSetupIssue]=useState<string|null>(null);
   const serviceConfigured=isWalletServiceConfigured(
     import.meta.env.VITE_BREEZ_API_KEY,
@@ -148,6 +155,11 @@ const AppContent: React.FC = () => {
 
   const sdk = useBreezSdk(showToast);
   const browserSessionLock=useBrowserSessionLock(sdk.isConnected, sdk.resumeBrowserWallet);
+  const walletSetup = useWalletSetup(sdk.isConnected ? sdk.walletInfo?.identityPubkey : null, sdk.config?.network);
+  useNewWalletSetup({creation: newWalletSetup, client: sdk.sdk, connected: sdk.isConnected, scope: walletSetup.scope});
+  const setupSession = useLatest({client: sdk.sdk, scope: walletSetup.scope});
+  let recoveryMethod: WalletRecoveryMethod = Capacitor.isNativePlatform() ? 'device' : 'phrase';
+  try { if (isPasskeyMode()) recoveryMethod = 'passkey'; } catch { /* Recovery still uses its own authentication checks. */ }
   // App lock overlays everything (including the unlock/backup screens)
   // while locked; rendered last in the tree so it stacks on top.
   const appLock = useAppLock();
@@ -181,6 +193,8 @@ const AppContent: React.FC = () => {
   const handleGetYourSatsStart = async () => {
     void loadWalletPage().catch(() => {});
     if (!requireWalletService()) return;
+    const attempt = ++setupAttempt.current;
+    setNewWalletSetup(null);
 
     // Native-only instant wallet: keys are generated with a cryptographic
     // random source and must be written to the OS-backed secure device vault.
@@ -217,9 +231,12 @@ const AppContent: React.FC = () => {
         }
         // Vault already contains the new seed. Avoid the SDK hook's second
         // storeSeed() call, which could overwrite a recoverable wallet.
-        await sdk.connectWallet(seed, false, undefined, 'secureStorage');
-        // No sensitive material in this reminder, only a recovery nudge.
-        try{localStorage.setItem('gys:backup:pending','true')}catch{/* device-only marker */}
+        const client = await sdk.connectWallet(seed, false, undefined, 'secureStorage');
+        if (attempt !== setupAttempt.current) return;
+        if (client) {
+          clearPasskeyMode();
+          setNewWalletSetup({client, phraseVerified: false});
+        }
         setUserScreen('wallet');
       } catch {
         setSetupIssue('Could not secure wallet keys on this device. Please retry or use manual recovery.');
@@ -275,32 +292,37 @@ const AppContent: React.FC = () => {
 
   // Navigate to wallet after successful connect
   const handleConnect = async (mnemonic: string, restore: boolean) => {
+    const attempt = ++setupAttempt.current;
+    setNewWalletSetup(null);
     if (!Capacitor.isNativePlatform()) {
       if (hasWebWalletVault()) throw new Error('A protected wallet already exists on this device. Unlock it first.');
       setPendingWebSeed({mnemonic,restore});
       setUserScreen('web-vault-setup');
       return;
     }
-    await sdk.connectWallet({ type: 'mnemonic', mnemonic }, restore);
-    // Only manual setup that passed the two-word backup challenge reaches
-    // this path with restore=false. Defer wallet scoping until the SDK has
-    // supplied the connected public identity. No phrase is stored here.
-    if(!restore){
-      try{sessionStorage.setItem('gys:manual-backup-verified-pending','1')}catch{/* reminder stays visible */}
-    }
+    const client = await sdk.connectWallet({ type: 'mnemonic', mnemonic }, restore);
+    if (attempt !== setupAttempt.current) return;
+    if (client) clearPasskeyMode();
+    if (!restore && client) setNewWalletSetup({client, phraseVerified: true});
     setUserScreen('wallet');
   };
 
   const finishBrowserVaultSetup = async(password:string) => {
+    const attempt = ++setupAttempt.current;
+    setNewWalletSetup(null);
     const legacy = pendingWebSeed ? null : legacyWebMnemonic();
     const mnemonic = pendingWebSeed?.mnemonic ?? legacy;
     if(!mnemonic)throw new Error('The existing wallet recovery words are unavailable. Restore the wallet again.');
     const restore = pendingWebSeed?.restore ?? true;
     await enrollWebWallet(mnemonic,password);
-    await sdk.connectWallet({type:'mnemonic',mnemonic},restore,undefined,'secureStorage');
+    const client=await sdk.connectWallet({type:'mnemonic',mnemonic},restore,undefined,'secureStorage');
+    if (attempt !== setupAttempt.current) return;
+    if (!client) throw new Error('Wallet connection could not be verified. Your recovery data is preserved.');
+    clearPasskeyMode();
     // Only remove the old plaintext when a persisted ciphertext matches the
     // actual phrase. If connection fails, the legacy phrase remains.
     if(legacy)await removeMatchingLegacyMnemonic(password);
+    if (!restore) setNewWalletSetup({client, phraseVerified: true});
     setPendingWebSeed(null);
     setUserScreen('wallet');
   };
@@ -320,8 +342,12 @@ const AppContent: React.FC = () => {
   // derives a never-used seed, so there is nothing to restore: gating on the
   // sync would hide a balance we already know is zero.
   const handlePasskeyConnect = async (seed: Seed, label: string, isNewWallet: boolean) => {
+    const attempt = ++setupAttempt.current;
+    setNewWalletSetup(null);
     try {
-      await sdk.connectWallet(seed, !isNewWallet, label);
+      const client = await sdk.connectWallet(seed, !isNewWallet, label);
+      if (attempt !== setupAttempt.current) return;
+      if (isNewWallet && client) setNewWalletSetup({client, phraseVerified: false});
       setPasskeySdkConnected(true);
     } catch {
       // Stay on passkey screen — sdk.error will be set by useBreezSdk
@@ -384,8 +410,12 @@ const AppContent: React.FC = () => {
   }, [sdk]);
 
   const handleLogout = async () => {
+    setupAttempt.current += 1;
+    setNewWalletSetup(null);
+    setWalletActionReturn('settings');
     try {
       await sdk.handleLogout();
+      clearWalletSetupMemory();
       setUserScreen('home');
       hasAutoOpenedMigrationRef.current = false;
     } catch(error) {
@@ -422,8 +452,10 @@ const AppContent: React.FC = () => {
         setUserScreen('wallet');
         return true;
       case 'backup':
-      case 'security':
       case 'email':
+        setUserScreen(walletActionReturn);
+        return true;
+      case 'security':
       case 'fiatCurrencies':
       case 'buyProviders':
       case 'passkeySettings':
@@ -452,7 +484,7 @@ const AppContent: React.FC = () => {
         // (same as pressing Home). Matches standard Android UX.
         return false;
     }
-  }, [currentScreen]), true);
+  }, [currentScreen, walletActionReturn]), true);
 
   // Render screens
   const renderCurrentScreen = () => {
@@ -531,6 +563,7 @@ const AppContent: React.FC = () => {
       return (
         <Suspense fallback={<GlobalLoadingOverlay />}>
         <WalletPage
+          key={walletGuideReplay}
           walletInfo={sdk.walletInfo}
           transactions={sdk.transactions}
           unclaimedDeposits={sdk.unclaimedDeposits}
@@ -553,6 +586,11 @@ const AppContent: React.FC = () => {
           onBuyBitcoin={sdk.handleBuyBitcoin}
           network={sdk.config?.network}
           onDepositChanged={sdk.fetchUnclaimedDeposits}
+          walletSetup={walletSetup}
+          recoveryMethod={recoveryMethod}
+          setupTourAllowed={!appLock.locked && !migrationModalOpen && sdk.celebrationPayment === null && !sdk.isLoading}
+          onReviewRecovery={() => { setWalletActionReturn('wallet'); setUserScreen('backup'); }}
+          onPersonalizeAddress={() => { setWalletActionReturn('wallet'); setUserScreen('email'); }}
         />
         </Suspense>
       );
@@ -571,8 +609,13 @@ const AppContent: React.FC = () => {
         onOpenBuyProviders={() => setUserScreen('buyProviders')}
         onOpenPasskeySettings={() => setUserScreen('passkeySettings')}
         onOpenSecurity={() => setUserScreen('security')}
-        onOpenBackup={() => setUserScreen('backup')}
-        onOpenEmail={() => setUserScreen('email')}
+        onOpenBackup={() => { setWalletActionReturn('settings'); setUserScreen('backup'); }}
+        onOpenEmail={() => { setWalletActionReturn('settings'); setUserScreen('email'); }}
+        onOpenWalletTour={walletSetup.scope ? () => {
+          walletSetup.beginTour(true);
+          setWalletGuideReplay(value => value + 1);
+          setUserScreen('wallet');
+        } : undefined}
         onOpenUnilateralExit={() => setUserScreen('unilateralExit')}
       />
     );
@@ -797,8 +840,13 @@ const AppContent: React.FC = () => {
         return (
           <>
             {renderWalletPage()}
-            {renderSettingsPage()}
-            <EmailVerificationPage onBack={() => setUserScreen('settings')}/>
+            {walletActionReturn === 'settings' && renderSettingsPage()}
+            <EmailVerificationPage
+              key={walletSetup.scope ?? 'identity-unavailable'}
+              onBack={() => setUserScreen(walletActionReturn)}
+              nativeAddress={sdk.nativeLightningAddress}
+              onClaimNativeAddress={featureAvailability.nativeLightningAddress ? sdk.claimNativeLightningAddress : undefined}
+            />
           </>
         );
 
@@ -808,14 +856,21 @@ const AppContent: React.FC = () => {
         return (
           <>
             {renderWalletPage()}
-            {renderSettingsPage()}
+            {(currentScreen === 'security' || walletActionReturn === 'settings') && renderSettingsPage()}
             {currentScreen === 'security' && (
               <SecurityPage onBack={() => setUserScreen('settings')} />
             )}
             {currentScreen === 'backup' && (
               <BackupPage
+                key={walletSetup.scope ?? 'recovery-unavailable'}
                 closeStyle="back"
-                onBack={() => setUserScreen('settings')}
+                onBack={() => setUserScreen(walletActionReturn)}
+                recoveryStatus={walletSetup.progress.recoveryStatus}
+                onRecoveryConfirmed={status => {
+                  if (walletSetup.scope && setupSession.current.scope === walletSetup.scope && setupSession.current.client === sdk.sdk) {
+                    confirmWalletRecovery(walletSetup.scope, status);
+                  }
+                }}
               />
             )}
           </>
@@ -856,7 +911,8 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <WalletProvider client={sdk.sdk} isConnected={sdk.isConnected} subscribeToSdkEvents={sdk.subscribeToSdkEvents}>
+    <WalletProvider client={sdk.sdk} isConnected={sdk.isConnected} subscribeToSdkEvents={sdk.subscribeToSdkEvents}
+      preferredLightningAddress={sdk.nativeLightningAddress}>
       <WalletInfoProvider walletInfo={sdk.walletInfo}>
         <WalletStatusProvider hasPendingConversion={sdk.hasPendingConversion}>
           <FiatDataProvider>

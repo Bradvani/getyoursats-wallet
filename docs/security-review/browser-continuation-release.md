@@ -1,6 +1,6 @@
 # Browser/PWA continuation: implementation and release decision
 
-> Latest combined takeover: [takeover-20261026.md](takeover-20261026.md). The historical implementation details below are superseded where that report records newer work. Production remains NO-GO.
+> Latest combined integration: [adoption-integration-20261027.md](adoption-integration-20261027.md). Historical implementation details below are superseded where the integration, takeover or disposable-acceptance reports record newer work. Production remains NO-GO.
 
 Date: 26 October 2026, Asia/Kolkata (25 October UTC).
 

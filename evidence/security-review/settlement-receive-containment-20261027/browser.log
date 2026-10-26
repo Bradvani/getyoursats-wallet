@@ -1,0 +1,44 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+[WebServer] (node:101321) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] 11:30:05 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+
+[WebServer] Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+[WebServer]   banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+[WebServer]     'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+[WebServer]     "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+[WebServer]     'globalThis.global = globalThis.global || __global_polyfill\n' +
+[WebServer]     "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+[WebServer]     'globalThis.process = globalThis.process || __process_polyfill\n'
+[WebServer] }`
+
+
+Running 7 tests using 1 worker
+
+(node:101356) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:101356) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/7] e2e/tests/browser-security-preview.spec.ts:6:2 › security preview states are explicit at 390px
+[2/7] e2e/tests/browser-security-preview.spec.ts:6:2 › security preview states are explicit at 768px
+[3/7] e2e/tests/browser-security-preview.spec.ts:6:2 › security preview states are explicit at 1366px
+[4/7] e2e/tests/browser-vault-concurrency.spec.ts:14:1 › real Web Locks holds a second tab until the first writer releases
+[5/7] e2e/tests/browser-vault-concurrency.spec.ts:35:1 › simultaneous first-time enrollment in two tabs commits only one wallet
+(node:101639) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:101639) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[6/7] e2e/tests/browser-vault-security.spec.ts:17:1 › migrates a legacy wallet and fails closed on denied browser spend approval
+[7/7] e2e/tests/browser-vault-security.spec.ts:36:1 › requires unlock after reload and restores same phrase on password reset
+  7 passed (15.0s)

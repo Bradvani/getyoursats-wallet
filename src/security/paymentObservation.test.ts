@@ -1,7 +1,7 @@
 import {beforeEach,describe,it,expect} from 'vitest';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 import {applyPaymentObservation,observationSdk,type PaymentObservation} from './paymentObservation';
-import {writeOperation,readOperations,operationWalletKey,isUnresolved,type OperationRecord} from './operationJournal';
+import {writeOperation,updateOperation,readOperations,operationWalletKey,isUnresolved,type OperationRecord} from './operationJournal';
 const identity='disposable-observation-identity';
 let record:OperationRecord;
 const payment=(status:'completed'|'pending'|'failed'='completed'):Payment=>({
@@ -15,7 +15,7 @@ beforeEach(async()=>{
  localStorage.clear();record={version:1,walletKey:await operationWalletKey('mainnet',identity),
  operationId:'11111111-1111-4111-8111-111111111111',paymentId:'payment-1',intentHash:'b'.repeat(64),recipientHash:'c'.repeat(64),
  network:'mainnet',route:'spark',amountSats:'100',feeLimitSats:'2',state:'unknown',createdAt:1,updatedAt:1};
- writeOperation(record);
+ record=updateOperation(writeOperation({...record,state:'submitting'}),{state:'unknown'});
 });
 describe('fresh operator/provider observation',()=>{
  it('clears the duplicate-payment guard on matching fresh completion',async()=>{
@@ -50,7 +50,8 @@ describe('fresh operator/provider observation',()=>{
   expect(readOperations(record.walletKey)[0].state).toBe('unknown');
  });
  it('does not treat a withdrawal failed status as returned funds',async()=>{
-  const withdrawal={...record,route:'bitcoin' as const};writeOperation(withdrawal);
+  localStorage.clear();
+  const withdrawal=updateOperation(writeOperation({...record,route:'bitcoin',state:'submitting'}),{state:'unknown'});
   await expect(applyPaymentObservation(withdrawal,{...observation('returned'),payment:{...payment('failed'),method:'withdraw'}},Date.now())).rejects.toThrow();
  });
  it('never substitutes a legacy active sync method for the observation extension',()=>{

@@ -6,6 +6,9 @@ import {readFileSync,mkdirSync} from 'node:fs';
 // from the marketing files when Vite serves /site/index.html in CI.
 const landing='http://localhost:5173/site/index.html';
 test.beforeEach(async({page})=>{
+  await page.route('**/assets/networks/*.png',route=>route.fulfill({
+    contentType:'image/png',body:readFileSync('site/assets/networks/'+new URL(route.request().url()).pathname.split('/').pop())
+  }));
   await page.route('**/experience-v5.js*',route=>route.fulfill({
     contentType:'application/javascript',body:readFileSync('site/experience-v5.js','utf8')
   }));
@@ -46,16 +49,16 @@ for(const [width,height] of [[1440,900],[390,844],[320,700]]){
     // Static network coverage remains visible as assets and directions change.
     const grid=page.locator('.ex-chain-grid');
     await expect(grid).toBeVisible();
-    await expect(grid.locator('.ex-chain-chip')).toHaveCount(7);
-  const featured=['Ethereum','Solana','Base','BNB Chain','Arbitrum','TRON','Monad'];
+    await expect(grid.locator('.ex-chain-chip')).toHaveCount(6);
+  const featured=['Ethereum','Solana','Base','BNB Chain','Arbitrum','TRON'];
   for(const [index,name] of featured.entries()){
     const tile=grid.locator('.ex-chain-chip').nth(index);
     await expect(tile.getByText(name,{exact:true})).toBeVisible();
-    await expect(tile.locator('img')).toHaveAttribute('src',/trustwallet\/assets\/master\/blockchains\/.*\/info\/logo\.png$/);
+    await expect(tile.locator('img')).toHaveAttribute('src',/^\/assets\/networks\/(ethereum|solana|base|bnb-chain|arbitrum|tron)\.png$/);
   }
-  await expect(page.locator('.ex-network-count')).toContainText('7 FEATURED');
-  await expect(page.locator('.ex-network-footnote')).toContainText('Monad availability is not yet confirmed');
-    await expect(page.locator('.ex-network-footnote')).toContainText('USDC/USDT availability varies by network, asset and direction');
+  await expect(page.locator('.ex-network-count')).toContainText('6 FEATURED');
+  await expect(page.locator('.ex-network-footnote')).toContainText('Check current availability and a live quote in your wallet');
+    await expect(page.locator('.ex-network-footnote')).toContainText('USDC/USDT routes vary by network, asset, direction and provider');
     await expect(page.locator('#ex-route-journey')).toHaveCount(0);
     await expect(page.locator('#ex-route-preview')).toHaveCount(0);
     await expect(page.locator('#ex-route-description')).toContainText('Send sats as USDT');
@@ -134,15 +137,15 @@ test('@public-smoke featured logo grid is curated and route availability is qual
   await page.locator('#tab-lightning').click();
   const grid=page.locator('.ex-chain-grid');
   await expect(grid).toBeVisible();
-  await expect(grid.locator('.ex-chain-chip')).toHaveCount(7);
-  for(const name of ['Ethereum','Solana','Base','BNB Chain','Arbitrum','TRON','Monad']){
+  await expect(grid.locator('.ex-chain-chip')).toHaveCount(6);
+  for(const name of ['Ethereum','Solana','Base','BNB Chain','Arbitrum','TRON']){
    await expect(grid.getByText(name,{exact:true})).toBeVisible();
   }
   await page.locator('#ex-route-reverse').click();
   await expect(page.locator('#ex-route-pair')).toHaveText('SATS  →  USDC');
   await page.locator('[data-ex-asset="USDT"]').click();
   await expect(page.locator('#ex-route-pair')).toHaveText('SATS  →  USDT');
-  await expect(grid.locator('.ex-chain-chip')).toHaveCount(7);
+  await expect(grid.locator('.ex-chain-chip')).toHaveCount(6);
   await expect(page.locator('.ex-network-footnote a')).toHaveAttribute('href','https://wallet.getyoursats.com/');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  }
@@ -155,7 +158,7 @@ test('@public-smoke reduced motion keeps the network listing readable without a 
  await page.goto(landing,{waitUntil:'domcontentloaded'});
  await page.locator('#tab-lightning').click();
  await expect(page.locator('.ex-chain-grid .ex-chain-chip').first()).toHaveCSS('animation-name','none');
- await expect(page.locator('.ex-network-count')).toContainText('7 FEATURED');
+ await expect(page.locator('.ex-network-count')).toContainText('6 FEATURED');
  await expect(page.locator('#ex-route-journey')).toHaveCount(0);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });

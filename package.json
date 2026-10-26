@@ -26,8 +26,10 @@
     "regtest:renewed-leaf": "node local-regtest/watchtower.mjs leaf",
     "regtest:parent-exit": "node local-regtest/watchtower.mjs parent",
     "regtest:watchtower-exit": "node local-regtest/watchtower.mjs exit",
-    "test:email-service": "node --test tests/email-account.test.mjs tests/handle-core.test.mjs tests/contact-enquiries.test.mjs",
+    "test:email-service": "node --test tests/email-account.test.mjs tests/handle-core.test.mjs tests/contact-enquiries.test.mjs tests/breez-lnurl-proxy.test.mjs",
     "test:handle-service": "node --test tests/handle-core.test.mjs",
+    "test:lightning-domain": "node --test tests/breez-lnurl-proxy.test.mjs",
+    "test:native-lnurl-session": "node --test tests/native-lnurl-session.integration.mjs",
     "test:acceptance:spark": "node scripts/security/accept-disposable-spark.mjs"
   },
   "dependencies": {

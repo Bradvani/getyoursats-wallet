@@ -2,7 +2,8 @@ import {readIncomingClaims} from './incomingClaimJournal';
 import {readDepositClaims} from './depositClaimJournal';
 import type {Network,RecoverFundsResponse,RefundDepositRequest} from '@breeztech/breez-sdk-spark';
 
-export const RECOVERY_JOURNAL_PREFIX='gys:signed-recovery:v1:';
+const RECOVERY_JOURNAL_ROOT='gys:signed-recovery:';
+export const RECOVERY_JOURNAL_PREFIX=RECOVERY_JOURNAL_ROOT+'v1:';
 export const RECOVERY_JOURNAL_EVENT='gys:signed-recovery-changed';
 export type RecoveryState='authorized'|'signed'|'broadcasting'|'uncertain'|'submitted'|'confirmed';
 export type SignedRecoveryTx=Readonly<{txId:string;txHex:string;childHex?:string;state:'signed'|'uncertain'|'submitted'|'confirmed'}>;
@@ -18,7 +19,7 @@ const hex=(v:unknown):v is string=>typeof v==='string'&&v.length>0&&v.length<=8_
 const amount=(v:unknown):v is string=>typeof v==='string'&&/^(0|[1-9][0-9]*)$/.test(v)&&BigInt(v)<=2_100_000_000_000_000n;
 function valid(r:RecoveryRecord):boolean {
  if(!r||typeof r!=='object'||r.version!==1||!hash(r.walletKey)||!hash(r.intentHash)||
-    !/^[0-9a-f-]{36}$/.test(r.operationId)||!['mainnet','regtest','signet'].includes(r.network)||
+    typeof r.operationId!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(r.operationId)||!['mainnet','regtest','signet'].includes(r.network)||
     !['refund','exit'].includes(r.purpose)||typeof r.destination!=='string'||r.destination.length<1||r.destination.length>256||
     !amount(r.amountSats)||!amount(r.feeLimitSats)||
     !['authorized','signed','broadcasting','uncertain','submitted','confirmed'].includes(r.state)||
@@ -58,7 +59,7 @@ function parse(raw:string,storageKey:string):RecoveryRecord {
 export function readRecoveries(walletKey?:string):ReadonlyArray<RecoveryRecord>{
  const result:RecoveryRecord[]=[];
  for(let i=0;i<localStorage.length;i++){
-  const k=localStorage.key(i);if(!k?.startsWith(RECOVERY_JOURNAL_PREFIX))continue;
+  const k=localStorage.key(i);if(!k?.startsWith(RECOVERY_JOURNAL_ROOT))continue;
   // Parse every origin record, including unknown versions. Removal is origin-wide.
   const record=parse(localStorage.getItem(k)??'',k);
   if(walletKey===undefined||record.walletKey===walletKey)result.push(record);
@@ -108,7 +109,7 @@ export function updateRecovery(r:RecoveryRecord,update:Partial<Pick<RecoveryReco
  return writeRecovery({...r,...update,revision:r.revision+1,updatedAt:Math.max(Date.now(),r.updatedAt)},r);
 }
 export function subscribeRecoveries(listener:()=>void):()=>void{
- const storage=(event:StorageEvent)=>{if(event.key===null||event.key.startsWith(RECOVERY_JOURNAL_PREFIX))listener();};
+ const storage=(event:StorageEvent)=>{if(event.key===null||event.key.startsWith(RECOVERY_JOURNAL_ROOT))listener();};
  window.addEventListener(RECOVERY_JOURNAL_EVENT,listener);window.addEventListener('storage',storage);
  return()=>{window.removeEventListener(RECOVERY_JOURNAL_EVENT,listener);window.removeEventListener('storage',storage);};
 }

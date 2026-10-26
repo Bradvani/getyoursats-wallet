@@ -1,7 +1,7 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 import {createIncomingClaimController,type IncomingSdk,type IncomingObservation} from './incomingClaimController';
-import {readIncomingClaims,saveIncomingClaim} from './incomingClaimJournal';
+import {readIncomingClaims,saveIncomingClaim,INCOMING_CLAIM_PREFIX} from './incomingClaimJournal';
 import {assertNoUnresolvedRecovery} from './signedRecoveryJournal';
 import {operationWalletKey} from './operationJournal';
 import {rememberSignerIdentity,getSpendingRequest,finishSpendingApproval,cancelSpendingApproval,clearSignerIdentity,lockSpendingSession} from './spendApproval';
@@ -71,6 +71,13 @@ describe('explicit incoming claim',()=>{
  it('rejects unknown schema records before attempting work',async()=>{
   localStorage.setItem('gys:incoming-claim:v2:'+key+':'+id,'{}');const h=harness();
   await expect(h.controller.claim(id)).rejects.toThrow(/incompatible/);expect(h.raw.claimIncomingTransfer).not.toHaveBeenCalled();
+ });
+ it.each(['walletKey','paymentId'] as const)('does not coerce an array-valued %s into a valid incoming journal identity',field=>{
+  const r=saveIncomingClaim({version:1,walletKey:key,paymentId:id,network:'regtest',amountSats:'500',expiresAt:100,state:'submitting',revision:0});
+  const storageKey=INCOMING_CLAIM_PREFIX+key+':'+id,bytes=JSON.stringify({...r,[field]:[r[field]]});
+  localStorage.setItem(storageKey,bytes);
+  expect(()=>readIncomingClaims(key)).toThrow(/incompatible/);
+  expect(localStorage.getItem(storageKey)).toBe(bytes);
  });
  it('rejects stale journal writers and replacement economics',()=>{
   const r=saveIncomingClaim({version:1,walletKey:key,paymentId:id,network:'regtest',amountSats:'500',expiresAt:100,state:'submitting',revision:0});

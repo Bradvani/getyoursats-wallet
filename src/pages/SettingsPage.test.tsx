@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { BreezSdk } from '@breeztech/breez-sdk-spark';
 import { WalletProvider } from '@/contexts/WalletContext';
 import { ToastProvider } from '@/contexts/ToastContext';
@@ -7,7 +7,7 @@ import { createMockClient } from '@/test/mocks/mockWalletApi';
 import { setDevMode } from '@/services/settings';
 import SettingsPage from './SettingsPage';
 
-const renderSettings = () => render(
+const renderSettings = (onOpenWalletTour?: () => void) => render(
   <ToastProvider>
   <WalletProvider client={createMockClient() as unknown as BreezSdk} isConnected>
   <SettingsPage
@@ -19,6 +19,7 @@ const renderSettings = () => render(
     onOpenSecurity={vi.fn()}
     onOpenBackup={vi.fn()}
     onOpenEmail={vi.fn()}
+    onOpenWalletTour={onOpenWalletTour}
     onOpenUnilateralExit={vi.fn()}
   />
   </WalletProvider>
@@ -60,6 +61,23 @@ describe('wallet accessibility and honest platform protection', () => {
 });
 
 describe('help and app identity', () => {
+  it('places guide replay with help near the bottom and keeps Account last', () => {
+    const replay = vi.fn();
+    renderSettings(replay);
+    const help = screen.getByRole('region', {name: 'Help & information'});
+    const display = screen.getByRole('heading', {name: 'Display'});
+    const diagnostics = screen.getByRole('heading', {name: 'Diagnostics'});
+    const account = screen.getByRole('heading', {name: 'Account'});
+    expect(display.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(diagnostics.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(help.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const sectionHeadings = screen.getAllByRole('heading', {level: 3});
+    expect(sectionHeadings[sectionHeadings.length - 1]).toBe(account);
+    expect(screen.queryByRole('heading', {name: 'Getting started'})).toBeNull();
+    fireEvent.click(within(help).getByRole('button', {name: 'Replay Wallet Guide'}));
+    expect(replay).toHaveBeenCalledOnce();
+  });
+
   it('shows direct Privacy and Support entries and the shared build version', () => {
     renderSettings();
     expect(screen.queryByTestId('settings-privacy-link')).not.toBeInTheDocument();

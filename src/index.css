@@ -1,24 +1,12 @@
 @import 'tailwindcss';
 @import './getyoursats/branding.css';
 
-/* Self-hosted font faces, bundled from @fontsource's woff2 files.
-   These used to load from fonts.googleapis.com via a render-blocking <link>,
-   which put a third-party network round trip on a native app's first paint and
-   broke first paint offline.
-
-   font-display is `block`, not `swap`, and these are declared by hand rather
-   than importing @fontsource's stylesheets (which hardcode `swap`). `swap`
-   paints text in the fallback first and restyles when the font arrives, which
-   is a visible flash on every cold start. Blocking briefly is only safe because
-   these files are now local: they come off disk in tens of milliseconds, so the
-   wait is imperceptible. Blocking on the old remote fonts would have risked
-   seconds of invisible text, which is exactly why `swap` was right then and is
-   wrong now. Latin subset, only the weights the UI uses. */
+/* Self-hosted fonts keep amounts and recovery instructions readable while loading. */
 @font-face {
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 300;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-300-normal.woff2') format('woff2');
 }
@@ -26,7 +14,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 400;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff2') format('woff2');
 }
@@ -34,7 +22,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 500;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-500-normal.woff2') format('woff2');
 }
@@ -42,7 +30,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 600;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-600-normal.woff2') format('woff2');
 }
@@ -50,7 +38,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 700;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff2') format('woff2');
 }
@@ -58,7 +46,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 800;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff2') format('woff2');
 }
@@ -66,21 +54,21 @@
   font-family: 'JetBrains Mono';
   font-style: normal;
   font-weight: 400;
-  font-display: block;
+  font-display: swap;
   src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2') format('woff2');
 }
 @font-face {
   font-family: 'JetBrains Mono';
   font-style: normal;
   font-weight: 500;
-  font-display: block;
+  font-display: swap;
   src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2') format('woff2');
 }
 @font-face {
   font-family: 'JetBrains Mono';
   font-style: normal;
   font-weight: 600;
-  font-display: block;
+  font-display: swap;
   src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-600-normal.woff2') format('woff2');
 }
 
@@ -95,7 +83,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 300;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+20BF;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-300-normal.woff2') format('woff2');
@@ -104,7 +92,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 400;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+20BF;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-400-normal.woff2') format('woff2');
@@ -113,7 +101,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 500;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+20BF;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-500-normal.woff2') format('woff2');
@@ -122,7 +110,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 600;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+20BF;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-600-normal.woff2') format('woff2');
@@ -131,7 +119,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 700;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+20BF;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-700-normal.woff2') format('woff2');
@@ -140,7 +128,7 @@
   font-family: 'Plus Jakarta Sans';
   font-style: normal;
   font-weight: 800;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+20BF;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
   src: url('@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-800-normal.woff2') format('woff2');
@@ -149,7 +137,7 @@
   font-family: 'JetBrains Mono';
   font-style: normal;
   font-weight: 400;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+20BF;
   src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-ext-400-normal.woff2') format('woff2');
 }
@@ -157,7 +145,7 @@
   font-family: 'JetBrains Mono';
   font-style: normal;
   font-weight: 500;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+20BF;
   src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-ext-500-normal.woff2') format('woff2');
 }
@@ -165,7 +153,7 @@
   font-family: 'JetBrains Mono';
   font-style: normal;
   font-weight: 600;
-  font-display: block;
+  font-display: swap;
   unicode-range: U+20BF;
   src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-ext-600-normal.woff2') format('woff2');
 }

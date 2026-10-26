@@ -1,0 +1,31 @@
+# GetYourSats
+
+> GetYourSats is a standalone Bitcoin wallet for everyday payments and merchant Point of Sale. It runs as a browser/PWA application with user-controlled signing keys.
+
+## Official product pages
+
+- [Website](https://getyoursats.com/): Product features and illustrative previews.
+- [Wallet](https://wallet.getyoursats.com/): The connected wallet application.
+- [Support](https://getyoursats.com/support): Payment status, wallet restoration, merchant receipts and contact.
+- [Wallet architecture](https://getyoursats.com/support#how-your-wallet-works): Spark, Lightning and Bitcoin on-chain interoperability.
+- [Keys and recovery](https://getyoursats.com/support#keys-and-recovery): Custody, browser security and recovery boundaries.
+- [Learn Bitcoin](https://getyoursats.com/learn): Bitcoin education.
+- [Privacy](https://getyoursats.com/privacy): Wallet information, optional email verification and support data.
+- [Source code](https://github.com/Bradvani/getyoursats-wallet): Application source, license and contributor guidance.
+- [Security](https://github.com/Bradvani/getyoursats-wallet/blob/main/SECURITY.md): Private reporting and security boundaries.
+
+## Product facts and limits
+
+GetYourSats uses the Breez Spark SDK. Users control their signing keys; GetYourSats does not operate a custodial wallet account that can reset lost keys. Browser security, transaction authorization and proven recovery are separate requirements from key ownership. The current engineering assessment has outstanding security and recovery gates and does not certify expanded real-funds adoption.
+
+The wallet supports Lightning and Spark payments and Bitcoin on-chain interoperability. Bitcoin deposits credit the Spark-backed wallet balance. The product does not currently include a separate native Bitcoin UTXO wallet.
+
+USDC and USDT workflows depend on live SDK/provider routes and quotes. A featured network logo is not a guarantee of availability for a specific asset, direction or recipient.
+
+Merchant Point of Sale requests Lightning payments and verifies matching wallet records. Merchant order details are local to the device; they are not a cloud accounting backup.
+
+Compatible passkeys and recovery phrases provide wallet access. Recovery must restore the same wallet identity. Optional email verification and personal Lightning addresses are account services, not recovery keys.
+
+Buy Bitcoin and recurring fiat purchases are not currently enabled. Marketing previews do not execute payments, create payable invoices or establish settlement evidence.
+
+GetYourSats is a separate product built on the MIT-licensed Breez Glow web implementation and Breez Spark SDK. Attribution is retained in its source repository.

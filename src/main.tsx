@@ -4,9 +4,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { Keyboard } from '@capacitor/keyboard';
 import App from './App';
 import AppErrorBoundary from './components/AppErrorBoundary';
-// Font faces are declared in index.css (pointing at @fontsource's woff2 files)
-// rather than importing @fontsource's own stylesheets, which hardcode
-// font-display: swap. See the comment there.
+// Self-hosted fonts use readable system fallbacks while their files load.
 import './index.css';
 import './getyoursats/premium.css';
 import './getyoursats/appearance.css';
@@ -207,49 +205,6 @@ initWebViewportManager();
  * call sites that just want the splash gone.
  */
 /**
- * Hold the reveal until the bundled font faces have loaded.
- *
- * The faces use `font-display: block` (see index.css), so text is invisible
- * until its font is ready. Revealing first would expose a screen of empty text
- * that pops in a moment later. The splash is already covering startup, so it
- * covers this too and the app is revealed fully styled.
- *
- * By the time any caller hides the splash, React has already rendered behind
- * it, so the fonts are in flight and `fonts.ready` waits for them. The race is
- * a safety bound: a font that never resolves must not strand the splash
- * forever. The fonts are local, so in practice this resolves in tens of ms.
- */
-const BUNDLED_FACES = [
-  '300 1rem "Plus Jakarta Sans"',
-  '400 1rem "Plus Jakarta Sans"',
-  '500 1rem "Plus Jakarta Sans"',
-  '600 1rem "Plus Jakarta Sans"',
-  '700 1rem "Plus Jakarta Sans"',
-  '800 1rem "Plus Jakarta Sans"',
-  '400 1rem "JetBrains Mono"',
-  '500 1rem "JetBrains Mono"',
-  '600 1rem "JetBrains Mono"',
-];
-
-async function fontsSettled(): Promise<void> {
-  if (!document.fonts) return;
-  // Request every bundled face, not just the ones the first screen happens to
-  // use. Browsers load faces lazily, so JetBrains Mono (the balance) is not
-  // fetched by the welcome screen and would load later — blanking the balance
-  // for a moment when the home screen first paints, under font-display: block.
-  // These are local and small, so warming all of them costs tens of ms of
-  // splash that is already on screen.
-  const warm = Promise.all(
-    BUNDLED_FACES.map((f) => document.fonts.load(f).catch(() => undefined)),
-  ).then(() => document.fonts.ready);
-
-  await Promise.race([
-    warm,
-    new Promise((resolve) => setTimeout(resolve, 1500)),
-  ]).catch(() => { /* never block the reveal on a font failure */ });
-}
-
-/**
  * Hold the reveal until the passkey-availability check has settled.
  *
  * The welcome screen picks its onboarding flow from that check and defaults to
@@ -257,7 +212,7 @@ async function fontsSettled(): Promise<void> {
  * flow — and a first-time user could tap into mnemonic onboarding in that
  * window. On native this is a quick bridge call. On web it goes through the
  * SDK's PasskeyProvider and so waits on the WASM module; that is the deliberate
- * cost of showing the right screen the first time. Bounded, like the fonts.
+ * cost of showing the right screen the first time. The wait is bounded.
  */
 async function passkeyCheckSettled(): Promise<void> {
   await Promise.race([
@@ -270,8 +225,7 @@ export async function hideSplash(): Promise<void> {
   const splash = document.getElementById('splash');
   if (!splash) return;
 
-  // Both gates run concurrently: the reveal waits on the slower of the two.
-  await Promise.all([fontsSettled(), passkeyCheckSettled()]);
+  await passkeyCheckSettled();
 
   const animation = splash.animate(
     [{ opacity: 1 }, { opacity: 0 }],
@@ -393,41 +347,7 @@ function showWebAssemblyBlocked(): void {
   });
 }
 
-// THROWAWAY: ?claimtest=<ms> mounts the unclaimed-deposit sheet with a stubbed
-// quote that lands after <ms>, for screenshots of the pricing states.
-async function mountClaimTest(delayMs: number) {
-  const [{ default: UnclaimedDepositDetailsPage }, { WalletProvider }, { ToastProvider }] = await Promise.all([
-    import('@/pages/UnclaimedDepositDetailsPage'),
-    import('@/contexts/WalletContext'),
-    import('@/contexts/ToastContext'),
-  ]);
-  const deposit = { txid: 'a'.repeat(64), vout: 0, amountSats: 100_000, isMature: false } as never;
-  const quote = {
-    amountSats: 100_000,
-    confirmations: 1,
-    instant: { confirmationsRequired: 1, creditAmountSats: 96_800, feeSats: 3_200, isEstimate: false },
-    mature: { confirmationsRequired: 3, creditAmountSats: 99_802, feeSats: 198, isEstimate: true },
-  };
-  const client = {
-    fetchClaimDepositQuote: () => new Promise(resolve => setTimeout(() => resolve(quote), delayMs)),
-    listUnclaimedDeposits: async () => ({ deposits: [deposit] }),
-  } as never;
-  ReactDOM.createRoot(document.getElementById('root')!).render(
-    <ToastProvider>
-      <WalletProvider client={client} isConnected>
-        <UnclaimedDepositDetailsPage deposit={deposit} onBack={() => {}} onChanged={() => {}} />
-      </WalletProvider>
-    </ToastProvider>,
-  );
-  await hideSplash();
-}
-
 async function init() {
-  const claimTest = new URLSearchParams(window.location.search).get('claimtest');
-  if (claimTest !== null) {
-    await mountClaimTest(Number(claimTest) || 1500);
-    return;
-  }
   // Lockdown Mode leaves the WebView running but takes WebAssembly with it, so
   // startup would otherwise paint a working-looking welcome screen and fail at
   // the first SDK call. Bail out here with something actionable instead.
