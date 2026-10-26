@@ -4,6 +4,7 @@ import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
+import {parseLightsparkResponseUrl} from './lightspark-response-url.mjs';
 const manualFunding=process.env.GYS_MANUAL_REGTEST_FUNDING==='1';
 const output=process.env.GYS_ACCEPTANCE_EVIDENCE_DIR||'/tmp/gys-disposable-acceptance';
 const origin=process.env.GYS_ACCEPTANCE_ORIGIN||'http://127.0.0.1:5173';
@@ -14,7 +15,7 @@ const report={schema:1,sourceCommit:execFileSync('git',['rev-parse','HEAD'],{enc
  settlementVerified:false,steps:[],result:'BLOCKED',startedAt:new Date().toISOString()};
 report.sdk=JSON.parse(await readFile('vendor/getyoursats-sdk-build.json','utf8'));
 report.testFiles={};
-for(const file of ['e2e/fixtures/disposable-wallet-acceptance.ts','scripts/security/accept-disposable-spark.mjs'])report.testFiles[file]=createHash('sha256').update(await readFile(file)).digest('hex');
+for(const file of ['e2e/fixtures/disposable-wallet-acceptance.ts','scripts/security/accept-disposable-spark.mjs','scripts/security/lightspark-response-url.mjs'])report.testFiles[file]=createHash('sha256').update(await readFile(file)).digest('hex');
 const launchOptions={headless:process.env.GYS_ACCEPTANCE_HEADED!=='1',...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})};
 const resume=process.env.GYS_ACCEPTANCE_RESUME==='1';
 if(resume){
@@ -84,7 +85,11 @@ try{
   report.faucet={mode:'human-assisted',requestedSats:1000};
  }else{
  await checkpoint('request-public-faucet-funding');const faucet=await a.ctx.newPage();const posts=[];const failedHosts=new Set();
- faucet.on('response',r=>{if(r.request().method()==='POST'&&new URL(r.url()).hostname.endsWith('lightspark.com'))posts.push({path:new URL(r.url()).pathname,status:r.status()});});
+ faucet.on('response',r=>{
+  if(r.request().method()!=='POST')return;
+  const url=parseLightsparkResponseUrl(r.url());
+  if(url)posts.push({path:url.pathname,status:r.status()});
+ });
  faucet.on('requestfailed',r=>failedHosts.add(new URL(r.url()).hostname));
  await faucet.goto('https://app.lightspark.com/regtest-faucet',{waitUntil:'domcontentloaded',timeout:30000});
  await faucet.getByPlaceholder('500',{exact:true}).fill('1000');

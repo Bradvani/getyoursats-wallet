@@ -19,6 +19,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
+    name: verify-rollback-compatibility
     if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
     runs-on: ubuntu-latest
     timeout-minutes: 15

@@ -1,10 +1,7 @@
 name: Verify signed recovery wiring
+# This historical integration's reviewed output is already in the candidate.
+# Run manually so routine workflow edits cannot reapply and push older source.
 on:
-  push:
-    branches: [release/browser-pwa-security-localization-20261025]
-    paths:
-      - scripts/security/wire-signed-recovery.py
-      - .github/workflows/wire-signed-recovery.yml
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,6 +10,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
+    name: verify-signed-recovery-wiring
     if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
     runs-on: ubuntu-latest
     timeout-minutes: 20

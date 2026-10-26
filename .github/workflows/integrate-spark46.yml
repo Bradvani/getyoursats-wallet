@@ -1,8 +1,7 @@
 name: Integrate pinned direct Spark route
+# This historical integration's reviewed output is already in the candidate.
+# Run manually so routine workflow edits cannot reapply and push older source.
 on:
-  push:
-    branches: [release/browser-pwa-security-localization-20261025]
-    paths: [.github/workflows/integrate-spark46.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,6 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   verify:
+    name: verify-pinned-spark-integration
     if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
     runs-on: ubuntu-latest
     timeout-minutes: 20
