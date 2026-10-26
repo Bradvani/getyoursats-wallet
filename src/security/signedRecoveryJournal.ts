@@ -1,3 +1,4 @@
+import {readDepositClaims} from './depositClaimJournal';
 import type {Network,RecoverFundsResponse,RefundDepositRequest} from '@breeztech/breez-sdk-spark';
 
 export const RECOVERY_JOURNAL_PREFIX='gys:signed-recovery:v1:';
@@ -65,6 +66,8 @@ export function readRecoveries(walletKey?:string):ReadonlyArray<RecoveryRecord>{
 }
 export const recoveryUnresolved=(r:RecoveryRecord):boolean=>r.state!=='confirmed';
 export function assertNoUnresolvedRecovery(walletKey?:string):void{
+ if(readDepositClaims().some(r=>(walletKey===undefined||r.walletKey===walletKey)&&r.state!=='settled'))
+  throw new Error('A deposit claim requires reconciliation. Preserve wallet data and do not retry the claim.');
  if(readRecoveries(walletKey).some(recoveryUnresolved))
   throw new Error('A signed recovery is pending. Resume or check that operation before starting another payment or removing this wallet.');
 }
