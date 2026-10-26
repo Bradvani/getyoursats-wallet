@@ -32,7 +32,7 @@ export function inventory(storage:Storage=localStorage):Inventory{
   const key=storage.key(i)??'';
   if(key.startsWith('gys:wallet-vault:preserved-previous:')||key.startsWith('gys:wallet-recovery:preserved-manifest:')){result.quarantinedRecords++;continue;}
   let expected:number|undefined;
-  if(key.startsWith('gys:payment-journal:')){result.paymentRecords++;expected=1;}
+  if(key.startsWith('gys:payment-journal:')||key.startsWith('gys:incoming-claim:')||key.startsWith('gys:deposit-claim:')){result.paymentRecords++;expected=1;}
   else if(key.startsWith('gys:signed-recovery:')){result.signedRecoveries++;expected=1;}
   else if(key.startsWith('recovery-plan:')){result.exitPlans++;expected=5;}
   else if(key.startsWith('unilateral-exit-pending:')){result.pendingExits++;expected=2;}

@@ -1,3 +1,4 @@
+import IncomingPaymentsPanel from '../security/IncomingPaymentsPanel';
 import PaymentReconciliationBanner from '../security/PaymentReconciliationBanner';
 import WalletRecoveryPanel from '../security/WalletRecoveryPanel';
 import {isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
@@ -399,7 +400,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
       >
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
 
-        <PaymentReconciliationBanner/><WalletRecoveryPanel/>
+        <PaymentReconciliationBanner/><WalletRecoveryPanel/><IncomingPaymentsPanel/>
         {/* One-glance market context belongs above transactions, never below
             a long activity list or behind a collapsed disclosure. */}
         {!historyOpen && !settingsActive && <MarketPulse />}

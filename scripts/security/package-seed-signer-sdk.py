@@ -30,6 +30,8 @@ def package(args: argparse.Namespace) -> None:
         raise ValueError('WASM binding generator version does not match Cargo.lock')
     if not wasm.is_file():
         raise ValueError('Compiled WASM is missing')
+    if subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], cwd=source).strip():
+        raise ValueError('Untracked SDK source is not covered by the patch; run check-sdk-source.py')
     source_diff = subprocess.check_output(['git', 'diff', '--full-index', '--binary'], cwd=source)
     if source_diff != patch.read_bytes():
         raise ValueError('Compiled source worktree differs from the supplied patch')
@@ -62,7 +64,7 @@ def package(args: argparse.Namespace) -> None:
                 file = dest / ('breez_sdk_spark_wasm' + suffix)
                 generated[str(file.relative_to(pkg))] = digest(file)
             declarations = (dest / 'breez_sdk_spark_wasm.d.ts').read_text()
-            for expected in ('defaultExternalSignersFromSeed', 'observeWalletState', 'observePayment', 'signRefundDeposit', 'verifyRefundTransaction', 'inspectRecoveryTransaction'):
+            for expected in ('defaultExternalSignersFromSeed', 'observeWalletState', 'observePayment', 'signRefundDeposit', 'verifyRefundTransaction', 'inspectRecoveryTransaction', 'claimIncomingTransfer', 'observeIncomingTransfer'):
                 if expected not in declarations:
                     raise ValueError(f'{expected} absent from {target} declarations')
         node = pkg / 'nodejs/index.mjs'
@@ -76,7 +78,7 @@ def package(args: argparse.Namespace) -> None:
             "  if (!_module) _notInitialized('defaultExternalSignersFromSeed');\n"
             '  return _module.defaultExternalSignersFromSeed(...args);\n}\n')
         metadata = json.loads((pkg / 'package.json').read_text())
-        metadata['version'] = '0.1.0-getyoursats.recovery.1'
+        metadata['version'] = '0.1.0-getyoursats.incoming.1'
         (pkg / 'package.json').write_text(json.dumps(metadata, indent=2)+'\n')
         manifest = {
             'schema': 1, 'sdkSourceCommit': BASE_SOURCE,
@@ -86,7 +88,7 @@ def package(args: argparse.Namespace) -> None:
             'cargoProfile': 'release (upstream profile, wasm-opt disabled)',
             'rawCompiledWasmSha256': digest(wasm), 'generatedArtifacts': generated,
             'securityClaim': 'same-wallet software signing with observation-only network queries; not isolated or hardware-backed',
-            'extensions': ['seed-compatible-external-signers-v1', 'observation-only-wallet-state-v1', 'signed-recovery-v1'],
+            'extensions': ['seed-compatible-external-signers-v1', 'observation-only-wallet-state-v1', 'signed-recovery-v1', 'explicit-incoming-claim-v1'],
         }
         (pkg / 'getyoursats-build.json').write_text(json.dumps(manifest, indent=2)+'\n')
         # Deterministic archive: no local usernames, build timestamps or paths.

@@ -18,6 +18,8 @@ import {SIGNED_RECOVERY,createSignedRecoveryController} from './signedRecoveryCo
 import {assertNoUnresolvedRecovery} from './signedRecoveryJournal';
 import {observationSdk,verifyObservationWithoutCommit} from './paymentObservation';
 
+import {INCOMING_CLAIMS,createIncomingClaimController} from './incomingClaimController';
+
 const RECONCILIATION=Symbol('wallet-operation-reconciliation');
 const STORAGE_GENERATION_KEY='gys:wallet-operation-generation:v1';
 function captureStorageGeneration():string {
@@ -114,6 +116,8 @@ export function createOperationGateway(network:Network) {
     })().catch(error=>{walletKeyPromise=null;throw error});
     return walletKeyPromise;
   };
+  const incoming=createIncomingClaimController({network,walletKey:getWalletKey,assertConnection,
+    raw:()=>{if(!client)throw new Error('Wallet is not connected');return client;}});
   const recovery=createSignedRecoveryController({network,walletKey:getWalletKey,assertConnection,
     raw:()=>{if(!client)throw new Error('Wallet is not connected');return client;}});
   const reconciliation:OperationReconciliation=Object.freeze({
@@ -320,6 +324,7 @@ export function createOperationGateway(network:Network) {
     // Use an empty facade: prototype lookup, mutation and reflection cannot expose raw methods.
     return new Proxy(Object.create(null) as BreezSdk,{
       get:(_target,key)=>{
+        if(key===INCOMING_CLAIMS)return incoming;
         if(key===RECONCILIATION)return reconciliation;
         if(key===SIGNED_RECOVERY)return recovery;
         if(key==='refundDeposit')return recovery.refund;

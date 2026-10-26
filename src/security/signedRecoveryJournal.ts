@@ -1,3 +1,4 @@
+import {readIncomingClaims} from './incomingClaimJournal';
 import {readDepositClaims} from './depositClaimJournal';
 import type {Network,RecoverFundsResponse,RefundDepositRequest} from '@breeztech/breez-sdk-spark';
 
@@ -66,6 +67,8 @@ export function readRecoveries(walletKey?:string):ReadonlyArray<RecoveryRecord>{
 }
 export const recoveryUnresolved=(r:RecoveryRecord):boolean=>r.state!=='confirmed';
 export function assertNoUnresolvedRecovery(walletKey?:string):void{
+ if(readIncomingClaims(walletKey).some(r=>r.state!=='settled'))
+  throw new Error('An incoming payment requires reconciliation. Preserve wallet data.');
  if(readDepositClaims().some(r=>(walletKey===undefined||r.walletKey===walletKey)&&r.state!=='settled'))
   throw new Error('A deposit claim requires reconciliation. Preserve wallet data and do not retry the claim.');
  if(readRecoveries(walletKey).some(recoveryUnresolved))
