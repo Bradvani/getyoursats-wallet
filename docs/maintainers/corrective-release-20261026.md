@@ -95,3 +95,9 @@ The draft security candidate is `4c5fe8bddb7c71e44f2d0d1748d2b2054d506134`, tree
 The source README, site metadata and `llms.txt` are corrected. GitHub's repository About description and homepage remain stale because the available connector cannot edit those fields and the browser owner session is signed out. Search engine or third-party descriptions have not been proven refreshed. None of these metadata edits substitutes for the security gates.
 
 No real-money transfer or support email was sent during this work. No existing wallet was reset or forcibly migrated. This evidence supports the corrective release described above and does not certify real-funds adoption.
+
+## Final security-CI snapshot and metadata continuation
+
+The [separate security-CI snapshot](../security-review/final-candidate-ci-20261026.md) records the draft candidate at 23:29:07 UTC. Five of six workflows passed. A dedicated Firefox job exhausted its 20-minute budget downloading operating-system dependencies before running any security or rollback assertions. The completed broad browser suite still passed all 300 executions across its three engines. The receipt does not infer submission or success of the one permitted retry and does not alter the production NO-GO decision.
+
+The prepared repository About description is **GetYourSats: a Bitcoin wallet for everyday payments with Lightning, Spark and on-chain interoperability.** The prepared homepage is **https://getyoursats.com**. Neither field has been changed. GitHub's secure sign-in choice was presented; the user selected passkey, after which GitHub reported partial passkey support and waited for browser interaction. No successful owner sign-in was observed. The [visible sign-in state](../../evidence/releases/corrective-20261026/github-signin-passkey-20261026.jpg) is retained for the owner handoff.

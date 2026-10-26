@@ -1,0 +1,433 @@
+{
+  "schemaVersion": 1,
+  "repository": "Bradvani/getyoursats-wallet",
+  "pullRequest": 43,
+  "publishedHead": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+  "publishedTree": "a271ade6929e72fc0f17f754242f29da1a96b896",
+  "equivalentLocalEvidenceCommit": "022ec9dd6609deaef00781e22ec83c923f11a2f4",
+  "locallyTestedImplementation": "d0d85e30e4ef48cafa33c5060d1a5ee5450e315c",
+  "pullRequestTestMerge": "b9fdc35fb25879bed28f5c820fb262cb3f04a082",
+  "pullRequestTestMergeTree": "a271ade6929e72fc0f17f754242f29da1a96b896",
+  "pullRequestTestMergeBase": "77cb496a453823099725977b6f7975a49b24c179",
+  "sourceEquivalenceVerified": true,
+  "unitTests": {
+    "passed": 1482,
+    "skipped": 1,
+    "unhandledErrors": 0,
+    "filesPassed": 147,
+    "filesSkipped": 1
+  },
+  "nodeServiceAndPolicyTests": {
+    "passed": 123,
+    "failed": 0,
+    "skipped": 0
+  },
+  "redisIntegration": {
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0,
+    "deliveryMocked": true
+  },
+  "lint": {
+    "errors": 0,
+    "existingWarnings": 8
+  },
+  "broadBrowser": {
+    "builtArtifact": 9,
+    "chromiumJourneys": 131,
+    "firefoxWebkitJourneys": 160,
+    "totalExecutions": 300,
+    "failureSummary": false,
+    "flakySummary": false,
+    "skippedSummary": false,
+    "retrySummary": false,
+    "jobId": 121901367681
+  },
+  "installedSdk": {
+    "mnemonicComparisons": 36,
+    "rawSeedComparisons": 108,
+    "signerGuardAssertions": 18,
+    "pbkdf2Comparisons": 17,
+    "networkCalls": 0,
+    "apiAndArtifactIntegrityCount": 12,
+    "jobId": 121901354313,
+    "extensions": [
+      "seed-compatible-external-signers-v1",
+      "observation-only-wallet-state-v1",
+      "signed-recovery-v1",
+      "explicit-incoming-claim-v1",
+      "bounded-mature-deposit-claim-v1"
+    ]
+  },
+  "productionInterlock": {
+    "expectedRefusalVerified": true,
+    "approved": false
+  },
+  "dependencyAudit": {
+    "allVulnerabilities": 0,
+    "runtimeVulnerabilities": 0
+  },
+  "optionalFundedE2E": {
+    "status": "intentionally skipped by workflow gate",
+    "fundedScenariosExecuted": false
+  },
+  "currentSourceChangesDuringMonitoring": false,
+  "publicRegtestFundingRetried": false,
+  "scope": "CI on the final draft security candidate. No real-funds approval, deployment or physical-device acceptance.",
+  "earlierBitcoinCoreEvidence": {
+    "head": "2329157c3a8aed401c8602f246c76f6e22ecaf3d",
+    "runId": 40414954169,
+    "passedCases": 1,
+    "triggeredOnFinalHead": false,
+    "sdkSignerStubbed": true,
+    "boundary": "Actual local Core mempool, exact-byte rebroadcast, confirmation and reorg; not Spark signing or fresh exit construction."
+  },
+  "checkpointChromium": {
+    "passed": 7,
+    "jobId": 121901354843
+  },
+  "securityEngineMatrix": {
+    "chromium": {
+      "securityPassed": 7,
+      "rollbackPassed": 9,
+      "jobId": 121901355504
+    },
+    "webkit": {
+      "securityPassed": 7,
+      "rollbackPassed": 9,
+      "jobId": 121901355267
+    },
+    "firefox": {
+      "securityPassed": 0,
+      "rollbackPassed": 0,
+      "originalJobId": 121901355353,
+      "status": "Original setup timed out; no assertions executed and no retry submission yet observed."
+    }
+  },
+  "artifactMetadataProvenance": "GitHub API-reported artifact digests and sizes; archives were not downloaded or locally hashed for this receipt.",
+  "observedAt": "2026-10-26 23:29:07 UTC",
+  "status": "Five workflows successful; release security matrix cancelled because Firefox setup timed out before tests. One authorized job-only retry has not yet been observed as submitted.",
+  "workflowSummary": {
+    "successful": 5,
+    "total": 6,
+    "allSuccessful": false
+  },
+  "workflows": [
+    {
+      "id": 40416894742,
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "success",
+      "event": "pull_request",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+      "attempt": 1,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894742",
+      "createdAt": "2026-10-26T23:02:14Z",
+      "updatedAt": "2026-10-26T23:03:16Z"
+    },
+    {
+      "id": 40416894651,
+      "name": "Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "event": "pull_request",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+      "attempt": 1,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894651",
+      "createdAt": "2026-10-26T23:02:13Z",
+      "updatedAt": "2026-10-26T23:04:56Z"
+    },
+    {
+      "id": 40416894654,
+      "name": "GetYourSats checks",
+      "status": "completed",
+      "conclusion": "success",
+      "event": "pull_request",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+      "attempt": 1,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894654",
+      "createdAt": "2026-10-26T23:02:13Z",
+      "updatedAt": "2026-10-26T23:04:38Z"
+    },
+    {
+      "id": 40416894652,
+      "name": "GetYourSats browser smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "event": "pull_request",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+      "attempt": 1,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894652",
+      "createdAt": "2026-10-26T23:02:13Z",
+      "updatedAt": "2026-10-26T23:15:18Z"
+    },
+    {
+      "id": 40416890522,
+      "name": "Browser security checkpoint",
+      "status": "completed",
+      "conclusion": "success",
+      "event": "push",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+      "attempt": 1,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890522",
+      "createdAt": "2026-10-26T23:02:12Z",
+      "updatedAt": "2026-10-26T23:12:26Z"
+    },
+    {
+      "id": 40416890656,
+      "name": "Release security engine matrix",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "event": "push",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+      "attempt": 1,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890656",
+      "createdAt": "2026-10-26T23:02:12Z",
+      "updatedAt": "2026-10-26T23:22:34Z"
+    }
+  ],
+  "jobs": [
+    {
+      "workflowRunId": 40416894742,
+      "workflowName": "CodeQL",
+      "id": 121901368463,
+      "name": "Analyze (javascript-typescript)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894742/job/121901368463"
+    },
+    {
+      "workflowRunId": 40416894651,
+      "workflowName": "Tests",
+      "id": 121901368170,
+      "name": "Build",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894651/job/121901368170"
+    },
+    {
+      "workflowRunId": 40416894651,
+      "workflowName": "Tests",
+      "id": 121901368349,
+      "name": "Type Check",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894651/job/121901368349"
+    },
+    {
+      "workflowRunId": 40416894651,
+      "workflowName": "Tests",
+      "id": 121901368583,
+      "name": "Lint",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894651/job/121901368583"
+    },
+    {
+      "workflowRunId": 40416894651,
+      "workflowName": "Tests",
+      "id": 121901368631,
+      "name": "Unit Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894651/job/121901368631"
+    },
+    {
+      "workflowRunId": 40416894651,
+      "workflowName": "Tests",
+      "id": 121901370451,
+      "name": "E2E Tests",
+      "status": "completed",
+      "conclusion": "skipped",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894651/job/121901370451"
+    },
+    {
+      "workflowRunId": 40416894654,
+      "workflowName": "GetYourSats checks",
+      "id": 121901368267,
+      "name": "verify",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894654/job/121901368267"
+    },
+    {
+      "workflowRunId": 40416894652,
+      "workflowName": "GetYourSats browser smoke",
+      "id": 121901367681,
+      "name": "setup-smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894652/job/121901367681"
+    },
+    {
+      "workflowRunId": 40416890656,
+      "workflowName": "Release security engine matrix",
+      "id": 121901355062,
+      "name": "dependency-evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890656/job/121901355062"
+    },
+    {
+      "workflowRunId": 40416890656,
+      "workflowName": "Release security engine matrix",
+      "id": 121901355267,
+      "name": "browsers (webkit)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890656/job/121901355267"
+    },
+    {
+      "workflowRunId": 40416890656,
+      "workflowName": "Release security engine matrix",
+      "id": 121901355353,
+      "name": "browsers (firefox)",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890656/job/121901355353"
+    },
+    {
+      "workflowRunId": 40416890656,
+      "workflowName": "Release security engine matrix",
+      "id": 121901355504,
+      "name": "browsers (chromium)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890656/job/121901355504"
+    },
+    {
+      "workflowRunId": 40416890522,
+      "workflowName": "Browser security checkpoint",
+      "id": 121901354313,
+      "name": "code-and-installed-sdk",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890522/job/121901354313"
+    },
+    {
+      "workflowRunId": 40416890522,
+      "workflowName": "Browser security checkpoint",
+      "id": 121901354843,
+      "name": "chromium-security-fixtures",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890522/job/121901354843"
+    }
+  ],
+  "jobSummary": {
+    "successful": 12,
+    "intentionallySkipped": 1,
+    "setupCancelled": 1
+  },
+  "firefoxAttempts": {
+    "schemaVersion": 1,
+    "sourceHead": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+    "sourceTree": "a271ade6929e72fc0f17f754242f29da1a96b896",
+    "workflowRunId": 40416890656,
+    "workflowUrl": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890656",
+    "scope": "Dedicated Firefox release-security and rollback CI; no real-funds clearance.",
+    "attempts": [
+      {
+        "attempt": 1,
+        "jobId": 121901355353,
+        "status": "completed",
+        "conclusion": "cancelled",
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890656/job/121901355353",
+        "checkUrl": "https://api.github.com/repos/Bradvani/getyoursats-wallet/check-runs/121901355353",
+        "startedAt": "2026-10-26T23:02:15Z",
+        "completedAt": "2026-10-26T23:22:33Z",
+        "stoppedAtStep": "npx playwright install --with-deps firefox",
+        "securityTestsExecuted": 0,
+        "rollbackTestsExecuted": 0,
+        "testStepsConclusion": "skipped",
+        "failureAnnotation": "The job has exceeded the maximum execution time of 20m0s",
+        "classification": "Setup timeout during slow Ubuntu/Azure OS-package downloads; no application assertion ran. Exact underlying network slowdown cause is not established.",
+        "diagnosticExcerpt": [
+          "2026-10-26T23:02:38.3599051Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-ipafont-gothic all 00303-21ubuntu1 [3513 kB]",
+          "2026-10-26T23:11:04.8360394Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 libcodec2-1.2 amd64 1.2.0-2build1 [8998 kB]",
+          "2026-10-26T23:19:26.0071572Z Get:41 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 libavcodec60 amd64 7:6.1.1-3ubuntu5 [5851 kB]",
+          "2026-10-26T23:22:19.0785666Z Get:47 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 xvfb amd64 2:21.1.12-1ubuntu1.9 [877 kB]",
+          "2026-10-26T23:22:31.1080088Z ##[error]The operation was canceled."
+        ],
+        "artifactUploaded": false
+      }
+    ],
+    "retryPolicy": {
+      "additionalAttemptsAuthorized": 1,
+      "scope": "Only original Firefox job121901355353 at the same commit, without workflow/source changes",
+      "reason": "Root authorized one retry after confirmed transient setup/download failure; GitHub annotation and package-download log establish setup timeout."
+    },
+    "retryRequested": false,
+    "finalOutcome": "pending authorized retry"
+  },
+  "artifacts": [
+    {
+      "workflowRunId": 40416894652,
+      "id": 12696730970,
+      "name": "getyoursats-chromium-b9fdc35fb25879bed28f5c820fb262cb3f04a082",
+      "sizeBytes": 19962510,
+      "reportedSha256": "sha256:5402f5c18095e21d0981c6b14f556936339807d9e6f63037c8722b944d69480a",
+      "createdAt": "2026-10-26T23:15:15Z",
+      "expiresAt": "2026-11-02T23:15:13Z",
+      "expiredAtObservation": false,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416894652/artifacts/12696730970",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134"
+    },
+    {
+      "workflowRunId": 40416890522,
+      "id": 12695808600,
+      "name": "checkpoint-unit-4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+      "sizeBytes": 66315,
+      "reportedSha256": "sha256:84478761fb84db9ee87de4ec9a6a6a442a317820df11fd16beb4e74abf754331",
+      "createdAt": "2026-10-26T23:04:48Z",
+      "expiresAt": "2026-11-02T23:04:48Z",
+      "expiredAtObservation": false,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890522/artifacts/12695808600",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134"
+    },
+    {
+      "workflowRunId": 40416890656,
+      "id": 12695533644,
+      "name": "engine-evidence-chromium-4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+      "sizeBytes": 5666,
+      "reportedSha256": "sha256:b5f36fb55fb459f28d5c58e4f7a1f7be5e2daccb03c19246a1dcb69fa68cb8e1",
+      "createdAt": "2026-10-26T23:03:40Z",
+      "expiresAt": "2026-11-25T23:03:39Z",
+      "expiredAtObservation": false,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890656/artifacts/12695533644",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134"
+    },
+    {
+      "workflowRunId": 40416890656,
+      "id": 12694869318,
+      "name": "engine-evidence-webkit-4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+      "sizeBytes": 5689,
+      "reportedSha256": "sha256:0634286e0d6797869d8e2f7c5c0593b781ef866c0e96b91f8c81d3c7469eb26e",
+      "createdAt": "2026-10-26T23:04:09Z",
+      "expiresAt": "2026-11-25T23:04:08Z",
+      "expiredAtObservation": false,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890656/artifacts/12694869318",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134"
+    },
+    {
+      "workflowRunId": 40416890656,
+      "id": 12694843465,
+      "name": "dependency-evidence-4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+      "sizeBytes": 596,
+      "reportedSha256": "sha256:d2e4dbf1918d11e1fdecbf70eb3bab69250cf9a4f5d9827c85b0704126d4c5d5",
+      "createdAt": "2026-10-26T23:02:38Z",
+      "expiresAt": "2026-11-25T23:02:38Z",
+      "expiredAtObservation": false,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40416890656/artifacts/12694843465",
+      "headSha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134"
+    }
+  ],
+  "evidenceLimits": [
+    "Counts for different suites are reported separately; overlapping cases and separate browser executions are not unique security properties.",
+    "Broad browser fixtures and dedicated security/rollback suites do not demonstrate settlement with a hosted provider or physical-device recovery.",
+    "The optional funded end-to-end workflow job was intentionally skipped.",
+    "The earlier public-regtest attempt connected empty disposable wallets but obtained no funds after a faucet bot/CAPTCHA rejection; no funding retry occurred during this verification.",
+    "The original Firefox setup timeout remains part of the record even if the one authorized retry later succeeds.",
+    "PR43 remains a draft security candidate with production NO-GO; passing CI is not release approval."
+  ]
+}

@@ -283,7 +283,10 @@
     "tree": "a271ade6929e72fc0f17f754242f29da1a96b896",
     "draft": true,
     "productionStatus": "NO-GO; not promoted",
-    "contractsDocument": "https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/remaining-sdk-contracts-20261027.md"
+    "contractsDocument": "https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/remaining-sdk-contracts-20261027.md",
+    "ciReceipt": "../../security-review/final-candidate-ci-20261026.json",
+    "ciObservedAt": "2026-10-26 23:29:07 UTC",
+    "ciStatus": "Five workflows successful; release security matrix cancelled because Firefox setup timed out before tests. One authorized job-only retry has not yet been observed as submitted."
   },
   "remainingGates": [
     "A01: encrypted mnemonic migration, locking, data preservation and physical recovery acceptance on the separate security candidate.",
@@ -352,6 +355,20 @@
       "path": "site-reveal-review.json",
       "bytes": 7462,
       "sha256": "0312f9a67cbc266431993a92d552757eee8b7c5e48aa7922f3dc62427ad3e4ed"
+    },
+    {
+      "path": "github-signin-passkey-20261026.jpg",
+      "bytes": 41116,
+      "sha256": "e660e8fb096bfea190ed48e3e7a6a8fc02f84677ceb74b627912f2328cb673fd"
     }
-  ]
+  ],
+  "repositoryMetadataFollowUp": {
+    "url": "https://github.com/Bradvani/getyoursats-wallet",
+    "descriptionBefore": "A PWA app showing how to implement Breez SDK with WebAssembly",
+    "homepageBefore": "https://glow-app.co",
+    "preparedDescription": "GetYourSats: a Bitcoin wallet for everyday payments with Lightning, Spark and on-chain interoperability.",
+    "preparedHomepage": "https://getyoursats.com",
+    "status": "Not changed. The connector cannot edit About fields. Secure browser authentication was offered; the user selected passkey. GitHub reports partial passkey support and is waiting for browser interaction. No successful owner sign-in was observed.",
+    "screenshot": "github-signin-passkey-20261026.jpg"
+  }
 }
