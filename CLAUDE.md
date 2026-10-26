@@ -1,8 +1,10 @@
-# Claude Code Guidelines
+# GetYourSats engineering guidance
+
+Audience: maintainers and coding tools. This file describes repository conventions, not public product claims or release approval. Start with [CONTRIBUTING.md](CONTRIBUTING.md), [product boundaries](GETYOURSATS.md) and [release readiness](docs/maintainers/release-readiness.md).
 
 ## Project Overview
 
-Glow is a Bitcoin/Lightning wallet web app built with React + TypeScript + Vite, using the Breez Spark SDK (WASM).
+GetYourSats is a Bitcoin/Lightning wallet built with React, TypeScript and Vite, using the Breez Spark SDK (WASM). It builds on the MIT-licensed Glow web implementation; retain upstream attribution.
 
 ## Comment Style
 
@@ -16,115 +18,28 @@ Same standard as spark-sdk's CLAUDE.md "Comment Style" section, condensed for th
 5. **Strip narrative; keep implementation facts.** No development history ("we used to..."), no PR-credit ("added for #1234"). State workarounds as present-tense facts: "Uses `bar()`: `foo()` deadlocks on the main thread." Pointers to active context are fine (an open upstream bug, a spec section, the issue a defense exists for, e.g. `(#213)`). Decision history belongs in the commit message.
 6. **Frame what something IS,** not what happens downstream and not what lives elsewhere. Don't restate the type; document what `undefined`/absence means at the domain level.
 
-## Key Paths (Hardcoded)
+## SDK integration and local development
 
-Assume these repos are checked out locally:
+- `src/hooks/useBreezSdk.ts` owns connection, reconnection, events and wallet data refresh.
+- `src/contexts/WalletContext.tsx` provides the current SDK client through `useWallet()`.
+- `src/main.tsx` and `src/services/sdkReady.ts` coordinate startup and WASM readiness.
+- `vendor/SOURCE_COMMIT` identifies the SDK source reference; `package.json` uses the vendored tarball, not an assumed npm release.
 
-```
-App:     ~/Documents/GitHub/glow-web
-SDK:     ~/Documents/GitHub/spark-sdk
-WASM:    ~/Documents/GitHub/spark-sdk/packages/wasm
-Types:   ~/Documents/GitHub/spark-sdk/packages/wasm/bundler/breez_sdk_spark_wasm.d.ts
-```
+The current client exposure is an implementation fact, not permission to add unrestricted value-moving calls. New sends, conversions, refunds, claims, migrations and exit operations require an explicit authorization and reconciliation policy. Coordinate with the security implementation under review. An SDK payment observer is not a universal spending-security boundary.
 
-## SDK Integration
+Read-only calls may use the current client:
 
-The app uses `@breeztech/breez-sdk-spark` for all wallet functionality. The SDK is a WASM module loaded at startup in `src/main.tsx`.
-
-**Architecture — direct SDK pattern (no wrappers):**
-- `src/hooks/useBreezSdk.ts` — owns the full SDK lifecycle: connect, disconnect, event listeners, mnemonic storage, data fetching
-- `src/contexts/WalletContext.tsx` — provides `WalletProvider` (React context) and `useWallet()` hook
-- `src/App.tsx` — wraps the app in `<WalletProvider client={sdk.sdk}>`
-- Components call `useWallet()` to get the `BreezSdk` instance and call SDK methods directly
-
-**How it works:**
-```tsx
-// In any component rendered after wallet connection:
-import { useWallet } from '@/contexts/WalletContext';
-
-const wallet = useWallet(); // Returns BreezSdk — guaranteed non-null
-
-// Call SDK methods directly — no wrappers
-const info = await wallet.getInfo({});
-const parsed = await wallet.parse(input);
-await wallet.sendPayment(preparedPayment);
-```
-
-**Key files:**
-- `src/hooks/useBreezSdk.ts` — SDK lifecycle, state, event handling
-- `src/contexts/WalletContext.tsx` — WalletProvider + useWallet()
-- `src/main.tsx` — WASM init + app bootstrap
-
-## Local SDK Development
-
-When testing unreleased SDK changes (PRs, feature branches):
-
-### Quick Setup (One Command)
-```bash
-# Build SDK and link to app
-cd ~/Documents/GitHub/spark-sdk && git checkout <branch-name> && git pull origin <branch-name> && cd packages/wasm && make build && cd ~/Documents/GitHub/glow-web && npm link @breeztech/breez-sdk-spark
-```
-
-### Verify Link
-```bash
-ls -la node_modules/@breeztech/breez-sdk-spark
-# Should show symlink → ../../../spark-sdk/packages/wasm
-```
-
-### After SDK Changes
-```bash
-cd ~/Documents/GitHub/spark-sdk/packages/wasm && make build
-```
-
-### Unlink (restore npm version)
-```bash
-npm unlink @breeztech/breez-sdk-spark && npm install
-```
-
-### Check SDK Types
-```bash
-# Find specific type definition
-grep -A 10 "export interface TypeName" ~/Documents/GitHub/spark-sdk/packages/wasm/bundler/breez_sdk_spark_wasm.d.ts
-
-# Find method signature
-grep "methodName" ~/Documents/GitHub/spark-sdk/packages/wasm/bundler/breez_sdk_spark_wasm.d.ts
-```
-
-## Branch Strategy
-
-| Branch | SDK Source | Deployment |
-|--------|------------|------------|
-| `main` | npm release | glow-app.co (prod) |
-| `staging` | npm pre-release | breez-glow-staging.vercel.app |
-| feature branches | `npm link` local | Local dev |
-
-## Staging Environment
-
-- **URL**: breez-glow-staging.vercel.app
-- **Password**: Set via `VITE_STAGING_PASSWORD` env var in Vercel (Preview only)
-- SDK version should track latest pre-release for integration testing
-
-## Common Tasks
-
-### Testing an SDK PR
-1. Create feature branch: `git checkout -b feat/sdk-pr-XXX-description staging`
-2. Build & link SDK (use Quick Setup above)
-3. Fix any breaking changes in app code
-4. Test locally with `npm run dev`
-5. Open **draft** PR against `staging` branch
-6. Once SDK PR merges and releases, update package.json and convert to ready
-
-### PR Naming Convention
-- Branch: `feat/sdk-pr-XXX-short-description`
-- PR title: `feat: short description (SDK PR #XXX)`
-- PR body should link to SDK PR and note it's blocked until SDK releases
-
-### Adding New SDK Methods
-Just call them directly — no wrapper files to update:
 ```tsx
 const wallet = useWallet();
-const result = await wallet.newSdkMethod({ param: value });
+const info = await wallet.getInfo({});
+const parsed = await wallet.parse(input);
 ```
+
+Use a separate disposable SDK checkout for experiments. Follow the pinned upstream build instructions, record the exact SDK revision and patch, and inspect the installed type declarations. Do not assume a developer-specific filesystem path or silently replace the vendored package with an npm pre-release. Restore locked dependencies with `npm ci` after local experiments.
+
+Use a topic branch from the agreed base. Record source/artifact hashes and focused tests in SDK-related PRs. Deployment targets and environment configuration belong in the [deployment guide](docs/maintainers/deployment.md). `VITE_STAGING_PASSWORD` is public client code, not private-preview access control.
+
+## Common tasks
 
 ### Adding Side Menu Items
 1. Add prop to `SideMenuProps` interface in `src/components/SideMenu.tsx`
@@ -383,27 +298,16 @@ UI with primary color").
 - Applies to standalone HTML in `public/` too (e.g. the account-deletion
   guide): warning boxes use the amber accent, never red.
 
-## Bitcoin Symbol (₿) in Amount Displays
+## Monetary units
 
-Every sat amount rendered as JSX goes through `SatAmount` (`src/components/SatAmount.tsx`). It supplies the ₿ symbol, the space-grouped digits, the mono font, and the `word-spacing` that corrects that font. Never hand-roll the markup: the parts have to agree, and assembling them by hand is how they drift.
+Use `SatAmount` (`src/components/SatAmount.tsx`) for satoshi values in JSX. It supplies space-grouped digits, the mono font and the explicit `sats` unit. Use the Bitcoin symbol only with BTC values, never as a prefix for a number of sats.
 
 ```tsx
-<SatAmount sats={amount} />          // inherits size, so wrap it to scale
-<span className="text-4xl font-bold"><SatAmount sats={total} /></span>
+<SatAmount sats={amount} />
+setError(`Amount must be at least ${formatWithSpaces(minSats)} sats`);
 ```
 
-**Plain text** (error messages, alerts, string props) cannot use a component, so prefix with `₿` and group with `formatWithSpaces`, never `toLocaleString`:
-```tsx
-setError(`Amount must be at least ₿${formatWithSpaces(minSats)}`);
-```
-
-**Key rules:**
-- `formatWithSpaces` is the only separator. No commas, and no narrower space character: U+2009 is absent from JetBrains Mono, so a thin space silently draws from a fallback font
-- The tightening exists because mono gives every space a full character cell, which makes an untightened separator read as a break in the number. It is calibrated for mono, so never put it on proportional text, where it would pull the groups into each other
-- Apply it only to digits. `word-spacing` hits every space in the element, so a ticker (`USDC`), a chain name, or a trailing label like "change" belongs outside the amount, as a sibling
-- Two displays are deliberately hand-rolled: the balance header positions ₿ absolutely and tightens via `.balance-display`, and the transaction list's token rows carry a per-asset symbol split off a pre-formatted string
-- Input field labels can use "sats" as a unit name (e.g., "Amount (sats)")
-- Range displays and placeholders use "sats" text, not ₿
+Keep token tickers, networks and fee units explicit. Preserve integer/bigint precision through SDK boundaries. Use the shared formatters rather than reconstructing amounts in components; monetary formatting changes require unit and fee-display checks.
 
 ## Icons
 
