@@ -3,6 +3,7 @@ node_modules/
 .env
 .env.*
 dist/
+site/release-manifest.json
 .vercel
 .env*.local
 

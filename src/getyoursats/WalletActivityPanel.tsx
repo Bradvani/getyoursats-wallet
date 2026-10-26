@@ -2,10 +2,13 @@ import {displayPaymentAmount} from './paymentDisplay';
 import {trustCopy} from './trustCopy';
 import {usePresentation} from '../hooks/usePresentation';
 import type {AppLanguage} from '../services/presentationPreferences';
-import {useMemo, useState} from 'react';
-import type {Payment} from '@breeztech/breez-sdk-spark';
+import {useEffect, useMemo, useState} from 'react';
+import type {BreezSdk, Payment} from '@breeztech/breez-sdk-spark';
 import TransactionList from '../components/TransactionList';
 import {BackIcon} from '../components/Icons';
+import {useWalletConnection} from '../contexts/WalletContext';
+import {readPaymentHistory, type PaymentHistorySnapshot} from '../services/paymentHistory';
+import {isUnclaimedDepositPayment} from '../utils/depositHelpers';
 import type {UnilateralExitEntry} from '../features/unilateral-exit/listEntries';
 import {historyToCsv, selectHistory, type HistoryDirection, type HistoryStatus} from './historyRecords';
 
@@ -57,20 +60,48 @@ export default function WalletActivityPanel({
   transactions, isSyncing, onPaymentSelected, exitEntries, onExitSelected, onRefresh, view,onViewChange,
 }: Props) {
   const {language}=usePresentation();const text=trustCopy(language);
+  const {sdk}=useWalletConnection();
   const [localTab, setLocalTab] = useState<'activity'|'history'>('activity');
   const tab=view??localTab;
   const setTab=(next:'activity'|'history')=>{setLocalTab(next);onViewChange?.(next);};
   const [query, setQuery] = useState('');
   const [direction, setDirection] = useState<HistoryDirection>('all');
   const [status, setStatus] = useState<HistoryStatus>('all');
+  const [historyRead, setHistoryRead] = useState<{
+    sdk: BreezSdk; revision: number; snapshot: PaymentHistorySnapshot | null; error: string;
+  } | null>(null);
+  const [historyRevision, setHistoryRevision] = useState(0);
+  const currentRead = historyRead?.sdk === sdk && historyRead.revision === historyRevision ? historyRead : null;
+  const historyLoading = tab === 'history' && !!sdk && !currentRead;
+  const historyError = currentRead?.error ?? '';
+  useEffect(() => {
+    if (tab !== 'history' || !sdk || currentRead) return;
+    const controller = new AbortController();
+    void readPaymentHistory(sdk, {signal: controller.signal}).then(snapshot => {
+      if (!controller.signal.aborted) setHistoryRead({sdk, revision: historyRevision, snapshot, error: ''});
+    }).catch(() => {
+      if (!controller.signal.aborted) setHistoryRead(previous => ({sdk, revision: historyRevision,
+        snapshot: previous?.sdk === sdk ? previous.snapshot : null,
+        error: 'Complete history could not be loaded. Retry before exporting.'}));
+    });
+    return () => controller.abort();
+  }, [tab, sdk, historyRevision, currentRead]);
+  const snapshot = historyRead?.sdk === sdk ? historyRead.snapshot : null;
+  const historyRecords = useMemo(() => snapshot
+    ? [...transactions.filter(isUnclaimedDepositPayment), ...snapshot.payments]
+    : transactions, [snapshot, transactions]);
   const filteredHistory = useMemo(
-    () => selectHistory(transactions, query, direction, status),
-    [transactions, query, direction, status],
+    () => selectHistory(historyRecords, query, direction, status),
+    [historyRecords, query, direction, status],
   );
+  const exportableHistory = useMemo(() => selectHistory(
+    (snapshot?.payments ?? transactions).filter(payment => !isUnclaimedDepositPayment(payment)), query, direction, status,
+  ), [snapshot, transactions, query, direction, status]);
+  const historyReady = !sdk || (!!snapshot && !historyLoading && !historyError);
   const exportCsv = () => {
-    if (!filteredHistory.length) return;
+    if (!historyReady || !exportableHistory.length) return;
     // The file is created entirely on device from current wallet SDK results.
-    const csv = historyToCsv(filteredHistory);
+    const csv = historyToCsv(exportableHistory);
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -98,14 +129,14 @@ export default function WalletActivityPanel({
         </div>
       </div>
       <button className="gys-activity__refresh" type="button"
-        onClick={onRefresh} aria-label="Sync wallet activity">↻</button>
+        onClick={() => { onRefresh(); setHistoryRevision(value => value + 1); }} aria-label="Sync wallet activity">↻</button>
     </div>
     {view===undefined&&<div className="gys-activity__tabs" role="tablist" aria-label="Wallet records">
       <button type="button" role="tab" id="gys-tab-activity" aria-controls="gys-panel-activity"
         aria-selected={tab==='activity'} onClick={()=>setTab('activity')}>Activity</button>
       <button type="button" role="tab" id="gys-tab-history" aria-controls="gys-panel-history"
         aria-selected={tab==='history'} onClick={()=>setTab('history')}>
-        Transaction history {transactions.length>0 && <span>{transactions.length}</span>}
+        Transaction history {snapshot && <span>{snapshot.payments.length}</span>}
       </button>
     </div>}
     {tab==='activity'
@@ -141,6 +172,14 @@ export default function WalletActivityPanel({
         </button>
       </div>
       : <div id="gys-panel-history" role="tabpanel" aria-label={text.history}>
+        {sdk && <p role="status" aria-live="polite">
+          {historyLoading || (!snapshot && !historyError)
+            ? 'Loading wallet history…'
+            : snapshot && `Loaded ${snapshot.payments.length} payment records through ${new Date(snapshot.throughTimestamp * 1_000).toLocaleString(language)}. Refresh after syncing for updated records.`}
+        </p>}
+        {!sdk && <p role="note">Showing loaded records only. The export includes these loaded payment records.</p>}
+        {!!historyError && <p role="alert">{historyError} <button type="button" onClick={() => setHistoryRevision(value => value + 1)}>Retry history</button></p>}
+        {historyRecords.some(isUnclaimedDepositPayment) && <p role="note">Unclaimed deposits appear below. CSV exports contain wallet payment records.</p>}
         <div className="gys-history-controls">
           <label className="gys-history-controls__search">
             <span>Search transactions</span>
@@ -165,14 +204,14 @@ export default function WalletActivityPanel({
             </label>
           </div>
           <div className="gys-history-controls__footer">
-            <span aria-live="polite">{filteredHistory.length} of {transactions.length} wallet records</span>
-            <button type="button" disabled={!filteredHistory.length} onClick={exportCsv}>
+            <span aria-live="polite">{filteredHistory.length} of {historyRecords.length} wallet records</span>
+            <button type="button" disabled={!historyReady || !exportableHistory.length} onClick={exportCsv}>
               Export CSV ↗
             </button>
           </div>
         </div>
-        {filteredHistory.length || !transactions.length
-          ? <TransactionList transactions={filteredHistory} isSyncing={isSyncing}
+        {filteredHistory.length || !historyRecords.length
+          ? <TransactionList transactions={filteredHistory} isSyncing={isSyncing || historyLoading}
               onPaymentSelected={onPaymentSelected}
               exitEntries={query || direction !== 'all' || status !== 'all' ? [] : exitEntries}
               onExitSelected={onExitSelected}/>

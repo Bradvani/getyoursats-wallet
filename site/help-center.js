@@ -4,15 +4,17 @@ let l=new URL(location.href).searchParams.get('lang');if(!langs.includes(l)){try
 function render(){const d=T[l];document.documentElement.lang=l;const sel=$('gys-language');if(sel)sel.value=l;
 const hero=document.querySelector('.hero h1');const lead=document.querySelector('.hero .lead');
 const isPrivacy=location.pathname.indexOf('/privacy')>=0;
-if(hero)hero.textContent=isPrivacy?d.privacyTitle:d.title;
-if(lead)lead.textContent=isPrivacy?d.privacyLead:d.lead;
+const supportCopy={en:['Help for your next step.','Check a payment, recover wallet access or find the right answer for your business.'],hi:['आपके अगले कदम में मदद।','भुगतान जाँचें, वॉलेट तक पहुँच बहाल करें या अपने व्यवसाय के सवाल का जवाब पाएँ।'],es:['Ayuda para tu próximo paso.','Consulta un pago, recupera el acceso a tu cartera o encuentra ayuda para tu negocio.'],pt:['Ajuda para o próximo passo.','Verifique um pagamento, recupere o acesso à carteira ou encontre ajuda para o seu negócio.']};
+const isSupport=document.body.dataset.helpPage==='support';
+if(hero)hero.textContent=isPrivacy?d.privacyTitle:isSupport?supportCopy[l][0]:d.title;
+if(lead)lead.textContent=isPrivacy?d.privacyLead:isSupport?supportCopy[l][1]:d.lead;
 document.querySelectorAll('.navbar .links a').forEach(a=>{
  if(a.getAttribute('href')?.endsWith('/privacy'))a.textContent=({en:'Privacy',hi:'गोपनीयता',es:'Privacidad',pt:'Privacidade'})[l];
  if(a.getAttribute('href')?.endsWith('/support'))a.textContent=({en:'Support',hi:'सहायता',es:'Soporte',pt:'Apoio'})[l];
 });
 const langSelect=$('gys-language');if(langSelect)langSelect.setAttribute('aria-label',d.language);
 document.querySelectorAll('[data-help-label]').forEach(n=>{const k=n.getAttribute('data-help-label');if(typeof d[k]==='string')n.textContent=d[k]});
-const lessons=$('gys-lessons');if(lessons){lessons.replaceChildren();lessons.append(el('p','eyebrow','GETYOURSATS / BITCOIN BASICS'),el('h2','gys-heading',d.title),el('p','gys-help-intro',d.lead));
+const lessons=$('gys-lessons');if(lessons){lessons.replaceChildren();lessons.append(el('p','eyebrow','GETYOURSATS / BITCOIN BASICS'),el('h2','gys-heading',({en:'Bitcoin basics',hi:'बिटकॉइन की बुनियाद',es:'Conceptos básicos de Bitcoin',pt:'Noções básicas de Bitcoin'})[l]),el('p','gys-help-intro',d.lead));
 const x=SIM[l],fixed=el('section','gys-rule-card gys-rule-card--bitcoin'),fiat=el('section','gys-rule-card gys-rule-card--fiat');
 const simulator=el('section','gys-rule-simulator');simulator.setAttribute('aria-label',x.heading);
 simulator.append(el('h3','gys-rule-heading',x.heading),el('p','gys-rule-intro',x.intro));
@@ -65,6 +67,9 @@ render();
 (async()=>{const form=$('gys-contact');if(!form)return;const submit=form.querySelector('[type=submit]'),status=$('gys-contact-status');submit.disabled=true;
 try{const res=await fetch('/api/contact',{cache:'no-store'}),out=await res.json();if(out.available){submit.disabled=false;status.textContent='';status.dataset.offline='false'}else{status.textContent=T[l].formWait;status.dataset.offline='true'}}catch{status.textContent=T[l].formWait;status.dataset.offline='true'}
 form.querySelector('select[name=topic]')?.addEventListener('change',event=>{const hint=$('gys-enquiry-note');if(hint)hint.hidden=event.currentTarget.value!=='support';});
+let retrySubmission=null;
 form.addEventListener('submit',async e=>{e.preventDefault();if(submit.disabled||!form.reportValidity())return;const d=T[l];submit.disabled=true;submit.textContent=d.formSending;status.textContent=d.formSending;const fd=new FormData(form);
-try{const res=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:fd.get('name'),email:fd.get('email'),topic:fd.get('topic'),message:fd.get('message'),website:fd.get('website'),consent:fd.get('consent')==='on'})});const out=await res.json().catch(()=>({}));if(!res.ok||!out.ok){status.textContent=out.error||d.formErr}else{status.textContent=d.formOk+(out.reference||'');form.reset();const hint=$('gys-enquiry-note');if(hint)hint.hidden=true;}}catch{status.textContent=d.formErr}submit.disabled=false;submit.textContent=d.formSend});
+const payload={name:fd.get('name'),email:fd.get('email'),topic:fd.get('topic'),message:fd.get('message'),website:fd.get('website'),consent:fd.get('consent')==='on'};const fingerprint=JSON.stringify(payload);
+if(!retrySubmission||retrySubmission.fingerprint!==fingerprint)retrySubmission={fingerprint,id:crypto.randomUUID()};payload.submissionId=retrySubmission.id;
+try{const res=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const out=await res.json().catch(()=>({}));if(!res.ok||!out.ok){status.textContent=out.error||d.formErr}else{status.textContent=d.formOk+(out.reference||'');retrySubmission=null;form.reset();const hint=$('gys-enquiry-note');if(hint)hint.hidden=true;}}catch{status.textContent=d.formErr}submit.disabled=false;submit.textContent=d.formSend});
 })()})();
