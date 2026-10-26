@@ -6,6 +6,7 @@
  * consumer (create, change, gate, lock screen) renders identically.
  */
 
+import StartupLogo from '@/components/StartupLogo';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { PIN_LENGTH, isBiometricGateEnabled, isBiometricGateEnabledSync, pinAttemptMessage, verifyPin } from '@/services/appLock';
 import { authenticateBiometric, getBiometryInfo, BiometryKind } from '@/services/secureStorage';
@@ -55,7 +56,7 @@ export const PinScreenLayout: React.FC<{
       {/* w-36 = 144px, matching the HomePage / UnlockPage logo. mb-10 =
           40dp logo-to-label; mb-6 matches PinEntry's internal space-y-6
           rhythm so the prompt reads as part of the group. */}
-      <img src="/brand/wordmark-stacked-dark.svg" alt="GetYourSats" className="w-36 h-36 object-contain mx-auto mb-10" />
+      <StartupLogo className="w-36 h-36 object-contain mx-auto mb-10" />
       {prompt && <div className="mb-6 text-center">{prompt}</div>}
       {children}
     </div>

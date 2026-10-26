@@ -71,7 +71,7 @@ function harness() {
 
 test('replacement waits for existing clients and retains only two owned release caches', async () => {
   const worker = harness();
-  for (const name of ['unrelated-store', 'getyoursats-brand-v4', 'getyoursats-static-old-a', 'getyoursats-static-old-b']) {
+  for (const name of ['unrelated-store', 'getyoursats-brand-v4', 'getyoursats-brand-v5', 'getyoursats-static-old-a', 'getyoursats-static-old-b']) {
     await (await worker.caches.open(name)).put('/assets/app-old12345.js', new Response(name));
   }
   await worker.lifecycle('install');
@@ -180,14 +180,16 @@ test('offline shell and previous immutable chunks remain usable without forced a
 test('offline onboarding and wallet branding survive legacy-cache cleanup', async () => {
   const worker = harness();
   const brandAssets = [
-    'wordmark-top.svg', 'wordmark-bottom.svg', 'wordmark-coin.svg', 'wordmark-3d-transparent.png',
+    'wordmark-top.svg', 'wordmark-bottom.svg', 'wordmark-top-light.svg', 'wordmark-bottom-light.svg',
+    'wordmark-coin.svg', 'wordmark-3d-transparent.png',
     'wordmark-stacked-light.svg', 'wordmark-horizontal-light.svg', 'app-icon.svg', 'monogram.svg',
   ];
-  const old = await worker.caches.open('getyoursats-brand-v4');
+  const old = await worker.caches.open('getyoursats-brand-v5');
   for (const name of brandAssets) await old.put(`/brand/${name}`, new Response('previous public brand asset'));
   await worker.lifecycle('install');
   await worker.lifecycle('activate');
   worker.network(() => Promise.reject(new Error('offline')));
+  assert.equal((await worker.request('/theme-bootstrap.js'))?.status, 200, 'Missing offline theme bootstrap');
   for (const name of brandAssets) {
     const response = await worker.request(`/brand/${name}`);
     assert.equal(response?.status, 200, `Missing offline brand asset: ${name}`);

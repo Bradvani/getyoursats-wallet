@@ -18,6 +18,8 @@ import WalletPage from '../../src/pages/WalletPage';
 import SettingsPage from '../../src/pages/SettingsPage';
 import ProcessingStep from '../../src/features/send/steps/ProcessingStep';
 import ResultStep from '../../src/features/send/steps/ResultStep';
+import BrandIntro from '../../src/components/BrandIntro';
+import StartupLogo from '../../src/components/StartupLogo';
 import PaymentCelebration from '../../src/components/PaymentCelebration';
 
 const info: GetInfoResponse = { identityPubkey: 'a'.repeat(66), balanceSats: 125000, recoverableFundsSats: 0, tokenBalances: new Map() };
@@ -76,6 +78,7 @@ function Fixture() {
   : screen==='wallet' ? null
   : screen==='dca' ? <h1>Recurring Buys entry reached</h1>
   : screen==='backup' ? <h1>Recovery entry reached</h1>
+  : screen==='startup' ? <><BrandIntro inline /><StartupLogo className="w-36 h-36 object-contain" /></>
   : screen==='received' ? <PaymentCelebration payment={received} onClose={close}/>
   : screen==='sent' || screen==='failed' ? <ResultStep result={screen==='sent'?'success':'failure'} error={screen==='failed'?'Network unavailable':null} onClose={close}/>
   : <ProcessingStep processingPhase={screen==='converting'?'converting':'sending'} operationType={screen==='receiving'?'withdraw':'payment'} />}

@@ -2,6 +2,8 @@
 
 Verification date: 26 October 2026 UTC. Candidate branch: `review/security-adoption-20261027`.
 
+**Latest integration:** [Final main integration and incoming discovery](final-main-integration-20261027.md) supersedes the current-source statement below with tested implementation `d0d85e30e4ef48cafa33c5060d1a5ee5450e315c` and 1,482 passing unit cases. It adds paginated incoming discovery and preserves concurrent main startup/theme changes. This document retains the exact earlier `48e1659` snapshot, including its blocked hosted-regtest attempt.
+
 **Production decision: NO-GO.** This continuation closes additional implementation defects and merges the corrective release. It does not complete Lightning receiving, mainnet deposit claims, fresh unilateral exits, physical-device acceptance or independent security review. The production build interlock remains enabled. No deployment, real funds, funded transaction, new claim or broadcast was performed for this continuation. A fresh public-regtest faucet request was rejected before funds arrived.
 
 ## Exact implementation and integration

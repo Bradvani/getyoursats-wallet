@@ -16,10 +16,16 @@ function git(...args) {
 }
 const localRevision = git('rev-parse', 'HEAD');
 const restoredConfigFormatting = [];
+const restoredConfigProjections = [];
+function sameJson(first, second) {
+  try { return isDeepStrictEqual(JSON.parse(first.toString()), JSON.parse(second.toString())); }
+  catch { return false; }
+}
 // Vercel reserializes its configuration before the build. Restore the committed
 // bytes only when the parsed values are identical; changed settings still fail
 // the clean-source gate. Do this before hashing the site's emitted files.
 if (process.env.VERCEL === '1' && localRevision) {
+  const configs = new Map();
   for (const path of ['vercel.json', 'site/vercel.json']) {
     let committed;
     try {
@@ -27,13 +33,24 @@ if (process.env.VERCEL === '1' && localRevision) {
     } catch { continue; }
     let current;
     try { current = await read(path); } catch { continue; }
-    if (committed.equals(current)) continue;
-    let identical;
-    try { identical = isDeepStrictEqual(JSON.parse(committed.toString()), JSON.parse(current.toString())); }
-    catch { continue; }
-    if (!identical) continue;
+    const config = { committed, current };
+    configs.set(path, config);
+    if (committed.equals(current) || !sameJson(committed, current)) continue;
     await writeFile(resolve(root, path), committed);
+    config.current = committed;
     restoredConfigFormatting.push(path);
+  }
+  // A Vercel site-root build copies the selected site configuration to the
+  // repository root. Accept only that exact committed configuration, with the
+  // selected site's own values intact. Wallet builds never allow this mapping.
+  const repositoryConfig = configs.get('vercel.json');
+  const projectConfig = configs.get('site/vercel.json');
+  if (site && repositoryConfig && projectConfig
+    && !repositoryConfig.committed.equals(repositoryConfig.current)
+    && sameJson(repositoryConfig.current, projectConfig.committed)
+    && sameJson(projectConfig.current, projectConfig.committed)) {
+    await writeFile(resolve(root, 'vercel.json'), repositoryConfig.committed);
+    restoredConfigProjections.push({ path: 'vercel.json', projectedFrom: 'site/vercel.json' });
   }
 }
 async function files(dir) {
@@ -68,6 +85,7 @@ const revision = suppliedRevision || localRevision;
 if (process.env.VERCEL_ENV === 'production' && !revision) throw new Error('A production build requires a source revision');
 const sourceStatus = localRevision ? git('status', '--porcelain', '--untracked-files=normal') : null;
 if (process.env.VERCEL_ENV === 'production' && localRevision && (sourceStatus === null || sourceStatus)) {
+  console.error('Release source status:', JSON.stringify(sourceStatus === null ? null : sourceStatus.split('\n')));
   throw new Error('A production build requires a clean source checkout');
 }
 const sdkRevision = site ? null : (await read('vendor/SOURCE_COMMIT')).toString().trim();
@@ -79,6 +97,7 @@ const manifest = {
   sourceRevision: revision,
   sourceDirty: sourceStatus === null ? null : Boolean(sourceStatus),
   restoredConfigFormatting,
+  restoredConfigProjections,
   sdk: site ? null : {
     sourceRevision: sdkRevision,
     packageSha256: sha256(await read('vendor/breeztech-breez-sdk-spark.tgz')),

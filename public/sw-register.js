@@ -25,7 +25,7 @@
       caches.keys()
         .then(function (keys) {
           keys.filter(function (k) {
-            return k.indexOf('glow-') === 0 || k.indexOf('getyoursats-static-') === 0 || k === 'getyoursats-brand-v4';
+            return k.indexOf('glow-') === 0 || k.indexOf('getyoursats-static-') === 0 || k === 'getyoursats-brand-v4' || k === 'getyoursats-brand-v5';
           })
             .forEach(function (k) { caches.delete(k); });
         })

@@ -1,4 +1,5 @@
 import type {BreezSdk,Network,Payment} from '@breeztech/breez-sdk-spark';
+import {readPaymentHistory} from '../services/paymentHistory';
 import {assertCurrentSession,getSpendingSessionEpoch,isSpendingSessionLocked,requestSpendingApproval} from './spendApproval';
 import {withOperationLock,operationWalletKey,readOperations,isUnresolved} from './operationJournal';
 import {assertNoUnresolvedRecovery} from './signedRecoveryJournal';
@@ -52,12 +53,15 @@ export function createIncomingClaimController(options:{network:Network;raw:()=>B
  return Object.freeze({
   list:async()=>readIncomingClaims(await walletKey()),
   discover:async()=>lock(async(key,epoch)=>{
-   await reconcile(key,epoch);
+   await reconcile(key,epoch);live(epoch);
    const s=sdk();
    // Use only the installed read-only extension; never the active sync API.
    const observe=Reflect.get(s,'observeWalletState');if(typeof observe!=='function')throw Error('Observation SDK unavailable');
    await observe.call(s);live(epoch);
-   const history=await s.listPayments({offset:0,limit:100});live(epoch);
+   const history=await readPaymentHistory({listPayments:async request=>{
+    // Cancel a changed session between pages without returning partial candidates.
+    live(epoch);const page=await s.listPayments(request);live(epoch);return page;
+   }});live(epoch);
    const attempted=new Set(readIncomingClaims(key).map(r=>r.paymentId));
    return Object.freeze(history.payments.filter(p=>incomingTransferId(p.id)&&directPayment(p,p.id)&&p.status==='pending'&&!attempted.has(p.id)));
   }),
