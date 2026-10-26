@@ -1,11 +1,26 @@
 import {displayPaymentAmount} from './paymentDisplay';
 import {trustCopy} from './trustCopy';
 import {usePresentation} from '../hooks/usePresentation';
+import type {AppLanguage} from '../services/presentationPreferences';
 import {useMemo, useState} from 'react';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 import TransactionList from '../components/TransactionList';
 import type {UnilateralExitEntry} from '../features/unilateral-exit/listEntries';
 import {historyToCsv, selectHistory, type HistoryDirection, type HistoryStatus} from './historyRecords';
+
+/** Explicit navigation affordance, localized independently of the Wallet nav label. */
+const BACK_TO_WALLET:Record<AppLanguage,string> = {
+  en: 'Back to Wallet',
+  hi: 'वॉलेट पर वापस जाएँ',
+  es: 'Volver a la cartera',
+  pt: 'Voltar à carteira',
+  ja: 'ウォレットに戻る',
+  th: 'กลับไปที่กระเป๋า',
+  vi: 'Quay lại ví',
+  ta: 'வாலட்டிற்குத் திரும்பு',
+  ar: 'العودة إلى المحفظة',
+  'zh-CN': '返回钱包',
+};
 
 interface Props {
   view?: 'activity'|'history';
@@ -73,9 +88,14 @@ export default function WalletActivityPanel({
   return <section className="gys-activity" aria-label="Wallet activity and transaction history">
     <div className="gys-activity__heading">
       <div>
+        {view==='history'&&<button type="button" className="gys-activity__back" onClick={()=>setTab('activity')} data-testid="history-back-to-wallet">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6"/><path d="M9 12h11"/>
+          </svg>
+          <span>{BACK_TO_WALLET[language]}</span>
+        </button>}
         <span className="gys-activity__eyebrow">YOUR WALLET · ON CHAIN & LIGHTNING</span>
         <h2>{tab==='history'?text.history:text.recent}</h2>
-        {view==='history'&&<button type="button" className="min-h-11 text-spark-primary" onClick={()=>setTab('activity')}>{text.wallet}</button>}
       </div>
       <button className="gys-activity__refresh" type="button"
         onClick={onRefresh} aria-label="Sync wallet activity">↻</button>
