@@ -51,6 +51,55 @@ describe('native Lightning name claims', () => {
     expect(mocks.copy).toHaveBeenCalledWith('bharat@getyoursats.com');
   });
 
+  it.each(['restored', 'claimed'])('checks a %s SDK lnurlp address using HTTPS before copying', async mode => {
+    const value = address();
+    value.lnurl.url = 'lnurlp://getyoursats.com/lnurlp/bharat';
+    const fetch = lookup();
+    vi.stubGlobal('fetch', fetch);
+    const claim = vi.fn().mockResolvedValue(value);
+    render(<GetYourSatsUsernameClaim {...props()} nativeAddress={mode === 'restored' ? value : null} onClaimNativeAddress={claim}/>);
+    if (mode === 'claimed') {
+      fireEvent.change(screen.getByLabelText('Username'), {target: {value: 'bharat'}});
+      fireEvent.click(screen.getByRole('button', {name: 'Claim Name'}));
+    }
+    fireEvent.click(await screen.findByRole('button', {name: 'Copy Address'}));
+    expect(await screen.findByRole('button', {name: 'Copied'})).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledExactlyOnceWith('https://getyoursats.com/lnurlp/bharat',
+      expect.objectContaining({redirect: 'error', credentials: 'omit', cache: 'no-store'}));
+    expect(mocks.copy).toHaveBeenCalledWith('bharat@getyoursats.com');
+  });
+
+  it.each([
+    'lnurlp://attacker.example/lnurlp/bharat',
+    'http://getyoursats.com/lnurlp/bharat',
+    'lnurlp://getyoursats.com/lnurlp/someoneelse',
+    'lnurlp://getyoursats.com/lnurlp/bharat?amount=1',
+  ])('rejects an untrusted SDK URL before public lookup or copying: %s', async url => {
+    const value = address();value.lnurl.url = url;
+    const fetch = vi.fn();vi.stubGlobal('fetch', fetch);
+    render(<GetYourSatsUsernameClaim {...props()} nativeAddress={value}/>);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not confirm your GetYourSats address.');
+    expect(fetch).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', {name: 'Copy Address'})).not.toBeInTheDocument();
+  });
+
+  it.each([
+    'http://getyoursats.com/lnurlp/bharat/invoice',
+    'lnurlp://getyoursats.com/lnurlp/bharat/invoice',
+    'https://getyoursats.com:443/lnurlp/bharat/invoice',
+    'https://user@getyoursats.com/lnurlp/bharat/invoice',
+    'https://getyoursats.com/lnurlp/bharat/invoice?amount=1',
+    'https://getyoursats.com/lnurlp/bharat/invoice#fragment',
+    'https://attacker.example/lnurlp/bharat/invoice',
+  ])('rejects an altered invoice callback without fetching it: %s', async callback => {
+    const fetch = vi.fn().mockResolvedValue({ok: true, json: async () => ({tag: 'payRequest', callback})});
+    vi.stubGlobal('fetch', fetch);
+    render(<GetYourSatsUsernameClaim {...props()} nativeAddress={address()}/>);
+    expect(await screen.findByRole('alert')).toHaveTextContent('payment link is not ready');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', {name: 'Copy Address'})).not.toBeInTheDocument();
+  });
+
   it('submits the chosen name once and copies the authoritative returned address', async () => {
     const fetch = lookup();
     vi.stubGlobal('fetch', fetch);

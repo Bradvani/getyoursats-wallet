@@ -45,7 +45,7 @@ async function provider() {
         const record = {
           username: body.username, description: body.description,
           lightning_address: `${body.username}@${request.headers.host}`,
-          lnurl: `http://${request.headers.host}/.well-known/lnurlp/${body.username}`,
+          lnurl: `lnurlp://${request.headers.host}/lnurlp/${body.username}`,
         };
         records.set(pubkey, record);
         response.end(JSON.stringify(record));
@@ -82,6 +82,7 @@ test('actual pinned SDK recovers, registers and restores a second-domain name wi
     const main = await session(original.url);
     assert.equal(await main.getLightningAddress(), undefined);
     const oldAddress = await main.registerLightningAddress({username: 'anonymous'});
+    assert.equal(oldAddress.lnurl.url, `lnurlp://${new URL(original.url).host}/lnurlp/anonymous`);
     const identity = (await main.signMessage({message: 'gys-native-lnurl-session-v1', compact: true})).pubkey;
 
     const first = await session(native.url);
@@ -89,6 +90,7 @@ test('actual pinned SDK recovers, registers and restores a second-domain name wi
     assert.equal(await first.getLightningAddress(), undefined);
     assert.equal(await first.checkLightningAddressAvailable({username: 'alice'}), true);
     const claimed = await first.registerLightningAddress({username: 'alice'});
+    assert.equal(claimed.lnurl.url, `lnurlp://${new URL(native.url).host}/lnurlp/alice`);
     assert.equal((await main.getLightningAddress()).lightningAddress, oldAddress.lightningAddress);
 
     const restored = await session(native.url);

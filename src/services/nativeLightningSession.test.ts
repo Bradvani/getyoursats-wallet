@@ -13,7 +13,7 @@ const OTHER_IDENTITY = `03${'2'.repeat(64)}`;
 const SEED = {type: 'mnemonic' as const, mnemonic: 'public non-wallet test fixture'};
 const ADDRESS: LightningAddressInfo = {
   username: 'alice', lightningAddress: 'alice@getyoursats.com', description: 'Pay to Alice',
-  lnurl: {url: 'https://getyoursats.com/.well-known/lnurlp/alice', bech32: 'lnurl1fixture'},
+  lnurl: {url: 'lnurlp://getyoursats.com/lnurlp/alice', bech32: 'lnurl1fixture'},
 };
 
 let sdk: BreezSdk;

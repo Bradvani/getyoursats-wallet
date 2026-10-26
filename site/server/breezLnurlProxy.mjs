@@ -188,6 +188,8 @@ function forwardedHeaders(req,secret,ip,body){
   headers.host=DOMAIN;
   headers[SECRET_HEADER]=secret;
   headers['x-forwarded-for']=ip;
+  // Identity encoding keeps the response inspectable and usable by every client.
+  headers['accept-encoding']='identity';
   if(body.length||req.headers['content-length']!==undefined||req.headers['transfer-encoding']!==undefined)
     headers['content-length']=String(body.length);
   return headers;

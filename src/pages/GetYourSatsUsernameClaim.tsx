@@ -4,6 +4,7 @@ import SlideInPage from '../components/layout/SlideInPage';
 import {PrimaryButton, SecondaryButton} from '../components/ui/buttons';
 import {FIELD_BASE_CLASS} from '../components/ui/forms';
 import {copyToClipboard} from '../utils/clipboard';
+import {nativeLightningLookupUrl, NATIVE_LIGHTNING_DOMAIN as DOMAIN} from '../services/nativeLightningAddress';
 
 interface Props {
   email: string;
@@ -12,26 +13,14 @@ interface Props {
   onClaimNativeAddress?: (username: string) => Promise<LightningAddressInfo>;
 }
 
-const DOMAIN = 'getyoursats.com';
-const usernameOf = (address: LightningAddressInfo) => {
-  const parts = address.lightningAddress.split('@');
-  if (parts.length !== 2 || parts[1] !== DOMAIN || !/^[a-z][a-z0-9]{2,23}$/.test(parts[0])) {
-    throw new Error('Could not confirm your GetYourSats address. Please try again.');
-  }
-  return parts[0];
-};
-
 async function confirmPublicAddress(address: LightningAddressInfo, signal: AbortSignal) {
-  const username = usernameOf(address);
-  const response = await fetch(`https://${DOMAIN}/.well-known/lnurlp/${encodeURIComponent(username)}`, {
-    cache: 'no-store', credentials: 'omit', signal,
+  const lookupUrl = nativeLightningLookupUrl(address);
+  const response = await fetch(lookupUrl, {
+    cache: 'no-store', credentials: 'omit', redirect: 'error', signal,
   });
   const result = await response.json() as {tag?: string; callback?: string};
-  let callback: URL | null = null;
-  try {callback = typeof result.callback === 'string' ? new URL(result.callback) : null;} catch { /* An invalid callback is not payable. */ }
-  if (!response.ok || result.tag !== 'payRequest' || callback?.protocol !== 'https:'
-    || callback.hostname !== DOMAIN || callback.username || callback.password || callback.port
-    || callback.pathname !== `/lnurlp/${username}/invoice`) {
+  if (!response.ok || result.tag !== 'payRequest'
+    || result.callback !== `https://${DOMAIN}/lnurlp/${address.username}/invoice`) {
     throw new Error('Your name is registered, but its payment link is not ready. Please check it again before sharing.');
   }
 }
@@ -99,7 +88,7 @@ export default function GetYourSatsUsernameClaim({email, onBack, nativeAddress, 
     }
     const registered = await onClaimNativeAddress(name);
     signal.throwIfAborted();
-    usernameOf(registered);
+    nativeLightningLookupUrl(registered);
     setAddress(registered);
     await confirmPublicAddress(registered, signal);
     signal.throwIfAborted();

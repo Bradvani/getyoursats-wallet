@@ -1,18 +1,8 @@
 import {connect, defaultServerConfig, type BreezSdk, type LightningAddressInfo, type Seed} from '@breeztech/breez-sdk-spark';
 import {sdkReady} from './sdkReady';
+import {assertNativeLightningAddress, NATIVE_LIGHTNING_DOMAIN} from './nativeLightningAddress';
 
-export const NATIVE_LIGHTNING_DOMAIN = 'getyoursats.com';
-
-export function assertNativeLightningAddress(address: LightningAddressInfo): void {
-  const expected = `${address.username}@${NATIVE_LIGHTNING_DOMAIN}`;
-  const url = new URL(address.lnurl.url);
-  if (address.lightningAddress !== expected || !/^[a-z][a-z0-9]{2,23}$/.test(address.username)
-    || url.protocol !== 'https:' || url.hostname !== NATIVE_LIGHTNING_DOMAIN
-    || url.username || url.password || url.port
-    || ![`/.well-known/lnurlp/${address.username}`, `/lnurlp/${address.username}`].includes(url.pathname)) {
-    throw new Error('Could not confirm your GetYourSats address. Please try again.');
-  }
-}
+export {assertNativeLightningAddress, NATIVE_LIGHTNING_DOMAIN} from './nativeLightningAddress';
 
 async function clearTemporaryStorage(directory: string): Promise<void> {
   const databases = await indexedDB.databases();

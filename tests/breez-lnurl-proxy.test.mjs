@@ -307,6 +307,40 @@ test('recovery, metadata, owner deletion and availability do not depend on regis
   assert.equal(app.forwarded.at(-1).options.headers['x-breez-timestamp'],String(NOW));
 });
 
+test('recovery requests identity upstream regardless of client compression negotiation',async()=>{
+  const body=JSON.stringify(signedManagement('recover'));
+  const output=Buffer.from('{"recovered":true}');
+  const app=harness({upstream:()=>{
+    const encoding=app.forwarded.at(-1).options.headers['accept-encoding'];
+    return encoding==='identity'
+      ?{status:200,body:output,headers:{}}
+      :{status:200,body:Buffer.from('unsupported-compressed-response'),headers:{'content-encoding':'zstd'}};
+  }});
+  for(const headers of [
+    {'accept-encoding':'gzip, deflate, br, zstd'},
+    {'accept-encoding':'zstd'},
+    {'accept-encoding':'identity;q=0, *;q=1'},
+    {'accept-encoding':['gzip','zstd']},
+    {'accept-encoding':'zstd\r\ninvalid'},
+    {'Accept-Encoding':'zstd'},
+    {'accept-encoding':'zstd',connection:'accept-encoding'},
+    {'accept-encoding':undefined}
+  ]){
+    const response=await app.invoke({url:BASE+'/recover',method:'POST',body,headers});
+    assert.equal(response.statusCode,200);
+    assert.deepEqual(response.body,output);
+    assert.equal(response.headers['content-encoding'],undefined);
+    assert.equal(response.headers['access-control-allow-origin'],ORIGIN);
+    const sent=app.forwarded.at(-1);
+    assert.equal(sent.options.headers['accept-encoding'],'identity');
+    assert.equal(sent.options.method,'POST');
+    assert.equal(sent.options.path,BASE+'/recover');
+    assert.equal(sent.options.rejectUnauthorized,true);
+    assert.deepEqual(sent.body,Buffer.from(body));
+  }
+  assert.equal(app.storage.length,0);
+});
+
 test('transfer, unknown private routes and unsupported private methods cannot bypass registration gating',async()=>{
   for(const [url,method,status] of [
     [BASE+'/transfer','POST',403],[BASE+'/transfer','DELETE',403],
@@ -408,6 +442,17 @@ test('compressed responses retain their original bytes and compression headers',
   assert.equal(result.statusCode,200);
   assert.deepEqual(result.body,bytes);
   assert.equal(result.headers['content-encoding'],'gzip');
+});
+
+test('unsupported upstream compression still fails closed after identity was requested',async()=>{
+  const app=harness({upstreamBody:Buffer.from('unsupported-compressed-response'),upstreamHeaders:{'content-encoding':'zstd'}});
+  const result=await app.invoke({url:BASE+'/recover',method:'POST',body:JSON.stringify(signedManagement('recover')),
+    headers:{'accept-encoding':'gzip, deflate, br, zstd'}});
+  assert.equal(app.forwarded[0].options.headers['accept-encoding'],'identity');
+  assert.equal(result.statusCode,502);
+  assert.equal(JSON.parse(result.body.toString()).reason,'Unsupported LNURL response encoding');
+  assert.equal(result.headers['content-encoding'],undefined);
+  assert.equal(result.body.toString().includes('unsupported-compressed-response'),false);
 });
 
 test('HEAD can retain compression headers with an empty upstream body',async()=>{
