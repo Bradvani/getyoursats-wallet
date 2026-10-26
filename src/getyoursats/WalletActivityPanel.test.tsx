@@ -26,6 +26,21 @@ describe('WalletActivityPanel', () => {
     fireEvent.click(screen.getByRole('tab',{name:/Transaction history/}));
     expect(screen.getByTestId('full-history').textContent).toContain('SDK history: 2');
   });
+  it('shows a clear Back to Wallet button on full history and returns to activity', () => {
+    const onViewChange = vi.fn();
+    const props = {transactions:[payment('a','completed','receive')], isSyncing:false,
+      onPaymentSelected:vi.fn(), exitEntries:[], onExitSelected:vi.fn(),
+      onRefresh:vi.fn(), onViewChange};
+    const {rerender} = render(<WalletActivityPanel {...props} view="history"/>);
+    expect(screen.getByRole('heading',{name:'History'})).toBeTruthy();
+    const back = screen.getByRole('button',{name:'Back to Wallet'});
+    expect(back.getAttribute('data-testid')).toBe('history-back-to-wallet');
+    fireEvent.click(back);
+    expect(onViewChange).toHaveBeenCalledWith('activity');
+    rerender(<WalletActivityPanel {...props} view="activity"/>);
+    expect(screen.getByRole('heading',{name:'Recent payments'})).toBeTruthy();
+    expect(screen.queryByRole('button',{name:'Back to Wallet'})).toBeNull();
+  });
   it('never invents transactions for an empty SDK history', () => {
     render(<WalletActivityPanel transactions={[]} isSyncing={false}
       onPaymentSelected={vi.fn()} exitEntries={[]}
