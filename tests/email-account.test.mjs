@@ -65,6 +65,27 @@ function service(t) {
     }
     if(op==='EVAL'){
       const [script,keyCount,...parameters]=args;
+      if(keyCount===6){
+        assert.match(script,/if blocked>0 then return \{blocked,retryMs\} end/);
+        const keys=parameters.slice(0,keyCount),rules=parameters.slice(keyCount);
+        let blocked=0,retryMs=0;
+        keys.forEach((key,index)=>{
+          const value=get(key);
+          if(value===null)return;
+          const count=Number(value),ttl=deadlines.has(key)?deadlines.get(key)-now:-1;
+          if(!/^[1-9][0-9]*$/.test(String(value))||!Number.isSafeInteger(count)||ttl<0||ttl>rules[index*3+2]){
+            throw new Error('Storage unavailable');
+          }
+          if(count>=rules[index*3]&&Math.max(1,ttl)>retryMs){blocked=index+1;retryMs=Math.max(1,ttl);}
+        });
+        if(blocked)return [blocked,retryMs];
+        keys.forEach((key,index)=>{
+          const count=Number(get(key)??0)+1;
+          values.set(key,count);
+          if(count===1)deadlines.set(key,now+rules[index*3+1]*1000);
+        });
+        return [0,0];
+      }
       if(keyCount===1){
         assert.match(script,/if count==1 then redis.call\('EXPIRE'/);
         const [key,seconds]=parameters;
@@ -119,7 +140,9 @@ function service(t) {
   };
   const send=async(account,email,headers)=>invoke({action:'send',email,...await proof(account,'send',headers)},{headers});
   const status=async(account,headers)=>invoke({action:'status',...await proof(account,'status',headers)},{headers});
-  return {invoke,proof,send,status,values,commands,emails,storageRequests,advance:ms=>{now+=ms;},setProviderOk:value=>{providerOk=value;},setStorageFailure:value=>{storageFailure=value;},settings};
+  return {invoke,proof,send,status,values,deadlines,commands,emails,storageRequests,
+    rateKey:key=>'gys:email:v1:rate:'+digest(settings.GETYOURSATS_EMAIL_HMAC_KEY,key),
+    advance:ms=>{now+=ms;},setProviderOk:value=>{providerOk=value;},setStorageFailure:value=>{storageFailure=value;},settings};
 }
 
 test('signed email and one-use OTP flow creates one durable wallet binding and restores its status',async t=>{
@@ -163,6 +186,7 @@ test('OTP attempts are capped at five and expired codes do not verify',async t=>
   for(let i=0;i<5;i++)assert.equal((await api.invoke({action:'verify',requestId:sent.body.requestId,code:wrong})).statusCode,401);
   assert.equal((await api.invoke({action:'verify',requestId:sent.body.requestId,code:correct})).statusCode,429);
   assert.equal(api.values.has('gys:email:v1:wallet:'+account.pub),false);
+  api.advance(60_000);
   const next=await api.send(account,'user@example.com');
   api.advance(601_000);
   assert.equal((await api.invoke({action:'verify',requestId:next.body.requestId,code:api.emails[1].code})).statusCode,409);
@@ -173,6 +197,7 @@ test('mailbox uniqueness is checked after its code and concurrent OTP reuse has 
   const initial=await api.send(first,'user@example.com');
   const attempts=await Promise.all(Array.from({length:2},()=>api.invoke({action:'verify',requestId:initial.body.requestId,code:api.emails[0].code})));
   assert.deepEqual(attempts.map(value=>value.statusCode).sort(),[200,409]);
+  api.advance(60_000);
   const duplicate=await api.send(second,'user@example.com');
   assert.equal(duplicate.statusCode,200);
   assert.equal((await api.invoke({action:'verify',requestId:duplicate.body.requestId,code:api.emails[1].code})).statusCode,409);
@@ -183,11 +208,21 @@ test('mailbox uniqueness is checked after its code and concurrent OTP reuse has 
 test('challenge, send and code limits are independent and failed requests do not extend their windows',async t=>{
   const api=service(t),account=wallet();
   for(let i=0;i<12;i++)assert.equal((await api.status(account)).statusCode,200);
-  for(let i=0;i<4;i++)assert.equal((await api.send(account,'user@example.com')).statusCode,200);
+  const firstSendAt=Date.now();
+  for(let i=0;i<4;i++){
+    assert.equal((await api.send(account,'user@example.com')).statusCode,200);
+    api.advance(60_000);
+  }
   const nextProof=await api.proof(account,'send');
-  assert.equal((await api.invoke({action:'send',email:'user@example.com',...nextProof})).statusCode,429);
-  api.advance(86_399_000);
-  assert.equal((await api.send(account,'user@example.com')).statusCode,429);
+  const denied=await api.invoke({action:'send',email:'user@example.com',...nextProof});
+  assert.equal(denied.statusCode,429);
+  assert.equal(denied.body.code,'send_rate_limit');
+  assert.equal(denied.body.retryAt,new Date(firstSendAt+86_400_000).toISOString());
+  api.advance(firstSendAt+86_399_000-Date.now());
+  const lastSecond=await api.send(account,'user@example.com');
+  assert.equal(lastSecond.statusCode,429);
+  assert.equal(lastSecond.body.retryAfterSeconds,1);
+  assert.equal(lastSecond.headers['Retry-After'],'1');
   api.advance(2_000);
   assert.equal((await api.send(account,'user@example.com')).statusCode,200);
 });
@@ -199,11 +234,120 @@ test('the shared daily mail budget stops new wallets after 80 attempts and reset
     assert.equal((await api.send(wallet(),'user'+i+'@example.com',headers)).statusCode,200);
   }
   const account=wallet(),headers={'x-vercel-forwarded-for':'198.51.100.1'};
-  assert.equal((await api.send(account,'next@example.com',headers)).statusCode,429);
+  const denied=await api.send(account,'next@example.com',headers);
+  assert.equal(denied.statusCode,429);
+  assert.equal(denied.body.code,'daily_capacity');
+  assert.equal(denied.body.retryAt,'2026-10-27T00:00:00.000Z');
+  assert.equal(denied.body.retryAfterSeconds,14*60*60);
+  assert.equal(denied.headers['Retry-After'],String(14*60*60));
   assert.equal(api.emails.length,80);
   api.advance(14*60*60*1000);
   assert.equal((await api.send(account,'next@example.com',headers)).statusCode,200);
   assert.equal(api.emails.length,81);
+});
+
+test('daily capacity denials preserve every send allowance and allow a full IP window after UTC reset',async t=>{
+  const api=service(t),account=wallet(),headers={'x-vercel-forwarded-for':'198.51.100.8'};
+  const day=Math.floor(Date.now()/86_400_000),globalKey=api.rateKey('mail-day:'+day);
+  const reset=(day+1)*86_400_000;
+  api.values.set(globalKey,80);
+  api.deadlines.set(globalKey,reset);
+  const personalKeys=['email-send:next@example.com','wallet-send:'+account.pub,'send:ip:198.51.100.8',
+    'email-cooldown:next@example.com','wallet-cooldown:'+account.pub].map(api.rateKey);
+  for(let i=0;i<8;i++){
+    const denied=await api.send(account,'next@example.com',headers);
+    assert.equal(denied.statusCode,429);
+    assert.equal(denied.body.code,'daily_capacity');
+    assert.equal(denied.body.retryAt,new Date(reset).toISOString());
+  }
+  assert.equal(api.values.get(globalKey),80);
+  assert.equal(api.deadlines.get(globalKey),reset);
+  for(const key of personalKeys){assert.equal(api.values.has(key),false);assert.equal(api.deadlines.has(key),false);}
+  assert.equal(api.emails.length,0);
+
+  api.advance(reset-Date.now());
+  for(const [owner,email] of [[account,'next@example.com'],[wallet(),'second@example.com']]){
+    for(let i=0;i<4;i++){
+      assert.equal((await api.send(owner,email,headers)).statusCode,200);
+      api.advance(60_000);
+    }
+  }
+  assert.equal(api.emails.length,8);
+  const denied=await api.send(wallet(),'third@example.com',headers);
+  assert.equal(denied.statusCode,429);
+  assert.equal(denied.body.code,'send_rate_limit');
+  assert.equal(denied.body.retryAt,new Date(reset+86_400_000).toISOString());
+});
+
+test('wallet and email resend cooldowns do not consume budgets or extend their reset',async t=>{
+  const api=service(t),account=wallet(),other=wallet(),started=Date.now();
+  const initial=await api.send(account,'user@example.com');
+  assert.equal(initial.statusCode,200);
+  assert.equal(initial.body.retryAt,new Date(started+60_000).toISOString());
+  assert.equal(initial.body.retryAfterSeconds,60);
+  const globalKey=api.rateKey('mail-day:'+Math.floor(started/86_400_000));
+  const cooldownKey=api.rateKey('wallet-cooldown:'+account.pub);
+  for(const [owner,email,headers] of [
+    [account,'other@example.com',undefined],
+    [other,'user@example.com',{'x-vercel-forwarded-for':'198.51.100.2'}]
+  ]){
+    const denied=await api.send(owner,email,headers);
+    assert.equal(denied.statusCode,429);
+    assert.equal(denied.body.code,'resend_cooldown');
+    assert.equal(denied.body.retryAfterSeconds,60);
+    assert.equal(denied.headers['Retry-After'],'60');
+  }
+  assert.equal(api.values.has(api.rateKey('email-send:other@example.com')),false);
+  assert.equal(api.values.has(api.rateKey('wallet-send:'+other.pub)),false);
+  assert.equal(api.values.has(api.rateKey('send:ip:198.51.100.2')),false);
+  assert.equal(api.values.get(globalKey),1);
+  assert.equal(api.deadlines.get(cooldownKey),started+60_000);
+  api.advance(59_000);
+  const waiting=await api.send(account,'user@example.com');
+  assert.equal(waiting.body.retryAfterSeconds,1);
+  assert.equal(waiting.body.retryAt,new Date(started+60_000).toISOString());
+  api.advance(1000);
+  assert.equal((await api.send(account,'user@example.com')).statusCode,200);
+  assert.equal(api.values.get(globalKey),2);
+  assert.equal(api.emails.length,2);
+  assert.equal((await api.invoke({action:'verify',requestId:initial.body.requestId,code:api.emails[0].code})).statusCode,200);
+});
+
+test('concurrent final daily-slot reservations allow one send and leave the denied wallet budgets untouched',async t=>{
+  const api=service(t),day=Math.floor(Date.now()/86_400_000),key=api.rateKey('mail-day:'+day);
+  api.values.set(key,79);api.deadlines.set(key,(day+1)*86_400_000);
+  const candidates=[wallet(),wallet()];
+  const responses=await Promise.all(candidates.map((account,index)=>
+    api.send(account,'last'+index+'@example.com',{'x-vercel-forwarded-for':'198.51.100.'+(index+1)})));
+  assert.deepEqual(responses.map(response=>response.statusCode).sort(),[200,429]);
+  const denied=responses.findIndex(response=>response.statusCode===429);
+  assert.equal(responses[denied].body.code,'daily_capacity');
+  assert.equal(api.values.has(api.rateKey('wallet-send:'+candidates[denied].pub)),false);
+  assert.equal(api.values.has(api.rateKey('email-send:last'+denied+'@example.com')),false);
+  assert.equal(api.values.has(api.rateKey('send:ip:198.51.100.'+(denied+1))),false);
+  assert.equal(api.values.get(key),80);
+  assert.equal(api.emails.length,1);
+});
+
+test('malformed send-budget counts or expiry fail closed before any quota reservation',async t=>{
+  const api=service(t),account=wallet();
+  const badKey=api.rateKey('wallet-cooldown:'+account.pub);
+  const globalKey=api.rateKey('mail-day:'+Math.floor(Date.now()/86_400_000));
+  for(const [value,ttl] of [
+    ['0',60_000],['-1',60_000],['1e0',60_000],['1.0',60_000],[' 1',60_000],
+    ['broken',60_000],['9007199254740992',60_000],['1',null],['1',60_001]
+  ]){
+    api.values.set(badKey,value);
+    if(ttl===null)api.deadlines.delete(badKey);else api.deadlines.set(badKey,Date.now()+ttl);
+    const response=await api.send(account,'user@example.com');
+    assert.equal(response.statusCode,503);
+    assert.deepEqual(response.body,{error:'Verification service temporarily unavailable'});
+    assert.equal(api.values.has(globalKey),false);
+    assert.equal(api.values.has(api.rateKey('email-send:user@example.com')),false);
+    assert.equal(api.values.has(api.rateKey('wallet-send:'+account.pub)),false);
+    assert.equal(api.values.get(badKey),value);
+  }
+  assert.equal(api.emails.length,0);
 });
 
 test('provider failure removes its pending OTP and storage errors fail closed',async t=>{

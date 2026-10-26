@@ -7,7 +7,28 @@ const PREFIX='gys:email:v1:';
 const ttlChallenge=300,ttlCode=600;
 const MAX_BODY_BYTES=4096;
 const DAILY_MAIL_LIMIT=80;
+const RESEND_COOLDOWN_SECONDS=60;
 const RATE_SCRIPT="local count=redis.call('INCR',KEYS[1]);if count==1 then redis.call('EXPIRE',KEYS[1],ARGV[1]) end;return count";
+const SEND_BUDGET_SCRIPT=`local blocked=0;local retryMs=0
+for i,key in ipairs(KEYS) do
+  local value=redis.call('GET',key)
+  if value then
+    local count=tonumber(value)
+    local ttl=redis.call('PTTL',key)
+    if not string.match(value,'^[1-9][0-9]*$') or not count or count>9007199254740991 or ttl<0 or ttl>tonumber(ARGV[(i-1)*3+3]) then
+      return redis.error_reply('Invalid send budget state')
+    end
+    if count>=tonumber(ARGV[(i-1)*3+1]) and math.max(1,ttl)>retryMs then
+      blocked=i;retryMs=math.max(1,ttl)
+    end
+  end
+end
+if blocked>0 then return {blocked,retryMs} end
+for i,key in ipairs(KEYS) do
+  local count=redis.call('INCR',key)
+  if count==1 then redis.call('EXPIRE',key,ARGV[(i-1)*3+2]) end
+end
+return {0,0}`;
 function storageConfig() {
   const explicit=[process.env.UPSTASH_REDIS_REST_URL,process.env.UPSTASH_REDIS_REST_TOKEN];
   const integrated=[process.env.KV_REST_API_URL,process.env.KV_REST_API_TOKEN];
@@ -44,12 +65,40 @@ async function rate(key,max,seconds) {
   if(!Number.isSafeInteger(count)||count<1)throw new Error('Storage unavailable');
   if(count>max)throw Object.assign(new Error('Too many requests. Please try again later.'),{status:429});
 }
-async function mailBudget() {
+function retryDetails(retryAt) {
+  return {retryAt:new Date(retryAt).toISOString(),retryAfterSeconds:Math.max(1,Math.ceil((retryAt-Date.now())/1000))};
+}
+async function reserveMailBudget(email,pub,ip) {
   const now=Date.now();
   const day=Math.floor(now/86_400_000);
-  // Reserve some of the shared free mail allowance for support. Failed or
+  const nextDay=(day+1)*86_400_000;
+  const rules=[
+    ['mail-day:'+day,DAILY_MAIL_LIMIT,Math.ceil((nextDay-now)/1000),'daily_capacity'],
+    ['email-send:'+email,4,86400,'send_rate_limit'],
+    ['wallet-send:'+pub,4,86400,'send_rate_limit'],
+    ['send:'+ip,8,86400,'send_rate_limit'],
+    ['email-cooldown:'+email,1,RESEND_COOLDOWN_SECONDS,'resend_cooldown'],
+    ['wallet-cooldown:'+pub,1,RESEND_COOLDOWN_SECONDS,'resend_cooldown']
+  ];
+  // Leave headroom in the shared free mail allowance for support. Failed or
   // uncertain provider calls also count because the email may have been sent.
-  await rate('mail-day:'+day,DAILY_MAIL_LIMIT,Math.ceil(((day+1)*86_400_000-now)/1000));
+  const result=await redis('EVAL',SEND_BUDGET_SCRIPT,rules.length,
+    ...rules.map(([key])=>PREFIX+'rate:'+hmac(key)),
+    ...rules.flatMap(([,max,seconds,code])=>[max,seconds,code==='daily_capacity'?86_400_000:seconds*1000]));
+  if(!Array.isArray(result)||result.length!==2||!result.every(Number.isSafeInteger)||
+      result[0]<0||result[0]>rules.length||result[1]<0||result[1]>86_400_000||
+      (result[0]===0)!==(result[1]===0))throw new Error('Storage unavailable');
+  if(result[0]){
+    const code=rules[result[0]-1][3];
+    const retryAt=code==='daily_capacity'?nextDay:Date.now()+result[1];
+    const messages={
+      daily_capacity:'Today\'s email verification capacity is full. Please try again after the reset. You can keep using your wallet.',
+      send_rate_limit:'You have reached the verification email limit. Please wait before requesting another code.',
+      resend_cooldown:'Please wait before requesting another verification code.'
+    };
+    throw Object.assign(new Error(messages[code]),{status:429,code,...retryDetails(retryAt)});
+  }
+  return Date.now()+RESEND_COOLDOWN_SECONDS*1000;
 }
 function respond(res,status,body) {res.statusCode=status;res.end(JSON.stringify(body));}
 async function payloadOf(req) {
@@ -145,12 +194,9 @@ export default async function handler(req,res) {
         respond(res,200,{verified:value!==null,email:value?.email??null});return;
       }
       const email=normalizeEmail(body.email);
-      await rate('email-send:'+email,4,86400);
-      await rate('wallet-send:'+challenge.pub,4,86400);
-      await rate('send:'+clientKey(req),8,86400);
       const previously=await redis('GET',verifiedKey(challenge.pub));
       if(verifiedRecord(previously))throw Object.assign(new Error('Email already linked to this wallet'),{status:409});
-      await mailBudget();
+      const resendAt=await reserveMailBudget(email,challenge.pub,clientKey(req));
       const code=String(randomInt(0,1000000)).padStart(6,'0');
       const requestId=randomBytes(18).toString('hex');
       const codeHash=hmac(requestId+':'+challenge.pub+':'+email+':'+code);
@@ -169,7 +215,7 @@ export default async function handler(req,res) {
         }),redirect:'error',cache:'no-store',signal:AbortSignal.timeout(10000)
       });
       if(!sent.ok){await redis('DEL',pendingKey(requestId));throw new Error('Email delivery unavailable');}
-      respond(res,200,{requestId,expiresIn:ttlCode});return;
+      respond(res,200,{requestId,expiresIn:ttlCode,...retryDetails(resendAt)});return;
     }
     if(action==='verify'){
       if(typeof body.requestId!=='string'||!/^[0-9a-f]{36}$/i.test(body.requestId)||
@@ -198,6 +244,11 @@ export default async function handler(req,res) {
   } catch(err) {
     const code=err?.status || (err instanceof SyntaxError?400:err?.message?.startsWith('Invalid')?400:503);
     // Do not log email, code, signature or key material.
-    respond(res,code,{error:code===503?'Verification service temporarily unavailable':err.message});
+    const body={error:code===503?'Verification service temporarily unavailable':err.message};
+    if(code===429&&['daily_capacity','send_rate_limit','resend_cooldown'].includes(err.code)){
+      Object.assign(body,{code:err.code,retryAt:err.retryAt,retryAfterSeconds:err.retryAfterSeconds});
+      res.setHeader('Retry-After',String(err.retryAfterSeconds));
+    }
+    respond(res,code,body);
   }
 }

@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 import type {BreezSdk, LightningAddressInfo} from '@breeztech/breez-sdk-spark';
 import SlideInPage from '../components/layout/SlideInPage';
-import {PrimaryButton, SecondaryButton} from '../components/ui/buttons';
+import {PrimaryButton, SecondaryButton, TextButton} from '../components/ui/buttons';
 import {FIELD_BASE_CLASS} from '../components/ui/forms';
 import GetYourSatsUsernameClaim from './GetYourSatsUsernameClaim';
 import {useWallet} from '../contexts/WalletContext';
@@ -9,14 +9,36 @@ import {selectedNetwork} from '../services/sdkConnect';
 
 type AccountStatus = {verified: boolean; email: string | null};
 type Challenge = {challengeId: string; message: string};
-type Pending = {requestId: string; expiresIn: number};
+type RetryTiming = {retryAt?: unknown; retryAfterSeconds?: unknown};
+type Pending = {requestId: string; expiresIn: number} & RetryTiming;
 type Readiness = {available: boolean};
+type SendPause = {until: number; message?: string};
 interface NativeAddressProps {
   nativeAddress?: LightningAddressInfo | null;
   onClaimNativeAddress?: (username: string) => Promise<LightningAddressInfo>;
 }
 
 type Step = 'loading' | 'unavailable' | 'email' | 'code' | 'verified' | 'failed';
+
+function retryDeadline(value: RetryTiming): number {
+  const now = Date.now();
+  const seconds = value.retryAfterSeconds;
+  if (typeof seconds === 'number' && Number.isSafeInteger(seconds) && seconds >= 0 && seconds <= 86_400) {
+    return now + seconds * 1000;
+  }
+  const timestamp = typeof value.retryAt === 'string' ? Date.parse(value.retryAt) : NaN;
+  if (Number.isFinite(timestamp) && timestamp >= now && timestamp <= now + 86_400_000) return timestamp;
+  return now + 60_000;
+}
+
+class EmailSendLimitError extends Error {
+  readonly retryAt: number;
+
+  constructor(message: string, timing: RetryTiming) {
+    super(message);
+    this.retryAt = retryDeadline(timing);
+  }
+}
 
 async function request<T>(body: Record<string, unknown>, signal: AbortSignal): Promise<T> {
   const response = await fetch('/api/account/email', {
@@ -27,8 +49,20 @@ async function request<T>(body: Record<string, unknown>, signal: AbortSignal): P
     cache: 'no-store',
     signal,
   });
-  const value = await response.json() as {error?: string};
-  if (!response.ok) throw new Error(value.error || 'Email verification is temporarily unavailable. Please try again.');
+  const value = await response.json() as {error?: string; code?: string} & RetryTiming;
+  if (!response.ok) {
+    if (response.status === 429) {
+      const messages: Record<string, string> = {
+        daily_capacity: 'Today\'s verification email limit has been reached. Your wallet and existing Lightning address still work.',
+        send_rate_limit: 'Too many verification codes have been requested. You can still use any valid code you already received.',
+        resend_cooldown: 'Please wait before requesting another verification code.',
+      };
+      if (value.code && Object.prototype.hasOwnProperty.call(messages, value.code)) {
+        throw new EmailSendLimitError(messages[value.code], value);
+      }
+    }
+    throw new Error(value.error || 'Email verification is temporarily unavailable. Please try again.');
+  }
   return value as T;
 }
 
@@ -67,11 +101,19 @@ function EmailVerificationSession({sdk, onBack, nativeAddress, onClaimNativeAddr
   const [code, setCode] = useState('');
   const [pending, setPending] = useState<Pending | null>(null);
   const [verified, setVerified] = useState<AccountStatus | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<'send' | 'verify' | null>(null);
+  const busy = operation !== null;
   const [error, setError] = useState('');
+  const [sendPause, setSendPause] = useState<SendPause | null>(null);
   const [retry, setRetry] = useState(0);
   const activeRequest = useRef<AbortController | null>(null);
   const active = useRef(false);
+
+  useEffect(() => {
+    if (!sendPause) return;
+    const timer = setTimeout(() => setSendPause(null), Math.max(0, sendPause.until - Date.now()));
+    return () => clearTimeout(timer);
+  }, [sendPause]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -113,39 +155,44 @@ function EmailVerificationSession({sdk, onBack, nativeAddress, onClaimNativeAddr
     };
   }, [sdk, retry]);
 
-  async function run(operation: (signal: AbortSignal) => Promise<void>) {
+  async function run(kind: 'send' | 'verify', operation: (signal: AbortSignal) => Promise<void>) {
     if (!active.current || activeRequest.current) return;
     const controller = new AbortController();
     activeRequest.current = controller;
-    setBusy(true);
+    setOperation(kind);
     setError('');
     try {
       await operation(controller.signal);
     } catch (cause) {
       if (!controller.signal.aborted && active.current) {
-        setError(cause instanceof Error ? cause.message : 'Could not verify your email. Please try again.');
+        if (cause instanceof EmailSendLimitError) setSendPause({until: cause.retryAt, message: cause.message});
+        else setError(cause instanceof Error ? cause.message : 'Could not verify your email. Please try again.');
       }
     } finally {
       if (activeRequest.current === controller) {
         activeRequest.current = null;
-        if (active.current) setBusy(false);
+        if (active.current) setOperation(null);
       }
     }
   }
 
-  const send = () => void run(async signal => {
-    const normalizedEmail = email.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) throw new Error('Enter a valid email address.');
-    const signed = await authenticate(sdk, 'send', signal);
-    const result = await request<Pending>({action: 'send', email: normalizedEmail, ...signed}, signal);
-    signal.throwIfAborted();
-    if (!/^[0-9a-f]{36}$/.test(result.requestId)) throw new Error('Could not send your code. Please try again.');
-    setPending(result);
-    setCode('');
-    setStep('code');
-  });
+  const send = () => {
+    if (sendPause && Date.now() < sendPause.until) return;
+    void run('send', async signal => {
+      const normalizedEmail = email.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) throw new Error('Enter a valid email address.');
+      const signed = await authenticate(sdk, 'send', signal);
+      const result = await request<Pending>({action: 'send', email: normalizedEmail, ...signed}, signal);
+      signal.throwIfAborted();
+      if (!/^[0-9a-f]{36}$/.test(result.requestId)) throw new Error('Could not send your code. Please try again.');
+      setPending(result);
+      setSendPause({until: retryDeadline(result)});
+      setCode('');
+      setStep('code');
+    });
+  };
 
-  const verify = () => void run(async signal => {
+  const verify = () => void run('verify', async signal => {
     if (!pending) throw new Error('Request a new verification code.');
     if (!/^\d{6}$/.test(code)) throw new Error('Enter the six-digit code from your email.');
     const result = checkedStatus(await request<AccountStatus>({action: 'verify', requestId: pending.requestId, code}, signal));
@@ -165,12 +212,11 @@ function EmailVerificationSession({sdk, onBack, nativeAddress, onClaimNativeAddr
   const footer = step === 'email' || step === 'code' ? (
     <div className="space-y-2">
       <PrimaryButton className="w-full" onClick={step === 'code' ? verify : send}
-        disabled={busy || (step === 'code' ? code.length !== 6 : !email.trim())}>
-        {busy ? (step === 'code' ? 'Verifying...' : 'Sending...') : (step === 'code' ? 'Verify Email' : 'Send Verification Code')}
+        disabled={busy || (step === 'code' ? code.length !== 6 : !!sendPause || !email.trim())}>
+        {busy ? (operation === 'verify' ? 'Verifying...' : 'Sending...') : (step === 'code' ? 'Verify Email' : 'Send Verification Code')}
       </PrimaryButton>
-      {step === 'code' ? <SecondaryButton className="w-full" disabled={busy} onClick={() => {
-        setPending(null); setCode(''); setError(''); setStep('email');
-      }}>Request a New Code</SecondaryButton> : null}
+      {step === 'code' ? <SecondaryButton className="w-full" disabled={busy || !!sendPause}
+        onClick={send}>Request a New Code</SecondaryButton> : null}
     </div>
   ) : step === 'failed' || step === 'unavailable' ? (
     <SecondaryButton className="w-full" onClick={() => {setStep('loading'); setError(''); setRetry(value => value + 1);}}>Try Again</SecondaryButton>
@@ -189,6 +235,10 @@ function EmailVerificationSession({sdk, onBack, nativeAddress, onClaimNativeAddr
         </p> : null}
         {step === 'code' ? <>
           <p className="text-sm text-spark-text-secondary">Enter the six-digit code sent to <strong className="break-words">{email.trim()}</strong>. It expires in 10 minutes.</p>
+          <TextButton type="button" className="min-h-[44px] px-2" aria-disabled={busy} onClick={() => {
+            if (busy) return;
+            setPending(null); setCode(''); setError(''); setStep('email');
+          }}>Change Email</TextButton>
           <label className="block text-sm text-spark-text-primary space-y-2" htmlFor="gys-email-code">
             <span>Verification code</span>
             <input id="gys-email-code" value={code} disabled={busy}
@@ -207,6 +257,14 @@ function EmailVerificationSession({sdk, onBack, nativeAddress, onClaimNativeAddr
             className={`${FIELD_BASE_CLASS} p-3`}/>
         </label> : null}
         {error ? <p role="alert" className="text-sm text-spark-warning">{error}</p> : null}
+        {sendPause ? <div className="space-y-2">
+          {sendPause.message ? <p role="alert" className="text-sm text-spark-warning">{sendPause.message}</p> : null}
+          <p role="status" className="text-sm text-spark-text-muted">
+            You can request a code after {new Date(sendPause.until).toLocaleString(undefined, {
+              month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short',
+            })}.
+          </p>
+        </div> : null}
         <p className="text-xs text-spark-text-muted leading-relaxed">
           Email cannot restore your wallet. Keep your recovery words or passkey safe.
         </p>

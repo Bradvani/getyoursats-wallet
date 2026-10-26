@@ -20,7 +20,7 @@ Use the [official reverse-proxy guide](https://sdk-doc-spark.breez.technology/gu
 - Generate anonymous names and collision suffixes with Web Crypto, without an insecure randomness fallback.
 - Recover and claim a native address through the same wallet identity in a temporary server-mode SDK session, without changing the payment SDK's domain or storage.
 - Restore verified-email status through a wallet-signed challenge and remove the superseded forwarding-alias claim UI.
-- Bound verification email sends to 80 attempts per UTC day, leaving capacity in the current 100-email daily provider allowance for support.
+- Bound verification email sends to 80 attempts per UTC day, leaving headroom in the current 100-email daily provider allowance for support. Atomically reserve send limits and apply a 60-second resend cooldown; rejected reservations do not consume personal allowances.
 
 The client email and native-name feature gates remain disabled. They must stay disabled until durable storage and provider end-to-end checks are complete. This integration does not implement fiat on-ramping, fee sponsorship or fee-free Lightning payments.
 
@@ -50,6 +50,8 @@ Use Production for the live release. If a trusted preview needs real provider ac
 `GETYOURSATS_HANDLE_ENABLED` belongs to the old application-managed alias implementation. Keep it unset or `false`. Do not enable that route as part of this release. The old alias model cannot prove that an arbitrary supplied `@breez.tips` source address belongs to the signing wallet, and its handle proof verifier also rejects the legacy challenge prefix. Native Breez registration replaces that architecture.
 
 The existing Resend domain is verified and a separate domain-restricted sending key, sender and 64-character random HMAC secret have been installed in the wallet's Production environment. Email remains disabled. No database or paid provider plan has been provisioned. The observed Resend allowance is 100 emails per day and 3,000 per month. The application's 80-attempt daily budget includes failed or uncertain send attempts; the provider's free-plan quota remains the final no-overage boundary. Confirm the selected database is a durable free resource before provisioning. Upstash's unclaimed three-day starter database is unsuitable for account records.
+
+Names are eligible immediately after optional email verification, with no funding or activity threshold. Email capacity affects new code sends only. Existing verified status, pending valid codes, registered names and payment routes remain usable. See [launch capacity](verified-email-rollout.md#launch-capacity) for resend controls, retry behavior and shared-account limits.
 
 ## Proxy contract
 
@@ -97,8 +99,8 @@ Registration can be paused by disabling `GETYOURSATS_NATIVE_HANDLES_ENABLED` and
 ## Recorded checks
 
 - Proxy: 23 local tests passed, including independent canonical-message hashing, ownership and email gates, malformed requests, method/path bypasses, CORS, secret reflection, compression, empty HEAD responses and integration credentials.
-- Email: 14 individual tests passed for successful OTP verification, restored status, identity proof, replay/expiry/collision rejection, atomic budgets, provider failures and integration credentials. All four service-test files passed together.
-- Native-session, email/username UI, Settings, Receive and random-name utilities: 62 tests passed across 11 test files.
+- Email: 18 individual tests passed for successful OTP verification, restored status, identity proof, replay/expiry/collision rejection, atomic budgets, provider failures and integration credentials. All four service-test files passed together. Rejected daily-capacity and cooldown attempts preserve personal send quotas and pending valid codes; malformed counter state fails closed.
+- Native-session, email/username UI, Settings, Receive and random-name utilities passed their targeted suites. The capacity follow-up passed 20 tests across the email and username screens, including local retry times, cooldown expiry, no automatic sends and pending-code preservation.
 - Targeted lint, TypeScript and production wallet build passed. The build retains existing dependency deprecation and chunking warnings.
 - Secret-free Vercel probes confirmed the routing/transport behavior described above. They did not register a name, access the real email database, generate an invoice or send a payment.
 - The existing CI service-test command includes the new proxy tests, so they also run in the repository's GetYourSats checks.

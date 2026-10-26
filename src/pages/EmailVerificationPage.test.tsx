@@ -37,14 +37,15 @@ function availableService(verified = false) {
       message: `gys-email-v1:${body.purpose}:${body.walletPubkey}:${challengeId}`,
     });
     if (body.action === 'status') return reply({verified, email: verified ? 'linked@example.com' : null});
-    if (body.action === 'send') return reply({requestId, expiresIn: 600});
+    if (body.action === 'send') return reply({requestId, expiresIn: 600,
+      retryAt: new Date(Date.now() + 60_000).toISOString(), retryAfterSeconds: 60});
     if (body.action === 'verify') return reply({verified: true, email: 'new@example.com'});
     return reply({error: 'Unexpected request'}, 400);
   });
 }
 
 beforeEach(() => {wallet.current = client();});
-afterEach(() => {vi.unstubAllGlobals();});
+afterEach(() => {vi.unstubAllGlobals(); vi.useRealTimers();});
 
 describe('verified email eligibility', () => {
   it('fails closed when readiness is disabled without requesting a signature or sending email', async () => {
@@ -137,15 +138,127 @@ describe('verified email eligibility', () => {
     expect(screen.queryByRole('region', {name: 'Native Lightning name'})).not.toBeInTheDocument();
   });
 
-  it('lets an expired-code user request a fresh code without sending automatically', async () => {
+  it('lets a user correct their email without sending automatically or clearing the resend pause', async () => {
     const fetch = availableService();
     vi.stubGlobal('fetch', fetch);
     render(<EmailVerificationPage onBack={vi.fn()}/>);
     fireEvent.change(await screen.findByLabelText('Email address'), {target: {value: 'new@example.com'}});
     fireEvent.click(screen.getByRole('button', {name: 'Send Verification Code'}));
     await screen.findByLabelText('Verification code');
-    fireEvent.click(screen.getByRole('button', {name: 'Request a New Code'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Change Email'}));
     expect(screen.getByLabelText('Email address')).toHaveValue('new@example.com');
+    expect(screen.getByRole('button', {name: 'Send Verification Code'})).toBeDisabled();
+    fireEvent.keyDown(screen.getByLabelText('Email address'), {key: 'Enter'});
+    expect(fetch.mock.calls.filter(([, init]) => requestBody(init)?.action === 'send')).toHaveLength(1);
+  });
+
+  it('shows the daily capacity reset and prevents extra challenges until an explicit retry', async () => {
+    const base = availableService();
+    let sends = 0;
+    const fetch = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+      if (requestBody(init)?.action === 'send' && sends++ === 0) return reply({
+        error: 'Daily email capacity reached', code: 'daily_capacity',
+        retryAt: '2026-10-27T00:00:00.000Z', retryAfterSeconds: 120,
+      }, 429);
+      return base(url, init);
+    });
+    vi.stubGlobal('fetch', fetch);
+    render(<EmailVerificationPage onBack={vi.fn()}/>);
+    fireEvent.change(await screen.findByLabelText('Email address'), {target: {value: 'new@example.com'}});
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-26T23:58:00.000Z'));
+    await act(async () => {fireEvent.click(screen.getByRole('button', {name: 'Send Verification Code'}));});
+    expect(screen.getByRole('alert')).toHaveTextContent("Today's verification email limit has been reached.");
+    expect(screen.getByRole('status')).toHaveTextContent('You can request a code after');
+    const signatureCount = vi.mocked(wallet.current.signMessage).mock.calls.length;
+    expect(screen.getByRole('button', {name: 'Send Verification Code'})).toBeDisabled();
+    fireEvent.keyDown(screen.getByLabelText('Email address'), {key: 'Enter'});
+    expect(wallet.current.signMessage).toHaveBeenCalledTimes(signatureCount);
+    await act(async () => {vi.advanceTimersByTime(119_000);});
+    expect(screen.getByRole('button', {name: 'Send Verification Code'})).toBeDisabled();
+    await act(async () => {vi.advanceTimersByTime(1000);});
+    expect(screen.getByRole('button', {name: 'Send Verification Code'})).toBeEnabled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(sends).toBe(1);
+    await act(async () => {fireEvent.keyDown(screen.getByLabelText('Email address'), {key: 'Enter'});});
+    expect(screen.getByLabelText('Verification code')).toBeInTheDocument();
+    expect(sends).toBe(2);
+  });
+
+  it('keeps a received code usable during cooldown and after a resend is denied', async () => {
+    const base = availableService();
+    let sends = 0;
+    let resolveResend!: (value: Response) => void;
+    const fetch = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+      if (requestBody(init)?.action === 'send' && ++sends === 2) {
+        return new Promise<Response>(resolve => {resolveResend = resolve;});
+      }
+      return base(url, init);
+    });
+    vi.stubGlobal('fetch', fetch);
+    render(<EmailVerificationPage onBack={vi.fn()}/>);
+    fireEvent.change(await screen.findByLabelText('Email address'), {target: {value: 'new@example.com'}});
+    vi.useFakeTimers();
+    await act(async () => {fireEvent.click(screen.getByRole('button', {name: 'Send Verification Code'}));});
+    fireEvent.change(screen.getByLabelText('Verification code'), {target: {value: '123456'}});
+    expect(screen.getByRole('button', {name: 'Request a New Code'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'Verify Email'})).toBeEnabled();
+    await act(async () => {vi.advanceTimersByTime(60_000);});
+    expect(sends).toBe(1);
+    await act(async () => {fireEvent.click(screen.getByRole('button', {name: 'Request a New Code'}));});
+    expect(screen.getByRole('button', {name: 'Sending...'})).toBeDisabled();
+    expect(screen.queryByRole('button', {name: 'Verifying...'})).not.toBeInTheDocument();
+    await act(async () => {resolveResend(await reply({
+      error: 'Daily email capacity reached', code: 'daily_capacity',
+      retryAt: new Date(Date.now() + 3600_000).toISOString(), retryAfterSeconds: 3600,
+    }, 429));});
+    expect(screen.getByRole('alert')).toHaveTextContent("Today's verification email limit has been reached.");
+    expect(screen.getByLabelText('Verification code')).toHaveValue('123456');
+    expect(screen.getByRole('button', {name: 'Request a New Code'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'Verify Email'})).toBeEnabled();
+    await act(async () => {fireEvent.click(screen.getByRole('button', {name: 'Verify Email'}));});
+    expect(screen.getByRole('region', {name: 'Native Lightning name'})).toBeInTheDocument();
+    expect(fetch.mock.calls.some(([, init]) => {
+      const body = requestBody(init);
+      return body?.action === 'verify' && body.requestId === requestId && body.code === '123456';
+    })).toBe(true);
+  });
+
+  it('uses a bounded pause for malformed retry times instead of permanently disabling email', async () => {
+    const base = availableService();
+    const fetch = vi.fn((url: RequestInfo | URL, init?: RequestInit) => requestBody(init)?.action === 'send'
+      ? reply({error: 'Please wait', code: 'send_rate_limit', retryAt: 'not-a-date', retryAfterSeconds: 1e12}, 429)
+      : base(url, init));
+    vi.stubGlobal('fetch', fetch);
+    render(<EmailVerificationPage onBack={vi.fn()}/>);
+    fireEvent.change(await screen.findByLabelText('Email address'), {target: {value: 'new@example.com'}});
+    vi.useFakeTimers();
+    await act(async () => {fireEvent.click(screen.getByRole('button', {name: 'Send Verification Code'}));});
+    expect(screen.getByRole('button', {name: 'Send Verification Code'})).toBeDisabled();
+    expect(screen.getByRole('status')).not.toHaveTextContent('Invalid Date');
+    await act(async () => {vi.advanceTimersByTime(60_000);});
+    expect(screen.getByRole('button', {name: 'Send Verification Code'})).toBeEnabled();
+    expect(fetch.mock.calls.filter(([, init]) => requestBody(init)?.action === 'send')).toHaveLength(1);
+  });
+
+  it('uses the relative retry delay across clock skew and scopes the pause to the active wallet', async () => {
+    const base = availableService();
+    const fetch = vi.fn((url: RequestInfo | URL, init?: RequestInit) => requestBody(init)?.action === 'send'
+      ? reply({error: 'Please wait', code: 'resend_cooldown', retryAt: '2000-01-01T00:00:00.000Z', retryAfterSeconds: 60}, 429)
+      : base(url, init));
+    vi.stubGlobal('fetch', fetch);
+    const {rerender} = render(<EmailVerificationPage onBack={vi.fn()}/>);
+    fireEvent.change(await screen.findByLabelText('Email address'), {target: {value: 'new@example.com'}});
+    vi.useFakeTimers();
+    await act(async () => {fireEvent.click(screen.getByRole('button', {name: 'Send Verification Code'}));});
+    expect(screen.getByRole('button', {name: 'Send Verification Code'})).toBeDisabled();
+    await act(async () => {vi.advanceTimersByTime(59_000);});
+    expect(screen.getByRole('button', {name: 'Send Verification Code'})).toBeDisabled();
+    wallet.current = client('03' + 'd'.repeat(64));
+    await act(async () => {rerender(<EmailVerificationPage onBack={vi.fn()}/>);});
+    fireEvent.change(screen.getByLabelText('Email address'), {target: {value: 'other@example.com'}});
+    expect(screen.getByRole('button', {name: 'Send Verification Code'})).toBeEnabled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(fetch.mock.calls.filter(([, init]) => requestBody(init)?.action === 'send')).toHaveLength(1);
   });
 });
