@@ -1,6 +1,6 @@
 # Disposable-wallet acceptance continuation — 26 October 2026
 
-**Product acceptance is BLOCKED, not complete. Production remains NO-GO.**
+**Direct Spark regtest settlement acceptance passed. Full product acceptance remains incomplete and production remains NO-GO.**
 
 The source continuation starts at `4664c6d1358ecc2389f0b9df3df18b84ab27a192` on PR #43. This work does not merge PR #43 or #46, deploy production, or authorize use of user funds. The public-regtest run used two newly generated disposable wallet identities, the actual compiled browser SDK, encrypted browser vaults and the operation gateway. It supplied no Breez API key or user credentials. That initial run reached no funded send, claim, refund or exit. Later human-funded attempts are recorded below.
 
@@ -53,7 +53,7 @@ The runner creates fresh profiles and prints one new `sparkrt1…` address. A hu
 
 ## Remaining release blockers
 
-New/rebuilt exits still require a durable SDK build-intent/result contract, authorization of all funding inputs/fees/destination, original passkey seed-compatible funding signatures, interruption recovery and actual exit acceptance. Mature/early deposit claims and Lightning receiving need separate bounded execution and reconciliation. The new direct Spark claim path itself still needs funded operator acceptance. Physical iPhone/Android recovery, cross-device restoration, original-origin service-worker/rollback rehearsal, complete security-copy localization and independent review remain open. There is no justified production launch date yet.
+New/rebuilt exits still require a durable SDK build-intent/result contract, authorization of all funding inputs/fees/destination, original passkey seed-compatible funding signatures, interruption recovery and actual exit acceptance. Mature/early deposit claims and Lightning receiving need separate bounded execution and reconciliation. The direct Spark claim path now has funded operator acceptance as recorded below. Physical iPhone/Android recovery, cross-device restoration, original-origin service-worker/rollback rehearsal, complete security-copy localization and independent review remain open. There is no justified production launch date yet.
 
 ## Human funding follow-up (26 October 2026)
 
@@ -64,4 +64,24 @@ The human-assisted faucet step succeeded twice, according to the operator's disp
 
 The runner now preserves disposable browser profiles locally, reports an operation's rejection immediately instead of hiding it behind an approval timeout and records read-only observations on failure. `GYS_ACCEPTANCE_RESUME=1` reuses those profiles without another faucet request. It refuses to repeat an acceptance sequence after a send has been submitted. Do not publish the profiles, fund historical addresses or use this fixture for real funds. Approval is still through the test fixture, not human biometric UI acceptance.
 
-A diagnostic rebuild of the same checks isolated the second rejection to `Incoming transfer involves the SSP identity`. The corrective source accepts an ordinary `Transfer` sent by an SSP identity, while still rejecting attached SSP requests, preimage requests, every other transfer type and mismatched ID, recipient, direction or amount. Claim approval, one-attempt persistence and fresh completion evidence remain required. Sixteen native Rust claim tests and seventeen application claim-controller tests passed. The corrected source is awaiting compiled-browser settlement evidence; these checks do not establish acceptance.
+A diagnostic rebuild of the same checks isolated the second rejection to `Incoming transfer involves the SSP identity`. The corrective source accepts an ordinary `Transfer` sent by an SSP identity, while still rejecting attached SSP requests, preimage requests, every other transfer type and mismatched ID, recipient, direction or amount. Claim approval, one-attempt persistence and fresh completion evidence remain required. Sixteen native Rust claim tests and seventeen application claim-controller tests passed. The following live run subsequently verified the corrected source in the compiled browser SDK.
+
+## Funded direct Spark result: PASS
+
+Receipt: `evidence/human-funded-spark-pass-20261026.json`, SHA-256 `b4a09952ce061f8227c4f2fb28cf09857e070ce9e1bc7e6b6500be6d382d855f`.
+
+The retained wallets completed the actual public-regtest sequence at 08:39 UTC (14:09 IST). No further faucet submission was made. The receipt records checkout base `6c87074`; its exact runner/fixture hashes and SDK source-patch hash were independently compared with corrective source commit `165fb6a8e476e6086f45a3936af2d65f9818e7e4` and match. The SDK package was compiled in the sandbox from that corrected source, not downloaded from the later GitHub rebuild.
+
+| Check | Evidence |
+| --- | --- |
+| Explicit funding claim | 10,000 regtest sats became spendable; incoming journal settled |
+| A sends B 100 sats | Transfer `4e20a87e-80e8-42b9-b81c-d7fafeb692ae`; zero fee; A 9,900, B 100 |
+| B restarts | Same encrypted profile and identity; 100-sat balance restored |
+| B returns 50 sats | Transfer `6fdb3198-7721-4abb-9bf6-f7d977cdc9d8`; zero fee; A 9,950, B 50 |
+| Finality and conservation | Matching completed receiving receipts and completed sending journals for both transfers; combined balance remains 10,000 |
+
+Tested source-patch SHA-256: `60bceecd63c7c20172ea78e59bcfb9d94ab251bcf4930938479534eefb85d045`.
+Tested package SHA-256: `59db0896e6d7913c5c7002d158a3dbb5321cdcbf1720d44f00949270fe82839e`.
+Tested browser WASM SHA-256: `02c67174cda118f747fe2da5fc1ac3729e20557a2bc3cb0b5c6084d7ce2152b8`.
+
+The result is deliberately `PASS_DIRECT_SPARK_ACCEPTANCE_ONLY`, with `fullProductAcceptance: false`. Approval was supplied by the regtest fixture. This run does not establish exit/refund/deposit/Lightning acceptance, biometric approval, a fresh-device seed restore, physical iPhone/Android behavior, rollback acceptance or independent security approval. The retained profiles contain only disposable valueless-regtest wallets and are not published. Do not fund their historical addresses.
