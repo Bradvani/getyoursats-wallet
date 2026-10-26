@@ -52,3 +52,16 @@ test('mobile drawer retains a compact set of working destinations without inacti
  await expect(page.getByTestId('menu-app-version')).toBeVisible();
  await expect(page.locator('.gys-feature-soon')).toHaveCount(0);
 });
+
+test('full history provides an obvious Back to Wallet control on mobile',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/e2e/fixtures/premium-ui.html');
+ await page.getByRole('button',{name:/View full transaction history/}).click();
+ await expect(page.getByRole('heading',{name:'History',exact:true})).toBeVisible();
+ const back=page.getByRole('button',{name:'Back to Wallet'});
+ await expect(back).toBeVisible();
+ await expect(back).toHaveCSS('min-height','44px');
+ await back.click();
+ await expect(page.getByRole('heading',{name:'Recent payments'})).toBeVisible();
+ await expect(back).not.toBeVisible();
+});

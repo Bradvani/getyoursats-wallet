@@ -222,6 +222,22 @@ html.ios-standalone-bottom-gap .gys-wallet-balance-surface__toolbar{z-index:30}
 /* Consolidated review: fluid application chrome with bounded reading surfaces. */
 .gys-desktop-nav{display:none}
 .gys-activity__amount{display:block;font-variant-numeric:tabular-nums;font-weight:650;color:var(--spark-text-primary,#faf9f6);margin-top:5px;overflow-wrap:anywhere}
+/* History is a full-screen destination on mobile. Make its exit an explicit
+   touch-sized navigation control rather than an ambiguous Wallet text link. */
+.gys-activity__back{
+ display:inline-flex;align-items:center;justify-content:center;gap:9px;
+ min-height:44px;max-width:100%;margin-bottom:16px;padding:9px 14px;
+ border:1px solid rgba(247,147,26,.52);border-radius:12px;
+ background:rgba(247,147,26,.12);color:#F7931A;
+ font-size:14px;font-weight:700;line-height:1.35;text-align:start;
+ cursor:pointer;transition:background .16s ease,border-color .16s ease;
+}
+.gys-activity__back svg{width:18px;height:18px;flex-shrink:0}
+.gys-activity__back:hover{background:rgba(247,147,26,.21);border-color:#F7931A}
+.gys-activity__back:active{background:rgba(247,147,26,.29)}
+.gys-activity__back:focus-visible{outline:3px solid #F7931A;outline-offset:3px}
+[dir="rtl"] .gys-activity__back svg{transform:scaleX(-1)}
+
 .gys-market-secondary{padding:16px;margin:16px;border:1px solid var(--spark-border,#303030);border-radius:16px}
 .gys-market-secondary summary{cursor:pointer;color:var(--spark-text-secondary,#aaa)}
 .gys-language-picker select{min-height:44px;border:1px solid var(--spark-border,#333);border-radius:10px;background:var(--spark-surface,#141414);color:var(--spark-text-primary,#faf9f6);padding:8px;max-width:135px}
