@@ -13,7 +13,7 @@ assert.equal(typeof sdk.BreezSdk.prototype.observePayment,'function');
 const manifest=JSON.parse(fs.readFileSync(path.join(root,'getyoursats-build.json'),'utf8'));
 assert(manifest.extensions.includes('observation-only-wallet-state-v1'));
 assert.equal(manifest.sdkSourceCommit,'57c5b9e5f0749f97ffe5d93bce21c994f6957cf4');
-const supported=new Set(['seed-compatible-external-signers-v1','observation-only-wallet-state-v1','signed-recovery-v1','explicit-incoming-claim-v1']);
+const supported=new Set(['seed-compatible-external-signers-v1','observation-only-wallet-state-v1','signed-recovery-v1','explicit-incoming-claim-v1','bounded-mature-deposit-claim-v1']);
 for(const extension of manifest.extensions)assert(supported.has(extension),'Unreviewed SDK extension');
 for(const [file,digest] of Object.entries(manifest.generatedArtifacts)){
  assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex'),digest,file);
@@ -27,6 +27,7 @@ const incoming=manifest.extensions.includes('explicit-incoming-claim-v1');
 if(incoming){
  for(const method of ['claimIncomingTransfer','observeIncomingTransfer'])assert.equal(typeof sdk.BreezSdk.prototype[method],'function',method);
 }
+if(manifest.extensions.includes('bounded-mature-deposit-claim-v1')){for(const method of ['claimMatureDepositOnce','observeDepositClaim'])assert.equal(typeof sdk.BreezSdk.prototype[method],'function',method);}
 const patch=fs.readFileSync(incoming?'vendor/patches/0004-complete-signed-recovery-source.patch':recovery?'vendor/patches/0003-signed-recovery-continuation.patch':'vendor/patches/0002-observation-only-wallet-state.patch');
 assert.equal(crypto.createHash('sha256').update(patch).digest('hex'),manifest.patchSha256);
 console.log(JSON.stringify({test:'installed observation/recovery API and artifact integrity',result:'PASS',

@@ -6,6 +6,7 @@ on:
       - vendor/patches/0004-complete-signed-recovery-source.patch
       - scripts/security/check-sdk-source.py
       - scripts/security/package-seed-signer-sdk.py
+      - scripts/security/build-seed-signer-sdk.sh
       - scripts/security/verify-observation-extension.mjs
       - .github/workflows/build-signed-recovery-sdk.yml
   workflow_dispatch:
@@ -52,6 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           cargo test --locked -p breez-sdk-spark incoming_claim_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/incoming-rust-tests.log
+          cargo test --locked -p breez-sdk-spark mature_deposit_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/mature-deposit-rust-tests.log
           cargo test --locked -p breez-sdk-spark signed_recovery_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/refund-rust-tests.log
           cargo test --locked -p breez-sdk-spark seed_factory --lib 2>&1 | tee /tmp/recovery-sdk-evidence/seed-rust-tests.log
           cargo test --locked -p breez-sdk-spark observation_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/observation-rust-tests.log
@@ -99,6 +101,6 @@ jobs:
           done
           git apply --3way --index /tmp/recovery-sdk-evidence/sdk.patch
           git diff --cached --check
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat(security): compile complete SDK source with single-transfer incoming claims'
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat(security): compile bounded incoming and mature deposit claims'
           git push origin HEAD:refs/heads/release/browser-pwa-security-localization-20261025
           git rev-parse HEAD

@@ -1,3 +1,4 @@
+import {DEPOSIT_CLAIMS,createDepositClaimController} from './depositClaimController';
 /**
  * Browser application authorization boundary. The raw SDK stays in this closure.
  * This does not isolate keys from compromised same-origin JavaScript.
@@ -116,6 +117,8 @@ export function createOperationGateway(network:Network) {
     })().catch(error=>{walletKeyPromise=null;throw error});
     return walletKeyPromise;
   };
+  const deposits=createDepositClaimController({network,walletKey:getWalletKey,assertConnection,
+    raw:()=>{if(!client)throw new Error('Wallet is not connected');return client;}});
   const incoming=createIncomingClaimController({network,walletKey:getWalletKey,assertConnection,
     raw:()=>{if(!client)throw new Error('Wallet is not connected');return client;}});
   const recovery=createSignedRecoveryController({network,walletKey:getWalletKey,assertConnection,
@@ -325,6 +328,8 @@ export function createOperationGateway(network:Network) {
     return new Proxy(Object.create(null) as BreezSdk,{
       get:(_target,key)=>{
         if(key===INCOMING_CLAIMS)return incoming;
+        // Acceptance-only until mature claim and interruption recovery pass on-chain.
+        if(key===DEPOSIT_CLAIMS)return import.meta.env.DEV&&network==='regtest'?deposits:null;
         if(key===RECONCILIATION)return reconciliation;
         if(key===SIGNED_RECOVERY)return recovery;
         if(key==='refundDeposit')return recovery.refund;

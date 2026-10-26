@@ -1,5 +1,5 @@
-/** Claim policy prototype. Not exposed by the browser gateway until restart
- * reconciliation and rollback/removal integration have acceptance evidence. */
+/** Mature-claim policy. Exposed only by the development regtest acceptance
+ * controller until interruption and rollback/removal acceptance is complete. */
 import type {ClaimDepositRequest,ClaimDepositResponse,FetchClaimDepositQuoteResponse,Network} from '@breeztech/breez-sdk-spark';
 
 export interface ClaimIntent {
@@ -25,7 +25,7 @@ export function prepareDepositClaim(network:Network,request:ClaimDepositRequest,
  // Only matured claims in this first policy. Deferred instructions and early
  // provider credit require a separate durable mandate, not a one-shot approval.
  if(!Number.isSafeInteger(quote.confirmations)||quote.confirmations<0||
-    !Number.isSafeInteger(quote.mature.confirmationsRequired)||quote.mature.confirmationsRequired<0||
+    !Number.isSafeInteger(quote.mature.confirmationsRequired)||quote.mature.confirmationsRequired<(network==='regtest'?1:3)||
     quote.confirmations<quote.mature.confirmationsRequired||quote.mature.isEstimate!==false)
   throw Error('An exact mature-deposit quote is required');
  if(sats(quote.mature.feeSats)>fee||sats(quote.mature.creditAmountSats)!==amount-quote.mature.feeSats)

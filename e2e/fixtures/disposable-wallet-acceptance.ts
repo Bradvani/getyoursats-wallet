@@ -1,3 +1,4 @@
+import {getDepositClaims} from '../../src/security/depositClaimController';
 /** Dev-only real-network acceptance fixture. No production wallet or raw SDK capability. */
 import {defaultConfig,type BreezSdk} from '@breeztech/breez-sdk-spark';
 import {entropyToMnemonic} from 'bip39';
@@ -38,9 +39,34 @@ const fixture={
    return {identity:info.identityPubkey,balance:String(info.balanceSats),address:address.paymentRequest,receiveFee:String(address.fee)};
   }finally{connecting=false;}
  },
+ async bitcoinQuote(address:string,amount:number){
+  const w=current();if(!address.startsWith('bcrt1')||!Number.isSafeInteger(amount)||amount<=0||amount>5000)throw Error('Invalid disposable Bitcoin transfer');
+  const p=await w.prepareSendPayment({paymentRequest:{type:'input',input:address},amount:BigInt(amount),feePolicy:'feesExcluded'});
+  if(p.paymentMethod.type!=='bitcoinAddress')throw Error('Expected a Bitcoin quote');
+  return p.paymentMethod.feeQuote;
+ },
+ async bitcoinSend(input:{address:string;amount:number;maxFeeSats:number}){
+  const w=current(),{address,amount,maxFeeSats}=input;
+  if(!address.startsWith('bcrt1')||!Number.isSafeInteger(amount)||amount<=0||amount>5000||!Number.isSafeInteger(maxFeeSats)||maxFeeSats<0||maxFeeSats>3000)throw Error('Invalid disposable withdrawal');
+  const p=await w.prepareSendPayment({paymentRequest:{type:'input',input:address},amount:BigInt(amount),feePolicy:'feesExcluded'});
+  if(p.paymentMethod.type!=='bitcoinAddress'||p.paymentMethod.feeQuote.isEstimate)throw Error('An exact Bitcoin quote is required');
+  const q=p.paymentMethod.feeQuote.speedFast;
+  if(q.userFeeSat+q.l1BroadcastFeeSat>maxFeeSats)throw Error('Disposable withdrawal exceeds its fee cap');
+  const r=await w.sendPayment({prepareResponse:p,options:{type:'bitcoinAddress',confirmationSpeed:'fast'}});
+  return {id:r.payment.id,amount:String(r.payment.amount),fee:String(r.payment.fees),status:r.payment.status};
+ },
+ async depositAddress(){
+  const r=await current().receivePayment({paymentMethod:{type:'bitcoinAddress'}});
+  if(!r.paymentRequest.startsWith('bcrt1'))throw Error('Deposit address is not regtest');
+  return {address:r.paymentRequest,fee:String(r.fee)};
+ },
+ async depositQuote(txid:string,vout:number){return current().fetchClaimDepositQuote({txid,vout});},
+ async depositClaim(request:{txid:string;vout:number;maxFee:{onchain:{type:'fixed';amount:number}}}){return getDepositClaims(current())!.claim(request);},
+ async depositReconcile(){return getDepositClaims(current())!.reconcile();},
+ async depositRecords(){return getDepositClaims(current())!.list();},
  async status(){
   const w=current();await w.syncWallet({});const info=await w.getInfo({ensureSynced:false});
-  return {identity:info.identityPubkey,balance:String(info.balanceSats),payments:(await w.listPayments({limit:100})).payments.map(p=>({id:p.id,amount:String(p.amount),fee:String(p.fees),status:p.status,type:p.paymentType,method:p.method})),
+  return {identity:info.identityPubkey,balance:String(info.balanceSats),payments:(await w.listPayments({limit:100})).payments.map(p=>({id:p.id,amount:String(p.amount),fee:String(p.fees),status:p.status,type:p.paymentType,method:p.method,...(p.details?.type==='withdraw'?{txId:p.details.txId}:{} )})),
    incoming:await getIncomingClaims(w)!.list(),outgoing:await getOperationReconciliation(w)!.status()};
  },
  async discover(){return (await getIncomingClaims(current())!.discover()).map(p=>({id:p.id,amount:String(p.amount),fee:String(p.fees)}));},

@@ -1,6 +1,7 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
 import type {BreezSdk,PrepareSendPaymentResponse,ProvisionalPayment,PrepareLnurlPayResponse,SendPaymentRequest,ReceivePaymentRequest,Network} from '@breeztech/breez-sdk-spark';
 import {createOperationGateway,getOperationReconciliation} from './operationGateway';
+import {getDepositClaims} from './depositClaimController';
 import {writeOperation,operationWalletKey,readAllOperations} from './operationJournal';
 import type {ObservationSdk} from './paymentObservation';
 import {rememberSignerIdentity,clearSignerIdentity,getSpendingRequest,finishSpendingApproval,cancelSpendingApproval,lockSpendingSession} from './spendApproval';
@@ -26,8 +27,20 @@ function harness(override?:ProvisionalPayment[],network:Network='mainnet') {
 async function approvalReady(){await vi.waitFor(()=>expect(getSpendingRequest()).not.toBeNull());}
 async function approve(){await approvalReady();finishSpendingApproval(getSpendingRequest()!.id,true);}
 beforeEach(async()=>{localStorage.clear();installOperationTestLock();await rememberSignerIdentity(seed)});
-afterEach(()=>{cancelSpendingApproval();clearSignerIdentity();vi.useRealTimers()});
+afterEach(()=>{cancelSpendingApproval();clearSignerIdentity();vi.useRealTimers();vi.unstubAllEnvs()});
 describe('connection operation gateway',()=>{
+ it.each(['mainnet','signet'] as const)('keeps mature claims unavailable on %s',network=>{
+  expect(getDepositClaims(harness(undefined,network).wallet)).toBeNull();
+ });
+ it('exposes mature claims only in development regtest, without exposing raw SDK methods',async()=>{
+  vi.stubEnv('DEV',true);
+  const wallet=harness(undefined,'regtest').wallet;
+  expect(getDepositClaims(wallet)).not.toBeNull();
+  expect(()=>wallet.claimDeposit({txid:'00'.repeat(32),vout:0})).toThrow(/unavailable/);
+  expect(()=>Reflect.get(wallet,'claimMatureDepositOnce')({txid:'00'.repeat(32),vout:0,identityPubkey:'wallet',network:'regtest',amountSats:100,maxFeeSats:1,expiresAt:1})).toThrow(/unavailable/);
+  vi.stubEnv('DEV',false);
+  expect(getDepositClaims(wallet)).toBeNull();
+ });
  it('does not treat an adapter generic unknown-symbol function as a reconciliation controller',()=>{
   const sdk=new Proxy({} as BreezSdk,{get:()=>async()=>undefined});
   expect(getOperationReconciliation(sdk)).toBeNull();
