@@ -1,0 +1,154 @@
+{
+  "timestamp": "2026-10-26T23:14:11.610Z",
+  "scope": "public-production",
+  "wallet": {
+    "sourceRevision": "13f7ff73f89ccde9c633cde981ce306c285a0942",
+    "releaseId": "3959c343f9083f957bcf",
+    "sourceDirty": false,
+    "dependencyLockSha256": "642a25bebbea06222a1fb0dd38d5876467e7ba1959417cedf8d13983fd29bb47",
+    "sdk": {
+      "sourceRevision": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+      "packageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026"
+    },
+    "restoredConfigFormatting": [
+      "vercel.json"
+    ],
+    "restoredConfigProjections": [],
+    "verifiedAssets": [
+      {
+        "path": "index.html",
+        "sha256": "ffc0d57c7c4e910e47b786c5057b3c6702af4384f867fa6e3ba63dbcee54d110",
+        "bytes": 7106
+      },
+      {
+        "path": "sw.js",
+        "sha256": "e19ea1f61eb8d45533d8139954ac0805a767b4bc54793b0bd5b36f1fe015032b",
+        "bytes": 5362
+      },
+      {
+        "path": "brand/wordmark-3d-transparent.png",
+        "sha256": "7b174cca6593622dd8112a7cfe6cb199bd087d5c33617b0402ab80e7901e5bf1",
+        "bytes": 1123109
+      },
+      {
+        "path": "brand/wordmark-top.svg",
+        "sha256": "6028b8fa369ebdb7678cab9f57fabab89178019e90b1ad999a967fa66cd3fade",
+        "bytes": 4830
+      },
+      {
+        "path": "brand/wordmark-bottom.svg",
+        "sha256": "77c1d601605f64c1c8a8990699a40e3d282847f9cd6080aef6e9cf8e82b30b12",
+        "bytes": 4600
+      },
+      {
+        "path": "brand/wordmark-coin.svg",
+        "sha256": "a5a4d2001942e70fe1452a056d1943b6410d830f141eb585b8d84308b5f2b5e5",
+        "bytes": 475
+      },
+      {
+        "path": "theme-bootstrap.js",
+        "sha256": "c5db4fb26a83ccdfd1b654b6d852adc267250115f2b54c79be545f227d3ea857",
+        "bytes": 791
+      },
+      {
+        "path": "brand/wordmark-top-light.svg",
+        "sha256": "4af9739f8ac830f46e593b01498d4d9b3a5b94a5f33a909a6b2e367ce6efcda0",
+        "bytes": 4830
+      },
+      {
+        "path": "brand/wordmark-bottom-light.svg",
+        "sha256": "2f33e6e2c9799597f821c9df90633b64ca4c9bf660eb4035c31cfe40b21e788e",
+        "bytes": 4600
+      },
+      {
+        "path": "assets/breez_sdk_spark_wasm_bg-jQ-bgV27.wasm",
+        "bytes": 12311382,
+        "sha256": "4fc7fb24e6244c7b94a6f869425537eaf47fe9ee721d31f273b58495d1554b25"
+      }
+    ],
+    "queryFixtureAbsent": true,
+    "zoomEnabled": true,
+    "imagesDecoded": true,
+    "widths": [
+      320,
+      390,
+      1280
+    ],
+    "pageErrors": [],
+    "verifiedAt": "2026-10-26T23:11:27.506Z"
+  },
+  "site": {
+    "sourceRevision": "13f7ff73f89ccde9c633cde981ce306c285a0942",
+    "releaseId": "91a1ee9e299dbaa63ac8",
+    "sourceDirty": false,
+    "dependencyLockSha256": "642a25bebbea06222a1fb0dd38d5876467e7ba1959417cedf8d13983fd29bb47",
+    "sdk": null,
+    "restoredConfigFormatting": [],
+    "restoredConfigProjections": [
+      {
+        "path": "vercel.json",
+        "projectedFrom": "site/vercel.json"
+      }
+    ],
+    "verifiedAssets": [
+      {
+        "path": "index.html",
+        "sha256": "608dca8cd09350f8902641e7f1c90a535d6ff27d77382536309b64fe185f9b27",
+        "bytes": 253218
+      },
+      {
+        "path": "help-center.js",
+        "sha256": "779cb29538f79da55166a072555adecb32a127334c3a60eb9b4469d6cda946df",
+        "bytes": 31001
+      },
+      {
+        "path": "help-style.css",
+        "sha256": "511a24ee422404a0b1450e13417dec0097b8cb9534cd921e9b9cd3c538c6be73",
+        "bytes": 10454
+      },
+      {
+        "path": "support.html",
+        "sha256": "0b57510e7c415d15dcb450a39d054b140815ea75b2800c0cb071cee9f44e97a6",
+        "bytes": 15805
+      },
+      {
+        "path": "learn.html",
+        "sha256": "f3e8a37a25d3afa1ff7a2366e9c5b29a6e1005f17e6de839f700bc105c6df2ca",
+        "bytes": 9124
+      },
+      {
+        "path": "llms.txt",
+        "sha256": "d8d24820bf70e136d635f34f6e122683f1f069e5bf21eb8646b5523f7a013212",
+        "bytes": 2724
+      }
+    ],
+    "pages": [
+      {
+        "path": "/",
+        "heading": "Bitcoin belongs\nin your hands."
+      },
+      {
+        "path": "/support",
+        "heading": "Help for your next step."
+      },
+      {
+        "path": "/learn",
+        "heading": "Bitcoin, made understandable."
+      }
+    ],
+    "widths": [
+      320,
+      390,
+      1280
+    ],
+    "networkLogosDecoded": 6,
+    "contactConfigurationAvailable": true,
+    "siteHeaders": {
+      "frameOptions": "DENY",
+      "permissionsPolicy": "camera=(), microphone=(), geolocation=()",
+      "contentTypeOptions": "nosniff"
+    },
+    "lnurlRouteInvalidInputRejected": true,
+    "pageErrors": []
+  }
+}

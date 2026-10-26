@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "64408512c4c7fd74d81e3f28e129f9a5be87274b",
+  "sourceTree": "41c0f800e76dc2c72b431640681e6ff944833192",
+  "scope": "Production Vite config with only the manifest-writing plugin removed; emitted files kept in memory.",
+  "targets": [
+    "pbkdf2",
+    "crypto-browserify",
+    "@meteorjs/crypto-browserify",
+    "parse-asn1",
+    "source-map-js",
+    "zod",
+    "brace-expansion",
+    "happy-dom",
+    "sharp",
+    "vite",
+    "vitest",
+    "@vitest",
+    "bip39",
+    "@noble/hashes/pbkdf2"
+  ],
+  "traceSha256": "e60e8069fc6b047d1bf8ce56e71f5251481bac9bb9911b573b2ba11440d679be",
+  "emittedModules": [
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/@noble/hashes/pbkdf2.js",
+      "renderedLength": 2686,
+      "renderedCodeSha256": "fc5b6590c0a11529db3c4d0072e6b2fd31eb91f941848742f741f20537c89637"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/wordlists/czech.json",
+      "renderedLength": 23394,
+      "renderedCodeSha256": "158db5ec601c24486b81b2367b35d19093d679bde520d7050bf5fc9fa2f35540"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/wordlists/chinese_simplified.json",
+      "renderedLength": 12623,
+      "renderedCodeSha256": "d8a3825e03540c1e762ce763867a5dd52139655e5c0461188e2a8f7f213f90f2"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/wordlists/chinese_traditional.json",
+      "renderedLength": 12629,
+      "renderedCodeSha256": "2fe9043242a9a2826440882e862e1c3f0da9ab2812361c5060f118b41a7675bc"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/wordlists/korean.json",
+      "renderedLength": 22431,
+      "renderedCodeSha256": "e53e9bf640abef0cfc7db31aab8a9243cd224a026d716f0016358d261237fff6"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/wordlists/french.json",
+      "renderedLength": 24844,
+      "renderedCodeSha256": "8ae1da8dc3291c298acf7206e726b11907cb4f89aba6ebff5a2ae76bcba238c9"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/wordlists/italian.json",
+      "renderedLength": 24494,
+      "renderedCodeSha256": "b3e6e0a87079fb90a5a22be4ccab2a217667e9d3e14baf6f760f667e58e5dade"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/wordlists/spanish.json",
+      "renderedLength": 22120,
+      "renderedCodeSha256": "b46f77bacf76197fa56dbd0048f532240deba1fe240433818f950629fd500496"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/wordlists/japanese.json",
+      "renderedLength": 18640,
+      "renderedCodeSha256": "7241286f40c571c05ad77586cd94247e92a8124793af25f399eadf1d15494f2f"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/wordlists/portuguese.json",
+      "renderedLength": 24150,
+      "renderedCodeSha256": "1a24d8e6f2f013028ae9f6282dee297a0e1be326c492c4823f5d391695a1c320"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/wordlists/english.json",
+      "renderedLength": 21577,
+      "renderedCodeSha256": "92a65a01559683c8555395e4be7f06aebda7df30ca6098e3112521ae007bd604"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/_wordlists.js",
+      "renderedLength": 1881,
+      "renderedCodeSha256": "e9f26ce1dfc7080c883a2f08769e27a05351eb96d277f7425eef7154c36086df"
+    },
+    {
+      "filename": "assets/logger-q7Ib7-Yv.js",
+      "id": "node_modules/bip39/src/index.js",
+      "renderedLength": 4073,
+      "renderedCodeSha256": "3183b8ff08853d9b9ef0d63992837a85d24e84c6425683aca65d1ffa719423a5"
+    }
+  ],
+  "graph": [
+    {
+      "id": "node_modules/bip39/src/wordlists/czech.json",
+      "importers": [
+        "node_modules/bip39/src/_wordlists.js"
+      ],
+      "importedIds": []
+    },
+    {
+      "id": "node_modules/bip39/src/wordlists/spanish.json",
+      "importers": [
+        "node_modules/bip39/src/_wordlists.js"
+      ],
+      "importedIds": []
+    },
+    {
+      "id": "node_modules/bip39/src/wordlists/korean.json",
+      "importers": [
+        "node_modules/bip39/src/_wordlists.js"
+      ],
+      "importedIds": []
+    },
+    {
+      "id": "node_modules/bip39/src/wordlists/chinese_simplified.json",
+      "importers": [
+        "node_modules/bip39/src/_wordlists.js"
+      ],
+      "importedIds": []
+    },
+    {
+      "id": "node_modules/@noble/hashes/pbkdf2.js",
+      "importers": [
+        "node_modules/bip39/src/index.js"
+      ],
+      "importedIds": [
+        "node_modules/@noble/hashes/hmac.js",
+        "node_modules/@noble/hashes/utils.js"
+      ]
+    },
+    {
+      "id": "node_modules/bip39/src/wordlists/italian.json",
+      "importers": [
+        "node_modules/bip39/src/_wordlists.js"
+      ],
+      "importedIds": []
+    },
+    {
+      "id": "node_modules/bip39/src/wordlists/portuguese.json",
+      "importers": [
+        "node_modules/bip39/src/_wordlists.js"
+      ],
+      "importedIds": []
+    },
+    {
+      "id": "node_modules/bip39/src/wordlists/chinese_traditional.json",
+      "importers": [
+        "node_modules/bip39/src/_wordlists.js"
+      ],
+      "importedIds": []
+    },
+    {
+      "id": "node_modules/bip39/src/wordlists/japanese.json",
+      "importers": [
+        "node_modules/bip39/src/_wordlists.js"
+      ],
+      "importedIds": []
+    },
+    {
+      "id": "node_modules/bip39/src/index.js",
+      "importers": [
+        "src/App.tsx",
+        "src/features/unilateral-exit/funding.ts",
+        "src/pages/GeneratePage.tsx",
+        "src/services/logger.ts"
+      ],
+      "importedIds": [
+        "node_modules/vite-plugin-node-polyfills/shims/buffer/dist/index.js",
+        "node_modules/@noble/hashes/sha256.js",
+        "node_modules/@noble/hashes/sha512.js",
+        "node_modules/@noble/hashes/pbkdf2.js",
+        "node_modules/@noble/hashes/utils.js",
+        "node_modules/bip39/src/_wordlists.js"
+      ]
+    },
+    {
+      "id": "node_modules/bip39/src/wordlists/french.json",
+      "importers": [
+        "node_modules/bip39/src/_wordlists.js"
+      ],
+      "importedIds": []
+    },
+    {
+      "id": "node_modules/bip39/src/_wordlists.js",
+      "importers": [
+        "node_modules/bip39/src/index.js"
+      ],
+      "importedIds": [
+        "node_modules/bip39/src/wordlists/czech.json",
+        "node_modules/bip39/src/wordlists/chinese_simplified.json",
+        "node_modules/bip39/src/wordlists/chinese_traditional.json",
+        "node_modules/bip39/src/wordlists/korean.json",
+        "node_modules/bip39/src/wordlists/french.json",
+        "node_modules/bip39/src/wordlists/italian.json",
+        "node_modules/bip39/src/wordlists/spanish.json",
+        "node_modules/bip39/src/wordlists/japanese.json",
+        "node_modules/bip39/src/wordlists/portuguese.json",
+        "node_modules/bip39/src/wordlists/english.json"
+      ]
+    },
+    {
+      "id": "node_modules/bip39/src/wordlists/english.json",
+      "importers": [
+        "node_modules/bip39/src/_wordlists.js"
+      ],
+      "importedIds": []
+    }
+  ],
+  "limits": [
+    "This traces the wallet browser bundle, not all serverless code or build-time execution.",
+    "Absence from the emitted bundle does not remove development or build-tool vulnerability findings."
+  ]
+}

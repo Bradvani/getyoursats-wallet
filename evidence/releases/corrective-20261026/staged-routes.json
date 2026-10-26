@@ -1,0 +1,35 @@
+[
+  {
+    "path": "/support",
+    "status": 200,
+    "cacheControl": "public, max-age=0, must-revalidate",
+    "contentType": "text/html; charset=utf-8",
+    "matchesManifest": true
+  },
+  {
+    "path": "/learn",
+    "status": 200,
+    "cacheControl": "public, max-age=0, must-revalidate",
+    "contentType": "text/html; charset=utf-8",
+    "matchesManifest": true
+  },
+  {
+    "path": "/api/contact",
+    "status": 200,
+    "cacheControl": "no-store",
+    "contentType": "application/json; charset=utf-8",
+    "body": {
+      "available": true
+    }
+  },
+  {
+    "path": "/.well-known/lnurlp/%21",
+    "status": 404,
+    "cacheControl": "no-store, max-age=0",
+    "contentType": "application/json; charset=utf-8",
+    "body": {
+      "status": "ERROR",
+      "reason": "LNURL route not found"
+    }
+  }
+]

@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-26 23:10:21 UTC",
+  "scope": "Corrective-release CI only; does not establish real-funds clearance.",
+  "repository": "Bradvani/getyoursats-wallet",
+  "pullRequest": 56,
+  "pullRequestUrl": "https://github.com/Bradvani/getyoursats-wallet/pull/56",
+  "source": {
+    "head": "13f7ff73f89ccde9c633cde981ce306c285a0942",
+    "tree": "b9155ca6257881b167f82b223e21cc62d3aa8d5b",
+    "base": "77cb496a453823099725977b6f7975a49b24c179",
+    "ciMerge": "4e2ef2599b2abf71fb96e1d22f36e9c3e4096b02",
+    "ciMergeTree": "b9155ca6257881b167f82b223e21cc62d3aa8d5b",
+    "ciMergeTreeEqualsHeadTree": true,
+    "treeVerificationUrl": "https://api.github.com/repos/Bradvani/getyoursats-wallet/git/commits/4e2ef2599b2abf71fb96e1d22f36e9c3e4096b02"
+  },
+  "workflows": [
+    {
+      "id": 40415923475,
+      "name": "CodeQL",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923475",
+      "jobs": [
+        {
+          "id": 121898106075,
+          "name": "Analyze (javascript-typescript)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923475/job/121898106075",
+          "checkUrl": "https://api.github.com/repos/Bradvani/getyoursats-wallet/check-runs/121898106075",
+          "startedAt": "2026-10-26T22:54:09Z",
+          "completedAt": "2026-10-26T22:55:21Z"
+        }
+      ]
+    },
+    {
+      "id": 40415923466,
+      "name": "GetYourSats checks",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923466",
+      "jobs": [
+        {
+          "id": 121898105307,
+          "name": "verify",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923466/job/121898105307",
+          "checkUrl": "https://api.github.com/repos/Bradvani/getyoursats-wallet/check-runs/121898105307",
+          "startedAt": "2026-10-26T22:54:09Z",
+          "completedAt": "2026-10-26T22:56:10Z"
+        }
+      ]
+    },
+    {
+      "id": 40415923465,
+      "name": "Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923465",
+      "jobs": [
+        {
+          "id": 121898106051,
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923465/job/121898106051",
+          "checkUrl": "https://api.github.com/repos/Bradvani/getyoursats-wallet/check-runs/121898106051",
+          "startedAt": "2026-10-26T22:54:09Z",
+          "completedAt": "2026-10-26T22:56:19Z"
+        },
+        {
+          "id": 121898106238,
+          "name": "Type Check",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923465/job/121898106238",
+          "checkUrl": "https://api.github.com/repos/Bradvani/getyoursats-wallet/check-runs/121898106238",
+          "startedAt": "2026-10-26T22:54:10Z",
+          "completedAt": "2026-10-26T22:56:14Z"
+        },
+        {
+          "id": 121898106317,
+          "name": "Unit Tests",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923465/job/121898106317",
+          "checkUrl": "https://api.github.com/repos/Bradvani/getyoursats-wallet/check-runs/121898106317",
+          "startedAt": "2026-10-26T22:54:10Z",
+          "completedAt": "2026-10-26T22:56:37Z"
+        },
+        {
+          "id": 121898106433,
+          "name": "Lint",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923465/job/121898106433",
+          "checkUrl": "https://api.github.com/repos/Bradvani/getyoursats-wallet/check-runs/121898106433",
+          "startedAt": "2026-10-26T22:54:10Z",
+          "completedAt": "2026-10-26T22:56:14Z"
+        },
+        {
+          "id": 121898108257,
+          "name": "E2E Tests",
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923465/job/121898108257",
+          "checkUrl": "https://api.github.com/repos/Bradvani/getyoursats-wallet/check-runs/121898108257",
+          "startedAt": "2026-10-26T22:54:07Z",
+          "completedAt": "2026-10-26T22:54:07Z"
+        }
+      ]
+    },
+    {
+      "id": 40415923491,
+      "name": "GetYourSats browser smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923491",
+      "jobs": [
+        {
+          "id": 121898105788,
+          "name": "setup-smoke",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923491/job/121898105788",
+          "checkUrl": "https://api.github.com/repos/Bradvani/getyoursats-wallet/check-runs/121898105788",
+          "startedAt": "2026-10-26T22:54:10Z",
+          "completedAt": "2026-10-26T23:08:35Z"
+        }
+      ]
+    }
+  ],
+  "actualCounts": {
+    "unit": {
+      "passed": 1074,
+      "filesPassed": 116,
+      "countSourceJobId": 121898105307,
+      "note": "Same unit suite also succeeds in Tests workflow; counts are not added twice."
+    },
+    "nodeServiceAndPolicy": {
+      "passed": 123,
+      "failed": 0,
+      "skipped": 0,
+      "countSourceJobId": 121898105307
+    },
+    "redisAcceptance": {
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "countSourceJobId": 121898105307,
+      "note": "Actual isolated Redis; provider delivery mocked."
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 8,
+      "countSourceJobId": 121898105307
+    },
+    "browser": {
+      "totalPassedExecutions": 300,
+      "failed": 0,
+      "flaky": 0,
+      "skipped": 0,
+      "retryMarkersObserved": 0,
+      "countSourceJobId": 121898105788,
+      "builtArtifact": {
+        "passed": 9,
+        "engines": {
+          "chromium": 3,
+          "firefox": 3,
+          "webkit": 3
+        }
+      },
+      "chromiumJourneys": {
+        "passed": 131,
+        "startupThemeTestsIncluded": 9,
+        "startupEvidence": "Completed command explicitly includes getyoursats-startup-theme.spec.ts; that file defines 9 tests and all 131 planned Chromium tests passed."
+      },
+      "firefoxAndWebkitJourneys": {
+        "passed": 160,
+        "note": "Combined actual pass count for both configured engines."
+      },
+      "evidence": "Completed job log reports 9/9, 131/131 and 160/160 passed, with no failure, flaky, skipped or retry summary."
+    }
+  },
+  "intentionalSkips": [
+    {
+      "workflowId": 40415923465,
+      "jobId": 121898108257,
+      "name": "E2E Tests",
+      "reason": "Optional release/manual/explicit run-e2e-label workflow gate was not enabled for this PR. Funded wallet-transfer/payment scenarios were not executed."
+    }
+  ],
+  "browserEvidenceArtifact": {
+    "id": 12696163621,
+    "name": "getyoursats-chromium-4e2ef2599b2abf71fb96e1d22f36e9c3e4096b02",
+    "bytes": 20061447,
+    "sha256": "966733c2cadd2de488212376739f465d4f8dd96d4ddce4b9757bfcf0fcbf9972",
+    "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40415923491/artifacts/12696163621",
+    "note": "Upload log confirms artifact hash and finalization; archive was not downloaded or independently rehashed for this snapshot."
+  },
+  "limits": [
+    "Staged-production and public-domain checks are separate evidence owned by the release lead.",
+    "CodeQL workflow success is not an independent security approval.",
+    "CI browser checks do not establish physical-device recovery, original-origin installed-PWA behavior, payment-claim or unilateral-exit acceptance.",
+    "Corrective A01-A03 and security-candidate external acceptance gates remain outside this CI result."
+  ]
+}

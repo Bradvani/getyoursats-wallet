@@ -1,0 +1,36 @@
+{
+  "observedAtUtc": "2026-10-26 23:18:17 UTC",
+  "aliases": [
+    {
+      "alias": "wallet.getyoursats.com",
+      "deploymentId": "dpl_949h8AJAod5DxvCFUHk9GWeeEvY4",
+      "deploymentUrl": "https://getyoursats-wallet-73fawtibt-bradvani-8798.vercel.app",
+      "redirect": null,
+      "redirectStatusCode": null,
+      "updatedAt": 1793056245475
+    },
+    {
+      "alias": "getyoursats.com",
+      "deploymentId": "dpl_23DNSpbVHc5ibQmjByhaxKW6qyzS",
+      "deploymentUrl": "https://getyoursats-site-pfr3ke5p1-bradvani-8798.vercel.app",
+      "redirect": null,
+      "redirectStatusCode": null,
+      "updatedAt": 1793056250045
+    },
+    {
+      "alias": "www.getyoursats.com",
+      "deploymentId": "dpl_23DNSpbVHc5ibQmjByhaxKW6qyzS",
+      "deploymentUrl": "https://getyoursats-site-pfr3ke5p1-bradvani-8798.vercel.app",
+      "redirect": "getyoursats.com",
+      "redirectStatusCode": 308,
+      "updatedAt": 1793056250042
+    }
+  ],
+  "autoAssignCustomDomains": {
+    "wallet": true,
+    "site": true,
+    "restoredAfterMergeAutomaticBuild": true
+  },
+  "walletPromotionUtc": "2026-10-26 23:10:44 UTC",
+  "sitePromotionUtc": "2026-10-26 23:10:48 UTC"
+}

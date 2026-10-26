@@ -1,0 +1,357 @@
+{
+  "schemaVersion": 2,
+  "preparedAtUtc": "2026-10-26T23:19:55.621572+00:00",
+  "status": "corrective_release_live",
+  "releaseBoundary": {
+    "scope": "Corrections to the existing product. Not approval for expanded real-funds adoption.",
+    "auditA01ThroughA03Closed": false,
+    "independentFinalSecurityReviewCompleted": false,
+    "securityCandidatePromoted": false,
+    "realMoneyTransferredByThisWork": false,
+    "supportEmailSentByThisWork": false
+  },
+  "source": {
+    "repository": "Bradvani/getyoursats-wallet",
+    "pullRequest": 56,
+    "pullRequestUrl": "https://github.com/Bradvani/getyoursats-wallet/pull/56",
+    "reviewedHead": "13f7ff73f89ccde9c633cde981ce306c285a0942",
+    "reviewedTree": "b9155ca6257881b167f82b223e21cc62d3aa8d5b",
+    "ciMerge": "4e2ef2599b2abf71fb96e1d22f36e9c3e4096b02",
+    "mainMerge": "72f92220078a2c4628a408fe82d4beb27d944e1c",
+    "integratedMainParent": "77cb496a453823099725977b6f7975a49b24c179",
+    "headCiMergeAndMainMergeTreesEqual": true,
+    "concurrentThemeChangesPreserved": true,
+    "dependencyLockSha256": "642a25bebbea06222a1fb0dd38d5876467e7ba1959417cedf8d13983fd29bb47"
+  },
+  "production": {
+    "wallet": {
+      "url": "https://wallet.getyoursats.com",
+      "deploymentId": "dpl_949h8AJAod5DxvCFUHk9GWeeEvY4",
+      "sourceCommit": "13f7ff73f89ccde9c633cde981ce306c285a0942",
+      "releaseId": "3959c343f9083f957bcf",
+      "promotedAtUtc": "2026-10-26 23:10:44 UTC"
+    },
+    "website": {
+      "url": "https://getyoursats.com",
+      "deploymentId": "dpl_23DNSpbVHc5ibQmjByhaxKW6qyzS",
+      "sourceCommit": "13f7ff73f89ccde9c633cde981ce306c285a0942",
+      "releaseId": "91a1ee9e299dbaa63ac8",
+      "promotedAtUtc": "2026-10-26 23:10:48 UTC"
+    },
+    "promotionMode": "Existing reviewed production-target artifacts promoted without rebuilding.",
+    "aliases": {
+      "observedAtUtc": "2026-10-26 23:18:17 UTC",
+      "aliases": [
+        {
+          "alias": "wallet.getyoursats.com",
+          "deploymentId": "dpl_949h8AJAod5DxvCFUHk9GWeeEvY4",
+          "deploymentUrl": "https://getyoursats-wallet-73fawtibt-bradvani-8798.vercel.app",
+          "redirect": null,
+          "redirectStatusCode": null,
+          "updatedAt": 1793056245475
+        },
+        {
+          "alias": "getyoursats.com",
+          "deploymentId": "dpl_23DNSpbVHc5ibQmjByhaxKW6qyzS",
+          "deploymentUrl": "https://getyoursats-site-pfr3ke5p1-bradvani-8798.vercel.app",
+          "redirect": null,
+          "redirectStatusCode": null,
+          "updatedAt": 1793056250045
+        },
+        {
+          "alias": "www.getyoursats.com",
+          "deploymentId": "dpl_23DNSpbVHc5ibQmjByhaxKW6qyzS",
+          "deploymentUrl": "https://getyoursats-site-pfr3ke5p1-bradvani-8798.vercel.app",
+          "redirect": "getyoursats.com",
+          "redirectStatusCode": 308,
+          "updatedAt": 1793056250042
+        }
+      ],
+      "autoAssignCustomDomains": {
+        "wallet": true,
+        "site": true,
+        "restoredAfterMergeAutomaticBuild": true
+      },
+      "walletPromotionUtc": "2026-10-26 23:10:44 UTC",
+      "sitePromotionUtc": "2026-10-26 23:10:48 UTC"
+    },
+    "automaticMainBuild": {
+      "walletDeploymentId": "dpl_FFCsyjoboz5wPgZ2PeavVUmKwZGu",
+      "sourceCommit": "72f92220078a2c4628a408fe82d4beb27d944e1c",
+      "ready": true,
+      "publicAliasAssignedToThisBuild": false
+    },
+    "previewProtection": "Existing SSO protection all_except_custom_domains preserved.",
+    "immediatePreviousDeployments": {
+      "wallet": {
+        "deploymentId": "dpl_5Q5vfPsSVUtMApMYvfg4wmDf6ycW",
+        "sourceCommit": "77cb496a453823099725977b6f7975a49b24c179"
+      },
+      "website": {
+        "deploymentId": "dpl_DbFYPCC7DTAnKjT6RB2eUFu95i8a",
+        "sourceCommit": "6af20fabff382de43145b8f81305054b5c82376d"
+      }
+    },
+    "rollbackPolicy": "Previous deployment IDs are provenance, not safe-rollback approval. The legacy worker forces activation and removes newer caches. Prefer forward containment with the bounded worker policy; original-origin funded-state rollback remains unaccepted."
+  },
+  "ci": {
+    "receipt": "ci.json",
+    "actualCounts": {
+      "unit": {
+        "passed": 1074,
+        "filesPassed": 116,
+        "countSourceJobId": 121898105307,
+        "note": "Same unit suite also succeeds in Tests workflow; counts are not added twice."
+      },
+      "nodeServiceAndPolicy": {
+        "passed": 123,
+        "failed": 0,
+        "skipped": 0,
+        "countSourceJobId": 121898105307
+      },
+      "redisAcceptance": {
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0,
+        "countSourceJobId": 121898105307,
+        "note": "Actual isolated Redis; provider delivery mocked."
+      },
+      "lint": {
+        "errors": 0,
+        "warnings": 8,
+        "countSourceJobId": 121898105307
+      },
+      "browser": {
+        "totalPassedExecutions": 300,
+        "failed": 0,
+        "flaky": 0,
+        "skipped": 0,
+        "retryMarkersObserved": 0,
+        "countSourceJobId": 121898105788,
+        "builtArtifact": {
+          "passed": 9,
+          "engines": {
+            "chromium": 3,
+            "firefox": 3,
+            "webkit": 3
+          }
+        },
+        "chromiumJourneys": {
+          "passed": 131,
+          "startupThemeTestsIncluded": 9,
+          "startupEvidence": "Completed command explicitly includes getyoursats-startup-theme.spec.ts; that file defines 9 tests and all 131 planned Chromium tests passed."
+        },
+        "firefoxAndWebkitJourneys": {
+          "passed": 160,
+          "note": "Combined actual pass count for both configured engines."
+        },
+        "evidence": "Completed job log reports 9/9, 131/131 and 160/160 passed, with no failure, flaky, skipped or retry summary."
+      }
+    },
+    "intentionalSkips": [
+      {
+        "workflowId": 40415923465,
+        "jobId": 121898108257,
+        "name": "E2E Tests",
+        "reason": "Optional release/manual/explicit run-e2e-label workflow gate was not enabled for this PR. Funded wallet-transfer/payment scenarios were not executed."
+      }
+    ],
+    "optionalClaudeReview": {
+      "status": "unperformed",
+      "latest_head_triggered": false,
+      "prior_head": "95f20b188384a1fb628bdf5718f8be0d6305692a",
+      "prior_job_url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40410299863/job/121879020204",
+      "reason": "The earlier job stopped before review because authorized provider credentials were unavailable. The workflow does not run on synchronize events."
+    },
+    "branchProtection": {
+      "branch": "main",
+      "protected": false,
+      "required_status_checks_enforcement": "off",
+      "required_contexts": [],
+      "rulesets": [],
+      "note": "No checks were enforced by GitHub branch protection. The recorded outcomes are explicit release evidence."
+    }
+  },
+  "artifactProvenance": {
+    "sourceDirty": false,
+    "walletManifest": "wallet-release-manifest.json",
+    "siteManifest": "site-release-manifest.json",
+    "walletConfigFormattingRestored": [
+      "vercel.json"
+    ],
+    "siteConfigProjectionRestored": [
+      {
+        "path": "vercel.json",
+        "projectedFrom": "site/vercel.json"
+      }
+    ],
+    "projectionRule": "Only an unchanged committed site/vercel.json projected as the root vercel.json during the Vercel --site build is accepted. Changed settings, other dirty files and staged edits remain rejected.",
+    "sdkSourceRevision": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+    "sdkPackageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026",
+    "servedSdkWasm": {
+      "path": "assets/breez_sdk_spark_wasm_bg-jQ-bgV27.wasm",
+      "bytes": 12311382,
+      "sha256": "4fc7fb24e6244c7b94a6f869425537eaf47fe9ee721d31f273b58495d1554b25"
+    },
+    "servedWasmMatchesVendoredSdkArchive": true,
+    "stagedHttpAssetCount": 11,
+    "publicWalletAssetCount": 10,
+    "publicSiteAssetCount": 6
+  },
+  "publicVerification": {
+    "receipt": "public-browser.json",
+    "environment": "Disposable headless Chromium browser state against the actual public production domains with normal TLS verification.",
+    "wallet": [
+      "Real onboarding at claimtest=1",
+      "Zoom enabled",
+      "Startup images decoded",
+      "No horizontal overflow at 320, 390 and 1280 CSS pixels",
+      "Ten served assets match manifest bytes and hashes, including actual SDK WASM",
+      "No page errors"
+    ],
+    "site": [
+      "Home, Support and Learn headings checked",
+      "No horizontal overflow at 320, 390 and 1280 CSS pixels",
+      "Six official network logos decoded after opening the network tab",
+      "Unsupported Monad and absolute 100% claims absent",
+      "Six served assets match manifest bytes and hashes",
+      "Security headers checked",
+      "Contact configuration GET reports available",
+      "Malformed LNURL route rejected with JSON error",
+      "No page errors"
+    ],
+    "contactLimit": "The public GET proves configured availability only. No contact POST, delivery or live Redis acceptance was performed against production.",
+    "lnurlLimit": "Invalid-input routing proof only. It is not Lightning settlement acceptance.",
+    "visualReview": "Read-only normal-scroll follow-up at 390x844 revealed all ten animated elements to full opacity with no horizontal overflow and no page errors. Principal copy and controls rendered. Minor decorative glyph and mining-label overlap observations remain; see site-reveal-review.json.",
+    "visualReceipt": "site-reveal-review.json"
+  },
+  "serviceWorkerEvidence": {
+    "finalSourcePolicyTestsPassed": 9,
+    "finalSourceManifestTestsPassed": 23,
+    "historicalLocalLifecycleReceipt": {
+      "passed": true,
+      "completed_at_utc": "2026-10-26T22:21:15.153Z",
+      "named_checkpoints": 9,
+      "recorded_source_head": "64408512c4c7fd74d81e3f28e129f9a5be87274b",
+      "previous_worker_source": "b914523ce283d4bd7d3974dcb213cba0531056a6",
+      "built_manifest_source": "ca9dd2b0f9aeefbb16ccd0c87f1b2115cd9ed7fe",
+      "built_manifest_release": "5c148f56fc89789e0a02",
+      "old_worker_sha256": "6788851d9add4c0f85d2f78adc3212f6f87db05fb660f3d6a0aa80a30c563c24",
+      "new_worker_sha256": "1b81167c24bab1ec4fb6aa7b378144c88badaf0640d8b106ad55105441e02f5a",
+      "observed": [
+        "New worker waited while two, then one, old controlled tabs remained open.",
+        "New worker activated after all old controlled tabs closed.",
+        "Synthetic localStorage and IndexedDB markers survived upgrade, offline reload and rollback.",
+        "Offline onboarding reloaded and all four brand images decoded after the cache correction.",
+        "Rolling back to the legacy worker forced a controller change and removed the new release cache; markers and the same frozen onboarding shell remained usable offline."
+      ],
+      "limitations": [
+        "Disposable local origin and browser profile; no original production-origin installed PWA or real wallet data.",
+        "Old and new workers served the same frozen current onboarding shell; this was not a historical application-bundle rollback or SDK/storage-schema migration test.",
+        "Legacy forced activation is observed behavior, not approval of safe production rollback.",
+        "No physical-device, storage-pressure/quota-exhaustion, OS eviction or separate-device recovery acceptance.",
+        "Historical receipt on the earlier corrective source. It does not test final source 13f7ff73, its newer theme assets or its additional legacy-v5 cleanup."
+      ],
+      "current_release_acceptance": false
+    }
+  },
+  "dependencyAudit": {
+    "scope": "Corrective branch locked dependencies",
+    "vulnerable_entries": 10,
+    "moderate": 4,
+    "high": 6,
+    "critical": 0,
+    "all_flagged_entries_marked_dev_in_lock": true,
+    "wallet_browser_bundle_includes_flagged_packages": false,
+    "browser_pbkdf2_implementation": "@noble/hashes/pbkdf2",
+    "limits": [
+      "This traces the wallet browser bundle, not all serverless code or build-time execution.",
+      "Absence from the emitted bundle does not remove development or build-tool vulnerability findings.",
+      "The emitted-bundle trace is pinned to earlier corrective source 64408512. The final lockfile is byte-identical, but exact final-source reachability was not rerun."
+    ],
+    "audit_report": "npm-audit.json",
+    "reachability_report": "dependency-reachability.json",
+    "separate_candidate_zero_vulnerability_result_does_not_transfer_to_this_release": true,
+    "audit_and_trace_source_commit": "64408512c4c7fd74d81e3f28e129f9a5be87274b",
+    "final_release_lock_sha256": "642a25bebbea06222a1fb0dd38d5876467e7ba1959417cedf8d13983fd29bb47",
+    "final_release_lock_equal_to_audited_lock": true,
+    "trace_repeated_on_final_source": false
+  },
+  "securityCandidate": {
+    "pullRequestUrl": "https://github.com/Bradvani/getyoursats-wallet/pull/43",
+    "head": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+    "tree": "a271ade6929e72fc0f17f754242f29da1a96b896",
+    "draft": true,
+    "productionStatus": "NO-GO; not promoted",
+    "contractsDocument": "https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/remaining-sdk-contracts-20261027.md"
+  },
+  "remainingGates": [
+    "A01: encrypted mnemonic migration, locking, data preservation and physical recovery acceptance on the separate security candidate.",
+    "A02: exact-intent signing coverage, including SDK Lightning claim and fresh/rebuilt unilateral-exit contracts.",
+    "A03: authoritative recovery after uncertain outcomes, including mature-deposit lost acknowledgments and durable exit build/resume binding.",
+    "Fresh funded valueless-regtest acceptance on the exact final candidate. The prior faucet request was rejected by CAPTCHA/bot protection; no funds arrived and no funded sequence was completed.",
+    "Physical iPhone and Android, installed PWA, passkey and recovery phrase, separate-device restoration and original-origin old/new wallet-state rollout.",
+    "Critical-flow translation, RTL and accessibility acceptance.",
+    "Qualified independent review of the exact application source, SDK patch, lockfile and built artifacts.",
+    "GitHub repository About description/homepage still need owner-session editing; source README, site metadata and llms.txt are corrected.",
+    "Corrective lock still reports six high and four moderate dependency entries. All are marked dev in the lock; historical browser trace is not universal runtime or build-time clearance."
+  ],
+  "otherLimits": [
+    "History pagination lacks an SDK transactional snapshot or stable secondary key. Concurrent backfill, deletion and equal-timestamp reorder remain completeness limits.",
+    "No physical device, funded payment, provider outage, original-origin rollback or OS storage eviction acceptance is implied by green CI.",
+    "Search engine and third-party summaries were not proven refreshed after this release.",
+    "Visual QA retained minor decorative missing-glyph observations in this Chromium environment and a partially overlaid mining illustration label at 390 CSS pixels."
+  ],
+  "evidenceFiles": [
+    {
+      "path": "ci.json",
+      "bytes": 8244,
+      "sha256": "4a4f985a567e5d6dadc7635d534478df950fda0a5f522f3299f6c9188a0d1604"
+    },
+    {
+      "path": "wallet-release-manifest.json",
+      "bytes": 109070,
+      "sha256": "497064e3b82fb87aeca02c45543d8d17d6ca3754624dc5152eeff1c9d55db2b6"
+    },
+    {
+      "path": "site-release-manifest.json",
+      "bytes": 6168,
+      "sha256": "c710d4c1e1fb99b7febfb745e3c46676c83d2855dcfa8fa0b6366b375fa447b9"
+    },
+    {
+      "path": "staged-assets.json",
+      "bytes": 5804,
+      "sha256": "6f87686cce1dbcfcbfa916c17f70915ec81a7d37c812d8f2b04b5f62e7de1626"
+    },
+    {
+      "path": "staged-routes.json",
+      "bytes": 806,
+      "sha256": "e6bebaaa1d157701aca7b034042c4fedaaa87536175b3dd11f0492b99a234f70"
+    },
+    {
+      "path": "public-browser.json",
+      "bytes": 4595,
+      "sha256": "b8ed855af3695e5b68fe8f64dac518eea05fd5bb134a67f6f6183159e8da4e5d"
+    },
+    {
+      "path": "production-aliases.json",
+      "bytes": 1158,
+      "sha256": "9c7919fbaeb380b94437db0718dedae2cefb0b10de8f88385bca5d6bb7787287"
+    },
+    {
+      "path": "npm-audit.json",
+      "bytes": 12511,
+      "sha256": "a04792718b3ce893ade65bd704e9d5af2108ce9cbaf8af54a785c7c50ab06cb9"
+    },
+    {
+      "path": "dependency-reachability.json",
+      "bytes": 7459,
+      "sha256": "accd0bfd41dbddacb5ea556d207c233f157225763f86e890913a8be2c75ea797"
+    },
+    {
+      "path": "site-reveal-review.json",
+      "bytes": 7462,
+      "sha256": "0312f9a67cbc266431993a92d552757eee8b7c5e48aa7922f3dc62427ad3e4ed"
+    }
+  ]
+}

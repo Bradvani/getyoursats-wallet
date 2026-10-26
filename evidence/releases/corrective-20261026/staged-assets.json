@@ -1,0 +1,151 @@
+[
+  {
+    "product": "wallet",
+    "path": "index.html",
+    "sha256": "ffc0d57c7c4e910e47b786c5057b3c6702af4384f867fa6e3ba63dbcee54d110",
+    "bytes": 7106,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "permissions-policy": "camera=(self), microphone=(), geolocation=(), payment=(), publickey-credentials-create=(self), publickey-credentials-get=(self)",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-frame-options": "DENY"
+    }
+  },
+  {
+    "product": "wallet",
+    "path": "sw.js",
+    "sha256": "e19ea1f61eb8d45533d8139954ac0805a767b4bc54793b0bd5b36f1fe015032b",
+    "bytes": 5362,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "application/javascript; charset=utf-8",
+      "permissions-policy": "camera=(self), microphone=(), geolocation=(), payment=(), publickey-credentials-create=(self), publickey-credentials-get=(self)",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-frame-options": "DENY"
+    }
+  },
+  {
+    "product": "wallet",
+    "path": "theme-bootstrap.js",
+    "sha256": "c5db4fb26a83ccdfd1b654b6d852adc267250115f2b54c79be545f227d3ea857",
+    "bytes": 791,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "application/javascript; charset=utf-8",
+      "permissions-policy": "camera=(self), microphone=(), geolocation=(), payment=(), publickey-credentials-create=(self), publickey-credentials-get=(self)",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-frame-options": "DENY"
+    }
+  },
+  {
+    "product": "wallet",
+    "path": "brand/wordmark-top-light.svg",
+    "sha256": "4af9739f8ac830f46e593b01498d4d9b3a5b94a5f33a909a6b2e367ce6efcda0",
+    "bytes": 4830,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "image/svg+xml",
+      "permissions-policy": "camera=(self), microphone=(), geolocation=(), payment=(), publickey-credentials-create=(self), publickey-credentials-get=(self)",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-frame-options": "DENY"
+    }
+  },
+  {
+    "product": "wallet",
+    "path": "brand/wordmark-bottom-light.svg",
+    "sha256": "2f33e6e2c9799597f821c9df90633b64ca4c9bf660eb4035c31cfe40b21e788e",
+    "bytes": 4600,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "image/svg+xml",
+      "permissions-policy": "camera=(self), microphone=(), geolocation=(), payment=(), publickey-credentials-create=(self), publickey-credentials-get=(self)",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-frame-options": "DENY"
+    }
+  },
+  {
+    "product": "site",
+    "path": "index.html",
+    "sha256": "608dca8cd09350f8902641e7f1c90a535d6ff27d77382536309b64fe185f9b27",
+    "bytes": 253218,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "permissions-policy": "camera=(), microphone=(), geolocation=()",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY"
+    }
+  },
+  {
+    "product": "site",
+    "path": "support.html",
+    "sha256": "0b57510e7c415d15dcb450a39d054b140815ea75b2800c0cb071cee9f44e97a6",
+    "bytes": 15805,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "permissions-policy": "camera=(), microphone=(), geolocation=()",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY"
+    }
+  },
+  {
+    "product": "site",
+    "path": "learn.html",
+    "sha256": "f3e8a37a25d3afa1ff7a2366e9c5b29a6e1005f17e6de839f700bc105c6df2ca",
+    "bytes": 9124,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "text/html; charset=utf-8",
+      "permissions-policy": "camera=(), microphone=(), geolocation=()",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY"
+    }
+  },
+  {
+    "product": "site",
+    "path": "help-center.js",
+    "sha256": "779cb29538f79da55166a072555adecb32a127334c3a60eb9b4469d6cda946df",
+    "bytes": 31001,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "application/javascript; charset=utf-8",
+      "permissions-policy": "camera=(), microphone=(), geolocation=()",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY"
+    }
+  },
+  {
+    "product": "site",
+    "path": "help-style.css",
+    "sha256": "511a24ee422404a0b1450e13417dec0097b8cb9534cd921e9b9cd3c538c6be73",
+    "bytes": 10454,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "text/css; charset=utf-8",
+      "permissions-policy": "camera=(), microphone=(), geolocation=()",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY"
+    }
+  },
+  {
+    "product": "site",
+    "path": "llms.txt",
+    "sha256": "d8d24820bf70e136d635f34f6e122683f1f069e5bf21eb8646b5523f7a013212",
+    "bytes": 2724,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "text/plain; charset=utf-8",
+      "permissions-policy": "camera=(), microphone=(), geolocation=()",
+      "referrer-policy": "strict-origin-when-cross-origin",
+      "x-content-type-options": "nosniff",
+      "x-frame-options": "DENY"
+    }
+  }
+]
