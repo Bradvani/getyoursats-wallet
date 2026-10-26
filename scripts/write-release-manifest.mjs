@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const site = process.argv.includes('--site');
@@ -12,6 +13,28 @@ const read = (path) => readFile(resolve(root, path));
 function git(...args) {
   try { return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
   catch { return null; }
+}
+const localRevision = git('rev-parse', 'HEAD');
+const restoredConfigFormatting = [];
+// Vercel reserializes its configuration before the build. Restore the committed
+// bytes only when the parsed values are identical; changed settings still fail
+// the clean-source gate. Do this before hashing the site's emitted files.
+if (process.env.VERCEL === '1' && localRevision) {
+  for (const path of ['vercel.json', 'site/vercel.json']) {
+    let committed;
+    try {
+      committed = execFileSync('git', ['show', `HEAD:${path}`], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'] });
+    } catch { continue; }
+    let current;
+    try { current = await read(path); } catch { continue; }
+    if (committed.equals(current)) continue;
+    let identical;
+    try { identical = isDeepStrictEqual(JSON.parse(committed.toString()), JSON.parse(current.toString())); }
+    catch { continue; }
+    if (!identical) continue;
+    await writeFile(resolve(root, path), committed);
+    restoredConfigFormatting.push(path);
+  }
 }
 async function files(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -38,7 +61,6 @@ if (!site) {
   await writeFile(resolve(output, 'sw.js'), worker);
   artifactFiles.push({ path: 'sw.js', bytes: Buffer.byteLength(worker), sha256: sha256(worker) });
 }
-const localRevision = git('rev-parse', 'HEAD');
 const suppliedRevision = process.env.VERCEL_GIT_COMMIT_SHA || process.env.GETYOURSATS_SOURCE_REVISION;
 if (suppliedRevision && !/^[0-9a-f]{40}$/.test(suppliedRevision)) throw new Error('Invalid release source revision');
 if (suppliedRevision && localRevision && suppliedRevision !== localRevision) throw new Error('Release source does not match checkout');
@@ -56,6 +78,7 @@ const manifest = {
   releaseId,
   sourceRevision: revision,
   sourceDirty: sourceStatus === null ? null : Boolean(sourceStatus),
+  restoredConfigFormatting,
   sdk: site ? null : {
     sourceRevision: sdkRevision,
     packageSha256: sha256(await read('vendor/breeztech-breez-sdk-spark.tgz')),

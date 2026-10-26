@@ -37,7 +37,7 @@ async function fixture(t, withGit = true) {
     run(extraEnv = {}) {
       return execFileSync(process.execPath, ['scripts/write-release-manifest.mjs'], {
         cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
-        env: {...process.env, VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_SHA: '', GETYOURSATS_SOURCE_REVISION: '', ...extraEnv},
+        env: {...process.env, VERCEL: '', VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_SHA: '', GETYOURSATS_SOURCE_REVISION: '', ...extraEnv},
       });
     },
     async manifest() { return JSON.parse(await readFile(join(root, 'dist/release-manifest.json'), 'utf8')); },
@@ -98,4 +98,25 @@ test('invalid SDK provenance and missing worker placeholder fail the build', asy
   await writeFile(join(app.root, 'vendor/SOURCE_COMMIT'), 'a'.repeat(40) + '\n');
   await writeFile(join(app.root, 'public/sw.js'), workerSource.replace('__GETYOURSATS_RELEASE__', 'hardcoded-cache'));
   assert.throws(() => app.run(), /placeholder|release.*token/i);
+});
+
+test('Vercel-only configuration formatting is restored without accepting changed settings', async t => {
+  const app = await fixture(t);
+  const original = '{\n  "headers": [{"source": "/(.*)", "headers": [{"key": "X-Frame-Options", "value": "DENY"}]}],\n  "installCommand": "npm ci"\n}\n';
+  await writeFile(join(app.root, 'vercel.json'), original);
+  app.git('add', 'vercel.json');
+  app.git('-c', 'user.name=Disposable Test', '-c', 'user.email=disposable@example.invalid', 'commit', '-qm', 'Disposable hosting fixture');
+  const parsed = JSON.parse(original);
+  await writeFile(join(app.root, 'vercel.json'), JSON.stringify({installCommand: parsed.installCommand, headers: parsed.headers}));
+  assert.throws(() => app.run({VERCEL_ENV: 'production'}), /clean source/);
+  app.run({VERCEL: '1', VERCEL_ENV: 'production'});
+  assert.equal(await readFile(join(app.root, 'vercel.json'), 'utf8'), original);
+  assert.equal((await app.manifest()).sourceDirty, false);
+  assert.deepEqual((await app.manifest()).restoredConfigFormatting, ['vercel.json']);
+
+  parsed.headers[0].headers[0].value = 'SAMEORIGIN';
+  const changed = JSON.stringify(parsed);
+  await writeFile(join(app.root, 'vercel.json'), changed);
+  assert.throws(() => app.run({VERCEL: '1', VERCEL_ENV: 'production'}), /clean source/);
+  assert.equal(await readFile(join(app.root, 'vercel.json'), 'utf8'), changed);
 });

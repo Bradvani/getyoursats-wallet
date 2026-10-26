@@ -5,7 +5,10 @@ const MAX_ENTRIES = 192;
 const STATIC_ASSETS = [
   '/', '/index.html', '/manifest.json',
   '/brand/wordmark-stacked-dark.svg', '/brand/wordmark-horizontal-dark.svg',
-  '/brand/favicon-48.png', '/brand/app-icon-192.png', '/brand/app-icon-512.png',
+  '/brand/wordmark-stacked-light.svg', '/brand/wordmark-horizontal-light.svg',
+  '/brand/wordmark-top.svg', '/brand/wordmark-bottom.svg', '/brand/wordmark-coin.svg',
+  '/brand/wordmark-3d-transparent.png', '/brand/app-icon.svg', '/brand/monogram.svg',
+  '/brand/favicon-48.png', '/brand/app-icon-180.png', '/brand/app-icon-192.png', '/brand/app-icon-512.png',
 ];
 const ownedCache = (name) => name.startsWith(CACHE_PREFIX) || name === LEGACY_CACHE;
 const isHashedAsset = (path) => /^\/assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(js|mjs|css|wasm|woff2?|ttf)$/.test(path);

@@ -176,3 +176,21 @@ test('offline shell and previous immutable chunks remain usable without forced a
   assert.equal((await worker.request('/assets/unavailable-12345678.js')).status, 503);
   assert.equal(worker.calls.skipWaiting + worker.calls.claim, 0);
 });
+
+test('offline onboarding and wallet branding survive legacy-cache cleanup', async () => {
+  const worker = harness();
+  const brandAssets = [
+    'wordmark-top.svg', 'wordmark-bottom.svg', 'wordmark-coin.svg', 'wordmark-3d-transparent.png',
+    'wordmark-stacked-light.svg', 'wordmark-horizontal-light.svg', 'app-icon.svg', 'monogram.svg',
+  ];
+  const old = await worker.caches.open('getyoursats-brand-v4');
+  for (const name of brandAssets) await old.put(`/brand/${name}`, new Response('previous public brand asset'));
+  await worker.lifecycle('install');
+  await worker.lifecycle('activate');
+  worker.network(() => Promise.reject(new Error('offline')));
+  for (const name of brandAssets) {
+    const response = await worker.request(`/brand/${name}`);
+    assert.equal(response?.status, 200, `Missing offline brand asset: ${name}`);
+    assert.ok((await response.text()).length > 0);
+  }
+});
