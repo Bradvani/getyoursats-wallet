@@ -8,7 +8,7 @@ The source continuation starts at `4664c6d1358ecc2389f0b9df3df18b84ab27a192` on 
 
 - Direct incoming BTC claims now bind one exact transfer ID, receiving identity, network, amount, zero fee and an approval expiry. They do not enable bulk claims, deposits, Lightning receives, tokens or counter-swaps.
 - The SDK re-queries operators, validates the transfer, and stores a single-attempt marker before claiming. The browser journals before invoking the SDK. Timeout, mismatched receipt and a locked session remain uncertain. Restart reconciliation queries the same transfer without claiming it again. Unresolved incoming records block new payments and origin-wide wallet removal.
-- The wallet has a foreground review/claim action and a status check. The containment rollback reader inventories incoming and deposit-claim records without changing them.
+- The wallet has a foreground review/claim action and a status check. After an uncertain attempt its repeat-claim action disappears; UI regression tests cover this and the absence of automatic claims. The containment rollback reader inventories incoming and deposit-claim records without changing them.
 - A clean SDK source reconstruction found that cumulative patch 0003 referenced `sdk/observation.rs` but omitted its file. Complete cumulative patch 0004 includes the exact observation source preserved in patch 0002 and the incoming extension. The build and packager now reject source files omitted from the supplied patch. Patch 0003 and its historical binary remain preserved; their hash check alone did not establish complete source provenance.
 - Exit funding addresses now use the test-network derivation on signet, reject unknown networks, and reject invalid/hardened address indexes. The existing valid mainnet/testnet/regtest derivations remain covered by vectors. This correction does not enable new or rebuilt browser exits.
 
@@ -20,7 +20,7 @@ Tested browser WASM SHA-256: `3dc338e2d7e7e42f85939adb81402520ba456d0f28eb1e5bd8
 
 Cumulative source patch SHA-256: `77407dafbc05893a5be89a012ab2ccfabf269eec14b63cbcb891f9bf18f96b6c`.
 
-The GitHub clean-build workflow is run `40251209478`; its eventual artifact must be checked separately. The hashes above identify the sandbox build actually used for the network attempt, not an assertion that another build is byte-identical.
+GitHub clean-build run `40251209478` passed and preserved the compiled SDK in `55651bc25f4d1265c01702a2184b8722b1fc1d6e`. Its package SHA-256 is `0b37230dace9be42c83b75d3e8c19e54ab56e97742201f74af9a5e22255f298f` and browser WASM SHA-256 is `ec96d375e5afec1eff42cb635050015cabee6197d2e935384088163eacfa2b29`. The source patch hash matches the sandbox network-test build. The package and browser binaries differ from the sandbox build; byte-for-byte build reproducibility is not established. Both builds passed their installed-artifact checks; the network receipt above applies to the exact hashes it records.
 
 ## Actual network result
 
@@ -36,7 +36,7 @@ The receipt pins the exact fixture/runner hashes used for that attempt. The late
 
 ## Verification
 
-- Full two-worker application suite: **1,134 passed, 1 skipped, zero failures**. The skipped case is the opt-in Bitcoin regtest integration; the independent Bitcoin-regtest CI run at the source head passed.
+- Full two-worker application suite: **1,136 passed, 1 skipped, zero failures** (with the GitHub-built SDK installed). The skipped case is the opt-in Bitcoin regtest integration; the independent Bitcoin-regtest CI run at the source head passed.
 - The first unrestricted-parallel local run had one existing modal-animation visibility failure. Its complete file and the full two-worker suite passed on rerun. No assertion was relaxed or removed.
 - TypeScript, scoped lint, preview build and 9 Chromium containment/rollback cases passed. The production interlock still rejects a production build.
 - These automated results do not replace funded protocol acceptance, physical devices or independent review.

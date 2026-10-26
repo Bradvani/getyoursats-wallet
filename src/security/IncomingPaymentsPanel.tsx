@@ -28,7 +28,7 @@ export default function IncomingPaymentsPanel(){
   <h2 className="font-semibold">Incoming Spark payments</h2>
   <p className="text-sm">Check for incoming Bitcoin, then approve each receipt. Direct Spark claims have no fee.</p>
   <button type="button" disabled={busy} onClick={()=>void act()} className="min-h-11 rounded-lg border border-spark-border px-3 disabled:opacity-50">{busy?'Checking…':'Check incoming payments'}</button>
-  {pending.map(p=><div key={p.id} className="space-y-1 rounded-lg border border-spark-border p-3">
+  {pending.filter(p=>!records.some(r=>r.paymentId===p.id)).map(p=><div key={p.id} className="space-y-1 rounded-lg border border-spark-border p-3">
    <p>{p.amount.toString()} sats · 0 sats fee</p><p className="break-all text-xs">{p.id}</p>
    <button type="button" disabled={busy} onClick={()=>void act(p.id)} className="min-h-11 rounded-lg border border-spark-border px-3">Review and claim</button>
   </div>)}
