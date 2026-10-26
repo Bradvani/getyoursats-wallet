@@ -35,6 +35,7 @@ describe('WalletActivityPanel', () => {
     expect(screen.getByRole('heading',{name:'History'})).toBeTruthy();
     const back = screen.getByRole('button',{name:'Back to Wallet'});
     expect(back.getAttribute('data-testid')).toBe('history-back-to-wallet');
+    expect(back.textContent).toBe(''); // Icon-only visually, with a full accessible name.
     fireEvent.click(back);
     expect(onViewChange).toHaveBeenCalledWith('activity');
     rerender(<WalletActivityPanel {...props} view="activity"/>);
