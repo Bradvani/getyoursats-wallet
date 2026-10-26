@@ -93,6 +93,27 @@ describe('useLightningAddress error copy', () => {
 });
 
 describe('shared Lightning address state', () => {
+  it('retries a colliding anonymous name with a four-digit Web Crypto suffix', async () => {
+    const values = [0, 0, 8999];
+    const random = vi.spyOn(globalThis.crypto, 'getRandomValues').mockImplementation(array => {
+      if (!(array instanceof Uint32Array)) throw new Error('Expected a 32-bit sample');
+      array[0] = values.shift() ?? 0;
+      return array;
+    });
+    const registered = address('SalmonBat9999');
+    const client = createMockClient({
+      checkLightningAddressAvailable: vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true),
+      registerLightningAddress: vi.fn().mockResolvedValue(registered),
+    });
+    const { result } = renderLightningAddress(client);
+
+    await waitFor(() => expect(result.current.address).toEqual(registered));
+    expect(client.checkLightningAddressAvailable).toHaveBeenNthCalledWith(1, { username: 'SalmonBat' });
+    expect(client.checkLightningAddressAvailable).toHaveBeenNthCalledWith(2, { username: 'SalmonBat9999' });
+    expect(client.registerLightningAddress).toHaveBeenCalledWith({ username: 'SalmonBat9999' });
+    expect(random).toHaveBeenCalledTimes(3);
+  });
+
   it('registers once for concurrent home and Receive consumers and uses the SDK result', async () => {
     const registered = address('calmfox');
     const client = createMockClient({ registerLightningAddress: vi.fn().mockResolvedValue(registered) });

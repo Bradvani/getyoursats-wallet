@@ -17,6 +17,7 @@ Use the [official reverse-proxy guide](https://sdk-doc-spark.breez.technology/gu
 - Leave signed wallet recovery, metadata and deletion available if email storage is down or new registration is disabled.
 - Reject native address transfers until a transfer entitlement policy is implemented.
 - Prepare the wallet's address state to follow its SDK instance and provider-confirmed changes.
+- Generate anonymous names and collision suffixes with Web Crypto, without an insecure randomness fallback.
 
 This draft does not switch the production wallet's `lnurlDomain`, enable the email screen or activate username claims. Those changes need the migration work described below. It does not implement fiat on-ramping, fee sponsorship or fee-free Lightning payments.
 
@@ -84,7 +85,7 @@ Registration can be paused by disabling `GETYOURSATS_NATIVE_HANDLES_ENABLED` and
 
 - Proxy: 22 local tests passed, including independent canonical-message hashing, ownership and email gates, malformed requests, method/path bypasses, CORS, secret reflection, compression and empty HEAD responses.
 - Existing email cryptography and disabled-service behavior: four tests passed.
-- Wallet hook and the Receive feature suite: 25 tests passed across six test files.
+- Wallet hook, Receive feature suite and secure random-name utility: 31 tests passed across seven test files.
 - Targeted hook lint, TypeScript and production wallet build passed. The build retains existing dependency deprecation and chunking warnings.
 - Secret-free Vercel probes confirmed the routing/transport behavior described above. They did not register a name, access the real email database, generate an invoice or send a payment.
 - The existing CI service-test command includes the new proxy tests, so they also run in the repository's GetYourSats checks.

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { LightningAddressInfo, BreezSdk } from '@breeztech/breez-sdk-spark';
 import { useSdkEvents, useWallet } from '../../../contexts/WalletContext';
-import { generateRandomName } from '../../../utils/randomName';
+import { generateRandomName, generateRandomNameSuffix } from '../../../utils/randomName';
 import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
 
@@ -99,7 +99,7 @@ function loadAddress(wallet: BreezSdk, state: AddressState): Promise<void> {
 
       const base = generateRandomName();
       for (let i = 0; i < 3; i++) {
-        const username = base + (i === 0 ? '' : String(Math.floor(1000 + Math.random() * 9000)));
+        const username = base + (i === 0 ? '' : generateRandomNameSuffix());
         const available = await wallet.checkLightningAddressAvailable({ username });
         if (!current(state, revision)) return;
         if (!available) continue;
