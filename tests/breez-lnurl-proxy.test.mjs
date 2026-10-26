@@ -175,6 +175,24 @@ test('accepts the pinned SDK canonical message with its independently specified 
   assert.equal(app.forwarded.length,1);
 });
 
+test('uses the integration read-only credential without mixing storage configuration pairs',async()=>{
+  const integration={UPSTASH_REDIS_REST_URL:undefined,UPSTASH_REDIS_REST_TOKEN:undefined,
+    KV_REST_API_URL:'https://integration-storage.example',KV_REST_API_TOKEN:'test-write-token',
+    KV_REST_API_READ_ONLY_TOKEN:'test-read-token'};
+  const app=harness({env:integration});
+  assert.equal((await app.invoke()).statusCode,200);
+  assert.equal(app.storage[0].url,'https://integration-storage.example/');
+  assert.equal(app.storage[0].options.headers.Authorization,'Bearer test-read-token');
+  const partial=harness({env:{...integration,UPSTASH_REDIS_REST_URL:'https://explicit-storage.example'}});
+  assert.equal((await partial.invoke()).statusCode,503);
+  assert.equal(partial.storage.length,0);
+  assert.equal(partial.forwarded.length,0);
+  const explicit=harness({env:{...integration,UPSTASH_REDIS_REST_URL:environment.UPSTASH_REDIS_REST_URL,
+    UPSTASH_REDIS_REST_TOKEN:environment.UPSTASH_REDIS_REST_TOKEN}});
+  assert.equal((await explicit.invoke()).statusCode,200);
+  assert.equal(explicit.storage[0].options.headers.Authorization,'Bearer test-storage-token');
+});
+
 test('feature and storage configuration fail closed before forwarding registration',async()=>{
   for(const env of [{GETYOURSATS_NATIVE_HANDLES_ENABLED:'false'},{GETYOURSATS_NATIVE_HANDLES_ENABLED:undefined},
     {UPSTASH_REDIS_REST_URL:undefined},{UPSTASH_REDIS_REST_TOKEN:''}]){

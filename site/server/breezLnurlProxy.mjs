@@ -138,19 +138,26 @@ function registrationPayload(raw,pubkey,now){
   if(!authenticated)throw new ProxyError(401,'Wallet authentication failed');
 }
 
+function registrationStorage(env){
+  if(env.UPSTASH_REDIS_REST_URL||env.UPSTASH_REDIS_REST_TOKEN)
+    return {url:env.UPSTASH_REDIS_REST_URL,token:env.UPSTASH_REDIS_REST_TOKEN};
+  return {url:env.KV_REST_API_URL,token:env.KV_REST_API_READ_ONLY_TOKEN||env.KV_REST_API_TOKEN};
+}
+
 function registrationEnabled(env){
-  if(env.GETYOURSATS_NATIVE_HANDLES_ENABLED!=='true'||
-      !env.UPSTASH_REDIS_REST_URL||!env.UPSTASH_REDIS_REST_TOKEN)
+  const storage=registrationStorage(env);
+  if(env.GETYOURSATS_NATIVE_HANDLES_ENABLED!=='true'||!storage.url||!storage.token)
     throw new ProxyError(503,'Username registration is not available');
 }
 
 async function requireVerifiedEmail(pubkey,env,fetchImpl){
   let record;
   try{
-    const url=new URL(env.UPSTASH_REDIS_REST_URL);
+    const storage=registrationStorage(env);
+    const url=new URL(storage.url);
     if(url.protocol!=='https:'||url.username||url.password)throw new Error();
     const response=await fetchImpl(url.href,{
-      method:'POST',headers:{Authorization:'Bearer '+env.UPSTASH_REDIS_REST_TOKEN,'Content-Type':'application/json'},
+      method:'POST',headers:{Authorization:'Bearer '+storage.token,'Content-Type':'application/json'},
       body:JSON.stringify(['GET',EMAIL_ROOT+pubkey]),
       redirect:'error',cache:'no-store',signal:AbortSignal.timeout(7000)
     });
