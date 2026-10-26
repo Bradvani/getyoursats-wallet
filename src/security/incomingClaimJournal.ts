@@ -8,7 +8,7 @@ const key=(r:IncomingClaim)=>INCOMING_CLAIM_PREFIX+r.walletKey+':'+r.paymentId;
 export const incomingTransferId=(v:string)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v);
 function valid(r:IncomingClaim):boolean{
  return !!r&&r.version===1&&/^[0-9a-f]{64}$/.test(r.walletKey)&&incomingTransferId(r.paymentId)&&
- ['mainnet','regtest','signet'].includes(r.network)&&/^[1-9][0-9]*$/.test(r.amountSats)&&BigInt(r.amountSats)<=2_100_000_000_000_000n&&
+ ['mainnet','regtest','signet'].includes(r.network)&&typeof r.amountSats==='string'&&/^[1-9][0-9]*$/.test(r.amountSats)&&BigInt(r.amountSats)<=2_100_000_000_000_000n&&
  Number.isSafeInteger(r.expiresAt)&&r.expiresAt>0&&Number.isSafeInteger(r.revision)&&r.revision>=0&&
  ['submitting','uncertain','settled'].includes(r.state);
 }

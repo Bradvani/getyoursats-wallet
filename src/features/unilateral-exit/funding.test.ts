@@ -47,6 +47,20 @@ describe('deriveFundingKey', () => {
     expect(key.address.startsWith('bcrt1q')).toBe(true);
   });
 
+  it('uses test-network derivation and addresses on signet', () => {
+    const signet = deriveFundingKey(VECTOR_MNEMONIC, 'signet', 0);
+    expect(signet).toEqual(deriveFundingKey(VECTOR_MNEMONIC, 'testnet', 0));
+    expect(signet.address.startsWith('tb1q')).toBe(true);
+  });
+
+  it.each(['unknown', '', 'MAINNET'])('rejects unknown network %s before displaying a funding address', network => {
+    expect(() => deriveFundingKey(VECTOR_MNEMONIC, network, 0)).toThrow(/Unsupported/);
+  });
+
+  it.each([-1, 1.5, NaN, Infinity, 0x80000000])('rejects invalid or hardened funding index %s', index => {
+    expect(() => deriveFundingKey(VECTOR_MNEMONIC, 'regtest', index)).toThrow(/index/);
+  });
+
   it('gives testnet and mainnet different keys', () => {
     const mainnet = deriveFundingKey(VECTOR_MNEMONIC, 'mainnet', 0);
     const testnet = deriveFundingKey(VECTOR_MNEMONIC, 'testnet', 0);

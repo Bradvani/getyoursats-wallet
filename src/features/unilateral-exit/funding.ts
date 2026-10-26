@@ -21,11 +21,14 @@ interface NetworkParams {
 const networkParams = (network: string): NetworkParams => {
   switch (network) {
     case 'testnet':
+    case 'signet':
       return { hrp: 'tb', coinType: 1 };
     case 'regtest':
       return { hrp: 'bcrt', coinType: 1 };
-    default:
+    case 'mainnet':
       return { hrp: 'bc', coinType: 0 };
+    default:
+      throw new Error('Unsupported exit funding network');
   }
 };
 
@@ -46,6 +49,9 @@ export function deriveFundingKey(mnemonic: string, network: string, index: numbe
     throw new Error('Recovery phrase is not valid');
   }
 
+  if (!Number.isSafeInteger(index) || index < 0 || index >= 0x80000000) {
+    throw new Error('Invalid exit funding address index');
+  }
   const { coinType } = networkParams(network);
   const seed = mnemonicToSeedSync(mnemonic);
   const node = HDKey.fromMasterSeed(seed).derive(`m/84'/${coinType}'/0'/0/${index}`);

@@ -27,7 +27,8 @@
     "regtest:parent-exit": "node local-regtest/watchtower.mjs parent",
     "regtest:watchtower-exit": "node local-regtest/watchtower.mjs exit",
     "test:email-service": "node --test tests/email-account.test.mjs tests/handle-core.test.mjs tests/contact-enquiries.test.mjs",
-    "test:handle-service": "node --test tests/handle-core.test.mjs"
+    "test:handle-service": "node --test tests/handle-core.test.mjs",
+    "test:acceptance:spark": "node scripts/security/accept-disposable-spark.mjs"
   },
   "dependencies": {
     "@breeztech/breez-sdk-spark": "file:vendor/breeztech-breez-sdk-spark.tgz",
