@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { WarningIcon, PasskeyIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
+import { WarningIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import { Capacitor } from '@capacitor/core';
 import SlideInPage from '../components/layout/SlideInPage';
 import { PinGate } from '../components/PinEntry';
 import { LoadingSpinner } from '../components/ui';
+import { PrimaryButton, SecondaryButton } from '../components/ui/buttons';
+import { FIELD_BASE_CLASS } from '../components/ui/forms';
+import { AlertCard } from '../components/AlertCard';
+import { createRecoveryChallenge, type RecoveryChallenge } from '../getyoursats/recoveryChallenge';
 import { isAppLockSupported, isPinEnabled } from '@/services/appLock';
 import {
   isPasskeyMode,
@@ -17,9 +21,13 @@ interface BackupPageProps {
   onBack: () => void;
   /** 'back' when opened via drill-in nav from Settings. */
   closeStyle?: 'close' | 'back';
+  recoveryStatus?: 'pending' | 'passkey-reviewed' | 'phrase-verified';
+  onRecoveryConfirmed?: (status: 'passkey-reviewed' | 'phrase-verified') => void;
 }
 
-const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' }) => {
+const BackupPage: React.FC<BackupPageProps> = ({
+  onBack, closeStyle = 'close', recoveryStatus = 'pending', onRecoveryConfirmed,
+}) => {
   const [mnemonic, setMnemonic] = useState<string | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [privateViewing, setPrivateViewing] = useState(false);
@@ -27,6 +35,15 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
   const canReveal = privateViewing && paperReady;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stage, setStage] = useState<'view' | 'verify' | 'complete'>('view');
+  const [passkeyAcknowledged, setPasskeyAcknowledged] = useState(false);
+  const [passkeyReviewConfirmed, setPasskeyReviewConfirmed] = useState(false);
+  const [handwritten, setHandwritten] = useState(false);
+  const [challenge, setChallenge] = useState<RecoveryChallenge | null>(null);
+  const [answers, setAnswers] = useState<[string, string]>(['', '']);
+  const [verificationError, setVerificationError] = useState('');
+  const passkeyReviewed = recoveryStatus === 'passkey-reviewed' || passkeyReviewConfirmed;
+  const phraseVerified = recoveryStatus === 'phrase-verified' || stage === 'complete';
 
   // App-lock gate at page entry: Backup opens directly from Settings,
   // so when a PIN is set the phrase must sit behind the same gate the
@@ -55,6 +72,7 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
   useScreenCaptureProtection(true);
 
   const isPasskey = isPasskeyMode();
+  const passkeyLabel = isPasskey ? localStorage.getItem('passkeyLabel') ?? 'Default' : null;
 
   // Non-passkey wallet whose seed sits in the biometric-bound tier
   // (biometric unlock enabled in Security settings). Reveal requires
@@ -211,6 +229,9 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
     setIsRevealed(false);
     setPrivateViewing(false);
     setPaperReady(false);
+    setHandwritten(false);
+    setAnswers(['', '']);
+    setVerificationError('');
     if (isPasskey && !seedFromVault) {
       setMnemonic(null);
       setPasskeyAttemptFailed(false);
@@ -220,8 +241,75 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
 
   const words = mnemonic ? mnemonic.split(' ') : [];
 
+  const reviewPasskey = () => {
+    if (gate !== 'open' || !isPasskey || !passkeyAcknowledged || phraseVerified || passkeyReviewed) return;
+    setPasskeyReviewConfirmed(true);
+    onRecoveryConfirmed?.('passkey-reviewed');
+  };
+
+  const beginVerification = () => {
+    if (gate !== 'open' || !isRevealed || !mnemonic || !handwritten) return;
+    try {
+      setChallenge(createRecoveryChallenge(words.length, challenge ?? undefined));
+      setAnswers(['', '']);
+      setVerificationError('');
+      setIsRevealed(false);
+      setStage('verify');
+    } catch {
+      setVerificationError('Could not start the backup check. Hide the words and try again.');
+    }
+  };
+
+  const cancelVerification = () => {
+    handleHide();
+    setStage('view');
+  };
+
+  const verifyBackup = () => {
+    if (gate !== 'open' || stage !== 'verify' || !challenge || !mnemonic) return;
+    if (answers.some((answer, index) => answer.trim().toLowerCase() !== words[challenge[index]])) {
+      setVerificationError('Those words do not match. Check your handwritten backup and try again.');
+      return;
+    }
+    setAnswers(['', '']);
+    setVerificationError('');
+    setMnemonic(null);
+    setPrivateViewing(false);
+    setPaperReady(false);
+    setHandwritten(false);
+    setStage('complete');
+    onRecoveryConfirmed?.('phrase-verified');
+  };
+
+  const closeBackup = () => {
+    setAnswers(['', '']);
+    setMnemonic(null);
+    setIsRevealed(false);
+    onBack();
+  };
+
+  const footer = gate !== 'open' ? undefined : stage === 'verify' ? (
+    <div className="space-y-2">
+      <PrimaryButton className="w-full" disabled={!answers[0].trim() || !answers[1].trim()}
+        onClick={verifyBackup}>Verify Offline Backup</PrimaryButton>
+      <SecondaryButton className="w-full" onClick={cancelVerification}>Return to Backup</SecondaryButton>
+    </div>
+  ) : stage === 'complete' ? (
+    <PrimaryButton className="w-full" onClick={closeBackup}>Done</PrimaryButton>
+  ) : isRevealed && mnemonic ? (
+    <PrimaryButton className="w-full" disabled={!handwritten} onClick={beginVerification}>
+      Check My Handwritten Backup
+    </PrimaryButton>
+  ) : isPasskey && !passkeyReviewed && !phraseVerified ? (
+    <PrimaryButton className="w-full" disabled={!passkeyAcknowledged} onClick={reviewPasskey}>
+      Keep Using My Passkey
+    </PrimaryButton>
+  ) : passkeyReviewed || phraseVerified ? (
+    <PrimaryButton className="w-full" onClick={closeBackup}>Done</PrimaryButton>
+  ) : undefined;
+
   return (
-    <SlideInPage title="Backup" onClose={onBack} slideFrom="left" closeStyle={closeStyle}>
+    <SlideInPage title="Backup" onClose={closeBackup} slideFrom="left" closeStyle={closeStyle} footer={footer}>
       {/* min-h-full + flexed chain so the PIN gate (the sole child
           while it shows) can split the viewport 1/3 header / 2/3
           input; the card views flow from the top as before. */}
@@ -237,24 +325,70 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
             <PinGate reason="Unlock Backup" onUnlocked={() => setGate('open')} />
           )}
 
-          {gate === 'open' && (
-          <>
-          {/* Passkey info card */}
-          {isPasskey && (
-            <div className="bg-spark-dark border border-spark-border rounded-2xl p-6">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-spark-primary/20 flex items-center justify-center shrink-0">
-                  <PasskeyIcon size="md" className="text-spark-primary" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-spark-text-primary mb-1">Passkey Protected</h4>
-                  <p className="text-spark-text-muted text-sm">
-                    This wallet's recovery phrase is derived from your passkey. You can optionally write it down offline as an independent backup. Passkey syncing depends on your device provider.
-                  </p>
-                </div>
-              </div>
-            </div>
+          {gate === 'open' && stage === 'complete' && (
+            <section className="rounded-2xl border border-spark-border bg-spark-dark p-5 space-y-3"
+              role="status" aria-label="Offline backup verification complete">
+              <h2 className="font-display text-lg font-semibold text-spark-text-primary">Offline backup verified</h2>
+              <p className="text-sm text-spark-text-secondary">
+                Your two-word check is complete. Keep the full handwritten phrase somewhere secure and separate from your device.
+              </p>
+              <p className="text-xs text-spark-text-muted">Your recovery words were checked on this device and were not sent anywhere.</p>
+            </section>
           )}
+
+          {gate === 'open' && stage === 'verify' && (
+            <section className="rounded-2xl border border-spark-border bg-spark-dark p-5 space-y-5"
+              aria-label="Verify handwritten backup">
+              <div className="space-y-2">
+                <h2 className="font-display text-lg font-semibold text-spark-text-primary">Check your handwritten backup</h2>
+                <p className="text-sm text-spark-text-secondary">Your recovery words are hidden. Enter the two requested words from your offline copy.</p>
+              </div>
+              {challenge?.map((position, index) => (
+                <label key={position} className="block space-y-2">
+                  <span className="text-sm font-medium text-spark-text-secondary">Word {position + 1}</span>
+                  <input type="text" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+                    className={`${FIELD_BASE_CLASS} p-3`} value={answers[index]}
+                    onChange={event => {
+                      setAnswers(previous => index === 0 ? [event.target.value, previous[1]] : [previous[0], event.target.value]);
+                      setVerificationError('');
+                    }}/>
+                </label>
+              ))}
+              {verificationError && <AlertCard variant="error" title="Try again">{verificationError}</AlertCard>}
+              <p className="text-xs text-spark-text-muted">This check happens only on your device.</p>
+            </section>
+          )}
+
+          {gate === 'open' && stage === 'view' && (
+          <>
+          {isPasskey && (
+            <section className="bg-spark-dark border border-spark-border rounded-2xl p-5 space-y-3"
+              aria-label="Passkey recovery review">
+              <h2 className="font-display font-semibold text-spark-text-primary">Know how to recover with your passkey</h2>
+              <p className="text-spark-text-secondary text-sm">
+                On another compatible device, use the same passkey and wallet label: <strong>{passkeyLabel}</strong>.
+                {' '}Keep access to the password manager and account where you saved that passkey.
+              </p>
+              <p className="text-spark-text-muted text-sm">
+                GetYourSats cannot verify that your passkey has synced. Syncing and account recovery depend on your provider.
+              </p>
+              {!passkeyReviewed && !phraseVerified ? (
+                <label className="flex min-h-11 items-start gap-3 text-sm text-spark-text-secondary">
+                  <input type="checkbox" checked={passkeyAcknowledged}
+                    onChange={event => setPasskeyAcknowledged(event.target.checked)} className="mt-1 accent-spark-primary"/>
+                  <span>I know which password manager and account hold my passkey, and I understand I need the same passkey and wallet label to recover this wallet.</span>
+                </label>
+              ) : passkeyReviewed && !phraseVerified ? (
+                <p className="text-sm font-medium text-spark-text-primary" role="status">Passkey recovery reviewed</p>
+              ) : null}
+              <p className="text-spark-text-muted text-sm">
+                A handwritten recovery phrase is an optional, independent backup. You can create and check that copy below when you are somewhere private.
+              </p>
+            </section>
+          )}
+
+          {phraseVerified && <p className="rounded-xl border border-spark-border bg-spark-dark p-4 text-sm text-spark-text-primary"
+            role="status">Offline backup verified on this device</p>}
 
 
           {!isPasskey && mnemonic && !Capacitor.isNativePlatform() && (
@@ -424,6 +558,12 @@ const BackupPage: React.FC<BackupPageProps> = ({ onBack, closeStyle = 'close' })
                   </div>
                 ))}
               </div>
+              <label className="flex min-h-11 items-start gap-3 border-t border-spark-border pt-4 text-sm text-spark-text-secondary">
+                <input type="checkbox" checked={handwritten} onChange={event => setHandwritten(event.target.checked)}
+                  className="mt-1 accent-spark-primary"/>
+                <span>I have written down every word in order and kept the copy offline in a secure, private place.</span>
+              </label>
+              {verificationError && <AlertCard variant="error" title="Backup check unavailable">{verificationError}</AlertCard>}
             </div>
           )}
 
