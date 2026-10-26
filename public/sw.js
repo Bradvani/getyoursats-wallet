@@ -1,9 +1,12 @@
 // GetYourSats Service Worker
-const CACHE_NAME = 'getyoursats-brand-v4';
+const CACHE_NAME = 'getyoursats-brand-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/theme-bootstrap.js',
+  '/brand/wordmark-stacked-light.svg',
+  '/brand/wordmark-horizontal-light.svg',
   '/brand/wordmark-stacked-dark.svg',
   '/brand/wordmark-horizontal-dark.svg',
   '/brand/favicon-48.png',

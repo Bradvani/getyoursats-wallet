@@ -19,15 +19,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="GetYourSats" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <!-- GetYourSats is dark-only. Declaring the color scheme stops Chrome from
-       adapting standalone PWA chrome to the system theme: without it,
-       Light mode renders a white navigation bar and Dark mode swaps
-       theme-color for Chrome's own near-black. -->
+  <!-- The early bootstrap applies the saved appearance before first paint. -->
   <meta name="color-scheme" content="dark" />
-  <!-- #13131d = spark-surface at 80% composited over the void canvas:
-       the same value the native app pins its system bars to (main.tsx),
-       so PWA system bars blend with the header / bottom-bar glass. The
-       media-qualified pair pins the same color in both system themes. -->
   <meta name="theme-color" content="#0B0B0B" />
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0B0B0B" />
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0B0B0B" />
@@ -80,6 +73,8 @@
        third-party network round trip on the first-paint path of a native
        app and broke first paint offline. -->
 
+  <script src="/theme-bootstrap.js"></script>
+
   <!-- Initial loading styles -->
   <style>
     /* Prevent pull-to-refresh on iOS */
@@ -114,6 +109,12 @@
        resizes the mark at the handoff everywhere else. Every logo on
        the launch path is this same 144 box: LockScreen, PinEntry,
        UnlockPage, UnlockingPage, HomePage. */
+    :root[data-gys-theme="orange"],
+    :root[data-gys-theme="orange"] body,
+    :root[data-gys-theme="orange"] #splash { background: #FAF7F1; }
+    .splash-logo--light { display: none; }
+    :root[data-gys-theme="orange"] .splash-logo--dark { display: none; }
+    :root[data-gys-theme="orange"] .splash-logo--light { display: block; }
     .splash-logo {
       width: 144px;
       height: 144px;
@@ -125,7 +126,8 @@
 <body>
   <!-- Splash screen shown during initial load -->
   <div id="splash">
-    <img class="splash-logo" src="/brand/wordmark-stacked-dark.svg" alt="" />
+    <img class="splash-logo splash-logo--dark" src="/brand/wordmark-stacked-dark.svg" alt="GetYourSats" />
+    <img class="splash-logo splash-logo--light" src="/brand/wordmark-stacked-light.svg" alt="GetYourSats" />
   </div>
   
   <div id="root"></div>

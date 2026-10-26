@@ -145,3 +145,6 @@
 .gys-transfer--static .gys-transfer__seal{animation:none!important;transition:none!important}
 .gys-transfer--static .gys-transfer__core{opacity:1;transform:none}
 .gys-transfer--static .gys-transfer__seal{opacity:1;transform:none}
+
+/* Keep the full-screen reveal on the same canvas as the light-theme splash. */
+:root[data-gys-theme="orange"] .gys-brand-reveal:not(.gys-brand-reveal--inline){background:#FAF7F1}
