@@ -1,6 +1,6 @@
 # Native GetYourSats Lightning addresses
 
-Status: staged integration, 26 October 2026. Domain registration is approved by Breez and the production proxy secret is configured. End-user activation is still pending.
+Status: staged integration, 26 October 2026. The root-domain proxy is deployed with the production secret and new registrations explicitly disabled. End-user activation is still pending.
 
 ## Provider confirmation
 
@@ -77,9 +77,13 @@ The actual returned `LightningAddressInfo` becomes the preferred wallet-bound ad
 
 The email and native-name screens accept only wallet-authenticated email status and provider-confirmed addresses. Opening the email screen does not send mail. Claims are user initiated and the name's public LNURL callback is checked before the claim screen offers copying. Recovery remains independent of email availability; the proxy still enforces verified email when a new name is registered.
 
+After launch, keep the client `nativeLightningAddress` gate enabled so existing names can be restored even when new claims are paused. Pause registration with the server flag, preserving public payment and signed recovery routes. A native name belongs to its wallet identity; the passkey-RP migration offer is withheld when a native name is present or native recovery could not be confirmed because that migration creates a different identity. Label or credential switching never carries the previous wallet's preferred address into the new wallet.
+
+Native name changes made elsewhere are picked up by a fresh login or explicit claim recovery. The default-domain payment SDK's address events cannot authoritatively update the separate native display. Hosted LNURL metadata lookup in the pinned provider source is wallet-key scoped rather than domain scoped, so keeping the original payment SDK should preserve comments and invoice metadata across both domains; confirm that behavior in provider end-to-end testing.
+
 ## Validation and deployment
 
-1. Run `npm run test:lightning-domain`, the targeted Lightning-address hook tests and `npm run build`. Server tests use generated test keys and mocked upstream/storage, never the real shared secret.
+1. Run `npm run test:lightning-domain`, `npm run test:native-lnurl-session`, the targeted Lightning-address hook tests and `npm run build`. The native-session test uses the actual pinned SDK with local regtest providers and a public test mnemonic. It never contacts production wallets, sends funds or needs the real shared secret. The optional SQLite runtime dependency must be built for this Node test (`npm rebuild better-sqlite3` if dependencies were installed with scripts disabled).
 2. Deploy `site/` to a preview of `getyoursats-site`. The project currently uses direct deployments, so a wallet-repository PR by itself does not release the root website. Preserve all existing static assets and `api/contact.js`.
 3. Verify that `/.well-known/lnurlp/{name}`, the invoice/verification paths and private SDK paths actually reach the Node function. The temporary preview has demonstrated routing, but the release's complete site build must pass the same checks. Check POST/DELETE, raw body preservation and decoded query values in the deployed runtime, too.
 4. With a trusted preview and the correctly scoped secret, confirm that the upstream enforces the registered domain/secret boundary and that direct access without the shared secret cannot bypass the proxy's registration policy.
@@ -92,12 +96,21 @@ Registration can be paused by disabling `GETYOURSATS_NATIVE_HANDLES_ENABLED` and
 
 ## Recorded checks
 
-- Proxy: 22 local tests passed, including independent canonical-message hashing, ownership and email gates, malformed requests, method/path bypasses, CORS, secret reflection, compression and empty HEAD responses.
-- Existing email cryptography and disabled-service behavior: four tests passed.
-- Wallet hook, Receive feature suite and secure random-name utility: 31 tests passed across seven test files.
-- Targeted hook lint, TypeScript and production wallet build passed. The build retains existing dependency deprecation and chunking warnings.
+- Proxy: 23 local tests passed, including independent canonical-message hashing, ownership and email gates, malformed requests, method/path bypasses, CORS, secret reflection, compression, empty HEAD responses and integration credentials.
+- Email: 14 individual tests passed for successful OTP verification, restored status, identity proof, replay/expiry/collision rejection, atomic budgets, provider failures and integration credentials. All four service-test files passed together.
+- Native-session, email/username UI, Settings, Receive and random-name utilities: 62 tests passed across 11 test files.
+- Targeted lint, TypeScript and production wallet build passed. The build retains existing dependency deprecation and chunking warnings.
 - Secret-free Vercel probes confirmed the routing/transport behavior described above. They did not register a name, access the real email database, generate an invoice or send a payment.
 - The existing CI service-test command includes the new proxy tests, so they also run in the repository's GetYourSats checks.
+- Native session lifecycle: seven unit tests passed for fresh storage, delayed recovery, identity mismatch, cancellation, wrong-domain data, error handling and signer/database cleanup.
+- Shared address state: 17 hook tests passed, including preferred native display surviving a Receive remount, late default lookups and default-domain change events.
+- Actual pinned SDK: local regtest recovery, registration and fresh-session restoration passed with independently verified native signatures. Both domains retained the same wallet identity and the original address stayed unchanged. A failed native recovery did not register a replacement.
+
+## Staged production state
+
+The root site deployment `getyoursats-site-ogxvjs5ah-bradvani-8798.vercel.app` serves `getyoursats.com` with the configured proxy secret and `GETYOURSATS_NATIVE_HANDLES_ENABLED=false`. Public lookups of an unregistered test name reach Breez and return its JSON not-found response with no-store headers. Contact readiness remains available. Website content, favicons, security headers, robots and sitemap are preserved; privacy and removal notices describe the optional services conditionally.
+
+The wallet production release remains unchanged. Its newly configured email credentials are server-only and `GETYOURSATS_EMAIL_ENABLED=false`. Both client feature gates remain false in this draft. Durable Redis provisioning, real verification delivery, provider registration/restoration and browser checks remain pending. No production name was registered, no invoice was generated and no payment or email was sent during this stage.
 
 ## Costs and P2P
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { LightningAddressInfo, BreezSdk } from '@breeztech/breez-sdk-spark';
-import { useSdkEvents, useWallet } from '../../../contexts/WalletContext';
+import { useSdkEvents, useWallet, useWalletConnection } from '../../../contexts/WalletContext';
 import { generateRandomName, generateRandomNameSuffix } from '../../../utils/randomName';
 import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
@@ -37,6 +37,7 @@ interface AddressState {
   revision: number;
   eventConsumers: number;
   unsubscribeEvents: (() => void) | null;
+  preferred: LightningAddressInfo | null;
   getSnapshot: () => AddressSnapshot;
   subscribe: (listener: () => void) => () => void;
 }
@@ -55,6 +56,7 @@ function addressState(wallet: BreezSdk): AddressState {
     revision: 0,
     eventConsumers: 0,
     unsubscribeEvents: null,
+    preferred: null,
     getSnapshot: () => state.snapshot,
     subscribe: listener => {
       state.listeners.add(listener);
@@ -70,6 +72,19 @@ function update(state: AddressState, changes: Partial<AddressSnapshot>): void {
   state.listeners.forEach(listener => listener());
 }
 
+// Native registration returns before any cross-device change event. Publish
+// that result against the exact SDK from useWallet, invalidating older reads.
+export function publishLightningAddress(wallet: BreezSdk, address: LightningAddressInfo): void {
+  const state = addressState(wallet);
+  state.revision++;
+  update(state, { address, isLoading: false, error: null, isSupported: true });
+}
+
+function preferLightningAddress(wallet: BreezSdk, address: LightningAddressInfo | null): void {
+  addressState(wallet).preferred = address;
+  if (address) publishLightningAddress(wallet, address);
+}
+
 function failed(state: AddressState, error: unknown, message: string): void {
   if (error instanceof Error && /lnurl server is not configured/i.test(error.message)) {
     update(state, { isSupported: false, error: null });
@@ -83,6 +98,7 @@ function current(state: AddressState, revision: number): boolean {
 }
 
 function loadAddress(wallet: BreezSdk, state: AddressState): Promise<void> {
+  if (state.preferred) return Promise.resolve();
   if (state.pending) return state.pending;
   if (!state.snapshot.isSupported) return Promise.resolve();
   const revision = ++state.revision;
@@ -132,6 +148,9 @@ function observeAddressChanges(
   if (!state.unsubscribeEvents) {
     state.unsubscribeEvents = subscribe(event => {
       if (event.type !== 'lightningAddressChanged') return;
+      // The payment SDK remains on Breez's domain. Its cache and change
+      // events cannot replace a native address recovered for this wallet.
+      if (state.preferred) return;
       const revision = ++state.revision;
       // The app event bus has no SDK identity tag. Read this SDK's cache
       // instead of applying a payload that could arrive from an old session.
@@ -157,7 +176,7 @@ function observeAddressChanges(
 }
 
 async function saveAddress(wallet: BreezSdk, state: AddressState, username: string): Promise<boolean> {
-  if (!state.snapshot.isSupported || state.pending) return false;
+  if (!state.snapshot.isSupported || state.pending || state.preferred) return false;
   if (!username) {
     update(state, { error: 'Please enter a username' });
     return false;
@@ -194,14 +213,19 @@ const extractUsername = (value: string): string => value.split('@')[0];
 
 export const useLightningAddress = (): UseLightningAddress => {
   const wallet = useWallet();
+  const {preferredLightningAddress} = useWalletConnection();
   const subscribeEvents = useSdkEvents();
   const state = useMemo(() => addressState(wallet), [wallet]);
   const snapshot = useSyncExternalStore(state.subscribe, state.getSnapshot, state.getSnapshot);
   const [editor, setEditor] = useState({ wallet, isEditing: false, value: '' });
-  const isEditing = editor.wallet === wallet && editor.isEditing && snapshot.isSupported;
+  const isEditing = editor.wallet === wallet && editor.isEditing && snapshot.isSupported && !preferredLightningAddress;
   const editValue = editor.wallet === wallet ? editor.value : '';
 
   const load = useCallback(() => loadAddress(wallet, state), [wallet, state]);
+
+  useEffect(() => {
+    preferLightningAddress(wallet, preferredLightningAddress);
+  }, [wallet, preferredLightningAddress]);
 
   useEffect(() => {
     const unsubscribe = observeAddressChanges(wallet, state, subscribeEvents);
@@ -210,7 +234,7 @@ export const useLightningAddress = (): UseLightningAddress => {
   }, [wallet, state, subscribeEvents, load]);
 
   const beginEdit = useCallback((address?: LightningAddressInfo | null) => {
-    if (!state.snapshot.isSupported) return;
+    if (!state.snapshot.isSupported || state.preferred) return;
     setEditor({ wallet, isEditing: true, value: extractUsername((address ?? state.snapshot.address)?.lightningAddress ?? '') });
     update(state, { error: null });
   }, [wallet, state]);
@@ -233,6 +257,7 @@ export const useLightningAddress = (): UseLightningAddress => {
 
   return {
     ...snapshot,
+    ...(preferredLightningAddress ? {address: preferredLightningAddress, isLoading: false, error: null, isSupported: true} : {}),
     isEditing,
     editValue,
     load,

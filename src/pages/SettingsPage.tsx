@@ -274,10 +274,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               disabled={!featureAvailability.emailVerification}
               onClick={featureAvailability.emailVerification ? onOpenEmail : undefined}
               className="flex w-full items-center justify-between rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary transition-colors disabled:cursor-default disabled:opacity-70">
-              <span>Verify email address</span>
+              <span>Verify Email Address</span>
               {featureAvailability.emailVerification ? <ChevronRightIcon size="md"/> : <span className="gys-feature-soon">Coming soon</span>}
             </button>
-            <p className="text-xs text-spark-text-muted">Available after the verified email service launches. Email is not a wallet backup.</p>
+            <p className="text-xs text-spark-text-muted">{featureAvailability.emailVerification
+              ? 'Link an email to your wallet. Keep your recovery words or passkey safe.'
+              : 'Email verification is coming soon. Keep your recovery words or passkey safe.'}</p>
           </div>
 
           {/* Display */}

@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { initLogging } from '@breeztech/breez-sdk-spark';
-import type { BreezSdk, Config, DepositInfo, GetInfoResponse, LogEntry, Payment, SdkEvent, Seed } from '@breeztech/breez-sdk-spark';
+import type { BreezSdk, Config, DepositInfo, GetInfoResponse, LightningAddressInfo, LogEntry, Payment, SdkEvent, Seed } from '@breeztech/breez-sdk-spark';
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { sdkReady } from '@/services/sdkReady';
@@ -49,6 +49,8 @@ import { hasConversionInFlight } from '../contexts/WalletContext';
 import { isConversionPayment } from '../utils/paymentDescription';
 import {newlyCompletedReceive,rememberPaymentId} from '../getyoursats/paymentMomentPolicy';
 import { unsettledDeposits } from '../utils/depositHelpers';
+import {featureAvailability} from '../getyoursats/featureAvailability';
+import {assertNativeLightningAddress, withNativeLightningSession} from '../services/nativeLightningSession';
 
 // ============================================
 // Payment filtering
@@ -113,6 +115,7 @@ export type StartupState =
 
 export interface BreezSdkState {
   sdk: BreezSdk | null;
+  nativeLightningAddress: LightningAddressInfo | null;
   isConnected: boolean;
   isLoading: boolean;
   isSyncing: boolean;
@@ -156,6 +159,7 @@ export type SdkEventUnsubscribe = () => void;
 export type ConnectSeedSource = 'onboarding' | 'secureStorage';
 
 export interface BreezSdkActions {
+  claimNativeLightningAddress: (username: string) => Promise<LightningAddressInfo>;
   connectWallet: (
     seed: Seed,
     restore: boolean,
@@ -225,6 +229,10 @@ export function useBreezSdk(
 ): BreezSdkState & BreezSdkActions {
   // Core state
   const [sdk, setSdk] = useState<BreezSdk | null>(null);
+  const [nativeAddressState, setNativeAddressState] = useState<{
+    sdk: BreezSdk; address: LightningAddressInfo | null; lookupFailed: boolean;
+  } | null>(null);
+  const nativeLightningAddress = nativeAddressState?.sdk === sdk ? nativeAddressState.address : null;
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -258,6 +266,10 @@ export function useBreezSdk(
   // retryUnlock on their own schedules, and BiometricPrompt crashes
   // if authenticate() is called while another prompt is already live.
   const retryUnlockInFlightRef = useRef(false);
+  const nativeClaimInFlightRef = useRef<number | null>(null);
+  const nativeWalletEpochRef = useRef(0);
+  const nativeReadRevisionRef = useRef(0);
+  const nativeSessionSdkRef = useRef<BreezSdk | null>(null);
 
   // In-app event bus: feature hooks subscribe here instead of creating their
   // own SDK-level listeners, so we only ever register one listener per SDK.
@@ -433,6 +445,34 @@ export function useBreezSdk(
   // Connection lifecycle
   // ----------------------------------------
 
+  const recoverNativeAddress = useCallback(async (client: BreezSdk, seed: Seed, cfg: Config, epoch: number) => {
+    if (!featureAvailability.nativeLightningAddress || cfg.network !== 'mainnet' || !cfg.apiKey) return;
+    if (epoch !== nativeWalletEpochRef.current || nativeSessionSdkRef.current !== client) return;
+    const revision = ++nativeReadRevisionRef.current;
+    try {
+      const identity = await client.signMessage({message: 'gys-native-lnurl-session-v1', compact: true});
+      const address = await withNativeLightningSession({
+        seed, apiKey: cfg.apiKey, expectedIdentityPubkey: identity.pubkey,
+        ensureActive: () => {
+          if (epoch !== nativeWalletEpochRef.current || nativeSessionSdkRef.current !== client) throw new Error('Wallet session changed');
+        },
+        use: async session => session.address,
+      });
+      if (epoch === nativeWalletEpochRef.current && revision === nativeReadRevisionRef.current && nativeSessionSdkRef.current === client) {
+        setNativeAddressState({sdk: client, address, lookupFailed: false});
+        if (address) setNeedsPasskeyMigration(false);
+      }
+    } catch {
+      // A failed native lookup cannot allocate a native replacement. The
+      // separate anonymous Breez address remains available as usual.
+      if (epoch === nativeWalletEpochRef.current && revision === nativeReadRevisionRef.current && nativeSessionSdkRef.current === client) {
+        setNativeAddressState({sdk: client, address: null, lookupFailed: true});
+        setNeedsPasskeyMigration(false);
+      }
+      logger.warn(LogCategory.SDK, 'Could not recover the branded Lightning address');
+    }
+  }, []);
+
   const connectWallet = useCallback(async (
     seed: Seed,
     restore: boolean,
@@ -447,6 +487,7 @@ export function useBreezSdk(
         logger.debug(LogCategory.SDK, 'Wallet already connected; skipping');
         return;
       }
+      const connectionEpoch = ++nativeWalletEpochRef.current;
 
       setIsLoading(true);
       setIsSyncing(restore);
@@ -476,6 +517,7 @@ export function useBreezSdk(
       // publish was already kicked off, fire-and-forget, inside register()).
       connectedSdk = await logger.time('[onboarding] sdk.connect', () =>
         connectSdk({ config: cfg, seed, storageDir: 'spark-wallet-example' }));
+      nativeSessionSdkRef.current = connectedSdk;
       setSdk(connectedSdk);
 
       logger.sdkInitialized();
@@ -556,6 +598,7 @@ export function useBreezSdk(
         logger.warn(LogCategory.SDK, 'Initial wallet data load failed', { error: formatError(e) });
       }
 
+      await recoverNativeAddress(connectedSdk, seed, cfg, connectionEpoch);
       setIsConnected(true);
       setStartupState('connected');
       setIsLoading(false);
@@ -584,6 +627,7 @@ export function useBreezSdk(
       // If SDK connected but a subsequent step failed, disconnect to avoid leaked instance
       if (connectedSdk) {
         try { await connectedSdk.disconnect(); } catch { /* best-effort cleanup */ }
+        nativeSessionSdkRef.current = null;
         setSdk(null);
       }
 
@@ -593,9 +637,75 @@ export function useBreezSdk(
       setConfig(null);
       throw e;
     }
-  }, [sdk, showToast]);
+  }, [sdk, showToast, recoverNativeAddress]);
+
+  const claimNativeLightningAddress = useCallback(async (input: string): Promise<LightningAddressInfo> => {
+    const activeSdk = sdkRef.current;
+    if (!featureAvailability.nativeLightningAddress || config?.network !== 'mainnet' || !config.apiKey
+      || !activeSdk || !isConnected || nativeSessionSdkRef.current !== activeSdk) {
+      throw new Error('GetYourSats names are not available yet. Please try again later.');
+    }
+    const username = input.trim().toLowerCase();
+    if (!/^[a-z][a-z0-9]{2,23}$/.test(username)) {
+      throw new Error('Use 3 to 24 lowercase letters or numbers, starting with a letter.');
+    }
+    const epoch = nativeWalletEpochRef.current;
+    if (nativeClaimInFlightRef.current === epoch) throw new Error('A Lightning name request is already in progress.');
+    nativeClaimInFlightRef.current = epoch;
+    nativeReadRevisionRef.current++;
+    const ensureActive = () => {
+      if (nativeWalletEpochRef.current !== epoch || sdkRef.current !== activeSdk || nativeSessionSdkRef.current !== activeSdk) {
+        throw new Error('Your active wallet changed. Please reopen Email Verification.');
+      }
+    };
+    try {
+      const identity = await activeSdk.signMessage({message: 'gys-native-lnurl-session-v1', compact: true});
+      ensureActive();
+      let seed: Seed;
+      if (deviceOnlyStorage.isSupported() && await deviceOnlyStorage.hasStoredSeed()) {
+        seed = await deviceOnlyStorage.retrieveSeed();
+      } else if (secureStorage.isSupported() && await secureStorage.hasStoredSeed()) {
+        seed = await secureStorage.retrieveSeed();
+      } else if (isPasskeyMode()) {
+        invalidatePasskey();
+        const label = localStorage.getItem('passkeyLabel') ?? undefined;
+        const signedIn = await signInPinnedToActiveCredential(label, getPasskeyRpId() ?? LEGACY_RP_ID);
+        seed = signedIn.wallet.seed;
+      } else {
+        const mnemonic = getSavedMnemonic();
+        if (!mnemonic) throw new Error('Please reconnect your wallet before choosing a Lightning name.');
+        seed = {type: 'mnemonic', mnemonic};
+      }
+      ensureActive();
+      const address = await withNativeLightningSession({
+        seed, apiKey: config.apiKey, expectedIdentityPubkey: identity.pubkey,
+        ensureActive,
+        use: async session => {
+          ensureActive();
+          // A name recovered on another device takes precedence over a new
+          // request. This flow never silently renames an existing address.
+          if (session.address) return session.address;
+          const available = await session.sdk.checkLightningAddressAvailable({username});
+          ensureActive();
+          if (!available) throw new Error('This Lightning name is taken. Please choose another.');
+          const registered = await session.sdk.registerLightningAddress({username});
+          assertNativeLightningAddress(registered);
+          if (registered.username !== username) throw new Error('Could not confirm the requested Lightning name.');
+          return registered;
+        },
+      });
+      ensureActive();
+      setNativeAddressState({sdk: activeSdk, address, lookupFailed: false});
+      setNeedsPasskeyMigration(false);
+      return address;
+    } finally {
+      if (nativeClaimInFlightRef.current === epoch) nativeClaimInFlightRef.current = null;
+    }
+  }, [sdkRef, config, isConnected]);
 
   const handleLogout = useCallback(async () => {
+    nativeWalletEpochRef.current++;
+    nativeSessionSdkRef.current = null;
     setIsLoading(true);
 
     // Wipe reconnect signals first so a hung sdk.disconnect() can't
@@ -648,6 +758,7 @@ export function useBreezSdk(
 
     // Always reset all state, even if disconnect threw.
     setSdk(null);
+    setNativeAddressState(null);
     setCachedStableTicker(null);
     clearStableRestorePrompted();
     clearRejectedDeposits();
@@ -671,6 +782,8 @@ export function useBreezSdk(
   }, [sdk, showToast]);
 
   const adoptMigratedSdk = useCallback(async (newSdk: BreezSdk, label: string): Promise<void> => {
+    nativeWalletEpochRef.current++;
+    nativeSessionSdkRef.current = null;
     logger.info(LogCategory.AUTH, 'Adopting migrated SDK', { label });
 
     // Disconnect the legacy SDK we were running. Unlike handleLogout this keeps
@@ -688,6 +801,7 @@ export function useBreezSdk(
     // Take ownership of the already connected + synced new SDK. Here we set mode
     // + RP ID so resume targets the new wallet; the migration flow pins the shared
     // credential as active right after this hand-off returns.
+    nativeSessionSdkRef.current = newSdk;
     setSdk(newSdk);
     // Login-entry migration never ran connectWallet on this hook, so `config`
     // is still null; set it (as connectWallet does) or `config.network` stays
@@ -747,6 +861,8 @@ export function useBreezSdk(
     what: string,
     rpId?: string,
   ): Promise<void> => {
+    const connectionEpoch = ++nativeWalletEpochRef.current;
+    nativeSessionSdkRef.current = null;
     setIsLoading(true);
     setError(null);
 
@@ -756,6 +872,7 @@ export function useBreezSdk(
     try {
       wallet = await derive();
     } catch (e) {
+      if (nativeWalletEpochRef.current === connectionEpoch) nativeSessionSdkRef.current = sdk;
       setIsLoading(false);
       throw e;
     }
@@ -804,6 +921,7 @@ export function useBreezSdk(
         seed: wallet.seed,
         storageDir: 'spark-wallet-example',
       });
+      nativeSessionSdkRef.current = connectedSdk;
       setSdk(connectedSdk);
       setPasskeyMode(wallet.label, rpId);
 
@@ -830,6 +948,7 @@ export function useBreezSdk(
       // Newly settled receives sometimes arrive via sync after a PWA resumes,
       // without a foreground paymentSucceeded event. Initial history is silent.
       if (newReceipt && !isMigrationInProgress()) setCelebrationPayment(newReceipt);
+      await recoverNativeAddress(connectedSdk, wallet.seed, cfg, connectionEpoch);
       setIsConnected(true);
       markLabelUsed(wallet.label);
 
@@ -847,6 +966,7 @@ export function useBreezSdk(
       logger.error(LogCategory.SDK, `Failed to connect after ${what} switch`, { error: errorMsg });
       if (connectedSdk) {
         try { await connectedSdk.disconnect(); } catch { /* best-effort */ }
+        nativeSessionSdkRef.current = null;
         setSdk(null);
       }
       setError(`Failed to switch ${what}. Please try again.`);
@@ -855,7 +975,7 @@ export function useBreezSdk(
       setIsSyncing(false);
       setIsLoading(false);
     }
-  }, [sdk]);
+  }, [sdk, recoverNativeAddress]);
 
   const switchPasskeyLabel = useCallback((newLabel: string): Promise<void> => {
     // Same passkey, same RP the active session uses (legacy for a not-yet-migrated
@@ -886,6 +1006,8 @@ export function useBreezSdk(
     newCredId: string,
     onPinned?: () => void,
   ): Promise<void> => {
+    nativeWalletEpochRef.current++;
+    nativeSessionSdkRef.current = null;
     // Remember the prior cred so PasskeyPage's detect-failure branch
     // can roll back if the new one turns out to be deleted.
     const fromCredId = localStorage.getItem('passkeyActiveCredentialId');
@@ -1467,6 +1589,7 @@ export function useBreezSdk(
   return {
     // State
     sdk,
+    nativeLightningAddress,
     isConnected,
     isLoading,
     isSyncing,
@@ -1485,6 +1608,7 @@ export function useBreezSdk(
     startupState,
     // Actions
     connectWallet,
+    claimNativeLightningAddress,
     refreshWalletData,
     fetchUnclaimedDeposits,
     handleLogout,

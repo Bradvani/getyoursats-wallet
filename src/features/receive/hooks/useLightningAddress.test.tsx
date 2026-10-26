@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import type { BreezSdk, LightningAddressInfo, SdkEvent } from '@breeztech/breez-sdk-spark';
-import { WalletProvider } from '@/contexts/WalletContext';
+import { WalletProvider, useWallet } from '@/contexts/WalletContext';
 import { createMockClient } from '@/test/mocks/mockWalletApi';
-import { useLightningAddress } from './useLightningAddress';
+import { publishLightningAddress, useLightningAddress } from './useLightningAddress';
 
 // The LNURL server reaches the WebView as an opaque fetch failure, which is
 // what the user reported seeing pasted verbatim into the Receive sheet.
@@ -93,6 +93,91 @@ describe('useLightningAddress error copy', () => {
 });
 
 describe('shared Lightning address state', () => {
+  it('keeps the preferred native address through default-domain events and a Receive remount', async () => {
+    const native = address('bharat', 'getyoursats.com');
+    const client = createMockClient({getLightningAddress: vi.fn().mockResolvedValue(address('oldanonymous'))});
+    const bus = events();
+    const wrapper = ({children}: {children: React.ReactNode}) => (
+      <WalletProvider client={client} isConnected preferredLightningAddress={native} subscribeToSdkEvents={bus.subscribe}>
+        {children}
+      </WalletProvider>
+    );
+    const first = renderHook(() => useLightningAddress(), {wrapper});
+    await waitFor(() => expect(first.result.current.address).toEqual(native));
+    act(() => bus.emit({type: 'lightningAddressChanged', lightningAddress: address('oldanonymous')}));
+    expect(first.result.current.address?.lnurl).toEqual(native.lnurl);
+    expect(client.getLightningAddress).not.toHaveBeenCalled();
+    first.unmount();
+
+    const second = renderHook(() => useLightningAddress(), {wrapper});
+    expect(second.result.current.address).toEqual(native);
+    expect(second.result.current.isLoading).toBe(false);
+    expect(client.getLightningAddress).not.toHaveBeenCalled();
+    expect(client.registerLightningAddress).not.toHaveBeenCalled();
+  });
+
+  it('does not replace a newly preferred native address with a late anonymous lookup', async () => {
+    const late = deferred<LightningAddressInfo | undefined>();
+    const native = address('bharat', 'getyoursats.com');
+    const client = createMockClient({getLightningAddress: vi.fn().mockReturnValue(late.promise)});
+    let preferred: LightningAddressInfo | null = null;
+    const {result, rerender} = renderHook(() => ({wallet: useWallet(), address: useLightningAddress()}), {
+      wrapper: ({children}) => <WalletProvider client={client} isConnected preferredLightningAddress={preferred}>{children}</WalletProvider>,
+    });
+    await waitFor(() => expect(client.getLightningAddress).toHaveBeenCalledTimes(1));
+    const activeWallet = result.current.wallet;
+    preferred = native;
+    rerender();
+    expect(result.current.wallet).toBe(activeWallet);
+    await act(async () => {late.resolve(undefined); await late.promise;});
+    expect(result.current.address.address).toEqual(native);
+    expect(client.registerLightningAddress).not.toHaveBeenCalled();
+  });
+
+  it('publishes a direct native claim to all address views and discards an older read', async () => {
+    const late = deferred<LightningAddressInfo | undefined>();
+    const claimed = address('bharat', 'getyoursats.com');
+    const client = createMockClient({ getLightningAddress: vi.fn().mockReturnValue(late.promise) });
+    const { result } = renderHook(() => ({
+      wallet: useWallet(),
+      home: useLightningAddress(),
+      receive: useLightningAddress(),
+    }), {
+      wrapper: ({ children }) => <WalletProvider client={client} isConnected>{children}</WalletProvider>,
+    });
+    await waitFor(() => expect(client.getLightningAddress).toHaveBeenCalledTimes(1));
+
+    act(() => publishLightningAddress(result.current.wallet, claimed));
+    expect(result.current.home.address).toEqual(claimed);
+    expect(result.current.receive.address?.lnurl).toEqual(claimed.lnurl);
+    expect(result.current.home.isLoading).toBe(false);
+
+    await act(async () => { late.resolve(undefined); await late.promise; });
+    expect(result.current.home.address).toEqual(claimed);
+    expect(result.current.receive.address).toEqual(claimed);
+    expect(client.registerLightningAddress).not.toHaveBeenCalled();
+  });
+
+  it('keeps a completed claim scoped to its wallet after the active SDK changes', async () => {
+    const previous = createMockClient({ getLightningAddress: vi.fn().mockResolvedValue(address('previous')) });
+    const nextAddress = address('nextwallet');
+    const next = createMockClient({ getLightningAddress: vi.fn().mockResolvedValue(nextAddress) });
+    let active = previous;
+    const { result, rerender } = renderHook(() => ({ wallet: useWallet(), receive: useLightningAddress() }), {
+      wrapper: ({ children }) => <WalletProvider client={active} isConnected>{children}</WalletProvider>,
+    });
+    await waitFor(() => expect(result.current.receive.address?.username).toBe('previous'));
+    const previousWallet = result.current.wallet;
+
+    active = next;
+    rerender();
+    await waitFor(() => expect(result.current.receive.address).toEqual(nextAddress));
+    act(() => publishLightningAddress(previousWallet, address('bharat', 'getyoursats.com')));
+
+    expect(result.current.receive.address).toEqual(nextAddress);
+    expect(next.registerLightningAddress).not.toHaveBeenCalled();
+  });
+
   it('retries a colliding anonymous name with a four-digit Web Crypto suffix', async () => {
     const values = [0, 0, 8999];
     const random = vi.spyOn(globalThis.crypto, 'getRandomValues').mockImplementation(array => {
