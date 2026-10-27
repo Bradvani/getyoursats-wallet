@@ -1,0 +1,56 @@
+import {test,expect} from '@playwright/test';
+const origin='/e2e/fixtures/browser-vault-security.html';
+const oldPassword='original-password-12345';
+const newPassword='replacement-password-12345';
+const phrase='abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+async function enroll(page:import('@playwright/test').Page){
+ await page.goto(origin+'?seedLegacy=yes');
+ await expect(page.getByRole('heading',{name:'Protect your wallet'})).toBeVisible();
+ await page.getByLabel('Wallet password',{exact:true}).fill(oldPassword);
+ await page.getByLabel('Confirm password').fill(oldPassword);
+ await page.getByRole('button',{name:'Encrypt and continue'}).click();
+ await expect(page.getByRole('heading',{name:'Protected test wallet'})).toBeVisible();
+ await expect(page.getByTestId('legacy-status')).toHaveText('plaintext-absent');
+ await expect(page.getByTestId('vault-status')).toHaveText('encrypted-present');
+ expect(await page.evaluate(()=>JSON.stringify(localStorage))).not.toContain('abandon abandon');
+}
+test('migrates a legacy wallet and fails closed on denied browser spend approval',async({page})=>{
+ await enroll(page);
+ await page.getByRole('button',{name:'Send 125 test sats'}).click();
+ await expect(page.getByRole('dialog',{name:'Approve transaction'})).toBeVisible();
+ await expect(page.getByTestId('executed-count')).toHaveText('0');
+ await page.getByRole('button',{name:'Cancel'}).click();
+ await expect(page.getByTestId('send-result')).toHaveText('denied');
+ await expect(page.getByTestId('executed-count')).toHaveText('0');
+ await page.getByRole('button',{name:'Send 125 test sats'}).click();
+ const prompt=page.getByRole('dialog',{name:'Approve transaction'});
+ await prompt.getByLabel('Wallet password').fill('invalid-long-password');
+ await prompt.getByRole('button',{name:'Authorize'}).click();
+ await expect(prompt.getByRole('alert')).toContainText('Incorrect wallet password');
+ await expect(page.getByTestId('executed-count')).toHaveText('0');
+ await prompt.getByLabel('Wallet password').fill(oldPassword);
+ await prompt.getByRole('button',{name:'Authorize'}).click();
+ await expect(page.getByTestId('send-result')).toHaveText('authorized');
+ await expect(page.getByTestId('executed-count')).toHaveText('1');
+});
+test('requires unlock after reload and restores same phrase on password reset',async({page})=>{
+ await enroll(page);
+ await page.reload();
+ await expect(page.getByRole('heading',{name:'Unlock your wallet'})).toBeVisible();
+ await page.getByLabel('Wallet password').fill('wrong-password');
+ await page.getByRole('button',{name:'Unlock wallet'}).click();
+ await expect(page.getByRole('alert')).toContainText('Incorrect password');
+ await page.getByRole('button',{name:'Recover with recovery words'}).click();
+ await page.getByLabel('Recovery words').fill('legal winner thank year wave sausage worth useful legal winner thank yellow');
+ await page.getByLabel('New wallet password').fill(newPassword);
+ await page.getByLabel('Confirm new password').fill(newPassword);
+ await page.getByRole('button',{name:'Restore protection'}).click();
+ await expect(page.getByRole('alert')).toContainText('do not match');
+ await page.getByLabel('Recovery words').fill(phrase);
+ await page.getByRole('button',{name:'Restore protection'}).click();
+ await expect(page.getByRole('heading',{name:'Protected test wallet'})).toBeVisible();
+ await page.reload();
+ await page.getByLabel('Wallet password').fill(newPassword);
+ await page.getByRole('button',{name:'Unlock wallet'}).click();
+ await expect(page.getByRole('heading',{name:'Protected test wallet'})).toBeVisible();
+});

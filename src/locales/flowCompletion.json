@@ -195,7 +195,12 @@
     "Generating Spark address...": "Generating Spark address...",
     "Creating request...": "Creating request...",
     "Send {amount} {asset} on {chain} to {address}": "Send {amount} {asset} on {chain} to {address}",
-    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "The {currency}/BTC rate has expired. Refresh the wallet and try again."
+    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "The {currency}/BTC rate has expired. Refresh the wallet and try again.",
+    "Could not create a Spark receive address. No payment request is available.": "Could not create a Spark receive address. No payment request is available.",
+    "Wallet locked": "Wallet locked",
+    "Unlock was not completed. Your wallet remains locked.": "Unlock was not completed. Your wallet remains locked.",
+    "Could not unlock with this passkey. Your wallet remains locked.": "Could not unlock with this passkey. Your wallet remains locked.",
+    "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline.": "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline."
   },
   "hi": {
     "Balance": "बैलेंस",
@@ -393,7 +398,12 @@
     "Generating Spark address...": "Spark पता बनाया जा रहा है…",
     "Creating request...": "अनुरोध बनाया जा रहा है…",
     "Send {amount} {asset} on {chain} to {address}": "{chain} पर {address} को {amount} {asset} भेजें",
-    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "{currency}/BTC दर की समय सीमा समाप्त हो गई है। वॉलेट रीफ़्रेश करें और फिर से कोशिश करें।"
+    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "{currency}/BTC दर की समय सीमा समाप्त हो गई है। वॉलेट रीफ़्रेश करें और फिर से कोशिश करें।",
+    "Could not create a Spark receive address. No payment request is available.": "Spark प्राप्ति पता नहीं बन सका। कोई भुगतान अनुरोध उपलब्ध नहीं है.",
+    "Wallet locked": "वॉलेट लॉक है",
+    "Unlock was not completed. Your wallet remains locked.": "अनलॉक प्रक्रिया पूरी नहीं हुई। आपका वॉलेट लॉक है।",
+    "Could not unlock with this passkey. Your wallet remains locked.": "इस पासकी से अनलॉक नहीं हो सका। आपका वॉलेट लॉक है।",
+    "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline.": "आपके रिकवरी शब्द इस डिवाइस पर एन्क्रिप्ट किए गए हैं। अनलॉक और भुगतान की मंज़ूरी के लिए वॉलेट पासवर्ड चाहिए। रिकवरी शब्द ऑफ़लाइन रखें।"
   },
   "es": {
     "Balance": "Saldo",
@@ -591,7 +601,12 @@
     "Generating Spark address...": "Generando dirección Spark…",
     "Creating request...": "Creando solicitud…",
     "Send {amount} {asset} on {chain} to {address}": "Envía {amount} {asset} en {chain} a {address}",
-    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "La cotización {currency}/BTC ha caducado. Actualiza la cartera e inténtalo de nuevo."
+    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "La cotización {currency}/BTC ha caducado. Actualiza la cartera e inténtalo de nuevo.",
+    "Could not create a Spark receive address. No payment request is available.": "No se pudo crear una dirección de recepción Spark. No hay ninguna solicitud de pago disponible.",
+    "Wallet locked": "Cartera bloqueada",
+    "Unlock was not completed. Your wallet remains locked.": "No se completó el desbloqueo. Tu cartera sigue bloqueada.",
+    "Could not unlock with this passkey. Your wallet remains locked.": "No se pudo desbloquear con esta clave de acceso. Tu cartera sigue bloqueada.",
+    "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline.": "Tus palabras de recuperación están cifradas en este dispositivo. Para desbloquear y aprobar pagos se usa la contraseña de la cartera. Guarda las palabras sin conexión."
   },
   "pt": {
     "Balance": "Saldo",
@@ -789,7 +804,12 @@
     "Generating Spark address...": "A gerar endereço Spark…",
     "Creating request...": "A criar pedido…",
     "Send {amount} {asset} on {chain} to {address}": "Envia {amount} {asset} em {chain} para {address}",
-    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "A cotação {currency}/BTC expirou. Atualiza a carteira e tenta novamente."
+    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "A cotação {currency}/BTC expirou. Atualiza a carteira e tenta novamente.",
+    "Could not create a Spark receive address. No payment request is available.": "Não foi possível criar um endereço de receção Spark. Não há nenhum pedido de pagamento disponível.",
+    "Wallet locked": "Carteira bloqueada",
+    "Unlock was not completed. Your wallet remains locked.": "O desbloqueio não foi concluído. A sua carteira continua bloqueada.",
+    "Could not unlock with this passkey. Your wallet remains locked.": "Não foi possível desbloquear com esta chave de acesso. A sua carteira continua bloqueada.",
+    "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline.": "As suas palavras de recuperação estão cifradas neste dispositivo. O desbloqueio e a aprovação de pagamentos usam a palavra-passe da carteira. Guarde as palavras offline."
   },
   "ja": {
     "Balance": "残高",
@@ -987,7 +1007,12 @@
     "Generating Spark address...": "Sparkアドレスを生成中…",
     "Creating request...": "リクエストを作成中…",
     "Send {amount} {asset} on {chain} to {address}": "{chain}で{amount} {asset}を{address}に送信",
-    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "{currency}/BTCのレートが期限切れです。ウォレットを更新して、もう一度お試しください。"
+    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "{currency}/BTCのレートが期限切れです。ウォレットを更新して、もう一度お試しください。",
+    "Could not create a Spark receive address. No payment request is available.": "Sparkの受取アドレスを作成できませんでした。利用可能な支払いリクエストはありません。",
+    "Wallet locked": "ウォレットはロックされています",
+    "Unlock was not completed. Your wallet remains locked.": "ロック解除は完了していません。ウォレットはロックされたままです。",
+    "Could not unlock with this passkey. Your wallet remains locked.": "このパスキーではロックを解除できませんでした。ウォレットはロックされたままです。",
+    "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline.": "復元フレーズはこの端末で暗号化されています。ロック解除と支払い承認にはウォレットのパスワードを使用します。復元フレーズはオフラインで保管してください。"
   },
   "th": {
     "Balance": "ยอดคงเหลือ",
@@ -1185,7 +1210,12 @@
     "Generating Spark address...": "กำลังสร้างที่อยู่ Spark…",
     "Creating request...": "กำลังสร้างคำขอ…",
     "Send {amount} {asset} on {chain} to {address}": "ส่ง {amount} {asset} บน {chain} ไปยัง {address}",
-    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "อัตรา {currency}/BTC หมดอายุแล้ว โปรดรีเฟรชกระเป๋าเงินแล้วลองอีกครั้ง"
+    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "อัตรา {currency}/BTC หมดอายุแล้ว โปรดรีเฟรชกระเป๋าเงินแล้วลองอีกครั้ง",
+    "Could not create a Spark receive address. No payment request is available.": "ไม่สามารถสร้างที่อยู่รับ Spark ได้ ยังไม่มีคำขอชำระเงิน",
+    "Wallet locked": "กระเป๋าเงินถูกล็อก",
+    "Unlock was not completed. Your wallet remains locked.": "การปลดล็อกยังไม่เสร็จสมบูรณ์ กระเป๋าเงินของคุณยังคงถูกล็อก",
+    "Could not unlock with this passkey. Your wallet remains locked.": "ไม่สามารถปลดล็อกด้วยพาสคีย์นี้ได้ กระเป๋าเงินของคุณยังคงถูกล็อก",
+    "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline.": "คำกู้คืนของคุณถูกเข้ารหัสบนอุปกรณ์นี้ การปลดล็อกและอนุมัติการชำระเงินใช้รหัสผ่านกระเป๋าเงิน เก็บคำกู้คืนแบบออฟไลน์"
   },
   "vi": {
     "Balance": "Số dư",
@@ -1383,7 +1413,12 @@
     "Generating Spark address...": "Đang tạo địa chỉ Spark…",
     "Creating request...": "Đang tạo yêu cầu…",
     "Send {amount} {asset} on {chain} to {address}": "Gửi {amount} {asset} trên {chain} đến {address}",
-    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "Tỷ giá {currency}/BTC đã hết hạn. Hãy làm mới ví và thử lại."
+    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "Tỷ giá {currency}/BTC đã hết hạn. Hãy làm mới ví và thử lại.",
+    "Could not create a Spark receive address. No payment request is available.": "Không thể tạo địa chỉ nhận Spark. Chưa có yêu cầu thanh toán nào.",
+    "Wallet locked": "Ví đã khóa",
+    "Unlock was not completed. Your wallet remains locked.": "Chưa hoàn tất mở khóa. Ví của bạn vẫn bị khóa.",
+    "Could not unlock with this passkey. Your wallet remains locked.": "Không thể mở khóa bằng passkey này. Ví của bạn vẫn bị khóa.",
+    "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline.": "Các từ khôi phục được mã hóa trên thiết bị này. Việc mở khóa và phê duyệt thanh toán dùng mật khẩu ví. Hãy lưu các từ khôi phục ngoại tuyến."
   },
   "ta": {
     "Balance": "இருப்பு",
@@ -1581,7 +1616,12 @@
     "Generating Spark address...": "Spark முகவரி உருவாக்கப்படுகிறது…",
     "Creating request...": "கோரிக்கை உருவாக்கப்படுகிறது…",
     "Send {amount} {asset} on {chain} to {address}": "{chain} வழியாக {address} முகவரிக்கு {amount} {asset} அனுப்பவும்",
-    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "{currency}/BTC விகிதம் காலாவதியானது. பணப்பையைப் புதுப்பித்து மீண்டும் முயற்சிக்கவும்."
+    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "{currency}/BTC விகிதம் காலாவதியானது. பணப்பையைப் புதுப்பித்து மீண்டும் முயற்சிக்கவும்.",
+    "Could not create a Spark receive address. No payment request is available.": "Spark பெறும் முகவரியை உருவாக்க முடியவில்லை. கட்டணக் கோரிக்கை எதுவும் கிடைக்கவில்லை.",
+    "Wallet locked": "பணப்பை பூட்டப்பட்டுள்ளது",
+    "Unlock was not completed. Your wallet remains locked.": "பூட்டுத் திறப்பு நிறைவடையவில்லை. உங்கள் பணப்பை இன்னும் பூட்டப்பட்டுள்ளது.",
+    "Could not unlock with this passkey. Your wallet remains locked.": "இந்தப் பாஸ்கீ மூலம் பூட்டைத் திறக்க முடியவில்லை. உங்கள் பணப்பை இன்னும் பூட்டப்பட்டுள்ளது.",
+    "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline.": "உங்கள் மீட்புச் சொற்கள் இந்தச் சாதனத்தில் குறியாக்கம் செய்யப்பட்டுள்ளன. பூட்டுத் திறப்பிற்கும் கட்டண ஒப்புதலுக்கும் பணப்பைக் கடவுச்சொல் பயன்படுத்தப்படும். மீட்புச் சொற்களை இணையத்திற்கு வெளியே பாதுகாக்கவும்."
   },
   "ar": {
     "Balance": "الرصيد",
@@ -1779,7 +1819,12 @@
     "Generating Spark address...": "جارٍ إنشاء عنوان Spark…",
     "Creating request...": "جارٍ إنشاء الطلب…",
     "Send {amount} {asset} on {chain} to {address}": "أرسل {amount} {asset} عبر {chain} إلى {address}",
-    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "انتهت صلاحية سعر {currency}/BTC. حدّث المحفظة وحاول مجددًا."
+    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "انتهت صلاحية سعر {currency}/BTC. حدّث المحفظة وحاول مجددًا.",
+    "Could not create a Spark receive address. No payment request is available.": "تعذّر إنشاء عنوان استلام Spark. لا يتوفر طلب دفع.",
+    "Wallet locked": "المحفظة مقفلة",
+    "Unlock was not completed. Your wallet remains locked.": "لم يكتمل فتح القفل. ما زالت محفظتك مقفلة.",
+    "Could not unlock with this passkey. Your wallet remains locked.": "تعذّر فتح القفل بمفتاح المرور هذا. ما زالت محفظتك مقفلة.",
+    "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline.": "كلمات الاسترداد مشفّرة على هذا الجهاز. يستخدم فتح القفل والموافقة على الدفع كلمة مرور المحفظة. احتفظ بكلمات الاسترداد دون اتصال بالإنترنت."
   },
   "zh-CN": {
     "Balance": "余额",
@@ -1977,6 +2022,11 @@
     "Generating Spark address...": "正在生成 Spark 地址…",
     "Creating request...": "正在创建请求…",
     "Send {amount} {asset} on {chain} to {address}": "通过 {chain} 向 {address} 发送 {amount} {asset}",
-    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "{currency}/BTC 汇率已过期。请刷新钱包后重试。"
+    "The {currency}/BTC rate has expired. Refresh the wallet and try again.": "{currency}/BTC 汇率已过期。请刷新钱包后重试。",
+    "Could not create a Spark receive address. No payment request is available.": "无法创建 Spark 收款地址。当前没有可用的付款请求。",
+    "Wallet locked": "钱包已锁定",
+    "Unlock was not completed. Your wallet remains locked.": "解锁未完成。您的钱包仍处于锁定状态。",
+    "Could not unlock with this passkey. Your wallet remains locked.": "无法使用此通行密钥解锁。您的钱包仍处于锁定状态。",
+    "Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline.": "您的恢复助记词已在此设备上加密。解锁和付款授权均使用钱包密码。请离线保管恢复助记词。"
   }
 }

@@ -1,0 +1,43 @@
+{
+  "test": "installed WASM identity preservation",
+  "result": "PASS",
+  "comparisons": 36,
+  "seedFixtures": 2,
+  "networks": 3,
+  "accountModes": 3,
+  "wasmSha256": "d1c8a8feabf0e14ace78f5be30f03cac62728b009edbd1810be26f62136d7878",
+  "publicFixtureIdentity": {
+    "mainnet": "0281363910b0dc0015a4a25e758da30f0e28388ea5252c0e3713936f2d4ef7d3d5",
+    "regtest": "02698b27ac308b275671b3ca25436346469d04a5bba578ae39feba1d65897a6abc",
+    "signet": "02698b27ac308b275671b3ca25436346469d04a5bba578ae39feba1d65897a6abc"
+  },
+  "networkCalls": 0
+}
+{"test":"compiled seed factory identity and derivation","result":"PASS","comparisons":108,"rawSeedByteLengths":[32,64],"networks":3,"accountModes":3,"networkCalls":0}
+(node:7) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"test":"installed WASM application signer guard","result":"PASS","assertions":6,"seedType":"mnemonic","idempotentDisposal":true,"networkCalls":0}
+{"test":"installed WASM application signer guard","result":"PASS","assertions":6,"seedType":"entropy","seedByteLength":32,"idempotentDisposal":true,"networkCalls":0}
+{"test":"installed WASM application signer guard","result":"PASS","assertions":6,"seedType":"entropy","seedByteLength":64,"idempotentDisposal":true,"networkCalls":0}
+Breez SDK: Failed to load Node.js storage: better-sqlite3 not found. Please install it in your project: npm install better-sqlite3@^9.2.2
+Original error: Cannot find module 'better-sqlite3'
+Require stack:
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/reconstructed/package/nodejs/storage/index.cjs
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/reconstructed/package/nodejs/index.js
+Fallback error: Cannot find module 'better-sqlite3'
+Require stack:
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/reconstructed/package/nodejs/storage/index.cjs
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/reconstructed/package/nodejs/index.js
+Breez SDK: Storage operations may not work properly. Ignore this warning if you are not using the default storage.
+Breez SDK: Failed to load Node.js tree store: better-sqlite3 not found. Please install it in your project: npm install better-sqlite3@^9.2.2
+Original error: Cannot find module 'better-sqlite3'
+Require stack:
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/reconstructed/package/nodejs/tree-store/index.cjs
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/reconstructed/package/nodejs/index.js
+Fallback error: Cannot find module 'better-sqlite3'
+Require stack:
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/reconstructed/package/nodejs/tree-store/index.cjs
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/reconstructed/package/nodejs/index.js
+Breez SDK: Tree state will not be persisted. Ignore this warning if you are not using the default storage.
+{"test":"installed observation/recovery API and artifact integrity","result":"PASS","extensions":["seed-compatible-external-signers-v1","observation-only-wallet-state-v1","signed-recovery-v1","explicit-incoming-claim-v1","bounded-mature-deposit-claim-v1"],"artifacts":12,"networkCalls":0}
+{"test":"browser PBKDF2 identity compatibility","comparisons":17,"result":"PASS","networkCalls":0}

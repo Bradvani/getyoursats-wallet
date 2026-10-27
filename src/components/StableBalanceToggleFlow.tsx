@@ -1,3 +1,5 @@
+import {isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
+import {DialogContainer,DialogCard} from './ui';
 import {useEffect,useRef,useState} from 'react';
 import type {ConversionEstimate,GetInfoResponse} from '@breeztech/breez-sdk-spark';
 import {useWallet} from '../contexts/WalletContext';
@@ -17,6 +19,7 @@ const foreground=()=>document.visibilityState!=='hidden';
  * This does not claim to resolve the separate operation-gateway/security release gates. */
 export default function StableBalanceToggleFlow({isOpen,direction,onComplete,onCancel}:Props){
  const wallet=useWallet(),stable=useStableBalance();const {refreshFiatData}=useFiatData();
+ const unavailable=isRestrictedBrowserWallet(wallet);
  const {language}=usePresentation();const copy=STABLE_BALANCE_COPY[language];
  const [step,setStep]=useState<'intro'|'estimating'|'review'|'executing'>('intro');
  const [estimate,setEstimate]=useState<ConversionEstimate|null>(null),[config,setConfig]=useState<TokenDisplayConfig|null>(null);
@@ -25,7 +28,7 @@ export default function StableBalanceToggleFlow({isOpen,direction,onComplete,onC
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;generation.current+=1;}},[]);
  const sourceOf=(value:GetInfoResponse):bigint=>direction==='toToken'?BigInt(value.balanceSats):getTokenBalance(value.tokenBalances,USDB_TOKEN_IDENTIFIER)?.balance??0n;
  async function prepare(){
-  if(executing.current)return;const current=++generation.current;
+  if(unavailable||executing.current)return;const current=++generation.current;
   setStep('estimating');setError(null);setInfo(null);setEstimate(null);setReview(null);
   try{
    const [balances,settings]=await Promise.all([wallet.getInfo({}),wallet.getUserSettings()]);
@@ -51,7 +54,7 @@ export default function StableBalanceToggleFlow({isOpen,direction,onComplete,onC
   }catch{if(mounted.current&&current===generation.current){setError(copy.quoteError);setReview(null);setStep('review');}}
  }
  async function confirm(){
-  if(executing.current||step!=='review'||!review||error)return;
+  if(unavailable||executing.current||step!=='review'||!review||error)return;
   if(!foreground()||Date.now()>=review.expiresAt){setReview(null);setError(copy.expired);return;}
   executing.current=true;setStep('executing');
   let submitted=false;
@@ -68,6 +71,11 @@ export default function StableBalanceToggleFlow({isOpen,direction,onComplete,onC
   finally{executing.current=false;}
  }
  if(!isOpen)return null;
+ if(unavailable)return <DialogContainer><DialogCard maxWidth="sm">
+  <h3 className="text-lg font-bold text-spark-text-primary">Balance conversion unavailable</h3>
+  <p className="my-4 text-sm text-spark-text-secondary">Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.</p>
+  <button type="button" onClick={onCancel} className="min-h-11 w-full rounded-xl border border-spark-border text-spark-text-primary">Close</button>
+ </DialogCard></DialogContainer>;
  if(step==='intro')return <StableBalanceDisclaimer isOpen title={direction==='toToken'?copy.toStable:copy.toBitcoin} onAccept={()=>void prepare()} onCancel={onCancel}/>;
  return <StableBalanceFeeConfirm isOpen direction={direction} conversionEstimate={estimate} displayConfig={config}
   isEstimating={step==='estimating'} isExecuting={step==='executing'} error={error} info={info} canConfirm={review!==null}

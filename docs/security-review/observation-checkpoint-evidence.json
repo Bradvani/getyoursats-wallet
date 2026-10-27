@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-26",
+  "implementation_commit": "9e8493e116f75fc5f18f390c3680cf980008ee7f",
+  "application_parent": "4120868a79117f7fbd610eded80dde1501e5b550",
+  "verified_source_tree": "30b7a90a6edbeb95e7b9ed6eef7b8d4382a222c8",
+  "transport_workflow_run": 40232210410,
+  "transport_patch_sha256": "e8f5e490f04868b2663cd33b417a2e412d3cbc8a3c0413f7237c6ee986298363",
+  "sdk_package_sha256": "49d7ff48517269ddbfe3607d9816a7233d93a2aabeeb09c111102f999e1beb0b",
+  "verification": {
+    "full_unit_suite": {"passed": 968, "failed": 0},
+    "security_suite": {"passed": 158, "failed": 0, "note": "Run before two additional recipient-hash vector tests; included in the full-suite total, not additive."},
+    "rust_observation_classification_tests": {"passed": 8, "failed": 0},
+    "chromium_security_fixtures": {"passed": 7, "failed": 0},
+    "installed_wasm_identity_and_signing_guard_checks": "passed, public disposable fixtures and no network",
+    "installed_observation_api_and_artifact_hashes": "passed",
+    "typescript": "passed",
+    "lint": "passed, seven pre-existing warnings and zero errors",
+    "preview_build": "passed",
+    "production_build": "rejected by the No-Go interlock as expected",
+    "diff_check": "passed"
+  },
+  "limits": {
+    "production_deployed": false,
+    "funded_transactions": false,
+    "physical_device_verification": false,
+    "independent_security_approval": false,
+    "operator_provider_chain_settlement_integration": "outstanding",
+    "refund_and_unilateral_exit_continuity": "outstanding",
+    "compatible_rollback_artifact": "outstanding"
+  },
+  "release_decision": "NO-GO"
+}

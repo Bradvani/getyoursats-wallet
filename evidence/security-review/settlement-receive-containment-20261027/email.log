@@ -1,0 +1,17 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> wasm-example-app@1.1.0 test:email-service
+> node --test tests/email-account.test.mjs tests/handle-core.test.mjs tests/contact-enquiries.test.mjs tests/breez-lnurl-proxy.test.mjs
+
+✔ tests/breez-lnurl-proxy.test.mjs (311.299797ms)
+✔ tests/contact-enquiries.test.mjs (82.024577ms)
+✔ tests/email-account.test.mjs (652.532912ms)
+✔ tests/handle-core.test.mjs (130.669878ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 675.941445

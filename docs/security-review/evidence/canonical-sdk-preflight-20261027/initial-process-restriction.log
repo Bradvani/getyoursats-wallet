@@ -1,0 +1,109 @@
+test_accepts_exact_complete_package_without_importing_sdk (__main__.CanonicalInstalledSdkTests.test_accepts_exact_complete_package_without_importing_sdk) ... ok
+test_node_cli_rejects_overrides_before_verification (__main__.CanonicalInstalledSdkTests.test_node_cli_rejects_overrides_before_verification) ... ok
+test_node_default_resolves_canonical_package_without_evaluating_sdk (__main__.CanonicalInstalledSdkTests.test_node_default_resolves_canonical_package_without_evaluating_sdk) ... FAIL
+test_node_environment_cannot_replace_normal_installed_package (__main__.CanonicalInstalledSdkTests.test_node_environment_cannot_replace_normal_installed_package) ... ok
+test_node_explicit_diagnostic_copy_receives_identical_canonical_checks (__main__.CanonicalInstalledSdkTests.test_node_explicit_diagnostic_copy_receives_identical_canonical_checks) ... FAIL
+test_node_normal_mode_rejects_symlink_package_substitution (__main__.CanonicalInstalledSdkTests.test_node_normal_mode_rejects_symlink_package_substitution) ... ok
+test_node_repository_authority_override_is_rejected (__main__.CanonicalInstalledSdkTests.test_node_repository_authority_override_is_rejected) ... ok
+test_node_tampering_is_rejected_before_a_following_synthetic_import (__main__.CanonicalInstalledSdkTests.test_node_tampering_is_rejected_before_a_following_synthetic_import) ... FAIL
+test_rejects_ambiguous_and_escaping_archive_paths (__main__.CanonicalInstalledSdkTests.test_rejects_ambiguous_and_escaping_archive_paths) ... ok
+test_rejects_archive_file_directory_collision (__main__.CanonicalInstalledSdkTests.test_rejects_archive_file_directory_collision) ... ok
+test_rejects_archive_links_and_special_entries (__main__.CanonicalInstalledSdkTests.test_rejects_archive_links_and_special_entries) ... ok
+test_rejects_archive_substitution (__main__.CanonicalInstalledSdkTests.test_rejects_archive_substitution) ... ok
+test_rejects_canonical_archive_with_previous_package_version (__main__.CanonicalInstalledSdkTests.test_rejects_canonical_archive_with_previous_package_version) ... ok
+test_rejects_duplicate_archive_members (__main__.CanonicalInstalledSdkTests.test_rejects_duplicate_archive_members) ... ok
+test_rejects_duplicate_json_fields_in_archive_manifest (__main__.CanonicalInstalledSdkTests.test_rejects_duplicate_json_fields_in_archive_manifest) ... ok
+test_rejects_duplicate_json_fields_in_repository_manifest (__main__.CanonicalInstalledSdkTests.test_rejects_duplicate_json_fields_in_repository_manifest) ... ok
+test_rejects_extra_file_and_empty_directory (__main__.CanonicalInstalledSdkTests.test_rejects_extra_file_and_empty_directory) ... ok
+test_rejects_installed_directory_symbolic_link (__main__.CanonicalInstalledSdkTests.test_rejects_installed_directory_symbolic_link) ... ok
+test_rejects_installed_file_symbolic_link_even_to_identical_bytes (__main__.CanonicalInstalledSdkTests.test_rejects_installed_file_symbolic_link_even_to_identical_bytes) ... ok
+test_rejects_installed_nonregular_file_without_opening_it (__main__.CanonicalInstalledSdkTests.test_rejects_installed_nonregular_file_without_opening_it) ... ok
+test_rejects_internally_incorrect_generated_digest (__main__.CanonicalInstalledSdkTests.test_rejects_internally_incorrect_generated_digest) ... ok
+test_rejects_missing_file (__main__.CanonicalInstalledSdkTests.test_rejects_missing_file) ... ok
+test_rejects_modified_helpers_in_all_four_runtime_targets (__main__.CanonicalInstalledSdkTests.test_rejects_modified_helpers_in_all_four_runtime_targets) ... ok
+test_rejects_modified_storage_and_ssr_helpers (__main__.CanonicalInstalledSdkTests.test_rejects_modified_storage_and_ssr_helpers) ... ok
+test_rejects_old_source_version_or_missing_extension (__main__.CanonicalInstalledSdkTests.test_rejects_old_source_version_or_missing_extension) ... ok
+test_rejects_package_root_and_intermediate_symbolic_links (__main__.CanonicalInstalledSdkTests.test_rejects_package_root_and_intermediate_symbolic_links) ... ok
+test_rejects_repository_authority_symlinks (__main__.CanonicalInstalledSdkTests.test_rejects_repository_authority_symlinks) ... ok
+test_rejects_repository_manifest_that_differs_from_embedded_manifest (__main__.CanonicalInstalledSdkTests.test_rejects_repository_manifest_that_differs_from_embedded_manifest) ... ok
+test_rejects_selected_source_patch_mismatch (__main__.CanonicalInstalledSdkTests.test_rejects_selected_source_patch_mismatch) ... ok
+test_rejects_wrapper_and_self_manifest_forgery_that_old_guard_accepted (__main__.CanonicalInstalledSdkTests.test_rejects_wrapper_and_self_manifest_forgery_that_old_guard_accepted) ... ok
+
+======================================================================
+FAIL: test_node_default_resolves_canonical_package_without_evaluating_sdk (__main__.CanonicalInstalledSdkTests.test_node_default_resolves_canonical_package_without_evaluating_sdk)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/gys-canonical-sdk-preflight-20261027/tests/canonical-installed-sdk.test.py", line 279, in test_node_default_resolves_canonical_package_without_evaluating_sdk
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 1 != 0 : node:internal/child_process:1191
+    result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);
+                   ^
+
+Error: spawnSync python3 EPERM
+    at Object.spawnSync (node:internal/child_process:1191:20)
+    at spawnSync (node:child_process:929:24)
+    at verifyCanonicalInstalledSdk (file:///tmp/gys-canonical-proof-cucz9yq9/repository/scripts/security/verify-canonical-installed-sdk.mjs:30:18)
+    at file:///tmp/gys-canonical-proof-cucz9yq9/repository/run.mjs:2:28
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  errno: -1,
+  code: 'EPERM',
+  syscall: 'spawnSync python3',
+  path: 'python3',
+  spawnargs: [
+    '-I',
+    '/tmp/gys-canonical-proof-cucz9yq9/repository/scripts/security/verify-canonical-installed-sdk.py',
+    '/tmp/gys-canonical-proof-cucz9yq9/repository/',
+    '/tmp/gys-canonical-proof-cucz9yq9/repository/node_modules/@breeztech/breez-sdk-spark'
+  ]
+}
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_node_explicit_diagnostic_copy_receives_identical_canonical_checks (__main__.CanonicalInstalledSdkTests.test_node_explicit_diagnostic_copy_receives_identical_canonical_checks)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/gys-canonical-sdk-preflight-20261027/tests/canonical-installed-sdk.test.py", line 302, in test_node_explicit_diagnostic_copy_receives_identical_canonical_checks
+    self.assertEqual(accepted.returncode, 0, accepted.stderr)
+AssertionError: 1 != 0 : node:internal/child_process:1191
+    result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);
+                   ^
+
+Error: spawnSync python3 EPERM
+    at Object.spawnSync (node:internal/child_process:1191:20)
+    at spawnSync (node:child_process:929:24)
+    at verifyCanonicalInstalledSdk (file:///tmp/gys-canonical-proof-fn6puev7/repository/scripts/security/verify-canonical-installed-sdk.mjs:30:18)
+    at file:///tmp/gys-canonical-proof-fn6puev7/repository/run.mjs:2:28
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  errno: -1,
+  code: 'EPERM',
+  syscall: 'spawnSync python3',
+  path: 'python3',
+  spawnargs: [
+    '-I',
+    '/tmp/gys-canonical-proof-fn6puev7/repository/scripts/security/verify-canonical-installed-sdk.py',
+    '/tmp/gys-canonical-proof-fn6puev7/repository/',
+    '/tmp/gys-canonical-proof-fn6puev7/repository/diagnostic-copy'
+  ]
+}
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_node_tampering_is_rejected_before_a_following_synthetic_import (__main__.CanonicalInstalledSdkTests.test_node_tampering_is_rejected_before_a_following_synthetic_import)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/gys-canonical-sdk-preflight-20261027/tests/canonical-installed-sdk.test.py", line 289, in test_node_tampering_is_rejected_before_a_following_synthetic_import
+    self.assertIn('inventory or bytes', result.stderr)
+AssertionError: 'inventory or bytes' not found in "node:internal/child_process:1191\n    result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);\n                   ^\n\nError: spawnSync python3 EPERM\n    at Object.spawnSync (node:internal/child_process:1191:20)\n    at spawnSync (node:child_process:929:24)\n    at verifyCanonicalInstalledSdk (file:///tmp/gys-canonical-proof-e3_90_n_/repository/scripts/security/verify-canonical-installed-sdk.mjs:30:18)\n    at file:///tmp/gys-canonical-proof-e3_90_n_/repository/run.mjs:2:1\n    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\n    at async node:internal/modules/esm/loader:647:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  errno: -1,\n  code: 'EPERM',\n  syscall: 'spawnSync python3',\n  path: 'python3',\n  spawnargs: [\n    '-I',\n    '/tmp/gys-canonical-proof-e3_90_n_/repository/scripts/security/verify-canonical-installed-sdk.py',\n    '/tmp/gys-canonical-proof-e3_90_n_/repository/',\n    '/tmp/gys-canonical-proof-e3_90_n_/repository/node_modules/@breeztech/breez-sdk-spark'\n  ]\n}\n\nNode.js v24.22.1\n"
+
+----------------------------------------------------------------------
+Ran 30 tests in 0.613s
+
+FAILED (failures=3)
