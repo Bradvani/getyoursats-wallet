@@ -136,6 +136,7 @@ export function useReceivePayment(): UseReceivePaymentReturn {
 
   const generateSparkAddress = useCallback(async () => {
     if (sparkAddress || sparkLoading) return;
+    setError(null);
     setSparkLoading(true);
     try {
       const receiveResponse = await wallet.receivePayment({

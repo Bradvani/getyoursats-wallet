@@ -15,8 +15,9 @@ interface SparkWorkflowProps {
 }
 
 const SparkWorkflow: React.FC<SparkWorkflowProps> = ({ method, amountSats, feesIncluded, conversionEstimate, balanceSats, tokenBalance, onBack, onSend }) => {
-  // Currently no fee exposed for spark address
-  const feesSat: number | null = method.type === 'sparkAddress' ? null : null;
+  // Use the SDK quote; absence must never be interpreted as a free transfer.
+  const feesSat = typeof method.fee === 'bigint' && method.fee >= 0n
+    && method.fee <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(method.fee) : null;
   const handleSend = () => onSend();
   return <ConfirmStep amountSats={amountSats} feesSat={feesSat} feesIncluded={feesIncluded} conversionEstimate={conversionEstimate} balanceSats={balanceSats} tokenBalance={tokenBalance} destination={getSendDestination(method)} error={null} isLoading={false} onBack={onBack} onConfirm={handleSend} />;
 };
