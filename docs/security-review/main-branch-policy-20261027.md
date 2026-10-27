@@ -1,14 +1,18 @@
-# Prepared protection for the default branch
+# Active protection for the default branch
 
 ## Status
 
-This policy is prepared for approval. It is **not active**. The public repository rulesets endpoint returned an empty list on 27 October 2026 at 10:22:35 UTC; the earlier 07:37 observation is retained in the candidate history. This endpoint does not establish classic branch-protection settings. No policy was created or activated in this continuation.
+The repository owner explicitly approved activation of the prepared policy. GitHub created **`main-release-protection`**, ruleset **`25954746`**, with active enforcement on **27 October 2026 at 17:33:21 IST** (`2026-10-27T12:03:21Z`).
 
-Automatic approval review previously rejected activation because this exact consequential default-branch policy had not been explicitly authorized. Activation can block legitimate merges if a required check becomes unavailable. The proposed policy includes no owner bypass, so that consequence also applies to the repository owner.
+The saved configuration and the effective rules for `main` match the approved policy. The bypass list is empty and GitHub reports `current_user_can_bypass: never`. See the [activation receipt](main-protection-activation-20261027.md) for original API responses and the saved UI screenshot.
 
-## Exact policy to approve
+The earlier [prepared policy at commit 44980ac2](https://github.com/Bradvani/getyoursats-wallet/blob/44980ac254685c0d498b7665e338cd317a7f64e8/docs/security-review/main-branch-policy-20261027.md) remains the immutable approval baseline. Automatic approval review had previously rejected activation because explicit authorization was missing; activation followed that authorization and GitHub's account verification. There was no bypass of the review rejection.
 
-| Setting | Prepared value |
+An unavailable required check can block legitimate merges, including owner merges. This is the approved consequence of enforcing the policy without bypass actors.
+
+## Activated policy
+
+| Setting | Active value |
 | --- | --- |
 | Repository | `Bradvani/getyoursats-wallet` |
 | Target | The default branch, currently `main` |
@@ -39,8 +43,12 @@ The final candidate `c47ffeda0550f08e3cda994bba06c9745adbdc3a` also reports all 
 
 The separate CodeQL findings check `122130969914` succeeded with no new alerts reported in PR-changed code and zero annotations. The [final CI receipt](pr43-recovery3-ci-20261027.md) retains its scope and the analyzer warnings. These observations establish current check identities and outcomes, not activation of this policy or real-funds clearance.
 
-## Activation handoff
+## Activation verification
 
-Obtain explicit approval for the policy above before activation. Re-read the current rulesets and default branch first to preserve any intervening owner change. Verify the saved rule and its effective branch targeting after activation. Do not bypass the earlier automatic-review rejection through another administrative tool.
+The pre-activation read confirmed that the default branch was `main`, the rulesets list was empty and PR43 still referenced source `c47ffeda0550f08e3cda994bba06c9745adbdc3a`. No intervening ruleset was overwritten.
+
+After creation, GitHub's saved ruleset API and its effective-rules API for `main` both showed all five approved rule types. The UI displayed **Ruleset created**, **Active**, **Bypass list is empty** and **Applies to 1 target: main**. No test push, merge attempt or production deployment was used to verify the policy.
+
+PR43 remains draft and unmerged at the same candidate. Main remains `07ddf16068cc5bd7ed09397e221800ad7b12d767`.
 
 Repository protection is an additional merge control. It does not close the SDK execution and recovery contracts, physical-device acceptance or independent security review described in the [release gates](reconciled-release-gates-20261027.md).

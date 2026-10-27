@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "repository": "Bradvani/getyoursats-wallet",
+  "result": "ACTIVATED_AND_VERIFIED",
+  "ruleset_id": 25954746,
+  "created_at": "2026-10-27T17:33:21.193+05:30",
+  "approved_baseline_commit": "44980ac254685c0d498b7665e338cd317a7f64e8",
+  "approved_policy_sha256": "2d719098101d4fab2421640a2abe725ec8baac924f5092d34963f3e74329cc0b",
+  "approval": "Explicit repository-owner approval received before activation",
+  "saved_ruleset_observed_no_later_than": "2026-10-27T12:04:12Z",
+  "effective_rules_observed_after": "2026-10-27T12:04:13Z",
+  "effective_rules_observed_before": "2026-10-27T12:05:16.776994Z",
+  "effective_rules_exact_observation_timestamp_retained": false,
+  "validation": {
+    "approved_configuration_matches": true,
+    "five_rules_effective_on_main": true,
+    "no_bypass": true,
+    "candidate_unchanged": true,
+    "main_unchanged": true,
+    "pr43_draft_open_unmerged": true
+  },
+  "mutation_scope": "Created approved ruleset only; subsequent publication records evidence",
+  "merge_attempted": false,
+  "production_deployment_performed": false,
+  "qualified_independent_release_approval": false,
+  "sources": {
+    "saved_ruleset": "https://api.github.com/repos/Bradvani/getyoursats-wallet/rulesets/25954746",
+    "effective_rules": "https://api.github.com/repos/Bradvani/getyoursats-wallet/rules/branches/main",
+    "ui": "https://github.com/Bradvani/getyoursats-wallet/settings/rules/25954746"
+  },
+  "files": [
+    {
+      "path": "active-ruleset.jpg",
+      "bytes": 85923,
+      "sha256": "9dc65d009426cb324f744e75b88b1e4b091286c044d45e8468d00a41dc54fe3c"
+    },
+    {
+      "path": "after_main.json",
+      "bytes": 352,
+      "sha256": "beff49af421ab78e3d9e49f299627b6311362961c730912346b18ed6e8d431a8"
+    },
+    {
+      "path": "after_ruleset.json",
+      "bytes": 1485,
+      "sha256": "cbbae266fbfd243ae4ef43e4b46e5e68614d9825365da29113d881f292e1b109"
+    },
+    {
+      "path": "after_rulesets.json",
+      "bytes": 479,
+      "sha256": "98c10266fe7d5ac7b7387e78063dcca16ab325d17c9c5a2a25d4e37878cf90c0"
+    },
+    {
+      "path": "before_main.json",
+      "bytes": 352,
+      "sha256": "beff49af421ab78e3d9e49f299627b6311362961c730912346b18ed6e8d431a8"
+    },
+    {
+      "path": "before_rulesets.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "effective-main-rules.json",
+      "bytes": 1912,
+      "sha256": "af94bbfd7869ac37798e4d4559df22133b1fb83b2117bf3232e04155f42a8b91"
+    },
+    {
+      "path": "pr43.json",
+      "bytes": 232,
+      "sha256": "c6683b1d1e0a6c983c204c8da9c48250e807764ce58e4230d7d11eb94ff34a09"
+    }
+  ]
+}
