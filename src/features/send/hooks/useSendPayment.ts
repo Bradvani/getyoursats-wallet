@@ -1,3 +1,4 @@
+import {notifyPaymentFeedback} from '@/utils/transferHaptics';
 import {classifyLookupFailure} from '@/getyoursats/lookupFailure';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {paymentOutcome,type PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
@@ -54,6 +55,8 @@ export interface UseSendPaymentReturn {
   tokenBalance: bigint | undefined;
   feesIncluded: boolean;
   processingPhase: ProcessingPhase;
+  /** Presentation milestone: preparation versus actual SDK invocation. */
+  transferStage: 'preparing' | 'processing';
   /** True when the destination carried its own amount (a BIP21 `amount` or a
    *  bolt11's embedded amount), so the amount step was skipped. Lets the confirm
    *  step send "back" to input instead of the amount step the user never saw. */
@@ -89,6 +92,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   const [completedPayment,setCompletedPayment] = useState<Payment|null>(null);
   const [feesIncluded, setFeesIncluded] = useState(false);
   const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('sending');
+  const [transferStage,setTransferStage]=useState<'preparing'|'processing'>('preparing');
   const [amountFixed, setAmountFixed] = useState(false);
   const [tokenIdentifier, setTokenIdentifier] = useState<string | null>(null);
 
@@ -307,6 +311,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   const handleSend = useCallback(async (options?: SendPaymentOptions) => {
     if (!prepareResponse || executionStarted.current) return;
     executionStarted.current = true;
+    setTransferStage('preparing');
     const hasConversion = !!prepareResponse.conversionEstimate;
     logger.info(LogCategory.PAYMENT, 'handleSend called', {
       hasConversion,
@@ -343,8 +348,11 @@ export function useSendPayment(): UseSendPaymentReturn {
     }
 
     try {
+      setTransferStage('processing');
       const outcome = await wallet.sendPayment({ prepareResponse, options });
       setPaymentResult(paymentOutcome(outcome));
+      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id);
+      else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
       setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
       logger.error(LogCategory.PAYMENT, 'Payment failed', { error: formatError(err) });
@@ -364,6 +372,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   const handleRun = useCallback(async (runner: () => Promise<PaymentExecutionResult>, hasConversion?: boolean) => {
     if (executionStarted.current) return;
     executionStarted.current = true;
+    setTransferStage('preparing');
     setProcessingPhase(hasConversion ? 'converting' : 'sending');
     setCurrentStep('processing');
     setIsLoading(true);
@@ -395,8 +404,11 @@ export function useSendPayment(): UseSendPaymentReturn {
     }
 
     try {
+      setTransferStage('processing');
       const outcome = await runner();
       setPaymentResult(paymentOutcome(outcome));
+      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id);
+      else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
       setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
       logger.error(LogCategory.PAYMENT, 'Operation failed during payment flow', { error: formatError(err) });
@@ -460,6 +472,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     tokenBalance,
     feesIncluded,
     processingPhase,
+    transferStage,
     amountFixed,
     tokenIdentifier,
     confirmDestination: useCallback((input: SendInput) => {

@@ -1,48 +1,54 @@
-import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
+import {beforeEach,describe,expect,it,vi} from 'vitest';
 import {Capacitor} from '@capacitor/core';
 import {Haptics} from '@capacitor/haptics';
-import {startTransferHaptics,setPaymentHapticsEnabled} from './transferHaptics';
+import {playPaymentFeedback,notifyPaymentFeedback,setPaymentHapticsEnabled,paymentVibrationSupported} from './transferHaptics';
 vi.mock('@capacitor/core',()=>({Capacitor:{isNativePlatform:vi.fn(()=>false)}}));
-vi.mock('@capacitor/haptics',()=>({Haptics:{impact:vi.fn().mockResolvedValue(undefined)},ImpactStyle:{Light:'LIGHT'}}));
-let visibility='visible';let stop=()=>{};
-const vibrate=vi.fn((duration:number)=>duration>=0);
+vi.mock('@capacitor/haptics',()=>({Haptics:{notification:vi.fn().mockResolvedValue(undefined)},NotificationType:{Success:'SUCCESS',Error:'ERROR'}}));
+const vibrate=vi.fn((_pattern:number|number[])=>true);
 beforeEach(()=>{
- vi.useFakeTimers();visibility='visible';
- Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>visibility});
+ vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);vibrate.mockReturnValue(true);
+ Object.defineProperty(document,'visibilityState',{configurable:true,value:'visible'});
  Object.defineProperty(navigator,'vibrate',{configurable:true,value:vibrate});
  Object.defineProperty(navigator,'userActivation',{configurable:true,value:{hasBeenActive:true}});
 });
-afterEach(()=>{stop();vi.useRealTimers()});
-describe('transfer haptic choreography',()=>{
- it('pairs two restrained native impacts with the outbound pulse',()=>{
+describe('payment result feedback independent of decorative clocks',()=>{
+ it('uses perceptible distinct web success/error patterns and a direct user test',async()=>{
+  expect(await playPaymentFeedback('success')).toBe('accepted');expect(vibrate).toHaveBeenLastCalledWith(70);
+  await playPaymentFeedback('error');expect(vibrate).toHaveBeenLastCalledWith([80,60,100]);
+  await playPaymentFeedback('test');expect(vibrate).toHaveBeenLastCalledWith(120);
+ });
+ it('uses native notification feedback, not a barely perceptible light impact',async()=>{
   vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
-  stop=startTransferHaptics('sent');expect(Haptics.impact).toHaveBeenCalledTimes(1);
-  vi.advanceTimersByTime(649);expect(Haptics.impact).toHaveBeenCalledTimes(1);
-  vi.advanceTimersByTime(1);expect(Haptics.impact).toHaveBeenCalledTimes(2);
+  await playPaymentFeedback('success');expect(Haptics.notification).toHaveBeenCalledWith({type:'SUCCESS'});
+  await playPaymentFeedback('error');expect(Haptics.notification).toHaveBeenCalledWith({type:'ERROR'});
+  expect(vibrate).not.toHaveBeenCalled();
  });
- it('uses short supported web vibration only after user activation',()=>{
-  vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
-  stop=startTransferHaptics('received');expect(vibrate).toHaveBeenCalledWith(12);
-  vi.advanceTimersByTime(760);expect(vibrate.mock.calls.filter(x=>x[0]===12)).toHaveLength(2);
+ it('honors opt-out and hidden pages',async()=>{
+  setPaymentHapticsEnabled(false);expect(await playPaymentFeedback('success')).toBe('disabled');
+  setPaymentHapticsEnabled(true);Object.defineProperty(document,'visibilityState',{configurable:true,value:'hidden'});
+  expect(await playPaymentFeedback('error')).toBe('hidden');expect(vibrate).not.toHaveBeenCalled();
  });
- it('cancels the second accent on backgrounding',()=>{
-  stop=startTransferHaptics('received');const count=vi.mocked(Haptics.impact).mock.calls.length+vibrate.mock.calls.length;
-  visibility='hidden';document.dispatchEvent(new Event('visibilitychange'));
-  vi.advanceTimersByTime(2000);
-  expect(vi.mocked(Haptics.impact).mock.calls.length+vibrate.mock.calls.filter(x=>x[0]!==0).length).toBe(count);
+ it('handles absent userActivation without falsely disabling supported browsers',async()=>{
+  Object.defineProperty(navigator,'userActivation',{configurable:true,value:undefined});
+  expect(await playPaymentFeedback('success')).toBe('accepted');
  });
- it('honors the user opt-out',()=>{
-  setPaymentHapticsEnabled(false);stop=startTransferHaptics('sent');vi.advanceTimersByTime(2000);
-  expect(Haptics.impact).not.toHaveBeenCalled();expect(vibrate).not.toHaveBeenCalled();
+ it('reports API absence and browser rejection rather than claiming motor delivery',async()=>{
+  vibrate.mockReturnValue(false);expect(await playPaymentFeedback('test')).toBe('blocked');
+  Object.defineProperty(navigator,'vibrate',{configurable:true,value:undefined});
+  expect(paymentVibrationSupported()).toBe(false);expect(await playPaymentFeedback('test')).toBe('unsupported');
  });
- it('does not vibrate a web page with no user activation',()=>{
-  vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
+ it('does not bypass activation restrictions',async()=>{
   Object.defineProperty(navigator,'userActivation',{configurable:true,value:{hasBeenActive:false}});
-  stop=startTransferHaptics('sent');vi.advanceTimersByTime(2000);expect(vibrate).not.toHaveBeenCalled();
+  expect(await playPaymentFeedback('success')).toBe('blocked');expect(vibrate).not.toHaveBeenCalled();
  });
- it('reduces to one accent for reduced motion and tolerates a missing engine',async()=>{
-  vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);vi.mocked(Haptics.impact).mockRejectedValueOnce(new Error('no engine'));
-  expect(()=>{stop=startTransferHaptics('sent',true)}).not.toThrow();
-  await Promise.resolve();vi.advanceTimersByTime(2000);expect(Haptics.impact).toHaveBeenCalledTimes(1);
+ it('deduplicates event and receipt owners, independently for a later definitive failure',async()=>{
+  notifyPaymentFeedback('success','unique-feedback-1');notifyPaymentFeedback('success','unique-feedback-1');
+  await Promise.resolve();expect(vibrate).toHaveBeenCalledTimes(1);
+  notifyPaymentFeedback('error','unique-feedback-1');expect(vibrate).toHaveBeenCalledTimes(2);
+ });
+ it('native engine errors never escape into payment execution',async()=>{
+  vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+  vi.mocked(Haptics.notification).mockRejectedValueOnce(new Error('no hardware'));
+  expect(await playPaymentFeedback('success')).toBe('error');
  });
 });

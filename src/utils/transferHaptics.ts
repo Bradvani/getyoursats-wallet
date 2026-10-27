@@ -1,42 +1,38 @@
 import {Capacitor} from '@capacitor/core';
-import {Haptics, ImpactStyle} from '@capacitor/haptics';
-
-export type TransferDirection = 'sent'|'received';
+import {Haptics,NotificationType} from '@capacitor/haptics';
+export type TransferDirection='sent'|'received';
+export type PaymentFeedbackKind='success'|'error'|'test';
+export type FeedbackResult='accepted'|'unsupported'|'blocked'|'disabled'|'hidden'|'error';
 const PREFERENCE='gys:payment-haptics:v1';
-export function paymentHapticsEnabled():boolean {
-  try{return localStorage.getItem(PREFERENCE)!=='off';}catch{return true;}
+const delivered=new Set<string>();
+export function paymentHapticsEnabled():boolean{try{return localStorage.getItem(PREFERENCE)!=='off';}catch{return true;}}
+export function setPaymentHapticsEnabled(enabled:boolean):void{try{localStorage.setItem(PREFERENCE,enabled?'on':'off');}catch{/* optional */}}
+export function paymentVibrationSupported():boolean{
+ return Capacitor.isNativePlatform() || (typeof navigator!=='undefined' && typeof navigator.vibrate==='function');
 }
-export function setPaymentHapticsEnabled(enabled:boolean):void {
-  try{localStorage.setItem(PREFERENCE,enabled?'on':'off');}catch{/* optional preference */}
+/** Browser acceptance is NOT evidence that a physical motor ran. Never awaited by payment execution. */
+export async function playPaymentFeedback(kind:PaymentFeedbackKind):Promise<FeedbackResult>{
+ if(!paymentHapticsEnabled())return 'disabled';
+ if(document.visibilityState==='hidden')return 'hidden';
+ try{
+  if(Capacitor.isNativePlatform()){
+   await Haptics.notification({type:kind==='error'?NotificationType.Error:NotificationType.Success});
+   return 'accepted';
+  }
+  if(typeof navigator.vibrate!=='function')return 'unsupported';
+  // Older supported browsers may not expose userActivation. Let their own
+  // activation policy decide rather than incorrectly treating absence as false.
+  if(navigator.userActivation && !navigator.userActivation.hasBeenActive)return 'blocked';
+  const pattern=kind==='error'?[80,60,100]:kind==='test'?120:70;
+  return navigator.vibrate(pattern)?'accepted':'blocked';
+ }catch{return 'error';}
 }
-/** Presentation-only. Never awaited by signing, sending or settlement code. */
-export function startTransferHaptics(direction:TransferDirection,reducedMotion=false):()=>void {
-  let stopped=false;
-  const timers:Array<ReturnType<typeof setTimeout>>=[];
-  const native=Capacitor.isNativePlatform();
-  let usedWebVibration=false;
-  const allowed=()=>!stopped && document.visibilityState!=='hidden' && paymentHapticsEnabled();
-  const tap=()=>{
-    if(!allowed())return;
-    try {
-      if(native)void Haptics.impact({style:ImpactStyle.Light}).catch(()=>{});
-      else if(typeof navigator.vibrate==='function' && navigator.userActivation?.hasBeenActive){
-        usedWebVibration=true;
-        navigator.vibrate(12);
-      }
-    }catch{/* Unsupported/disabled haptics must never affect a payment. */}
-  };
-  // Two restrained accents: ignition and the wave's arrival. No pending loop.
-  tap();
-  if(!reducedMotion)timers.push(setTimeout(tap,direction==='sent'?650:760));
-  const cancel=()=>{
-    stopped=true;timers.forEach(clearTimeout);
-    document.removeEventListener('visibilitychange',onVisibility);
-    window.removeEventListener('pagehide',cancel);
-    if(usedWebVibration){try{navigator.vibrate(0);}catch{/* best effort */}}
-  };
-  const onVisibility=()=>{if(document.visibilityState==='hidden')cancel();};
-  document.addEventListener('visibilitychange',onVisibility);
-  window.addEventListener('pagehide',cancel);
-  return cancel;
+/** Shared by the SDK event and receipt owners; no repeated buzz for one result. */
+export function notifyPaymentFeedback(kind:'success'|'error',paymentId:string):void{
+ if(!paymentId)return;
+ const key=`${kind}:${paymentId}`;
+ if(delivered.has(key))return;
+ delivered.add(key);
+ if(delivered.size>512)delivered.delete(delivered.values().next().value!);
+ void playPaymentFeedback(kind).then(result=>{if(result!=='accepted')delivered.delete(key);});
 }

@@ -72,6 +72,8 @@ vi.mock('./hooks/useBackButton', () => ({useBackButton: vi.fn()}));
 vi.mock('./components/LoadingSpinner', () => ({default: () => null}));
 vi.mock('./components/BrandIntro', () => ({default: () => null}));
 vi.mock('./components/PaymentCelebration', () => ({default: () => null}));
+// Incoming-event ownership is exercised in IncomingPaymentNotice.test.tsx.
+vi.mock('./components/IncomingPaymentNotice', () => ({default: () => null}));
 vi.mock('./components/OfflineBanner', () => ({default: () => null}));
 vi.mock('./components/LockScreen', () => ({default: () => null}));
 vi.mock('./getyoursats/DcaPage', () => ({default: () => null}));

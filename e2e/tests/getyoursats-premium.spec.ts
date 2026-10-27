@@ -85,7 +85,11 @@ test('@public-smoke merchant shows lightning flash only after an SDK confirmed r
  });
  await expect(page.getByTestId('pos-received-motion')).toBeVisible();
  await expect(page.getByTestId('pos-received-motion').locator('[data-motion-state="received"]')).toBeVisible();
- await expect(page.getByTestId('pos-received-motion').locator('img[src="/brand/monogram.svg"]')).toBeVisible();
+ // Payment artwork is now crisp inline SVG; the invoice QR retains its image.
+ const mark=page.getByTestId('pos-received-motion').locator('svg.gys-contour-mark');
+ await expect(mark).toBeVisible();
+ await expect(mark.locator('image,img')).toHaveCount(0);
+ await expect(mark).toHaveAttribute('viewBox','0 0 512 512');
  await expect(page.getByTestId('pos-invoice-qr')).toHaveCount(0);
  await expect(terminal).toContainText('Payment confirmed by the wallet');
  await page.screenshot({path:'test-artifacts/pos-payment-received.png',animations:'disabled'});
@@ -105,14 +109,23 @@ test('@public-smoke send receive settings and reduced motion',async({page})=>{
  await page.screenshot({path:'test-artifacts/send-mobile.png'});
  for(const state of ['sending','converting','receiving','sent','failed','received','settings']){
   await page.goto(fixture+'?screen='+state);
-  if(state!=='settings')await expect(page.locator('[data-motion-state]')).toBeVisible();
+  if(state!=='settings'&&state!=='received')await expect(page.locator('[data-motion-state]')).toBeVisible();
   if(state==='settings')await expect(page.getByRole('heading',{name:'Settings',exact:true})).toBeVisible();
   if(state==='received'){
-   await expect(page.getByTestId('payment-received-moment')).toHaveCSS('opacity','1');
-   await expect(page.getByTestId('payment-received-moment').locator('img[src="/brand/monogram.svg"]')).toBeVisible();
+   // The integrated receive scene is portalled, not nested in its event owner.
+   await expect(page.getByTestId('payment-received-moment')).toBeAttached();
+   const scene=page.getByTestId('transfer-experience');
+   await expect(scene).toBeVisible();
+   await expect(scene).toHaveAttribute('data-phase','confirmed');
+   await expect(scene).toHaveAttribute('data-direction','received');
+   await expect(scene.locator('svg.gys-contour-mark')).toBeVisible();
+   await expect(scene.locator('.gys-contour-mark image,.gys-contour-mark img')).toHaveCount(0);
+   await expect(scene.getByRole('progressbar')).toHaveAttribute('aria-valuenow','100');
   }
   if(state==='sent'){
-   await expect(page.getByTestId('payment-success').locator('img[src="/brand/monogram.svg"]')).toBeVisible();
+   const mark=page.getByTestId('payment-success').locator('svg.gys-contour-mark');
+   await expect(mark).toBeVisible();
+   await expect(mark.locator('image,img')).toHaveCount(0);
   }
   await page.screenshot({path:`test-artifacts/state-${state}.png`,animations:'disabled'});
   if(state==='received'){
@@ -122,11 +135,17 @@ test('@public-smoke send receive settings and reduced motion',async({page})=>{
  }
  await page.emulateMedia({reducedMotion:'reduce'});
  await page.goto(fixture+'?screen=sending');
- await expect(page.locator('.gys-transfer__orbit')).toHaveCSS('animation-name','none');
+ await expect(page.locator('.gys-contour-mark')).toBeVisible();
+ await expect(page.locator('.gys-contour-mark')).toHaveCSS('animation-name','none');
+ await expect(page.locator('.gys-pulse__contours')).toBeHidden();
  await expect(page.getByRole('status')).toHaveAttribute('aria-busy','true');
  await page.goto(fixture+'?screen=received');
- await expect(page.getByTestId('payment-received-moment')).toBeVisible();
- await expect(page.locator('.gys-transfer--received .gys-transfer__glow')).toHaveCSS('display','none');
+ await expect(page.getByTestId('payment-received-moment')).toBeAttached();
+ const reducedScene=page.getByTestId('transfer-experience');
+ await expect(reducedScene).toBeVisible();
+ await expect(reducedScene.locator('.gys-sequence__canvas')).toBeHidden();
+ await expect(reducedScene.locator('.gys-contour-mark')).toHaveCSS('animation-name','none');
+ await expect(reducedScene.getByRole('progressbar')).toHaveAttribute('aria-valuenow','100');
 });
 
 test('@public-smoke installed iOS header keeps the official wordmark clear',async({page})=>{

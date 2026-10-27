@@ -1,0 +1,36 @@
+/* Payment-state-driven, one-way choreography. No repeat clocks and no filtering of the logo. */
+.gys-sequence{position:fixed;inset:0;z-index:10010;overflow:hidden;background:#0b0b0b;color:#faf9f6;isolation:isolate;--sequence-accent:#F7931A;--sequence-muted:#b8b6b1;overscroll-behavior:contain}
+.gys-sequence__canvas{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.gys-sequence__wave{vector-effect:non-scaling-stroke}
+.gys-sequence__content{position:absolute;z-index:1;top:clamp(90px,23vh,250px);left:50%;width:min(360px,calc(100% - 40px));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;text-align:center}
+.gys-sequence__identity{width:144px;height:144px;flex:none}
+.gys-sequence .gys-contour-mark{width:144px;height:144px;display:block;overflow:visible;filter:none;transform:none;animation:none}
+.gys-sequence__evidence{display:flex;flex-direction:column;align-items:center;width:min(230px,100%);margin-top:24px}
+.gys-sequence__percent{font-size:clamp(40px,10vw,58px);font-weight:650;letter-spacing:-.055em;font-variant-numeric:tabular-nums;line-height:1;color:var(--sequence-accent)}
+.gys-sequence__percent>span{font-size:.43em;font-weight:500;margin-left:5px}
+.gys-sequence__caption{display:block;font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--sequence-muted);margin-top:9px}
+.gys-sequence__steps{display:flex;gap:5px;width:118px;margin-top:14px}
+.gys-sequence__steps i{height:3px;flex:1;border-radius:3px;background:#ffffff21}
+.gys-sequence__steps i[data-done="true"]{background:var(--sequence-accent)}
+.gys-sequence h2{font-size:22px;line-height:1.25;font-weight:650;margin:22px 0 10px;color:inherit}
+.gys-sequence__description{max-width:290px;font-size:12px;line-height:1.6;color:var(--sequence-muted)}
+.gys-sequence__error-detail{margin-top:10px;max-height:72px;overflow:auto;font-size:11px;overflow-wrap:anywhere}
+.gys-sequence__amount{font-size:24px;line-height:1.35;margin-top:12px;font-weight:650;letter-spacing:-.02em}
+.gys-sequence__footer{position:absolute;z-index:2;left:50%;bottom:max(24px,env(safe-area-inset-bottom));width:min(370px,calc(100% - 36px));transform:translateX(-50%);text-align:center}
+.gys-sequence__close{min-height:48px;min-width:160px;padding:10px 25px;border:1px solid #f7931a66;border-radius:16px;background:#17140f;color:#faf9f6;font-size:14px;font-weight:650;cursor:pointer}
+.gys-sequence__close:hover{background:#292015}
+.gys-sequence__close:focus-visible{outline:3px solid #F7931A;outline-offset:4px}
+.gys-sequence--orange{--sequence-accent:#101010;--sequence-muted:#292015;color:#101010}
+.gys-sequence--orange .gys-sequence__steps i{background:#10101024}
+.gys-sequence--orange .gys-sequence__steps i[data-done="true"]{background:#101010}
+.gys-sequence--orange .gys-sequence__close{border-color:#111;background:#111;color:#fff}
+.gys-sequence--interrupted .gys-sequence__steps i[data-done="true"]{background:#c0aba0}
+.gys-sequence--interrupted .gys-sequence__percent{color:#e0c4b1}
+.gys-sequence--interrupted .gys-sequence__canvas{opacity:.22}
+.gys-sequence__studio{font-size:11px;margin-top:12px;padding:10px;border-radius:14px;background:#101010e8;color:#faf9f6}
+.gys-sequence__studio button{min-height:40px;padding:7px 10px;border:1px solid #ffffff30;border-radius:9px;font-size:11px}
+.gys-sequence__studio button:disabled{opacity:.35}
+@media(max-height:740px){.gys-sequence__content{top:65px}.gys-sequence__evidence{margin-top:14px}.gys-sequence h2{margin-top:14px}.gys-sequence__description{font-size:11px}}
+@media(max-height:600px){.gys-sequence__content{top:24px}.gys-sequence__identity,.gys-sequence .gys-contour-mark{width:88px;height:88px}.gys-sequence__evidence{margin-top:10px}.gys-sequence__percent{font-size:32px}.gys-sequence h2{font-size:18px;margin:10px 0 6px}.gys-sequence__description{font-size:10px;max-width:320px}.gys-sequence__footer{bottom:12px}}
+@media(prefers-reduced-motion:reduce){.gys-sequence__canvas{display:none}.gys-sequence{border:2px solid #F7931A}}
+@media(forced-colors:active){.gys-sequence{background:Canvas;color:CanvasText;--sequence-accent:Highlight;--sequence-muted:CanvasText}.gys-sequence__canvas{display:none}.gys-sequence__close{background:ButtonFace;color:ButtonText;border:1px solid ButtonText}}

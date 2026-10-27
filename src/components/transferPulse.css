@@ -1,80 +1,34 @@
-/* GetYourSats paired transfer pulse. One shot after settlement, never a clock
-   that changes payment state. Body portal escapes transformed bottom sheets. */
-.gys-pulse{
- --gys-pulse-orange:#F7931A;--gys-pulse-duration:1250ms;
- position:fixed;inset:0;width:100%;height:100%;z-index:10010;
- overflow:hidden;isolation:isolate;pointer-events:none!important;
- background:#0B0B0B;opacity:0;
- animation:gys-pulse-envelope var(--gys-pulse-duration) linear both;
- contain:layout paint;
-}
-.gys-pulse *{pointer-events:none!important;box-sizing:border-box}
-.gys-pulse__field,.gys-pulse__aperture,.gys-pulse__wave{position:absolute;inset:0}
-.gys-pulse__field{
- background:radial-gradient(ellipse at center,rgba(247,147,26,.92),rgba(247,147,26,.63) 65%,#F7931A);
- opacity:0;
-}
-.gys-pulse__logo{
- position:absolute;left:50%;top:50%;width:88px;height:88px;
- transform:translate(-50%,-50%);display:grid;place-items:center;
- filter:drop-shadow(0 0 22px rgba(247,147,26,.35));
-}
-.gys-pulse__logo img{width:100%;height:100%;object-fit:contain;border-radius:22%;}
-.gys-pulse__wave{
- inset:auto;left:50%;top:50%;width:155vmax;height:155vmax;
- margin-left:-77.5vmax;margin-top:-77.5vmax;
- background:radial-gradient(ellipse,rgba(247,147,26,.46) 0%,rgba(247,147,26,.74) 60%,#F7931A 68%,rgba(247,147,26,.16) 70%,transparent 73%);
- border-radius:46% 50% 45% 49%;opacity:0;transform:scale(.015);
-}
-.gys-pulse__edge,.gys-pulse__edge-glow{
- position:absolute;inset:3px;border-radius:clamp(20px,4vmin,38px);opacity:0;
-}
-.gys-pulse__edge{
- padding:3px;
- -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
- -webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;
-}
-.gys-pulse__edge span{
- position:absolute;width:160vmax;height:160vmax;left:calc(50% - 80vmax);top:calc(50% - 80vmax);
- background:conic-gradient(from 0deg,#F7931A 0deg,rgba(247,147,26,.18) 75deg,#F7931A 120deg,rgba(247,147,26,.26) 210deg,#F7931A 300deg);
- animation:gys-pulse-edge-flow 1250ms cubic-bezier(.2,.65,.25,1) both;
-}
-.gys-pulse__edge-glow{
- border:3px solid #F7931A;box-shadow:inset 0 0 30px rgba(247,147,26,.8),0 0 24px rgba(247,147,26,.75);
- filter:blur(6px);
-}
-/* OUTBOUND: monochrome identity ignites, then one wave travels to the bezel. */
-.gys-pulse--sent .gys-pulse__wave{animation:gys-pulse-out var(--gys-pulse-duration) cubic-bezier(.16,.72,.25,1) both}
-.gys-pulse--sent .gys-pulse__logo{animation:gys-pulse-logo-out var(--gys-pulse-duration) ease-out both}
-.gys-pulse--sent .gys-pulse__edge,.gys-pulse--sent .gys-pulse__edge-glow{animation:gys-pulse-edge-out var(--gys-pulse-duration) ease-out both}
-/* INBOUND: glowing outside edges advance inward as the dark aperture closes. */
-.gys-pulse--received .gys-pulse__field{opacity:1}
-.gys-pulse--received .gys-pulse__wave{display:none}
-.gys-pulse--received .gys-pulse__aperture{
- inset:4px;background:#0B0B0B;border-radius:clamp(20px,4vmin,38px);
- box-shadow:0 0 28px 8px rgba(247,147,26,.75),inset 0 0 32px rgba(247,147,26,.5);
- animation:gys-pulse-in var(--gys-pulse-duration) cubic-bezier(.32,.04,.18,1) both;
-}
-.gys-pulse--received .gys-pulse__edge,.gys-pulse--received .gys-pulse__edge-glow{animation:gys-pulse-edge-in var(--gys-pulse-duration) ease-out both}
-.gys-pulse--received .gys-pulse__logo{animation:gys-pulse-logo-in var(--gys-pulse-duration) ease-out both}
-@keyframes gys-pulse-envelope{0%{opacity:0}9%,72%{opacity:1}100%{opacity:0}}
-@keyframes gys-pulse-out{0%,14%{opacity:0;transform:scale(.015) rotate(-8deg)}22%{opacity:1}78%{opacity:.9}100%{opacity:0;transform:scale(1) rotate(7deg);border-radius:50%}}
-@keyframes gys-pulse-in{0%,12%{transform:scale(1);border-radius:32px}62%{border-radius:38% 44% 40% 46%}83%,100%{transform:scale(0);border-radius:50%}}
-@keyframes gys-pulse-logo-out{0%,15%{filter:grayscale(1) brightness(1.2);opacity:1;transform:translate(-50%,-50%) scale(.88)}32%{filter:grayscale(0) drop-shadow(0 0 24px #F7931A);opacity:1;transform:translate(-50%,-50%) scale(1.05)}70%,100%{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
-@keyframes gys-pulse-logo-in{0%,38%{opacity:0;transform:translate(-50%,-50%) scale(.88)}73%,88%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
-@keyframes gys-pulse-edge-out{0%,43%{opacity:0}70%{opacity:1}100%{opacity:0}}
-@keyframes gys-pulse-edge-in{0%{opacity:0}12%,45%{opacity:1}90%,100%{opacity:0}}
-@keyframes gys-pulse-edge-flow{from{transform:rotate(-35deg)}to{transform:rotate(145deg)}}
-/* Reduced motion: no travel, fill or scale. The accessible receipt is never
-   delayed or hidden by JS; this is a short decorative border-only accent. */
-.gys-pulse--reduced{background:transparent;animation:none;opacity:1}
-.gys-pulse--reduced .gys-pulse__field,.gys-pulse--reduced .gys-pulse__aperture,.gys-pulse--reduced .gys-pulse__wave,.gys-pulse--reduced .gys-pulse__logo,.gys-pulse--reduced .gys-pulse__edge-glow{display:none}
-.gys-pulse--reduced .gys-pulse__edge{animation:none;opacity:.45}
-.gys-pulse--reduced .gys-pulse__edge span{animation:none}
-@media(prefers-reduced-motion:reduce){
- .gys-pulse{background:transparent;animation:none;opacity:1}
- .gys-pulse__field,.gys-pulse__aperture,.gys-pulse__wave,.gys-pulse__logo,.gys-pulse__edge-glow{display:none!important}
- .gys-pulse .gys-pulse__edge{animation:none!important;opacity:.45}
- .gys-pulse__edge span{animation:none}
-}
-@media(forced-colors:active){.gys-pulse{display:none}}
+/* Six slow contours anchored to the live logo. No opaque screen, duplicate logo,
+   radial wash or timing-derived settlement. SVG updates are capped at 30fps. */
+.gys-pulse{position:fixed;inset:0;width:100%;height:100%;z-index:10010;overflow:hidden;pointer-events:none!important;contain:layout paint;background:transparent}
+.gys-pulse *{pointer-events:none!important}
+.gys-pulse__contours{position:absolute;inset:0;overflow:visible}
+.gys-pulse__contour{opacity:0;filter:drop-shadow(0 0 3px rgba(247,147,26,.6));vector-effect:non-scaling-stroke}
+.gys-pulse__reduced-border{display:none}
+.gys-pulse--reduced .gys-pulse__contours{display:none}
+.gys-pulse--reduced .gys-pulse__reduced-border{display:block;position:absolute;inset:4px;border:1px solid rgba(247,147,26,.35);border-radius:24px}
+.gys-contour-mark{display:block;width:112px;height:112px;flex:none;overflow:visible}
+.gys-contour-mark__image{filter:grayscale(1);transition:filter 2200ms ease}
+.gys-contour-mark--settled .gys-contour-mark__image{filter:grayscale(0)}
+.gys-contour-mark__trace{fill:none;stroke:#F7931A;stroke-width:5;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:170 830;animation:gys-contour-trace 5400ms linear infinite;filter:drop-shadow(0 0 4px rgba(247,147,26,.55))}
+.gys-contour-mark--received .gys-contour-mark__trace{animation-direction:reverse}
+.gys-contour-mark--settled .gys-contour-mark__trace{animation-duration:4600ms;animation-iteration-count:1}
+.gys-contour-mark--static .gys-contour-mark__trace{animation:none;stroke-dasharray:none;opacity:.22}
+.gys-contour-slot{display:grid;place-items:center;width:152px;height:152px;margin:6px auto 24px}
+.gys-transfer-progress{width:min(100%,280px);margin:2px auto 16px;color:var(--color-spark-text-secondary);font-size:12px;text-align:center}
+.gys-transfer-progress__line{height:2px;background:rgba(247,147,26,.12);overflow:hidden;border-radius:2px;margin:9px 0}
+.gys-transfer-progress__line:before{content:'';display:block;width:36%;height:100%;background:#F7931A;animation:gys-confirmation-wait 3200ms ease-in-out infinite}
+.gys-transfer-progress--complete .gys-transfer-progress__line:before{width:100%;animation:none}
+.gys-transfer-progress strong{font-size:22px;color:var(--color-spark-primary);font-variant-numeric:tabular-nums}
+.gys-incoming-notice{position:fixed;z-index:99;bottom:max(20px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;width:min(350px,calc(100vw - 32px));padding:12px;border:1px solid rgba(247,147,26,.28);border-radius:20px;background:var(--color-spark-dark,#141414);color:var(--color-spark-text-primary,#FAF9F6);box-shadow:0 10px 35px #0003}
+.gys-incoming-notice .gys-contour-slot{width:48px;height:48px;margin:0}
+.gys-incoming-notice .gys-contour-mark{width:44px;height:44px}
+.gys-incoming-notice button{min-width:44px;min-height:44px;margin-left:auto}
+@keyframes gys-contour-trace{to{stroke-dashoffset:-1000}}
+@keyframes gys-confirmation-wait{0%{transform:translateX(-105%)}50%{transform:translateX(90%)}100%{transform:translateX(290%)}}
+@media(prefers-reduced-motion:reduce){.gys-pulse__contours{display:none!important}.gys-contour-mark__trace,.gys-transfer-progress__line:before{animation:none!important}.gys-contour-mark__image{transition:none}.gys-contour-mark__trace{stroke-dasharray:none;opacity:.25}}
+@media(forced-colors:active){.gys-pulse,.gys-contour-mark__trace{display:none}}
+
+/* v3: no logo trace or rasterized filter; secondary receipts remain static. */
+.gys-contour-mark__trace{display:none!important}
+.gys-contour-mark{filter:none!important;animation:none!important}
