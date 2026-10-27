@@ -6,10 +6,13 @@ import { ToastProvider } from '@/contexts/ToastContext';
 import { createMockClient } from '@/test/mocks/mockWalletApi';
 import { setDevMode } from '@/services/settings';
 import SettingsPage from './SettingsPage';
+import {FiatDataProvider} from '@/contexts/FiatDataContext';
+import {StableBalanceProvider} from '@/contexts/StableBalanceContext';
 
 const renderSettings = (onOpenWalletTour?: () => void) => render(
   <ToastProvider>
   <WalletProvider client={createMockClient() as unknown as BreezSdk} isConnected>
+  <FiatDataProvider><StableBalanceProvider>
   <SettingsPage
     onBack={vi.fn()}
     config={null}
@@ -22,6 +25,7 @@ const renderSettings = (onOpenWalletTour?: () => void) => render(
     onOpenWalletTour={onOpenWalletTour}
     onOpenUnilateralExit={vi.fn()}
   />
+  </StableBalanceProvider></FiatDataProvider>
   </WalletProvider>
   </ToastProvider>
 );
