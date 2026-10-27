@@ -22,6 +22,7 @@ import AmountStep from './steps/AmountStep';
 import ConfirmStep from './steps/ConfirmStep';
 import TransferExperience from '../../components/TransferExperience';
 import {displayPaymentAmount} from '@/getyoursats/paymentDisplay';
+import PaymentFiatAmount from '../../components/PaymentFiatAmount';
 import ContactsSubView from './components/ContactsSubView';
 import { setSendSheetOpen } from './sendSheetVisibility';
 import { holdIdleLock } from '@/services/appLock';
@@ -394,6 +395,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
                   : send.paymentResult==='failure'?'failed':'unknown'}
                 receiptId={send.completedPayment?.id}
                 amount={send.completedPayment?.status==='completed'?displayPaymentAmount(send.completedPayment):undefined}
+                fiatAmount={send.completedPayment?.status==='completed'?<PaymentFiatAmount payment={send.completedPayment}/>:undefined}
                 error={send.error} onClose={handleClose}/>
             )}
             </>}

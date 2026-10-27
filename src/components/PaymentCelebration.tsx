@@ -6,6 +6,7 @@ import { useFiatData } from '../contexts/FiatDataContext';
 import { getTokenAmountFromPayment, formatTokenAmount, buildTokenDisplayConfig, withAssetDecimals } from '../utils/tokenFormatting';
 import {notifyPaymentFeedback} from '../utils/transferHaptics';
 import TransferExperience from './TransferExperience';
+import PaymentFiatAmount from './PaymentFiatAmount';
 
 interface PaymentCelebrationProps {
   payment: Payment;
@@ -79,7 +80,8 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
   return <div data-testid={isSent?'payment-sent-moment':'payment-received-moment'}>
     <TransferExperience key={payment.id} operationId={payment.id} receiptId={payment.id}
       direction={isSent?'sent':'received'} phase="confirmed" onClose={onClose}
-      amount={displayText ?? <>{isSent?'-':''}<SatAmount sats={Number(payment.amount)}/></>}/>
+      amount={displayText ?? <SatAmount sats={payment.amount}/>}
+      fiatAmount={<PaymentFiatAmount payment={payment}/>}/>
   </div>;
 };
 

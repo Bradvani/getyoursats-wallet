@@ -210,4 +210,5 @@ it('keeps one transfer screen from actual SDK invocation through a verified resu
  expect(screen.getByTestId('transfer-experience')).toBe(view);
  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','100');
  expect(client.lnurlPay).toHaveBeenCalledOnce();
+ expect(await screen.findByTestId('payment-fiat-amount')).toHaveTextContent('≈ $1.00 USD');
 });

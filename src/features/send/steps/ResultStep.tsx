@@ -5,6 +5,7 @@ import type {Payment} from '@breeztech/breez-sdk-spark';
 import {displayPaymentAmount} from '@/getyoursats/paymentDisplay';
 import { PrimaryButton } from '../../../components/ui';
 import TransferProgress from '../../../components/TransferProgress';
+import PaymentFiatAmount from '../../../components/PaymentFiatAmount';
 import PaymentMotion from '../../../components/PaymentMotion';
 
 export interface ResultStepProps {
@@ -81,8 +82,8 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
     <div className="gys-payment-stage" data-testid={isSuccess ? 'payment-success' : 'payment-failure'}>
       <PaymentMotion state="sent" animate={operationType==='payment'}
         settlementId={operationType==='payment' && payment?.status==='completed' && payment.paymentType==='send'?payment.id:undefined}/>
+      {payment?.status==='completed'&&<div className="gys-payment-stage__amount" data-testid="sent-payment-amount">{displayPaymentAmount(payment)}<PaymentFiatAmount payment={payment} className="mt-2 text-base font-normal text-spark-text-secondary"/></div>}
       {operationType==='payment'&&payment?.status==='completed'&&<TransferProgress confirmed/>}
-      {payment?.status==='completed'&&<div className="gys-payment-stage__amount" data-testid="sent-payment-amount">{displayPaymentAmount(payment)}</div>}
 
       {/* Title */}
       <h3 className="font-display text-2xl font-bold mb-2 text-spark-primary">
