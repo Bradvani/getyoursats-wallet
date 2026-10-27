@@ -1,26 +1,26 @@
 {
   "schema": 1,
   "sdkSourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
-  "patchSha256": "280e182624968ddb5755103d28dd0a9a07f867c37cd6b7f0d4ff9c1025da3f55",
+  "patchSha256": "0881588afefe212b426854b06dc2b0956c1084bfec9b1981677d93642276baa4",
   "baselinePackageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026",
   "cargoLockSha256": "a4ff9d25f17511301751298d67caa1cd123d2ad220013f14875034ba1311b0b9",
   "rustToolchain": "1.95.0",
   "wasmBindgenVersion": "0.2.120",
   "cargoProfile": "release (upstream profile, wasm-opt disabled)",
-  "rawCompiledWasmSha256": "b4d003f720dcebc19a5965838a838d91454c2dc012cb687e3f586bb37f277077",
+  "rawCompiledWasmSha256": "8bd148f7d2219f38363876278ed8fda09a34e8d6876f4f02d467f8ce44b460ff",
   "generatedArtifacts": {
-    "web/breez_sdk_spark_wasm.js": "abb1a95d7c6b506cc5f1fa4373ddbecd02f2a545bf99f4e1ad323b93575de025",
-    "web/breez_sdk_spark_wasm.d.ts": "37c3511355608d49fd83ad9e5897bb132d92b61da8a7cf9446e9b05d5a42681a",
-    "web/breez_sdk_spark_wasm_bg.wasm": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
-    "nodejs/breez_sdk_spark_wasm.js": "bbc86dfd4584be21e72ae0fabde9b0d5a5081cbcc161a0db6beebde948992a78",
-    "nodejs/breez_sdk_spark_wasm.d.ts": "7d7a98ae2c6840e171ae93a5e4efb2249abf57698cb33076ca6fb5a5d64a0e0e",
-    "nodejs/breez_sdk_spark_wasm_bg.wasm": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+    "web/breez_sdk_spark_wasm.js": "87b0bed1139178b4ed734639a1448cbd36e9e65f078a352b22ef936d9153739a",
+    "web/breez_sdk_spark_wasm.d.ts": "96c85d7153c80135a15c1364d751cdfad29b6410b7a9c143ed5f460a40616f7a",
+    "web/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+    "nodejs/breez_sdk_spark_wasm.js": "d484061ddf6adbf4e128986caaf410e0a1481f13107388cc1741dc9cf550acd0",
+    "nodejs/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+    "nodejs/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
     "bundler/breez_sdk_spark_wasm.js": "6342628f134d0ad21d634559fe7b5a3cea6389e2e5a82134009cc94cfaec81e2",
-    "bundler/breez_sdk_spark_wasm.d.ts": "7d7a98ae2c6840e171ae93a5e4efb2249abf57698cb33076ca6fb5a5d64a0e0e",
-    "bundler/breez_sdk_spark_wasm_bg.wasm": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
-    "deno/breez_sdk_spark_wasm.js": "4a24e272d97d509eca59c90282efa83d97dce9dc89d52c5c2f4e7bfc78416dd3",
-    "deno/breez_sdk_spark_wasm.d.ts": "7d7a98ae2c6840e171ae93a5e4efb2249abf57698cb33076ca6fb5a5d64a0e0e",
-    "deno/breez_sdk_spark_wasm_bg.wasm": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8"
+    "bundler/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+    "bundler/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+    "deno/breez_sdk_spark_wasm.js": "871574fb1e6cbd93ac0c631527b2344f15272f1c1d140f75c295894a2393be29",
+    "deno/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+    "deno/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910"
   },
   "securityClaim": "same-wallet software signing with observation-only network queries; not isolated or hardware-backed",
   "extensions": [
@@ -28,7 +28,9 @@
     "observation-only-wallet-state-v1",
     "signed-recovery-v1",
     "explicit-incoming-claim-v1",
-    "bounded-mature-deposit-claim-v1"
+    "bounded-mature-deposit-claim-v1",
+    "unreceived-deposit-continuation-v1",
+    "recovery-signer-envelope-v1"
   ],
-  "packageSha256": "cbb19e1e16760d63e8cba74a33e21ec75dac6684bc8d389da6c9921b8ba58505"
+  "packageSha256": "f3cb177c5cb38cd3222b8279e8a9c5815f788d5ccd611a9e8a29d5caefb4bf37"
 }
