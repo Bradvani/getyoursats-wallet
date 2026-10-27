@@ -1,9 +1,10 @@
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {usePresentation} from '@/hooks/usePresentation';
-import React, { useEffect, type ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
+import type {Payment} from '@breeztech/breez-sdk-spark';
+import {displayPaymentAmount} from '@/getyoursats/paymentDisplay';
 import { PrimaryButton } from '../../../components/ui';
 import PaymentMotion from '../../../components/PaymentMotion';
-import { hapticLight } from '@/utils/haptics';
 
 export interface ResultStepProps {
   result: 'success' | 'failure' | 'unknown';
@@ -15,19 +16,13 @@ export interface ResultStepProps {
   description?: string;
   /** Shown on success between the description and Done, e.g. a transaction ID. */
   children?: ReactNode;
+  payment?: Payment|null;
 }
 
-const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operationType = 'payment', description, children }) => {
+const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operationType = 'payment', description, children, payment }) => {
   const isSuccess = result === 'success';
   const {language}=usePresentation();
   const copy=trustCopy(language);
-
-  useEffect(() => {
-    if (isSuccess) {
-      void hapticLight();
-
-    }
-  }, [isSuccess]);
 
   const getTitle = () => {
     if (operationType === 'auth') {
@@ -83,7 +78,9 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
   // Success: show icon, title, description, and done button
   return (
     <div className="gys-payment-stage" data-testid={isSuccess ? 'payment-success' : 'payment-failure'}>
-      <PaymentMotion state="sent" />
+      <PaymentMotion state="sent" animate={operationType==='payment'}
+        settlementId={operationType==='payment' && payment?.status==='completed' && payment.paymentType==='send'?payment.id:undefined}/>
+      {payment?.status==='completed'&&<div className="gys-payment-stage__amount" data-testid="sent-payment-amount">{displayPaymentAmount(payment)}</div>}
 
       {/* Title */}
       <h3 className="font-display text-2xl font-bold mb-2 text-spark-primary">

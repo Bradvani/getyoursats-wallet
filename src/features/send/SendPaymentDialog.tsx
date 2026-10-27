@@ -392,6 +392,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
             {send.currentStep === 'result' && (
               <ResultStep
                 result={send.paymentResult ?? 'unknown'}
+                payment={send.completedPayment}
                 error={send.error}
                 onClose={handleClose}
               />

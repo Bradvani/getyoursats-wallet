@@ -1,90 +1,29 @@
-# GetYourSats · Payment Motion v1
+# GetYourSats premium transfer pulse
 
-**Status:** Implementation specification · 25 October 2026  
-**Product surfaces:** Wallet Send, Wallet Receive, merchant Point of Sale (POS), delayed settlement recovery  
-**Design language:** GetYourSats approved monogram, Bitcoin orange `#F7931A`, near black `#0B0B0B`, warm white `#FAF9F6`  
-**Scope boundary:** Visual feedback only. Never modify keys, signing, payment methods, amounts, routes, quote fees or settlement authority.
+## Shipped composition
 
-## 1. Objective
+`src/components/PaymentMotion.tsx` retains compact pending/failure and receipt artwork. A successful, non-compact, non-historical receipt with a stable SDK payment ID mounts `TransferPulse.tsx` into a body portal. The portal is decorative and pointer-transparent, so transformed bottom sheets do not clip the bezel light and controls remain accessible.
 
-Every money-moving action should communicate its real state clearly and feel recognizably GetYourSats. Replace generic loaders and silent POS confirmations with a coherent **Orange Lightning Flash** language. The lightning stroke points **outward** for sends and **inward** for receives, illuminates the existing brand monogram and resolves into the final state.
+- Sender: approved `/brand/monogram.svg` starts monochrome at the viewport centre. One soft orange wave expands outward, energizes the screen edge and dissolves into the exact completed-payment receipt.
+- Receiver: flowing orange perimeter light advances inward around a closing dark aperture. The logo resolves at the centre and the completed receipt remains visible.
+- Duration: 1,250 ms, one continuous pulse, no strobe. The effects are paired visual directions, **not a synchronized cross-device communication protocol**. Each device follows its own SDK confirmation.
+- Pending/converting stays pending until the SDK changes it. Unknown results never celebrate. Auth success and refund broadcast acknowledgments do not masquerade as completed transfers.
+- The sender amount is read from the completed SDK payment, with asset-aware formatting. No invented balances, counting-up value or settlement timer.
 
-The experience must be polished but calm: no confetti, no casino-style rewards, no full-screen strobe, no fake sound and no animation that obscures transaction truth.
+## Ownership and repeat suppression
 
-## 2. Product requirements
+The send result uses `paymentOutcome` unchanged and passes the completed receipt only for presentation. Incoming confirmations remain owned by the existing SDK event/newly-completed-receive handler; initial history remains silent. POS history continues to use static artwork and does not launch the full pulse. A bounded, memory-only set of direction/payment IDs suppresses competing receipt surfaces and React remount replays. This is UI deduplication, not financial idempotency.
 
-### 2.1 Sending
+Backgrounding, pagehide, owner unmount and a reduced-motion preference change stop the effect and future haptic accents. Returning from the background does not replay an already-presented pulse. A receipt first delivered while hidden can still appear through the existing foreground-aware global receipt owner.
 
-| Source of truth | UI treatment | Exit |
-|---|---|---|
-| User approved quote and the SDK call is in flight | Subtle looping orange line + directional outward trace, “Sending…” (or “Converting…” when SDK actually is converting) | SDK terminal state |
-| SDK send operation confirms success | A single outward lightning sweep, localized orange glow and monogram reveal; “Payment sent”; exact amount and verified receipt details if known | User Done |
-| SDK returns failure | Red-neutral restrained failure mark, explanation and Close; no success flash, no confetti | User Close |
-| Sheet dismissed during payment | SDK event may report completed send via the existing global outcome overlay; never assume that dismissal means failure | Event or activity history |
+## Haptics and accessibility
 
-No spinner timeouts may declare a successful transaction. The Send sheet remains authoritative for operations that it owns.
+`transferHaptics.ts` schedules a Light impact at ignition and a second restrained accent at outward/inward arrival (650/760 ms). It uses the existing Capacitor plugin in native builds and a 12 ms best-effort vibration on browsers exposing `navigator.vibrate` after user activation. Unsupported hardware/APIs, denied calls, browser restrictions and device settings are silent no-ops. No web workaround promises iPhone Safari vibration. No hardware haptic test was performed by automated browser fixtures.
 
-### 2.2 Receiving and wallet-home
+Settings > Display includes Payment haptics in all ten existing app languages. The setting is local and independent from wallet/security state. Reduced motion uses a short static border-only accent with at most one haptic, no fill/scale/travel. Forced-colours hides decorative light. Full receipt content and close controls remain accessible independently of the visual timer.
 
-- Trigger the global payment moment **only** on a new `paymentSucceeded` SDK event for a completed **incoming** payment, or a new completed incoming payment discovered during a subsequent wallet sync while the same wallet session is active.
-- Initial wallet connection/history hydration is a **silent baseline**, not a flood of notifications.
-- De-duplicate by payment ID across SDK event and sync paths. Do not reanimate the same payment after unrelated refreshes or app state updates.
-- Do not celebrate intermediate conversion payment legs (including ongoing AMM/conversion receipts).
-- The incoming direction runs toward the center, and the final amount appears with the appropriate denomination (sats / supported token).
-- Only display “Payment received” once settlement has been confirmed by the SDK. A pending deposit or a QR merely being generated must never trigger success.
+## Verification
 
-### 2.3 Merchant POS
+`TransferPulse.test.tsx`, `PaymentCelebration.test.tsx` and `transferHaptics.test.ts` cover receipt eligibility, direction, owner deduplication, StrictMode, hidden documents, cancellation, reduced motion, hardware errors, user opt-out and unknown/auth/refund exclusion. `e2e/tests/transfer-pulse.spec.ts` exercises the real CSS at mobile/desktop widths plus reduced motion and pointer-transparent controls. CI runs these in Chromium, Firefox and WebKit.
 
-- **Charge created:** show the actual SDK BOLT11 QR with brand mark, amount and “Waiting for payment”; no success flash yet.
-- **Paid:** transition the invoice region to the received-state lightning flash, monogram, confirmed amount and “Payment confirmed by the wallet.” Keep New charge and history actions available.
-- **Reopened charge:** show the success state if and only if the connected wallet's completed payment history has verified that exact order; do not animate an old paid order on every revisit.
-- **Network delay or failure:** retain QR/Copy invoice and explain the unconfirmed status; never synthesize a payment.
-- POS must remain usable on small phones and iOS standalone PWA mode.
-
-### 2.4 Presentation
-
-- A shared `PaymentMotion` component supplies direction, stroke and light for `sending`, `receiving`, `converting`, `sent`, `received` and `failed` states.
-- For terminal success, animate a central *existing* `/brand/monogram.svg` asset, not a freshly invented logo.
-- Directional line draws and local glow should occupy roughly 0.5–1.2 seconds; no full-screen white flash.
-- A passive global receipt celebration stays visible for a few seconds of **foreground** time, pauses on hidden/background tabs, and has an explicit Done action.
-- Do not add audible feedback by default. One existing, light native haptic at completed event is sufficient. No haptic on browser and no repeated POS haptic when the global event also fires.
-- Observe `prefers-reduced-motion: reduce`: stop looping, remove streak/flash and present the final legible icon and text immediately.
-- Keep amount, state text and Done controls readable on phone viewports (320, 360, 390 and 430 px) and desktop. Avoid horizontal overflow.
-
-## 3. State and integration architecture
-
-```text
-User confirms Send  →  SDK processing  →  confirmed success / failure
-                                        ↘ if sheet dismissed: SDK event overlay
-
-POS Charge           →  real payable BOLT11 QR  →  SDK matching paymentSucceeded
-                                             or verified reconciled paid order
-                                             →  local received state
-
-Wallet background receive  →  SDK event OR new settled receipt during sync
-                         →  payment-ID de-dupe  →  global payment moment
-```
-
-The only sources of settlement are Breez SDK responses/events and matching completed wallet history. UI timers only dismiss presentation; they are never financial state transitions.
-
-## 4. Privacy and trust constraints
-
-- No logging private keys, seeds, invoices, preimages, recipient addresses or other secret-shaped payment details from animations.
-- No extra transaction signing, SDK listeners per component or fee adjustments.
-- No fake confetti or success in pending state. No paid receipt on the merchant's local click alone.
-- A visual success mark is **not** a PIN/Face ID authorization control and does not close the separate P0 imported-wallet security gap.
-- Offline and low-connectivity states must retain the truthful pending state until SDK confirmation.
-
-## 5. Acceptance criteria
-
-1. **Send:** active outward state while SDK is in flight, one terminal success flash on SDK confirmation, and zero success flashes on rejected sends.
-2. **Receive:** one incoming moment per newly settled incoming payment; no first-login historical replay; late SDK-event and sync double reports are de-duplicated.
-3. **POS:** after Charge, the branded QR is visible; after a wallet-confirmed payment, the QR changes to a branded received confirmation. Unpaid orders never enter success state.
-4. **Background:** passive receipt timer does not silently consume the entire display duration in a hidden tab.
-5. **Accessibility:** all essential states remain understandable with reduced motion, readable text and non-color indicators.
-6. **Regression:** TypeScript, lint, unit, CodeQL, browser smoke and production build pass. Include explicit motion checks in browser smoke with reduced motion and POS paid/unpaid path.
-7. **Mainnet gate:** prior to broad merchant launch, physically scan an actual invoice on a supported iOS/Android device, settle a low-value payment and verify wallet status, amount and lack of duplicate celebration. Automated fixture tests are not proof of real-world settlement.
-
-## 6. Out of scope / separate release gates
-
-Imported-wallet secure vault, Face ID / device biometric setup, per-transaction authorization, treasury monetization and exchange/AutoPay integrations. Never describe the payment-motion patch as those features being complete.
+Browser fixtures use synthetic public display data and no wallet connection. They do not claim a real payment, haptic-motor test or coordinated two-device settlement test. No signer, vault, operation gateway, recovery credential or fee computation is changed by this release.
