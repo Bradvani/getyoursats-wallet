@@ -12,7 +12,7 @@ import ResultStep from '../steps/ResultStep';
 interface LnurlAuthWorkflowProps {
   parsed: LnurlAuthRequestDetails;
   onBack: () => void;
-  onAuth: (requestData: LnurlAuthRequestDetails) => {t("Promise")}<LnurlCallbackStatus>;
+  onAuth: (requestData: LnurlAuthRequestDetails) => Promise<LnurlCallbackStatus>;
   /** Closes the sheet: after a login, or to decline one. */
   onClose: () => void;
 }
@@ -191,7 +191,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
                 }}
                 className="whitespace-nowrap underline underline-offset-4 hover:text-spark-text-secondary transition-colors"
               >
-                {t("LUD-01")}
+                LUD-01
               </a>
               ).
             </p>

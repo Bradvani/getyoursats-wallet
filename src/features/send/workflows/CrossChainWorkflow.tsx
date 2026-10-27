@@ -41,7 +41,7 @@ interface CrossChainWorkflowProps {
   feesIncluded: boolean;
   tokenIdentifier?: string | null;
   onBack: () => void;
-  onRun: (runner: () => {t("Promise")}<PaymentExecutionResult>) => {t("Promise")}<void>;
+  onRun: (runner: () => Promise<PaymentExecutionResult>) => Promise<void>;
 }
 
 interface ProviderQuote {

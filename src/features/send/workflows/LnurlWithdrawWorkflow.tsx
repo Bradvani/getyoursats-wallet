@@ -19,7 +19,7 @@ interface LnurlWithdrawWorkflowProps {
   onBack: () => void;
   /** Runs the withdrawal for `amountSats`. The SDK creates the invoice and posts
    *  it to the LNURL callback; the funds arrive as an ordinary Lightning receive. */
-  onWithdraw: (amountSats: number) => {t("Promise")}<LnurlWithdrawResponse>;
+  onWithdraw: (amountSats: number) => Promise<LnurlWithdrawResponse>;
   /** Close the flow once the incoming payment is confirmed. The app-wide
    *  "Payment Received" celebration is driven by the SDK event, not here. */
   onDone: () => void;
