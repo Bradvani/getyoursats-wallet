@@ -1,0 +1,226 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-27T10:29:59.154649Z",
+  "scope": "Metadata-only supplement to the completed eleven-file c47 root publication review; no test rerun or new network access.",
+  "sourceDirectory": "/tmp/gys-pr43-c47-ci-20261027/root",
+  "previousReview": {
+    "path": "/tmp/gys-pr43-evidence-staging-20261027/final-c47/root-publication-review.json",
+    "sha256": "b8b503ea65f7bb3f5b9bc5f8aa1c6e51410dfe8200daecdfbe8c1d08918940a5",
+    "unchanged": true,
+    "originalFilesRescanned": false
+  },
+  "files": [
+    {
+      "path": "checks-final.original.json",
+      "bytes": 53593,
+      "sha256": "c6da85583692fcaff58b3a957b2a872eccf41fec917b1c44be0e147c822981c1"
+    },
+    {
+      "path": "final-ci-receipt.json",
+      "bytes": 13472,
+      "sha256": "2907e5428648d17dc8338c62ae93d572e8ffcfb847dd6760dac23284c108ef55"
+    },
+    {
+      "path": "main-final.original.json",
+      "bytes": 352,
+      "sha256": "beff49af421ab78e3d9e49f299627b6311362961c730912346b18ed6e8d431a8"
+    },
+    {
+      "path": "pr-final.original.json",
+      "bytes": 29641,
+      "sha256": "23081e549b6c9f66f38f0532f6d84869784323af077d9764a3b1e810a1d9a51e"
+    },
+    {
+      "path": "runs-final.original.json",
+      "bytes": 81315,
+      "sha256": "5ba1d9c1dd3832e4814502142dcc887f359cc4106a001a4a452f6ea9c307baa6"
+    }
+  ],
+  "fileCount": 5,
+  "totalBytes": 178373,
+  "receiptObservedAt": "2026-10-27T10:25:03Z",
+  "source": {
+    "head": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+    "tree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+    "prCheckout": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+    "checkoutTreeBasis": "Previously verified merge.original.json and four completed Tests logs, bound by the unchanged original review. The new metadata matches those identities.",
+    "main": "07ddf16068cc5bd7ed09397e221800ad7b12d767"
+  },
+  "verifiedMetadata": {
+    "workflowRuns": [
+      {
+        "id": 40486813619,
+        "name": "GetYourSats checks",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      {
+        "id": 40486813535,
+        "name": "CodeQL",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      {
+        "id": 40486813725,
+        "name": "Tests",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      {
+        "id": 40486813574,
+        "name": "GetYourSats browser smoke",
+        "event": "pull_request",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      {
+        "id": 40486808391,
+        "name": "Browser security checkpoint",
+        "event": "push",
+        "attempt": 1,
+        "conclusion": "success"
+      },
+      {
+        "id": 40486808144,
+        "name": "Release security engine matrix",
+        "event": "push",
+        "attempt": 1,
+        "conclusion": "success"
+      }
+    ],
+    "workflowCount": 6,
+    "successfulChecks": 14,
+    "skippedChecks": [
+      {
+        "id": 122130544099,
+        "name": "E2E Tests",
+        "conclusion": "skipped"
+      }
+    ],
+    "allChecks": [
+      {
+        "id": 122130969914,
+        "name": "CodeQL",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130544099,
+        "name": "E2E Tests",
+        "conclusion": "skipped"
+      },
+      {
+        "id": 122130542576,
+        "name": "Build",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130542525,
+        "name": "Lint",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130542485,
+        "name": "Type Check",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130542244,
+        "name": "Unit Tests",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130541385,
+        "name": "verify",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130541321,
+        "name": "setup-smoke",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130541293,
+        "name": "Analyze (javascript-typescript)",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130525856,
+        "name": "browsers (firefox)",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130525607,
+        "name": "dependency-evidence",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130525493,
+        "name": "browsers (chromium)",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130525341,
+        "name": "chromium-security-fixtures",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130525120,
+        "name": "browsers (webkit)",
+        "conclusion": "success"
+      },
+      {
+        "id": 122130524924,
+        "name": "code-and-installed-sdk",
+        "conclusion": "success"
+      }
+    ],
+    "everyRecordedRunAndCheckMatchesReceipt": true,
+    "allAtCandidateHead": true,
+    "allRunAttempts": 1,
+    "pullRequest": {
+      "number": 43,
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+      "base": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+      "mergeCommitMetadata": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+      "syntheticMergeIsNotCompletedMerge": true
+    }
+  },
+  "interpretation": [
+    "All six recorded exact-head workflows and fourteen checks succeeded; one optional E2E check is skipped. Skipped funded work is not a pass.",
+    "Receipt application, service, source-guard, canonical SDK and lint values agree with the previously completed source-specific reviews: 1943 passed plus 1 skipped, 161 files passed plus 1 skipped, 236 Node cases, 11 Redis cases, 20 Python source controls, 36 canonical controls, and lint 0 errors plus 8 warnings.",
+    "The legacy Tests workflow Node20.20.2 engine warning remains in the original reviewed logs. Success does not establish supported SDK execution on Node20; separate standard verification uses its configured Node22 evidence.",
+    "CodeQL success is the recorded PR finding scope and does not assert repository-wide zero alerts. Dependency counts retain their npm classification and artifact-download limitations.",
+    "Browser run and check conclusions were read in these final metadata files. Browser case counts, screenshots and full reports are separately owned evidence; this supplement does not independently review the browser packet.",
+    "Production source07dd and rulesets wording are consistent with the earlier normal-TLS governance snapshot; no new deployment or governance request was made for this supplement. An empty rulesets response does not establish classic branch protection.",
+    "Repeated suites are not summed into distinct cases. Original f912 CodeQL failure and c651 installation cancellation remain historical outcomes. Prepared main policy remains unactivated.",
+    "Automated success is not real-funds approval, independent qualified security approval, funded protocol acceptance, physical-device recovery acceptance or authorization to merge/deploy. Receipt releaseApproved remains false and realFundsVerdict remains NO-GO."
+  ],
+  "publicationReview": {
+    "decision": "Ready for publication as scoped metadata evidence.",
+    "utf8Only": true,
+    "oversizedOrBinaryPayloads": false,
+    "credentialPatternCandidates": [],
+    "redactions": [],
+    "reviewMethod": "Read receipt and relevant metadata fields, compare all run/check identities and conclusions, check bounded credential and embedded-payload patterns across all five exact text files. This is not a universal secret-detection guarantee."
+  },
+  "preservation": {
+    "originalFiveFilesUnchanged": true,
+    "existingReviewUnchanged": true,
+    "originalLogsNotRescanned": true,
+    "archiveCreated": false,
+    "sourceOrRefChanges": false,
+    "networkOrWalletOperations": false
+  },
+  "excluded": [
+    "Browser evidence directory and external screenshot ZIP contents.",
+    "New files added after this five-file snapshot.",
+    "SDK source, binary archive and independently executed runtime or provider acceptance.",
+    "Unchanged original logs, already covered by the prior eleven-file review."
+  ]
+}

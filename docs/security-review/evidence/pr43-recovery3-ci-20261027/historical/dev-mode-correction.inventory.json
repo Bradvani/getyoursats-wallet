@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "sourceDirectory": "/tmp/gys-dev-mode-literal-storage-evidence-20261027",
+  "sourceCommit": "1cfdfd219be6e0e19c37581b71611ace8c46c6d6",
+  "sourceTree": "61f993c61a583a0f467039396bfde726e5cbdf20",
+  "publishedEquivalentCommit": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+  "archive": {
+    "path": "dev-mode-correction.tar.gz",
+    "bytes": 4955,
+    "sha256": "df86574674b4681a8d26e0fa340ce85cdb739fcc56f8f2f063a6e1afd0437940",
+    "uncompressedTarBytes": 30720,
+    "uncompressedTarSha256": "f85f13a1ff89c8fae42a8f064980253097ac7e47d43a5be458da7c3555bd294b"
+  },
+  "payloadFiles": 11,
+  "payloadBytes": 16144,
+  "directories": [
+    "correction"
+  ],
+  "files": [
+    {
+      "path": "correction/canonical-preflight-escalated.log",
+      "sourceRelativePath": "canonical-preflight-escalated.log",
+      "bytes": 2258,
+      "sha256": "534a5f42a1f7812f17ca1f9582a93af08f8e75b6f4bba24ec1616e34b28f48ec"
+    },
+    {
+      "path": "correction/canonical-preflight.log",
+      "sourceRelativePath": "canonical-preflight.log",
+      "bytes": 1122,
+      "sha256": "6550a14b98f4b0b2a640082426a7690db0db05af3e0a504f9fe91ad9ef44f294"
+    },
+    {
+      "path": "correction/code-and-tests.patch",
+      "sourceRelativePath": "code-and-tests.patch",
+      "bytes": 2599,
+      "sha256": "d5b683c548f214e58ad4a72b221e033e76c2ca12df50c545b1ecdf7d8995352c"
+    },
+    {
+      "path": "correction/eslint-final.log",
+      "sourceRelativePath": "eslint-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "correction/eslint.log",
+      "sourceRelativePath": "eslint.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "correction/receipt.json",
+      "sourceRelativePath": "receipt.json",
+      "bytes": 5264,
+      "sha256": "5b5872fac5f051729ccc144cd77bc88ca620356eee7042d40fdfd9cc2aaba322"
+    },
+    {
+      "path": "correction/settings-after-fix.log",
+      "sourceRelativePath": "settings-after-fix.log",
+      "bytes": 231,
+      "sha256": "3d5130392d1fb9cc980f8acc11ba3c38726e3e6253ff869edead54b38536b1ff"
+    },
+    {
+      "path": "correction/settings-before-fix.log",
+      "sourceRelativePath": "settings-before-fix.log",
+      "bytes": 3643,
+      "sha256": "2e0610b5f72c0d8551221b39e7c9d0a3c1e0d4690b24653c8460ed3f0c454a12"
+    },
+    {
+      "path": "correction/settings-final.log",
+      "sourceRelativePath": "settings-final.log",
+      "bytes": 231,
+      "sha256": "f31a2c87d5d08143f530b1bcf1cb6fe59f4e231da3e4efc5d8162db682c160c8"
+    },
+    {
+      "path": "correction/typescript-final.log",
+      "sourceRelativePath": "typescript-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "correction/typescript.log",
+      "sourceRelativePath": "typescript.log",
+      "bytes": 796,
+      "sha256": "d6f9cab745e2bd84d72a4ce9034d221a0ceeef47aef441cf94c2540825314b22"
+    }
+  ],
+  "contentTransformations": [],
+  "omittedSourceFiles": [],
+  "archiveMetadata": {
+    "format": "USTAR",
+    "gzipLevel": 9,
+    "gzipMtime": 0,
+    "gzipFilename": "",
+    "tarMtime": 0,
+    "uid": 0,
+    "gid": 0,
+    "uname": "",
+    "gname": "",
+    "fileMode": "0644",
+    "directoryMode": "0755",
+    "entryOrder": "lexicographic POSIX archive path",
+    "repeatedGenerationIdentical": true,
+    "allArchivedBytesVerifiedAgainstOriginals": true
+  }
+}

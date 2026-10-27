@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "head": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+  "tree": "61f993c61a583a0f467039396bfde726e5cbdf20",
+  "combinedResult": "INCOMPLETE: matrix WebKit installation timed out before tests",
+  "laterCandidate": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+  "releaseApproved": false,
+  "bundles": [
+    {
+      "archive": "c651-audit.tar.gz",
+      "bytes": 58547,
+      "sha256": "aae2b211aa26ecf1a3f7dda0821fdf0717e9148fdcd3444661a212f74d2bc9a7",
+      "inventory": "c651-audit.inventory.json",
+      "inventorySha256": "efdccdd495f1d023752a97a7fb042b977d8746ceaa443dc56fda808b3e681562",
+      "originalFiles": 11
+    },
+    {
+      "archive": "c651-browsers.tar.gz",
+      "bytes": 244296,
+      "sha256": "88f9580216d8fa4094d86f60d310dfaa6b08aaa06a24ef4cba033ac6dc3f55d8",
+      "inventory": "c651-browsers.inventory.json",
+      "inventorySha256": "ea2d1a42978641b4be848718d22630539c5f7a7d1601b08a585d83b3ebaed57c",
+      "originalFiles": 31
+    },
+    {
+      "archive": "c651-governance.tar.gz",
+      "bytes": 46678,
+      "sha256": "ced01e2a2014aad5a7d5f75e20de1e9c8d0522deeeb52ffd1b4ae676cf43f926",
+      "inventory": "c651-governance.inventory.json",
+      "inventorySha256": "ecbfacfe17d41be222c215295abb71f212676e237b821d69c26dcd77282b81c0",
+      "originalFiles": 8
+    },
+    {
+      "archive": "c651-root-checks.tar.gz",
+      "bytes": 112063,
+      "sha256": "d96d243b72bc81a808a31beea7573eae0226731275169537072c4774cd31c127",
+      "inventory": "c651-root-checks.inventory.json",
+      "inventorySha256": "8521a42a9e67d143a7319f1fed3c38e9e95870e5c1407920243f4f3ef85f4049",
+      "originalFiles": 18
+    },
+    {
+      "archive": "c651-security.tar.gz",
+      "bytes": 133638,
+      "sha256": "a4c7df68dda94b9843405e0a6aefa47e3f97d9a1b433f56d3bd7e49507703120",
+      "inventory": "c651-security.inventory.json",
+      "inventorySha256": "19502c0c08db56d4f7a14ba910a3b266a2de9735a303843f1475531185e81e27",
+      "originalFiles": 16
+    }
+  ],
+  "largeSmokeZip": {
+    "included": false,
+    "sha256": "8c6cfd32860eb495a3d6b33fcc3abbd5cee3ced4ae5b25c428c7b8efe5f4a291",
+    "artifact": 12725225758,
+    "contains": "172 screenshots plus CAS JSON; CAS JSON and full member inventory are included in browser bundle",
+    "screenshotsVisuallyReviewed": false
+  }
+}

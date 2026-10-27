@@ -1,0 +1,123 @@
+{
+  "schema": 1,
+  "sourceDirectory": "/tmp/gys-pr43-final-ci-20261027/audit",
+  "sourceCommit": "f912253d7a618f7fdc361e8221d37b6962b7eb8e",
+  "sourceTree": "0437b489e8626b948bdbd7a54fb3ecaade080024",
+  "publishedEquivalentCommit": null,
+  "archive": {
+    "path": "f912-audit.tar.gz",
+    "bytes": 64871,
+    "sha256": "5b4877090dd2cb0d10ad136d5013e354e77a270e97ab109e153188aeac14f36f",
+    "uncompressedTarBytes": 102400,
+    "uncompressedTarSha256": "c6e05cd4e43064972c95397a5727b7f9bb83cebe94a1507389f028cd05f18539"
+  },
+  "payloadFiles": 14,
+  "payloadBytes": 85220,
+  "directories": [
+    "audit"
+  ],
+  "files": [
+    {
+      "path": "audit/README.md",
+      "sourceRelativePath": "README.md",
+      "bytes": 1232,
+      "sha256": "b1ed9a536caf03dd52b98e716611c2a5c8cc4019bbf9771230977fa31ae40ffd"
+    },
+    {
+      "path": "audit/SHA256SUMS.json",
+      "sourceRelativePath": "SHA256SUMS.json",
+      "bytes": 1321,
+      "sha256": "0d8602c9085a35a635afaedcf4d360f8b3034c5f5e71bd2d1720cc701991618e"
+    },
+    {
+      "path": "audit/codeql-analyzer-jobs.json",
+      "sourceRelativePath": "codeql-analyzer-jobs.json",
+      "bytes": 1471,
+      "sha256": "5309ca79dc95ad199378d482234ebb065f50c70ff830237e8d54b8e44faf1df4"
+    },
+    {
+      "path": "audit/codeql-analyzer-steps.json",
+      "sourceRelativePath": "codeql-analyzer-steps.json",
+      "bytes": 1055,
+      "sha256": "16e3c5b741f09c14ead4c84deed979746a2795063474e02ba84badbefb872790"
+    },
+    {
+      "path": "audit/codeql-job-122098388223.original.log.gz",
+      "sourceRelativePath": "codeql-job-122098388223.original.log.gz",
+      "bytes": 40378,
+      "sha256": "ca4a4b2e028d6850049804f9bcc230b443b56428cb57aaf0f973716413dcb356"
+    },
+    {
+      "path": "audit/codeql-run-final.original.json.gz",
+      "sourceRelativePath": "codeql-run-final.original.json.gz",
+      "bytes": 1747,
+      "sha256": "f3b4a65456b17d048d74bd5c87825e4d4396e6353fb41fcbe54c955637cbc7fe"
+    },
+    {
+      "path": "audit/dependency-job-122098370440.log",
+      "sourceRelativePath": "dependency-job-122098370440.log",
+      "bytes": 17677,
+      "sha256": "c144d2550d7b4f62a693980d21e85c56edd41f487da82e106a7cd018ab5da4a0"
+    },
+    {
+      "path": "audit/dependency-job-122098370440.original.log.gz",
+      "sourceRelativePath": "dependency-job-122098370440.original.log.gz",
+      "bytes": 5036,
+      "sha256": "d475daa9b9a7f5741494b37d4e657a30a5e896f6620ea564b206b526640645da"
+    },
+    {
+      "path": "audit/dependency-steps.json",
+      "sourceRelativePath": "dependency-steps.json",
+      "bytes": 1434,
+      "sha256": "305a1a2baec3efb810dac102fd9003dee37285f02ddea5e55e54a16b5987429d"
+    },
+    {
+      "path": "audit/head-checks-final.original.json.gz",
+      "sourceRelativePath": "head-checks-final.original.json.gz",
+      "bytes": 3148,
+      "sha256": "094480911fd3547c92356e3b9561fc499d09253699d2dc83740d5c02b6d3afb8"
+    },
+    {
+      "path": "audit/head-checks-initial.original.json.gz",
+      "sourceRelativePath": "head-checks-initial.original.json.gz",
+      "bytes": 2844,
+      "sha256": "72e8e87f4699a1ef7340743cc49fff8860f5103164889a49a57d6a9fba2b42ad"
+    },
+    {
+      "path": "audit/original-text-lengths.json",
+      "sourceRelativePath": "original-text-lengths.json",
+      "bytes": 411,
+      "sha256": "aa20711bfb10a13a959c2c0293fda8a69db9d25b8d1c9e1132132cdea93721fe"
+    },
+    {
+      "path": "audit/receipt.json",
+      "sourceRelativePath": "receipt.json",
+      "bytes": 6207,
+      "sha256": "cd834b03d4767ca7eea38ee3fd4f15e84f36e907eaae6278f8cf0e6d7f490fb1"
+    },
+    {
+      "path": "audit/retrieval-limits.json",
+      "sourceRelativePath": "retrieval-limits.json",
+      "bytes": 1259,
+      "sha256": "31e8795fcd91bc476b8fbd93eee3d531b244ee9190072ddd8037636a0798eee5"
+    }
+  ],
+  "contentTransformations": [],
+  "omittedSourceFiles": [],
+  "archiveMetadata": {
+    "format": "USTAR",
+    "gzipLevel": 9,
+    "gzipMtime": 0,
+    "gzipFilename": "",
+    "tarMtime": 0,
+    "uid": 0,
+    "gid": 0,
+    "uname": "",
+    "gname": "",
+    "fileMode": "0644",
+    "directoryMode": "0755",
+    "entryOrder": "lexicographic POSIX archive path",
+    "repeatedGenerationIdentical": true,
+    "allArchivedBytesVerifiedAgainstOriginals": true
+  }
+}

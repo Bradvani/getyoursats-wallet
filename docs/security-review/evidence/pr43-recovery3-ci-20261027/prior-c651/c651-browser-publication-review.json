@@ -1,0 +1,199 @@
+{
+  "schema": 1,
+  "sourceHead": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+  "scope": "Final browser evidence only, including expanded gzip logs and the two small JSON-report ZIPs",
+  "filesReviewed": 35,
+  "expandedBytes": 1112599,
+  "patterns": [
+    "private_key_pem",
+    "github_token",
+    "aws_access_id",
+    "jwt",
+    "signed_url",
+    "embedded_binary"
+  ],
+  "hits": [],
+  "records": [
+    {
+      "path": "artifacts/pr43-c651-matrix-chromium.zip::home/runner/work/getyoursats-wallet/getyoursats-wallet/dist-rollback/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "d912ab7dec37b096cc83fd7f794b4ca636f464a9e41c93fbcaed2f836fcd78f3"
+    },
+    {
+      "path": "artifacts/pr43-c651-matrix-chromium.zip::tmp/engine-evidence/rollback.json",
+      "bytes": 16815,
+      "sha256": "c9ac7bf657d1ce582784032a496614a50bc8b016fa5fa6acaf9f58e391752977"
+    },
+    {
+      "path": "artifacts/pr43-c651-matrix-chromium.zip::tmp/engine-evidence/security.json",
+      "bytes": 15107,
+      "sha256": "53db84a297667dd9e9a84dd81ab77df833d6474bab1992c84271102830a0b18d"
+    },
+    {
+      "path": "artifacts/pr43-c651-matrix-firefox.zip::home/runner/work/getyoursats-wallet/getyoursats-wallet/dist-rollback/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "d912ab7dec37b096cc83fd7f794b4ca636f464a9e41c93fbcaed2f836fcd78f3"
+    },
+    {
+      "path": "artifacts/pr43-c651-matrix-firefox.zip::tmp/engine-evidence/rollback.json",
+      "bytes": 16812,
+      "sha256": "732774a5559aa8edbc29435df77d95adb616723dc11a941d39fa306951fcc4f1"
+    },
+    {
+      "path": "artifacts/pr43-c651-matrix-firefox.zip::tmp/engine-evidence/security.json",
+      "bytes": 15093,
+      "sha256": "d8fd82279ca83c76f858238ada3ad35a2dbf04cd04ee5a988aba317d815fc520"
+    },
+    {
+      "path": "evidence-inventory.json",
+      "bytes": 5098,
+      "sha256": "4a4cb1b6ec77ff7ed4a779fb64e5161d4eb69b24566fd2cae2202d7b68bab9ba"
+    },
+    {
+      "path": "log-hashes.json",
+      "bytes": 1500,
+      "sha256": "a2e166c06c096f5999f185d77e4326db27a758044d8c532703691cc63f50cf20"
+    },
+    {
+      "path": "logs/matrix-chromium.log.gz::decompressed",
+      "bytes": 52650,
+      "sha256": "d1e610517d644ea832b3324e340e97cdf58950739e749cf8a50eae4ae72e82dc"
+    },
+    {
+      "path": "logs/matrix-firefox.log.gz::decompressed",
+      "bytes": 65426,
+      "sha256": "b33c7b63c1b7d102a148021d2d1763141e529032ff45ed2cef68851c1b9c8352"
+    },
+    {
+      "path": "logs/matrix-webkit.log.gz::decompressed",
+      "bytes": 41906,
+      "sha256": "533007fd2f0f7c039f68870079b1e756874b4ff675359f8d314b897b345678a9"
+    },
+    {
+      "path": "logs/smoke.log.gz::decompressed",
+      "bytes": 226642,
+      "sha256": "cbd2052a869351e41ecf21cdb17592c7bd353f7465232a2e3d19a7404d4267ab"
+    },
+    {
+      "path": "matrix-artifacts.json",
+      "bytes": 2723,
+      "sha256": "8586664dff29337318d602812a27926ce30403f6b8e698d368a551d5d3f6bec3"
+    },
+    {
+      "path": "matrix-final-jobs.json",
+      "bytes": 17451,
+      "sha256": "b0be500b14e83789f3ce7962be12e4e4c219cde491559081698db5ccbe0a4188"
+    },
+    {
+      "path": "matrix-final-run.json",
+      "bytes": 15123,
+      "sha256": "edc55c42fd3dec1aaa7e64074a81defe5ccadf791f988072a412ddf1abf3bbe0"
+    },
+    {
+      "path": "matrix-summary.json",
+      "bytes": 8010,
+      "sha256": "47641ef48f35da6d7475ce0df94cfb358b64e63ecf61a5ad5e474a2bed4003f3"
+    },
+    {
+      "path": "pr-checkout-metadata.json",
+      "bytes": 3728,
+      "sha256": "0f5db8ea9fe860726a4f436dd98138b09d8da0ab3ae8c7a2a2abf5251168dae8"
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 13474,
+      "sha256": "461505f3f8a008aa6517ec026342f69c0a8268fc18423e815c25c3d6790be111"
+    },
+    {
+      "path": "receipt.md",
+      "bytes": 6028,
+      "sha256": "622785233a66a11ea56e7a5cfaad8812a89904becedef0d2d18161d8319be3a9"
+    },
+    {
+      "path": "reports/matrix-chromium/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "d912ab7dec37b096cc83fd7f794b4ca636f464a9e41c93fbcaed2f836fcd78f3"
+    },
+    {
+      "path": "reports/matrix-chromium/rollback.json",
+      "bytes": 16815,
+      "sha256": "c9ac7bf657d1ce582784032a496614a50bc8b016fa5fa6acaf9f58e391752977"
+    },
+    {
+      "path": "reports/matrix-chromium/security.json",
+      "bytes": 15107,
+      "sha256": "53db84a297667dd9e9a84dd81ab77df833d6474bab1992c84271102830a0b18d"
+    },
+    {
+      "path": "reports/matrix-firefox/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "d912ab7dec37b096cc83fd7f794b4ca636f464a9e41c93fbcaed2f836fcd78f3"
+    },
+    {
+      "path": "reports/matrix-firefox/rollback.json",
+      "bytes": 16812,
+      "sha256": "732774a5559aa8edbc29435df77d95adb616723dc11a941d39fa306951fcc4f1"
+    },
+    {
+      "path": "reports/matrix-firefox/security.json",
+      "bytes": 15093,
+      "sha256": "d8fd82279ca83c76f858238ada3ad35a2dbf04cd04ee5a988aba317d815fc520"
+    },
+    {
+      "path": "reports/smoke/sdk-storage-cas.json",
+      "bytes": 443930,
+      "sha256": "4e069b7f1ea57e4c9d8c93d70c7621e4cd619c7aee4085ce25722e3bc98d03cb"
+    },
+    {
+      "path": "smoke-artifact-inventory.json",
+      "bytes": 41600,
+      "sha256": "fef833b54cc3c85e2d99da39b24b80cabd6743420a4ef6e2a4efd70edbf671a2"
+    },
+    {
+      "path": "smoke-artifacts.json",
+      "bytes": 926,
+      "sha256": "2566025986134a319398dc643ca4f42f5f76307d868aa496cc683ac55d1abb86"
+    },
+    {
+      "path": "smoke-cas-summary.json",
+      "bytes": 4405,
+      "sha256": "b9ac6e2847d918dc9c10870f27d06866884651bcbdb70f0d3ea8725fdf1b1fb7"
+    },
+    {
+      "path": "smoke-final-jobs.json",
+      "bytes": 4844,
+      "sha256": "06621ae868d15c1a6ebc16c87b63648d329addb358ba661cfeaf1b1d03885c1f"
+    },
+    {
+      "path": "smoke-final-run.json",
+      "bytes": 15131,
+      "sha256": "49a15b00ae2a20d1e39c9e9529455307ed67cbe282b78d67dabfb3f4e2698af6"
+    },
+    {
+      "path": "smoke-outcome.json",
+      "bytes": 1263,
+      "sha256": "f62e2933f63d2e934d2238fcfe3e0a353ed9316b32af28bb694c5bf62c9e72b7"
+    },
+    {
+      "path": "smoke-outcome.md",
+      "bytes": 1650,
+      "sha256": "e07cade05f7c58845ecee69e4cb12fe5356f3bf9141379b1f5bdc0762fb573af"
+    },
+    {
+      "path": "webkit-cancellation.json",
+      "bytes": 5467,
+      "sha256": "177dc61ddca2c3255d39f029d8c5535879ae5f80fda4fa0b6b87670964781068"
+    },
+    {
+      "path": "webkit-check-annotations.json",
+      "bytes": 2478,
+      "sha256": "62cac15a1ac75a825fe73eafd2e701000097401fdd1a38db8fed14de30f75b9e"
+    }
+  ],
+  "limits": [
+    "Pattern scan and source-scope review are publication aids, not universal secret-detection guarantees.",
+    "External smoke ZIP contains screenshots and is retained outside this packet; visual review is not claimed.",
+    "No original evidence bytes were changed.",
+    "Cancelled WebKit matrix and two skipped stages remain explicitly incomplete."
+  ]
+}

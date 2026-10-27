@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "purpose": "Attribution only; these large or source payloads are not copied into historical staging or its bundles.",
+  "artifacts": [
+    {
+      "kind": "historical browser screenshots and CAS report ZIP",
+      "retainedOutsideStaging": "/tmp/gys-pr43-final-smoke-artifact.zip",
+      "bytes": 20221546,
+      "sha256": "ae540cec603767e14f06c7b7cf866992a462938df642e7eeb2ccdef01d3ba205",
+      "rehashedDuringStaging": true,
+      "attributionReceipt": "/tmp/gys-pr43-final-ci-20261027/browsers/receipt.json",
+      "attributionReceiptSha256": "015934be6ab930a7cd0a59f5168cffd85a529162e0175fdd508d4c520e7dadaa",
+      "includedInBundles": false,
+      "artifactId": 12722455645,
+      "screenshotVisualReviewPerformed": false
+    },
+    {
+      "kind": "canonical SDK CI evidence ZIP",
+      "retainedOutsideStaging": "/tmp/gys-sdk-0007-canonical-evidence.zip",
+      "bytes": 56092063,
+      "sha256": "e208ef7938d26bd282a3ef4501656ee60298e5412a4b3cf0650b71e1f40ab615",
+      "rehashedDuringStaging": true,
+      "attributionReceipt": "/tmp/gys-sdk-0007-evidence-docs-20261027/docs/security-review/evidence/sdk-ci-0007-20261027/receipt.json",
+      "attributionReceiptSha256": "33bd27d6f03382a329e09c814e4cd5e4b4f70694f2e611fe842022d7b407f71f",
+      "includedInBundles": false,
+      "workflowRun": 40473745510,
+      "sourceCommit": "1298724dfe1d95b7a0a24f19be80e6e977cec011",
+      "preservationCommit": "de5100c3728bc11d019744f09624648b4aff8803"
+    },
+    {
+      "kind": "cumulative SDK 0007 source patch",
+      "retainedOutsideStaging": "/tmp/getyoursats-sdk-isolated-build/vendor/patches/0007-signer-storage-identity.patch",
+      "bytes": 389779,
+      "sha256": "e56dde90e545646dbce6e6f3218bb67c54084f13110fcbbafdb1eccc211b3eb7",
+      "rehashedDuringStaging": true,
+      "attributionReceipt": "/tmp/gys-sdk-0007-evidence-docs-20261027/docs/security-review/evidence/sdk-ci-0007-20261027/receipt.json",
+      "attributionReceiptSha256": "33bd27d6f03382a329e09c814e4cd5e4b4f70694f2e611fe842022d7b407f71f",
+      "includedInBundles": false,
+      "upstreamSdkCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+      "patchedSdkTree": "0fad9ee69476211ee47bafb413ba75639a22014f"
+    },
+    {
+      "kind": "generated package/manifest/lock preservation patch",
+      "retainedOutsideStaging": "/tmp/gys-sdk-0007-canonical-evidence.zip::sdk.patch",
+      "bytes": 43069018,
+      "sha256": "d8014cd9b5fa8d2ba4f74bb8e3e45d67540c5a28fc45def613a05d742af9a3bc",
+      "rehashedDuringStaging": true,
+      "attributionReceipt": "/tmp/gys-sdk-0007-evidence-docs-20261027/docs/security-review/evidence/sdk-ci-0007-20261027/receipt.json",
+      "attributionReceiptSha256": "33bd27d6f03382a329e09c814e4cd5e4b4f70694f2e611fe842022d7b407f71f",
+      "includedInBundles": false
+    }
+  ],
+  "canonicalPackage": {
+    "sha256": "32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c",
+    "bytes": 21081690,
+    "webWasmSha256": "d77b97e2041c62575702a3c1227c7efa1299b7c2ce2f6e05612b8c14992e206a"
+  }
+}

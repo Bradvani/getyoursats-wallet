@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-27T10:26:34.290418+00:00",
+  "result": "No blocking publication issue found in the explicitly inventoried root snapshot.",
+  "scope": "Read-only review of four Tests logs, final Tests run/jobs, merge metadata, initial checks/runs and their receipt/manifest. No archive produced.",
+  "source": {
+    "head": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+    "tree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+    "actualPrMergeCheckout": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+    "mergeTreeMatchesHead": true
+  },
+  "snapshot": {
+    "directory": "/tmp/gys-pr43-c47-ci-20261027/root",
+    "files": 11,
+    "bytes": 774444,
+    "inventory": [
+      {
+        "path": "checks-initial.original.json",
+        "bytes": 53551,
+        "sha256": "b0829ede8f5ddd15939b6562e87615002090928cff5f142bfdf513f409829818"
+      },
+      {
+        "path": "initial-files.json",
+        "bytes": 1548,
+        "sha256": "5a1a61931bec5eafb213317df36ef5c731c7ef3d05553272e1ea7278650a97b9"
+      },
+      {
+        "path": "merge.original.json",
+        "bytes": 2714,
+        "sha256": "69c4449ed3d055f5e69841eccd16bd2a228d52f4978708bd745220739e82555c"
+      },
+      {
+        "path": "runs-initial.original.json",
+        "bytes": 81309,
+        "sha256": "0d0df80f9666bd86f4d293a68be1d2b503386b04ba11874b7e4d3dfb0f726bc2"
+      },
+      {
+        "path": "test-job-122130542244.original.log",
+        "bytes": 487242,
+        "sha256": "d1a1de6f4bc1320de9345396db8dd4865926d26caec247708e374629e2b92d8c"
+      },
+      {
+        "path": "test-job-122130542485.original.log",
+        "bytes": 15870,
+        "sha256": "fcb0622a7e5f0e936601683036d0d8734b565d8dab1434d8cb9fac843809d744"
+      },
+      {
+        "path": "test-job-122130542525.original.log",
+        "bytes": 24926,
+        "sha256": "a18c230884eacb5ae461c1a906f6f388022ed192d1a8a106767b1ad27d4bc154"
+      },
+      {
+        "path": "test-job-122130542576.original.log",
+        "bytes": 80673,
+        "sha256": "69d19d78630be70317e65f9f7ccc3a5543fc925077f69a00c0d954e7201670c7"
+      },
+      {
+        "path": "tests-jobs-final.original.json",
+        "bytes": 10013,
+        "sha256": "2d5af0df0865d5e5429549b8880658006299b278148c432f7f748fd43662000a"
+      },
+      {
+        "path": "tests-run-final.original.json",
+        "bytes": 13529,
+        "sha256": "a30b0335cbfdb6efc5977d1e9b02ebabf6c72e1600d35d78c51e0ea606d36557"
+      },
+      {
+        "path": "tests.receipt.json",
+        "bytes": 3069,
+        "sha256": "4435bb3f4f2301654e26be3f1ee9aa3a9a0bc70f4476b77a4990440eee823d7f"
+      }
+    ],
+    "allRecordedInitialFileAndJobLogHashesMatched": true,
+    "reviewedBytesUnchangedAfterReview": true
+  },
+  "observedTests": {
+    "runId": 40486813725,
+    "conclusion": "success",
+    "attempt": 1,
+    "jobs": [
+      {
+        "id": 122130542244,
+        "name": "Unit Tests",
+        "conclusion": "success",
+        "actualCheckout": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+        "node": "20.20.2",
+        "npm": "10.8.2",
+        "sdkEngineWarningRetained": true,
+        "log": "test-job-122130542244.original.log"
+      },
+      {
+        "id": 122130542485,
+        "name": "Type Check",
+        "conclusion": "success",
+        "actualCheckout": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+        "node": "20.20.2",
+        "npm": "10.8.2",
+        "sdkEngineWarningRetained": true,
+        "log": "test-job-122130542485.original.log"
+      },
+      {
+        "id": 122130542525,
+        "name": "Lint",
+        "conclusion": "success",
+        "actualCheckout": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+        "node": "20.20.2",
+        "npm": "10.8.2",
+        "sdkEngineWarningRetained": true,
+        "log": "test-job-122130542525.original.log"
+      },
+      {
+        "id": 122130542576,
+        "name": "Build",
+        "conclusion": "success",
+        "actualCheckout": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+        "node": "20.20.2",
+        "npm": "10.8.2",
+        "sdkEngineWarningRetained": true,
+        "log": "test-job-122130542576.original.log"
+      }
+    ],
+    "unitPassed": 1943,
+    "unitSkipped": 1,
+    "filesPassed": 161,
+    "filesSkipped": 1,
+    "skippedFile": "src/security/bitcoinRegtest.integration.test.ts",
+    "optionalFundedE2e": "skipped",
+    "lintErrors": 0,
+    "lintWarnings": 8,
+    "buildAndTypeCheckSucceeded": true
+  },
+  "legacyRuntime": {
+    "observedInAllFourCompletedLogs": true,
+    "node": "20.20.2",
+    "npm": "10.8.2",
+    "warningCode": "EBADENGINE",
+    "package": "@breeztech/breez-sdk-spark@0.1.0-getyoursats.recovery.3",
+    "requiredNode": ">=22",
+    "warningRetainedUnchanged": true,
+    "qualification": "These recorded legacy workflow successes do not establish supported Node20 SDK execution. Standard verification and installed-SDK checks have their own Node22-configured evidence; results are not transferred or summed."
+  },
+  "publicationReview": {
+    "patterns": [
+      "private-key-pem",
+      "github-token",
+      "aws-access-key",
+      "jwt",
+      "authorization-value",
+      "signed-url-query",
+      "embedded-image-or-binary",
+      "sensitive-field-value"
+    ],
+    "candidateCredentialHits": [],
+    "oversizedOrEmbeddedBinaryPayloads": false,
+    "redactions": [],
+    "omittedFilesWithinSnapshot": [],
+    "qualification": "No candidate credentials found by the text-pattern and contextual receipt/log review; not a universal secret-detection guarantee."
+  },
+  "exclusions": [
+    {
+      "scope": "Future additions to root, including final global metadata",
+      "reason": "Only exact filenames and hashes in this snapshot are reviewed; additions require a separate supplement.",
+      "newFilesObservedDuringReview": [
+        "checks-final.original.json",
+        "final-ci-receipt.json",
+        "main-final.original.json",
+        "pr-final.original.json",
+        "runs-final.original.json"
+      ]
+    },
+    {
+      "scope": "Browser folder and smoke/matrix packet",
+      "reason": "Handled separately; not read or covered here."
+    },
+    {
+      "scope": "Existing audit/security/governance staging",
+      "reason": "Retains its separate review; not repeated in this task."
+    }
+  ],
+  "limits": [
+    "Initial checks/runs snapshots are context only and do not establish final global completion.",
+    "The same application suite overlaps standard verify/checkpoint. Do not add repeated runs into an invented distinct-case total.",
+    "One Bitcoin Core integration case and optional funded E2E are skipped, not passed.",
+    "Lint has eight warnings and the four legacy jobs retain their Node engine warning; no warning-free or supported-Node20 claim is made.",
+    "Original logs mean complete decoded UTF-8 supplied by the connector, not original HTTP transport-compressed bytes. Expected fixture errors and warnings remain intact.",
+    "No test execution, SDK import, wallet/profile/provider/network operation, source/ref/ruleset change, final archive or deployment occurred.",
+    "This publication review is not qualified independent security approval or real-funds/provider/device acceptance."
+  ]
+}

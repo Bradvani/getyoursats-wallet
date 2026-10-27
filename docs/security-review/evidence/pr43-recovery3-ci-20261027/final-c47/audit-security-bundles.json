@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "sourceCommit": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+  "sourceTree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+  "sourceFiles": 34,
+  "originalBytes": 1033212,
+  "archiveBytes": 207628,
+  "archives": [
+    {
+      "scope": "audit",
+      "sourceCommit": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+      "sourceTree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+      "archive": "c47-audit.tar.gz",
+      "bytes": 65939,
+      "sha256": "9f4b45987b237eb8dcf289b8c3deb8cac7fec53d1c4d3965e28a7624d1fa5c12",
+      "memberCount": 16,
+      "originalBytes": 77452,
+      "inventory": "c47-audit.inventory.json",
+      "inventorySha256": "bffc2fcbaf142d179da54ea8b5b537f2eba4711dd8147506ee65065a3b30ce99",
+      "uncompressedTarSha256": "64be8adee2bb3049db95d1a9261a9161a927e5df36a046ec9286851b175d0cb2"
+    },
+    {
+      "scope": "security",
+      "sourceCommit": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+      "sourceTree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+      "archive": "c47-security.tar.gz",
+      "bytes": 141689,
+      "sha256": "e743be40d6445018eede3238a0be8a645a8f9be8eb55d5c5616132d177d0725e",
+      "memberCount": 18,
+      "originalBytes": 955760,
+      "inventory": "c47-security.inventory.json",
+      "inventorySha256": "44a3d907f65d3b35bc12aed6c9a9b3da334af8c6dd38b919170e52dd54d7237d",
+      "uncompressedTarSha256": "0224335f12f08cbaaf68785c404981765d9ce5660b2dd52a9bb5828877c49085"
+    }
+  ],
+  "publicationReview": {
+    "path": "audit-security-publication-review.json",
+    "bytes": 5603,
+    "sha256": "9fe1f6063a39d4bed4d8c7a8ca62a684a49c983042252a4081d7654fcad06780"
+  },
+  "readme": {
+    "path": "audit-security-README.md",
+    "bytes": 1642,
+    "sha256": "139e40dd9c5035e206fa640846958d39be4009bec7d77ffb04e0657ee12146cb"
+  },
+  "releaseApproved": false
+}

@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "archive": "c651-audit.tar.gz",
+  "archiveBytes": 58547,
+  "archiveSha256": "aae2b211aa26ecf1a3f7dda0821fdf0717e9148fdcd3444661a212f74d2bc9a7",
+  "uncompressedTarSha256": "aca6e19d22e453261a28c838b7addc494cc248b326b33d48560c63223f0462e3",
+  "memberCount": 11,
+  "originalFileBytes": 64284,
+  "method": "Sorted regular files only; fixed tar metadata; lossless gzip with mtime=0; every member round-tripped and checked against original bytes",
+  "sourceRoot": "/tmp/gys-pr43-c651-ci-20261027/audit",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 1265,
+      "sha256": "a6f582fded4e8d4752b8d3ed839d64fc5099c0e549ac31e8bb8bf6755276e979"
+    },
+    {
+      "path": "SHA256SUMS.json",
+      "bytes": 1034,
+      "sha256": "b1ccd57f018e39917a9a5dee5d4d47e354dda6d44baad7173656d49e0eebcea4"
+    },
+    {
+      "path": "codeql-job-122120389556.original.log.gz",
+      "bytes": 40156,
+      "sha256": "aa00ea9618d1adcf87570eac7e126d8094ca99e64460d31b0366b01550fd38a5"
+    },
+    {
+      "path": "codeql-jobs.wrapper.json.gz",
+      "bytes": 311,
+      "sha256": "61206650fb73bb152ddbcce29e8c411086d7a41a076047ee0e0a48490ff8aa7b"
+    },
+    {
+      "path": "codeql-run-final.original.json.gz",
+      "bytes": 1738,
+      "sha256": "f9429a0c43d0994fdca3976de8e4971f4f4f024b06027f19268138e448185021"
+    },
+    {
+      "path": "dependency-job-122120361866.original.log.gz",
+      "bytes": 5012,
+      "sha256": "f27854d4091ecaaf371a29e68e325138242d2fa8ed4a53a1cad971c608e1ff08"
+    },
+    {
+      "path": "dependency-steps.wrapper.json.gz",
+      "bytes": 359,
+      "sha256": "1aedc4060c2bd98c2b450e811ccbd0242919541663bb2d3a13008ddf57f4ebad"
+    },
+    {
+      "path": "head-checks-final.original.json.gz",
+      "bytes": 2975,
+      "sha256": "7349dbfc7698f7f5df335fd2548b19c207e41883c2d7b3bda167c799fe9e84f4"
+    },
+    {
+      "path": "head-checks-initial.original.json.gz",
+      "bytes": 2954,
+      "sha256": "0f62c3de81e64046cc87a8792396ca24e40923b10df520474adb124490b0586e"
+    },
+    {
+      "path": "original-text-lengths.json",
+      "bytes": 957,
+      "sha256": "f6fee2215f0e1434625217a977fca667b54c40377f3397afe1eff2c46d1e7927"
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 7523,
+      "sha256": "a9f03da1334e45f7585f69c208573c5a53ab607ec3eb265d4915ca03ee768b23"
+    }
+  ]
+}

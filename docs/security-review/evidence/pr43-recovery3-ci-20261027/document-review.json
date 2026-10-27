@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "type": "Internal read-only document consistency review; not qualified independent release approval",
+  "candidate": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+  "tree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+  "result": "No concrete inconsistency found within the stated scope",
+  "checked": [
+    "Six workflow successes and 14 successful checks with one intentional job skip",
+    "Source-specific application and browser counts, with repeated suites not summed",
+    "Distinct isolated build 129, integrated c47 and served 07dd identities",
+    "All 21 original audit priority/severity pairs retained",
+    "All 9 non-CI release-gate rows retained",
+    "Historical f912 finding and c651 cancelled matrix preserved",
+    "CodeQL warning/scope, inactive proposed policy and real-funds NO-GO retained"
+  ],
+  "excluded": [
+    "Evidence-index assembly, checked separately by the publication inventory",
+    "Qualified independent security, provider, physical-device or release approval"
+  ],
+  "documents": [
+    {
+      "path": "docs/security-review/pr43-recovery3-ci-20261027.md",
+      "bytes": 11292,
+      "sha256": "aef83d0121e2ae26fc036bc28d0e45e2882a99ec21b6dd09f2f27375bb0def38"
+    },
+    {
+      "path": "docs/security-review/reconciled-release-gates-20261027.md",
+      "bytes": 16507,
+      "sha256": "e5c1f8adce69ac370efa7161620e96748adadef815d4c94ebfa091e68a9da548"
+    },
+    {
+      "path": "docs/security-review/audit-boundary-status-20261027.md",
+      "bytes": 16961,
+      "sha256": "04f76a6964976be8bf75af86f1146d2b8aff4e29abc3f573e7666f1747a5a349"
+    },
+    {
+      "path": "docs/security-review/main-branch-policy-20261027.md",
+      "bytes": 3514,
+      "sha256": "2d719098101d4fab2421640a2abe725ec8baac924f5092d34963f3e74329cc0b"
+    }
+  ]
+}

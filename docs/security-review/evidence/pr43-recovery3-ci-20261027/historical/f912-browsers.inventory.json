@@ -1,0 +1,226 @@
+{
+  "schema": 1,
+  "sourceDirectory": "/tmp/gys-pr43-final-ci-20261027/browsers",
+  "sourceCommit": "f912253d7a618f7fdc361e8221d37b6962b7eb8e",
+  "sourceTree": "0437b489e8626b948bdbd7a54fb3ecaade080024",
+  "publishedEquivalentCommit": null,
+  "archive": {
+    "path": "f912-browsers.tar.gz",
+    "bytes": 262627,
+    "sha256": "3ceba31f3673710b0f071048683ce44905e932981eeb187e2104eb23035286b9",
+    "uncompressedTarBytes": 829440,
+    "uncompressedTarSha256": "8931eff77e92c0ba5be5c7cc3eeab108e7facbf7a4f6fc59ef2f3de4d96701ec"
+  },
+  "payloadFiles": 30,
+  "payloadBytes": 791329,
+  "directories": [
+    "browsers",
+    "browsers/artifacts",
+    "browsers/logs",
+    "browsers/reports",
+    "browsers/reports/matrix-chromium",
+    "browsers/reports/matrix-firefox",
+    "browsers/reports/matrix-webkit",
+    "browsers/reports/smoke"
+  ],
+  "files": [
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-chromium.zip",
+      "sourceRelativePath": "artifacts/pr43-final-matrix-chromium.zip",
+      "bytes": 5106,
+      "sha256": "115e02abcb61d4761cb3ea5a9c7062e69288db35cffd641230bb75947518c8ae"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-firefox.zip",
+      "sourceRelativePath": "artifacts/pr43-final-matrix-firefox.zip",
+      "bytes": 5118,
+      "sha256": "a4b5f867fbb508ce0745dbc2df851fb62d50e00aebadf086498b4e5dce356a43"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-webkit.zip",
+      "sourceRelativePath": "artifacts/pr43-final-matrix-webkit.zip",
+      "bytes": 5121,
+      "sha256": "58b46dab5e01346cdee11c1983e98eb6d107ae7547ed53b54d238bd484777627"
+    },
+    {
+      "path": "browsers/evidence-inventory.json",
+      "sourceRelativePath": "evidence-inventory.json",
+      "bytes": 4990,
+      "sha256": "ca424285191b906e8655ec21148381dbb61e4cd746f80bfa86db1c4328c787fb"
+    },
+    {
+      "path": "browsers/log-hashes.json",
+      "sourceRelativePath": "log-hashes.json",
+      "bytes": 1388,
+      "sha256": "e66dbc01f79709ae66398f3bf2c59e5f374d1c84722d6a9dd517e379babff304"
+    },
+    {
+      "path": "browsers/logs/matrix-chromium.log.gz",
+      "sourceRelativePath": "logs/matrix-chromium.log.gz",
+      "bytes": 12333,
+      "sha256": "6e12b0aa90877e72f0d2c63e92caa952e2558360b9aab72eed3007b8d1fc1d3f"
+    },
+    {
+      "path": "browsers/logs/matrix-firefox.log.gz",
+      "sourceRelativePath": "logs/matrix-firefox.log.gz",
+      "bytes": 14960,
+      "sha256": "b95a08831560f6c09f7b82cd811d27370a8f44605d2a8bca83860768cd299127"
+    },
+    {
+      "path": "browsers/logs/matrix-webkit.log.gz",
+      "sourceRelativePath": "logs/matrix-webkit.log.gz",
+      "bytes": 29288,
+      "sha256": "a12431380055937aebc5d1c2560cbcbff03412b5cbea21d57666c1d5b7616ca3"
+    },
+    {
+      "path": "browsers/logs/smoke.log.gz",
+      "sourceRelativePath": "logs/smoke.log.gz",
+      "bytes": 42515,
+      "sha256": "ea1457ddfda895e4fc3ef9e390c69ac69a67512bfa180ac2631d116db005194b"
+    },
+    {
+      "path": "browsers/matrix-artifacts.json",
+      "sourceRelativePath": "matrix-artifacts.json",
+      "bytes": 3623,
+      "sha256": "9ea093dad7971adfdd2579ce874c6712e082ab8581ece09e0ca38a771d61e806"
+    },
+    {
+      "path": "browsers/matrix-final-jobs.json",
+      "sourceRelativePath": "matrix-final-jobs.json",
+      "bytes": 17447,
+      "sha256": "8cc74a1237022c9ac593e87e12da21de9b762d12e32f8d34ddcb59ea0b98936f"
+    },
+    {
+      "path": "browsers/matrix-final-run.json",
+      "sourceRelativePath": "matrix-final-run.json",
+      "bytes": 15145,
+      "sha256": "11716a5c0fb579f174c7107e4c9683f0a1f28320b606b767cc4aa0fef9c2510a"
+    },
+    {
+      "path": "browsers/matrix-summary.json",
+      "sourceRelativePath": "matrix-summary.json",
+      "bytes": 11409,
+      "sha256": "7a6961df22bcabd72de3e40be113390d65e4a928b6c297b68101b287466251f4"
+    },
+    {
+      "path": "browsers/pr-checkout-metadata.json",
+      "sourceRelativePath": "pr-checkout-metadata.json",
+      "bytes": 3698,
+      "sha256": "a09fed9fef830a2b21d74de885c2a8972da86165947f905dfe5a82ccc54df1e5"
+    },
+    {
+      "path": "browsers/receipt.json",
+      "sourceRelativePath": "receipt.json",
+      "bytes": 8949,
+      "sha256": "015934be6ab930a7cd0a59f5168cffd85a529162e0175fdd508d4c520e7dadaa"
+    },
+    {
+      "path": "browsers/receipt.md",
+      "sourceRelativePath": "receipt.md",
+      "bytes": 4455,
+      "sha256": "52c3505b7693f78c70e84c2dc52e8ced99d0100aa87698d9ddfad9720aa1fb87"
+    },
+    {
+      "path": "browsers/reports/matrix-chromium/rollback-manifest.json",
+      "sourceRelativePath": "reports/matrix-chromium/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "c4176bf675cb9d9cb06b117ac29a84672815c7a18d39e66ba3de0e30311e79ed"
+    },
+    {
+      "path": "browsers/reports/matrix-chromium/rollback.json",
+      "sourceRelativePath": "reports/matrix-chromium/rollback.json",
+      "bytes": 16992,
+      "sha256": "fea658cc5ca4756452bbaf16a22ae832e51a9197cc38fdb119ad8d8e1367d3d8"
+    },
+    {
+      "path": "browsers/reports/matrix-chromium/security.json",
+      "sourceRelativePath": "reports/matrix-chromium/security.json",
+      "bytes": 15282,
+      "sha256": "5030163f3a93dfec8a3af88f2217c79062803fe07ef0825fc5546d936d0e6a6f"
+    },
+    {
+      "path": "browsers/reports/matrix-firefox/rollback-manifest.json",
+      "sourceRelativePath": "reports/matrix-firefox/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "c4176bf675cb9d9cb06b117ac29a84672815c7a18d39e66ba3de0e30311e79ed"
+    },
+    {
+      "path": "browsers/reports/matrix-firefox/rollback.json",
+      "sourceRelativePath": "reports/matrix-firefox/rollback.json",
+      "bytes": 16980,
+      "sha256": "57df9743968869cfce17713446b6e06f591fc4bce396f8298eea49d03efb1105"
+    },
+    {
+      "path": "browsers/reports/matrix-firefox/security.json",
+      "sourceRelativePath": "reports/matrix-firefox/security.json",
+      "bytes": 15270,
+      "sha256": "e0e77ca7147811ae3d0d3cc2b6ae5e76a39d2d1561ebbb007f543d59b24cc95b"
+    },
+    {
+      "path": "browsers/reports/matrix-webkit/rollback-manifest.json",
+      "sourceRelativePath": "reports/matrix-webkit/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "c4176bf675cb9d9cb06b117ac29a84672815c7a18d39e66ba3de0e30311e79ed"
+    },
+    {
+      "path": "browsers/reports/matrix-webkit/rollback.json",
+      "sourceRelativePath": "reports/matrix-webkit/rollback.json",
+      "bytes": 16962,
+      "sha256": "1f71c8268d76f1b65bcf8061b1ccae9b6ab4de2c21b12eddb6cd003c068476d6"
+    },
+    {
+      "path": "browsers/reports/matrix-webkit/security.json",
+      "sourceRelativePath": "reports/matrix-webkit/security.json",
+      "bytes": 15248,
+      "sha256": "f4964e10ded64efb27019f3caf85d2e7cb6494b9b4023d0f0da7db05d05739f9"
+    },
+    {
+      "path": "browsers/reports/smoke/sdk-storage-cas.json",
+      "sourceRelativePath": "reports/smoke/sdk-storage-cas.json",
+      "bytes": 443943,
+      "sha256": "b835d0bc4591899d25e508fc22181373f60e9b36e08385cdc9b22c5b128513d7"
+    },
+    {
+      "path": "browsers/smoke-artifact-inventory.json",
+      "sourceRelativePath": "smoke-artifact-inventory.json",
+      "bytes": 41566,
+      "sha256": "f1a4616ea24d3dcd3212e22c12056dd0850bad1939bbc1d1158eded9f3a66d6c"
+    },
+    {
+      "path": "browsers/smoke-artifacts.json",
+      "sourceRelativePath": "smoke-artifacts.json",
+      "bytes": 926,
+      "sha256": "4ca335a02391b1c1375cf1f7808c272525c7542695f1e16300dad388d00cc99a"
+    },
+    {
+      "path": "browsers/smoke-final-jobs.json",
+      "sourceRelativePath": "smoke-final-jobs.json",
+      "bytes": 4844,
+      "sha256": "16ab45356db098a129b0cc2031cad1dc2f566b9def83e22a4761429571e03a15"
+    },
+    {
+      "path": "browsers/smoke-final-run.json",
+      "sourceRelativePath": "smoke-final-run.json",
+      "bytes": 15152,
+      "sha256": "14e04f88916f84779a964ae494da2b4fb479ada04d7ed4d440311d7e159da671"
+    }
+  ],
+  "contentTransformations": [],
+  "omittedSourceFiles": [],
+  "archiveMetadata": {
+    "format": "USTAR",
+    "gzipLevel": 9,
+    "gzipMtime": 0,
+    "gzipFilename": "",
+    "tarMtime": 0,
+    "uid": 0,
+    "gid": 0,
+    "uname": "",
+    "gname": "",
+    "fileMode": "0644",
+    "directoryMode": "0755",
+    "entryOrder": "lexicographic POSIX archive path",
+    "repeatedGenerationIdentical": true,
+    "allArchivedBytesVerifiedAgainstOriginals": true
+  }
+}

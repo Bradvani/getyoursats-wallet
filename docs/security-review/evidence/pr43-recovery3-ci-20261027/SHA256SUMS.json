@@ -1,0 +1,260 @@
+{
+  "schema": 1,
+  "scope": "All publication files in this directory except this self-inventory",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4149,
+      "sha256": "78f0da2ce8fa89a665dce21421ab0475d0a415d7773e704849aa45464cbf48bf"
+    },
+    {
+      "path": "bundles.json",
+      "bytes": 7656,
+      "sha256": "13faa36827da367dcd9a66abdb8a3c83a38889d789f30d95309402151c8144f7"
+    },
+    {
+      "path": "document-review.json",
+      "bytes": 1796,
+      "sha256": "d0784e422daa8d2b1595d93a098a1959dccaef1533c89d3c2cdbc7ec64204792"
+    },
+    {
+      "path": "final-c47/audit-security-README.md",
+      "bytes": 1642,
+      "sha256": "139e40dd9c5035e206fa640846958d39be4009bec7d77ffb04e0657ee12146cb"
+    },
+    {
+      "path": "final-c47/audit-security-bundles.json",
+      "bytes": 1823,
+      "sha256": "52dd2996267cd53a767f1198d88bba9138fe6656e4bd764f731d06a8571f7af3"
+    },
+    {
+      "path": "final-c47/audit-security-publication-review.json",
+      "bytes": 5603,
+      "sha256": "9fe1f6063a39d4bed4d8c7a8ca62a684a49c983042252a4081d7654fcad06780"
+    },
+    {
+      "path": "final-c47/c47-audit.inventory.json",
+      "bytes": 3017,
+      "sha256": "bffc2fcbaf142d179da54ea8b5b537f2eba4711dd8147506ee65065a3b30ce99"
+    },
+    {
+      "path": "final-c47/c47-audit.tar.gz",
+      "bytes": 65939,
+      "sha256": "9f4b45987b237eb8dcf289b8c3deb8cac7fec53d1c4d3965e28a7624d1fa5c12"
+    },
+    {
+      "path": "final-c47/c47-browsers-publication-review.json",
+      "bytes": 10336,
+      "sha256": "23585dfb9dafde1bf9a48c54a90ccc6514c0123dffbdb1be28f5e88195e9cf0d"
+    },
+    {
+      "path": "final-c47/c47-browsers.inventory.json",
+      "bytes": 6389,
+      "sha256": "16485e8d6a9dd73c467d5d886bc1152d9955766d88e2dbb9305baefd043af7d1"
+    },
+    {
+      "path": "final-c47/c47-browsers.tar.gz",
+      "bytes": 267470,
+      "sha256": "8b70609665a7332145d4706b55194a3a90fad00ad9f55442fc1f7878e1e5fe12"
+    },
+    {
+      "path": "final-c47/c47-governance-publication-review.json",
+      "bytes": 4382,
+      "sha256": "af206816277d291dd1bec0ec4bc3eae66429b1eb407286c6246cfbecd3e95504"
+    },
+    {
+      "path": "final-c47/c47-governance.inventory.json",
+      "bytes": 1731,
+      "sha256": "42091fad430c6058283c11fd4bd2bf174175141237640423bfb9c876445605b5"
+    },
+    {
+      "path": "final-c47/c47-governance.tar.gz",
+      "bytes": 47218,
+      "sha256": "d00cd25e1c73bc9596df717c606456ae3b82af9d575b24a87378e6dad5635e01"
+    },
+    {
+      "path": "final-c47/c47-root-checks.inventory.json",
+      "bytes": 3133,
+      "sha256": "8bef99993cfda9b69d4a2cce59b89aa31cec2367c5fa17fe93e93405f61c72c5"
+    },
+    {
+      "path": "final-c47/c47-root-checks.tar.gz",
+      "bytes": 105690,
+      "sha256": "4a68b5f09973491f608c225e08cb238571a52e6f6dc09c3501a2c3c2752e4c2a"
+    },
+    {
+      "path": "final-c47/c47-security.inventory.json",
+      "bytes": 3446,
+      "sha256": "44a3d907f65d3b35bc12aed6c9a9b3da334af8c6dd38b919170e52dd54d7237d"
+    },
+    {
+      "path": "final-c47/c47-security.tar.gz",
+      "bytes": 141689,
+      "sha256": "e743be40d6445018eede3238a0be8a645a8f9be8eb55d5c5616132d177d0725e"
+    },
+    {
+      "path": "final-c47/root-publication-review-supplement.json",
+      "bytes": 8144,
+      "sha256": "4c4ed0db3eff6f2ca030b6b2c9e34925fabff02ba04427ef38e05900096dab61"
+    },
+    {
+      "path": "final-c47/root-publication-review.json",
+      "bytes": 7144,
+      "sha256": "b8b503ea65f7bb3f5b9bc5f8aa1c6e51410dfe8200daecdfbe8c1d08918940a5"
+    },
+    {
+      "path": "final-ci-receipt.json",
+      "bytes": 13472,
+      "sha256": "2907e5428648d17dc8338c62ae93d572e8ffcfb847dd6760dac23284c108ef55"
+    },
+    {
+      "path": "historical/README.md",
+      "bytes": 3321,
+      "sha256": "77f9b8d15f89aabadabe229a71ee43099bb1faab5c4b462475de47f978401e6f"
+    },
+    {
+      "path": "historical/bundles.json",
+      "bytes": 3707,
+      "sha256": "b0d2138d0b8a4c658df30c8da4a4b83d8bab3189ea828d433a7a364c5b761223"
+    },
+    {
+      "path": "historical/dev-mode-correction.inventory.json",
+      "bytes": 3515,
+      "sha256": "d3a9eabf1251d93d8cb7bf9379b5ba6913360add0eb197b7373427f452e4e01c"
+    },
+    {
+      "path": "historical/dev-mode-correction.tar.gz",
+      "bytes": 4955,
+      "sha256": "df86574674b4681a8d26e0fa340ce85cdb739fcc56f8f2f063a6e1afd0437940"
+    },
+    {
+      "path": "historical/external-artifact-attribution.json",
+      "bytes": 3030,
+      "sha256": "b0dbeffc1dacc05d3a70bb7a42012638d9c8fc7d065532da8f24655aef21d6e4"
+    },
+    {
+      "path": "historical/f912-audit.inventory.json",
+      "bytes": 4248,
+      "sha256": "e7441737dd6ea0997aa22d6a0c1984037549c582501ade0895a9a24b81c9a9bb"
+    },
+    {
+      "path": "historical/f912-audit.tar.gz",
+      "bytes": 64871,
+      "sha256": "5b4877090dd2cb0d10ad136d5013e354e77a270e97ab109e153188aeac14f36f"
+    },
+    {
+      "path": "historical/f912-browsers.inventory.json",
+      "bytes": 8315,
+      "sha256": "e9c97190b78bbc20142064dada2599ed0cd315978bcd2b773f8c7dc5259bc648"
+    },
+    {
+      "path": "historical/f912-browsers.tar.gz",
+      "bytes": 262627,
+      "sha256": "3ceba31f3673710b0f071048683ce44905e932981eeb187e2104eb23035286b9"
+    },
+    {
+      "path": "historical/f912-codeql-annotations.json",
+      "bytes": 499,
+      "sha256": "e2b0fad0eb4f4889bd0da433a8f78f7914bec266faa244a0f1b463578db24758"
+    },
+    {
+      "path": "historical/f912-security.inventory.json",
+      "bytes": 4557,
+      "sha256": "5d55a2991c84bd1627c2f962a847fa426404a8a51bf056b91d6d30dca1888741"
+    },
+    {
+      "path": "historical/f912-security.tar.gz",
+      "bytes": 131188,
+      "sha256": "6cc3d9a0d054fb103cd577d422d248f9e8065be6f3869db4bdd26aaf2070fe37"
+    },
+    {
+      "path": "historical/publication-review.json",
+      "bytes": 18482,
+      "sha256": "164362f1fe482b7158e536325ffab2088d56adce8b228b0573611b081544b870"
+    },
+    {
+      "path": "prior-c651/README.md",
+      "bytes": 2756,
+      "sha256": "fcf9d4391669852cd165e534a24b3bc8661534a81bff95c32cea6be944121e34"
+    },
+    {
+      "path": "prior-c651/c651-audit.inventory.json",
+      "bytes": 2324,
+      "sha256": "efdccdd495f1d023752a97a7fb042b977d8746ceaa443dc56fda808b3e681562"
+    },
+    {
+      "path": "prior-c651/c651-audit.tar.gz",
+      "bytes": 58547,
+      "sha256": "aae2b211aa26ecf1a3f7dda0821fdf0717e9148fdcd3444661a212f74d2bc9a7"
+    },
+    {
+      "path": "prior-c651/c651-browser-publication-review.json",
+      "bytes": 6864,
+      "sha256": "1e58fb248da0aec879cabb5533c9549560e9909a4c54eeabf7c9da0c4553a4c7"
+    },
+    {
+      "path": "prior-c651/c651-browsers.inventory.json",
+      "bytes": 5550,
+      "sha256": "ea2d1a42978641b4be848718d22630539c5f7a7d1601b08a585d83b3ebaed57c"
+    },
+    {
+      "path": "prior-c651/c651-browsers.tar.gz",
+      "bytes": 244296,
+      "sha256": "88f9580216d8fa4094d86f60d310dfaa6b08aaa06a24ef4cba033ac6dc3f55d8"
+    },
+    {
+      "path": "prior-c651/c651-governance.inventory.json",
+      "bytes": 1733,
+      "sha256": "ecbfacfe17d41be222c215295abb71f212676e237b821d69c26dcd77282b81c0"
+    },
+    {
+      "path": "prior-c651/c651-governance.tar.gz",
+      "bytes": 46678,
+      "sha256": "ced01e2a2014aad5a7d5f75e20de1e9c8d0522deeeb52ffd1b4ae676cf43f926"
+    },
+    {
+      "path": "prior-c651/c651-root-checks.inventory.json",
+      "bytes": 3494,
+      "sha256": "8521a42a9e67d143a7319f1fed3c38e9e95870e5c1407920243f4f3ef85f4049"
+    },
+    {
+      "path": "prior-c651/c651-root-checks.tar.gz",
+      "bytes": 112063,
+      "sha256": "d96d243b72bc81a808a31beea7573eae0226731275169537072c4774cd31c127"
+    },
+    {
+      "path": "prior-c651/c651-security.inventory.json",
+      "bytes": 3160,
+      "sha256": "19502c0c08db56d4f7a14ba910a3b266a2de9735a303843f1475531185e81e27"
+    },
+    {
+      "path": "prior-c651/c651-security.tar.gz",
+      "bytes": 133638,
+      "sha256": "a4c7df68dda94b9843405e0a6aefa47e3f97d9a1b433f56d3bd7e49507703120"
+    },
+    {
+      "path": "prior-c651/current-publication-review-supplement.json",
+      "bytes": 5797,
+      "sha256": "68bc40683d7e5cf81c5f35da852db08602e39880508211caaf7608bc25714051"
+    },
+    {
+      "path": "prior-c651/current-publication-review.json",
+      "bytes": 12239,
+      "sha256": "e455cf39adf248a34b58fdaca1cd71810f671a0fa1d2ca660f0e9ef34310307e"
+    },
+    {
+      "path": "prior-c651/final-ci-receipt.json",
+      "bytes": 5339,
+      "sha256": "66169ca146f9c776e7c81d267395cfa05c2f4a41f15e6dc702f9336229c26a90"
+    },
+    {
+      "path": "prior-c651/index.json",
+      "bytes": 2295,
+      "sha256": "54b24586485838358066a79ea45006200b748b03a36492da4546b06713c64b63"
+    }
+  ],
+  "fileCount": 50,
+  "bytes": 1871957,
+  "candidate": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+  "releaseApproved": false
+}

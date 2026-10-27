@@ -1,0 +1,173 @@
+{
+  "schema": 1,
+  "candidate": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+  "tree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+  "automatedCi": "SUCCESS: six workflows on attempt1",
+  "releaseApproved": false,
+  "realFundsVerdict": "NO-GO",
+  "bundleCount": 14,
+  "compressedBytes": 1686869,
+  "originalFileCountAcrossSourceSpecificPackets": 248,
+  "bundles": [
+    {
+      "archive": "final-c47/c47-audit.tar.gz",
+      "source": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+      "bytes": 65939,
+      "sha256": "9f4b45987b237eb8dcf289b8c3deb8cac7fec53d1c4d3965e28a7624d1fa5c12",
+      "inventory": "final-c47/c47-audit.inventory.json",
+      "inventorySha256": "bffc2fcbaf142d179da54ea8b5b537f2eba4711dd8147506ee65065a3b30ce99",
+      "originalFileCount": 16,
+      "originalBytes": 77452,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "final-c47/c47-browsers.tar.gz",
+      "source": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+      "bytes": 267470,
+      "sha256": "8b70609665a7332145d4706b55194a3a90fad00ad9f55442fc1f7878e1e5fe12",
+      "inventory": "final-c47/c47-browsers.inventory.json",
+      "inventorySha256": "16485e8d6a9dd73c467d5d886bc1152d9955766d88e2dbb9305baefd043af7d1",
+      "originalFileCount": 36,
+      "originalBytes": 813961,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "final-c47/c47-governance.tar.gz",
+      "source": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+      "bytes": 47218,
+      "sha256": "d00cd25e1c73bc9596df717c606456ae3b82af9d575b24a87378e6dad5635e01",
+      "inventory": "final-c47/c47-governance.inventory.json",
+      "inventorySha256": "42091fad430c6058283c11fd4bd2bf174175141237640423bfb9c876445605b5",
+      "originalFileCount": 8,
+      "originalBytes": 162671,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "final-c47/c47-root-checks.tar.gz",
+      "source": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+      "bytes": 105690,
+      "sha256": "4a68b5f09973491f608c225e08cb238571a52e6f6dc09c3501a2c3c2752e4c2a",
+      "inventory": "final-c47/c47-root-checks.inventory.json",
+      "inventorySha256": "8bef99993cfda9b69d4a2cce59b89aa31cec2367c5fa17fe93e93405f61c72c5",
+      "originalFileCount": 16,
+      "originalBytes": 952817,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "final-c47/c47-security.tar.gz",
+      "source": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+      "bytes": 141689,
+      "sha256": "e743be40d6445018eede3238a0be8a645a8f9be8eb55d5c5616132d177d0725e",
+      "inventory": "final-c47/c47-security.inventory.json",
+      "inventorySha256": "44a3d907f65d3b35bc12aed6c9a9b3da334af8c6dd38b919170e52dd54d7237d",
+      "originalFileCount": 18,
+      "originalBytes": 955760,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "historical/dev-mode-correction.tar.gz",
+      "source": "f912 historical CI plus c651 fixed-literal correction",
+      "bytes": 4955,
+      "sha256": "df86574674b4681a8d26e0fa340ce85cdb739fcc56f8f2f063a6e1afd0437940",
+      "inventory": "historical/dev-mode-correction.inventory.json",
+      "inventorySha256": "d3a9eabf1251d93d8cb7bf9379b5ba6913360add0eb197b7373427f452e4e01c",
+      "originalFileCount": 11,
+      "originalBytes": 16144,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "historical/f912-audit.tar.gz",
+      "source": "f912 historical CI plus c651 fixed-literal correction",
+      "bytes": 64871,
+      "sha256": "5b4877090dd2cb0d10ad136d5013e354e77a270e97ab109e153188aeac14f36f",
+      "inventory": "historical/f912-audit.inventory.json",
+      "inventorySha256": "e7441737dd6ea0997aa22d6a0c1984037549c582501ade0895a9a24b81c9a9bb",
+      "originalFileCount": 14,
+      "originalBytes": 85220,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "historical/f912-browsers.tar.gz",
+      "source": "f912 historical CI plus c651 fixed-literal correction",
+      "bytes": 262627,
+      "sha256": "3ceba31f3673710b0f071048683ce44905e932981eeb187e2104eb23035286b9",
+      "inventory": "historical/f912-browsers.inventory.json",
+      "inventorySha256": "e9c97190b78bbc20142064dada2599ed0cd315978bcd2b773f8c7dc5259bc648",
+      "originalFileCount": 30,
+      "originalBytes": 791329,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "historical/f912-security.tar.gz",
+      "source": "f912 historical CI plus c651 fixed-literal correction",
+      "bytes": 131188,
+      "sha256": "6cc3d9a0d054fb103cd577d422d248f9e8065be6f3869db4bdd26aaf2070fe37",
+      "inventory": "historical/f912-security.inventory.json",
+      "inventorySha256": "5d55a2991c84bd1627c2f962a847fa426404a8a51bf056b91d6d30dca1888741",
+      "originalFileCount": 15,
+      "originalBytes": 907528,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "prior-c651/c651-audit.tar.gz",
+      "source": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+      "bytes": 58547,
+      "sha256": "aae2b211aa26ecf1a3f7dda0821fdf0717e9148fdcd3444661a212f74d2bc9a7",
+      "inventory": "prior-c651/c651-audit.inventory.json",
+      "inventorySha256": "efdccdd495f1d023752a97a7fb042b977d8746ceaa443dc56fda808b3e681562",
+      "originalFileCount": 11,
+      "originalBytes": 64284,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "prior-c651/c651-browsers.tar.gz",
+      "source": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+      "bytes": 244296,
+      "sha256": "88f9580216d8fa4094d86f60d310dfaa6b08aaa06a24ef4cba033ac6dc3f55d8",
+      "inventory": "prior-c651/c651-browsers.inventory.json",
+      "inventorySha256": "ea2d1a42978641b4be848718d22630539c5f7a7d1601b08a585d83b3ebaed57c",
+      "originalFileCount": 31,
+      "originalBytes": 751696,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "prior-c651/c651-governance.tar.gz",
+      "source": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+      "bytes": 46678,
+      "sha256": "ced01e2a2014aad5a7d5f75e20de1e9c8d0522deeeb52ffd1b4ae676cf43f926",
+      "inventory": "prior-c651/c651-governance.inventory.json",
+      "inventorySha256": "ecbfacfe17d41be222c215295abb71f212676e237b821d69c26dcd77282b81c0",
+      "originalFileCount": 8,
+      "originalBytes": 161026,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "prior-c651/c651-root-checks.tar.gz",
+      "source": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+      "bytes": 112063,
+      "sha256": "d96d243b72bc81a808a31beea7573eae0226731275169537072c4774cd31c127",
+      "inventory": "prior-c651/c651-root-checks.inventory.json",
+      "inventorySha256": "8521a42a9e67d143a7319f1fed3c38e9e95870e5c1407920243f4f3ef85f4049",
+      "originalFileCount": 18,
+      "originalBytes": 990308,
+      "allMembersVerified": true
+    },
+    {
+      "archive": "prior-c651/c651-security.tar.gz",
+      "source": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+      "bytes": 133638,
+      "sha256": "a4c7df68dda94b9843405e0a6aefa47e3f97d9a1b433f56d3bd7e49507703120",
+      "inventory": "prior-c651/c651-security.inventory.json",
+      "inventorySha256": "19502c0c08db56d4f7a14ba910a3b266a2de9735a303843f1475531185e81e27",
+      "originalFileCount": 16,
+      "originalBytes": 912273,
+      "allMembersVerified": true
+    }
+  ],
+  "limits": [
+    "File counts describe retained evidence, not unique tests or new execution.",
+    "Historical failures, cancellations, interim snapshots and intentional skips retain their exact-source meaning.",
+    "Large screenshot and SDK ZIPs are attributed by their retained digests/inventories rather than duplicated here.",
+    "Every archive hash, uncompressed-tar hash and original member length/hash was independently rechecked during final assembly; no SDK or wallet code was imported."
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "schema": 1,
+  "archive": "c47-browsers.tar.gz",
+  "archiveBytes": 267470,
+  "archiveSha256": "8b70609665a7332145d4706b55194a3a90fad00ad9f55442fc1f7878e1e5fe12",
+  "uncompressedTarSha256": "61dbccddfc7db633ffab1d62864805b3e9bed4eb3865417bea33768b1c27db6a",
+  "memberCount": 36,
+  "originalFileBytes": 813961,
+  "method": "Sorted regular files only; fixed tar metadata; lossless gzip with mtime=0; every member round-tripped and checked against original bytes",
+  "sourceRoot": "/tmp/gys-pr43-c47-ci-20261027/browsers",
+  "files": [
+    {
+      "path": "artifacts/pr43-c47-matrix-chromium.zip",
+      "bytes": 5051,
+      "sha256": "50b08e6de2af7fe0596c895737ebcfcdc18edee556a6626ebe9d92f0af2f72f8"
+    },
+    {
+      "path": "artifacts/pr43-c47-matrix-firefox.zip",
+      "bytes": 5072,
+      "sha256": "b456f4b6e5b5ebe4fc6ad6cbdc06ad45ab8a4d54a253a0d0036278843f7c2085"
+    },
+    {
+      "path": "artifacts/pr43-c47-matrix-webkit.zip",
+      "bytes": 5060,
+      "sha256": "339831436732a10d24397b8e2214675578ef29f86ff123583003d89f0eaff82e"
+    },
+    {
+      "path": "evidence-inventory.json",
+      "bytes": 5923,
+      "sha256": "68bff46506fa61b6d1173c5bbd364914ac1c2aed24191c35c278c090d06ac7cf"
+    },
+    {
+      "path": "log-hashes.json",
+      "bytes": 1580,
+      "sha256": "bb145b3515f1c536433ac00c289d07f902da60199d2596d98348528d7c9bae04"
+    },
+    {
+      "path": "logs/matrix-chromium.log.gz",
+      "bytes": 13093,
+      "sha256": "5c0396b1dc47267c2b8ac964866bb54321f95a1a2e297dbbc1aaa36d5b73c63b"
+    },
+    {
+      "path": "logs/matrix-firefox.log.gz",
+      "bytes": 15776,
+      "sha256": "43cd2b500e3b81e6c3cf8f5bd96edca1208ac89b1bfabffe7c593ca9557ca8f9"
+    },
+    {
+      "path": "logs/matrix-webkit.log.gz",
+      "bytes": 30188,
+      "sha256": "361e8c6419be988b9d445006af5a2d4fb37d72fb76d019cfdfa72985e1b12e8f"
+    },
+    {
+      "path": "logs/smoke.log.gz",
+      "bytes": 42562,
+      "sha256": "b1f5f0284c5e046d66bacc35a47b744a712d899a31c9c9b9f237607eee0e9be2"
+    },
+    {
+      "path": "matrix-artifacts.json",
+      "bytes": 3623,
+      "sha256": "dcb8013f6ca20ac2f7456930fbb58fc57f43cecbb4753263f11a68096e3a8f40"
+    },
+    {
+      "path": "matrix-final-jobs.json",
+      "bytes": 18251,
+      "sha256": "c9acd14891ffd6d9e2a39beddfc90f280977f6d0159a084ec94f3f0c214d835f"
+    },
+    {
+      "path": "matrix-final-run.json",
+      "bytes": 15091,
+      "sha256": "c557a9916cd72bba172d2177329855eec952133452802a80dc22e1db58168117"
+    },
+    {
+      "path": "matrix-outcome.md",
+      "bytes": 1996,
+      "sha256": "148550549da89100f27ccff96a045466b57f260c242bd08a418d5090b212b99b"
+    },
+    {
+      "path": "matrix-summary.json",
+      "bytes": 11500,
+      "sha256": "61052957b95e2a6f7124cd2875285ec90574587fce5495de4c938c5bd7de049b"
+    },
+    {
+      "path": "mirror-installation-evidence.json",
+      "bytes": 5176,
+      "sha256": "aaad3260f81cf769ce3f682c54802c52db60b1985f6c5c4f21629e138ada1927"
+    },
+    {
+      "path": "pr-checkout-metadata.json",
+      "bytes": 3785,
+      "sha256": "c41b5758933638c6b55f3e7297483224fcd3f4933fb9f9f07e32d56af47ad93e"
+    },
+    {
+      "path": "pr-final-status.json",
+      "bytes": 367,
+      "sha256": "f6903d0a7e21b5a5f6fae5fed2387be6e71ba6d72180cab3345e054b3246791e"
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 13601,
+      "sha256": "96ae93ba0e9915b368fe062a408366aef112df5551ff381395b76439419cd1f2"
+    },
+    {
+      "path": "receipt.md",
+      "bytes": 5433,
+      "sha256": "ee3ab5143ab0baceb65ba4f62c0f3ba40301fdbe5eb032a047c07b5f951f4a57"
+    },
+    {
+      "path": "reports/matrix-chromium/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "97892e2f9e848a2fa6ffa607905b24535db39fc9a9eaf2285eac30f7fd43cf45"
+    },
+    {
+      "path": "reports/matrix-chromium/rollback.json",
+      "bytes": 16695,
+      "sha256": "0cb030134137113c64381b9fff075a0ff70f0f6f5e6ccf24dbcbb4f3dbd3b907"
+    },
+    {
+      "path": "reports/matrix-chromium/security.json",
+      "bytes": 14985,
+      "sha256": "e0c7e6dd96f545df558726a0e46e2b602d724576c84d47ec1755c3884f29bf4a"
+    },
+    {
+      "path": "reports/matrix-firefox/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "97892e2f9e848a2fa6ffa607905b24535db39fc9a9eaf2285eac30f7fd43cf45"
+    },
+    {
+      "path": "reports/matrix-firefox/rollback.json",
+      "bytes": 16692,
+      "sha256": "8a91efd6689de318fda262de5517831b12b5a26cd475d858af680fcf2c4da4cc"
+    },
+    {
+      "path": "reports/matrix-firefox/security.json",
+      "bytes": 14982,
+      "sha256": "f1f1ce958d50ff6f3c0c569e6738bd9628bd1e17eae68a424d3f36c9a42a49eb"
+    },
+    {
+      "path": "reports/matrix-webkit/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "97892e2f9e848a2fa6ffa607905b24535db39fc9a9eaf2285eac30f7fd43cf45"
+    },
+    {
+      "path": "reports/matrix-webkit/rollback.json",
+      "bytes": 16665,
+      "sha256": "575aeaa9b49fc76d7a48da616df0062d3fbb01b128f96165b669ec7e74378f24"
+    },
+    {
+      "path": "reports/matrix-webkit/security.json",
+      "bytes": 14969,
+      "sha256": "536bda58273294822ff6fe21a3038baf52dccfeaceb16eec107dcd8b3824d56d"
+    },
+    {
+      "path": "reports/smoke/sdk-storage-cas.json",
+      "bytes": 443930,
+      "sha256": "739c88e121a98ea4765e36fb71d01f811cf55c7ae66e54ae96ea94729be04e24"
+    },
+    {
+      "path": "smoke-artifact-inventory.json",
+      "bytes": 41608,
+      "sha256": "df7508bc565be8a8ba45cecebd4c38daaa63d8f31ca0d079f95587dd5e7cdc12"
+    },
+    {
+      "path": "smoke-artifacts.json",
+      "bytes": 926,
+      "sha256": "25e6c71eeac676a3163ff224f56d657bfec4c6139f747b2ae20ac1e6a7827ba7"
+    },
+    {
+      "path": "smoke-cas-summary.json",
+      "bytes": 4405,
+      "sha256": "0a9818a69205d88eede6e7b22d4ba5f79a8836ab77998e98c310dc98355f3e3b"
+    },
+    {
+      "path": "smoke-final-jobs.json",
+      "bytes": 4844,
+      "sha256": "d871b08442a3a573020689138acabf327a45954faa1deb49294abc72a1930964"
+    },
+    {
+      "path": "smoke-final-run.json",
+      "bytes": 15116,
+      "sha256": "7e3b227e907f50200937a6bf5fb979de4d4b298f8eb9e9242d3a1163f23724ad"
+    },
+    {
+      "path": "smoke-outcome.json",
+      "bytes": 1118,
+      "sha256": "4368ffa139445d7358ee34779788f5b10cb8c50aa408d2d6c1b934a7c59009cb"
+    },
+    {
+      "path": "smoke-outcome.md",
+      "bytes": 1279,
+      "sha256": "3cf1db14a6065d7981e2d57269385528fb04460110b1c2e054ba979cfcbb1e6c"
+    }
+  ]
+}

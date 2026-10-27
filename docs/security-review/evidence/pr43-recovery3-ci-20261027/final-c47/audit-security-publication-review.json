@@ -1,0 +1,141 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-27T10:20:08.152589+00:00",
+  "result": "No blocking publication issue found in the scoped audit/security evidence.",
+  "source": {
+    "head": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+    "tree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+    "prMerge": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+    "mergeTreeMatchesHead": true
+  },
+  "includedScopes": [
+    "audit",
+    "security"
+  ],
+  "excludedScopes": [
+    {
+      "path": "root / Tests / global metadata",
+      "reason": "Being saved separately by root; no review or packaging in this snapshot."
+    },
+    {
+      "path": "browsers / smoke / engine matrix packet",
+      "reason": "Handled separately by history_pos; not reviewed or packaged here."
+    },
+    {
+      "path": "governance",
+      "reason": "Not part of the assigned audit/security snapshot."
+    },
+    {
+      "path": "prior f912 and c651 evidence",
+      "reason": "Retained separately and untouched."
+    }
+  ],
+  "snapshot": {
+    "sourceRoot": "/tmp/gys-pr43-c47-ci-20261027",
+    "regularFiles": 34,
+    "originalBytes": 1033212,
+    "largestFileBytes": 685673,
+    "originalEvidenceUnchangedAfterPackaging": true,
+    "archives": [
+      {
+        "scope": "audit",
+        "sourceCommit": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+        "sourceTree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+        "archive": "c47-audit.tar.gz",
+        "bytes": 65939,
+        "sha256": "9f4b45987b237eb8dcf289b8c3deb8cac7fec53d1c4d3965e28a7624d1fa5c12",
+        "memberCount": 16,
+        "originalBytes": 77452,
+        "inventory": "c47-audit.inventory.json",
+        "inventorySha256": "bffc2fcbaf142d179da54ea8b5b537f2eba4711dd8147506ee65065a3b30ce99",
+        "uncompressedTarSha256": "64be8adee2bb3049db95d1a9261a9161a927e5df36a046ec9286851b175d0cb2"
+      },
+      {
+        "scope": "security",
+        "sourceCommit": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+        "sourceTree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+        "archive": "c47-security.tar.gz",
+        "bytes": 141689,
+        "sha256": "e743be40d6445018eede3238a0be8a645a8f9be8eb55d5c5616132d177d0725e",
+        "memberCount": 18,
+        "originalBytes": 955760,
+        "inventory": "c47-security.inventory.json",
+        "inventorySha256": "44a3d907f65d3b35bc12aed6c9a9b3da334af8c6dd38b919170e52dd54d7237d",
+        "uncompressedTarSha256": "0224335f12f08cbaaf68785c404981765d9ce5660b2dd52a9bb5828877c49085"
+      }
+    ]
+  },
+  "publicationReview": {
+    "patterns": [
+      "private-key-pem",
+      "github-token",
+      "aws-access-key",
+      "jwt",
+      "authorization-value",
+      "signed-url-query",
+      "embedded-image-or-binary",
+      "sensitive-field-value"
+    ],
+    "textPayloadsScanned": 34,
+    "expandedGzipFiles": 12,
+    "expandedGzipBytes": 577261,
+    "credentialCandidates": [],
+    "oversizedOrEmbeddedBinaryPayloads": false,
+    "redactions": [],
+    "omissionsWithinIncludedScopes": [],
+    "qualification": "Contextual receipt/source review and credential-pattern scan found no candidate credentials; this is not a universal secret-detection guarantee."
+  },
+  "byteProvenance": {
+    "allRecordedAuditGzipAndOriginalHashesLengthsMatched": true,
+    "allSecurityManifestAndRawLogHashesMatched": true,
+    "structuredWrapperSerializationExplicitlyLabeled": true,
+    "allArchivesRoundTrippedAgainstOriginalBytes": true,
+    "repeatedGenerationIdentical": true,
+    "method": "Inspected generic helper: sorted regular paths, fixed tar metadata, lossless gzip mtime0, full per-member round-trip checks. No original content normalization.",
+    "helperPath": "/tmp/gys-package-evidence-20261027.py",
+    "helperSha256": "63a7c9c6375d57cfc9bb753c19dc409d715aace7929bfe9122c8adc3bcb34065",
+    "python": "3.12.14",
+    "zlib": "1.3.2"
+  },
+  "evidenceInterpretation": {
+    "codeqlFindings": {
+      "checkId": 122130969914,
+      "conclusion": "success",
+      "title": "No new alerts in code changed by this pull request",
+      "findingsAnnotations": 0,
+      "separateAnalyzerAnnotations": 3,
+      "diffLimitWarningRetained": true
+    },
+    "dependencyTotals": {
+      "all": 0,
+      "omitDev": 0,
+      "dependencyArtifactZipIndependentlyDownloaded": false
+    },
+    "standardUnit": {
+      "passed": 1943,
+      "skipped": 1,
+      "filesPassed": 161,
+      "filesSkipped": 1
+    },
+    "nodePassed": 236,
+    "redisPassed": 11,
+    "pythonSourceGuards": 20,
+    "pythonCanonicalGuards": 36,
+    "lintErrors": 0,
+    "lintWarnings": 8,
+    "checkpointChromium": {
+      "passed": 7,
+      "seconds": 15.4
+    },
+    "exactProductionInterlockRejectionRetained": true
+  },
+  "limits": [
+    "No new CI/network/wallet/profile/provider request or runtime test was performed; these are retained source-specific observations.",
+    "Do not sum overlapping Tests, standard, checkpoint or matrix executions into invented distinct-case totals.",
+    "The skipped Bitcoin Core case remains skipped. Eight lint warnings remain warnings, not failures or warning-free validation.",
+    "CodeQL no-new-alert findings do not mean zero repository-wide/historical alerts; the 300-file and diff-informed-analysis limits remain retained.",
+    "Dependency omit-dev classification does not prove bundle reachability; the linked audit ZIP was not independently downloaded.",
+    "No source/ref/ruleset changes, retries, deployment, qualified independent review or real-funds approval is asserted.",
+    "Only the two archives named here are in this snapshot; root and browser/global evidence may be added separately."
+  ]
+}

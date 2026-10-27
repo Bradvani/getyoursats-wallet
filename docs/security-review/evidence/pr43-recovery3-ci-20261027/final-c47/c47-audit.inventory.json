@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "archive": "c47-audit.tar.gz",
+  "archiveBytes": 65939,
+  "archiveSha256": "9f4b45987b237eb8dcf289b8c3deb8cac7fec53d1c4d3965e28a7624d1fa5c12",
+  "uncompressedTarSha256": "64be8adee2bb3049db95d1a9261a9161a927e5df36a046ec9286851b175d0cb2",
+  "memberCount": 16,
+  "originalFileBytes": 77452,
+  "method": "Sorted regular files only; fixed tar metadata; lossless gzip with mtime=0; every member round-tripped and checked against original bytes",
+  "sourceRoot": "/tmp/gys-pr43-c47-ci-20261027/audit",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 1703,
+      "sha256": "8e9ee6d9d2dc5f31fcf076e8be3cca15876820b03a468cec37247961c1319fe4"
+    },
+    {
+      "path": "SHA256SUMS.json",
+      "bytes": 2007,
+      "sha256": "163881351014b9e716d7c51596d51a958432845b6eef465f95c1b68706f55d46"
+    },
+    {
+      "path": "checks-final.json.gz",
+      "bytes": 2991,
+      "sha256": "f3fbd1111785d3c5c5c7b58da98af7a4833c2f994951891d562b2108ed49dbf3"
+    },
+    {
+      "path": "checks-initial.json.gz",
+      "bytes": 2636,
+      "sha256": "8425d31d1ea5a8972022acb9bb8400ba16bf4dbd8710a4d3bb48ab7a4e317c4b"
+    },
+    {
+      "path": "codeql-job.log.gz",
+      "bytes": 39926,
+      "sha256": "8867f6daacda2891b5e8e10fec5f5e34a667129a9a768c12569d4b9194983cdd"
+    },
+    {
+      "path": "codeql-jobs-final.json.gz",
+      "bytes": 311,
+      "sha256": "11c84e3e15478543b605571983821afb02ad130c4c5a25cc440599c6e671059c"
+    },
+    {
+      "path": "codeql-jobs-initial.json.gz",
+      "bytes": 329,
+      "sha256": "f3fb1b8a1ae8da76913d4244c05777d2413f81ac6496633a13c733b8f520b3bc"
+    },
+    {
+      "path": "codeql-run-final.json.gz",
+      "bytes": 1727,
+      "sha256": "b624496e889b291ec46bbf8cffb24d739713c5e3afdaf417bc057e82befad53e"
+    },
+    {
+      "path": "codeql-run-initial.json.gz",
+      "bytes": 1725,
+      "sha256": "84e276c699a63d79d019913bcec2580318c2877398b0572173480efc02e2567c"
+    },
+    {
+      "path": "dependency-job.log.gz",
+      "bytes": 5040,
+      "sha256": "d830e6ab6449186c81aad91543ab9564a9ff95913f23f870f08449b9dc40c3db"
+    },
+    {
+      "path": "dependency-jobs.json.gz",
+      "bytes": 798,
+      "sha256": "17adf709fded5d4f1fa39d5d0d514a0f9e64af310c934f48d29b3662ae58ca95"
+    },
+    {
+      "path": "dependency-run.json.gz",
+      "bytes": 1696,
+      "sha256": "96bec8ad1a86ac3ee8f2cf93ba87b1f5d447edb890632b56d53809656e4201a2"
+    },
+    {
+      "path": "git-commit.json.gz",
+      "bytes": 512,
+      "sha256": "8c8e6d2de48eb33119be4d5db93707e781b95eb05339586a2ec945cfab1979c7"
+    },
+    {
+      "path": "git-merge.json.gz",
+      "bytes": 1261,
+      "sha256": "c80217f821dd7fa067b8d143c85619578166dd285cdda28961d344c613f95af6"
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 12051,
+      "sha256": "9787eaf28e5d8b596f92efdf19c12da3abd30ac9b115709ad1696b5b2e248081"
+    },
+    {
+      "path": "retrieved-files-initial.json",
+      "bytes": 2739,
+      "sha256": "568c7c59de2be2f45eb07c311104c0adc0cd8c0dc185dee30155a13637ce63ec"
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-27T10:23:34.299484+00:00",
+  "result": "No blocking publication issue found in this governance-only packet.",
+  "expectedCandidate": {
+    "head": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+    "tree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b"
+  },
+  "capturedAt": "2026-10-27T10:22:35.796677+00:00",
+  "sourceReceiptSha256": "a8dadad9f17e839ef2642e80379c3ec4364115b835d173c68e28766a87e90e26",
+  "archive": {
+    "path": "c47-governance.tar.gz",
+    "bytes": 47218,
+    "sha256": "d00cd25e1c73bc9596df717c606456ae3b82af9d575b24a87378e6dad5635e01",
+    "inventory": "c47-governance.inventory.json",
+    "inventorySha256": "42091fad430c6058283c11fd4bd2bf174175141237640423bfb9c876445605b5",
+    "memberCount": 8,
+    "originalFileBytes": 162671,
+    "uncompressedTarSha256": "cd2b70fca07e18391bfc8f8be407a5f43d5a9b2c9afe17a2b5afda5bf1924492"
+  },
+  "capture": {
+    "requests": 5,
+    "method": "GET",
+    "allResponses200": true,
+    "normalTlsCertificateAndHostnameVerification": true,
+    "authentication": "none",
+    "cookiesOrAuthenticatedBrowser": false,
+    "responseBodiesUnchanged": true,
+    "selectedResponseMetadataRecorded": true
+  },
+  "observed": {
+    "production": {
+      "sourceRevision": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+      "releaseId": "32be2cb598402c0344cc",
+      "sourceDirty": false,
+      "sdk": {
+        "sourceRevision": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+        "packageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026"
+      },
+      "dependencyLockSha256": "642a25bebbea06222a1fb0dd38d5876467e7ba1959417cedf8d13983fd29bb47"
+    },
+    "rulesets": {
+      "listedCount": 0,
+      "emptyListObserved": true,
+      "claim": "Only the public repository rulesets endpoint was read; this does not establish classic branch-protection configuration."
+    },
+    "repository": {
+      "fullName": "Bradvani/getyoursats-wallet",
+      "defaultBranch": "main"
+    },
+    "mainRef": {
+      "ref": "refs/heads/main",
+      "sha": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+      "type": "commit"
+    },
+    "pr43": {
+      "number": 43,
+      "state": "open",
+      "draft": true,
+      "head": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+      "baseRef": "main",
+      "baseSha": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+      "htmlUrl": "https://github.com/Bradvani/getyoursats-wallet/pull/43",
+      "merged": false,
+      "mergeCommitSha": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+      "mergeCommitMeaning": "For an open pull request, this is metadata and is not evidence of a completed merge."
+    }
+  },
+  "publicationReview": {
+    "filesReviewed": 8,
+    "originalBytes": 162671,
+    "patterns": [
+      "private-key-pem",
+      "github-token",
+      "aws-access-key",
+      "jwt",
+      "authorization-value",
+      "signed-url-query",
+      "embedded-image-or-binary",
+      "sensitive-field-value"
+    ],
+    "candidateCredentialHits": [],
+    "oversizedOrEmbeddedBinaryPayloadsFound": false,
+    "redactions": [],
+    "omittedFiles": [],
+    "allOriginalManifestAndResponseHashesMatched": true,
+    "selectedInterpretationsMatchBodies": true,
+    "repeatedPackagingIdentical": true,
+    "allArchiveMembersRoundTrippedAgainstOriginalBytes": true,
+    "sourceFilesUnchangedAfterPackaging": true,
+    "helperSha256": "63a7c9c6375d57cfc9bb753c19dc409d715aace7929bfe9122c8adc3bcb34065"
+  },
+  "limits": [
+    "This packet includes only the five fresh public responses and their README/receipt/hash manifest. Separate Tests/global, audit/security and browser packets retain their own scopes.",
+    "The public rulesets[] response does not establish classic branch-protection configuration or absence of all protection.",
+    "The open draft PR synthetic merge SHA is metadata, not evidence of a completed merge.",
+    "Production remains the observed 07dd source and older 4294 SDK archive, distinct from the c47 candidate archive 32715449.",
+    "Public metadata can change after these timestamps. No production promotion, wallet/provider/funded/device acceptance or qualified independent release approval is inferred.",
+    "No authentication, browser, wallet initialization, mutation, ref/source/ruleset change or test run was used.",
+    "Credential-pattern/context review found no candidates; it is not a universal secret-detection guarantee."
+  ]
+}

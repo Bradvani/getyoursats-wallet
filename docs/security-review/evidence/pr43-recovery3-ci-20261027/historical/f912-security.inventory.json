@@ -1,0 +1,129 @@
+{
+  "schema": 1,
+  "sourceDirectory": "/tmp/gys-pr43-final-ci-20261027/security",
+  "sourceCommit": "f912253d7a618f7fdc361e8221d37b6962b7eb8e",
+  "sourceTree": "0437b489e8626b948bdbd7a54fb3ecaade080024",
+  "publishedEquivalentCommit": null,
+  "archive": {
+    "path": "f912-security.tar.gz",
+    "bytes": 131188,
+    "sha256": "6cc3d9a0d054fb103cd577d422d248f9e8065be6f3869db4bdd26aaf2070fe37",
+    "uncompressedTarBytes": 921600,
+    "uncompressedTarSha256": "8cfa24ab211c970b6d4d4bbc7921e08a3730cecc7201b2d5d9f7d5b75680fa11"
+  },
+  "payloadFiles": 15,
+  "payloadBytes": 907528,
+  "directories": [
+    "security"
+  ],
+  "files": [
+    {
+      "path": "security/checkpoint-code-and-installed-sdk.raw.log",
+      "sourceRelativePath": "checkpoint-code-and-installed-sdk.raw.log",
+      "bytes": 107471,
+      "sha256": "85efecc5ee7602e8ff5b0db3c328c1c53e303d4433c974bf323d423d5348249e"
+    },
+    {
+      "path": "security/checkpoint-code-and-installed-sdk.raw.log.records.json",
+      "sourceRelativePath": "checkpoint-code-and-installed-sdk.raw.log.records.json",
+      "bytes": 8632,
+      "sha256": "77089e6ea942fc8452bbcc0555567f90fb8d82191edad011a72115be89004275"
+    },
+    {
+      "path": "security/checkpoint-jobs-090048.json",
+      "sourceRelativePath": "checkpoint-jobs-090048.json",
+      "bytes": 3822,
+      "sha256": "caef19536562f6c62a147714e7eb14cdd882dfe3e2a484a8dcb18fe0f317a3c8"
+    },
+    {
+      "path": "security/checkpoint-jobs-final.json",
+      "sourceRelativePath": "checkpoint-jobs-final.json",
+      "bytes": 3821,
+      "sha256": "4bd764dec4d74fffbcde7d6f098059b21efff79f3247005a287370c69c6be413"
+    },
+    {
+      "path": "security/checkpoint-run-final.json",
+      "sourceRelativePath": "checkpoint-run-final.json",
+      "bytes": 15146,
+      "sha256": "5eca9e41e454a2f7fe0cb21acf88ba0779dba5a4f757a3d7c403bfbb832e8eac"
+    },
+    {
+      "path": "security/checkpoint-run-initial.json",
+      "sourceRelativePath": "checkpoint-run-initial.json",
+      "bytes": 15144,
+      "sha256": "87ea7cb1ba7d2ad41d8de25b88113865b972f15f16f12ce0852bd57edcdee947"
+    },
+    {
+      "path": "security/files.json",
+      "sourceRelativePath": "files.json",
+      "bytes": 1991,
+      "sha256": "1cc14f1da1c40c8de5e792a93dc8387886666a8702c6f281fd839dd2e0094631"
+    },
+    {
+      "path": "security/standard-checkout-commit.json",
+      "sourceRelativePath": "standard-checkout-commit.json",
+      "bytes": 2917,
+      "sha256": "7eaf7b28005900c435ffc852d0726ed89a79fae2e96cc13e0d1e06b91f85f17e"
+    },
+    {
+      "path": "security/standard-jobs-090048.json",
+      "sourceRelativePath": "standard-jobs-090048.json",
+      "bytes": 3062,
+      "sha256": "5563394bf2e9cc10ef4ad31b2f87ca58614b8b65ff2f763adeff101d30505ec3"
+    },
+    {
+      "path": "security/standard-jobs-final.json",
+      "sourceRelativePath": "standard-jobs-final.json",
+      "bytes": 3227,
+      "sha256": "80686e7931614eeff4b38296e897d2dadca91908fac07201e0505f9471d28334"
+    },
+    {
+      "path": "security/standard-run-final.json",
+      "sourceRelativePath": "standard-run-final.json",
+      "bytes": 15134,
+      "sha256": "2a13e5a764c2a8d1cc5d7a3d718eb4818ae051bbbd72723295bb90dde41f3c8f"
+    },
+    {
+      "path": "security/standard-run-initial.json",
+      "sourceRelativePath": "standard-run-initial.json",
+      "bytes": 15132,
+      "sha256": "af6b6255c9c64ee12e23c4735e73a5579fa486a146147df737dcb567e885b31e"
+    },
+    {
+      "path": "security/standard-verify.raw.log",
+      "sourceRelativePath": "standard-verify.raw.log",
+      "bytes": 686249,
+      "sha256": "ba2064929ad8606c73eb3443005d2928bd199d51ace605c9dca852cf75021b81"
+    },
+    {
+      "path": "security/standard-verify.raw.log.records.json",
+      "sourceRelativePath": "standard-verify.raw.log.records.json",
+      "bytes": 8632,
+      "sha256": "91e0a0eb825985dfc65f1cfb1b0ed33be7f75f87ae3f42f5c446df0a14a9db3b"
+    },
+    {
+      "path": "security/summary.json",
+      "sourceRelativePath": "summary.json",
+      "bytes": 17148,
+      "sha256": "0cfe158baafdfdb5dbe47359d1a6e31dfaa519f5334b85d977f8009251145c38"
+    }
+  ],
+  "contentTransformations": [],
+  "omittedSourceFiles": [],
+  "archiveMetadata": {
+    "format": "USTAR",
+    "gzipLevel": 9,
+    "gzipMtime": 0,
+    "gzipFilename": "",
+    "tarMtime": 0,
+    "uid": 0,
+    "gid": 0,
+    "uname": "",
+    "gname": "",
+    "fileMode": "0644",
+    "directoryMode": "0755",
+    "entryOrder": "lexicographic POSIX archive path",
+    "repeatedGenerationIdentical": true,
+    "allArchivedBytesVerifiedAgainstOriginals": true
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "historicalSource": {
+    "head": "f912253d7a618f7fdc361e8221d37b6962b7eb8e",
+    "tree": "0437b489e8626b948bdbd7a54fb3ecaade080024"
+  },
+  "correction": {
+    "localCommit": "1cfdfd219be6e0e19c37581b71611ace8c46c6d6",
+    "publishedCommit": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+    "tree": "61f993c61a583a0f467039396bfde726e5cbdf20"
+  },
+  "originalFileCount": 70,
+  "originalBytes": 1800221,
+  "bundleBytes": 463641,
+  "bundles": [
+    {
+      "label": "f912-security",
+      "sourceCommit": "f912253d7a618f7fdc361e8221d37b6962b7eb8e",
+      "sourceTree": "0437b489e8626b948bdbd7a54fb3ecaade080024",
+      "archive": {
+        "path": "f912-security.tar.gz",
+        "bytes": 131188,
+        "sha256": "6cc3d9a0d054fb103cd577d422d248f9e8065be6f3869db4bdd26aaf2070fe37"
+      },
+      "inventory": {
+        "path": "f912-security.inventory.json",
+        "bytes": 4557,
+        "sha256": "5d55a2991c84bd1627c2f962a847fa426404a8a51bf056b91d6d30dca1888741"
+      },
+      "payloadFiles": 15,
+      "payloadBytes": 907528
+    },
+    {
+      "label": "f912-audit",
+      "sourceCommit": "f912253d7a618f7fdc361e8221d37b6962b7eb8e",
+      "sourceTree": "0437b489e8626b948bdbd7a54fb3ecaade080024",
+      "archive": {
+        "path": "f912-audit.tar.gz",
+        "bytes": 64871,
+        "sha256": "5b4877090dd2cb0d10ad136d5013e354e77a270e97ab109e153188aeac14f36f"
+      },
+      "inventory": {
+        "path": "f912-audit.inventory.json",
+        "bytes": 4248,
+        "sha256": "e7441737dd6ea0997aa22d6a0c1984037549c582501ade0895a9a24b81c9a9bb"
+      },
+      "payloadFiles": 14,
+      "payloadBytes": 85220
+    },
+    {
+      "label": "f912-browsers",
+      "sourceCommit": "f912253d7a618f7fdc361e8221d37b6962b7eb8e",
+      "sourceTree": "0437b489e8626b948bdbd7a54fb3ecaade080024",
+      "archive": {
+        "path": "f912-browsers.tar.gz",
+        "bytes": 262627,
+        "sha256": "3ceba31f3673710b0f071048683ce44905e932981eeb187e2104eb23035286b9"
+      },
+      "inventory": {
+        "path": "f912-browsers.inventory.json",
+        "bytes": 8315,
+        "sha256": "e9c97190b78bbc20142064dada2599ed0cd315978bcd2b773f8c7dc5259bc648"
+      },
+      "payloadFiles": 30,
+      "payloadBytes": 791329
+    },
+    {
+      "label": "dev-mode-correction",
+      "sourceCommit": "1cfdfd219be6e0e19c37581b71611ace8c46c6d6",
+      "sourceTree": "61f993c61a583a0f467039396bfde726e5cbdf20",
+      "archive": {
+        "path": "dev-mode-correction.tar.gz",
+        "bytes": 4955,
+        "sha256": "df86574674b4681a8d26e0fa340ce85cdb739fcc56f8f2f063a6e1afd0437940"
+      },
+      "inventory": {
+        "path": "dev-mode-correction.inventory.json",
+        "bytes": 3515,
+        "sha256": "d3a9eabf1251d93d8cb7bf9379b5ba6913360add0eb197b7373427f452e4e01c"
+      },
+      "payloadFiles": 11,
+      "payloadBytes": 16144
+    }
+  ],
+  "supplements": [
+    {
+      "path": "f912-codeql-annotations.json",
+      "bytes": 499,
+      "sha256": "e2b0fad0eb4f4889bd0da433a8f78f7914bec266faa244a0f1b463578db24758"
+    },
+    {
+      "path": "external-artifact-attribution.json",
+      "bytes": 3030,
+      "sha256": "b0dbeffc1dacc05d3a70bb7a42012638d9c8fc7d065532da8f24655aef21d6e4"
+    },
+    {
+      "path": "publication-review.json",
+      "bytes": 18482,
+      "sha256": "164362f1fe482b7158e536325ffab2088d56adce8b228b0573611b081544b870"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3321,
+      "sha256": "77f9b8d15f89aabadabe229a71ee43099bb1faab5c4b462475de47f978401e6f"
+    }
+  ],
+  "sourceInventoriesUnchangedAfterPackaging": true,
+  "noSourceContentTransformations": true,
+  "releaseApproved": false,
+  "compressionImplementation": {
+    "python": "3.12.14",
+    "zlib": "1.3.2"
+  }
+}

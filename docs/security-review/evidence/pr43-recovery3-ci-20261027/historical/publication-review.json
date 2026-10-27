@@ -1,0 +1,522 @@
+{
+  "review": "Prepublication scan; candidate hits require contextual classification, not automatic redaction.",
+  "filesScannedIncludingDecompressedOrZipMembers": 76,
+  "scannedBytes": 2755057,
+  "containers": [
+    {
+      "path": "audit/codeql-job-122098388223.original.log.gz",
+      "type": "gzip",
+      "compressedBytes": 40378,
+      "expandedBytes": 399375
+    },
+    {
+      "path": "audit/codeql-run-final.original.json.gz",
+      "type": "gzip",
+      "compressedBytes": 1747,
+      "expandedBytes": 13568
+    },
+    {
+      "path": "audit/dependency-job-122098370440.original.log.gz",
+      "type": "gzip",
+      "compressedBytes": 5036,
+      "expandedBytes": 17877
+    },
+    {
+      "path": "audit/head-checks-final.original.json.gz",
+      "type": "gzip",
+      "compressedBytes": 3148,
+      "expandedBytes": 53780
+    },
+    {
+      "path": "audit/head-checks-initial.original.json.gz",
+      "type": "gzip",
+      "compressedBytes": 2844,
+      "expandedBytes": 53179
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-chromium.zip",
+      "type": "zip",
+      "compressedBytes": 5106,
+      "members": [
+        {
+          "path": "home/runner/work/getyoursats-wallet/getyoursats-wallet/dist-rollback/rollback-manifest.json",
+          "bytes": 873
+        },
+        {
+          "path": "tmp/engine-evidence/rollback.json",
+          "bytes": 16992
+        },
+        {
+          "path": "tmp/engine-evidence/security.json",
+          "bytes": 15282
+        }
+      ]
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-firefox.zip",
+      "type": "zip",
+      "compressedBytes": 5118,
+      "members": [
+        {
+          "path": "home/runner/work/getyoursats-wallet/getyoursats-wallet/dist-rollback/rollback-manifest.json",
+          "bytes": 873
+        },
+        {
+          "path": "tmp/engine-evidence/rollback.json",
+          "bytes": 16980
+        },
+        {
+          "path": "tmp/engine-evidence/security.json",
+          "bytes": 15270
+        }
+      ]
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-webkit.zip",
+      "type": "zip",
+      "compressedBytes": 5121,
+      "members": [
+        {
+          "path": "tmp/engine-evidence/rollback.json",
+          "bytes": 16962
+        },
+        {
+          "path": "home/runner/work/getyoursats-wallet/getyoursats-wallet/dist-rollback/rollback-manifest.json",
+          "bytes": 873
+        },
+        {
+          "path": "tmp/engine-evidence/security.json",
+          "bytes": 15248
+        }
+      ]
+    },
+    {
+      "path": "browsers/logs/matrix-chromium.log.gz",
+      "type": "gzip",
+      "compressedBytes": 12333,
+      "expandedBytes": 51757
+    },
+    {
+      "path": "browsers/logs/matrix-firefox.log.gz",
+      "type": "gzip",
+      "compressedBytes": 14960,
+      "expandedBytes": 64618
+    },
+    {
+      "path": "browsers/logs/matrix-webkit.log.gz",
+      "type": "gzip",
+      "compressedBytes": 29288,
+      "expandedBytes": 143076
+    },
+    {
+      "path": "browsers/logs/smoke.log.gz",
+      "type": "gzip",
+      "compressedBytes": 42515,
+      "expandedBytes": 225847
+    }
+  ],
+  "hits": [],
+  "scannedContent": [
+    {
+      "path": "security/checkpoint-code-and-installed-sdk.raw.log",
+      "bytes": 107471,
+      "sha256": "85efecc5ee7602e8ff5b0db3c328c1c53e303d4433c974bf323d423d5348249e"
+    },
+    {
+      "path": "security/checkpoint-code-and-installed-sdk.raw.log.records.json",
+      "bytes": 8632,
+      "sha256": "77089e6ea942fc8452bbcc0555567f90fb8d82191edad011a72115be89004275"
+    },
+    {
+      "path": "security/checkpoint-jobs-090048.json",
+      "bytes": 3822,
+      "sha256": "caef19536562f6c62a147714e7eb14cdd882dfe3e2a484a8dcb18fe0f317a3c8"
+    },
+    {
+      "path": "security/checkpoint-jobs-final.json",
+      "bytes": 3821,
+      "sha256": "4bd764dec4d74fffbcde7d6f098059b21efff79f3247005a287370c69c6be413"
+    },
+    {
+      "path": "security/checkpoint-run-final.json",
+      "bytes": 15146,
+      "sha256": "5eca9e41e454a2f7fe0cb21acf88ba0779dba5a4f757a3d7c403bfbb832e8eac"
+    },
+    {
+      "path": "security/checkpoint-run-initial.json",
+      "bytes": 15144,
+      "sha256": "87ea7cb1ba7d2ad41d8de25b88113865b972f15f16f12ce0852bd57edcdee947"
+    },
+    {
+      "path": "security/files.json",
+      "bytes": 1991,
+      "sha256": "1cc14f1da1c40c8de5e792a93dc8387886666a8702c6f281fd839dd2e0094631"
+    },
+    {
+      "path": "security/standard-checkout-commit.json",
+      "bytes": 2917,
+      "sha256": "7eaf7b28005900c435ffc852d0726ed89a79fae2e96cc13e0d1e06b91f85f17e"
+    },
+    {
+      "path": "security/standard-jobs-090048.json",
+      "bytes": 3062,
+      "sha256": "5563394bf2e9cc10ef4ad31b2f87ca58614b8b65ff2f763adeff101d30505ec3"
+    },
+    {
+      "path": "security/standard-jobs-final.json",
+      "bytes": 3227,
+      "sha256": "80686e7931614eeff4b38296e897d2dadca91908fac07201e0505f9471d28334"
+    },
+    {
+      "path": "security/standard-run-final.json",
+      "bytes": 15134,
+      "sha256": "2a13e5a764c2a8d1cc5d7a3d718eb4818ae051bbbd72723295bb90dde41f3c8f"
+    },
+    {
+      "path": "security/standard-run-initial.json",
+      "bytes": 15132,
+      "sha256": "af6b6255c9c64ee12e23c4735e73a5579fa486a146147df737dcb567e885b31e"
+    },
+    {
+      "path": "security/standard-verify.raw.log",
+      "bytes": 686249,
+      "sha256": "ba2064929ad8606c73eb3443005d2928bd199d51ace605c9dca852cf75021b81"
+    },
+    {
+      "path": "security/standard-verify.raw.log.records.json",
+      "bytes": 8632,
+      "sha256": "91e0a0eb825985dfc65f1cfb1b0ed33be7f75f87ae3f42f5c446df0a14a9db3b"
+    },
+    {
+      "path": "security/summary.json",
+      "bytes": 17148,
+      "sha256": "0cfe158baafdfdb5dbe47359d1a6e31dfaa519f5334b85d977f8009251145c38"
+    },
+    {
+      "path": "audit/README.md",
+      "bytes": 1232,
+      "sha256": "b1ed9a536caf03dd52b98e716611c2a5c8cc4019bbf9771230977fa31ae40ffd"
+    },
+    {
+      "path": "audit/SHA256SUMS.json",
+      "bytes": 1321,
+      "sha256": "0d8602c9085a35a635afaedcf4d360f8b3034c5f5e71bd2d1720cc701991618e"
+    },
+    {
+      "path": "audit/codeql-analyzer-jobs.json",
+      "bytes": 1471,
+      "sha256": "5309ca79dc95ad199378d482234ebb065f50c70ff830237e8d54b8e44faf1df4"
+    },
+    {
+      "path": "audit/codeql-analyzer-steps.json",
+      "bytes": 1055,
+      "sha256": "16e3c5b741f09c14ead4c84deed979746a2795063474e02ba84badbefb872790"
+    },
+    {
+      "path": "audit/codeql-job-122098388223.original.log.gz::decompressed",
+      "bytes": 399375,
+      "sha256": "7051e7f255af3c22e5fb6be5deb8886644893e6e54a7d3a6ea9e5b62780aa847"
+    },
+    {
+      "path": "audit/codeql-run-final.original.json.gz::decompressed",
+      "bytes": 13568,
+      "sha256": "e84c2f88e07ff995e850e8072e021355aa8fc1870137084b6faa95ae7c9afe02"
+    },
+    {
+      "path": "audit/dependency-job-122098370440.log",
+      "bytes": 17677,
+      "sha256": "c144d2550d7b4f62a693980d21e85c56edd41f487da82e106a7cd018ab5da4a0"
+    },
+    {
+      "path": "audit/dependency-job-122098370440.original.log.gz::decompressed",
+      "bytes": 17877,
+      "sha256": "943b94c2f65af3001549c74e322fe2bef353c300c3348e9021b2b10bf4057a10"
+    },
+    {
+      "path": "audit/dependency-steps.json",
+      "bytes": 1434,
+      "sha256": "305a1a2baec3efb810dac102fd9003dee37285f02ddea5e55e54a16b5987429d"
+    },
+    {
+      "path": "audit/head-checks-final.original.json.gz::decompressed",
+      "bytes": 53780,
+      "sha256": "310eae6dea59e37a107549595571a16fa830d93d75bed25a0a91c321b777f6ff"
+    },
+    {
+      "path": "audit/head-checks-initial.original.json.gz::decompressed",
+      "bytes": 53179,
+      "sha256": "aaa09676eef5a17783b7d5275682c15bf1388ecf69d4cf8120c0d0b1751ae500"
+    },
+    {
+      "path": "audit/original-text-lengths.json",
+      "bytes": 411,
+      "sha256": "aa20711bfb10a13a959c2c0293fda8a69db9d25b8d1c9e1132132cdea93721fe"
+    },
+    {
+      "path": "audit/receipt.json",
+      "bytes": 6207,
+      "sha256": "cd834b03d4767ca7eea38ee3fd4f15e84f36e907eaae6278f8cf0e6d7f490fb1"
+    },
+    {
+      "path": "audit/retrieval-limits.json",
+      "bytes": 1259,
+      "sha256": "31e8795fcd91bc476b8fbd93eee3d531b244ee9190072ddd8037636a0798eee5"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-chromium.zip::home/runner/work/getyoursats-wallet/getyoursats-wallet/dist-rollback/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "c4176bf675cb9d9cb06b117ac29a84672815c7a18d39e66ba3de0e30311e79ed"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-chromium.zip::tmp/engine-evidence/rollback.json",
+      "bytes": 16992,
+      "sha256": "fea658cc5ca4756452bbaf16a22ae832e51a9197cc38fdb119ad8d8e1367d3d8"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-chromium.zip::tmp/engine-evidence/security.json",
+      "bytes": 15282,
+      "sha256": "5030163f3a93dfec8a3af88f2217c79062803fe07ef0825fc5546d936d0e6a6f"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-firefox.zip::home/runner/work/getyoursats-wallet/getyoursats-wallet/dist-rollback/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "c4176bf675cb9d9cb06b117ac29a84672815c7a18d39e66ba3de0e30311e79ed"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-firefox.zip::tmp/engine-evidence/rollback.json",
+      "bytes": 16980,
+      "sha256": "57df9743968869cfce17713446b6e06f591fc4bce396f8298eea49d03efb1105"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-firefox.zip::tmp/engine-evidence/security.json",
+      "bytes": 15270,
+      "sha256": "e0e77ca7147811ae3d0d3cc2b6ae5e76a39d2d1561ebbb007f543d59b24cc95b"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-webkit.zip::tmp/engine-evidence/rollback.json",
+      "bytes": 16962,
+      "sha256": "1f71c8268d76f1b65bcf8061b1ccae9b6ab4de2c21b12eddb6cd003c068476d6"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-webkit.zip::home/runner/work/getyoursats-wallet/getyoursats-wallet/dist-rollback/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "c4176bf675cb9d9cb06b117ac29a84672815c7a18d39e66ba3de0e30311e79ed"
+    },
+    {
+      "path": "browsers/artifacts/pr43-final-matrix-webkit.zip::tmp/engine-evidence/security.json",
+      "bytes": 15248,
+      "sha256": "f4964e10ded64efb27019f3caf85d2e7cb6494b9b4023d0f0da7db05d05739f9"
+    },
+    {
+      "path": "browsers/evidence-inventory.json",
+      "bytes": 4990,
+      "sha256": "ca424285191b906e8655ec21148381dbb61e4cd746f80bfa86db1c4328c787fb"
+    },
+    {
+      "path": "browsers/log-hashes.json",
+      "bytes": 1388,
+      "sha256": "e66dbc01f79709ae66398f3bf2c59e5f374d1c84722d6a9dd517e379babff304"
+    },
+    {
+      "path": "browsers/logs/matrix-chromium.log.gz::decompressed",
+      "bytes": 51757,
+      "sha256": "d6d0ccc6a2095975840db58b8b4c484e89a84ecf901b67c845471407e5cc70af"
+    },
+    {
+      "path": "browsers/logs/matrix-firefox.log.gz::decompressed",
+      "bytes": 64618,
+      "sha256": "ce29f72371270cea888ea3a1d9e66b44135b0eae2669fc63aa2f97df0236b5fd"
+    },
+    {
+      "path": "browsers/logs/matrix-webkit.log.gz::decompressed",
+      "bytes": 143076,
+      "sha256": "da30bb72ed1c8a36ebb29c232c94c4439ca83bc3122ea4907846bc85c36dc7e3"
+    },
+    {
+      "path": "browsers/logs/smoke.log.gz::decompressed",
+      "bytes": 225847,
+      "sha256": "b1d04d665e08b90b00534f512746d9d4cc37250956b5be53022fc5894d73c035"
+    },
+    {
+      "path": "browsers/matrix-artifacts.json",
+      "bytes": 3623,
+      "sha256": "9ea093dad7971adfdd2579ce874c6712e082ab8581ece09e0ca38a771d61e806"
+    },
+    {
+      "path": "browsers/matrix-final-jobs.json",
+      "bytes": 17447,
+      "sha256": "8cc74a1237022c9ac593e87e12da21de9b762d12e32f8d34ddcb59ea0b98936f"
+    },
+    {
+      "path": "browsers/matrix-final-run.json",
+      "bytes": 15145,
+      "sha256": "11716a5c0fb579f174c7107e4c9683f0a1f28320b606b767cc4aa0fef9c2510a"
+    },
+    {
+      "path": "browsers/matrix-summary.json",
+      "bytes": 11409,
+      "sha256": "7a6961df22bcabd72de3e40be113390d65e4a928b6c297b68101b287466251f4"
+    },
+    {
+      "path": "browsers/pr-checkout-metadata.json",
+      "bytes": 3698,
+      "sha256": "a09fed9fef830a2b21d74de885c2a8972da86165947f905dfe5a82ccc54df1e5"
+    },
+    {
+      "path": "browsers/receipt.json",
+      "bytes": 8949,
+      "sha256": "015934be6ab930a7cd0a59f5168cffd85a529162e0175fdd508d4c520e7dadaa"
+    },
+    {
+      "path": "browsers/receipt.md",
+      "bytes": 4455,
+      "sha256": "52c3505b7693f78c70e84c2dc52e8ced99d0100aa87698d9ddfad9720aa1fb87"
+    },
+    {
+      "path": "browsers/reports/matrix-chromium/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "c4176bf675cb9d9cb06b117ac29a84672815c7a18d39e66ba3de0e30311e79ed"
+    },
+    {
+      "path": "browsers/reports/matrix-chromium/rollback.json",
+      "bytes": 16992,
+      "sha256": "fea658cc5ca4756452bbaf16a22ae832e51a9197cc38fdb119ad8d8e1367d3d8"
+    },
+    {
+      "path": "browsers/reports/matrix-chromium/security.json",
+      "bytes": 15282,
+      "sha256": "5030163f3a93dfec8a3af88f2217c79062803fe07ef0825fc5546d936d0e6a6f"
+    },
+    {
+      "path": "browsers/reports/matrix-firefox/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "c4176bf675cb9d9cb06b117ac29a84672815c7a18d39e66ba3de0e30311e79ed"
+    },
+    {
+      "path": "browsers/reports/matrix-firefox/rollback.json",
+      "bytes": 16980,
+      "sha256": "57df9743968869cfce17713446b6e06f591fc4bce396f8298eea49d03efb1105"
+    },
+    {
+      "path": "browsers/reports/matrix-firefox/security.json",
+      "bytes": 15270,
+      "sha256": "e0e77ca7147811ae3d0d3cc2b6ae5e76a39d2d1561ebbb007f543d59b24cc95b"
+    },
+    {
+      "path": "browsers/reports/matrix-webkit/rollback-manifest.json",
+      "bytes": 873,
+      "sha256": "c4176bf675cb9d9cb06b117ac29a84672815c7a18d39e66ba3de0e30311e79ed"
+    },
+    {
+      "path": "browsers/reports/matrix-webkit/rollback.json",
+      "bytes": 16962,
+      "sha256": "1f71c8268d76f1b65bcf8061b1ccae9b6ab4de2c21b12eddb6cd003c068476d6"
+    },
+    {
+      "path": "browsers/reports/matrix-webkit/security.json",
+      "bytes": 15248,
+      "sha256": "f4964e10ded64efb27019f3caf85d2e7cb6494b9b4023d0f0da7db05d05739f9"
+    },
+    {
+      "path": "browsers/reports/smoke/sdk-storage-cas.json",
+      "bytes": 443943,
+      "sha256": "b835d0bc4591899d25e508fc22181373f60e9b36e08385cdc9b22c5b128513d7"
+    },
+    {
+      "path": "browsers/smoke-artifact-inventory.json",
+      "bytes": 41566,
+      "sha256": "f1a4616ea24d3dcd3212e22c12056dd0850bad1939bbc1d1158eded9f3a66d6c"
+    },
+    {
+      "path": "browsers/smoke-artifacts.json",
+      "bytes": 926,
+      "sha256": "4ca335a02391b1c1375cf1f7808c272525c7542695f1e16300dad388d00cc99a"
+    },
+    {
+      "path": "browsers/smoke-final-jobs.json",
+      "bytes": 4844,
+      "sha256": "16ab45356db098a129b0cc2031cad1dc2f566b9def83e22a4761429571e03a15"
+    },
+    {
+      "path": "browsers/smoke-final-run.json",
+      "bytes": 15152,
+      "sha256": "14e04f88916f84779a964ae494da2b4fb479ada04d7ed4d440311d7e159da671"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/canonical-preflight-escalated.log",
+      "bytes": 2258,
+      "sha256": "534a5f42a1f7812f17ca1f9582a93af08f8e75b6f4bba24ec1616e34b28f48ec"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/canonical-preflight.log",
+      "bytes": 1122,
+      "sha256": "6550a14b98f4b0b2a640082426a7690db0db05af3e0a504f9fe91ad9ef44f294"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/code-and-tests.patch",
+      "bytes": 2599,
+      "sha256": "d5b683c548f214e58ad4a72b221e033e76c2ca12df50c545b1ecdf7d8995352c"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/eslint-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/eslint.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/receipt.json",
+      "bytes": 5264,
+      "sha256": "5b5872fac5f051729ccc144cd77bc88ca620356eee7042d40fdfd9cc2aaba322"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/settings-after-fix.log",
+      "bytes": 231,
+      "sha256": "3d5130392d1fb9cc980f8acc11ba3c38726e3e6253ff869edead54b38536b1ff"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/settings-before-fix.log",
+      "bytes": 3643,
+      "sha256": "2e0610b5f72c0d8551221b39e7c9d0a3c1e0d4690b24653c8460ed3f0c454a12"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/settings-final.log",
+      "bytes": 231,
+      "sha256": "f31a2c87d5d08143f530b1bcf1cb6fe59f4e231da3e4efc5d8162db682c160c8"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/typescript-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "gys-dev-mode-literal-storage-evidence-20261027/typescript.log",
+      "bytes": 796,
+      "sha256": "d6f9cab745e2bd84d72a4ce9034d221a0ceeef47aef441cf94c2540825314b22"
+    }
+  ],
+  "result": "No candidate secret or embedded-binary hits in the reviewed evidence; no source bytes redacted or omitted.",
+  "reviewedPatterns": [
+    "private-key PEM",
+    "GitHub token formats",
+    "AWS access-key IDs",
+    "JWTs",
+    "unmasked authorization values",
+    "signed URL query credentials",
+    "embedded image/binary data URLs",
+    "sensitive-field literal values"
+  ],
+  "contextReview": [
+    "Original audit/browser receipts and source-specific scope were read. Historical audit connector limitations remain unchanged; later annotation retained separately.",
+    "All three included ZIPs contain only three small JSON reports each. All nine gzip inputs were expanded and scanned; no archive member was executed.",
+    "Every original file is preserved byte-for-byte. Existing GitHub masking and earlier explicitly documented normalization remain as received; no additional redaction occurs.",
+    "External screenshot and SDK ZIP payloads were hash-checked only, not copied or included in this textual secret review.",
+    "This pattern/context review is a publication aid, not a universal guarantee that arbitrary secrets can be detected."
+  ],
+  "originalPayloadFiles": 70,
+  "originalPayloadBytes": 1800221,
+  "largestOriginalFileBytes": 686249
+}

@@ -1,0 +1,143 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-27T10:05:22.349072+00:00",
+  "result": "No blocking publication issue found in the twelve-file supplement.",
+  "scope": "Read-only review of four newly retained checkpoint files and eight governance files; original38-file review is unchanged and was not rerun.",
+  "priorReview": {
+    "path": "current-publication-review.json",
+    "sha256": "e455cf39adf248a34b58fdaca1cd71810f671a0fa1d2ca660f0e9ef34310307e",
+    "unchanged": true
+  },
+  "source": {
+    "head": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+    "tree": "61f993c61a583a0f467039396bfde726e5cbdf20"
+  },
+  "snapshot": {
+    "files": 12,
+    "bytes": 226252,
+    "unchangedAfterReview": true,
+    "inventory": [
+      {
+        "path": "governance/README.md",
+        "bytes": 716,
+        "sha256": "609dcedfbc0a4fd6baedb382e7557b22343d476548f0be447ffa98bf0b6d6138"
+      },
+      {
+        "path": "governance/SHA256SUMS.json",
+        "bytes": 888,
+        "sha256": "7e79ce7337e4afafbc2f7c01e42436845a590b0eb8e57e35438369c27147b4e1"
+      },
+      {
+        "path": "governance/main-ref.json",
+        "bytes": 352,
+        "sha256": "beff49af421ab78e3d9e49f299627b6311362961c730912346b18ed6e8d431a8"
+      },
+      {
+        "path": "governance/pr43.json",
+        "bytes": 28244,
+        "sha256": "23cf6a5c6301b5da1a4d94f421eb109f0bb83bf887629ac7a0955b6e7e462c26"
+      },
+      {
+        "path": "governance/production-manifest.json",
+        "bytes": 109070,
+        "sha256": "c0b37434c82057302f4e5961421dd8009c71951183ea8d3665a13f19f22928f6"
+      },
+      {
+        "path": "governance/receipt.json",
+        "bytes": 6009,
+        "sha256": "854359d346c27d829bd831c388e73ae2882af8aaa03588fa7c0ad86f9625762d"
+      },
+      {
+        "path": "governance/repository.json",
+        "bytes": 15745,
+        "sha256": "fb4e4be6bddff4737420b8854b54e60bf4ccb273b742739c38abde59b72fc291"
+      },
+      {
+        "path": "governance/rulesets.json",
+        "bytes": 2,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "path": "root/checkpoint-chromium.original.log",
+        "bytes": 45099,
+        "sha256": "52a6028c7c62644b15ac69ef590cd6216b19a38e6d53fd8c4b7fb0da4e94016a"
+      },
+      {
+        "path": "root/checkpoint-chromium.receipt.json",
+        "bytes": 1017,
+        "sha256": "c27adcabb656f3d9630dbb7c229883bf934531ed04f17d306096e3f6491f9b2a"
+      },
+      {
+        "path": "root/checkpoint-jobs-final.original.json",
+        "bytes": 5534,
+        "sha256": "d2d5623f321b94026186620aecaa81afe1e0bd087c747c27bcf61281d3b2113d"
+      },
+      {
+        "path": "root/checkpoint-run-final.original.json",
+        "bytes": 13576,
+        "sha256": "ea3ecc29f492f39cf10bc52b78ce7ae9691e377c053cf8ddd218b99631bcb027"
+      }
+    ]
+  },
+  "secretReview": {
+    "patterns": [
+      "private-key-pem",
+      "github-token",
+      "aws-access-key",
+      "jwt",
+      "authorization-value",
+      "signed-url-query",
+      "embedded-image-or-binary",
+      "sensitive-field-value"
+    ],
+    "candidateHits": [],
+    "embeddedBinaryOrOversizedPayloads": false,
+    "redactions": [],
+    "qualification": "No candidate credentials found in contextual and pattern review of the twelve text files; not a universal secret-detection guarantee."
+  },
+  "checkpoint": {
+    "runId": 40483780180,
+    "jobId": 122120362146,
+    "attempt": 1,
+    "conclusion": "success",
+    "completedAt": "2026-10-27T10:00:52Z",
+    "actualCheckout": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+    "passed": 7,
+    "durationSeconds": 15.7,
+    "fullLogHashAndByteCountMatched": true,
+    "statusAndExactCheckoutMatched": true,
+    "failureRetryFlakyOrSkipSummaryObserved": false,
+    "overlap": "These are repeated Chromium security fixture executions, not seven additional unique security cases or a provider acceptance run."
+  },
+  "governance": {
+    "responseBodiesVerified": 5,
+    "allDeclaredLengthsAndHashesMatched": true,
+    "sevenListedFileDigestsMatched": true,
+    "receiptInterpretationsMatchBodies": true,
+    "observedAt": "2026-10-27T10:00:12.908758+00:00",
+    "productionSource": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+    "productionSdkArchiveSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026",
+    "candidateSdkArchiveSha256": "32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c",
+    "candidateNotDeployedByThisObservation": true,
+    "rulesetsListCount": 0,
+    "classicBranchProtectionInspected": false,
+    "prState": "open",
+    "prDraft": true,
+    "prMerged": false,
+    "authenticationAndTls": "The receipt records fresh unauthenticated GETs with normal TLS; this review verifies retained bytes and interpretations and does not independently repeat those requests."
+  },
+  "remainingExclusions": [
+    {
+      "path": "browsers",
+      "reason": "Separate browser evidence folder remains outside this review; only the four explicitly named root checkpoint files are included."
+    }
+  ],
+  "limits": [
+    "This supplement supersedes only the prior governance-folder exclusion and adds the four checkpoint files; it does not rewrite the previous snapshot.",
+    "An empty public rulesets list does not prove absence of classic branch protection or all protection.",
+    "Open-PR merge_commit_sha is synthetic merge metadata, not a completed merge.",
+    "The public production manifest identifies main07dd and an earlier SDK archive, distinct from the draftc651 candidate.",
+    "Original response bodies are preserved; no earlier09:56response is reconstructed or substituted.",
+    "No test rerun, SDK import, wallet/profile/provider operation, new network retrieval, source/ref/policy change, deployment or qualified release approval occurred in this review."
+  ]
+}

@@ -1,0 +1,324 @@
+{
+  "schema": 1,
+  "reviewedAt": "2026-10-27T10:01:59.322919+00:00",
+  "result": "No blocking publication issue found in the explicitly scoped snapshot.",
+  "scope": "Read-only local byte, status, source-binding and publication review; no fresh CI query or runtime execution.",
+  "source": {
+    "head": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+    "tree": "61f993c61a583a0f467039396bfde726e5cbdf20",
+    "prMergeCheckout": "a922ee9110d5b3b9e3ee0822654673813a34a52b",
+    "prMergeTreeMatchesHead": true
+  },
+  "includedDirectories": [
+    "audit",
+    "security",
+    "root"
+  ],
+  "excludedDirectories": [
+    {
+      "path": "browsers",
+      "reason": "Still being assembled; not read, scanned, inventoried or approved in this review."
+    },
+    {
+      "path": "governance",
+      "reason": "Still being assembled; not read, scanned, inventoried or approved in this review."
+    }
+  ],
+  "snapshot": {
+    "root": "/tmp/gys-pr43-c651-ci-20261027",
+    "files": 38,
+    "bytes": 1761268,
+    "largestFileBytes": 689130,
+    "inventorySha256": "e587df9ccf8c18de638619260b7216712327dac1042ee3641edc52a122d8cb2b",
+    "inventoryEncoding": "UTF-8 JSON array below, sorted object keys, compact separators, one final newline",
+    "unchangedAfterReview": true,
+    "inventory": [
+      {
+        "path": "audit/README.md",
+        "bytes": 1265,
+        "sha256": "a6f582fded4e8d4752b8d3ed839d64fc5099c0e549ac31e8bb8bf6755276e979"
+      },
+      {
+        "path": "audit/SHA256SUMS.json",
+        "bytes": 1034,
+        "sha256": "b1ccd57f018e39917a9a5dee5d4d47e354dda6d44baad7173656d49e0eebcea4"
+      },
+      {
+        "path": "audit/codeql-job-122120389556.original.log.gz",
+        "bytes": 40156,
+        "sha256": "aa00ea9618d1adcf87570eac7e126d8094ca99e64460d31b0366b01550fd38a5"
+      },
+      {
+        "path": "audit/codeql-jobs.wrapper.json.gz",
+        "bytes": 311,
+        "sha256": "61206650fb73bb152ddbcce29e8c411086d7a41a076047ee0e0a48490ff8aa7b"
+      },
+      {
+        "path": "audit/codeql-run-final.original.json.gz",
+        "bytes": 1738,
+        "sha256": "f9429a0c43d0994fdca3976de8e4971f4f4f024b06027f19268138e448185021"
+      },
+      {
+        "path": "audit/dependency-job-122120361866.original.log.gz",
+        "bytes": 5012,
+        "sha256": "f27854d4091ecaaf371a29e68e325138242d2fa8ed4a53a1cad971c608e1ff08"
+      },
+      {
+        "path": "audit/dependency-steps.wrapper.json.gz",
+        "bytes": 359,
+        "sha256": "1aedc4060c2bd98c2b450e811ccbd0242919541663bb2d3a13008ddf57f4ebad"
+      },
+      {
+        "path": "audit/head-checks-final.original.json.gz",
+        "bytes": 2975,
+        "sha256": "7349dbfc7698f7f5df335fd2548b19c207e41883c2d7b3bda167c799fe9e84f4"
+      },
+      {
+        "path": "audit/head-checks-initial.original.json.gz",
+        "bytes": 2954,
+        "sha256": "0f62c3de81e64046cc87a8792396ca24e40923b10df520474adb124490b0586e"
+      },
+      {
+        "path": "audit/original-text-lengths.json",
+        "bytes": 957,
+        "sha256": "f6fee2215f0e1434625217a977fca667b54c40377f3397afe1eff2c46d1e7927"
+      },
+      {
+        "path": "audit/receipt.json",
+        "bytes": 7523,
+        "sha256": "a9f03da1334e45f7585f69c208573c5a53ab607ec3eb265d4915ca03ee768b23"
+      },
+      {
+        "path": "root/checks-initial.original.json",
+        "bytes": 53530,
+        "sha256": "d532105453e57ab5dfe0b001920ae5f061f1d968d94930029b9e85cba509113d"
+      },
+      {
+        "path": "root/merge-initial.original.json",
+        "bytes": 2714,
+        "sha256": "11f33680590fb904861e4187bc88bbf50714d7ae38beb2751c386fdb5819e691"
+      },
+      {
+        "path": "root/original-files.json",
+        "bytes": 1405,
+        "sha256": "b493871bf3f113aa5760282c7e3e907ccd1a32ca0de16ddfc633d890df9332c9"
+      },
+      {
+        "path": "root/pr-initial.original.json",
+        "bytes": 28244,
+        "sha256": "23cf6a5c6301b5da1a4d94f421eb109f0bb83bf887629ac7a0955b6e7e462c26"
+      },
+      {
+        "path": "root/runs-initial.original.json",
+        "bytes": 81426,
+        "sha256": "aecba6155c70e8cd744919e71adc29181c73740def6f6a6b8138f6e25b318c1e"
+      },
+      {
+        "path": "root/test-job-122120388367.original.log",
+        "bytes": 24762,
+        "sha256": "539acd543cb93208826fefcb7902c411949a94273c9bfa79c056f3dd469834c5"
+      },
+      {
+        "path": "root/test-job-122120388705.original.log",
+        "bytes": 80672,
+        "sha256": "44a099a3915f0d511536d03c7a0f201beecb7b55727c6f6daa0249f8d214aad1"
+      },
+      {
+        "path": "root/test-job-122120388733.original.log",
+        "bytes": 15697,
+        "sha256": "e21ccf4604e00851273038799bbceb84c86c70d8ebcd260f7182d821f2552849"
+      },
+      {
+        "path": "root/test-job-122120388856.original.log",
+        "bytes": 483384,
+        "sha256": "02e07176fb7b240d726c9073e2aecdd4302da8c86017d56ecedbdfcf33c36cb4"
+      },
+      {
+        "path": "root/tests-initial.original.json",
+        "bytes": 10013,
+        "sha256": "a288d494b0781307d394d8375f69c93979ca6dfc5a6a2f703dc8c37af16c851e"
+      },
+      {
+        "path": "root/tests.receipt.json",
+        "bytes": 2864,
+        "sha256": "bb17de68d92aedb16b594a2e6b4a8d40cc72267c2482f2caf58bdbf6e685394b"
+      },
+      {
+        "path": "security/checkpoint-code-and-installed-sdk.raw.log",
+        "bytes": 108303,
+        "sha256": "2f5cc2627a4733b1e1d1dd4ad958569dd1601a9c9f603caf38ea7c4eff365ffc"
+      },
+      {
+        "path": "security/checkpoint-code-and-installed-sdk.raw.log.records.json",
+        "bytes": 8632,
+        "sha256": "765771655e3fee3a1d3e5475ddf0cbc2bd0c386e93852802256d044c68ec2328"
+      },
+      {
+        "path": "security/checkpoint-jobs-at-code-completion.json",
+        "bytes": 3648,
+        "sha256": "7c1c40043e78fadbee707f44320ffc52dc351c4f2ddbc4c24d5d5154b7d7669c"
+      },
+      {
+        "path": "security/checkpoint-jobs-initial.json",
+        "bytes": 3468,
+        "sha256": "5e98968064cbd6896541c0dc54400b747e9707e0048b0dfd0488881eb71f0fa8"
+      },
+      {
+        "path": "security/checkpoint-run-at-code-completion.json",
+        "bytes": 15119,
+        "sha256": "2a8ef97c672c11e58b69857bd5e1211b037c9270d54fbaddd62ea764b182592a"
+      },
+      {
+        "path": "security/checkpoint-run-initial.json",
+        "bytes": 15119,
+        "sha256": "2a8ef97c672c11e58b69857bd5e1211b037c9270d54fbaddd62ea764b182592a"
+      },
+      {
+        "path": "security/files.json",
+        "bytes": 2600,
+        "sha256": "563f7c3cef44c5174d29fec3254e32ee73998ab124d440185bae0a7532dc83d4"
+      },
+      {
+        "path": "security/retrieval.json",
+        "bytes": 407,
+        "sha256": "2a5506e23ac70f873c80576e6f5a898abfefed533e6c739663f52408e6bbda5c"
+      },
+      {
+        "path": "security/standard-checkout-commit.json",
+        "bytes": 2917,
+        "sha256": "a09c0b105b7a50f063284f9bbe228f90761cedbe110fd2b7fda73cbbc747c73d"
+      },
+      {
+        "path": "security/standard-jobs-final.json",
+        "bytes": 3227,
+        "sha256": "472d32cc80d7280f0a0b313026005924eadfaa12ac99c6df5556f08fcfec4c30"
+      },
+      {
+        "path": "security/standard-jobs-initial.json",
+        "bytes": 3033,
+        "sha256": "e713d2b5de1a7f176e0a38adea44145dc0613f071cc05d0081f29e2b9f3715c8"
+      },
+      {
+        "path": "security/standard-run-final.json",
+        "bytes": 15113,
+        "sha256": "305817d686e76f6e0c8e411abf62b3e2eb4b7fef88ebff26aac8d5ad9150209b"
+      },
+      {
+        "path": "security/standard-run-initial.json",
+        "bytes": 15110,
+        "sha256": "3c61d03837ff089b7d27cbfef7d6811a4d9123bf258a46bf8ca20ca8cb0a34c8"
+      },
+      {
+        "path": "security/standard-verify.raw.log",
+        "bytes": 689130,
+        "sha256": "b39cd18646224b803a5cff2f43c8dd0a1c34606562c6db14519455e119a4ae7f"
+      },
+      {
+        "path": "security/standard-verify.raw.log.records.json",
+        "bytes": 8632,
+        "sha256": "35fd88a40fd6a714454a1daec9a361407db3e70bb5b699c3cdd6329b30f875a9"
+      },
+      {
+        "path": "security/summary.json",
+        "bytes": 17815,
+        "sha256": "b8a93808a116a4c44ac650f15a6e0ed1234ef62362c10df2135a63895210760b"
+      }
+    ]
+  },
+  "secretReview": {
+    "patterns": [
+      "private-key-pem",
+      "github-token",
+      "aws-access-key",
+      "jwt",
+      "authorization-value",
+      "signed-url-query",
+      "embedded-image-or-binary",
+      "sensitive-field-value"
+    ],
+    "textPayloadsReviewed": 38,
+    "expandedTextBytes": 2248083,
+    "candidateHits": [],
+    "oversizedOrEmbeddedBinaryPayloadsFound": false,
+    "redactions": [],
+    "omissionsWithinIncludedDirectories": [],
+    "qualification": "Pattern scan and contextual receipt/log review found no candidate credentials. Existing GitHub masking is preserved. This is not a universal guarantee of secret detection."
+  },
+  "byteProvenance": {
+    "auditGzipFilesVerified": 7,
+    "compressedAndOriginalUtf8HashesAndLengthsMatched": true,
+    "auditOriginalCharacterAndFinalNewlineMetadataMatched": true,
+    "structuredWrapperSerializationExplicitlyLabeled": true,
+    "rootOriginalManifestRowsVerified": 9,
+    "rootCompletedTestLogsVerified": 4,
+    "securityManifestRowsVerified": 15,
+    "securityRawLogHashesMatched": true,
+    "originalMeaning": "Full decoded UTF-8 supplied by connectors, not original compressed HTTP transport bytes.",
+    "noEvidenceBytesModified": true
+  },
+  "sourceAndResultChecks": {
+    "codeql": {
+      "analysisCheck": 122120937380,
+      "conclusion": "success",
+      "title": "No new alerts in code changed by this pull request",
+      "annotations": 0,
+      "limits": [
+        "No repository-wide zero-alert claim.",
+        "Analyzer 300-file/full-diff warning retained.",
+        "Prior f912 failure retained separately."
+      ]
+    },
+    "dependencies": {
+      "recordedAllAdvisories": 0,
+      "recordedOmitDevAdvisories": 0,
+      "fullAuditZipIndependentlyDownloaded": false
+    },
+    "testsWorkflow": {
+      "runId": 40483787820,
+      "completedJobs": 4,
+      "unitPassed": 1943,
+      "unitSkipped": 1,
+      "filesPassed": 161,
+      "filesSkipped": 1,
+      "lintErrors": 0,
+      "lintWarnings": 8,
+      "optionalFundedE2eJob": "skipped"
+    },
+    "standardVerify": {
+      "runId": 40483787892,
+      "applicationSuiteOverlapsTestsWorkflow": true,
+      "unitPassed": 1943,
+      "unitSkipped": 1,
+      "sourcePythonControlsPassed": 20,
+      "canonicalPythonControlsPassed": 36,
+      "nodePassed": 236,
+      "redisPassed": 11
+    },
+    "productionInterlockExactRejectionRetained": true,
+    "canonicalInstalledSdkRecords": [
+      {
+        "jobId": 122120388159,
+        "actualCheckout": "a922ee9110d5b3b9e3ee0822654673813a34a52b",
+        "archiveSha256": "32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c",
+        "patchSha256": "e56dde90e545646dbce6e6f3218bb67c54084f13110fcbbafdb1eccc211b3eb7",
+        "wasmSha256": "d77b97e2041c62575702a3c1227c7efa1299b7c2ce2f6e05612b8c14992e206a"
+      },
+      {
+        "jobId": 122120362679,
+        "actualCheckout": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+        "archiveSha256": "32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c",
+        "patchSha256": "e56dde90e545646dbce6e6f3218bb67c54084f13110fcbbafdb1eccc211b3eb7",
+        "wasmSha256": "d77b97e2041c62575702a3c1227c7efa1299b7c2ce2f6e05612b8c14992e206a"
+      }
+    ]
+  },
+  "publicationLimits": [
+    "Do not sum repeated application tests from standard verify, Tests or checkpoint into an invented distinct-case total.",
+    "Checkpoint emits unit results to a separate JSON artifact; its retained log has no unit total and the receipt does not borrow a count.",
+    "The optional funded E2E job and Bitcoin Core integration case are skipped, not passed.",
+    "Lint succeeded with eight warnings; this is not warning-free lint.",
+    "Recorded CI/source checks are not real-funds adoption, provider/device acceptance, qualified independent review or production release approval.",
+    "Browser and governance evidence is expressly excluded; no overall all-checks or governance verdict follows from this snapshot.",
+    "No source/ref changes, new tests, SDK import, wallet/profile/provider calls or deployment occurred during this review."
+  ]
+}

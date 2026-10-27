@@ -2,7 +2,7 @@
 
 ## Status
 
-This policy is prepared for approval. It is **not active**. The repository rulesets endpoint returned an empty list on 27 October 2026 at approximately 07:37 UTC. No policy was created or activated in this continuation.
+This policy is prepared for approval. It is **not active**. The public repository rulesets endpoint returned an empty list on 27 October 2026 at 10:22:35 UTC; the earlier 07:37 observation is retained in the candidate history. This endpoint does not establish classic branch-protection settings. No policy was created or activated in this continuation.
 
 Automatic approval review previously rejected activation because this exact consequential default-branch policy had not been explicitly authorized. Activation can block legitimate merges if a required check becomes unavailable. The proposed policy includes no owner bypass, so that consequence also applies to the repository owner.
 
@@ -28,6 +28,16 @@ The policy does not add a paid service, require the optional funded end-to-end w
 ## Verified check availability
 
 All three named checks reported success on PR #43 source [`6c695aa6`](https://github.com/Bradvani/getyoursats-wallet/commit/6c695aa6ce3f39a3fb2f0915e10df1ffa0b80129). Their reported app ID was `15368`. The `setup-smoke` job runs on pull requests, so its absence from a later merge-commit check list is expected. This establishes the configured check names, not approval of a later security candidate.
+
+The final candidate `c47ffeda0550f08e3cda994bba06c9745adbdc3a` also reports all three proposed required checks successful, with GitHub Actions app ID `15368`, at the final 10:25:03 UTC snapshot:
+
+| Required check | Observed check/job ID | Conclusion |
+| --- | --- | --- |
+| `verify` | `122130541385` | Success |
+| `setup-smoke` | `122130541321` | Success |
+| `Analyze (javascript-typescript)` | `122130541293` | Success |
+
+The separate CodeQL findings check `122130969914` succeeded with no new alerts reported in PR-changed code and zero annotations. The [final CI receipt](pr43-recovery3-ci-20261027.md) retains its scope and the analyzer warnings. These observations establish current check identities and outcomes, not activation of this policy or real-funds clearance.
 
 ## Activation handoff
 

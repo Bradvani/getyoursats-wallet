@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "archive": "c47-security.tar.gz",
+  "archiveBytes": 141689,
+  "archiveSha256": "e743be40d6445018eede3238a0be8a645a8f9be8eb55d5c5616132d177d0725e",
+  "uncompressedTarSha256": "0224335f12f08cbaaf68785c404981765d9ce5660b2dd52a9bb5828877c49085",
+  "memberCount": 18,
+  "originalFileBytes": 955760,
+  "method": "Sorted regular files only; fixed tar metadata; lossless gzip with mtime=0; every member round-tripped and checked against original bytes",
+  "sourceRoot": "/tmp/gys-pr43-c47-ci-20261027/security",
+  "files": [
+    {
+      "path": "checkpoint-chromium.raw.log",
+      "bytes": 45032,
+      "sha256": "3bb89a281c6ff35a19b90b05deef87b34ba1481a13c3a2942c19bc0c023b72c9"
+    },
+    {
+      "path": "checkpoint-code-and-installed-sdk.raw.log",
+      "bytes": 108303,
+      "sha256": "f8c480011bfd7350c5d29d49b8cc6b61b3e8e7db5fa173a8ce7960ca3362734b"
+    },
+    {
+      "path": "checkpoint-code-and-installed-sdk.raw.log.records.json",
+      "bytes": 8632,
+      "sha256": "67ad7ac22cda2affea959b88e7ae2c60d2f87907924b0533179bd5d6e0e8a941"
+    },
+    {
+      "path": "checkpoint-jobs-final.json",
+      "bytes": 3821,
+      "sha256": "2fa91ca55b76677d8be0c72a00363bf64c9dab924182ffd6d19c0e8a5974d290"
+    },
+    {
+      "path": "checkpoint-jobs-initial.json",
+      "bytes": 3482,
+      "sha256": "8229f40f6d9bdc6e0f1c3411f58453b0b90a39e8d455be49b070871576894882"
+    },
+    {
+      "path": "checkpoint-run-final.json",
+      "bytes": 15092,
+      "sha256": "9fa7cc2dbdba02e2a327af4392df7921f66e973b7a8b892443bda2d23d39c956"
+    },
+    {
+      "path": "checkpoint-run-initial.json",
+      "bytes": 15089,
+      "sha256": "404376d584726a0f9ee86a3ea891431119c34d82cf38b1d36c4f1708731885ed"
+    },
+    {
+      "path": "clock-initial.json",
+      "bytes": 48,
+      "sha256": "28b98a770c61cdd5c15959ea9840fac95319ce8bd1acf82867d1d084d231389a"
+    },
+    {
+      "path": "files.json",
+      "bytes": 2888,
+      "sha256": "7aeab54a5ddbe1a16e42c4cec5f5a2c1b5796ba47d5ae411fb7a7b54a8feab1f"
+    },
+    {
+      "path": "retrieval.json",
+      "bytes": 567,
+      "sha256": "4336937567043197f2c5cc179c008dd19da38d9a31ce302d4e5b9cbe6bf854f8"
+    },
+    {
+      "path": "standard-checkout-commit.json",
+      "bytes": 2917,
+      "sha256": "01955f2398787a565a3a9df4224c812051270cc6a4d1b6a7fdec09f43c7c6e00"
+    },
+    {
+      "path": "standard-jobs-final.json",
+      "bytes": 3227,
+      "sha256": "467327dacf9f3aa3346d43568f769c0c73e7e102eb12456ff5d391932abc4176"
+    },
+    {
+      "path": "standard-jobs-initial.json",
+      "bytes": 3033,
+      "sha256": "bd6279b0b19de69833bc4e0a4680e84d43931246b62799d8b56a8a50b7053284"
+    },
+    {
+      "path": "standard-run-final.json",
+      "bytes": 15098,
+      "sha256": "c3cc33282e451816c76fb69a431151a890fd0994d6ea4d34363941bc42c14028"
+    },
+    {
+      "path": "standard-run-initial.json",
+      "bytes": 15095,
+      "sha256": "93517211a448ab7eff882c89686a2f6403b687c20b13880859a14a9d003c414a"
+    },
+    {
+      "path": "standard-verify.raw.log",
+      "bytes": 685673,
+      "sha256": "97d41c700424eadd2fb94a640722bfff46e67a8c33eedfc98a19f0042a483cd0"
+    },
+    {
+      "path": "standard-verify.raw.log.records.json",
+      "bytes": 8632,
+      "sha256": "7b0233b4ba37db22d7f13cdd470432054ffb087ad13df39eeab80c94843708b3"
+    },
+    {
+      "path": "summary.json",
+      "bytes": 19131,
+      "sha256": "b8bff4c6f7c539edeaefc14011bd053ef306aaa30910adda34936eb4f3b8b473"
+    }
+  ]
+}

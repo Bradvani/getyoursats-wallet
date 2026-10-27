@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "archive": "c47-governance.tar.gz",
+  "archiveBytes": 47218,
+  "archiveSha256": "d00cd25e1c73bc9596df717c606456ae3b82af9d575b24a87378e6dad5635e01",
+  "uncompressedTarSha256": "cd2b70fca07e18391bfc8f8be407a5f43d5a9b2c9afe17a2b5afda5bf1924492",
+  "memberCount": 8,
+  "originalFileBytes": 162671,
+  "method": "Sorted regular files only; fixed tar metadata; lossless gzip with mtime=0; every member round-tripped and checked against original bytes",
+  "sourceRoot": "/tmp/gys-pr43-c47-ci-20261027/governance",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 544,
+      "sha256": "be994b83ae911fd33fa8c7c2a971936a36875c41c2e86613fef4bfdea95911e3"
+    },
+    {
+      "path": "SHA256SUMS.json",
+      "bytes": 888,
+      "sha256": "885b7d9f12427c0c74f4276af6f0459a2f843f537f88a9792bf423c7fd66ade0"
+    },
+    {
+      "path": "main-ref.json",
+      "bytes": 352,
+      "sha256": "beff49af421ab78e3d9e49f299627b6311362961c730912346b18ed6e8d431a8"
+    },
+    {
+      "path": "pr43.json",
+      "bytes": 29644,
+      "sha256": "0c6781cf99c859543de4517460a531329c60d1463bac10b0b3ceb8265a746df2"
+    },
+    {
+      "path": "production-manifest.json",
+      "bytes": 109070,
+      "sha256": "c0b37434c82057302f4e5961421dd8009c71951183ea8d3665a13f19f22928f6"
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 6426,
+      "sha256": "a8dadad9f17e839ef2642e80379c3ec4364115b835d173c68e28766a87e90e26"
+    },
+    {
+      "path": "repository.json",
+      "bytes": 15745,
+      "sha256": "e4f8c377b044b616462d531ae16f00e8f05d4402a02a0318aa7d52c7ccd13282"
+    },
+    {
+      "path": "rulesets.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    }
+  ]
+}

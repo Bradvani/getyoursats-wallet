@@ -1,0 +1,410 @@
+{
+  "schema": 1,
+  "observedAt": "2026-10-27T10:25:03Z",
+  "candidate": {
+    "head": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+    "tree": "8f18bfbcec61c14b8a48b78359fd8686f26ec60b",
+    "pr": 43,
+    "draft": true,
+    "merged": false,
+    "actualPrCheckout": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+    "checkoutTreeEqualsCandidate": true,
+    "base": "07ddf16068cc5bd7ed09397e221800ad7b12d767"
+  },
+  "automatedCi": {
+    "conclusion": "SUCCESS",
+    "workflowCount": 6,
+    "successfulChecks": 14,
+    "intentionalSkippedJobs": 1,
+    "allRunAttempts": 1,
+    "runs": [
+      {
+        "id": 40486813619,
+        "name": "GetYourSats checks",
+        "event": "pull_request",
+        "conclusion": "success",
+        "attempt": 1,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813619"
+      },
+      {
+        "id": 40486813535,
+        "name": "CodeQL",
+        "event": "pull_request",
+        "conclusion": "success",
+        "attempt": 1,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813535"
+      },
+      {
+        "id": 40486813725,
+        "name": "Tests",
+        "event": "pull_request",
+        "conclusion": "success",
+        "attempt": 1,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813725"
+      },
+      {
+        "id": 40486813574,
+        "name": "GetYourSats browser smoke",
+        "event": "pull_request",
+        "conclusion": "success",
+        "attempt": 1,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813574"
+      },
+      {
+        "id": 40486808391,
+        "name": "Browser security checkpoint",
+        "event": "push",
+        "conclusion": "success",
+        "attempt": 1,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486808391"
+      },
+      {
+        "id": 40486808144,
+        "name": "Release security engine matrix",
+        "event": "push",
+        "conclusion": "success",
+        "attempt": 1,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486808144"
+      }
+    ],
+    "checks": [
+      {
+        "id": 122130969914,
+        "name": "CodeQL",
+        "conclusion": "success",
+        "app": 57789,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/runs/122130969914"
+      },
+      {
+        "id": 122130544099,
+        "name": "E2E Tests",
+        "conclusion": "skipped",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813725/job/122130544099"
+      },
+      {
+        "id": 122130542576,
+        "name": "Build",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813725/job/122130542576"
+      },
+      {
+        "id": 122130542525,
+        "name": "Lint",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813725/job/122130542525"
+      },
+      {
+        "id": 122130542485,
+        "name": "Type Check",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813725/job/122130542485"
+      },
+      {
+        "id": 122130542244,
+        "name": "Unit Tests",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813725/job/122130542244"
+      },
+      {
+        "id": 122130541385,
+        "name": "verify",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813619/job/122130541385"
+      },
+      {
+        "id": 122130541321,
+        "name": "setup-smoke",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813574/job/122130541321"
+      },
+      {
+        "id": 122130541293,
+        "name": "Analyze (javascript-typescript)",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486813535/job/122130541293"
+      },
+      {
+        "id": 122130525856,
+        "name": "browsers (firefox)",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486808144/job/122130525856"
+      },
+      {
+        "id": 122130525607,
+        "name": "dependency-evidence",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486808144/job/122130525607"
+      },
+      {
+        "id": 122130525493,
+        "name": "browsers (chromium)",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486808144/job/122130525493"
+      },
+      {
+        "id": 122130525341,
+        "name": "chromium-security-fixtures",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486808391/job/122130525341"
+      },
+      {
+        "id": 122130525120,
+        "name": "browsers (webkit)",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486808144/job/122130525120"
+      },
+      {
+        "id": 122130524924,
+        "name": "code-and-installed-sdk",
+        "conclusion": "success",
+        "app": 15368,
+        "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486808391/job/122130524924"
+      }
+    ]
+  },
+  "sdk": {
+    "version": "0.1.0-getyoursats.recovery.3",
+    "archiveSha256": "32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c",
+    "wasmSha256": "d77b97e2041c62575702a3c1227c7efa1299b7c2ce2f6e05612b8c14992e206a",
+    "patchSha256": "e56dde90e545646dbce6e6f3218bb67c54084f13110fcbbafdb1eccc211b3eb7",
+    "isolatedBuildRun": 40473745510,
+    "preservedCommit": "de5100c3728bc11d019744f09624648b4aff8803"
+  },
+  "application": {
+    "passed": 1943,
+    "skipped": 1,
+    "filesPassed": 161,
+    "filesSkipped": 1,
+    "skippedFile": "src/security/bitcoinRegtest.integration.test.ts",
+    "runtime": {
+      "node": "20.20.2",
+      "npm": "10.8.2"
+    }
+  },
+  "serviceAndSourceCases": {
+    "nodePassed": 236,
+    "redisPassed": 11,
+    "pythonSourceGuardsPassed": 20,
+    "canonicalPackageControlsPassed": 36
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 8
+  },
+  "browsers": {
+    "matrixPassed": 48,
+    "securityPerEngine": 7,
+    "rollbackPerEngine": 9,
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "smoke": {
+      "builtArtifact": {
+        "chromium": 3,
+        "firefox": 3,
+        "webkit": 3,
+        "total": 9
+      },
+      "sdkCas": {
+        "chromium": 9,
+        "firefox": 9,
+        "webkit": 9,
+        "total": 27
+      },
+      "chromiumJourneys": 138,
+      "firefoxWebkitNavigationCombined": 164,
+      "total": 338
+    },
+    "checkpointChromiumPassed": 7,
+    "uniqueTotalAcrossOverlappingSuitesNotAsserted": true
+  },
+  "codeql": {
+    "findingsCheck": 122130969914,
+    "conclusion": "success",
+    "title": "No new alerts in code changed by this pull request",
+    "annotations": 0,
+    "repositoryWideZeroAlertsAsserted": false,
+    "largePrDiffWarningRetained": true
+  },
+  "dependencies": {
+    "runId": 40486808144,
+    "jobId": 122130525607,
+    "status": "completed",
+    "conclusion": "success",
+    "jobUrl": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486808144/job/122130525607",
+    "headVerifiedByRunMetadata": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+    "commands": [
+      "npm audit --json",
+      "npm audit --omit=dev --json"
+    ],
+    "printedAt": [
+      "2026-10-27T10:13:50.3619968Z",
+      "2026-10-27T10:13:50.3622782Z"
+    ],
+    "all": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "runtime": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "runtimeMeaning": "npm omit-dev dependency classification; not a fresh runtime bundle reachability analysis",
+    "guard": "Completed job rejects audit registry errors, missing/non-safe-integer totals and any nonzero advisory total.",
+    "uploadedArtifact": {
+      "id": 12725456955,
+      "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40486808144/artifacts/12725456955",
+      "reportedZipBytes": 596,
+      "reportedZipSha256": "c4629c5faa9e2c91dc0a25c66ac8839af7effd55a3b9bcc17bc24d5e70c53653",
+      "independentlyDownloaded": false,
+      "source": "Full completed job log"
+    }
+  },
+  "productionAndGovernanceSnapshot": {
+    "production": {
+      "sourceRevision": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+      "releaseId": "32be2cb598402c0344cc",
+      "sourceDirty": false,
+      "sdk": {
+        "sourceRevision": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+        "packageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026"
+      },
+      "dependencyLockSha256": "642a25bebbea06222a1fb0dd38d5876467e7ba1959417cedf8d13983fd29bb47"
+    },
+    "rulesets": {
+      "listedCount": 0,
+      "emptyListObserved": true,
+      "claim": "Only the public repository rulesets endpoint was read; this does not establish classic branch-protection configuration."
+    },
+    "repository": {
+      "fullName": "Bradvani/getyoursats-wallet",
+      "defaultBranch": "main"
+    },
+    "mainRef": {
+      "ref": "refs/heads/main",
+      "sha": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+      "type": "commit"
+    },
+    "pr43": {
+      "number": 43,
+      "state": "open",
+      "draft": true,
+      "head": "c47ffeda0550f08e3cda994bba06c9745adbdc3a",
+      "baseRef": "main",
+      "baseSha": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+      "htmlUrl": "https://github.com/Bradvani/getyoursats-wallet/pull/43",
+      "merged": false,
+      "mergeCommitSha": "fc52e5025b061334d4c5127275ba20ca27954ff6",
+      "mergeCommitMeaning": "For an open pull request, this is metadata and is not evidence of a completed merge."
+    }
+  },
+  "mainPolicy": {
+    "status": "prepared, not activated",
+    "proposedRequiredChecks": [
+      {
+        "name": "verify",
+        "checkId": 122130541385,
+        "app": 15368,
+        "observedConclusion": "success"
+      },
+      {
+        "name": "setup-smoke",
+        "checkId": 122130541321,
+        "app": 15368,
+        "observedConclusion": "success"
+      },
+      {
+        "name": "Analyze (javascript-typescript)",
+        "checkId": 122130541293,
+        "app": 15368,
+        "observedConclusion": "success"
+      }
+    ],
+    "requiresExplicitApproval": true
+  },
+  "intentionalSkips": [
+    "Opt-in Bitcoin Core integration test",
+    "Optional funded E2E job122130544099"
+  ],
+  "historicalOutcomes": [
+    {
+      "head": "f912253d7a618f7fdc361e8221d37b6962b7eb8e",
+      "separateCodeqlFindingsCheck": 122098998040,
+      "conclusion": "failure",
+      "resultRewritten": false
+    },
+    {
+      "head": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+      "matrixRun": 40483780128,
+      "webkitJob": 122120362240,
+      "conclusion": "cancelled",
+      "reason": "20-minute Ubuntu package-install timeout",
+      "webkitMatrixCasesExecuted": 0,
+      "resultRewritten": false
+    }
+  ],
+  "supportingReceipts": [
+    {
+      "pathInSourceEvidence": "security/summary.json",
+      "bytes": 19131,
+      "sha256": "b8bff4c6f7c539edeaefc14011bd053ef306aaa30910adda34936eb4f3b8b473"
+    },
+    {
+      "pathInSourceEvidence": "audit/receipt.json",
+      "bytes": 12051,
+      "sha256": "9787eaf28e5d8b596f92efdf19c12da3abd30ac9b115709ad1696b5b2e248081"
+    },
+    {
+      "pathInSourceEvidence": "root/tests.receipt.json",
+      "bytes": 3069,
+      "sha256": "4435bb3f4f2301654e26be3f1ee9aa3a9a0bc70f4476b77a4990440eee823d7f"
+    },
+    {
+      "pathInSourceEvidence": "browsers/smoke-outcome.json",
+      "bytes": 1118,
+      "sha256": "4368ffa139445d7358ee34779788f5b10cb8c50aa408d2d6c1b934a7c59009cb"
+    },
+    {
+      "pathInSourceEvidence": "browsers/matrix-summary.json",
+      "bytes": 11500,
+      "sha256": "61052957b95e2a6f7124cd2875285ec90574587fce5495de4c938c5bd7de049b"
+    },
+    {
+      "pathInSourceEvidence": "governance/receipt.json",
+      "bytes": 6426,
+      "sha256": "a8dadad9f17e839ef2642e80379c3ec4364115b835d173c68e28766a87e90e26"
+    }
+  ],
+  "releaseApproved": false,
+  "realFundsVerdict": "NO-GO",
+  "limitations": [
+    "Only automated exact-source CI is closed. All remaining release-gate and A01-A21 acceptance boundaries retain their stated scope.",
+    "Repeated workflows/suites are not summed into distinct-case totals. The Tests workflow used legacy Node20.20.2 and retains its engine warning; standard verification uses its separate Node22 configuration.",
+    "CodeQL PR findings and dependency advisory counts are not qualified independent protocol, cryptographic or release approval.",
+    "No provider settlement, physical device, separate-device recovery or funded original-origin rollout is inferred.",
+    "The observation harness remains unconditionally blocked, original records remain preserved and no real-funds promotion or support delivery was performed."
+  ]
+}
