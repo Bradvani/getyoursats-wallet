@@ -99,7 +99,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   const [rateError,setRateError]=React.useState('');
   const requestInvoice=()=>{
     if(isFiatDenomination(denomination) && (!fetchedAt || Date.now()-fetchedAt>120_000)){
-      setRateError(t('The {currency}/BTC rate has expired. Refresh the wallet before sending.',{currency:denomination}));
+      setRateError(t('The {currency}/BTC rate has expired. Refresh the wallet and try again.',{currency:denomination}));
       return;
     }
     setRateError('');

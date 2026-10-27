@@ -29,6 +29,7 @@ for(const language of languages){
   await expect(surface.getByTestId('send-destination')).toHaveAttribute('title',destination);
   await expect(surface).toContainText(t('To Spark address'));
   await expect(surface).toContainText(t('Network fee'));
+  if(['ar','ja','ta'].includes(language))await page.screenshot({path:`test-artifacts/send-${language}-390.png`});
   await expect(page.getByTestId('submitted')).toHaveText(JSON.stringify({destination,amount:'1000'}));
   await surface.getByTestId('send-confirm-button').click();
   await expect(surface).toContainText(t('Sending…'));
@@ -48,6 +49,20 @@ for(const language of languages){
   await surface.locator('#subview-contact-name').fill('Untranslated user name');
   await page.getByLabel('Fixture language').selectOption(language==='ar'?'ja':'ar');
   await expect(surface.locator('#subview-contact-name')).toHaveValue('Untranslated user name');
+  for(const [screen,label]of [['receive','Create Lightning Address'],['settings','Privacy & recovery'],['details','Date & Time']]){
+   await page.goto('/e2e/fixtures/localization-complete.html?lang='+language+'&case='+screen);
+   await expect(page.locator('body')).toContainText(t(label));
+  }
+  await page.goto('/e2e/fixtures/localization-complete.html?lang='+language+'&case=receiveamount');
+  await expect(page.locator('body')).toContainText(t('Request amount'));
+  await page.getByTestId('invoice-amount-input').fill('1000');
+  await expect(page.getByTestId('generate-invoice-button')).toBeEnabled();
+  await page.goto('/e2e/fixtures/localization-complete.html?lang='+language+'&case=provider-error');
+  if(language!=='en'){
+   await expect(surface).toContainText(t('Unable to complete this request. Check the details before trying again.'));
+   await surface.locator('summary').click();
+  }
+  await expect(surface.getByText('Network unavailable: disposable provider diagnostic',{exact:true})).toBeVisible();
   expect(errors).toEqual([]);
  });
  for(const host of ['site','wallet'])test('complete '+host+' Support '+language,async({page})=>{
@@ -61,6 +76,7 @@ for(const language of languages){
   await expect(page.locator('.hero h1')).toHaveText(privacy[language].ui[1]);
   for(const key of ['notice','payment1','payment2','merchant1','merchant2','address1','address2','keys1','keys2','keys3','investigate','learn'])await expect(page.locator('article')).toContainText(c[key]);
   await expect(page.locator('#gys-language option')).toHaveCount(10);
+  if(host==='site'&&['ar','ja','ta'].includes(language))await page.screenshot({path:`test-artifacts/support-${language}-390.png`});
   expect(await page.locator('article').evaluate(node=>{
    const recovery=node.querySelector('#section-1'),keys=node.querySelector('#keys-and-recovery');
    return !!recovery&&!!keys&&!!(keys.compareDocumentPosition(recovery)&Node.DOCUMENT_POSITION_FOLLOWING);
@@ -96,4 +112,17 @@ test('wallet language survives public-link import and subsequent changes',async(
  await page.reload();
  await expect(page.locator('html')).toHaveAttribute('lang','ar');
  await expect(page.locator('html')).toHaveAttribute('dir','rtl');
+});
+for(const language of ['ar','ta','ja'])test('readable narrow and enlarged Support '+language,async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.setViewportSize({width:320,height:740});
+ await page.goto('/site/support.html?lang='+language);
+ await expect(page.locator('#gys-language')).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ await page.setViewportSize({width:1280,height:900});
+ await page.evaluate(()=>{document.documentElement.style.zoom='2';});
+ await page.locator('.toc a[href="#keys-and-recovery"]').click();
+ await expect(page.locator('#keys-and-recovery')).toBeInViewport();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ await page.screenshot({path:`test-artifacts/support-${language}-200percent.png`});
 });

@@ -25,7 +25,7 @@ const aliases:Record<string,string>={
  'Failed to update contact':'Unable to complete this request. Check the details before trying again.',
  'Failed to add contact':'Unable to complete this request. Check the details before trying again.'
 };
-const dictionaries:Record<AppLanguage,Record<string,string>>={...completion};
+const dictionaries=Object.fromEntries(Object.entries(completion).map(([language,copy])=>[language,{...copy}])) as unknown as Record<AppLanguage,Record<string,string>>;
 for(const catalog of [PAYMENT_UX,PAYMENT_EXPERIENCE,TRUST_COPY]){
  for(const [key,english] of Object.entries(catalog.en)){
   for(const language of Object.keys(dictionaries) as AppLanguage[]){
@@ -34,11 +34,11 @@ for(const catalog of [PAYMENT_UX,PAYMENT_EXPERIENCE,TRUST_COPY]){
   }
  }
 }
-export function isLocalizedFlowText(language:AppLanguage,text:string):boolean{return Object.values(dictionaries[language]).includes(text);}
-export function hasFlowText(text:string):boolean{return Boolean(dictionaries.en[aliases[text]||text]);}
+export function hasFlowText(text:string):boolean{return typeof dictionaries.en[aliases[text]||text]==='string';}
 export function flowText(language:AppLanguage,text:string,values:Record<string,string|number>={}):string{
  // Preserve protocol/user/provider data. Only known application copy is translated.
  const key=aliases[text]||text;
- const result=language==='en'?text:dictionaries[language]?.[key]||text;
+ const translated=dictionaries[language]?.[key];
+ const result=language==='en'||typeof translated!=='string'?text:translated;
  return result.replace(/\{([A-Za-z]+)\}/g,(match,name)=>Object.prototype.hasOwnProperty.call(values,name)?String(values[name]):match);
 }

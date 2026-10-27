@@ -1,5 +1,4 @@
-import {usePresentation} from '@/hooks/usePresentation';
-import {flowText} from '@/locales/flowText';
+import LocalizedErrorText from '../../LocalizedErrorText';
 import React, { ReactNode } from 'react';
 import { ErrorIcon } from '../../Icons';
 
@@ -154,12 +153,11 @@ export const FormTextarea: React.FC<FormTextareaProps> = ({
 export const FormError: React.FC<{
   error: string | null;
 }> = ({ error }) => {
-  const {language}=usePresentation();
   if (!error) return null;
   return (
     <div className="flex items-center gap-2 text-spark-primary text-sm">
       <ErrorIcon className="shrink-0" />
-      <span className="min-w-0 [overflow-wrap:anywhere] text-spark-primary-light">{flowText(language,error)}</span>
+      <div className="min-w-0 [overflow-wrap:anywhere] text-spark-primary-light"><LocalizedErrorText message={error}/></div>
     </div>
   );
 };

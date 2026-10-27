@@ -33,6 +33,7 @@ const LUD_01_URL = 'https://github.com/lnurl/luds/blob/luds/01.md';
 
 interface Failure {
   message: string;
+  detail?: string;
   /** The site answered but hid its reply, which LUD-01's CORS rule forbids. */
   missingCors?: boolean;
 }
@@ -135,7 +136,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
       }
       const reason = result.errorDetails.reason.trim().replace(/\.+$/, '');
       logger.warn(LogCategory.SDK, 'LNURL auth refused', { domain, reason });
-      setFailure({ message: `Could not ${action.doing} ${domain}: ${reason}. ${FRESH_CODE}` });
+      setFailure({ message: language==='en'?`Could not ${action.doing} ${domain}: ${reason}. ${FRESH_CODE}`:t('Sign-in could not be completed.')+' '+t(FRESH_CODE),detail:language==='en'?undefined:reason });
     } catch (err) {
       const error = formatError(err);
       logger.error(LogCategory.SDK, 'LNURL auth failed', { domain, error });
@@ -143,14 +144,14 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
       // still answers, the reply was hidden by missing CORS headers and the
       // site may well have accepted the login (#415).
       if (!error.includes('Network error:')) {
-        setFailure({ message: `Could not ${action.doing} ${domain}. ${FRESH_CODE}` });
+        setFailure({ message: language==='en'?`Could not ${action.doing} ${domain}. ${FRESH_CODE}`:t('Sign-in could not be completed.')+' '+t(FRESH_CODE) });
       } else if (await hostAnswers(parsed.url)) {
         setFailure({
-          message: `Could not read the reply from ${domain}. Check the site to see if you've ${action.done}.`,
+          message: language==='en'?`Could not read the reply from ${domain}. Check the site to see if you've ${action.done}.`:t('Could not read the reply from {domain}. Check the site before trying again.',{domain}),
           missingCors: true,
         });
       } else {
-        setFailure({ message: `Could not reach ${domain}. Check your connection and try again.` });
+        setFailure({ message: t('Could not reach {domain}. Check your connection and try again.',{domain}) });
       }
     } finally {
       setIsLoading(false);
@@ -179,6 +180,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
       {failure && (
         <div className="space-y-2">
           <FormError error={failure.message} />
+          {failure.detail&&<details className="text-xs"><summary>{t('Technical details')}</summary><p dir="auto">{failure.detail}</p></details>}
           {/* Indented to the error's text, so it reads as that error's detail line. */}
           {failure.missingCors && (
             <p className="ml-6 text-xs text-spark-text-muted [overflow-wrap:anywhere]">

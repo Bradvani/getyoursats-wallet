@@ -1,3 +1,8 @@
+import SettingsPage from '../../src/pages/SettingsPage';
+import LightningAddressDisplay from '../../src/features/receive/LightningAddressDisplay';
+import AmountPanel from '../../src/features/receive/AmountPanel';
+import PaymentDetailsDialog from '../../src/components/PaymentDetailsDialog';
+import type {Sats} from '../../src/types/sats';
 // Disposable UI acceptance. No real network, signer, wallet or funds.
 import {useState} from 'react';
 import {createRoot} from 'react-dom/client';
@@ -34,6 +39,8 @@ function Fixture(){
  const [step,setStep]=useState(new URLSearchParams(location.search).get('case')||'input');
  const [destination,setDestination]=useState('');
  const [amount,setAmount]=useState(0n);
+ const [receiveAmount,setReceiveAmount]=useState<Sats|null>(null);
+ const [description,setDescription]=useState('');
  const [speed,setSpeed]=useState<'slow'|'medium'|'fast'>('medium');
  const noop=()=>{};
  const payment={id:'disposable-result',paymentType:'send',status:'completed',amount,fees:2n,timestamp:Math.floor(Date.now()/1000),method:'spark'} as Payment;
@@ -42,6 +49,11 @@ function Fixture(){
  <select aria-label="Fixture language" value={language} onChange={event=>setAppLanguage(event.target.value as AppLanguage)}>{APP_LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.name}</option>)}</select>
  <output data-testid="submitted">{JSON.stringify({destination,amount:String(amount)})}</output>
  <main data-testid="localized-surface">
+ {step==='settings'&&<SettingsPage onBack={noop} config={null} onOpenFiatCurrencies={noop} onOpenBuyProviders={noop} onOpenPasskeySettings={noop} onOpenSecurity={noop} onOpenBackup={noop} onOpenEmail={noop} onOpenUnilateralExit={noop}/>}
+ {step==='receive'&&<LightningAddressDisplay address={null} isLoading={false} isSupported section="qr" onEdit={noop} onCustomizeAmount={()=>setStep('receiveamount')}/>}
+ {step==='receiveamount'&&<AmountPanel isOpen amountSats={receiveAmount} setAmountSats={setReceiveAmount} setAmountDisplay={noop} description={description} setDescription={setDescription} isLoading={false} error={null} onCreateInvoice={noop} onClose={noop} resetCount={0}/>}
+ {step==='details'&&<PaymentDetailsDialog optionalPayment={payment} onClose={noop}/>}
+ {step==='provider-error'&&<FormError error="Network unavailable: disposable provider diagnostic"/>}
  {step==='input'&&<InputStep paymentInput={destination} isLoading={false} error={null} onContinue={value=>{setDestination(value);setStep('amount');}} onOpenContacts={()=>setStep('contacts')}/>}
  {step==='amount'&&<AmountStep paymentInput={destination} amount="" balanceSats={125000} isLoading={false} error={null} onBack={()=>setStep('input')} onNext={value=>{setAmount(value);setStep('confirm');}}/>}
  {step==='confirm'&&<ConfirmStep amountSats={amount} feesSat={2} balanceSats={125000} destination={{label:'To Spark address',value:destination}} error={null} isLoading={false} onConfirm={()=>{setStep('processing');setTimeout(()=>setStep('result'),1500);}}/>}

@@ -1,4 +1,5 @@
 import {PAYMENT_UX} from '@/locales/paymentUx';
+import {useFlowText} from '@/hooks/useFlowText';
 import {formatMoney} from '@/getyoursats/money';
 import {receiveQuoteEvidence} from '@/getyoursats/receiveQuote';
 import {trustCopy} from '@/getyoursats/trustCopy';
@@ -55,6 +56,7 @@ interface CrossChainReceiveWorkflowProps {
 }
 
 const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ active, onRestingChange }) => {
+  const t=useFlowText();
   const wallet = useWallet();
   const stableBalance = useStableBalance();
   const { showToast } = useToast();
@@ -272,7 +274,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
   // EIP-681 URI so scanners auto-fill the amount; falls back to the URI if the
   // SDK omitted the structured info.
   const resultDepositAddress = resultInfo?.depositAddress ?? receiveResult?.paymentRequest ?? '';
-  const resultShareMessage = `Send ${resultDepositAmount} ${resultAssetName} on ${resultChainName} to ${resultDepositAddress}`;
+  const resultShareMessage = t('Send {amount} {asset} on {chain} to {address}',{amount:resultDepositAmount,asset:resultAssetName,chain:resultChainName,address:resultDepositAddress});
   const requestedAtomic=selectedRoute?parseCrossChainAmount(usdInput,selectedRoute.decimals):null;
   const quote=resultInfo&&requestedAtomic!==null?receiveQuoteEvidence(resultInfo,requestedAtomic):null;
   const quoteUsable=!!quote?.expiresAtMs && now<quote.expiresAtMs;
@@ -335,7 +337,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
           <div className="space-y-4 pt-6">
             <FormError error={error} />
             <PrimaryButton onClick={() => fetchRoutes()} className="w-full" disabled={!canContinue} data-testid="cross-chain-receive-continue">
-              Continue
+              {t('Continue')}
             </PrimaryButton>
           </div>
         </div>
@@ -346,7 +348,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
         <div className="flex flex-col items-center justify-center py-12 space-y-3">
           <SpinnerIcon size="lg" className="text-spark-primary animate-spin" />
           <p className="text-sm text-spark-text-secondary">
-            {step === 'loading' ? 'Fetching routes...' : 'Creating request...'}
+            {t(step === 'loading' ? 'Fetching routes...' : 'Creating request...')}
           </p>
         </div>
       )}
@@ -382,7 +384,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
         <div className="flex flex-col" style={{ maxHeight: isSheetFull ? '85dvh' : '60dvh' }}>
           <div className="mb-4 min-h-0 flex flex-col">
             <label className="block text-sm font-medium text-spark-text-primary mb-2 shrink-0">
-              Select Provider for {selectedAsset} ({formatChainName(routesForSelection[0]?.chain ?? '')})
+              {t('Select Provider for {asset}',{asset:selectedAsset??''})} ({formatChainName(routesForSelection[0]?.chain ?? '')})
             </label>
             <div className="space-y-2 overflow-y-auto overscroll-y-none touch-pan-y min-h-0 pr-1">
               {routesForSelection.map(r => (
@@ -407,7 +409,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
               className="w-full"
               disabled={!pendingProvider}
             >
-              Continue
+              {t('Continue')}
             </PrimaryButton>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import LocalizedErrorText from '@/components/LocalizedErrorText';
 import {useFlowText} from '@/hooks/useFlowText';
 import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -479,7 +480,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
 
           {error && (
             <div className="mb-4 p-3 bg-spark-warn-surface border border-spark-warn-border rounded-xl text-sm text-spark-warn-text">
-              {error}
+              <LocalizedErrorText message={error}/>
             </div>
           )}
 

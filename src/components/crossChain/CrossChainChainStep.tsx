@@ -1,3 +1,4 @@
+import LocalizedErrorText from '@/components/LocalizedErrorText';
 import {useFlowText} from '@/hooks/useFlowText';
 import React, { useState } from 'react';
 import type { CrossChainRoutePair } from '@breeztech/breez-sdk-spark';
@@ -50,7 +51,7 @@ export const CrossChainChainStep: React.FC<CrossChainChainStepProps> = ({
     >
       {error && (
         <div className="mb-4 p-3 bg-spark-warn-surface border border-spark-warn-border rounded-xl text-sm text-spark-warn-text shrink-0">
-          {t(error)}
+          <LocalizedErrorText message={error}/>
         </div>
       )}
       <label className="block text-sm font-medium text-spark-text-primary mb-2 shrink-0">

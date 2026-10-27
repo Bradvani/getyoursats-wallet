@@ -110,7 +110,6 @@ export const DialogHeader: React.FC<{
   onBack?: () => void;
   icon?: ReactNode;
 }> = ({ title, onClose, onBack, icon }) => {
-  const t=useFlowText();
   const { language } = usePresentation();
   const text = PAYMENT_UX[language];
   // Without an explicit onBack, the step on screen can lend one (useSheetBack).
@@ -129,7 +128,7 @@ export const DialogHeader: React.FC<{
       )}
       <div className="flex items-center gap-2 min-w-0 max-w-full">
         {icon && <span className="text-spark-primary shrink-0">{icon}</span>}
-        <h2 className="font-display text-lg font-bold text-spark-text-primary truncate">{t(title)}</h2>
+        <h2 className="font-display text-lg font-bold text-spark-text-primary truncate">{title}</h2>
         {icon && <span className="w-5 h-5 shrink-0" aria-hidden="true" />}
       </div>
       <button

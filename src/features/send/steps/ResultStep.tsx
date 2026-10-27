@@ -1,4 +1,5 @@
 import {useFlowText} from '@/hooks/useFlowText';
+import LocalizedErrorText from '@/components/LocalizedErrorText';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {usePresentation} from '@/hooks/usePresentation';
 import React, { type ReactNode } from 'react';
@@ -68,9 +69,9 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
           {getTitle()}
         </h3>
 
-        <p className="text-spark-text-secondary text-center max-w-xs mb-8">
-          {error ? t(error) : getDefaultErrorMessage()}
-        </p>
+        <div className="text-spark-text-secondary text-center max-w-xs mb-8">
+          {error ? <LocalizedErrorText message={error}/> : getDefaultErrorMessage()}
+        </div>
 
         <PrimaryButton onClick={onClose} className="min-w-[200px]">
           {t("Close")}

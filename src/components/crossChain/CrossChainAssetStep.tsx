@@ -1,3 +1,4 @@
+import LocalizedErrorText from '@/components/LocalizedErrorText';
 import {useFlowText} from '@/hooks/useFlowText';
 import React from 'react';
 import { useSheetBack, useSheetFullSnap, useSheetOwnsScroll } from '../ui/sheets/BottomSheetCardContext';
@@ -36,7 +37,7 @@ export const CrossChainAssetStep: React.FC<CrossChainAssetStepProps> = ({
   >
     {error && (
       <div className="mb-4 p-3 bg-spark-warn-surface border border-spark-warn-border rounded-xl text-sm text-spark-warn-text shrink-0">
-        {t(error)}
+        <LocalizedErrorText message={error}/>
       </div>
     )}
     {assets.length > 0 && (

@@ -76,7 +76,7 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
   if (!address) {
     return section === 'qr' ? slot(
       <div className="text-center">
-        <h3 className="font-display text-lg font-semibold text-spark-text-primary mb-2">Lightning Address</h3>
+        <h3 className="font-display text-lg font-semibold text-spark-text-primary mb-2">{t('Lightning Address')}</h3>
         <p className="text-spark-text-secondary text-sm mb-4">{t("Create a Lightning Address to receive payments easily")}</p>
         <PrimaryButton onClick={onEdit}>{t("Create Lightning Address")}</PrimaryButton>
       </div>,

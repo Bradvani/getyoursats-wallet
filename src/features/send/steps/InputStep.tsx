@@ -1,4 +1,5 @@
 import {useFlowText} from '@/hooks/useFlowText';
+import LocalizedErrorText from '@/components/LocalizedErrorText';
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { SimpleAlert } from '../../../components/AlertCard';
 import { PrimaryButton, FIELD_BASE_CLASS } from '../../../components/ui';
@@ -237,7 +238,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
       {/* Error */}
       {error && (
         <SimpleAlert variant="error" dataTestId="send-error-banner">
-          {t(error)}
+          <LocalizedErrorText message={error}/>
         </SimpleAlert>
       )}
 
