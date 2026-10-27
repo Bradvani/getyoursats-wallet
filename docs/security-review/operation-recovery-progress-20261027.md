@@ -1,5 +1,7 @@
 # Payment and exit recovery progress, 27 October 2026
 
+**Source-specific historical receipt.** This document describes concurrent source `e827e4a0bdc89245d8539a314e3dc81bdfdccfab` and cumulative patch `0005`. The subsequent integration must retain strict raw receipt checks and use atomic same-store reservations before executing continuation. The get/compare/set/readback sequence described here does not establish that exclusivity. Results below apply only to their recorded source.
+
 This is implementation evidence, not product acceptance or independent security approval. PR #43 remains draft and production-blocked. The live welcome-card dismissal from main `07ddf16068cc5bd7ed09397e221800ad7b12d767` is retained in this candidate, based on security HEAD `f5c319882d172ec2710a712aa02f15497b6eb2e7`.
 
 ## Implemented boundaries

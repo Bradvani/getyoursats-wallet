@@ -127,7 +127,7 @@ export interface UnilateralExitFlow {
   funding: FundingFields | null;
   submitDestination: () => Promise<void>;
   submitFee: () => Promise<void>;
-  unlock: () => Promise<void>;
+  unlock: (assertCurrent?: () => void) => Promise<void>;
   unlockError: string | null;
   build: () => Promise<void>;
   buildError: string | null;
@@ -292,11 +292,15 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
   // The index, not the plan: every engine pass emits a new plan object, and
   // the page re-runs unlock whenever this callback changes.
   const planFundingIndex = plan?.fundingAddressIndex;
-  const unlock = useCallback(async () => {
+  const unlock = useCallback(async (assertCurrent?: () => void) => {
     if (!walletKey || !quote) return;
+    assertCurrent?.();
     setUnlockError(null);
     try {
       const seed = await readWalletSeed({ interactive: true });
+      // The page can close or change policy while a native/passkey read is
+      // pending. A stale read must not derive or publish funding state.
+      assertCurrent?.();
       // Every exit pays from the same address, so coins one exit leaves there
       // count toward the next. An exit under way keeps the index it was built with.
       const index = planFundingIndex ?? 0;
@@ -324,6 +328,7 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
       );
       setPhase('pending');
     } catch (e) {
+      try { assertCurrent?.(); } catch { return; }
       setUnlockError(message(e));
     }
   }, [walletKey, quote, network, planFundingIndex]);

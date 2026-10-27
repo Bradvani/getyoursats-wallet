@@ -24,6 +24,8 @@ jobs:
           VITE_BREEZ_API_KEY: ''
           VITE_SPARK_LOCAL_CONFIG: ''
           VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
+      - name: Verify SDK attempt reservations across browser engines
+        run: npx playwright test -c playwright.sdk-storage.config.ts
       - name: Verify safe setup, review changes and responsive wallet journeys
         run: npx playwright test e2e/tests/send-destination.spec.ts e2e/tests/payment-locales.spec.ts e2e/tests/getyoursats-desktop-navigation.spec.ts e2e/tests/getyoursats-review.spec.ts e2e/tests/getyoursats-setup.spec.ts e2e/tests/getyoursats-landing.spec.ts e2e/tests/getyoursats-premium.spec.ts e2e/tests/getyoursats-orange-audit.spec.ts e2e/tests/getyoursats-startup-theme.spec.ts e2e/tests/getyoursats-scarcity-rulebook.spec.ts e2e/tests/getyoursats-contact-enquiries.spec.ts e2e/tests/getyoursats-site-experience.spec.ts e2e/tests/getyoursats-network-gallery.spec.ts e2e/tests/getyoursats-wallet-tour.spec.ts e2e/tests/getyoursats-scan-send.spec.ts e2e/tests/getyoursats-backup-setup.spec.ts e2e/tests/getyoursats-passkey-support.spec.ts --project chromium
         env:
@@ -45,5 +47,6 @@ jobs:
             test-artifacts/*.png
             test-results/**/*.png
             test-results/**/error-context.md
+            test-artifacts/sdk-storage-cas.json
           if-no-files-found: ignore
           retention-days: 7

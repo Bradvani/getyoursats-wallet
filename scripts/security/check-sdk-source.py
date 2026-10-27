@@ -3,11 +3,20 @@
 
 New files created by git apply are untracked: git diff alone silently omits
 these files. Include only files declared by the patch, reject other untracked
-source, then compare the complete diff. This does not compile or connect a wallet.
+source, then compare the complete diff against HEAD, including staged changes.
+This does not compile or connect a wallet.
 """
 import argparse
 from pathlib import Path
 import subprocess
+
+
+def require_clean(source: Path):
+    if subprocess.run(['git', 'diff', '--quiet', 'HEAD'], cwd=source).returncode != 0:
+        raise ValueError('SDK baseline has staged or unstaged changes')
+    if subprocess.check_output(
+            ['git', 'ls-files', '--others', '--exclude-standard', '-z'], cwd=source).strip(b'\0'):
+        raise ValueError('SDK baseline has untracked source files')
 
 
 def check(source: Path, patch: Path):
@@ -25,19 +34,24 @@ def check(source: Path, patch: Path):
         raise ValueError('Source files missing from the patch: ' + ', '.join(unexpected))
     # Intent-to-add changes only the disposable source checkout index.
     subprocess.run(['git', 'add', '-N', '--', *sorted(paths)], cwd=source, check=True)
-    actual = subprocess.check_output(['git', 'diff', '--full-index', '--binary'], cwd=source)
+    actual = subprocess.check_output(['git', 'diff', 'HEAD', '--full-index', '--binary'], cwd=source)
     if actual != data:
         raise ValueError('SDK source differs from its complete cumulative patch')
     observation = source / 'crates/breez-sdk/core/src/sdk/observation.rs'
     if not observation.is_file() or str(observation.relative_to(source)) not in paths:
         raise ValueError('Observation module is absent from the SDK source patch')
-    subprocess.run(['git', 'diff', '--check'], cwd=source, check=True)
+    subprocess.run(['git', 'diff', 'HEAD', '--check'], cwd=source, check=True)
     print(f'Complete SDK source verified: {len(paths)} patched files')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, required=True)
-    parser.add_argument('--patch', type=Path, required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument('--patch', type=Path)
+    mode.add_argument('--require-clean', action='store_true')
     args = parser.parse_args()
-    check(args.source.resolve(), args.patch.resolve())
+    if args.require_clean:
+        require_clean(args.source.resolve())
+    else:
+        check(args.source.resolve(), args.patch.resolve())

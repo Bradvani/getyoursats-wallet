@@ -24,6 +24,7 @@ import { FaceIdIcon, FingerprintIcon, PasskeyIcon } from '../components/Icons';
 import { AlertCard } from '../components/AlertCard';
 import { confirmDeviceOwner, getBiometryInfo, BiometryInfo, secureStorage } from '../services/secureStorage';
 import { isPasskeyMode } from '../services/passkeyService';
+import { getNativeSeedTier } from '../services/nativeSeedSelection';
 
 interface UnlockPageProps {
   isLoading: boolean;
@@ -47,10 +48,9 @@ const UnlockPage: React.FC<UnlockPageProps> = ({
   // behind the same confirm the side-menu logout uses.
   const [showEraseConfirm, setShowEraseConfirm] = useState(false);
   const isPasskey = isPasskeyMode();
-  // Only pre-app-lock installs keep the seed behind a biometric. With
-  // nothing in that tier this page is a plain reconnect retry (the
-  // silent start failed), so it must not promise a Face ID prompt.
-  const [isBiometricTier, setIsBiometricTier] = useState(true);
+  // Only the selected bound record needs a biometric prompt. Another retained
+  // bound record must not change the device-only wallet's retry label.
+  const isBiometricTier = isWebPasskey || getNativeSeedTier() === 'biometric';
 
   useEffect(() => {
     if (isWebPasskey) return;
@@ -58,9 +58,6 @@ const UnlockPage: React.FC<UnlockPageProps> = ({
     getBiometryInfo().then((info) => {
       if (!cancelled) setBiometry(info);
     });
-    secureStorage.hasStoredSeed().then((stored) => {
-      if (!cancelled) setIsBiometricTier(stored);
-    }).catch(() => undefined);
     return () => {
       cancelled = true;
     };

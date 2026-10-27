@@ -202,9 +202,8 @@ const AppContent: React.FC = () => {
     if (Capacitor.isNativePlatform() && deviceOnlyStorage.isSupported()) {
       try {
         setSetupIssue(null);
-        // Never call hasStoredSeed() here: the native implementation returns
-        // false on vault read errors, which is NOT proof that a wallet is absent.
-        // retrieveSeed() distinguishes a truly empty vault from failure.
+        // Decide from the actual record read, not an earlier presence probe.
+        // Only retrieveSeed()'s explicit NO_STORED_SEED permits creation.
         let existingSeed: Awaited<ReturnType<typeof deviceOnlyStorage.retrieveSeed>> | undefined;
         try {
           existingSeed = await deviceOnlyStorage.retrieveSeed();

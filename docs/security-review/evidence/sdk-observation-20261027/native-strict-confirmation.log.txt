@@ -1,0 +1,33 @@
+   Compiling spark v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/spark)
+    Finished `test` profile [unoptimized] target(s) in 6.45s
+     Running unittests src/lib.rs (target/debug/deps/spark-37f507d4e2dc9fd0)
+
+running 8 tests
+test services::transfer::strict_observation::tests::strict_transfer_exact_id_requires_a_terminal_full_participant_response ... ok
+test services::transfer::strict_observation::tests::strict_transfer_query_bounds_reject_invalid_limits_offsets_and_id_multiplicity ... ok
+test services::transfer::strict_observation::tests::strict_transfer_duplicate_foreign_and_unrequested_rows_are_rejected ... ok
+test services::transfer::strict_observation::tests::strict_transfer_complete_single_participant_evidence_survives_raw_and_typed_checks ... ok
+test services::transfer::strict_observation::tests::strict_transfer_raw_cursor_is_never_normalized_into_completion_or_a_different_page ... ok
+test services::transfer::strict_observation::tests::strict_transfer_valid_plus_malformed_row_never_becomes_unique_evidence ... ok
+test services::transfer::strict_observation::tests::strict_transfer_single_receiver_status_mapping_rejects_each_conflicting_phase ... ok
+test services::transfer::strict_observation::tests::strict_transfer_dropped_raw_fields_cannot_hide_participant_network_or_value_conflicts ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 550 filtered out; finished in 0.05s
+
+{"rustGate": "strict_transfer_", "crate": "spark", "passed": 8}
+    Finished `test` profile [unoptimized] target(s) in 0.33s
+     Running unittests src/lib.rs (target/debug/deps/spark-37f507d4e2dc9fd0)
+
+running 7 tests
+test services::htlc::strict_observation::tests::strict_htlc_only_explicit_minus_one_means_exhausted ... ok
+test services::htlc::strict_observation::tests::strict_htlc_preserves_advancing_raw_cursor_without_inventing_stride ... ok
+test services::htlc::strict_observation::tests::strict_htlc_rejects_oversized_or_unrepresentable_pages ... ok
+test services::htlc::strict_observation::tests::strict_htlc_default_or_invalid_cursor_cannot_make_one_row_complete ... ok
+test services::htlc::strict_observation::tests::strict_htlc_complete_valid_row_survives_without_claim_or_release ... ok
+test services::htlc::strict_observation::tests::strict_htlc_raw_fields_cannot_disappear_during_projection ... ok
+test services::htlc::strict_observation::tests::strict_htlc_valid_plus_malformed_row_never_becomes_unique_evidence ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 551 filtered out; finished in 0.02s
+
+{"rustGate": "strict_htlc_", "crate": "spark", "passed": 7}
+Complete SDK source verified: 32 patched files

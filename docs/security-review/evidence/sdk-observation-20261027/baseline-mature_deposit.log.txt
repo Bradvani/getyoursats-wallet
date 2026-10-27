@@ -1,0 +1,38 @@
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.44s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 11 tests
+test sdk::mature_deposit::tests::mature_deposit_credit_bound ... ok
+test sdk::mature_deposit::tests::mature_deposit_fee_consumes_output ... ok
+test sdk::mature_deposit::tests::mature_deposit_expired ... ok
+test sdk::mature_deposit::tests::mature_deposit_chain_depth ... ok
+test sdk::mature_deposit::tests::mature_deposit_exact_intent ... ok
+test sdk::mature_deposit::tests::mature_deposit_no_early_route ... ok
+test sdk::mature_deposit::tests::mature_deposit_missing_or_reorged_height ... ok
+test sdk::mature_deposit::tests::mature_deposit_noncanonical_txid ... ok
+test sdk::mature_deposit::tests::mature_deposit_standing_approval ... ok
+test sdk::mature_deposit::tests::mature_deposit_wrong_identity ... ok
+test sdk::mature_deposit::tests::mature_deposit_wrong_network ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 1165 filtered out; finished in 0.00s
