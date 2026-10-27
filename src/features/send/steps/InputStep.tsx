@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { SimpleAlert } from '../../../components/AlertCard';
 import { PrimaryButton, FIELD_BASE_CLASS } from '../../../components/ui';
@@ -28,6 +29,7 @@ export interface InputStepProps {
 // Parent (SendPaymentDialog) keys this on `selectedContactAddress` so
 // a fresh contact pick remounts and lazy-init re-reads the props.
 const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddress, isLoading, suspended = false, error, onClearError, onContinue, onScanQr, onOpenContacts, onStablecoin }) => {
+  const t=useFlowText();
   const { contacts } = useContactsContext();
   const [localPaymentInput, setLocalPaymentInput] = useState<string>(() =>
     selectedContactAddress || paymentInput || ''
@@ -62,12 +64,12 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
   };
 
   const recipientPlaceholder = preferredRail === 'bitcoin'
-    ? 'Bitcoin address (bc1...)'
+    ? t("Bitcoin address (bc1...)")
     : preferredRail === 'lightning'
-      ? 'Lightning address or invoice (lnbc...)'
+      ? t("Lightning address or invoice (lnbc...)")
       : preferredRail === 'stablecoin'
-        ? 'Recipient address for USDT / USDC'
-        : 'Lightning address, invoice, Bitcoin or stablecoin destination';
+        ? t("Recipient address for USDT / USDC")
+        : t("Lightning address, invoice, Bitcoin or stablecoin destination");
 
   const handlePaste = async () => {
     if (!canSubmit.current) return;
@@ -125,7 +127,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
     <div className="flex flex-col gap-4">
       {/* Scan/Paste first: reduce technical input friction without bypassing SDK parsing. */}
       <div className="space-y-2">
-        <p className="text-sm font-medium text-spark-text-primary">Where would you like to send?</p>
+        <p className="text-sm font-medium text-spark-text-primary">{t("Where would you like to send?")}</p>
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
@@ -134,7 +136,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
             className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-[#F7931A] bg-[#F7931A] px-3 py-3 text-sm font-semibold text-[#0B0B0B] hover:bg-[#FFB25E] disabled:opacity-50"
           >
             <QrCodeIcon size="sm" />
-            Scan QR
+            {t("Scan QR")}
           </button>
           <button
             type="button"
@@ -143,11 +145,11 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
             className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-spark-border bg-spark-surface px-3 py-3 text-sm font-semibold text-spark-text-primary hover:border-[#F7931A] disabled:opacity-50"
           >
             <ClipboardIcon size="sm" />
-            Paste
+            {t("Paste")}
           </button>
         </div>
       </div>
-      <p className="text-xs text-spark-text-muted">Or enter a destination below. We’ll recognize the payment format.</p>
+      <p className="text-xs text-spark-text-muted">{t("Or enter a destination below. We’ll recognize the payment format.")}</p>
       {/* Input with autocomplete */}
       <div className="h-20">
         {selectedContact ? (
@@ -166,7 +168,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
               onClick={handleClearContact}
               disabled={isLoading}
               className="p-1 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors shrink-0"
-              aria-label="Clear contact"
+              aria-label={t("Clear contact")}
             >
               <CloseIcon size="sm" />
             </button>
@@ -242,8 +244,8 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
       {/* Compact shortcuts are input guidance, not hardcoded payment routes.
           SDK address parsing and cross-chain route availability control settlement. */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-spark-text-muted">Payment type</p>
-        <div className="grid grid-cols-3 gap-2" role="group" aria-label="Payment type shortcuts">
+        <p className="text-xs font-medium text-spark-text-muted">{t("Payment type")}</p>
+        <div className="grid grid-cols-3 gap-2" role="group" aria-label={t("Payment type shortcuts")}>
           {([
             { rail: 'bitcoin', label: 'Bitcoin' },
             { rail: 'lightning', label: 'Lightning' },
@@ -263,7 +265,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
             </button>
           ))}
         </div>
-        <p className="text-xs text-spark-text-muted">Available networks, assets and fees are verified after you enter a destination.</p>
+        <p className="text-xs text-spark-text-muted">{t("Available networks, assets and fees are verified after you enter a destination.")}</p>
       </div>
       <button
         type="button"
@@ -272,7 +274,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
         className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-spark-border bg-spark-surface px-3 py-2 text-sm font-medium text-spark-text-secondary hover:text-spark-text-primary"
       >
         <ContactsIcon size="sm" />
-        Choose a contact
+        {t("Choose a contact")}
       </button>
 
       {/* Continue button */}
@@ -285,9 +287,9 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
             <SpinnerIcon />
-            Processing...
+            {t("Processing...")}
           </span>
-        ) : 'Continue'}
+        ) : t("Continue")}
       </PrimaryButton>
 
     </div>

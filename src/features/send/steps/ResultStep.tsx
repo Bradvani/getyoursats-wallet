@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {usePresentation} from '@/hooks/usePresentation';
 import React, { type ReactNode } from 'react';
@@ -22,33 +23,34 @@ export interface ResultStepProps {
 }
 
 const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operationType = 'payment', description, children, payment }) => {
+  const t=useFlowText();
   const isSuccess = result === 'success';
   const {language}=usePresentation();
   const copy=trustCopy(language);
 
   const getTitle = () => {
     if (operationType === 'auth') {
-      return 'Authenticated!';
+      return t("Authenticated!");
     }
     if (operationType === 'refund') {
-      return isSuccess ? 'Refund Sent!' : 'Refund Failed';
+      return isSuccess ? t("Refund Sent!") : t("Refund Failed");
     }
-    return isSuccess ? 'Payment Sent!' : 'Payment Failed';
+    return isSuccess ? t("Payment Sent!") : t("Payment Failed");
   };
 
   const getSuccessDescription = () => {
     if (description) return description;
     if (operationType === 'refund') {
-      return 'Your refund has been sent to the Bitcoin network.';
+      return t("Your refund has been sent to the Bitcoin network.");
     }
-    return 'Your payment has been successfully sent to the recipient.';
+    return t("Your payment has been successfully sent to the recipient.");
   };
 
   const getDefaultErrorMessage = () => {
     if (operationType === 'refund') {
-      return 'There was an error processing your refund. Please try again.';
+      return t("There was an error processing your refund. Please try again.");
     }
-    return 'There was an error processing your payment. Please try again.';
+    return t("There was an error processing your payment. Please try again.");
   };
 
   if(result==='unknown') return <div className="gys-payment-stage" data-testid="payment-unknown" role="status">
@@ -67,11 +69,11 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
         </h3>
 
         <p className="text-spark-text-secondary text-center max-w-xs mb-8">
-          {error || getDefaultErrorMessage()}
+          {error ? t(error) : getDefaultErrorMessage()}
         </p>
 
         <PrimaryButton onClick={onClose} className="min-w-[200px]">
-          Close
+          {t("Close")}
         </PrimaryButton>
       </div>
     );
@@ -99,7 +101,7 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
 
       {/* Action button */}
       <PrimaryButton onClick={onClose} className="min-w-[200px]">
-        Done
+        {t("Done")}
       </PrimaryButton>
     </div>
   );
