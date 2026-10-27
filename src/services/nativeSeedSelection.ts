@@ -1,8 +1,12 @@
 import type { BreezSdk, Network, Seed } from '@breeztech/breez-sdk-spark';
 import { deviceOnlyStorage, secureStorage } from './secureStorage';
 import {
-  assertCurrentSession, getSpendingSessionEpoch, isSpendingSessionLocked,
+  assertCurrentSession, getSpendingSessionEpoch,
 } from '../security/spendApproval';
+import {
+  assertNativeReadLease, captureNativeReadLease, getNativeReadLeaseRevision, invalidateNativeReadBinding,
+  type NativeReadLease,
+} from './nativeReadLease';
 
 export type NativeSeedTier = 'device' | 'biometric';
 type ActiveWallet = { sdk: Pick<BreezSdk, 'getInfo'>; network: Network };
@@ -21,6 +25,11 @@ type Selection = { tier: NativeSeedTier | null; revision: number };
 let pendingSelection: Promise<Selection> | null = null;
 let activeWallet: ActiveWallet | null = null;
 let revision = 0;
+// One-use startup provenance for immutable returned objects. Weak keys retain
+// neither seed material nor signer handles; values contain only revisions.
+const completedStartupReads = new WeakMap<Seed, {
+  tier: NativeSeedTier; revision: number; epoch: number; readRevision: number; consumed: boolean;
+}>();
 
 export function getNativeSeedTier(): NativeSeedTier | null { return selectedTier; }
 
@@ -28,12 +37,14 @@ export function setNativeSeedTier(tier: NativeSeedTier): void {
   selectedTier = tier;
   unconfirmedTier = null;
   revision++;
+  invalidateNativeReadBinding();
 }
 
 export function setActiveNativeSeedWallet(sdk: ActiveWallet['sdk'] | null, network?: Network): void {
   if (sdk && !network) throw new Error('Native wallet network is required');
   activeWallet = sdk && network ? { sdk, network } : null;
   revision++;
+  invalidateNativeReadBinding();
 }
 
 /** Only an explicit wallet reset may discard the selected native record. */
@@ -43,6 +54,7 @@ export function resetNativeSeedSelection(): void {
   pendingSelection = null;
   activeWallet = null;
   revision++;
+  invalidateNativeReadBinding();
 }
 
 /** Preserve existing device-only precedence, keeping the other record intact. */
@@ -113,17 +125,53 @@ function snapshotSeed(seed: Seed): Seed {
   throw new Error('Wallet seed is not valid');
 }
 
+/** Establish a missing tier for a caller that already read/saved a native seed. */
+export async function prepareNativeSeedConnection(seed: Seed): Promise<Seed> {
+  const incoming = snapshotSeed(seed);
+  // Only a completed raw selected read can skip another native prompt. A
+  // selected tier from a failed proof is never authority for a supplied seed.
+  const proof = completedStartupReads.get(seed);
+  if (proof) {
+    if (proof.consumed) throw new Error('Native startup read has already been used');
+    proof.consumed = true;
+    if (proof.tier !== selectedTier || proof.revision !== revision ||
+        proof.readRevision !== getNativeReadLeaseRevision()) throw new Error('Native wallet changed after startup read');
+    assertCurrentSession(proof.epoch);
+    return incoming;
+  }
+  const wallet = activeWallet;
+  const epoch = getSpendingSessionEpoch();
+  const selection = await chooseNativeSeedSelection();
+  const ensureCurrent = () => {
+    if (activeWallet !== wallet || revision !== selection.revision || selectedTier !== selection.tier) {
+      throw new Error('Native wallet selection changed');
+    }
+    assertCurrentSession(epoch);
+  };
+  ensureCurrent();
+  if (!selection.tier) throw new Error('The saved native wallet is unavailable');
+  const saved = await readSelectedNativeSeed({ verifyIdentity: false });
+  ensureCurrent();
+  const matches = saved?.type === 'mnemonic' && incoming.type === 'mnemonic'
+    ? saved.mnemonic === incoming.mnemonic && (saved.passphrase ?? undefined) === (incoming.passphrase ?? undefined)
+    : saved?.type === 'entropy' && incoming.type === 'entropy' &&
+      saved.length === incoming.length && Array.from(saved).every((byte, index) => byte === incoming[index]);
+  if (!matches) throw new Error('The supplied seed does not match the selected native wallet');
+  return incoming;
+}
+
 /** Verify a freshly read seed using the SDK's unchanged seed/account semantics. */
-export async function readSeedForActiveNativeWallet(read: () => Promise<Seed>): Promise<Seed> {
+export async function readSeedForActiveNativeWallet(read: () => Promise<Seed>, entryLease?: NativeReadLease): Promise<Seed> {
   const wallet = activeWallet;
   const selectedRevision = revision;
   const epoch = getSpendingSessionEpoch();
+  const lease = entryLease ?? captureNativeReadLease();
   const ensureCurrent = () => {
     if (!wallet || activeWallet !== wallet || revision !== selectedRevision) {
       throw new Error('Native wallet connection or selection changed');
     }
     assertCurrentSession(epoch);
-    if (isSpendingSessionLocked()) throw new Error('Wallet session is locked');
+    assertNativeReadLease(lease);
   };
   ensureCurrent();
   const seed = snapshotSeed(await read());
@@ -164,23 +212,42 @@ export async function readSeedForActiveNativeWallet(read: () => Promise<Seed>): 
   }
 }
 
-export async function readSelectedNativeSeed({ verifyIdentity = true, allowBiometric = true } = {}): Promise<Seed | null> {
+export async function readSelectedNativeSeed({ verifyIdentity = true, allowBiometric = true, entryLease }: {
+  verifyIdentity?: boolean; allowBiometric?: boolean; entryLease?: NativeReadLease;
+} = {}): Promise<Seed | null> {
+  // Web funding shares this helper, but has no native policy or native vault.
+  if (!selectedTier && !activeWallet && !deviceOnlyStorage.isSupported() && !secureStorage.isSupported()) return null;
   const wallet = activeWallet;
   const epoch = getSpendingSessionEpoch();
+  // Capture before the first await. A later lock/re-authentication cannot
+  // grant an already-started backup/funding request a replacement lease.
+  const lease = verifyIdentity ? entryLease ?? captureNativeReadLease() : undefined;
   const selection = await chooseNativeSeedSelection();
   const { tier, revision: selectedRevision } = selection;
   if (activeWallet !== wallet || revision !== selectedRevision || selectedTier !== tier) throw new Error('Native wallet selection changed');
   assertCurrentSession(epoch);
+  if (lease !== undefined) assertNativeReadLease(lease);
   if (!tier) return null;
   if (tier === 'biometric' && !allowBiometric) throw new NativeSeedAuthenticationRequiredError();
-  const read = async () => {
-    if (revision !== selectedRevision || selectedTier !== tier) throw new Error('Native wallet selection changed');
-    const seed = await (tier === 'device' ? deviceOnlyStorage : secureStorage).retrieveSeed();
-    if (revision !== selectedRevision || selectedTier !== tier) throw new Error('Native wallet selection changed');
+  const rawReadRevision = getNativeReadLeaseRevision();
+  const ensureCurrent = () => {
+    if (activeWallet !== wallet || revision !== selectedRevision || selectedTier !== tier) throw new Error('Native wallet selection changed');
     assertCurrentSession(epoch);
+    if (lease !== undefined) assertNativeReadLease(lease);
+    else if (getNativeReadLeaseRevision() !== rawReadRevision) throw new Error('Native wallet changed during startup read');
+  };
+  const read = async () => {
+    ensureCurrent();
+    const seed = await (tier === 'device' ? deviceOnlyStorage : secureStorage).retrieveSeed();
+    ensureCurrent();
     return seed;
   };
   // Startup needs the selected seed to establish the first SDK connection.
   // Once connected, backup/funding reads must prove the exact public identity.
-  return verifyIdentity ? readSeedForActiveNativeWallet(read) : read();
+  const seed = verifyIdentity ? await readSeedForActiveNativeWallet(read, lease) : snapshotSeed(await read());
+  ensureCurrent();
+  if (!verifyIdentity) completedStartupReads.set(seed, {
+    tier, revision: selectedRevision, epoch, readRevision: rawReadRevision, consumed: false,
+  });
+  return seed;
 }

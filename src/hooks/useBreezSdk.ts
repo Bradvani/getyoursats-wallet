@@ -38,7 +38,7 @@ import {
 import { LEGACY_RP_ID, SHARED_RP_ID, rpId as defaultRpId } from '../services/passkeyPrfProvider';
 import { secureStorage, deviceOnlyStorage, SecureStorageError, resetSecureStorageInit } from '../services/secureStorage';
 import {
-  assertNativeWalletSwitchAllowed, chooseNativeSeedTier, readSelectedNativeSeed, resetNativeSeedSelection,
+  assertNativeWalletSwitchAllowed, chooseNativeSeedTier, prepareNativeSeedConnection, readSelectedNativeSeed, resetNativeSeedSelection,
   setActiveNativeSeedWallet, setNativeSeedTier,
 } from '../services/nativeSeedSelection';
 import {
@@ -500,8 +500,9 @@ export function useBreezSdk(
         logger.debug(LogCategory.SDK, 'Wallet already connected; skipping');
         return null;
       }
-      if (Capacitor.isNativePlatform() && source !== 'secureStorage') {
-        await assertNativeWalletSwitchAllowed();
+      if (Capacitor.isNativePlatform()) {
+        if (source === 'secureStorage') seed = await prepareNativeSeedConnection(seed);
+        else await assertNativeWalletSwitchAllowed();
       }
       const connectionEpoch = ++nativeWalletEpochRef.current;
 

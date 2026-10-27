@@ -3,6 +3,7 @@ import type { Seed } from '@breeztech/breez-sdk-spark';
 import { LogCategory, logger } from '@/services/logger';
 import { deviceOnlyStorage, secureStorage } from '@/services/secureStorage';
 import { NativeSeedAuthenticationRequiredError, readSeedForActiveNativeWallet, readSelectedNativeSeed } from '@/services/nativeSeedSelection';
+import { assertNativeReadLease, captureNativeReadLease, type NativeReadLease } from '@/services/nativeReadLease';
 import { ripemd160 } from '@noble/hashes/legacy';
 import { sha256 } from '@noble/hashes/sha2';
 import { bech32, hex } from '@scure/base';
@@ -117,9 +118,9 @@ export class MnemonicNeedsPasskeyError extends Error {
   }
 }
 
-const stored = async (interactive: boolean): Promise<Seed | null> => {
+const stored = async (interactive: boolean, entryLease?: NativeReadLease): Promise<Seed | null> => {
   try {
-    const seed = await readSelectedNativeSeed({ allowBiometric: interactive });
+    const seed = await readSelectedNativeSeed({ allowBiometric: interactive, entryLease });
     if (seed) return seed;
   } catch (e) {
     if (e instanceof NativeSeedAuthenticationRequiredError) throw new MnemonicNeedsPasskeyError(e.message);
@@ -132,7 +133,7 @@ const stored = async (interactive: boolean): Promise<Seed | null> => {
   if (!mnemonic) return null;
   const seed: Seed = { type: 'mnemonic', mnemonic };
   return deviceOnlyStorage.isSupported() || secureStorage.isSupported()
-    ? readSeedForActiveNativeWallet(async () => seed) : seed;
+    ? readSeedForActiveNativeWallet(async () => seed, entryLease) : seed;
 };
 
 /**
@@ -145,7 +146,11 @@ const stored = async (interactive: boolean): Promise<Seed | null> => {
  * user did not ask for.
  */
 export async function readWalletSeed({ interactive = false } = {}): Promise<Seed> {
-  const cached = await stored(interactive);
+  const native = deviceOnlyStorage.isSupported() || secureStorage.isSupported();
+  const entryLease = native ? captureNativeReadLease() : undefined;
+  const ensureCurrent = () => { if (entryLease !== undefined) assertNativeReadLease(entryLease); };
+  const cached = await stored(interactive, entryLease);
+  ensureCurrent();
   if (cached) return requireValidPassphrase(cached);
 
   // Loaded here rather than imported: the passkey module reads
@@ -154,15 +159,19 @@ export async function readWalletSeed({ interactive = false } = {}): Promise<Seed
   const { getPasskeyLabel, isPasskeyMode, signInPinnedToActiveCredential } = await import(
     '@/services/passkeyService'
   );
+  ensureCurrent();
   if (!isPasskeyMode()) throw new MnemonicUnavailableError();
   if (!interactive) throw new MnemonicNeedsPasskeyError();
 
   const read = async () => {
+    ensureCurrent();
     const { wallet } = await signInPinnedToActiveCredential(getPasskeyLabel() ?? undefined);
+    ensureCurrent();
     return requireValidPassphrase(wallet.seed);
   };
-  return deviceOnlyStorage.isSupported() || secureStorage.isSupported()
-    ? readSeedForActiveNativeWallet(read) : read();
+  const seed = await (native ? readSeedForActiveNativeWallet(read, entryLease) : read());
+  ensureCurrent();
+  return seed;
 }
 
 /** Compatibility for callers that explicitly require words, never reinterpret raw bytes. */

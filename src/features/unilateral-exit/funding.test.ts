@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mnemonicToSeedSync, entropyToMnemonic } from 'bip39';
 import type { Seed } from '@breeztech/breez-sdk-spark';
 import { signInPinnedToActiveCredential } from '@/services/passkeyService';
-import { resetNativeSeedSelection, setActiveNativeSeedWallet } from '@/services/nativeSeedSelection';
+import { chooseNativeSeedTier, resetNativeSeedSelection, setActiveNativeSeedWallet } from '@/services/nativeSeedSelection';
+import { confirmNativePinPolicy, getNativePinPolicyRevision, invalidateNativePinPolicy } from '@/services/nativeReadLease';
 import { clearSignerIdentity, rememberSignerIdentity } from '@/security/spendApproval';
 
 const stores = vi.hoisted(() => ({
@@ -23,6 +24,9 @@ const VECTOR_MNEMONIC =
   'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
 
 beforeEach(() => {
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+  invalidateNativePinPolicy();
+  confirmNativePinPolicy(false, getNativePinPolicyRevision());
   resetNativeSeedSelection();
   clearSignerIdentity();
   for (const store of Object.values(stores)) {
@@ -209,6 +213,7 @@ describe('funding seed selection fails closed', () => {
     stores.secureStorage.isSupported.mockReturnValue(true);
     stores.secureStorage.hasStoredSeed.mockResolvedValue(true);
     localStorage.setItem('walletMnemonic', VECTOR_MNEMONIC);
+    await chooseNativeSeedTier();
     await expect(readWalletSeed()).rejects.toThrow(MnemonicNeedsPasskeyError);
     expect(stores.secureStorage.retrieveSeed).not.toHaveBeenCalled();
     expect(signIn).not.toHaveBeenCalled();
@@ -230,6 +235,7 @@ describe('funding seed selection fails closed', () => {
     localStorage.setItem('walletMnemonic', VECTOR_MNEMONIC);
     localStorage.setItem('passkeyLabel', 'Default');
 
+    await chooseNativeSeedTier();
     await expect(readWalletSeed({ interactive: true })).rejects.toBe(error);
     expect(signIn).not.toHaveBeenCalled();
     expect(localStorage.getItem('walletMnemonic')).toBe(VECTOR_MNEMONIC);

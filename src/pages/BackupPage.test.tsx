@@ -281,6 +281,8 @@ describe('native backup authentication paths', () => {
     fixtures.pinEnabled.mockResolvedValue(true);
     fixtures.deviceSupported.mockReturnValue(true);
     fixtures.deviceHasSeed.mockResolvedValue(true);
+    // Native connection establishes this tier before Backup can mount.
+    setNativeSeedTier('device');
     render(<BackupPage onBack={vi.fn()}/>);
     const unlock = await screen.findByRole('button', {name: 'Unlock Backup'});
     expect(fixtures.deviceRetrieve).not.toHaveBeenCalled();
@@ -310,12 +312,15 @@ describe('native backup authentication paths', () => {
     fixtures.biometricSupported.mockReturnValue(true);
     fixtures.biometricHasSeed.mockResolvedValue(true);
     fixtures.signIn.mockRejectedValueOnce(new Error('Synthetic passkey cancellation'));
+    // This connected legacy wallet already selected its retained bound tier.
+    setNativeSeedTier('biometric');
     render(<BackupPage onBack={vi.fn()}/>);
     fireEvent.click(screen.getByRole('checkbox', {name: /I am in a private space/}));
     fireEvent.click(screen.getByRole('checkbox', {name: /I understand these words control my wallet/}));
     fireEvent.click(screen.getByRole('button', {name: 'Reveal Words Privately'}));
-    await waitFor(() => expect(fixtures.biometricHasSeed).toHaveBeenCalledOnce());
+    await screen.findByText(backupSetupCopy('en').deviceAuth);
     const fallback = await screen.findByRole('button', {name: 'Reveal Words Privately'});
+    await waitFor(() => expect(fallback).toBeEnabled());
     expect(fixtures.signIn).toHaveBeenCalledOnce();
     expect(fixtures.biometricRetrieve).not.toHaveBeenCalled();
     expect(screen.queryByText('Recovery Phrase')).toBeNull();

@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BreezSdk } from '@breeztech/breez-sdk-spark';
 import { useBreezSdk } from './useBreezSdk';
 import { SecureStorageError } from '../services/secureStorage';
-import { resetNativeSeedSelection } from '../services/nativeSeedSelection';
+import { getNativeSeedTier, resetNativeSeedSelection } from '../services/nativeSeedSelection';
+import { confirmNativePinPolicy, getNativePinPolicyRevision, invalidateNativePinPolicy } from '../services/nativeReadLease';
 import { clearSignerIdentity, rememberSignerIdentity } from '../security/spendApproval';
 import { readWalletSeed } from '../features/unilateral-exit/funding';
 import { invalidatePasskey, pinActivePasskeyCredentialId, setPendingSwitchFromCredentialId } from '../services/passkeyService';
@@ -77,6 +78,9 @@ const RECOVERY_RECORDS = {
 };
 
 beforeEach(() => {
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+  invalidateNativePinPolicy();
+  confirmNativePinPolicy(false, getNativePinPolicyRevision());
   resetNativeSeedSelection();
   clearSignerIdentity();
   fixtures.boundRecord = null;
@@ -240,7 +244,7 @@ describe('native startup and retry preserve selected wallet records', () => {
     let connecting!: Promise<BreezSdk | null>;
     act(() => { connecting = result.current.connectWallet(SEED, false); });
     await waitFor(() => expect(sdk.disconnect).toHaveBeenCalledOnce());
-    await expect(readWalletSeed({ interactive: true })).rejects.toThrow(/connection/);
+    await expect(readWalletSeed({ interactive: true })).rejects.toThrow(/connection|changed/);
     expect(fixtures.factory).not.toHaveBeenCalled();
     expect(fixtures.deviceRecord).toBe('unacknowledged device ciphertext');
     await act(async () => {
@@ -306,6 +310,45 @@ describe('native wallet switches preserve the current connection and stored keys
     expect(fixtures.connect).not.toHaveBeenCalled();
     expect(fixtures.passkey).not.toHaveBeenCalled();
     expect(localStorage.getItem('passkeyLabel')).toBeNull();
+    expectRecordsPreserved();
+  });
+});
+
+describe('native direct Start connection establishes its saved tier', () => {
+  it('selects and proves a just-saved device wallet before exposing the connection', async () => {
+    const { result } = renderHook(() => useBreezSdk(vi.fn()));
+    await waitFor(() => expect(result.current.startupState).toBe('no-wallet'));
+    expect(getNativeSeedTier()).toBeNull();
+    fixtures.deviceRecord = 'just-saved device record';
+    fixtures.device.retrieveSeed.mockResolvedValue(SEED);
+    const sdk = {
+      getInfo: vi.fn(async () => ({ identityPubkey: IDENTITY })),
+      listPayments: vi.fn(async () => ({ payments: [] })),
+      listUnclaimedDeposits: vi.fn(async () => ({ deposits: [] })),
+      addEventListener: vi.fn(async () => 'fixture-listener'), removeEventListener: vi.fn(async () => {}),
+    } as unknown as BreezSdk;
+    fixtures.connect.mockImplementation(async () => {
+      expect(getNativeSeedTier()).toBe('device');
+      expect(fixtures.device.retrieveSeed).toHaveBeenCalledOnce();
+      await rememberSignerIdentity(SEED);
+      return sdk;
+    });
+    await act(async () => { await result.current.connectWallet(SEED, false, undefined, 'secureStorage'); });
+    expect(result.current.isConnected).toBe(true);
+    await expect(readWalletSeed({ interactive: true })).resolves.toEqual(SEED);
+    expectRecordsPreserved();
+  });
+
+  it('rejects a supplied seed that differs from the newly selected record before SDK connect', async () => {
+    const { result } = renderHook(() => useBreezSdk(vi.fn()));
+    await waitFor(() => expect(result.current.startupState).toBe('no-wallet'));
+    fixtures.deviceRecord = 'retained device record';
+    fixtures.device.retrieveSeed.mockResolvedValue({ ...SEED, passphrase: 'retained identity' });
+    await act(async () => {
+      await expect(result.current.connectWallet(SEED, false, undefined, 'secureStorage')).rejects.toThrow(/does not match/);
+    });
+    expect(fixtures.connect).not.toHaveBeenCalled();
+    expect(result.current.isConnected).toBe(false);
     expectRecordsPreserved();
   });
 });
