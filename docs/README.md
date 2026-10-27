@@ -6,6 +6,7 @@ For the product introduction, see the [root README](../README.md). For developme
 
 - [Product capabilities and boundaries](../GETYOURSATS.md)
 - [Security reporting and platform boundaries](../SECURITY.md)
+- [Passkey recovery support guide and translations](support/passkey-recovery.md)
 - [Deployment and environment configuration](maintainers/deployment.md)
 - [Release readiness](maintainers/release-readiness.md)
 - [Cross-chain verification](cross-chain-testing.md)
