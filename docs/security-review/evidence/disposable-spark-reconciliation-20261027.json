@@ -1,0 +1,401 @@
+{
+  "schema": 1,
+  "network": "regtest",
+  "realFunds": false,
+  "userSecrets": false,
+  "fixtureApprovals": true,
+  "physicalDevice": false,
+  "fullProductAcceptance": false,
+  "sourceCommit": "76fb6140aaa3712d57c3f57c0c7c2d1303a49171",
+  "sourceDirty": true,
+  "priorReceiptSha256": "0b9084e2a47420b379525f70faae4141d9240e3c18bd81254e8aa5f5d15ea27f",
+  "sdk": {
+    "schema": 1,
+    "sdkSourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+    "patchSha256": "0881588afefe212b426854b06dc2b0956c1084bfec9b1981677d93642276baa4",
+    "baselinePackageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026",
+    "cargoLockSha256": "a4ff9d25f17511301751298d67caa1cd123d2ad220013f14875034ba1311b0b9",
+    "rustToolchain": "1.95.0",
+    "wasmBindgenVersion": "0.2.120",
+    "cargoProfile": "release (upstream profile, wasm-opt disabled)",
+    "rawCompiledWasmSha256": "8bd148f7d2219f38363876278ed8fda09a34e8d6876f4f02d467f8ce44b460ff",
+    "generatedArtifacts": {
+      "web/breez_sdk_spark_wasm.js": "87b0bed1139178b4ed734639a1448cbd36e9e65f078a352b22ef936d9153739a",
+      "web/breez_sdk_spark_wasm.d.ts": "96c85d7153c80135a15c1364d751cdfad29b6410b7a9c143ed5f460a40616f7a",
+      "web/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+      "nodejs/breez_sdk_spark_wasm.js": "d484061ddf6adbf4e128986caaf410e0a1481f13107388cc1741dc9cf550acd0",
+      "nodejs/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+      "nodejs/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+      "bundler/breez_sdk_spark_wasm.js": "6342628f134d0ad21d634559fe7b5a3cea6389e2e5a82134009cc94cfaec81e2",
+      "bundler/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+      "bundler/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+      "deno/breez_sdk_spark_wasm.js": "871574fb1e6cbd93ac0c631527b2344f15272f1c1d140f75c295894a2393be29",
+      "deno/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+      "deno/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910"
+    },
+    "securityClaim": "same-wallet software signing with observation-only network queries; not isolated or hardware-backed",
+    "extensions": [
+      "seed-compatible-external-signers-v1",
+      "observation-only-wallet-state-v1",
+      "signed-recovery-v1",
+      "explicit-incoming-claim-v1",
+      "bounded-mature-deposit-claim-v1",
+      "unreceived-deposit-continuation-v1",
+      "recovery-signer-envelope-v1"
+    ],
+    "packageSha256": "f3cb177c5cb38cd3222b8279e8a9c5815f788d5ccd611a9e8a29d5caefb4bf37"
+  },
+  "fixtureSha256": "d3cc05afe5c0151491fdaac0e1c8362a6e0450c5f33d000b2aa4811cbc794b36",
+  "scriptSha256": "38d5f4c89e0b31472e7d60ce480967c6972efe8d73e0e2335c1b84034a2f7439",
+  "originalOperationId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+  "originalSendResubmitted": false,
+  "steps": [
+    {
+      "step": "original-direct-spark-settlement",
+      "result": "PASS",
+      "id": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+      "sender": {
+        "identity": "034c01f28e4db50219ccbceb75d1b5bdf064a05ef58532d910775454e55d6fb5bd",
+        "balance": "900",
+        "payments": [
+          {
+            "id": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+            "amount": "100",
+            "fee": "0",
+            "status": "completed",
+            "type": "send",
+            "method": "spark"
+          },
+          {
+            "id": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+            "amount": "1000",
+            "fee": "0",
+            "status": "completed",
+            "type": "receive",
+            "method": "spark"
+          }
+        ],
+        "incoming": [
+          {
+            "version": 1,
+            "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+            "paymentId": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+            "network": "regtest",
+            "amountSats": "1000",
+            "expiresAt": 1793065822,
+            "state": "settled",
+            "revision": 1
+          }
+        ],
+        "outgoing": [
+          {
+            "version": 1,
+            "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+            "operationId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+            "paymentId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+            "intentHash": "c66135f1cdaa552ec82eb5dd1dab01ac72d0825897ddb543ddb2bc24f086d1f8",
+            "recipientHash": "e8e1731df92747bb20e7de8d3b0b935d7e80bf1da7bdca908e75c9235825bb02",
+            "network": "regtest",
+            "route": "spark",
+            "amountSats": "100",
+            "feeLimitSats": "0",
+            "state": "completed",
+            "createdAt": 1793065765150,
+            "updatedAt": 1793066000820
+          }
+        ]
+      },
+      "receiver": {
+        "identity": "03f9751e36385090cbcb11837dcace5a6aa204291ee04ab20a34d0d3f7c020df86",
+        "balance": "100",
+        "payments": [
+          {
+            "id": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+            "amount": "100",
+            "fee": "0",
+            "status": "completed",
+            "type": "receive",
+            "method": "spark"
+          }
+        ],
+        "incoming": [
+          {
+            "version": 1,
+            "walletKey": "a8e55ae20ade26baa2ec203e93b16a65d90797bb9b46f7ca115f73b5e8e12737",
+            "paymentId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+            "network": "regtest",
+            "amountSats": "100",
+            "expiresAt": 1793066058,
+            "state": "settled",
+            "revision": 1
+          }
+        ],
+        "outgoing": []
+      }
+    },
+    {
+      "step": "same-profile-restart",
+      "result": "PASS",
+      "restored": {
+        "identity": "03f9751e36385090cbcb11837dcace5a6aa204291ee04ab20a34d0d3f7c020df86",
+        "balance": "100",
+        "address": "sparkrt1pgss87t4rcmrs5yse093rqmaet89564zqs53acz2kg9rf5xn7lqzphuxzzdcfx",
+        "receiveFee": "0"
+      }
+    },
+    {
+      "step": "return-direct-spark-settlement",
+      "result": "PASS",
+      "id": "117da763-c299-49af-b9d6-e6181cf00693",
+      "sender": {
+        "identity": "03f9751e36385090cbcb11837dcace5a6aa204291ee04ab20a34d0d3f7c020df86",
+        "balance": "50",
+        "payments": [
+          {
+            "id": "117da763-c299-49af-b9d6-e6181cf00693",
+            "amount": "50",
+            "fee": "0",
+            "status": "completed",
+            "type": "send",
+            "method": "spark"
+          },
+          {
+            "id": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+            "amount": "100",
+            "fee": "0",
+            "status": "completed",
+            "type": "receive",
+            "method": "spark"
+          }
+        ],
+        "incoming": [
+          {
+            "version": 1,
+            "walletKey": "a8e55ae20ade26baa2ec203e93b16a65d90797bb9b46f7ca115f73b5e8e12737",
+            "paymentId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+            "network": "regtest",
+            "amountSats": "100",
+            "expiresAt": 1793066058,
+            "state": "settled",
+            "revision": 1
+          }
+        ],
+        "outgoing": [
+          {
+            "version": 1,
+            "walletKey": "a8e55ae20ade26baa2ec203e93b16a65d90797bb9b46f7ca115f73b5e8e12737",
+            "operationId": "117da763-c299-49af-b9d6-e6181cf00693",
+            "paymentId": "117da763-c299-49af-b9d6-e6181cf00693",
+            "intentHash": "518e2ec8e0db1988acf4a75c8729ab693052f1bee01e83ca4263cc792de4676e",
+            "recipientHash": "cf7330c403acf81b3ab96442ffc8c77e093cd90f62fea065d425c0fcaf44e896",
+            "network": "regtest",
+            "route": "spark",
+            "amountSats": "50",
+            "feeLimitSats": "0",
+            "state": "completed",
+            "createdAt": 1793066004335,
+            "updatedAt": 1793066012964
+          }
+        ]
+      },
+      "receiver": {
+        "identity": "034c01f28e4db50219ccbceb75d1b5bdf064a05ef58532d910775454e55d6fb5bd",
+        "balance": "950",
+        "payments": [
+          {
+            "id": "117da763-c299-49af-b9d6-e6181cf00693",
+            "amount": "50",
+            "fee": "0",
+            "status": "completed",
+            "type": "receive",
+            "method": "spark"
+          },
+          {
+            "id": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+            "amount": "100",
+            "fee": "0",
+            "status": "completed",
+            "type": "send",
+            "method": "spark"
+          },
+          {
+            "id": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+            "amount": "1000",
+            "fee": "0",
+            "status": "completed",
+            "type": "receive",
+            "method": "spark"
+          }
+        ],
+        "incoming": [
+          {
+            "version": 1,
+            "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+            "paymentId": "117da763-c299-49af-b9d6-e6181cf00693",
+            "network": "regtest",
+            "amountSats": "50",
+            "expiresAt": 1793066070,
+            "state": "settled",
+            "revision": 1
+          },
+          {
+            "version": 1,
+            "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+            "paymentId": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+            "network": "regtest",
+            "amountSats": "1000",
+            "expiresAt": 1793065822,
+            "state": "settled",
+            "revision": 1
+          }
+        ],
+        "outgoing": [
+          {
+            "version": 1,
+            "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+            "operationId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+            "paymentId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+            "intentHash": "c66135f1cdaa552ec82eb5dd1dab01ac72d0825897ddb543ddb2bc24f086d1f8",
+            "recipientHash": "e8e1731df92747bb20e7de8d3b0b935d7e80bf1da7bdca908e75c9235825bb02",
+            "network": "regtest",
+            "route": "spark",
+            "amountSats": "100",
+            "feeLimitSats": "0",
+            "state": "completed",
+            "createdAt": 1793065765150,
+            "updatedAt": 1793066000820
+          }
+        ]
+      }
+    }
+  ],
+  "result": "PASS_DIRECT_SPARK_RECONCILIATION_AND_RETURN_ONLY",
+  "settlementVerified": true,
+  "startedAt": "2026-10-27T01:52:52.703Z",
+  "returnPending": true,
+  "finalObservations": [
+    {
+      "identity": "034c01f28e4db50219ccbceb75d1b5bdf064a05ef58532d910775454e55d6fb5bd",
+      "balance": "950",
+      "payments": [
+        {
+          "id": "117da763-c299-49af-b9d6-e6181cf00693",
+          "amount": "50",
+          "fee": "0",
+          "status": "completed",
+          "type": "receive",
+          "method": "spark"
+        },
+        {
+          "id": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+          "amount": "100",
+          "fee": "0",
+          "status": "completed",
+          "type": "send",
+          "method": "spark"
+        },
+        {
+          "id": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+          "amount": "1000",
+          "fee": "0",
+          "status": "completed",
+          "type": "receive",
+          "method": "spark"
+        }
+      ],
+      "incoming": [
+        {
+          "version": 1,
+          "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+          "paymentId": "117da763-c299-49af-b9d6-e6181cf00693",
+          "network": "regtest",
+          "amountSats": "50",
+          "expiresAt": 1793066070,
+          "state": "settled",
+          "revision": 1
+        },
+        {
+          "version": 1,
+          "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+          "paymentId": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+          "network": "regtest",
+          "amountSats": "1000",
+          "expiresAt": 1793065822,
+          "state": "settled",
+          "revision": 1
+        }
+      ],
+      "outgoing": [
+        {
+          "version": 1,
+          "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+          "operationId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+          "paymentId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+          "intentHash": "c66135f1cdaa552ec82eb5dd1dab01ac72d0825897ddb543ddb2bc24f086d1f8",
+          "recipientHash": "e8e1731df92747bb20e7de8d3b0b935d7e80bf1da7bdca908e75c9235825bb02",
+          "network": "regtest",
+          "route": "spark",
+          "amountSats": "100",
+          "feeLimitSats": "0",
+          "state": "completed",
+          "createdAt": 1793065765150,
+          "updatedAt": 1793066000820
+        }
+      ]
+    },
+    {
+      "identity": "03f9751e36385090cbcb11837dcace5a6aa204291ee04ab20a34d0d3f7c020df86",
+      "balance": "50",
+      "payments": [
+        {
+          "id": "117da763-c299-49af-b9d6-e6181cf00693",
+          "amount": "50",
+          "fee": "0",
+          "status": "completed",
+          "type": "send",
+          "method": "spark"
+        },
+        {
+          "id": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+          "amount": "100",
+          "fee": "0",
+          "status": "completed",
+          "type": "receive",
+          "method": "spark"
+        }
+      ],
+      "incoming": [
+        {
+          "version": 1,
+          "walletKey": "a8e55ae20ade26baa2ec203e93b16a65d90797bb9b46f7ca115f73b5e8e12737",
+          "paymentId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+          "network": "regtest",
+          "amountSats": "100",
+          "expiresAt": 1793066058,
+          "state": "settled",
+          "revision": 1
+        }
+      ],
+      "outgoing": [
+        {
+          "version": 1,
+          "walletKey": "a8e55ae20ade26baa2ec203e93b16a65d90797bb9b46f7ca115f73b5e8e12737",
+          "operationId": "117da763-c299-49af-b9d6-e6181cf00693",
+          "paymentId": "117da763-c299-49af-b9d6-e6181cf00693",
+          "intentHash": "518e2ec8e0db1988acf4a75c8729ab693052f1bee01e83ca4263cc792de4676e",
+          "recipientHash": "cf7330c403acf81b3ab96442ffc8c77e093cd90f62fea065d425c0fcaf44e896",
+          "network": "regtest",
+          "route": "spark",
+          "amountSats": "50",
+          "feeLimitSats": "0",
+          "state": "completed",
+          "createdAt": 1793066004335,
+          "updatedAt": 1793066012964
+        }
+      ]
+    }
+  ],
+  "finishedAt": "2026-10-27T01:53:35.205Z",
+  "profilesRetained": true,
+  "doNotFundReportedAddresses": true
+}
