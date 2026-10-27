@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import {useInvoiceExpiry} from '../../hooks/useInvoiceExpiry';
 import {formatMoney} from '@/getyoursats/money';
 import {trustCopy} from '@/getyoursats/trustCopy';
@@ -60,6 +61,7 @@ interface QRCodeDisplayProps {
  *  The figure leads in the unit it was typed in, with the sats under it when
  *  that was a fiat or stable one, since the invoice is denominated in sats. */
 const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amount }) => {
+  const t=useFlowText();
   const { showToast } = useToast();
   const expiry=useInvoiceExpiry(paymentData);const text=trustCopy();
   if(!expiry.usable)return <div className="p-4 text-sm text-spark-text-secondary" role="status">{expiry.checking?text.checking:expiry.expiresAt?text.invoiceExpired:text.invoiceExpiryUnknown}</div>;
@@ -68,7 +70,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
       <p className="text-xs text-spark-text-muted">{text.expires}: {new Date(expiry.expiresAt!).toLocaleString()}</p>
       {amount && (
         <div className="text-center">
-          <p className="text-spark-text-muted text-sm mb-2">Scan to pay</p>
+          <p className="text-spark-text-muted text-sm mb-2">{t("Scan to pay")}</p>
           <span className="text-3xl font-mono font-bold text-spark-text-primary">
             {amount.display ?? <SatAmount sats={amount.sats} />}
           </span>
@@ -83,7 +85,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
       <QRCodeContainer value={paymentData} />
       <div className="gys-receive-status" role="status">
         <PaymentMotion state="receiving" compact />
-        <span><strong>Ready to receive</strong><small>Share this invoice. Confirmation appears when payment arrives.</small></span>
+        <span><strong>{t("Ready to receive")}</strong><small>{t("Share this invoice. Confirmation appears when payment arrives.")}</small></span>
       </div>
 
       <div className="w-full">
@@ -92,8 +94,8 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
           truncate
           showShare
           label="Lightning Invoice"
-          onCopied={() => showToast('success', 'Copied!')}
-          onShareError={() => showToast('error', 'Failed to share')}
+          onCopied={() => showToast('success', t('Copied!'))}
+          onShareError={() => showToast('error', t('Failed to share'))}
           data-testid="lightning-invoice-text"
         />
 
@@ -108,6 +110,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
 };
 
 const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onClose }) => {
+  const t=useFlowText();
   const receive = useReceivePayment();
   const [showChangeConfirm, setShowChangeConfirm] = useState<boolean>(false);
   // The tabs belong to choosing, not to what you have made with the choice:
@@ -213,7 +216,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
     const parts = lightningAddress.lightningAddress.split('@');
     const username = parts[0];
     const domain = parts[1] || 'breez.tips';
-    return `'${username}@${domain}' will stop receiving payments.\n\nDo you want to proceed?`;
+    return t("'{address}' will stop receiving payments.\n\nDo you want to proceed?",{address:username+'@'+domain});
   };
 
   // The BTC tab shows Lightning or on-chain, reusing those two tab states.
@@ -328,22 +331,13 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
     />
   ));
 
-  const getQRTitle = () => {
-    switch (receive.activeTab) {
-      case 'lightning': return 'Lightning Invoice';
-      case 'spark': return 'Spark Address';
-      case 'bitcoin': return 'Bitcoin Address';
-      case 'usd': return trustCopy().stablecoins;
-      default: return 'Payment Request';
-    }
-  };
 
   return (
     <>
       <BottomSheetContainer isOpen={isOpen} onClose={onClose} showBackdrop>
         <BottomSheetCard>
           <DialogHeader
-            title="Receive"
+            title={t("Receive")}
             onClose={onClose}
             // The USD steps lend theirs through `useSheetBack`; the invoice is
             // rendered here, so its way back is passed in directly.
@@ -404,7 +398,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
 
                     {receive.currentStep === 'loading' && (
                       <div className="flex flex-col items-center justify-center h-40" data-testid="invoice-generation-loading">
-                        <LoadingSpinner text={`Generating ${getQRTitle().toLowerCase()}...`} />
+                        <LoadingSpinner text={t('Creating payment request…')} />
                       </div>
                     )}
 
@@ -442,17 +436,17 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
             // because `isContentReady` gates the tab UI, so a
             // Lightning-specific copy is safe.
             <div className="text-center py-8">
-              <LoadingSpinner text="Loading Lightning Address..." />
+              <LoadingSpinner text={t('Loading Lightning address…')} />
             </div>
           )}
         </BottomSheetCard>
 
         <ConfirmDialog
           isOpen={showChangeConfirm}
-          title="Confirm Username Change"
+          title={t("Confirm Username Change")}
           message={getAddressChangeMessage()}
-          confirmLabel="Change"
-          cancelLabel="Cancel"
+          confirmLabel={t("Change")}
+          cancelLabel={t("Cancel")}
           variant="warning"
           onConfirm={async () => {
             setShowChangeConfirm(false);

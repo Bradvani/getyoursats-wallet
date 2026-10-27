@@ -35,3 +35,7 @@ local-regtest/cluster/target/
 /demo/
 /e2e/demo/
 /playwright.demo.config.ts
+
+# Generated from lockfile-pinned fonts at build time
+/public/locale-fonts/
+/site/locale-fonts/

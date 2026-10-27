@@ -1,3 +1,5 @@
+import {formatFiat} from '../utils/formatFiat';
+import {useFlowText} from '@/hooks/useFlowText';
 import GetYourSatsWordmark from './GetYourSatsWordmark';
 import DenominationTabs from '../getyoursats/DenominationTabs';
 import {getDenomination,saveDenomination,satsToAmount,satoshiSymbol,type Denomination} from '../getyoursats/denomination';
@@ -42,6 +44,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
   hasRejectedDeposits,
   onOpenGetRefund,
 }) => {
+  const t=useFlowText();
   const { fiatRates, fiatCurrencies } = useFiatData();
   const stableBalance = useStableBalance();
   // Persisted rather than a plain index: the receive amount input reads the
@@ -198,9 +201,9 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
 
     return {
       ...info,
-      value: fiatValue.toFixed(info.fractionSize),
+      value: formatFiat(fiatValue,info.currencyId,language,{numberOnly:true,maximumFractionDigits:info.fractionSize}),
     };
-  }, [stableBalance.isActive, fiatCurrencyInfo, activeFiatIndex, displayBalance, btcBalanceSat, hasSecondaryData]);
+  }, [stableBalance.isActive, fiatCurrencyInfo, activeFiatIndex, displayBalance, btcBalanceSat, hasSecondaryData, language]);
 
   // Stable balance secondary line. Sats only: the "change" label renders beside
   // the amount rather than inside it, so it keeps a normal word space.
@@ -222,10 +225,10 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
     if(bitcoinUnit!=='sats'&&bitcoinUnit!=='BTC'&&primaryFiatRate){
       const v=satsToAmount(Math.round(displayBalance),bitcoinUnit,primaryFiatRate);
       const numeric=Number(v);
-      return Number.isFinite(numeric)?formatWithSpaces(numeric):v;
+      return Number.isFinite(numeric)?formatFiat(numeric,bitcoinUnit,language,{numberOnly:true}):v;
     }
     return formatWithSpaces(displayBalance);
-  }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, primaryFiatRate]);
+  }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, primaryFiatRate, language]);
 
   // The Bitcoin glyph denotes BTC, never sats. Sats are labelled by their unit selector.
   const currencySymbol = stableBalance.isActive && stableBalance.displayConfig?.symbol
@@ -281,7 +284,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
           <button
             onClick={onOpenMenu}
             className="inline-flex min-h-11 min-w-11 items-center justify-center gap-0.5 p-2 -ml-2 text-[#F7931A] hover:text-[#FFB25E] transition-colors rounded-xl hover:bg-white/5"
-            aria-label="Open menu"
+            aria-label={t("Open menu")}
             data-testid="menu-button"
           >
             <span className="font-semibold text-[25px] leading-none" aria-hidden="true">{satoshiSymbol}</span>
@@ -300,7 +303,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
                 className="flex items-center gap-1 h-9 px-3 rounded-xl text-spark-warning border border-spark-warning/20 hover:border-spark-warning/40 hover:bg-spark-warning/5 transition-colors text-xs font-medium"
               >
                 <AlertTriangleIcon size="xs" />
-                Refund
+                {t("Refund")}
               </button>
             )}
             {/* Buy Bitcoin */}
@@ -308,7 +311,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
               <button
                 type="button"
                 disabled={isBuyLoading}
-                aria-label={buyCopy('Buy')}
+                aria-label={buyCopy(t('Buy'))}
                 className={`flex items-center justify-center gap-1.5 h-9 rounded-xl transition-colors text-sm font-medium disabled:opacity-50 ${
                   isBuyIconOnly()
                     ? 'w-9 bg-[#00D632] hover:bg-[#00bf2d] border border-black/15 hover:border-black/25'
@@ -326,7 +329,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
                 ) : (
                   <CurrencyIcon size="sm" />
                 )}
-                {!isBuyIconOnly() && <span>{buyCopy('Buy')}</span>}
+                {!isBuyIconOnly() && <span>{buyCopy(t('Buy'))}</span>}
               </button>
             )}
           </div>
@@ -342,7 +345,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-spark-primary animate-pulse" />
-              Syncing
+              {t("Syncing")}
             </span>
             {/* inline-flex + items-center keeps the suffix pill on the
                 same vertical axis as the BALANCE text (inline baseline
@@ -352,7 +355,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
                 isSyncing ? 'opacity-0' : 'opacity-100'
               }`}
             >
-              Balance
+              {t("Balance")}
               <span className="mx-1.5" aria-hidden="true">·</span>
               <span data-testid="balance-holding-label">{balanceSuffix}</span>
             </span>
@@ -385,7 +388,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
                 stableSecondarySats ? (
                   <span className="inline-flex items-center">
                     <SatAmount sats={stableSecondarySats} />
-                    <span className="ml-1">change</span>
+                    <span className="ml-1">{t("change")}</span>
                   </span>
                 ) : (
                   <span className="invisible">$0.00</span>

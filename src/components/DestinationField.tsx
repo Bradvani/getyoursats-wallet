@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import React, { useId, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Clipboard } from '@capacitor/clipboard';
@@ -19,6 +20,7 @@ export const DestinationField: React.FC<{
   onSubmit: () => void;
   onScanQr: () => void;
 }> = ({ destination, onChange, error, onSubmit, onScanQr }) => {
+  const t=useFlowText();
   const id = useId();
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -52,7 +54,7 @@ export const DestinationField: React.FC<{
           htmlFor={id}
           className="block text-sm font-medium text-spark-text-primary mb-2"
         >
-          Destination
+          {t("Destination")}
         </label>
         {/* A textarea so a long address wraps instead of scrolling sideways,
             with Enter submitting: this field never takes a second line. */}
@@ -80,11 +82,11 @@ export const DestinationField: React.FC<{
       <div className="flex gap-2">
         <button type="button" onClick={() => void handlePaste()} className={quickAction}>
           <ClipboardIcon size="xs" />
-          <span className="text-sm font-medium">Paste</span>
+          <span className="text-sm font-medium">{t("Paste")}</span>
         </button>
         <button type="button" onClick={onScanQr} className={quickAction}>
           <QrCodeIcon size="xs" />
-          <span className="text-sm font-medium">Scan</span>
+          <span className="text-sm font-medium">{t("Scan")}</span>
         </button>
       </div>
 

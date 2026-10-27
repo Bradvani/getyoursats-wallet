@@ -1,3 +1,4 @@
+import {flowText} from '@/locales/flowText';
 import {usePresentation} from '@/hooks/usePresentation';
 import {sendDestinationCopy} from '@/locales/sendDestination';
 import {PAYMENT_UX} from '@/locales/paymentUx';
@@ -204,7 +205,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
             }`}
           >
             <DialogHeader
-              title={dialogTitle}
+              title={flowText(language,dialogTitle)}
               onClose={handleClose}
               icon={headerIcon}
             />

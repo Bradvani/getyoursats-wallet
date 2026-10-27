@@ -1,3 +1,4 @@
+import LocalizedErrorText from '../../LocalizedErrorText';
 import React, { ReactNode } from 'react';
 import { ErrorIcon } from '../../Icons';
 
@@ -156,7 +157,7 @@ export const FormError: React.FC<{
   return (
     <div className="flex items-center gap-2 text-spark-primary text-sm">
       <ErrorIcon className="shrink-0" />
-      <span className="min-w-0 [overflow-wrap:anywhere] text-spark-primary-light">{error}</span>
+      <div className="min-w-0 [overflow-wrap:anywhere] text-spark-primary-light"><LocalizedErrorText message={error}/></div>
     </div>
   );
 };

@@ -1,3 +1,5 @@
+import {useFlowText} from '@/hooks/useFlowText';
+import {usePresentation} from '@/hooks/usePresentation';
 import React, { Fragment, useLayoutEffect, useRef, useState } from 'react';
 import type { LnurlAuthRequestDetails, LnurlCallbackStatus } from '@breeztech/breez-sdk-spark';
 import { FormError, PrimaryButton, SecondaryButton } from '../../../components/ui';
@@ -31,6 +33,7 @@ const LUD_01_URL = 'https://github.com/lnurl/luds/blob/luds/01.md';
 
 interface Failure {
   message: string;
+  detail?: string;
   /** The site answered but hid its reply, which LUD-01's CORS rule forbids. */
   missingCors?: boolean;
 }
@@ -112,6 +115,8 @@ const DomainName: React.FC<{ domain: string }> = ({ domain }) => {
 };
 
 const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, onAuth, onClose }) => {
+  const t=useFlowText();
+  const {language}=usePresentation();
   const [failure, setFailure] = useState<Failure | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -131,7 +136,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
       }
       const reason = result.errorDetails.reason.trim().replace(/\.+$/, '');
       logger.warn(LogCategory.SDK, 'LNURL auth refused', { domain, reason });
-      setFailure({ message: `Could not ${action.doing} ${domain}: ${reason}. ${FRESH_CODE}` });
+      setFailure({ message: language==='en'?`Could not ${action.doing} ${domain}: ${reason}. ${FRESH_CODE}`:t('Sign-in could not be completed.')+' '+t(FRESH_CODE),detail:language==='en'?undefined:reason });
     } catch (err) {
       const error = formatError(err);
       logger.error(LogCategory.SDK, 'LNURL auth failed', { domain, error });
@@ -139,14 +144,14 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
       // still answers, the reply was hidden by missing CORS headers and the
       // site may well have accepted the login (#415).
       if (!error.includes('Network error:')) {
-        setFailure({ message: `Could not ${action.doing} ${domain}. ${FRESH_CODE}` });
+        setFailure({ message: language==='en'?`Could not ${action.doing} ${domain}. ${FRESH_CODE}`:t('Sign-in could not be completed.')+' '+t(FRESH_CODE) });
       } else if (await hostAnswers(parsed.url)) {
         setFailure({
-          message: `Could not read the reply from ${domain}. Check the site to see if you've ${action.done}.`,
+          message: language==='en'?`Could not read the reply from ${domain}. Check the site to see if you've ${action.done}.`:t('Could not read the reply from {domain}. Check the site before trying again.',{domain}),
           missingCors: true,
         });
       } else {
-        setFailure({ message: `Could not reach ${domain}. Check your connection and try again.` });
+        setFailure({ message: t('Could not reach {domain}. Check your connection and try again.',{domain}) });
       }
     } finally {
       setIsLoading(false);
@@ -159,7 +164,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
         result="success"
         error={null}
         operationType="auth"
-        description={`${domain} confirmed it's you.`}
+        description={language==='en'?`${domain} confirmed it's you.`:t('{domain} confirmed it’s you.',{domain})}
         onClose={onClose}
       />
     );
@@ -169,16 +174,17 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
     <div className="space-y-5">
       <div className="text-center">
         <DomainName domain={domain} />
-        <p className="text-spark-text-secondary text-sm mt-1">wants you to {action.ask}</p>
+        <p className="text-spark-text-secondary text-sm mt-1">{t('Request from this website: {action}',{action:t(action.label)})}</p>
       </div>
 
       {failure && (
         <div className="space-y-2">
           <FormError error={failure.message} />
+          {failure.detail&&<details className="text-xs"><summary>{t('Technical details')}</summary><p dir="auto">{failure.detail}</p></details>}
           {/* Indented to the error's text, so it reads as that error's detail line. */}
           {failure.missingCors && (
             <p className="ml-6 text-xs text-spark-text-muted [overflow-wrap:anywhere]">
-              {domain} is missing a CORS header (
+              {language==='en'?`${domain} is missing a CORS header`:t('{domain} is missing a CORS header.',{domain})} (
               <a
                 href={LUD_01_URL}
                 target="_blank"
@@ -201,20 +207,20 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
           single-use code would only report it as used. */}
       {failure?.missingCors ? (
         <PrimaryButton onClick={onClose} className="w-full">
-          Done
+          {t("Done")}
         </PrimaryButton>
       ) : (
         <div className="flex gap-3">
           <SecondaryButton onClick={onClose} disabled={isLoading} className="flex-1">
-            Cancel
+            {t("Cancel")}
           </SecondaryButton>
           <PrimaryButton onClick={handleAuth} disabled={isLoading} className="flex-1">
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
                 <SpinnerIcon size="md" />
-                Processing...
+                {t("Processing...")}
               </span>
-            ) : action.label}
+            ) : t(action.label)}
           </PrimaryButton>
         </div>
       )}

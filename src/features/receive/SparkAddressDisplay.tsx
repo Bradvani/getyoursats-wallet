@@ -2,6 +2,7 @@ import React from 'react';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { QRCodeContainer, CopyableText } from '../../components/ui';
 import { useToast } from '../../contexts/ToastContext';
+import {useFlowText} from '../../hooks/useFlowText';
 
 interface Props {
   address: string | null;
@@ -10,11 +11,12 @@ interface Props {
 
 const SparkAddressDisplay: React.FC<Props> = ({ address, isLoading }) => {
   const { showToast } = useToast();
+  const t=useFlowText();
 
   if (isLoading || !address) {
     return (
       <div className="text-center py-8">
-        <LoadingSpinner text="Generating Spark address..." />
+        <LoadingSpinner text={t('Generating Spark address...')} />
       </div>
     );
   }
@@ -28,8 +30,8 @@ const SparkAddressDisplay: React.FC<Props> = ({ address, isLoading }) => {
         showShare
         label="Spark Address"
         textColor="text-spark-primary"
-        onCopied={() => showToast('success', 'Copied!')}
-        onShareError={() => showToast('error', 'Failed to share')}
+        onCopied={() => showToast('success', t('Copied!'))}
+        onShareError={() => showToast('error', t('Failed to share'))}
         data-testid="spark-address-text"
       />
     </div>

@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import React from 'react';
 import type { LightningAddressInfo } from '@breeztech/breez-sdk-spark';
 import { BottomSheetContainer, BottomSheetCard, DialogHeader, FormError, LoadingSpinner, PrimaryButton } from '../../components/ui';
@@ -25,11 +26,13 @@ const LightningAddressEditSheet: React.FC<LightningAddressEditSheetProps> = ({
   onEditValueChange,
   onSave,
   onClose,
-}) => (
+}) => {
+ const t=useFlowText();
+ return (
   <BottomSheetContainer isOpen={isOpen} onClose={onClose} showBackdrop>
     <BottomSheetCard>
       <DialogHeader
-        title={address ? 'Edit Address' : 'Create Address'}
+        title={address ? t('Edit Address') : t('Create Address')}
         onClose={onClose}
         icon={<LightningBoltIcon />}
       />
@@ -83,11 +86,12 @@ const LightningAddressEditSheet: React.FC<LightningAddressEditSheetProps> = ({
           className="w-full"
           data-testid="save-address-button"
         >
-          {isLoading ? <LoadingSpinner size="small" /> : 'Save'}
+          {isLoading ? <LoadingSpinner size="small" /> : t('Save')}
         </PrimaryButton>
       </div>
     </BottomSheetCard>
   </BottomSheetContainer>
 );
+};
 
 export default LightningAddressEditSheet;

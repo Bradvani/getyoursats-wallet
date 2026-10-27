@@ -46,7 +46,7 @@ test('@public-smoke support form offers action-oriented enquiries without implyi
  await page.locator('#gys-email').fill('quality-check@example.com');
  await page.locator('#gys-message').fill('I would like to discuss a potential partnership and community collaboration.');
  await page.locator('input[name=consent]').check();
- await page.getByRole('button',{name:'Send securely'}).click();
+ await page.getByRole('button',{name:'Send message',exact:true}).click();
  await expect(page.getByRole('status',{name:''}).last()).toContainText('GYS-CATEGORY-QA');
  expect(submissions[submissions.length - 1]?.topic).toBe('partnership');
  expect(submissions[submissions.length - 1]?.message).toContain('potential partnership');

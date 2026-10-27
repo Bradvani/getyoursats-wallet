@@ -1,3 +1,5 @@
+import {getAppLanguage} from '../services/presentationPreferences';
+import {flowText} from '../locales/flowText';
 import type { Payment, PaymentDetails } from '@breeztech/breez-sdk-spark';
 
 type ContactLookup = (address: string) => { name: string } | undefined;
@@ -43,10 +45,12 @@ const truncate = (text: string, maxLen: number): string =>
   text.length > maxLen ? `${text.slice(0, maxLen)}…` : text;
 
 export function getPaymentDescription(payment: Payment, findContactByAddress?: ContactLookup, fiatCurrencyName?: string | null): string {
+  const language=getAppLanguage();
+  const t=(text:string,values:Record<string,string>={})=>flowText(language,text,values);
   const convInfo = getConversionInfo(payment.details);
 
   if (payment.method === 'lightning') {
-    if (isCrossChain(convInfo)) return 'USD Transfer';
+    if (isCrossChain(convInfo)) return t('USD Transfer');
     if (payment.details?.type === 'lightning') {
       const comment = payment.details.lnurlPayInfo?.comment
         ?? payment.details.lnurlReceiveMetadata?.senderComment;
@@ -54,32 +58,32 @@ export function getPaymentDescription(payment: Payment, findContactByAddress?: C
       if (payment.details.lnurlPayInfo?.lnAddress) {
         const contact = findContactByAddress?.(payment.details.lnurlPayInfo.lnAddress);
         const isSend = payment.paymentType === 'send';
-        if (contact) return isSend ? `Pay to ${contact.name}` : contact.name;
-        return isSend ? `Pay to ${payment.details.lnurlPayInfo.lnAddress}` : payment.details.lnurlPayInfo.lnAddress;
+        if (contact) return isSend ? t('Pay to {recipient}',{recipient:contact.name}) : contact.name;
+        return isSend ? t('Pay to {recipient}',{recipient:payment.details.lnurlPayInfo.lnAddress}) : payment.details.lnurlPayInfo.lnAddress;
       }
-      return payment.details?.description || 'Lightning Payment';
+      return payment.details?.description || t('Lightning Payment');
     }
-    return 'Lightning Payment';
+    return t('Lightning Payment');
   }
   if (payment.method === 'spark') {
-    if (isCrossChain(convInfo)) return 'USD Transfer';
+    if (isCrossChain(convInfo)) return t('USD Transfer');
     if (convInfo) {
       const dir = payment.paymentType === 'send' ? 'from' : 'to';
-      return `Conversion ${dir} Bitcoin`;
+      return t(dir==='from'?'Conversion from {asset}':'Conversion to {asset}',{asset:'Bitcoin'});
     }
-    return 'Spark Transfer';
+    return t('Spark Transfer');
   }
   if (payment.method === 'token') {
     const ticker = payment.details?.type === 'token' ? payment.details.metadata.ticker : null;
     const displayName = (ticker ? tickerToDisplayName(ticker) : null) || fiatCurrencyName;
-    if (isCrossChain(convInfo)) return displayName ? `${displayName} Transfer` : 'Token Transfer';
+    if (isCrossChain(convInfo)) return displayName ? t('{asset} Transfer',{asset:displayName}) : t('Token Transfer');
     if (convInfo) {
       const dir = payment.paymentType === 'send' ? 'from' : 'to';
-      return `Conversion ${dir} ${displayName}`;
+      return t(dir==='from'?'Conversion from {asset}':'Conversion to {asset}',{asset:displayName??''});
     }
-    return displayName ? `${displayName} Transfer` : 'Token Transfer';
+    return displayName ? t('{asset} Transfer',{asset:displayName}) : t('Token Transfer');
   }
-  if (payment.method === 'deposit') return 'BTC Transfer';
-  if (payment.method === 'withdraw') return 'BTC Transfer';
-  return 'Payment';
+  if (payment.method === 'deposit') return t('BTC Transfer');
+  if (payment.method === 'withdraw') return t('BTC Transfer');
+  return t('Payment');
 }

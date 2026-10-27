@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import React from 'react';
 import { SatAmount } from './SatAmount';
 
@@ -51,10 +52,11 @@ export const FeeBreakdownCard: React.FC<FeeBreakdownCardProps> = ({
   useRawStrings = false,
   className = '',
 }) => {
+  const t=useFlowText();
   return (
     <div className={`bg-spark-dark/50 border border-spark-border rounded-2xl p-4 space-y-3 ${className}`}>
       {items.map((item, index) => (
-        <React.Fragment key={item.label}>
+        <React.Fragment key={t(item.label)}>
           {index > 0 && <div className="border-t border-spark-border/50" />}
           <div className="flex justify-between items-center">
             <span className={`text-sm ${item.highlight ? 'text-spark-text-primary font-semibold' : item.emphasis ? 'text-spark-text-primary' : 'text-spark-text-secondary'}`}>
