@@ -1,0 +1,33 @@
+name: Import verified payment pulse source
+on:
+  push:
+    branches: ['feat/premium-transfer-pulse-20261027']
+    paths: ['.github/workflows/import-pulse-source.yml']
+permissions:
+  contents: write
+jobs:
+  preserve:
+    if: github.repository == 'Bradvani/getyoursats-wallet'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: feat/premium-transfer-pulse-20261027
+          fetch-depth: 2
+      - name: Validate exact tested source and preserve it on this branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = '07ddf16068cc5bd7ed09397e221800ad7b12d767'
+          curl --fail --silent --show-error --retry 2 --max-time 30 'https://sb-4frl2rcec29a.vercel.run/premium-pulse.patch.gz' -o /tmp/pulse.patch.gz
+          echo 'ca93678662cb7d71be8f3a3d4d6dd9f2a7a426652053be6303c1cbdb290d6208  /tmp/pulse.patch.gz' | sha256sum --check
+          gzip -dc /tmp/pulse.patch.gz > /tmp/pulse.patch
+          echo 'a9b0df6a445ce0da0f39aa96e429756bd6e4f8719166ce81df169bcf40eb8fc9  /tmp/pulse.patch' | sha256sum --check
+          git apply --check /tmp/pulse.patch
+          git apply --index /tmp/pulse.patch
+          git rm .github/workflows/import-pulse-source.yml
+          git diff --cached --check
+          test "$(git write-tree)" = '4eb4012c62793d4f559a12d7dc992560af8142fc'
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat(payments): paired settlement pulse and accessible haptic feedback'
+          git push origin HEAD:refs/heads/feat/premium-transfer-pulse-20261027
