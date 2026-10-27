@@ -67,7 +67,14 @@ for(const language of languages){
  });
  for(const host of ['site','wallet'])test('complete '+host+' Support '+language,async({page})=>{
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.route('**/api/contact',route=>route.fulfill({status:200,contentType:'application/json',body:'{"available":true}'}));
+  const submissions:Array<{email:string;message:string;topic:string}>=[];
+  await page.route('**/api/contact',route=>{
+   if(route.request().method()==='POST'){
+    submissions.push(route.request().postDataJSON());
+    return route.fulfill({status:202,contentType:'application/json',body:'{"ok":true,"reference":"GYS-LOCALE-TEST"}'});
+   }
+   return route.fulfill({status:200,contentType:'application/json',body:'{"available":true}'});
+  });
   await page.setViewportSize({width:390,height:844});
   await page.goto((host==='site'?'/site/support.html':'/support.html')+'?lang='+language);
   await expect(page.locator('html')).toHaveAttribute('lang',language);
@@ -88,9 +95,16 @@ for(const language of languages){
   if(host==='site'){
    await page.locator('#gys-email').fill('disposable@example.invalid');
    await page.locator('#gys-message').fill('Keep this draft');
-   await page.locator('#gys-language').selectOption(language==='ar'?'ja':'ar');
+   const nextLanguage=language==='ar'?'ja':'ar';
+   await page.locator('#gys-language').selectOption(nextLanguage);
    await expect(page.locator('#gys-message')).toHaveValue('Keep this draft');
    await expect(page.locator('#gys-email')).toHaveValue('disposable@example.invalid');
+   await page.locator('#gys-topic').selectOption('general');
+   await page.locator('input[name=consent]').check();
+   await page.getByRole('button',{name:privacy[nextLanguage].form.formSend,exact:true}).click();
+   await expect(page.locator('#gys-contact-status')).toContainText(privacy[nextLanguage].form.formOk+'GYS-LOCALE-TEST');
+   expect(submissions).toHaveLength(1);
+   expect(submissions[0]).toMatchObject({email:'disposable@example.invalid',message:'Keep this draft',topic:'general'});
   }
   expect(errors).toEqual([]);
  });
