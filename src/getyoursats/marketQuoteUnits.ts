@@ -1,3 +1,5 @@
+import {formatFiat} from '../utils/formatFiat';
+
 /** Bitcoin price equivalents shown in the market widget only.
  * These are NOT wallet balance or payment-denomination inputs.
  * Each value represents an exact integer number of satoshis.
@@ -31,14 +33,5 @@ export function formatMarketFiat(
 ): string {
   const value = marketFiatValue(fiatPerBtc, satoshis);
   if (value === null) return 'Rate unavailable';
-  try {
-    const fraction = new Intl.NumberFormat(locale, { style: 'currency', currency })
-      .resolvedOptions().minimumFractionDigits ?? 2;
-    return new Intl.NumberFormat(locale, {
-      style: 'currency', currency, minimumFractionDigits: fraction,
-      maximumFractionDigits: Math.max(fraction, satoshis >= 100_000_000 ? 2 : 4),
-    }).format(value);
-  } catch {
-    return currency + ' ' + value.toFixed(satoshis >= 100_000_000 ? 2 : 4);
-  }
+  return formatFiat(value, currency, locale, {maximumFractionDigits: satoshis >= 100_000_000 ? 2 : 4});
 }

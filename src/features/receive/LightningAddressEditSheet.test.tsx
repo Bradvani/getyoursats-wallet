@@ -17,6 +17,22 @@ const address = (username: string): LightningAddressInfo => ({
 });
 
 describe('anonymous Lightning Address personalization', () => {
+  it('shows readiness instead of setup advice for the wallet-confirmed personal address', async () => {
+    const client = createMockClient() as unknown as BreezSdk;
+    const personal = {...address('reader'), lightningAddress: 'reader@getyoursats.com'};
+    render(
+      <ToastProvider><WalletProvider client={client} isConnected preferredLightningAddress={personal}>
+        <FiatDataProvider><StableBalanceProvider>
+          <ReceivePaymentDialog isOpen onClose={vi.fn()} />
+        </StableBalanceProvider></FiatDataProvider>
+      </WalletProvider></ToastProvider>,
+    );
+    await waitForSheetOpen();
+    expect(await screen.findByTestId('lightning-address-text')).toHaveTextContent('reader@getyoursats.com');
+    expect(screen.getByText('Your personal GetYourSats address is ready to receive payments.')).toBeInTheDocument();
+    expect(screen.queryByText('Personalize your address in Settings after email verification.')).toBeNull();
+    expect(client.registerLightningAddress).not.toHaveBeenCalled();
+  });
   it('keeps the SDK-issued Breez receiver stable and directs personalization through verified identity', async () => {
     const client = createMockClient() as unknown as BreezSdk;
     client.getLightningAddress = vi.fn().mockResolvedValue(address('alice'));

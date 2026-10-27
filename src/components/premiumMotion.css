@@ -148,3 +148,30 @@
 
 /* Keep the full-screen reveal on the same canvas as the light-theme splash. */
 :root[data-gys-theme="orange"] .gys-brand-reveal:not(.gys-brand-reveal--inline){background:#FAF7F1}
+
+/* Text enlargement keeps status, values and dismissal controls in normal flow. */
+.gys-payment-stage{max-width:100%;min-width:0;padding:1.75rem .75rem}
+.gys-payment-stage h3{max-width:100%;font-size:1.6875rem;overflow-wrap:anywhere}
+.gys-payment-stage p{max-width:min(100%,26rem);font-size:.875rem;overflow-wrap:anywhere}
+.gys-payment-stage__note{max-width:min(100%,26rem);font-size:.8125rem}
+.gys-payment-stage .gys-overline{font-size:.75rem;letter-spacing:.06em}
+.gys-payment-stage button{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.gys-receive-status{max-width:100%;min-width:0;text-align:start}
+.gys-receive-status strong{font-size:.875rem}
+.gys-receive-status small{font-size:.8125rem}
+.gys-fiat-estimate{overflow-wrap:anywhere}
+.gys-confirm-total{font-size:clamp(1rem,8vw,2.25rem);line-height:1.3}
+.gys-moment{padding-block:max(1rem,env(safe-area-inset-top)) max(1rem,env(safe-area-inset-bottom))}
+.gys-moment__amount{max-width:100%;overflow-wrap:anywhere}
+.gys-moment__amount .text-5xl{font-size:clamp(1.5rem,8vw,3rem)}
+.gys-moment__title{overflow-wrap:anywhere}
+.gys-payment-done{color:var(--color-spark-text-primary);border-color:var(--color-spark-border);min-height:44px;white-space:normal}
+@media(max-width:420px){
+ .bottom-sheet-content-pad{padding-inline:16px}
+ .gys-receive-code-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin-inline:0;gap:16px}
+ .gys-receive-code-row>:nth-child(2){grid-column:1 / -1;grid-row:2}
+ .gys-receive-code-row>:first-child{grid-column:1;grid-row:1}
+ .gys-receive-side-caption{grid-column:2;grid-row:1;width:auto;min-height:44px;max-width:100%}
+ .gys-receive-side-caption>span{writing-mode:horizontal-tb;letter-spacing:normal;margin:0;white-space:normal}
+ .gys-transfer:not(.gys-transfer--compact){width:120px;height:120px;margin-bottom:1rem}
+}

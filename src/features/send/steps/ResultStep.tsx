@@ -1,5 +1,6 @@
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {usePresentation} from '@/hooks/usePresentation';
+import {PAYMENT_EXPERIENCE} from '../../../locales/paymentExperience';
 import React, { useEffect, type ReactNode } from 'react';
 import { PrimaryButton } from '../../../components/ui';
 import PaymentMotion from '../../../components/PaymentMotion';
@@ -21,6 +22,7 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
   const isSuccess = result === 'success';
   const {language}=usePresentation();
   const copy=trustCopy(language);
+  const text=PAYMENT_EXPERIENCE[language];
 
   useEffect(() => {
     if (isSuccess) {
@@ -31,27 +33,24 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
 
   const getTitle = () => {
     if (operationType === 'auth') {
-      return 'Authenticated!';
+      return isSuccess ? text.authenticated : text.authFailed;
     }
     if (operationType === 'refund') {
-      return isSuccess ? 'Refund Sent!' : 'Refund Failed';
+      return isSuccess ? text.refundSent : text.refundFailed;
     }
-    return isSuccess ? 'Payment Sent!' : 'Payment Failed';
+    return isSuccess ? text.sent : text.failed;
   };
 
   const getSuccessDescription = () => {
     if (description) return description;
     if (operationType === 'refund') {
-      return 'Your refund has been sent to the Bitcoin network.';
+      return text.refundBody;
     }
-    return 'Your payment has been successfully sent to the recipient.';
+    return operationType === 'auth' ? text.authBody : text.sentBody;
   };
 
   const getDefaultErrorMessage = () => {
-    if (operationType === 'refund') {
-      return 'There was an error processing your refund. Please try again.';
-    }
-    return 'There was an error processing your payment. Please try again.';
+    return operationType === 'auth' ? text.authFailedBody : text.failedBody;
   };
 
   if(result==='unknown') return <div className="gys-payment-stage" data-testid="payment-unknown" role="status">
@@ -70,11 +69,15 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
         </h3>
 
         <p className="text-spark-text-secondary text-center max-w-xs mb-8">
-          {error || getDefaultErrorMessage()}
+          {getDefaultErrorMessage()}
         </p>
+        {error && <details className="w-full text-sm mb-4 break-words">
+          <summary>{text.errorDetails}</summary>
+          <p dir="auto">{error}</p>
+        </details>}
 
         <PrimaryButton onClick={onClose} className="min-w-[200px]">
-          Close
+          {copy.close}
         </PrimaryButton>
       </div>
     );
@@ -99,7 +102,7 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
 
       {/* Action button */}
       <PrimaryButton onClick={onClose} className="min-w-[200px]">
-        Done
+        {text.done}
       </PrimaryButton>
     </div>
   );

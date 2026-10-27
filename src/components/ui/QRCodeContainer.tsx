@@ -1,6 +1,8 @@
 import React from 'react';
 import BrandedQrCode from '../BrandedQrCode';
 import LoadingSpinner from '../LoadingSpinner';
+import {usePresentation} from '../../hooks/usePresentation';
+import {PAYMENT_EXPERIENCE} from '../../locales/paymentExperience';
 
 const Corners: React.FC = () => (
   <div className="absolute -inset-3 pointer-events-none">
@@ -22,14 +24,17 @@ interface QrFrameProps {
  * QR Code display component with decorative corners.
  * Separated from barrel file to enable lazy loading of react-qr-code library.
  */
-export const QRCodeContainer: React.FC<QrFrameProps & { value: string }> = ({ value, size = 200, className = '', cardClassName = '' }) => (
+export const QRCodeContainer: React.FC<QrFrameProps & { value: string }> = ({ value, size = 200, className = '', cardClassName = '' }) => {
+  const {language} = usePresentation();
+  return (
   <div className={`relative ${className}`}>
     <Corners />
     <div className={`qr-container ${cardClassName}`}>
-      <BrandedQrCode value={value} size={size} label="Payment QR code" />
+      <BrandedQrCode value={value} size={size} label={PAYMENT_EXPERIENCE[language].qrLabel} />
     </div>
   </div>
-);
+  );
+};
 
 /**
  * Holds a QR's place while its value loads: the frame's corners stay put and a

@@ -167,3 +167,17 @@ describe('new-wallet enrollment', () => {
     expect(second.result.current.progress).toMatchObject({tourStatus: 'skipped', recoveryStatus: 'pending'});
   });
 });
+
+it('retains dismissal when authentication disconnects and reconnects the same wallet', () => {
+  const {result, rerender, unmount} = renderHook(({identity}) => useWalletSetup(identity, 'mainnet'),
+    {initialProps: {identity: identityA as string | null}});
+  act(() => result.current.dismissCard());
+  rerender({identity: null});
+  expect(result.current.scope).toBeNull();
+  rerender({identity: identityA});
+  expect(result.current.progress).toMatchObject({cardDismissed: true, recoveryStatus: 'pending'});
+  unmount();
+  clearWalletSetupMemory();
+  const reopened = renderHook(() => useWalletSetup(identityA, 'mainnet'));
+  expect(reopened.result.current.progress.cardDismissed).toBe(true);
+});

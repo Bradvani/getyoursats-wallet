@@ -37,7 +37,7 @@ describe('AmountStep USD entry (no stable balance)', () => {
     const { onNext } = renderAmountStep();
 
     const input = screen.getByTestId('amount-input');
-    expect(input).toHaveAttribute('placeholder', 'Enter amount in sats');
+    expect(input).toHaveAttribute('placeholder', 'Enter amount (sats)');
 
     fireEvent.change(input, { target: { value: '1500' } });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
@@ -53,7 +53,7 @@ describe('AmountStep USD entry (no stable balance)', () => {
     fireEvent.click(switcher);
 
     const input = screen.getByTestId('amount-input');
-    expect(input).toHaveAttribute('placeholder', 'Enter amount in USD');
+    expect(input).toHaveAttribute('placeholder', 'Enter amount (USD)');
 
     fireEvent.change(input, { target: { value: '5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
@@ -83,7 +83,7 @@ describe('AmountStep USD entry (no stable balance)', () => {
     expect(screen.queryByRole('button', { name: 'sats' })).toBeNull();
     expect(screen.getByTestId('amount-input')).toHaveAttribute(
       'placeholder',
-      'Enter amount in sats'
+      'Enter amount (sats)'
     );
   });
 
@@ -146,7 +146,7 @@ describe('AmountStep USD entry (no stable balance)', () => {
 
     expect(screen.getByTestId('amount-input')).toHaveAttribute(
       'placeholder',
-      'Enter amount in USD'
+      'Enter amount (USD)'
     );
     expect(screen.queryByRole('button', { name: 'sats' })).toBeNull();
     expect(screen.queryByRole('button', { name: '$' })).toBeNull();

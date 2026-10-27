@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import {usePresentation} from '../hooks/usePresentation';
 import {useFiatData} from '../contexts/FiatDataContext';
 import {getDisplayFiatCurrency,getFiatSettings,setDisplayFiatCurrency} from '../services/settings';
 import {
@@ -19,6 +20,7 @@ function selectedMarketUnit():MarketQuoteUnitId {
  * only; wallet custody, balances and payment denominations stay untouched.
  */
 export default function MarketPulse(){
+  const {language}=usePresentation();
   const {fiatRates,fetchedAt,refreshFiatData}=useFiatData();
   const [currency,setCurrency]=useState(getDisplayFiatCurrency);
   const [quoteUnit,setQuoteUnit]=useState<MarketQuoteUnitId>(selectedMarketUnit);
@@ -34,7 +36,7 @@ export default function MarketPulse(){
   const rate=fiatRates.find(x=>x.coin===currency)?.value;
   const unit=MARKET_QUOTE_UNITS.find(x=>x.id===quoteUnit)??MARKET_QUOTE_UNITS[0];
   const stale=!fetchedAt||clock-fetchedAt>120000;
-  const price=formatMarketFiat(rate,currency,unit.satoshis);
+  const price=formatMarketFiat(rate,currency,unit.satoshis,language);
   const currencies=getFiatSettings().selectedCurrencies;
 
   const cycleCurrency=()=>{

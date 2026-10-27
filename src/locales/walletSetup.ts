@@ -4,6 +4,7 @@ import type {WalletTourStep} from '../getyoursats/walletSetupState';
 interface StepCopy { title: string; body: string; detail: string }
 
 export interface WalletSetupCopy {
+  dismiss: string;
   guideLabel: string; progressLabel: string; next: string; skip: string; finish: string; preview: string;
   cardTitle: string; cardBody: string; backupPending: string; backupReviewed: string; backupVerified: string;
   start: string; resume: string; completed: string; replay: string; replayDescription: string; helpTitle: string;
@@ -17,6 +18,7 @@ export interface WalletSetupCopy {
 
 const copy: Record<AppLanguage, WalletSetupCopy> = {
   en: {
+    dismiss: 'Dismiss wallet setup',
     guideLabel: 'Wallet guide', progressLabel: 'Guide progress', next: 'Next', skip: 'Skip for now', finish: 'Finish', preview: 'Preview',
     cardTitle: 'Make yourself at home', cardBody: 'Back up your wallet and explore receiving, payments and Point of Sale.',
     backupPending: 'Back Up Your Wallet', backupReviewed: 'Passkey reviewed. Back up your wallet.', backupVerified: 'Recovery backup checked',
@@ -39,6 +41,7 @@ const copy: Record<AppLanguage, WalletSetupCopy> = {
     named: {title: 'Your address is ready', body: 'Copy your GetYourSats Lightning address from Home or Receive when someone is sending you sats.', detail: 'Your personal address receives payments into this wallet.'},
   },
   hi: {
+    dismiss: 'वॉलेट सेटअप बंद करें',
     guideLabel: 'वॉलेट गाइड', progressLabel: 'गाइड की प्रगति', next: 'आगे', skip: 'अभी छोड़ें', finish: 'पूरा करें', preview: 'पूर्वावलोकन',
     cardTitle: 'अपने वॉलेट को जानें', cardBody: 'वॉलेट का बैकअप लें और पैसे प्राप्त करना, भुगतान और बिक्री काउंटर जानें।',
     backupPending: 'वॉलेट का बैकअप लें', backupReviewed: 'पासकी की समीक्षा हुई। वॉलेट का बैकअप लें।', backupVerified: 'रिकवरी बैकअप जाँचा गया',
@@ -61,6 +64,7 @@ const copy: Record<AppLanguage, WalletSetupCopy> = {
     named: {title: 'आपका पता तैयार है', body: 'कोई sats भेज रहा हो तो होम या प्राप्त करें से GetYourSats Lightning पता कॉपी करें।', detail: 'इस निजी पते पर आए भुगतान इसी वॉलेट में मिलते हैं।'},
   },
   es: {
+    dismiss: 'Cerrar la configuración de la cartera',
     guideLabel: 'Guía de la cartera', progressLabel: 'Progreso de la guía', next: 'Siguiente', skip: 'Omitir por ahora', finish: 'Terminar', preview: 'Vista previa',
     cardTitle: 'Conoce tu cartera', cardBody: 'Haz una copia de seguridad y descubre cómo recibir, pagar y cobrar.',
     backupPending: 'Crear Copia de Seguridad', backupReviewed: 'Passkey revisada. Haz una copia de seguridad.', backupVerified: 'Copia de recuperación comprobada',
@@ -83,6 +87,7 @@ const copy: Record<AppLanguage, WalletSetupCopy> = {
     named: {title: 'Tu dirección está lista', body: 'Copia tu dirección Lightning de GetYourSats desde Inicio o Recibir cuando alguien te envíe sats.', detail: 'Los pagos a tu dirección personal llegan a esta cartera.'},
   },
   pt: {
+    dismiss: 'Fechar a configuração da carteira',
     guideLabel: 'Guia da carteira', progressLabel: 'Progresso do guia', next: 'Seguinte', skip: 'Saltar por agora', finish: 'Concluir', preview: 'Pré-visualização',
     cardTitle: 'Conheça a sua carteira', cardBody: 'Faça uma cópia de segurança e descubra como receber, pagar e vender.',
     backupPending: 'Fazer Cópia da Carteira', backupReviewed: 'Passkey revista. Faça uma cópia da carteira.', backupVerified: 'Cópia de recuperação verificada',
@@ -105,6 +110,7 @@ const copy: Record<AppLanguage, WalletSetupCopy> = {
     named: {title: 'O seu endereço está pronto', body: 'Copie o endereço Lightning GetYourSats do Início ou Receber quando alguém lhe enviar sats.', detail: 'Os pagamentos para o endereço pessoal chegam a esta carteira.'},
   },
   ja: {
+    dismiss: 'ウォレットのセットアップを閉じる',
     guideLabel: 'ウォレットガイド', progressLabel: 'ガイドの進行状況', next: '次へ', skip: '今はスキップ', finish: '完了', preview: 'プレビュー',
     cardTitle: 'ウォレットを使いこなそう', cardBody: 'ウォレットをバックアップし、受け取り、支払い、販売時の決済を確認しましょう。',
     backupPending: 'ウォレットをバックアップ', backupReviewed: 'パスキーを確認済みです。バックアップを作成してください。', backupVerified: '復元用バックアップを確認済み',
@@ -127,6 +133,7 @@ const copy: Record<AppLanguage, WalletSetupCopy> = {
     named: {title: 'アドレスを使えます', body: '送金してもらうときは、ホームまたは受け取りからGetYourSatsのLightningアドレスをコピーできます。', detail: 'あなたのアドレスへの支払いは、このウォレットに届きます。'},
   },
   th: {
+    dismiss: 'ปิดการตั้งค่ากระเป๋า',
     guideLabel: 'คู่มือกระเป๋า', progressLabel: 'ความคืบหน้าคู่มือ', next: 'ถัดไป', skip: 'ข้ามไว้ก่อน', finish: 'เสร็จสิ้น', preview: 'ตัวอย่าง',
     cardTitle: 'ทำความรู้จักกระเป๋าของคุณ', cardBody: 'สำรองกระเป๋าและเรียนรู้การรับเงิน การจ่ายเงินและจุดขาย',
     backupPending: 'สำรองกระเป๋าของคุณ', backupReviewed: 'ตรวจสอบพาสคีย์แล้ว โปรดสำรองกระเป๋า', backupVerified: 'ตรวจสอบข้อมูลสำรองแล้ว',
@@ -149,6 +156,7 @@ const copy: Record<AppLanguage, WalletSetupCopy> = {
     named: {title: 'ที่อยู่ของคุณพร้อมแล้ว', body: 'คัดลอกที่อยู่ Lightning ของ GetYourSats จากหน้าแรกหรือหน้ารับเงินเมื่อมีคนจะส่ง sats ให้คุณ', detail: 'เงินที่ส่งมายังที่อยู่ส่วนตัวจะเข้ากระเป๋านี้'},
   },
   vi: {
+    dismiss: 'Đóng thiết lập ví',
     guideLabel: 'Hướng dẫn ví', progressLabel: 'Tiến độ hướng dẫn', next: 'Tiếp', skip: 'Bỏ qua lúc này', finish: 'Hoàn tất', preview: 'Xem trước',
     cardTitle: 'Làm quen với ví của bạn', cardBody: 'Sao lưu ví và khám phá cách nhận tiền, thanh toán và điểm bán hàng.',
     backupPending: 'Sao Lưu Ví', backupReviewed: 'Đã xem xét passkey. Hãy sao lưu ví.', backupVerified: 'Đã kiểm tra bản sao khôi phục',
@@ -171,6 +179,7 @@ const copy: Record<AppLanguage, WalletSetupCopy> = {
     named: {title: 'Địa chỉ của bạn đã sẵn sàng', body: 'Sao chép địa chỉ Lightning GetYourSats từ Trang chủ hoặc Nhận tiền khi ai đó gửi sats cho bạn.', detail: 'Các khoản gửi đến địa chỉ riêng sẽ vào ví này.'},
   },
   ta: {
+    dismiss: 'பணப்பை அமைப்பை மூடவும்',
     guideLabel: 'வாலட் வழிகாட்டி', progressLabel: 'வழிகாட்டி முன்னேற்றம்', next: 'அடுத்து', skip: 'இப்போது தவிர்', finish: 'முடி', preview: 'முன்னோட்டம்',
     cardTitle: 'உங்கள் வாலட்டை அறியுங்கள்', cardBody: 'வாலட்டை காப்புப் பிரதி எடுத்து, பணம் பெறுதல், செலுத்துதல் மற்றும் விற்பனை முனையத்தை அறியுங்கள்.',
     backupPending: 'வாலட்டை காப்புப் பிரதி எடுங்கள்', backupReviewed: 'பாஸ்கீ ஆய்வு செய்யப்பட்டது. வாலட்டை காப்புப் பிரதி எடுங்கள்.', backupVerified: 'மீட்புக் காப்புப் பிரதி சரிபார்க்கப்பட்டது',
@@ -193,6 +202,7 @@ const copy: Record<AppLanguage, WalletSetupCopy> = {
     named: {title: 'உங்கள் முகவரி தயார்', body: 'யாராவது sats அனுப்பும்போது முகப்பு அல்லது பெறுதல் பக்கத்திலிருந்து GetYourSats Lightning முகவரியை நகலெடுக்கவும்.', detail: 'உங்கள் தனிப்பட்ட முகவரிக்கு வரும் பணம் இந்த வாலட்டில் சேரும்.'},
   },
   ar: {
+    dismiss: 'إغلاق إعداد المحفظة',
     guideLabel: 'دليل المحفظة', progressLabel: 'تقدم الدليل', next: 'التالي', skip: 'تخطي الآن', finish: 'إنهاء', preview: 'معاينة',
     cardTitle: 'تعرّف على محفظتك', cardBody: 'احفظ نسخة احتياطية واستكشف الاستلام والدفع ونقطة البيع.',
     backupPending: 'نسخ المحفظة احتياطياً', backupReviewed: 'تمت مراجعة مفتاح المرور. احفظ نسخة احتياطية.', backupVerified: 'تم التحقق من نسخة الاسترداد',
@@ -215,6 +225,7 @@ const copy: Record<AppLanguage, WalletSetupCopy> = {
     named: {title: 'عنوانك جاهز', body: 'انسخ عنوان Lightning في GetYourSats من الرئيسية أو الاستلام عندما يريد أحد إرسال sats إليك.', detail: 'تصل المدفوعات إلى عنوانك الشخصي في هذه المحفظة.'},
   },
   'zh-CN': {
+    dismiss: '关闭钱包设置',
     guideLabel: '钱包指南', progressLabel: '指南进度', next: '下一步', skip: '暂时跳过', finish: '完成', preview: '预览',
     cardTitle: '熟悉你的钱包', cardBody: '备份钱包，了解收款、付款和销售终端。',
     backupPending: '备份你的钱包', backupReviewed: '已查看通行密钥。请备份钱包。', backupVerified: '恢复备份已核对',

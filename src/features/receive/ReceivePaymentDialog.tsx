@@ -1,3 +1,8 @@
+import {usePresentation} from '../../hooks/usePresentation';
+import {WALLET_COPY} from '../../services/presentationPreferences';
+import {useWalletConnection} from '../../contexts/WalletContext';
+import {PAYMENT_EXPERIENCE} from '../../locales/paymentExperience';
+import FiatEstimate from '../../components/FiatEstimate';
 import {useInvoiceExpiry} from '../../hooks/useInvoiceExpiry';
 import {formatMoney} from '@/getyoursats/money';
 import {trustCopy} from '@/getyoursats/trustCopy';
@@ -61,17 +66,20 @@ interface QRCodeDisplayProps {
  *  that was a fiat or stable one, since the invoice is denominated in sats. */
 const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amount }) => {
   const { showToast } = useToast();
-  const expiry=useInvoiceExpiry(paymentData);const text=trustCopy();
+  const {language} = usePresentation();
+  const words = PAYMENT_EXPERIENCE[language];
+  const expiry=useInvoiceExpiry(paymentData);const text=trustCopy(language);
   if(!expiry.usable)return <div className="p-4 text-sm text-spark-text-secondary" role="status">{expiry.checking?text.checking:expiry.expiresAt?text.invoiceExpired:text.invoiceExpiryUnknown}</div>;
   return (
     <div className="pt-4 space-y-6 flex flex-col items-center">
-      <p className="text-xs text-spark-text-muted">{text.expires}: {new Date(expiry.expiresAt!).toLocaleString()}</p>
+      <p className="text-xs text-spark-text-muted">{text.expires}: {new Date(expiry.expiresAt!).toLocaleString(language)}</p>
       {amount && (
         <div className="text-center">
-          <p className="text-spark-text-muted text-sm mb-2">Scan to pay</p>
+          <p className="text-spark-text-muted text-sm mb-2">{words.scanToPay}</p>
           <span className="text-3xl font-mono font-bold text-spark-text-primary">
             {amount.display ?? <SatAmount sats={amount.sats} />}
           </span>
+          <FiatEstimate sats={amount.sats} />
           {amount.display && (
             <p className="text-sm text-spark-text-secondary mt-1 font-mono">
               <SatAmount sats={amount.sats} />
@@ -83,7 +91,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
       <QRCodeContainer value={paymentData} />
       <div className="gys-receive-status" role="status">
         <PaymentMotion state="receiving" compact />
-        <span><strong>Ready to receive</strong><small>Share this invoice. Confirmation appears when payment arrives.</small></span>
+        <span><strong>{words.readyReceive}</strong><small>{words.receiveBody}</small></span>
       </div>
 
       <div className="w-full">
@@ -91,9 +99,9 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
           text={paymentData}
           truncate
           showShare
-          label="Lightning Invoice"
-          onCopied={() => showToast('success', 'Copied!')}
-          onShareError={() => showToast('error', 'Failed to share')}
+          label={words.lightningInvoice}
+          onCopied={() => showToast('success', text.copySuccess)}
+          onShareError={() => showToast('error', words.shareFailed)}
           data-testid="lightning-invoice-text"
         />
 
@@ -108,6 +116,9 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({ paymentData, feeSats, amo
 };
 
 const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onClose }) => {
+  const {language} = usePresentation();
+  const words = PAYMENT_EXPERIENCE[language];
+  const {preferredLightningAddress} = useWalletConnection();
   const receive = useReceivePayment();
   const [showChangeConfirm, setShowChangeConfirm] = useState<boolean>(false);
   // The tabs belong to choosing, not to what you have made with the choice:
@@ -310,6 +321,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
       address={lightningAddress}
       isLoading={lightningAddressLoading}
       isSupported={isLightningAddressSupported}
+      isPersonalized={!!preferredLightningAddress && preferredLightningAddress.lightningAddress === lightningAddress?.lightningAddress}
       onEdit={() => beginEditLightningAddress(lightningAddress)}
       onCustomizeAmount={() => receive.setShowAmountPanel(true)}
       section={section}
@@ -328,22 +340,13 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
     />
   ));
 
-  const getQRTitle = () => {
-    switch (receive.activeTab) {
-      case 'lightning': return 'Lightning Invoice';
-      case 'spark': return 'Spark Address';
-      case 'bitcoin': return 'Bitcoin Address';
-      case 'usd': return trustCopy().stablecoins;
-      default: return 'Payment Request';
-    }
-  };
 
   return (
     <>
       <BottomSheetContainer isOpen={isOpen} onClose={onClose} showBackdrop>
         <BottomSheetCard>
           <DialogHeader
-            title="Receive"
+            title={WALLET_COPY[language].receive}
             onClose={onClose}
             // The USD steps lend theirs through `useSheetBack`; the invoice is
             // rendered here, so its way back is passed in directly.
@@ -387,7 +390,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                           <div className="flex flex-col items-center gap-6">
                             {/* Dock, code, caption. The row runs edge to edge and its gaps match the corners' 12px overhang,
                                 so the dock and caption center between the sheet edge and the corners. */}
-                            <div className="-mx-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-3 items-center justify-items-center self-stretch">
+                            <div className="gys-receive-code-row -mx-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-3 items-center justify-items-center self-stretch">
                               <SideDock mode={btcMode} onChange={switchBtcMode} />
                               {btcView('qr')}
                               <SideCaption shown={shownMode} mode={btcMode} onChange={switchBtcMode} />
@@ -404,7 +407,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
 
                     {receive.currentStep === 'loading' && (
                       <div className="flex flex-col items-center justify-center h-40" data-testid="invoice-generation-loading">
-                        <LoadingSpinner text={`Generating ${getQRTitle().toLowerCase()}...`} />
+                        <LoadingSpinner text={words.generating} />
                       </div>
                     )}
 
@@ -442,7 +445,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
             // because `isContentReady` gates the tab UI, so a
             // Lightning-specific copy is safe.
             <div className="text-center py-8">
-              <LoadingSpinner text="Loading Lightning Address..." />
+              <LoadingSpinner text={words.loadingAddress} />
             </div>
           )}
         </BottomSheetCard>

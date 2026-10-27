@@ -1,4 +1,5 @@
 import {usePresentation} from '@/hooks/usePresentation';
+import FiatEstimate from '../../../components/FiatEstimate';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import React from 'react';
@@ -78,10 +79,11 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
       <div className="text-center py-4">
         <p className="text-spark-text-muted text-sm mb-2">{text.totalDeducted}</p>
         <div className="flex items-baseline justify-center gap-2">
-          <span className="text-4xl font-mono font-bold text-spark-text-primary">
-            <SatAmount sats={total} />
+          <span className="gys-confirm-total max-w-full font-mono font-bold text-spark-text-primary">
+            <SatAmount sats={total} className="justify-center" />
           </span>
         </div>
+        {amountSats !== null && feesSat !== null && <FiatEstimate sats={total} />}
       </div>
 
       {destination && (

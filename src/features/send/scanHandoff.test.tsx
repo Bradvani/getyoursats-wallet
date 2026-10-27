@@ -49,6 +49,25 @@ function setup(client: BreezSdk, props: Partial<Parameters<typeof SendPaymentDia
 }
 
 describe('scan to Send handoff', () => {
+  it('shows fiat and exact sats after reviewing a fixed Lightning QR without sending', async () => {
+    const invoice = 'lnbc1disposablefixture';
+    const client = createMockClient({
+      parse: vi.fn().mockResolvedValue({type: 'bolt11Invoice', invoice: {bolt11: invoice}, amountMsat: 123450000}),
+      prepareSendPayment: vi.fn().mockResolvedValue({
+        amount: 123450n,
+        paymentMethod: {type: 'bolt11Invoice', lightningFeeSats: 100,
+          invoiceDetails: {invoice: {bolt11: invoice}}},
+      }),
+    });
+    setup(client, {initialRawInput: invoice, initialInputId: 1});
+    expect(await screen.findByTestId('payment-input')).toHaveValue(invoice);
+    fireEvent.click(screen.getByTestId('continue-button'));
+    expect(await screen.findByTestId('send-confirm-button')).toBeEnabled();
+    await waitFor(() => expect(screen.getByTestId('fiat-estimate')).toHaveTextContent('≈ $123.55 USD'));
+    expect(screen.getAllByText('123 550').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('send-destination')).toHaveAttribute('title', invoice);
+    expect(client.sendPayment).not.toHaveBeenCalled();
+  });
   it('holds a resolving surface until amount entry is ready, without mounting the input form', async () => {
     const parse = deferred<InputType>();
     const client = createMockClient({parse: vi.fn().mockReturnValue(parse.promise)});

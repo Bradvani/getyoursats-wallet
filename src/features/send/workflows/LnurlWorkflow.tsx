@@ -1,4 +1,5 @@
 import {usePresentation} from '@/hooks/usePresentation';
+import FiatEstimate from '../../../components/FiatEstimate';
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
 import React, { useMemo, useState } from 'react';
@@ -338,6 +339,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
           ) : <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-spark-text-secondary" dir="ltr">sats</span>}
         </div>
 
+        {!isTokenMode && /^\d+$/.test(amount) && Number(amount) > 0 && <FiatEstimate sats={Number(amount)} />}
         <p id="lnurl-limits" className="mt-2 text-xs text-spark-text-muted">{text.recipientLimits}: <bdi dir="ltr">{formatWithSpaces(minSats)} … {formatWithSpaces(maxSats)} sats</bdi></p>
         <p id="lnurl-fees" className="mt-1 text-xs text-spark-text-muted">{text.feesHint}</p>
         {/* Quick amount buttons */}

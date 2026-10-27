@@ -6,6 +6,9 @@ import { SatAmount } from './SatAmount';
 import { useFiatData } from '../contexts/FiatDataContext';
 import { getTokenAmountFromPayment, formatTokenAmount, buildTokenDisplayConfig, withAssetDecimals } from '../utils/tokenFormatting';
 import PaymentMotion from './PaymentMotion';
+import FiatEstimate from './FiatEstimate';
+import {usePresentation} from '../hooks/usePresentation';
+import {PAYMENT_EXPERIENCE} from '../locales/paymentExperience';
 import { hapticLight } from '@/utils/haptics';
 
 interface PaymentCelebrationProps {
@@ -14,6 +17,8 @@ interface PaymentCelebrationProps {
 }
 
 const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClose }) => {
+  const {language} = usePresentation();
+  const text = PAYMENT_EXPERIENCE[language];
   // Sends only reach here when the send sheet was dismissed mid-payment,
   // so this is the only report the user gets of the outcome.
   const isSent = payment.paymentType === 'send';
@@ -80,7 +85,7 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
   return createPortal(
     <div
       data-testid={isSent ? 'payment-sent-moment' : 'payment-received-moment'}
-      className={`gys-moment fixed inset-0 z-100 flex items-center justify-center transition-all duration-500 motion-reduce:transition-none ${
+      className={`gys-moment fixed inset-0 z-100 flex overflow-y-auto p-4 transition-opacity duration-500 motion-reduce:transition-none ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       role="status" aria-live="polite" aria-atomic="true"
@@ -90,7 +95,7 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
 
       {/* Main content */}
       <div
-        className={`relative z-10 flex flex-col items-center transform transition-all duration-500 motion-reduce:transition-none motion-reduce:transform-none ${
+        className={`relative z-10 flex flex-col items-center w-full max-w-lg m-auto min-w-0 text-center transform transition-all duration-500 motion-reduce:transition-none motion-reduce:transform-none ${
           isVisible ? 'scale-100 translate-y-0' : 'scale-50 translate-y-20'
         }`}
       >
@@ -98,11 +103,11 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
 
         {/* Title */}
         <h2 className="gys-moment__title text-2xl font-display font-bold text-spark-text-primary mb-2">
-          {isSent ? 'Payment Sent' : 'Payment Received'}
+          {isSent ? text.sent : text.received}
         </h2>
 
         <p className="text-sm text-spark-text-secondary mb-5">
-          {isSent ? 'Confirmed by your wallet' : 'Sats confirmed in your wallet'}
+          {text.confirmed}
         </p>
 
         {/* Exact SDK amount, displayed with a visual arrival rather than a misleading simulated count. */}
@@ -123,9 +128,10 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
             </span>
           )}
         </div>
+        {!tokenInfo && <FiatEstimate sats={payment.amount} />}
 
         <button type="button" className="gys-payment-done mt-10" onClick={onClose}>
-          Done
+          {text.done}
         </button>
       </div>
     </div>,

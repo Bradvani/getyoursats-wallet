@@ -1,4 +1,6 @@
 import GetYourSatsWordmark from './GetYourSatsWordmark';
+import {formatFiat} from '../utils/formatFiat';
+import {usePresentation} from '../hooks/usePresentation';
 import DenominationTabs from '../getyoursats/DenominationTabs';
 import {getDenomination,saveDenomination,satsToAmount,satoshiSymbol,type Denomination} from '../getyoursats/denomination';
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
@@ -42,6 +44,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
   hasRejectedDeposits,
   onOpenGetRefund,
 }) => {
+  const {language} = usePresentation();
   const { fiatRates, fiatCurrencies } = useFiatData();
   const stableBalance = useStableBalance();
   // Persisted rather than a plain index: the receive amount input reads the
@@ -245,9 +248,9 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
 
     return {
       ...info,
-      value: fiatValue.toFixed(info.fractionSize),
+      value: formatFiat(fiatValue, info.currencyId, language, {numberOnly: true}),
     };
-  }, [stableBalance.isActive, fiatCurrencyInfo, activeFiatIndex, displayBalance, btcBalanceSat, hasSecondaryData]);
+  }, [stableBalance.isActive, fiatCurrencyInfo, activeFiatIndex, displayBalance, btcBalanceSat, hasSecondaryData, language]);
 
   // Stable balance secondary line. Sats only: the "change" label renders beside
   // the amount rather than inside it, so it keeps a normal word space.
@@ -269,10 +272,10 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
     if(bitcoinUnit!=='sats'&&bitcoinUnit!=='BTC'&&primaryFiatRate){
       const v=satsToAmount(Math.round(displayBalance),bitcoinUnit,primaryFiatRate);
       const numeric=Number(v);
-      return Number.isFinite(numeric)?formatWithSpaces(numeric):v;
+      return Number.isFinite(numeric)?formatFiat(numeric,bitcoinUnit,language,{numberOnly:true}):v;
     }
     return formatWithSpaces(displayBalance);
-  }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, primaryFiatRate]);
+  }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, primaryFiatRate, language]);
 
   // The Bitcoin glyph denotes BTC, never sats. Sats are labelled by their unit selector.
   const currencySymbol = stableBalance.isActive && stableBalance.displayConfig?.symbol

@@ -20,9 +20,9 @@ export const SatAmount: React.FC<{
    */
   approximate?: boolean;
 }> = ({ sats, className = '', approximate = false }) => (
-  <span className={`inline-flex items-center font-mono [word-spacing:-0.4em] ${approximate ? 'relative' : ''} ${className}`}>
+  <span dir="ltr" className={`inline-flex max-w-full flex-wrap items-baseline font-mono [word-spacing:-0.4em] ${approximate ? 'relative' : ''} ${className}`}>
     {approximate && <span className="absolute right-full opacity-70">~</span>}
-    {formatWithSpaces(sats)}
+    <span className="whitespace-nowrap">{formatWithSpaces(sats)}</span>
     <span className="text-[0.8em] opacity-70 ml-1">{' '}sats</span>
   </span>
 );

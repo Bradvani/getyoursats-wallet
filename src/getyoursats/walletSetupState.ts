@@ -5,6 +5,7 @@ export type WalletTourStatus = 'not-started' | 'active' | 'skipped' | 'completed
 
 export interface WalletSetupProgress {
   readonly version: 1;
+  readonly cardDismissed: boolean;
   readonly tourStatus: WalletTourStatus;
   readonly step: WalletTourStep;
   readonly recoveryStatus: WalletRecoveryStatus;
@@ -12,7 +13,7 @@ export interface WalletSetupProgress {
 
 export const WALLET_TOUR_STEPS: readonly WalletTourStep[] = ['language', 'protect', 'balance', 'receive', 'pos', 'identity'];
 export const EMPTY_WALLET_SETUP: WalletSetupProgress = Object.freeze({
-  version: 1, tourStatus: 'not-started', step: 'language', recoveryStatus: 'pending',
+  version: 1, cardDismissed: false, tourStatus: 'not-started', step: 'language', recoveryStatus: 'pending',
 });
 
 const PREFIX = 'gys:wallet-setup:v1:';
@@ -38,7 +39,7 @@ function parseProgress(raw: string | null): WalletSetupProgress {
       return EMPTY_WALLET_SETUP;
     }
     return Object.freeze({
-      version: 1, tourStatus: record.tourStatus as WalletTourStatus,
+      version: 1, cardDismissed: record.cardDismissed === true, tourStatus: record.tourStatus as WalletTourStatus,
       step: record.step as WalletTourStep, recoveryStatus: record.recoveryStatus as WalletRecoveryStatus,
     });
   } catch {
@@ -68,7 +69,7 @@ function changeWalletSetup(scope: string | null, change: (current: WalletSetupPr
   if (!scope || !scopePattern.test(scope)) return;
   const current = readWalletSetup(scope);
   const progress = Object.freeze(change(current));
-  if (progress.tourStatus === current.tourStatus && progress.step === current.step &&
+  if (progress.cardDismissed === current.cardDismissed && progress.tourStatus === current.tourStatus && progress.step === current.step &&
     progress.recoveryStatus === current.recoveryStatus) return;
   let raw = cache.get(scope)?.raw ?? null;
   try {
@@ -130,6 +131,11 @@ export function advanceWalletTour(scope: string | null) {
 
 export function skipWalletTour(scope: string | null) {
   changeWalletSetup(scope, current => current.tourStatus === 'completed' ? current : {...current, tourStatus: 'skipped'});
+}
+
+// Dismissing optional setup is not backup verification or tour completion.
+export function dismissWalletSetupCard(scope: string | null) {
+  changeWalletSetup(scope, current => ({...current, cardDismissed: true}));
 }
 
 export function confirmWalletRecovery(scope: string | null, recoveryStatus: Exclude<WalletRecoveryStatus, 'pending'>) {

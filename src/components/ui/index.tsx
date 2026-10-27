@@ -1,5 +1,7 @@
 import { usePresentation } from '@/hooks/usePresentation';
 import { PAYMENT_UX } from '@/locales/paymentUx';
+import { PAYMENT_EXPERIENCE } from '@/locales/paymentExperience';
+import { trustCopy } from '@/getyoursats/trustCopy';
 import React, { ReactNode, forwardRef, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { logger, LogCategory } from '@/services/logger';
@@ -115,25 +117,24 @@ export const DialogHeader: React.FC<{
   const stepBack = useContext(SheetBackContext);
   const back = onBack ?? stepBack;
   return (
-    <div className="flex justify-center items-center mb-5 relative px-8">
+    <div className="flex justify-center items-center mb-5 relative px-[44px] min-h-[44px]">
       {back && (
         <button
           onClick={back}
           aria-label={text.back}
-          className="absolute start-0 top-1/2 -translate-y-1/2 py-2 ps-6 pe-2 -ms-6 text-spark-text-muted hover:text-spark-text-primary transition-colors rounded-lg hover:bg-white/5"
+          className="absolute start-0 top-1/2 -translate-y-1/2 size-[44px] grid place-items-center text-spark-text-muted hover:text-spark-text-primary transition-colors rounded-lg hover:bg-white/5 [&>svg]:size-[20px]"
         >
           <BackIcon className="rtl:rotate-180" />
         </button>
       )}
-      <div className="flex items-center gap-2 min-w-0 max-w-full">
-        {icon && <span className="text-spark-primary shrink-0">{icon}</span>}
-        <h2 className="font-display text-lg font-bold text-spark-text-primary truncate">{title}</h2>
-        {icon && <span className="w-5 h-5 shrink-0" aria-hidden="true" />}
+      <div className="flex items-center gap-[8px] min-w-0 max-w-full">
+        {icon && <span className="text-spark-primary shrink-0 [&>svg]:size-[20px]">{icon}</span>}
+        <h2 className="font-display text-lg font-bold text-spark-text-primary text-center [overflow-wrap:anywhere]">{title}</h2>
       </div>
       <button
         onClick={onClose}
         aria-label={text.close}
-        className="absolute end-0 top-1/2 -translate-y-1/2 py-2 ps-2 pe-6 -me-6 text-spark-text-muted hover:text-spark-primary-light transition-colors rounded-lg hover:bg-white/5"
+        className="absolute end-0 top-1/2 -translate-y-1/2 size-[44px] grid place-items-center text-spark-text-muted hover:text-spark-primary-light transition-colors rounded-lg hover:bg-white/5 [&>svg]:size-[20px]"
       >
         <CloseIcon />
       </button>
@@ -268,6 +269,8 @@ export const CopyableRow: React.FC<{
   display?: string;
   'data-testid'?: string;
 }> = ({ label, value, display, 'data-testid': testId }) => {
+  const {language} = usePresentation();
+  const words = PAYMENT_EXPERIENCE[language];
   const [copied, setCopied] = React.useState(false);
   const handleCopy = () => {
     copyToClipboard(value)
@@ -295,7 +298,7 @@ export const CopyableRow: React.FC<{
       <button
         onClick={handleCopy}
         className="shrink-0 p-1.5 rounded-md hover:bg-white/5 transition-colors"
-        aria-label={`Copy ${label}`}
+        aria-label={`${words.copy}: ${label}`}
       >
         {copied
           ? <CheckIcon size="sm" className="text-spark-success" />
@@ -320,6 +323,8 @@ export const CopyableText: React.FC<{
   shareLabel?: string;
   'data-testid'?: string;
 }> = ({ text, truncate = false, hideText = false, showShare = false, onCopied, onShareError, label = 'Address', additionalActions, textColor = 'text-spark-text-muted', textToCopy, textToShare, shareLabel, 'data-testid': testId }) => {
+  const {language} = usePresentation();
+  const words = PAYMENT_EXPERIENCE[language];
   const [copied, setCopied] = React.useState(false);
   const [shareAvailable] = React.useState(canShare);
 
@@ -354,7 +359,7 @@ export const CopyableText: React.FC<{
         <button
           onClick={handleCopy}
           className={`text-center font-mono text-xs sm:text-sm break-all hover:opacity-80 transition-opacity ${textColor}`}
-          title="Tap to copy"
+          title={words.copy}
           data-testid="copyable-text-content"
         >
           {displayText}
@@ -362,7 +367,7 @@ export const CopyableText: React.FC<{
       )}
 
       {/* Action buttons */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap justify-center gap-2 max-w-full">
         <button
           onClick={handleCopy}
           className={`
@@ -372,21 +377,21 @@ export const CopyableText: React.FC<{
               : 'bg-spark-primary text-white hover:bg-spark-primary-light'
             }
           `}
-          title={`Copy ${label}`}
+          title={`${words.copy}: ${label}`}
           data-testid="copy-button"
         >
           <CopyIcon size="sm" />
-          {copied ? 'Copied!' : 'Copy'}
+          {copied ? trustCopy(language).copySuccess : words.copy}
         </button>
 
         {showShare && shareAvailable && (
           <button
             onClick={handleShare}
             className="flex items-center gap-2 px-4 py-2 border border-spark-border text-spark-text-secondary rounded-xl font-medium text-sm hover:text-spark-text-primary hover:border-spark-border-light transition-colors"
-            title={`Share ${label}`}
+            title={`${words.share}: ${label}`}
           >
             <ShareIcon />
-            Share
+            {words.share}
           </button>
         )}
 
@@ -532,7 +537,7 @@ export const Tab: React.FC<{
     onClick={onClick}
     data-testid={testId}
     className={`
-      flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-display font-semibold transition-all duration-200
+      flex-1 min-w-0 flex flex-wrap items-center justify-center gap-2 px-3 py-3 rounded-xl text-sm font-display font-semibold transition-colors duration-200 [overflow-wrap:anywhere]
       ${isActive
         ? 'bg-spark-primary text-black'
         : 'text-spark-text-muted hover:text-spark-text-primary hover:bg-white/5'

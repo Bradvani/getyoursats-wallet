@@ -1,4 +1,7 @@
 import {useFiatData} from '../../../contexts/FiatDataContext';
+import FiatEstimate from '../../../components/FiatEstimate';
+import {usePresentation} from '../../../hooks/usePresentation';
+import {PAYMENT_UX} from '../../../locales/paymentUx';
 import DenominationTabs from '../../../getyoursats/DenominationTabs';
 import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
 import React, { useEffect, useState, useMemo } from 'react';
@@ -42,6 +45,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
   amountFirst = false,
   destinationReviewed = false,
 }) => {
+  const {language} = usePresentation();
+  const ux = PAYMENT_UX[language];
   // USD entry without a stable-balance token, funded from BTC. Cross-chain
   // ("Send USD", amountFirst) starts in USD; plain BTC sends start in sats
   // with USD as a toggleable secondary option (#253).
@@ -196,13 +201,13 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const inlineBalanceError = useMemo(() => {
     if (amountNum <= 0) return null;
     if (isSendAll) return null;
-    return balance.exceedsBalance(amountNum) ? 'Amount exceeds available balance' : null;
-  }, [amountNum, isSendAll, balance]);
+    return balance.exceedsBalance(amountNum) ? ux.exceeds : null;
+  }, [amountNum, isSendAll, balance, ux.exceeds]);
 
   const destinationSection = (
     <div>
       <label className="block text-sm font-medium text-spark-text-primary mb-2">
-        Destination
+        {ux.recipient}
       </label>
       <div className="w-full p-4 bg-spark-dark border border-spark-border rounded-xl text-spark-text-secondary font-mono text-sm break-all">
         {paymentInput}
@@ -215,7 +220,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const amountSection = (
     <div>
         <label className="block text-sm font-medium text-spark-text-primary mb-2">
-          Amount
+          {ux.amount}
         </label>
         <div className="relative">
           <input
@@ -235,7 +240,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
                 }
               }
             }}
-            placeholder={isDenominated?`Enter amount in ${denomination}`:isTokenMode&&config?`Enter amount in ${config.currencyCode}`:'Enter amount in sats'}
+            aria-label={ux.amount}
+            placeholder={`${ux.enterAmount} (${isDenominated?denomination:isTokenMode&&config?config.currencyCode:'sats'})`}
             className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none read-only:cursor-not-allowed`}
             disabled={isLoading}
             readOnly={isSendAll}
@@ -253,6 +259,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
           )}
         </div>
 
+        {!amountFirst && !isTokenMode && /^\d+$/.test(localAmount) && Number(localAmount) > 0 && <FiatEstimate sats={Number(localAmount)} />}
         {!amountFirst&&<DenominationTabs value={denomination} onChange={selectDenomination} disabled={isLoading} fiatAvailable={!!currentRate}/>}
         {unitUnavailable&&<p role="status" className="text-xs text-spark-warning mt-2">Live {denomination}/BTC rate unavailable. Choose sats or BTC.</p>}
         {isDenominated&&!!localAmount&&<p className="text-xs text-spark-text-muted mt-2">≈ {localAmount} sats · Settlement is denominated in Bitcoin</p>}
@@ -312,9 +319,9 @@ const AmountStep: React.FC<AmountStepProps> = ({
               {hasPendingConversion ? (
                 <span className="inline-flex items-center justify-center gap-1.5">
                   <SpinnerIcon size="xs" />
-                  Send All
+                  {ux.max}
                 </span>
-              ) : 'Send All'}
+              ) : ux.max}
             </button>
           )}
         </div>
@@ -335,9 +342,9 @@ const AmountStep: React.FC<AmountStepProps> = ({
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
             <SpinnerIcon />
-            Processing...
+            {ux.processing}
           </span>
-        ) : 'Continue'}
+        ) : ux.continue}
       </PrimaryButton>
     </div>
   );

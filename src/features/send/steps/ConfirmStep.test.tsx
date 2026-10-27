@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { WalletProvider } from '@/contexts/WalletContext';
 import { FiatDataProvider } from '@/contexts/FiatDataContext';
 import { StableBalanceProvider } from '@/contexts/StableBalanceContext';
@@ -31,6 +31,13 @@ function renderConfirmStep(
 }
 
 describe('ConfirmStep destination', () => {
+  it('shows an approximate fiat total for a fixed scanned payment without altering confirmation', async () => {
+    const onConfirm = vi.fn();
+    renderConfirmStep({label: 'Recipient', value: 'example.invalid'}, {onConfirm});
+    await waitFor(() => expect(screen.getByTestId('fiat-estimate')).toHaveTextContent('≈ $50.01 USD'));
+    fireEvent.click(screen.getByTestId('send-confirm-button'));
+    expect(onConfirm).toHaveBeenCalledOnce();
+  });
   it('shows the destination alongside the Send action', () => {
     const value = 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4';
     renderConfirmStep({ label: 'To address', value });

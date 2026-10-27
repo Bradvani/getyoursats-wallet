@@ -1,4 +1,6 @@
 import {trustCopy} from '@/getyoursats/trustCopy';
+import {usePresentation} from '../../hooks/usePresentation';
+import {PAYMENT_EXPERIENCE} from '../../locales/paymentExperience';
 import {featureAvailability} from '@/getyoursats/featureAvailability';
 import React, { type ReactNode } from 'react';
 import type { LightningAddressInfo } from '@breeztech/breez-sdk-spark';
@@ -10,6 +12,7 @@ export interface LightningAddressDisplayProps {
   address: LightningAddressInfo | null;
   isLoading: boolean;
   isSupported: boolean;
+  isPersonalized?: boolean;
   /** Opens the edit sheet, which also creates the first address. */
   onEdit: () => void;
   onCustomizeAmount: () => void;
@@ -23,6 +26,7 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
   address,
   isLoading,
   isSupported,
+  isPersonalized = false,
   onEdit,
   onCustomizeAmount,
   section,
@@ -30,13 +34,16 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
   qrCardClassName,
 }) => {
   const { showToast } = useToast();
+  const {language} = usePresentation();
+  const text = PAYMENT_EXPERIENCE[language];
+  const trust = trustCopy(language);
   const amountLink = (className: string) => (
     <TextButton
       onClick={onCustomizeAmount}
       className={`${className} show-amount-panel-button`}
       data-testid="show-amount-panel-button"
     >
-      Create invoice with specific amount →
+      {text.createInvoice}
     </TextButton>
   );
   // A message in the QR slot takes the card's width, so the dock and caption stay put.
@@ -44,9 +51,9 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
 
   if (!isSupported) {
     return section === 'qr' ? slot(
-      <AlertCard variant="info" title="Lightning addresses unavailable" className="w-full text-left">
+      <AlertCard variant="info" title={text.addressUnavailable} className="w-full text-left">
         <p className="text-spark-text-secondary text-sm" data-testid="lightning-address-unsupported">
-          They&apos;re not supported in this environment.
+          {text.addressUnavailableBody}
         </p>
       </AlertCard>,
     ) : (
@@ -78,11 +85,11 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
   if (!address) {
     return section === 'qr' ? slot(
       <div className="text-center">
-        <h3 className="font-display text-lg font-semibold text-spark-text-primary mb-2">Lightning Address</h3>
+        <h3 className="font-display text-lg font-semibold text-spark-text-primary mb-2">{text.lightningAddress}</h3>
         <p className="text-spark-text-secondary text-sm mb-4">
-          Create a Lightning Address to receive payments easily
+          {text.createAddress}
         </p>
-        <PrimaryButton onClick={onEdit}>Create Lightning Address</PrimaryButton>
+        <PrimaryButton onClick={onEdit}>{text.createAddress}</PrimaryButton>
       </div>,
     ) : (
       <div className="w-full flex justify-center">{amountLink('text-sm')}</div>
@@ -99,10 +106,10 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
         text={address.lightningAddress}
         truncate
         showShare
-        label="Lightning Address"
+        label={text.lightningAddress}
         textColor="text-spark-primary"
-        onCopied={() => showToast('success', 'Copied!')}
-        onShareError={() => showToast('error', 'Failed to share')}
+        onCopied={() => showToast('success', trust.copySuccess)}
+        onShareError={() => showToast('error', text.shareFailed)}
         textToCopy={address.lightningAddress}
         textToShare={address.lnurl.bech32}
         shareLabel="LNURL-Pay"
@@ -110,7 +117,7 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
       />
 
       <p className="text-xs text-center text-spark-text-muted max-w-xs">
-        {featureAvailability.emailVerification?'Personalize your address in Settings after email verification.':trustCopy().personalSoon}
+        {isPersonalized ? text.personalReady : featureAvailability.emailVerification ? text.personalize : trust.personalSoon}
       </p>
       {amountLink('mt-2')}
     </div>

@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   EMPTY_WALLET_SETUP, advanceWalletTour, beginWalletTour, clearWalletSetupMemory,
-  confirmWalletRecovery, initializeNewWalletSetup, readWalletSetup, skipWalletTour,
+  confirmWalletRecovery, dismissWalletSetupCard, initializeNewWalletSetup, readWalletSetup, skipWalletTour,
   subscribeWalletSetup, walletSetupScope,
 } from './walletSetupState';
 
@@ -128,5 +128,28 @@ describe('wallet-scoped setup progress', () => {
     expect(listenerB).not.toHaveBeenCalled();
     stopA();
     stopB();
+  });
+});
+
+describe('welcome card dismissal', () => {
+  it('survives a new session and repeated enrollment without changing recovery evidence', () => {
+    initializeNewWalletSetup(scopeA, false);
+    skipWalletTour(scopeA);
+    dismissWalletSetupCard(scopeA);
+    clearWalletSetupMemory();
+    initializeNewWalletSetup(scopeA, false);
+    expect(readWalletSetup(scopeA)).toMatchObject({cardDismissed: true, tourStatus: 'skipped', recoveryStatus: 'pending'});
+    expect(readWalletSetup(scopeB).cardDismissed).toBe(false);
+    expect(readWalletSetup(walletSetupScope(identityA, 'regtest')).cardDismissed).toBe(false);
+    beginWalletTour(scopeA, true);
+    expect(readWalletSetup(scopeA)).toMatchObject({cardDismissed: true, tourStatus: 'active', step: 'language', recoveryStatus: 'pending'});
+  });
+
+  it('reads older verified records without discarding backup evidence', () => {
+    localStorage.setItem(scopeA, JSON.stringify({version: 1, tourStatus: 'skipped', step: 'protect', recoveryStatus: 'phrase-verified'}));
+    expect(readWalletSetup(scopeA)).toMatchObject({cardDismissed: false, recoveryStatus: 'phrase-verified', tourStatus: 'skipped'});
+    dismissWalletSetupCard(scopeA);
+    clearWalletSetupMemory();
+    expect(readWalletSetup(scopeA)).toMatchObject({cardDismissed: true, recoveryStatus: 'phrase-verified'});
   });
 });

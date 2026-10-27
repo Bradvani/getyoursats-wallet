@@ -56,11 +56,11 @@ export const FeeBreakdownCard: React.FC<FeeBreakdownCardProps> = ({
       {items.map((item, index) => (
         <React.Fragment key={item.label}>
           {index > 0 && <div className="border-t border-spark-border/50" />}
-          <div className="flex justify-between items-center">
-            <span className={`text-sm ${item.highlight ? 'text-spark-text-primary font-semibold' : item.emphasis ? 'text-spark-text-primary' : 'text-spark-text-secondary'}`}>
+          <div className="flex flex-wrap justify-between items-baseline gap-x-3 gap-y-1">
+            <span className={`min-w-0 [overflow-wrap:anywhere] text-sm ${item.highlight ? 'text-spark-text-primary font-semibold' : item.emphasis ? 'text-spark-text-primary' : 'text-spark-text-secondary'}`}>
               {item.label}
             </span>
-            <span className={`font-mono text-sm ${item.highlight ? 'font-bold text-spark-primary' : item.emphasis ? 'font-semibold text-spark-text-primary' : 'text-spark-text-primary'}`}>
+            <span className={`max-w-full [overflow-wrap:anywhere] font-mono text-sm ${item.highlight ? 'font-bold text-spark-primary' : item.emphasis ? 'font-semibold text-spark-text-primary' : 'text-spark-text-primary'}`}>
               {item.pending
                 ? <span className="text-spark-text-muted">&mdash;</span>
                 : useRawStrings || typeof item.value === 'string'
