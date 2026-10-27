@@ -1,0 +1,80 @@
+/* GetYourSats paired transfer pulse. One shot after settlement, never a clock
+   that changes payment state. Body portal escapes transformed bottom sheets. */
+.gys-pulse{
+ --gys-pulse-orange:#F7931A;--gys-pulse-duration:1250ms;
+ position:fixed;inset:0;width:100%;height:100%;z-index:10010;
+ overflow:hidden;isolation:isolate;pointer-events:none!important;
+ background:#0B0B0B;opacity:0;
+ animation:gys-pulse-envelope var(--gys-pulse-duration) linear both;
+ contain:layout paint;
+}
+.gys-pulse *{pointer-events:none!important;box-sizing:border-box}
+.gys-pulse__field,.gys-pulse__aperture,.gys-pulse__wave{position:absolute;inset:0}
+.gys-pulse__field{
+ background:radial-gradient(ellipse at center,rgba(247,147,26,.92),rgba(247,147,26,.63) 65%,#F7931A);
+ opacity:0;
+}
+.gys-pulse__logo{
+ position:absolute;left:50%;top:50%;width:88px;height:88px;
+ transform:translate(-50%,-50%);display:grid;place-items:center;
+ filter:drop-shadow(0 0 22px rgba(247,147,26,.35));
+}
+.gys-pulse__logo img{width:100%;height:100%;object-fit:contain;border-radius:22%;}
+.gys-pulse__wave{
+ inset:auto;left:50%;top:50%;width:155vmax;height:155vmax;
+ margin-left:-77.5vmax;margin-top:-77.5vmax;
+ background:radial-gradient(ellipse,rgba(247,147,26,.46) 0%,rgba(247,147,26,.74) 60%,#F7931A 68%,rgba(247,147,26,.16) 70%,transparent 73%);
+ border-radius:46% 50% 45% 49%;opacity:0;transform:scale(.015);
+}
+.gys-pulse__edge,.gys-pulse__edge-glow{
+ position:absolute;inset:3px;border-radius:clamp(20px,4vmin,38px);opacity:0;
+}
+.gys-pulse__edge{
+ padding:3px;
+ -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+ -webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;
+}
+.gys-pulse__edge span{
+ position:absolute;width:160vmax;height:160vmax;left:calc(50% - 80vmax);top:calc(50% - 80vmax);
+ background:conic-gradient(from 0deg,#F7931A 0deg,rgba(247,147,26,.18) 75deg,#F7931A 120deg,rgba(247,147,26,.26) 210deg,#F7931A 300deg);
+ animation:gys-pulse-edge-flow 1250ms cubic-bezier(.2,.65,.25,1) both;
+}
+.gys-pulse__edge-glow{
+ border:3px solid #F7931A;box-shadow:inset 0 0 30px rgba(247,147,26,.8),0 0 24px rgba(247,147,26,.75);
+ filter:blur(6px);
+}
+/* OUTBOUND: monochrome identity ignites, then one wave travels to the bezel. */
+.gys-pulse--sent .gys-pulse__wave{animation:gys-pulse-out var(--gys-pulse-duration) cubic-bezier(.16,.72,.25,1) both}
+.gys-pulse--sent .gys-pulse__logo{animation:gys-pulse-logo-out var(--gys-pulse-duration) ease-out both}
+.gys-pulse--sent .gys-pulse__edge,.gys-pulse--sent .gys-pulse__edge-glow{animation:gys-pulse-edge-out var(--gys-pulse-duration) ease-out both}
+/* INBOUND: glowing outside edges advance inward as the dark aperture closes. */
+.gys-pulse--received .gys-pulse__field{opacity:1}
+.gys-pulse--received .gys-pulse__wave{display:none}
+.gys-pulse--received .gys-pulse__aperture{
+ inset:4px;background:#0B0B0B;border-radius:clamp(20px,4vmin,38px);
+ box-shadow:0 0 28px 8px rgba(247,147,26,.75),inset 0 0 32px rgba(247,147,26,.5);
+ animation:gys-pulse-in var(--gys-pulse-duration) cubic-bezier(.32,.04,.18,1) both;
+}
+.gys-pulse--received .gys-pulse__edge,.gys-pulse--received .gys-pulse__edge-glow{animation:gys-pulse-edge-in var(--gys-pulse-duration) ease-out both}
+.gys-pulse--received .gys-pulse__logo{animation:gys-pulse-logo-in var(--gys-pulse-duration) ease-out both}
+@keyframes gys-pulse-envelope{0%{opacity:0}9%,72%{opacity:1}100%{opacity:0}}
+@keyframes gys-pulse-out{0%,14%{opacity:0;transform:scale(.015) rotate(-8deg)}22%{opacity:1}78%{opacity:.9}100%{opacity:0;transform:scale(1) rotate(7deg);border-radius:50%}}
+@keyframes gys-pulse-in{0%,12%{transform:scale(1);border-radius:32px}62%{border-radius:38% 44% 40% 46%}83%,100%{transform:scale(0);border-radius:50%}}
+@keyframes gys-pulse-logo-out{0%,15%{filter:grayscale(1) brightness(1.2);opacity:1;transform:translate(-50%,-50%) scale(.88)}32%{filter:grayscale(0) drop-shadow(0 0 24px #F7931A);opacity:1;transform:translate(-50%,-50%) scale(1.05)}70%,100%{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
+@keyframes gys-pulse-logo-in{0%,38%{opacity:0;transform:translate(-50%,-50%) scale(.88)}73%,88%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+@keyframes gys-pulse-edge-out{0%,43%{opacity:0}70%{opacity:1}100%{opacity:0}}
+@keyframes gys-pulse-edge-in{0%{opacity:0}12%,45%{opacity:1}90%,100%{opacity:0}}
+@keyframes gys-pulse-edge-flow{from{transform:rotate(-35deg)}to{transform:rotate(145deg)}}
+/* Reduced motion: no travel, fill or scale. The accessible receipt is never
+   delayed or hidden by JS; this is a short decorative border-only accent. */
+.gys-pulse--reduced{background:transparent;animation:none;opacity:1}
+.gys-pulse--reduced .gys-pulse__field,.gys-pulse--reduced .gys-pulse__aperture,.gys-pulse--reduced .gys-pulse__wave,.gys-pulse--reduced .gys-pulse__logo,.gys-pulse--reduced .gys-pulse__edge-glow{display:none}
+.gys-pulse--reduced .gys-pulse__edge{animation:none;opacity:.45}
+.gys-pulse--reduced .gys-pulse__edge span{animation:none}
+@media(prefers-reduced-motion:reduce){
+ .gys-pulse{background:transparent;animation:none;opacity:1}
+ .gys-pulse__field,.gys-pulse__aperture,.gys-pulse__wave,.gys-pulse__logo,.gys-pulse__edge-glow{display:none!important}
+ .gys-pulse .gys-pulse__edge{animation:none!important;opacity:.45}
+ .gys-pulse__edge span{animation:none}
+}
+@media(forced-colors:active){.gys-pulse{display:none}}

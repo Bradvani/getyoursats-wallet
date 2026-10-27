@@ -6,7 +6,6 @@ import { SatAmount } from './SatAmount';
 import { useFiatData } from '../contexts/FiatDataContext';
 import { getTokenAmountFromPayment, formatTokenAmount, buildTokenDisplayConfig, withAssetDecimals } from '../utils/tokenFormatting';
 import PaymentMotion from './PaymentMotion';
-import { hapticLight } from '@/utils/haptics';
 
 interface PaymentCelebrationProps {
   payment: Payment;
@@ -27,10 +26,10 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => {
+    if(payment.status!=='completed')return;
     let revealFrame: number | undefined;
     let closeTimer: ReturnType<typeof setTimeout> | undefined;
     let exitTimer: ReturnType<typeof setTimeout> | undefined;
-    let hapticPlayed = false;
 
     const clearPresentationTimers = () => {
       if (revealFrame !== undefined) cancelAnimationFrame(revealFrame);
@@ -43,10 +42,6 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
       setIsVisible(false);
       revealFrame = requestAnimationFrame(() => {
         setIsVisible(true);
-        if (!hapticPlayed) {
-          hapticPlayed = true;
-          void hapticLight();
-        }
       });
       closeTimer = setTimeout(() => {
         setIsVisible(false);
@@ -66,7 +61,7 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
       document.removeEventListener('visibilitychange', onVisibility);
       clearPresentationTimers();
     };
-  }, [payment.id]);
+  }, [payment.id,payment.status]);
 
   // Determine display: token amount or sats
   // Always show token denomination for token payments, even if stable balance is off
@@ -76,6 +71,8 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
     const base = stableBalance.displayConfig ?? buildTokenDisplayConfig(tokenInfo.metadata, fiatCurrencies);
     displayText = formatTokenAmount(tokenInfo.amount, withAssetDecimals(base, tokenInfo.metadata.decimals));
   }
+
+  if(payment.status!=='completed')return null;
 
   return createPortal(
     <div
@@ -94,7 +91,7 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
           isVisible ? 'scale-100 translate-y-0' : 'scale-50 translate-y-20'
         }`}
       >
-        <PaymentMotion state={isSent ? 'sent' : 'received'} />
+        <PaymentMotion state={isSent ? 'sent' : 'received'} animate={isVisible} settlementId={payment.status==='completed'?payment.id:undefined}/>
 
         {/* Title */}
         <h2 className="gys-moment__title text-2xl font-display font-bold text-spark-text-primary mb-2">
