@@ -8,6 +8,10 @@ The successor source corrects the namespace derivation and the application refus
 
 At this receipt's creation, the application controls passed locally and the SDK source passed internal source review. The ten new Rust/WASM controls and the successor installed-package verifier still require the canonical successor build. Source review is not a compiled-artifact pass or an independent third-party audit. This change does not approve production or funded operations.
 
+## Compiled follow-up, 27 October 2026
+
+The source-review-only status above records the original receipt. The successor [build 40473745510](https://github.com/Bradvani/getyoursats-wallet/actions/runs/40473745510) subsequently passed both build and preservation. Its exact `recovery.3` archive is preserved in `de5100c3728bc11d019744f09624648b4aff8803`, SHA256 `32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c`; browser WASM SHA256 is `d77b97e2041c62575702a3c1227c7efa1299b7c2ce2f6e05612b8c14992e206a`. All ten actual WASM identity cases passed. The installed verifier passed 18 path cases, 58 constructor checks, twelve invalid-identity controls and four durable-tree factory checks, with zero real storage opens, network attempts or other signer calls. All four production WASM binaries passed the test-export guard. The [build and offline artifact receipt](sdk-ci-0007-20261027.md) records the exact scope. Legacy ownership/migration, provider acceptance and independent release review remain open.
+
 ## Compiled failure evidence
 
 The probe initialized the retained browser WASM, supplied public fixture keys, and intercepted its first `createDefaultStorage` call. That factory immediately rejected before opening storage or starting the core SDK. It invoked twelve builders: two public seed fixtures, two networks, and the seeded, full external-signer and signing-only external-signer constructors.

@@ -13,6 +13,8 @@ package and an explicit reviewed storage-provenance plan are required before
 any connection, profile copy or migration. Historical funded `0005` acceptance
 is not a `0006` pass.
 
+The later canonical `0007` [build and artifact checks](sdk-ci-0007-20261027.md) passed. This prepared `0006` harness has not been retargeted or unblocked. A successful successor build alone does not establish ownership of the retained shared stores or authorize copying, migrating or connecting those profiles.
+
 The only intended result is fresh positive compatibility of three already
 completed incoming Spark receipts with the strict `observeIncomingTransfer`
 implementation. It does not exercise a new claim, initial/continued deposit,
