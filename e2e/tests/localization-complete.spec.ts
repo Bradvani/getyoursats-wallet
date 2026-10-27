@@ -7,6 +7,9 @@ import completion from '../../src/locales/flowCompletion.json' with {type:'json'
 const support=JSON.parse(readFileSync('public/support-locales.js','utf8').split('window.GYS_SUPPORT = ')[1].replace(/;\s*$/,''));
 const privacy=JSON.parse(readFileSync('public/privacy-locales.js','utf8').split('window.GYS_PRIVACY = ')[1].replace(/;\s*$/,''));
 const languages=Object.keys(completion) as AppLanguage[];
+test.beforeEach(async({page})=>{
+ await page.route('https://wallet.getyoursats.com/brand/wordmark-horizontal-dark.svg',route=>route.fulfill({contentType:'image/svg+xml',headers:{'Cross-Origin-Resource-Policy':'cross-origin'},body:readFileSync('public/brand/wordmark-horizontal-dark.svg','utf8')}));
+});
 for(const language of languages){
  test('complete send and balance language '+language,async({page})=>{
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
@@ -139,6 +142,9 @@ for(const language of ['ar','ta','ja'])test('readable narrow and enlarged Suppor
  await page.evaluate(()=>{document.documentElement.style.zoom='2';});
  await page.locator('.toc a[href="#keys-and-recovery"]').click();
  await expect(page.locator('#keys-and-recovery')).toBeInViewport();
+ const headingBox=await page.locator('#keys-and-recovery h2').boundingBox();
+ const headerBox=await page.locator('header.top').boundingBox();
+ expect(headingBox!.y).toBeGreaterThanOrEqual(headerBox!.y+headerBox!.height);
  const enlarged=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
   overflow:Array.from(document.querySelectorAll('body *')).filter(n=>!n.closest('.toc')).map(n=>({tag:n.tagName,id:n.id,class:n.className,right:n.getBoundingClientRect().right})).filter(n=>n.right>innerWidth+1)}));
  expect(enlarged.scrollWidth,JSON.stringify(enlarged)).toBeLessThanOrEqual(enlarged.width+1);
