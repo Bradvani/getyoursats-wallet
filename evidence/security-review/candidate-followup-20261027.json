@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "recordedAtUtc": "2026-10-27T00:01:39.245825+00:00",
   "pullRequest": 43,
-  "status": "draft_not_deployed_fresh_ci_pending",
+  "status": "draft_not_promoted_to_production_ci_passed",
   "publishedHead": "f5c319882d172ec2710a712aa02f15497b6eb2e7",
   "tree": "aac378618ad62773216d2970ad121ca77b9fd9c2",
   "equivalentLocalCommit": "b042afc208d75ef4685aacd75d84f3e8027175a9",
@@ -34,5 +34,9 @@
   "sdkPackageChanged": false,
   "productionInterlockChanged": false,
   "productionPromoted": false,
-  "realFundsAcceptance": false
+  "realFundsAcceptance": false,
+  "ciReceipt": "followup-ci-20261027.json",
+  "ciObservedAtUtc": "2026-10-27 00:15:38 UTC",
+  "allSevenWorkflowsPassed": true,
+  "separateCodeqlVerdict": "success"
 }

@@ -170,6 +170,13 @@
       "required_contexts": [],
       "rulesets": [],
       "note": "No checks were enforced by GitHub branch protection. The recorded outcomes are explicit release evidence."
+    },
+    "separateCodeqlSecurityVerdict": {
+      "head": "13f7ff73f89ccde9c633cde981ce306c285a0942",
+      "checkId": 121898547787,
+      "app": "GitHub Advanced Security",
+      "conclusion": "success",
+      "title": "No new alerts in code changed by this pull request"
     }
   },
   "artifactProvenance": {
@@ -284,10 +291,11 @@
     "draft": true,
     "productionStatus": "NO-GO; not promoted",
     "contractsDocument": "https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/remaining-sdk-contracts-20261027.md",
-    "ciReceipt": "../../security-review/final-candidate-ci-20261026.json",
-    "ciObservedAt": "2026-10-26 23:29:07 UTC",
-    "ciStatus": "Fresh follow-up CI pending. Earlier 4c5 snapshot corrected to include failed separate CodeQL verdict and ambiguous retry acceptance.",
-    "followUpReceipt": "../../security-review/candidate-followup-20261027.json"
+    "ciReceipt": "../../security-review/followup-ci-20261027.json",
+    "ciObservedAt": "2026-10-27 00:15:38 UTC",
+    "ciStatus": "All seven Actions workflows and separate CodeQL security verdict passed on f5c319. The subsequent SDK source work is outside this snapshot; production remains NO-GO.",
+    "followUpReceipt": "../../security-review/candidate-followup-20261027.json",
+    "historicalCiReceipt": "../../security-review/final-candidate-ci-20261026.json"
   },
   "remainingGates": [
     "A01: encrypted mnemonic migration, locking, data preservation and physical recovery acceptance on the separate security candidate.",

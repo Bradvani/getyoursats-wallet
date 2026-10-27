@@ -40,3 +40,7 @@ Follow-up source `f5c319882d172ec2710a712aa02f15497b6eb2e7` fixes the predicate 
 The security candidate remains draft with its production interlock enabled. The earlier Bitcoin Core mempool/restart/reorg case is pinned to its earlier source and stubs SDK signing; it is not reattributed to this final head or treated as fresh Spark exit acceptance. The earlier public regtest attempt connected two empty disposable wallets but received no funds after a faucet bot/CAPTCHA rejection. No funded route, payment, claim or funding retry occurred in this CI verification.
 
 The [remaining SDK contracts](https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/remaining-sdk-contracts-20261027.md) require bounded Lightning execution, authoritative uncertain-deposit recovery and durable fresh/rebuilt exits. Fresh funded final-SDK testing, physical devices, separate-device restoration, original-origin rollout, critical-language/RTL/accessibility acceptance and qualified independent review remain open. Artifact digests in the receipt are GitHub API/upload metadata, not locally downloaded archive hashes.
+
+## Subsequent source verification
+
+The [fresh follow-up snapshot](followup-ci-20261027.md) records seven passing workflows and a successful separate CodeQL security verdict on `f5c31988`. Its dedicated Firefox job passed seven security and nine rollback cases. These are new source-specific results and do not change this historical head's failed verdict or uncertain retry acceptance.
