@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {flowText} from '../../src/locales/flowText';
 import {PAYMENT_UX} from '../../src/locales/paymentUx';
 import type {AppLanguage} from '../../src/services/presentationPreferences';
-import completion from '../../src/locales/flowCompletion.json';
+import completion from '../../src/locales/flowCompletion.json' with {type:'json'};
 const support=JSON.parse(readFileSync('public/support-locales.js','utf8').split('window.GYS_SUPPORT = ')[1].replace(/;\s*$/,''));
 const privacy=JSON.parse(readFileSync('public/privacy-locales.js','utf8').split('window.GYS_PRIVACY = ')[1].replace(/;\s*$/,''));
 const languages=Object.keys(completion) as AppLanguage[];

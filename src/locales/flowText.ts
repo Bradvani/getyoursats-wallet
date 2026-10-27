@@ -1,10 +1,12 @@
 import {TRUST_COPY} from '../getyoursats/trustCopy';
 import type {AppLanguage} from '../services/presentationPreferences';
-import completion from './flowCompletion.json';
+import completion from './flowCompletion.json' with {type:'json'};
 import {PAYMENT_UX} from './paymentUx';
 import {PAYMENT_EXPERIENCE} from './paymentExperience';
 
 const aliases:Record<string,string>={
+ 'Generate Invoice':'Create Invoice','On-chain':'Bitcoin on-chain deposit',
+"Create Lightning Address":"Create Lightning address","They're not supported in this environment.":"Lightning addresses are not supported in this environment.","Loading Lightning Address...":"Loading Lightning address…","Failed to share":"Could not share","Requested amount":"Request amount","Invalid amount":"Please enter a valid amount",
  'Scan':'Scan QR','Enter amount in sats':'Enter amount in {currency}',
  'Processing...':'Processing…','Search contacts...':'Search contacts','Lightning Address':'Lightning address','Lightning Invoice':'Lightning invoice',
  'Authenticated!':'Signed in','Refund Sent!':'Refund sent','Refund Failed':'Refund failed','Payment Sent!':'Payment sent','Payment Failed':'Payment failed',

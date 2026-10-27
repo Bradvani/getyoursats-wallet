@@ -1,4 +1,5 @@
 import {useFlowText} from '@/hooks/useFlowText';
+import {usePresentation} from '@/hooks/usePresentation';
 import React, { Fragment, useLayoutEffect, useRef, useState } from 'react';
 import type { LnurlAuthRequestDetails, LnurlCallbackStatus } from '@breeztech/breez-sdk-spark';
 import { FormError, PrimaryButton, SecondaryButton } from '../../../components/ui';
@@ -114,6 +115,7 @@ const DomainName: React.FC<{ domain: string }> = ({ domain }) => {
 
 const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, onAuth, onClose }) => {
   const t=useFlowText();
+  const {language}=usePresentation();
   const [failure, setFailure] = useState<Failure | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -161,7 +163,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
         result="success"
         error={null}
         operationType="auth"
-        description={t('{domain} confirmed it’s you.',{domain})}
+        description={language==='en'?`${domain} confirmed it's you.`:t('{domain} confirmed it’s you.',{domain})}
         onClose={onClose}
       />
     );
@@ -180,7 +182,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
           {/* Indented to the error's text, so it reads as that error's detail line. */}
           {failure.missingCors && (
             <p className="ml-6 text-xs text-spark-text-muted [overflow-wrap:anywhere]">
-              {t('{domain} is missing a CORS header.',{domain})} (
+              {language==='en'?`${domain} is missing a CORS header`:t('{domain} is missing a CORS header.',{domain})} (
               <a
                 href={LUD_01_URL}
                 target="_blank"

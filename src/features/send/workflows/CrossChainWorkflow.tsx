@@ -323,7 +323,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
           onPendingChange={setPendingAsset}
           onBack={onBack}
           onContinue={() => { if (pendingAsset) selectAsset(pendingAsset, routes); }}
-          error={t(error)}
+          error={error}
         />
       )}
 
