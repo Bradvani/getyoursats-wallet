@@ -132,7 +132,9 @@ for(const language of ['ar','ta','ja'])test('readable narrow and enlarged Suppor
  await page.setViewportSize({width:320,height:740});
  await page.goto('/site/support.html?lang='+language);
  await expect(page.locator('#gys-language')).toBeVisible();
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ const layout=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+  overflow:Array.from(document.querySelectorAll('body *')).filter(n=>!n.closest('.toc')).map(n=>({tag:n.tagName,id:n.id,class:n.className,right:n.getBoundingClientRect().right})).filter(n=>n.right>innerWidth+1)}));
+ expect(layout.scrollWidth,JSON.stringify(layout)).toBeLessThanOrEqual(layout.width+1);
  await page.setViewportSize({width:1280,height:900});
  await page.evaluate(()=>{document.documentElement.style.zoom='2';});
  await page.locator('.toc a[href="#keys-and-recovery"]').click();
