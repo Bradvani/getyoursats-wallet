@@ -139,6 +139,8 @@ for(const language of ['ar','ta','ja'])test('readable narrow and enlarged Suppor
  await page.evaluate(()=>{document.documentElement.style.zoom='2';});
  await page.locator('.toc a[href="#keys-and-recovery"]').click();
  await expect(page.locator('#keys-and-recovery')).toBeInViewport();
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+ const enlarged=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+  overflow:Array.from(document.querySelectorAll('body *')).filter(n=>!n.closest('.toc')).map(n=>({tag:n.tagName,id:n.id,class:n.className,right:n.getBoundingClientRect().right})).filter(n=>n.right>innerWidth+1)}));
+ expect(enlarged.scrollWidth,JSON.stringify(enlarged)).toBeLessThanOrEqual(enlarged.width+1);
  await page.screenshot({path:`test-artifacts/support-${language}-200percent.png`});
 });
