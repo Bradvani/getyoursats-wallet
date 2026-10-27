@@ -47,7 +47,7 @@ function Fixture(){
  return <ToastProvider><WalletProvider client={sdk} isConnected><WalletInfoProvider walletInfo={info}><FiatDataProvider><StableBalanceProvider><ContactsProvider>
  <div className="max-w-md mx-auto p-5">
  <select aria-label="Fixture language" value={language} onChange={event=>setAppLanguage(event.target.value as AppLanguage)}>{APP_LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.name}</option>)}</select>
- <output data-testid="submitted">{JSON.stringify({destination,amount:String(amount)})}</output>
+ <output className="sr-only" data-testid="submitted">{JSON.stringify({destination,amount:String(amount)})}</output>
  <main data-testid="localized-surface">
  {step==='settings'&&<SettingsPage onBack={noop} config={null} onOpenFiatCurrencies={noop} onOpenBuyProviders={noop} onOpenPasskeySettings={noop} onOpenSecurity={noop} onOpenBackup={noop} onOpenEmail={noop} onOpenUnilateralExit={noop}/>}
  {step==='receive'&&<LightningAddressDisplay address={null} isLoading={false} isSupported section="qr" onEdit={noop} onCustomizeAmount={()=>setStep('receiveamount')}/>}

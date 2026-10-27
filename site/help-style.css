@@ -128,3 +128,13 @@
   background:rgba(247,147,26,.055);border:1px solid rgba(247,147,26,.21);
   border-radius:12px;color:#C8BAA7;font-size:12px;line-height:1.65
 }
+
+/* Long translated navigation labels must reflow on narrow screens. */
+@media(max-width:420px){
+ .navbar{flex-wrap:wrap;padding-block:12px}
+ .navbar>a{flex-shrink:0}
+ .navbar .links{flex:1 1 190px;min-width:0;flex-wrap:wrap;justify-content:flex-end}
+ .navbar .links .wallet{flex:1 1 105px;white-space:normal;text-align:center;max-width:100%}
+ .navbar .links label{flex:0 0 auto}
+ .hero h1,.hero-actions a{overflow-wrap:anywhere}
+}
