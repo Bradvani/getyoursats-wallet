@@ -60,7 +60,7 @@ jobs:
           sudo python3 -I -B - <<'PY'
           from pathlib import Path
           import re
-          paths = [Path('/etc/apt/sources.list')]
+          paths = [Path('/etc/apt/sources.list'), Path('/etc/apt/apt-mirrors.txt')]
           paths += list(Path('/etc/apt/sources.list.d').glob('*.list'))
           paths += list(Path('/etc/apt/sources.list.d').glob('*.sources'))
           pattern = re.compile(r'https?://azure\.archive\.ubuntu\.com/ubuntu(?=/|\s|$)')
