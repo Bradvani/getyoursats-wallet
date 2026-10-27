@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "title": "A13 candidate welcome visibility correction",
+  "generatedAt": "2026-10-27T00:45:14.162419+00:00",
+  "source": {
+    "base": "6304e545149d53efa73f4580b869bba475b4fd68",
+    "baseTree": "b892c263304b466bdc2e16927cb4e826ea026dae",
+    "commit": "942d20a85cebb2d92b1bf174f9265cd4fb5b00dd",
+    "tree": "b18c72ef8622d06de4e38fcc3c9662b3e915f664",
+    "branch": "codex/a13-welcome-visibility-20261027",
+    "workingTreeClean": true,
+    "filesChanged": [
+      "src/pages/HomePage.tsx"
+    ],
+    "insertions": 0,
+    "deletions": 2,
+    "published": false,
+    "deployed": false,
+    "patchSha256": "9b19c91d06c9ece8b17c18a2c696009cdf1a7462e315de211801f4de7ceaf4df",
+    "sourceHashes": {
+      "src/pages/HomePage.tsx": {
+        "beforeSha256": "99c990bede7fd63f6bc5bc2ac8ea67cb1bf58e5f42dbb4534d74e94c5ce42382",
+        "afterSha256": "b5056b75d8012d5398b63fbb7bfb708e16f02d4eb56983a0c02969d7d4835fbb",
+        "expectedChanged": true
+      },
+      "src/components/BrandIntro.tsx": {
+        "beforeSha256": "7ef62d4deaf1b25230d672dc6ec67b3e5e572df5454dc407ea3506ad8b9afaf0",
+        "afterSha256": "7ef62d4deaf1b25230d672dc6ec67b3e5e572df5454dc407ea3506ad8b9afaf0"
+      },
+      "src/pages/UnlockingPage.tsx": {
+        "beforeSha256": "be63e08ac4f9e7039c8634f6b6e2e08a3f867aae2bea97237439227f895c7bb7",
+        "afterSha256": "be63e08ac4f9e7039c8634f6b6e2e08a3f867aae2bea97237439227f895c7bb7"
+      },
+      "src/App.tsx": {
+        "beforeSha256": "9ca42d2b70338f2984a64527cf73e0b16b7ddede1a50bf54df3591cda9260170",
+        "afterSha256": "9ca42d2b70338f2984a64527cf73e0b16b7ddede1a50bf54df3591cda9260170"
+      },
+      "src/main.tsx": {
+        "beforeSha256": "462c09095b47478435e0cf9416a75959311af84209d323c75b887b73e19d696d",
+        "afterSha256": "462c09095b47478435e0cf9416a75959311af84209d323c75b887b73e19d696d"
+      },
+      "src/components/premiumMotion.css": {
+        "beforeSha256": "f290be03acd1b2cd65b1022120db3ccb1c184c66f6b9211684c0ed2bc446877f",
+        "afterSha256": "f290be03acd1b2cd65b1022120db3ccb1c184c66f6b9211684c0ed2bc446877f"
+      },
+      "src/services/sdkReady.ts": {
+        "beforeSha256": "88ea5cf86ff76c9caea39ded68d479860d61d6492559498c6bc82064b577ee12",
+        "afterSha256": "88ea5cf86ff76c9caea39ded68d479860d61d6492559498c6bc82064b577ee12"
+      },
+      "src/services/passkeyService.ts": {
+        "beforeSha256": "a06c8635bfac8e05afb56e551e603d22a8277952f689ae595c0ea756442b9263",
+        "afterSha256": "a06c8635bfac8e05afb56e551e603d22a8277952f689ae595c0ea756442b9263"
+      },
+      "src/hooks/useBreezSdk.ts": {
+        "beforeSha256": "b3466a63306cc9b02151a5f4c5415654ec08e456562d17168054a7ce0f27d6fa",
+        "afterSha256": "b3466a63306cc9b02151a5f4c5415654ec08e456562d17168054a7ce0f27d6fa"
+      },
+      "public/brand/wordmark-3d-transparent.png": {
+        "beforeSha256": "7b174cca6593622dd8112a7cfe6cb199bd087d5c33617b0402ab80e7901e5bf1",
+        "afterSha256": "7b174cca6593622dd8112a7cfe6cb199bd087d5c33617b0402ab80e7901e5bf1"
+      }
+    }
+  },
+  "scope": "Remove only the full-screen BrandIntro import and mount from HomePage. Keep hero, Start morph, inline loading/unlocking brand, splash capability wait, SDK/session logic and production interlock unchanged.",
+  "checks": [
+    {
+      "name": "existing onboarding, routing, motion and welcome-card unit tests",
+      "command": "node node_modules/vitest/vitest.mjs run src/getyoursats/onboardingPolicy.test.ts src/getyoursats/onboardingUi.test.tsx src/getyoursats/startRouting.test.ts src/components/PaymentMotion.test.tsx src/getyoursats/WalletSetupCard.test.tsx",
+      "files": 5,
+      "passed": 37,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "name": "TypeScript and local preview-mode build",
+      "command": "VITE_STAGING_PASSWORD= VITE_BREEZ_API_KEY= VERCEL_ENV=preview npm run build",
+      "exitCode": 0
+    },
+    {
+      "name": "changed-file lint",
+      "command": "node node_modules/eslint/bin/eslint.js src/pages/HomePage.tsx --report-unused-disable-directives",
+      "exitCode": 0
+    },
+    {
+      "name": "git diff whitespace check",
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "browser": {
+    "engine": "Chromium 147.0.7727.0",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "startedAt": "2026-10-27T00:42:48.908Z",
+    "finishedAt": "2026-10-27T00:42:52.389Z",
+    "complete": true,
+    "refinedSampleCount": 2,
+    "earlierDiagnosticSampleCount": 2,
+    "visualPredicate": "Legible requires heading, subtitle, Start, Restore and hero at combined ancestor opacity >=0.95 with no visible splash or full-screen brand cover. Unoccluded uses >0.01 and is a distinct earlier mark.",
+    "samples": [
+      {
+        "variant": "before",
+        "marksMs": {
+          "heroDecoded": 191,
+          "splashRemoved": 374.4,
+          "onboardingDomAvailable": 491.1,
+          "brandRevealHidden": 2307.4,
+          "onboardingUnoccluded": 2307.6,
+          "onboardingLegible": 2307.9
+        },
+        "brandCoverEverSeen": true,
+        "afterSplash": {
+          "atMs": 494.69999999552965,
+          "marks": {
+            "heroDecoded": 191,
+            "splashRemoved": 374.3999999985099,
+            "onboardingDomAvailable": 491.1000000014901
+          },
+          "brandPresent": true,
+          "brandOpacity": "1",
+          "brandVisibility": "visible",
+          "startText": "Start",
+          "restorePresent": true
+        },
+        "onboarding": {
+          "heading": "Every sat counts.",
+          "startText": "Start",
+          "restorePresent": true,
+          "heroSource": "/brand/wordmark-3d-transparent.png",
+          "heroNaturalWidth": 1448,
+          "heroNaturalHeight": 1086,
+          "heroBox": {
+            "x": 88.09375,
+            "y": 172.296875,
+            "width": 213.8125,
+            "height": 160.359375,
+            "top": 172.296875,
+            "right": 301.90625,
+            "bottom": 332.65625,
+            "left": 88.09375
+          }
+        },
+        "storage": {
+          "localKeys": [],
+          "sessionKeys": [],
+          "databases": [
+            {
+              "name": "glow-logs",
+              "version": 2
+            }
+          ]
+        },
+        "safetyStops": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "requests": 53,
+        "allRequestsSameOriginGet": true
+      },
+      {
+        "variant": "after",
+        "marksMs": {
+          "heroDecoded": 175.8,
+          "splashRemoved": 359,
+          "onboardingDomAvailable": 492.6,
+          "onboardingUnoccluded": 492.7,
+          "onboardingLegible": 909.1
+        },
+        "brandCoverEverSeen": false,
+        "afterSplash": {
+          "atMs": 495.3999999985099,
+          "marks": {
+            "heroDecoded": 175.79999999701977,
+            "splashRemoved": 359,
+            "onboardingDomAvailable": 492.6000000014901,
+            "onboardingUnoccluded": 492.70000000298023
+          },
+          "brandPresent": false,
+          "brandOpacity": null,
+          "brandVisibility": null,
+          "startText": "Start",
+          "restorePresent": true
+        },
+        "onboarding": {
+          "heading": "Every sat counts.",
+          "startText": "Start",
+          "restorePresent": true,
+          "heroSource": "/brand/wordmark-3d-transparent.png",
+          "heroNaturalWidth": 1448,
+          "heroNaturalHeight": 1086,
+          "heroBox": {
+            "x": 88.09375,
+            "y": 172.296875,
+            "width": 213.8125,
+            "height": 160.359375,
+            "top": 172.296875,
+            "right": 301.90625,
+            "bottom": 332.65625,
+            "left": 88.09375
+          }
+        },
+        "storage": {
+          "localKeys": [],
+          "sessionKeys": [],
+          "databases": [
+            {
+              "name": "glow-logs",
+              "version": 2
+            }
+          ]
+        },
+        "safetyStops": [],
+        "pageErrors": [],
+        "requestFailures": [],
+        "requests": 52,
+        "allRequestsSameOriginGet": true
+      }
+    ]
+  },
+  "buildContext": {
+    "sdkPackageSha256": "cbb19e1e16760d63e8cba74a33e21ec75dac6684bc8d389da6c9921b8ba58505",
+    "sdkWasmSha256": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+    "lockSha256": "93dcb8e7d76f5de9a2e73f3f162df30aadeb71d2169dfb2490611b4b5fb8b4bb",
+    "installedDependenciesChanged": false,
+    "temporaryDependencySymlinkRemoved": true,
+    "manifestNote": "Both local build manifests truthfully report base6304/sourceDirty:true. Baseline dirtiness was the temporary untracked node_modules symlink; the after build also contained the uncommitted two-line source edit. The commit above records the identical source after verification. These local artifacts are not clean release attestations or deployment candidates."
+  },
+  "limits": [
+    "Single before/after samples do not establish stable speedup or production performance; concurrent SDK Cargo compilation and uncontrolled host load are explicit limitations.",
+    "These are local HTTP loopback static builds using the candidate SDK cbb19e1e, not the public release32be original SDK. Public four-sample baseline remains a separate receipt.",
+    "The unchanged welcome content and hero still fade in. First unoccluded DOM and >=95% combined-opacity legibility are separately recorded. Initial exploratory screenshots were transition frames and are not final readability proof.",
+    "No Start/Restore click, wallet creation, credentials, wallet connection, funds or email. Only same-origin GET requests, no guard stops, empty local/session storage key lists and diagnostic glow-logs IndexedDB.",
+    "No physical device, field data, connected-wallet readiness, passkey ceremony or real-funds acceptance. A13 overall acceptance remains open.",
+    "One default-sandbox Chromium launch failed before navigation due OS sandbox restrictions; the authorized local browser run then completed outside that sandbox. It is not an application startup error."
+  ],
+  "artifacts": [
+    {
+      "file": "local-visibility.json",
+      "bytes": 27869,
+      "sha256": "d54719baa47da57a836d9547c9f33a98cbbd0f2d7c796d1ecc780223827e43ed"
+    },
+    {
+      "file": "local-visibility.cjs",
+      "bytes": 14271,
+      "sha256": "0bbed11a30bfece50e7306463f5340221bb3d34b95b07594aa3e5ff63ed74d54"
+    },
+    {
+      "file": "before-covered.png",
+      "bytes": 4647,
+      "sha256": "69141f1b03032625cba3927acdc177ed833128d60cf2bea2b31f2fe726323456"
+    },
+    {
+      "file": "after-readable.png",
+      "bytes": 142899,
+      "sha256": "16b4445737ee6e19aaa52e5c94e8840e71be33af55e153512cc517a935befee3"
+    },
+    {
+      "file": "welcome-cover-removal.patch",
+      "bytes": 928,
+      "sha256": "9b19c91d06c9ece8b17c18a2c696009cdf1a7462e315de211801f4de7ceaf4df"
+    },
+    {
+      "file": "unit.sanitized.log",
+      "bytes": 207,
+      "sha256": "2f9eb1dd51cff5bf30541db887af521d538c74363685f73d942ee62143d65328"
+    },
+    {
+      "file": "lint.sanitized.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "before-build.sanitized.log",
+      "bytes": 46559,
+      "sha256": "5586909d73cf91b8c13a7cd98c7a90a2d0e540581cdfd4c48ea92f191b155941"
+    },
+    {
+      "file": "after-build.sanitized.log",
+      "bytes": 46711,
+      "sha256": "6fc1b8b11bcc04b527f4c52adb0f195642a234d8153fa4e797ac6107d2b0a496"
+    },
+    {
+      "file": "initial-visibility.json",
+      "bytes": 27769,
+      "sha256": "0bba00060bd84c362cd5ed5b1337e0c89f927dec5f1024a3c974bbe99a036bb2"
+    },
+    {
+      "file": "initial-visibility.cjs",
+      "bytes": 13466,
+      "sha256": "589cf03fc18a5fc99adeafb83a76b3a2abe8d715df70857a282ded8c49b04ecb"
+    },
+    {
+      "file": "settled-visual-proof.json",
+      "bytes": 67297,
+      "sha256": "8569f2b13a20d825d4b521face331e4e0797e3d5cff2347797390fd7d3c468cf"
+    },
+    {
+      "file": "settled-visual-proof.cjs",
+      "bytes": 15588,
+      "sha256": "df891cc2b99c9c38ad4b8a98ed8a14b4c017e417bbb3a2caea59e8ea1d33b31e"
+    },
+    {
+      "file": "after-settled-verified.png",
+      "bytes": 137646,
+      "sha256": "544a33208f36e291b2b09e03f0956c80b940272a170c63864ca908a71f8184b2"
+    }
+  ],
+  "settledVisualFollowup": {
+    "sampleCount": 1,
+    "complete": true,
+    "receipt": "settled-visual-proof.json",
+    "screenshot": "after-settled-verified.png",
+    "screenshotSha256": "544a33208f36e291b2b09e03f0956c80b940272a170c63864ca908a71f8184b2",
+    "normalFiniteAnimationsCompleted": true,
+    "completedAnimationCount": 6,
+    "subsequentRafCount": 2,
+    "requiredElementCount": 8,
+    "allRequiredElementsOpacityOneAndInsideViewport": true,
+    "imageDecoded": true,
+    "fontsStatus": "loaded",
+    "heroAssetSha256": "7b174cca6593622dd8112a7cfe6cb199bd087d5c33617b0402ab80e7901e5bf1",
+    "settledPngBytesIdenticalToPublicBaseline": true,
+    "earlierHeaderLanguageHeroRegionsUnchanged": true,
+    "scope": "Settled artifact and rendered-state verification only. Earlier visibility samples remain diagnostic; no inline preview defect was attributed to the product."
+  }
+}

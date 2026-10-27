@@ -1,0 +1,877 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-27T00:42:48.908Z",
+  "scope": "Local built-candidate welcome visibility only",
+  "visualPredicate": "Legible requires heading, subtitle, Start, Restore and hero at combined ancestor opacity >=0.95 with no visible splash or full-screen brand cover. Unoccluded uses >0.01 and is a distinct earlier mark.",
+  "sourceBase": "6304e545149d53efa73f4580b869bba475b4fd68",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "samples": [
+    {
+      "variant": "before",
+      "origin": "http://127.0.0.1:40195",
+      "startedAt": "2026-10-27T00:42:48.980Z",
+      "pageErrors": [],
+      "requestFailures": [],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:40195/",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/theme-bootstrap.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/index-CdaTX9wK.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/dist-Ct6Dr8jI.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/logger-DARXN4Gy.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/useStatusBarColor-DA8iJ6vX.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/ui-B9ANlfnV.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/sdkConnect-B1g1pEba.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/definitions-BdWVgBTV.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/definitions-DlpntO5o.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/useUnilateralExitEngineLifecycle-nXJ2RP7p.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/index-C44TO1tc.css",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-stacked-dark.svg",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-stacked-light.svg",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/sw-register.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/web-DhQnEQpZ.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/storage-Cxv8D4z6.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/sw.js",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/index.html",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/manifest.json",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/theme-bootstrap.js",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-stacked-dark.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-horizontal-dark.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-stacked-light.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-horizontal-light.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-top.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-bottom.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-coin.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-top-light.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-bottom-light.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-3d-transparent.png",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/app-icon.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/monogram.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/favicon-48.png",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/app-icon-180.png",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/app-icon-192.png",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/app-icon-512.png",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-top.svg",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-bottom.svg",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-coin.svg",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/plus-jakarta-sans-latin-ext-500-normal-9VZagAe1.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/plus-jakarta-sans-latin-ext-400-normal-D127hM_v.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/web-BA4NCoH6.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/tree-store-picGlnYB.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/plus-jakarta-sans-latin-500-normal-Bf-nb4oT.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/brand/wordmark-3d-transparent.png",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/plus-jakarta-sans-latin-ext-800-normal-B6BjB2Ju.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/plus-jakarta-sans-latin-ext-700-normal-BajbvANd.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/plus-jakarta-sans-latin-400-normal-Dhut76fR.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/plus-jakarta-sans-latin-800-normal-CusIZhrK.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/plus-jakarta-sans-latin-700-normal-CfpNZvy6.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:40195/assets/breez_sdk_spark_wasm_bg-4gX78Mib.wasm",
+          "method": "GET",
+          "serviceWorker": false
+        }
+      ],
+      "html": {
+        "status": 200,
+        "sha256": "f3042e44ab2d3554787003709f9038c7f0711249e3ab5e38c7faca86ce2f9fc6"
+      },
+      "afterSplash": {
+        "atMs": 494.69999999552965,
+        "marks": {
+          "heroDecoded": 191,
+          "splashRemoved": 374.3999999985099,
+          "onboardingDomAvailable": 491.1000000014901
+        },
+        "brandPresent": true,
+        "brandOpacity": "1",
+        "brandVisibility": "visible",
+        "startText": "Start",
+        "restorePresent": true
+      },
+      "browser": {
+        "instrumentation": {
+          "timeOrigin": 1793061769007.8,
+          "marks": {
+            "heroDecoded": 191,
+            "splashRemoved": 374.3999999985099,
+            "onboardingDomAvailable": 491.1000000014901,
+            "brandRevealHidden": 2307.39999999851,
+            "onboardingUnoccluded": 2307.60000000149,
+            "onboardingLegible": 2307.89999999851
+          },
+          "longTasks": [],
+          "stops": [],
+          "wasm": [
+            {
+              "method": "instantiateStreaming",
+              "start": 223.29999999701977,
+              "end": 277.6000000014901,
+              "success": true
+            }
+          ],
+          "brandCoverSeen": true,
+          "lcp": {
+            "start": 60,
+            "size": 12096,
+            "tag": "IMG"
+          }
+        },
+        "navigation": [
+          {
+            "name": "http://127.0.0.1:40195/",
+            "entryType": "navigation",
+            "startTime": 0,
+            "duration": 85.79999999701977,
+            "initiatorType": "navigation",
+            "deliveryType": "",
+            "nextHopProtocol": "http/1.1",
+            "renderBlockingStatus": "non-blocking",
+            "contentEncoding": "",
+            "workerStart": 0,
+            "workerRouterEvaluationStart": 0,
+            "workerCacheLookupStart": 0,
+            "workerMatchedSourceType": "",
+            "workerFinalSourceType": "",
+            "redirectStart": 0,
+            "redirectEnd": 0,
+            "fetchStart": 0.10000000149011612,
+            "domainLookupStart": 1.1000000014901161,
+            "domainLookupEnd": 1.1000000014901161,
+            "connectStart": 1.1000000014901161,
+            "secureConnectionStart": 0,
+            "connectEnd": 1.2999999970197678,
+            "requestStart": 1.3999999985098839,
+            "responseStart": 6.199999995529652,
+            "firstInterimResponseStart": 0,
+            "finalResponseHeadersStart": 6.199999995529652,
+            "responseEnd": 7.100000001490116,
+            "transferSize": 6340,
+            "encodedBodySize": 6040,
+            "decodedBodySize": 6040,
+            "responseStatus": 200,
+            "serverTiming": [],
+            "unloadEventStart": 0,
+            "unloadEventEnd": 0,
+            "domInteractive": 19.100000001490116,
+            "domContentLoadedEventStart": 85.19999999552965,
+            "domContentLoadedEventEnd": 85.19999999552965,
+            "domComplete": 85.60000000149012,
+            "loadEventStart": 85.60000000149012,
+            "loadEventEnd": 85.79999999701977,
+            "type": "navigate",
+            "redirectCount": 0,
+            "activationStart": 0,
+            "criticalCHRestart": 0,
+            "notRestoredReasons": null,
+            "confidence": {
+              "randomizedTriggerRate": 0.4994798,
+              "value": "high"
+            }
+          }
+        ],
+        "paint": [
+          {
+            "name": "first-paint",
+            "entryType": "paint",
+            "startTime": 40,
+            "duration": 0,
+            "paintTime": 35.600000001490116,
+            "presentationTime": 40
+          },
+          {
+            "name": "first-contentful-paint",
+            "entryType": "paint",
+            "startTime": 60,
+            "duration": 0,
+            "paintTime": 57.5,
+            "presentationTime": 60
+          }
+        ],
+        "onboarding": {
+          "heading": "Every sat counts.",
+          "startText": "Start",
+          "restorePresent": true,
+          "heroSource": "/brand/wordmark-3d-transparent.png",
+          "heroNaturalWidth": 1448,
+          "heroNaturalHeight": 1086,
+          "heroBox": {
+            "x": 88.09375,
+            "y": 172.296875,
+            "width": 213.8125,
+            "height": 160.359375,
+            "top": 172.296875,
+            "right": 301.90625,
+            "bottom": 332.65625,
+            "left": 88.09375
+          }
+        },
+        "storage": {
+          "localKeys": [],
+          "sessionKeys": [],
+          "databases": [
+            {
+              "name": "glow-logs",
+              "version": 2
+            }
+          ]
+        },
+        "workerControlled": false
+      },
+      "manifest": {
+        "sourceRevision": "6304e545149d53efa73f4580b869bba475b4fd68",
+        "sourceDirty": true,
+        "releaseId": "ce426974de8548769584",
+        "sdk": {
+          "sourceRevision": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+          "packageSha256": "cbb19e1e16760d63e8cba74a33e21ec75dac6684bc8d389da6c9921b8ba58505"
+        }
+      },
+      "finishedAt": "2026-10-27T00:42:51.327Z"
+    },
+    {
+      "variant": "after",
+      "origin": "http://127.0.0.1:42413",
+      "startedAt": "2026-10-27T00:42:51.364Z",
+      "pageErrors": [],
+      "requestFailures": [],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:42413/",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/theme-bootstrap.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/index-94ZnkdAl.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/dist-Ct6Dr8jI.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/logger-DARXN4Gy.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/useStatusBarColor-DA8iJ6vX.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/ui-B9ANlfnV.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/sdkConnect-Bz1_Vvz8.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/definitions-BdWVgBTV.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/definitions-DlpntO5o.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/useUnilateralExitEngineLifecycle-CDC_YLpQ.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/index-C44TO1tc.css",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-stacked-dark.svg",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-stacked-light.svg",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/sw-register.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/web-DhQnEQpZ.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/storage-Cxv8D4z6.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/sw.js",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-top.svg",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-bottom.svg",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-coin.svg",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/index.html",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/manifest.json",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/theme-bootstrap.js",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-stacked-dark.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-horizontal-dark.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-stacked-light.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-horizontal-light.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-top.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-bottom.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-coin.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-top-light.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-bottom-light.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-3d-transparent.png",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/app-icon.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/monogram.svg",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/favicon-48.png",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/app-icon-180.png",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/app-icon-192.png",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/app-icon-512.png",
+          "method": "GET",
+          "serviceWorker": true
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/plus-jakarta-sans-latin-ext-500-normal-9VZagAe1.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/plus-jakarta-sans-latin-ext-400-normal-D127hM_v.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/web-BA4NCoH6.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/tree-store-picGlnYB.js",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/brand/wordmark-3d-transparent.png",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/plus-jakarta-sans-latin-ext-800-normal-B6BjB2Ju.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/plus-jakarta-sans-latin-ext-700-normal-BajbvANd.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/plus-jakarta-sans-latin-400-normal-Dhut76fR.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/breez_sdk_spark_wasm_bg-4gX78Mib.wasm",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/plus-jakarta-sans-latin-800-normal-CusIZhrK.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        },
+        {
+          "url": "http://127.0.0.1:42413/assets/plus-jakarta-sans-latin-700-normal-CfpNZvy6.woff2",
+          "method": "GET",
+          "serviceWorker": false
+        }
+      ],
+      "html": {
+        "status": 200,
+        "sha256": "434a9dce305b37b13aad108e7d1ac0cb26071cf448facc8786b5db1435ae63a2"
+      },
+      "afterSplash": {
+        "atMs": 495.3999999985099,
+        "marks": {
+          "heroDecoded": 175.79999999701977,
+          "splashRemoved": 359,
+          "onboardingDomAvailable": 492.6000000014901,
+          "onboardingUnoccluded": 492.70000000298023
+        },
+        "brandPresent": false,
+        "brandOpacity": null,
+        "brandVisibility": null,
+        "startText": "Start",
+        "restorePresent": true
+      },
+      "browser": {
+        "instrumentation": {
+          "timeOrigin": 1793061771389.7,
+          "marks": {
+            "heroDecoded": 175.79999999701977,
+            "splashRemoved": 359,
+            "onboardingDomAvailable": 492.6000000014901,
+            "onboardingUnoccluded": 492.70000000298023,
+            "onboardingLegible": 909.1000000014901
+          },
+          "longTasks": [],
+          "stops": [],
+          "wasm": [
+            {
+              "method": "instantiateStreaming",
+              "start": 198.10000000149012,
+              "end": 263.20000000298023,
+              "success": true
+            }
+          ],
+          "brandCoverSeen": false,
+          "lcp": {
+            "start": 52,
+            "size": 12096,
+            "tag": "IMG"
+          }
+        },
+        "navigation": [
+          {
+            "name": "http://127.0.0.1:42413/",
+            "entryType": "navigation",
+            "startTime": 0,
+            "duration": 88.10000000149012,
+            "initiatorType": "navigation",
+            "deliveryType": "",
+            "nextHopProtocol": "http/1.1",
+            "renderBlockingStatus": "non-blocking",
+            "contentEncoding": "",
+            "workerStart": 0,
+            "workerRouterEvaluationStart": 0,
+            "workerCacheLookupStart": 0,
+            "workerMatchedSourceType": "",
+            "workerFinalSourceType": "",
+            "redirectStart": 0,
+            "redirectEnd": 0,
+            "fetchStart": 0.20000000298023224,
+            "domainLookupStart": 1.1000000014901161,
+            "domainLookupEnd": 1.1000000014901161,
+            "connectStart": 1.1000000014901161,
+            "secureConnectionStart": 0,
+            "connectEnd": 1.2000000029802322,
+            "requestStart": 1.3999999985098839,
+            "responseStart": 2.7000000029802322,
+            "firstInterimResponseStart": 0,
+            "finalResponseHeadersStart": 2.7000000029802322,
+            "responseEnd": 3.5,
+            "transferSize": 6340,
+            "encodedBodySize": 6040,
+            "decodedBodySize": 6040,
+            "responseStatus": 200,
+            "serverTiming": [],
+            "unloadEventStart": 0,
+            "unloadEventEnd": 0,
+            "domInteractive": 14.299999997019768,
+            "domContentLoadedEventStart": 87.39999999850988,
+            "domContentLoadedEventEnd": 87.5,
+            "domComplete": 87.89999999850988,
+            "loadEventStart": 87.89999999850988,
+            "loadEventEnd": 88.10000000149012,
+            "type": "navigate",
+            "redirectCount": 0,
+            "activationStart": 0,
+            "criticalCHRestart": 0,
+            "notRestoredReasons": null,
+            "confidence": {
+              "randomizedTriggerRate": 0.4994798,
+              "value": "high"
+            }
+          }
+        ],
+        "paint": [
+          {
+            "name": "first-paint",
+            "entryType": "paint",
+            "startTime": 52,
+            "duration": 0,
+            "paintTime": 47.899999998509884,
+            "presentationTime": 52
+          },
+          {
+            "name": "first-contentful-paint",
+            "entryType": "paint",
+            "startTime": 52,
+            "duration": 0,
+            "paintTime": 47.899999998509884,
+            "presentationTime": 52
+          }
+        ],
+        "onboarding": {
+          "heading": "Every sat counts.",
+          "startText": "Start",
+          "restorePresent": true,
+          "heroSource": "/brand/wordmark-3d-transparent.png",
+          "heroNaturalWidth": 1448,
+          "heroNaturalHeight": 1086,
+          "heroBox": {
+            "x": 88.09375,
+            "y": 172.296875,
+            "width": 213.8125,
+            "height": 160.359375,
+            "top": 172.296875,
+            "right": 301.90625,
+            "bottom": 332.65625,
+            "left": 88.09375
+          }
+        },
+        "storage": {
+          "localKeys": [],
+          "sessionKeys": [],
+          "databases": [
+            {
+              "name": "glow-logs",
+              "version": 2
+            }
+          ]
+        },
+        "workerControlled": false
+      },
+      "manifest": {
+        "sourceRevision": "6304e545149d53efa73f4580b869bba475b4fd68",
+        "sourceDirty": true,
+        "releaseId": "415e47ce85501040d888",
+        "sdk": {
+          "sourceRevision": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+          "packageSha256": "cbb19e1e16760d63e8cba74a33e21ec75dac6684bc8d389da6c9921b8ba58505"
+        }
+      },
+      "finishedAt": "2026-10-27T00:42:52.378Z"
+    }
+  ],
+  "limits": [
+    "Two cold samples, one before and one after, not a statistical performance estimate.",
+    "Concurrent SDK Cargo compilation and uncontrolled host load can change wall-clock values.",
+    "Local loopback HTTP static delivery, different SDK from public source07dd, not production network performance.",
+    "No Start/Restore clicks or other wallet actions. No wallet-ready, physical-device or funded-flow claim."
+  ],
+  "browserVersion": "147.0.7727.0",
+  "complete": true,
+  "finishedAt": "2026-10-27T00:42:52.389Z"
+}

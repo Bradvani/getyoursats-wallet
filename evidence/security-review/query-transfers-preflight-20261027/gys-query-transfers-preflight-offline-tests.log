@@ -1,0 +1,35 @@
+✔ request wire contains only one canonical UUID and explicit REGTEST2 (2.799321ms)
+✔ request rejects noncanonical or supplied-empty-control identifiers (0.507045ms)
+✔ protobuf decodes explicit signed int64 minus-one terminal (0.474957ms)
+✔ missing/default/nonterminal offsets cannot pass (0.216977ms)
+✔ unexpected transfer is rejected before its payload is decoded (0.396157ms)
+✔ duplicate offset and unknown fields fail (0.189916ms)
+✔ truncated/overflowed/noncanonical protobuf varints fail (0.204458ms)
+✔ binary grpc-web success requires terminal protobuf and status (1.575836ms)
+✔ negative control decodes trailer-only InvalidArgument (0.425342ms)
+✔ grpc status may be in initial headers, including trailers-only errors (0.734377ms)
+✔ HTTP200 without grpc-status does not pass (0.333964ms)
+✔ conflicting or duplicate grpc status fails (0.39133ms)
+✔ invalid grpc status spellings fail (0.372442ms)
+✔ authentication and unimplemented statuses stop (0.233612ms)
+✔ HTTP auth, redirect, session cookie and challenge stop (0.306522ms)
+✔ HTML/text response cannot be mistaken for protobuf success (0.115494ms)
+✔ compressed and unknown frame flags fail (0.184388ms)
+✔ truncated header, truncated payload and oversized frame fail (0.318821ms)
+✔ multiple unary messages and data after trailers fail (0.247664ms)
+✔ body/header capture caps are enforced (0.200863ms)
+✔ negative control cannot return successful or populated payload (0.264729ms)
+✔ curl invocation pins endpoint and forbids credentials, redirects and retry options (0.260143ms)
+✔ successful synthetic flow performs exactly two reads and never claims acceptance (1.985805ms)
+✔ unexpected transfer stops after one read without recording returned payload (0.28461ms)
+✔ auth or transport failure is not retried and skips negative control (0.423128ms)
+✔ second-response failure stops at two requests (0.457269ms)
+✔ imported flow cannot implicitly obtain a real transport (0.184147ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22.207078

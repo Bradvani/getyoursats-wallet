@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "purpose": "Anonymous deployed-method and terminal-empty-response preflight only",
+  "executedResultFile": "gys-query-transfers-preflight-result.json",
+  "executedResultSha256": "ba8d7327cacb217985e75c0e82b1fc7ff98ef15c122c7b98eaa79de9093e23fa",
+  "scriptSha256": "e55d3495ea7086aa32e660ff61c115d1fafc9cf080df6ab5e435f8a0a7414c5d",
+  "operatorCommitFieldMeaning": "Pinned public source reference used to design the probe, not observed deployment identity",
+  "deployedOperatorRevision": "unknown",
+  "sourceAndBuildGateBeforeExecution": {
+    "upstreamSdkCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+    "patchedSdkTree": "a1400c1851d4a6e2c274133be0d86d272d6f4586",
+    "cumulativePatchSha256": "f00e39b8013d239a1560ceaf1ac0369fa6519a0ab6f0bd3bd3d271c0ee7e05c8",
+    "nativeTestsPassed": 171,
+    "releaseWasmBuild": "passed",
+    "rawCompiledWasmSha256": "72ad6571525be7c03ea997ecff89b6406468665cdf289088818b28452a37e269",
+    "installedPackageVerification": "not part of this stateless transport probe"
+  },
+  "observed": "Configured coordinator accepted anonymous REGTEST exact-ID read with gRPC OK, zero records and offset -1; empty-ID control returned InvalidArgument",
+  "remaining": [
+    "Owned-record fields and participant cardinality",
+    "Assigned leaves, status and economic consistency on owned records",
+    "Final installed SDK authentication/transport compatibility",
+    "Funded operation and failure recovery acceptance"
+  ],
+  "nonExecutionInferencePermitted": false,
+  "providerCompatibilityAccepted": false,
+  "fundedAcceptance": false,
+  "qualifiedIndependentSecurityApproval": false
+}

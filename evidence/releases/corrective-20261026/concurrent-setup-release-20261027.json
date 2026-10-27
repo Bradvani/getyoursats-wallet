@@ -1,0 +1,138 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-10-27T00:35:21Z",
+  "scope": "Read-only observation of a separately merged setup release; no deployment performed by this SDK hardening continuation",
+  "pullRequest": {
+    "number": 59,
+    "url": "https://github.com/Bradvani/getyoursats-wallet/pull/59",
+    "mergedAt": "2026-10-27T00:16:31Z",
+    "title": "Fix recurring welcome card and add a persistent close button",
+    "head": "7003ef00755a9dc3c8f622ce4cca0086784570b2",
+    "merge": "07ddf16068cc5bd7ed09397e221800ad7b12d767"
+  },
+  "main": {
+    "source": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+    "tree": "54f64d701655ff5e3e0a1d6084f15cd80c0194ba",
+    "protected": false
+  },
+  "aliases": {
+    "wallet": {
+      "alias": "wallet.getyoursats.com",
+      "deploymentId": "dpl_GPjSEHhAVnzw6VgfhXJxqvgmKu9r",
+      "updatedAt": 1793060261146,
+      "projectId": "prj_kVMt4cd9k0WsufaoRCVCH2bpPtWa"
+    },
+    "site": {
+      "alias": "getyoursats.com",
+      "deploymentId": "dpl_23DNSpbVHc5ibQmjByhaxKW6qyzS",
+      "updatedAt": 1793059594598,
+      "projectId": "prj_bCTyVL32guivsY5i5M0mDXQ0cC03"
+    }
+  },
+  "walletDeployment": {
+    "id": "dpl_GPjSEHhAVnzw6VgfhXJxqvgmKu9r",
+    "url": "getyoursats-wallet-3fqqif6rd-bradvani-8798.vercel.app",
+    "readyState": "READY",
+    "target": "production",
+    "createdAt": 1793060193995,
+    "ready": 1793060232961,
+    "source": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+    "branch": "main",
+    "aliases": [
+      "wallet.getyoursats.com",
+      "getyoursats-wallet.vercel.app",
+      "getyoursats-wallet-bradvani-8798.vercel.app",
+      "getyoursats-wallet-git-main-bradvani-8798.vercel.app"
+    ]
+  },
+  "manifest": {
+    "requestedUrl": "https://wallet.getyoursats.com/release-manifest.json",
+    "responseUrl": "https://wallet.getyoursats.com/release-manifest.json",
+    "startedAt": "2026-10-27T00:28:43.413225+00:00",
+    "receivedAt": "2026-10-27T00:28:43.502079+00:00",
+    "status": 200,
+    "normalTls": true,
+    "responseSha256": "c0b37434c82057302f4e5961421dd8009c71951183ea8d3665a13f19f22928f6",
+    "responseBytes": 109070,
+    "headers": {
+      "age": "102",
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Tue, 27 Oct 2026 00:28:43 GMT",
+      "x-vercel-cache": "HIT"
+    },
+    "manifestKeys": [
+      "artifacts",
+      "dependencyLockSha256",
+      "nodeVersion",
+      "product",
+      "releaseId",
+      "restoredConfigFormatting",
+      "restoredConfigProjections",
+      "schemaVersion",
+      "sdk",
+      "sourceDirty",
+      "sourceRevision"
+    ],
+    "identity": {
+      "schema": null,
+      "product": "getyoursats-wallet",
+      "generatedAt": null,
+      "sourceRevision": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+      "sourceTree": null,
+      "sourceTreeSha": null,
+      "releaseId": "32be2cb598402c0344cc",
+      "sourceDirty": false,
+      "dependencyLockSha256": "642a25bebbea06222a1fb0dd38d5876467e7ba1959417cedf8d13983fd29bb47"
+    },
+    "sdk": {
+      "sourceRevision": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+      "packageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026",
+      "patchSha256": null
+    },
+    "relevantArtifacts": [
+      {
+        "path": "assets/breez_sdk_spark_wasm_bg-jQ-bgV27.wasm",
+        "bytes": 12311382,
+        "sha256": "4fc7fb24e6244c7b94a6f869425537eaf47fe9ee721d31f273b58495d1554b25"
+      },
+      {
+        "path": "assets/zxing_reader-Bb9Mx2Pu.wasm",
+        "bytes": 953527,
+        "sha256": "e8af31edb56d0522f4de74495839385ef019ba8bc90d38e5ecb2f18795d86fb2"
+      },
+      {
+        "path": "index.html",
+        "bytes": 7106,
+        "sha256": "933b9c4ee8bdd6a42cfd198974fe4531daeba190557f1b233459bb4954022eaf"
+      },
+      {
+        "path": "sw.js",
+        "bytes": 5362,
+        "sha256": "89d8fb16108f9fea9adc54bae022c2fefc568dac9623f457609ea9208ecdae58"
+      }
+    ],
+    "localGitObject": {
+      "sourceRevision": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+      "tree": "54f64d701655ff5e3e0a1d6084f15cd80c0194ba",
+      "evidence": "git show -s --format=%H%n%T; tree is not supplied by the public manifest"
+    }
+  },
+  "priorCorrectiveWallet": {
+    "source": "13f7ff73f89ccde9c633cde981ce306c285a0942",
+    "deploymentId": "dpl_949h8AJAod5DxvCFUHk9GWeeEvY4",
+    "historicalVerificationRetained": true,
+    "safeRollbackApproved": false
+  },
+  "candidate": {
+    "head": "f5c319882d172ec2710a712aa02f15497b6eb2e7",
+    "draft": true,
+    "promotedToProduction": false
+  },
+  "constraints": [
+    "PR59 workflow and physical acceptance totals are not independently revalidated by this receipt",
+    "Original SDK package remains served",
+    "Earlier source-specific CI evidence does not transfer to the changed source",
+    "Main protection activation remains blocked pending explicit approval of the prepared policy"
+  ]
+}

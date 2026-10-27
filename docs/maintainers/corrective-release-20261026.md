@@ -1,8 +1,8 @@
 # Corrective release: production evidence, 26 October 2026
 
-**Live corrective release. Expanded real-funds adoption remains NO-GO.**
+**Corrective release promotion snapshot. Expanded real-funds adoption remains NO-GO.**
 
-[PR #56](https://github.com/Bradvani/getyoursats-wallet/pull/56) was merged and its previously built, reviewed wallet and website artifacts were promoted without rebuilding. [The wallet](https://wallet.getyoursats.com) and [website](https://getyoursats.com) serve the recorded release. A01 through A03 remain security-release gates; [PR #43](https://github.com/Bradvani/getyoursats-wallet/pull/43) stays draft and has not been promoted.
+[PR #56](https://github.com/Bradvani/getyoursats-wallet/pull/56) was merged and its previously built, reviewed wallet and website artifacts were promoted without rebuilding on 26 October. Both public applications served those artifacts at the recorded promotion check. The wallet subsequently advanced to the PR #59 welcome-card release described under [Concurrent production setup release](#concurrent-production-setup-release) below; the website retained its corrective artifact at that later check. A01 through A03 remain security-release gates; [PR #43](https://github.com/Bradvani/getyoursats-wallet/pull/43) stays draft and has not been promoted.
 
 The [machine-readable release record](../../evidence/releases/corrective-20261026/release-evidence.json) links every retained receipt and records their hashes. This documentation branch adds evidence only; it is not another application release.
 
@@ -20,9 +20,9 @@ The [machine-readable release record](../../evidence/releases/corrective-2026102
 | Website deployment | `dpl_23DNSpbVHc5ibQmjByhaxKW6qyzS` |
 | Website release | `91a1ee9e299dbaa63ac8` |
 
-The reviewed head, CI merge and main merge have the same Git tree. The concurrent theme and startup changes were preserved. Wallet promotion completed at **23:10:44 UTC** and website promotion at **23:10:48 UTC**. The final alias read at **23:18:17 UTC** confirms the public domains still point to these deployments; `www.getyoursats.com` redirects to `getyoursats.com` with status 308. Automatic custom-domain assignment was restored on both projects after the automatic main build finished. Existing preview SSO protection was preserved.
+The reviewed head, CI merge and main merge have the same Git tree. The concurrent theme and startup changes were preserved. Wallet promotion completed at **23:10:44 UTC** and website promotion at **23:10:48 UTC**. The alias read at **23:18:17 UTC on 26 October** confirmed the public domains pointed to these deployments; `www.getyoursats.com` redirected to `getyoursats.com` with status 308. Automatic custom-domain assignment was restored on both projects after the automatic main build finished. Existing preview SSO protection was preserved.
 
-The automatic wallet build of the main merge is ready at `dpl_FFCsyjoboz5wPgZ2PeavVUmKwZGu`, but the public wallet alias remains on the reviewed source artifact. This distinction is recorded rather than replacing the tested artifact with another build.
+At that promotion snapshot, the automatic wallet build of the main merge was ready at `dpl_FFCsyjoboz5wPgZ2PeavVUmKwZGu` and the public wallet alias remained on the reviewed source artifact. This historical distinction does not describe the later PR #59 wallet deployment recorded below.
 
 ## What this release changes
 
@@ -80,7 +80,7 @@ History scans still lack an SDK transactional snapshot and a stable secondary pa
 
 ## Remaining real-funds release gates
 
-The latest published draft security candidate is `f5c319882d172ec2710a712aa02f15497b6eb2e7`, tree `aac378618ad62773216d2970ad121ca77b9fd9c2`. It preserves the concurrent passkey guide and fixes the diagnostic hostname check. The following contract and integration records retain their earlier source identity. Its [remaining SDK contracts](https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/remaining-sdk-contracts-20261027.md) and [integration evidence](https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/final-main-integration-20261027.md) are separate from this live corrective release.
+The verified draft security candidate snapshot at **00:15:38 UTC on 27 October** was `f5c319882d172ec2710a712aa02f15497b6eb2e7`, tree `aac378618ad62773216d2970ad121ca77b9fd9c2`. It preserved the concurrent passkey guide and fixed the diagnostic hostname check. A later concurrent update, [e827e4a](https://github.com/Bradvani/getyoursats-wallet/commit/e827e4a0bdc89245d8539a314e3dc81bdfdccfab), added recovery and seed-derivation work and incorporated main `07ddf16`. The f5 test results do not validate that later source or its rebuilt package. The following contract and integration records retain their earlier source identity. The [remaining SDK contracts](https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/remaining-sdk-contracts-20261027.md) and [integration evidence](https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/final-main-integration-20261027.md) are separate from this corrective release.
 
 | Gate | Evidence still required |
 |---|---|
@@ -111,3 +111,15 @@ Automatic approval review rejected the Create action because the user had not ex
 ## Follow-up candidate CI
 
 At 00:15:38 UTC on 27 October, [all seven follow-up workflows and the separate CodeQL security verdict passed](../security-review/followup-ci-20261027.md) on `f5c31988`. The broad browser run passed 305 executions, including the preserved passkey support guide. Dedicated security and rollback passed in Chromium, Firefox and WebKit. This clears the diagnostic-host correction on that source; it does not include the subsequent SDK work, fund a wallet or approve a production promotion.
+
+## Concurrent production setup release
+
+The release above is a historical, exact-artifact record. A separate [PR #59](https://github.com/Bradvani/getyoursats-wallet/pull/59) merged at 00:16:31 UTC on 27 October and updated the live wallet's welcome-card dismissal behavior. Read-only GitHub, Vercel and normal-TLS public-manifest checks confirmed source `07ddf16068cc5bd7ed09397e221800ad7b12d767`, tree `54f64d701655ff5e3e0a1d6084f15cd80c0194ba`, production deployment `dpl_GPjSEHhAVnzw6VgfhXJxqvgmKu9r` and release `32be2cb598402c0344cc`.
+
+The original SDK package `4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026` and lock `642a25be` remain served. The website remains on its recorded `dpl_23DNSpbVHc5ibQmjByhaxKW6qyzS` deployment. This SDK-hardening continuation did not deploy or revert either application. The [observation receipt](../../evidence/releases/corrective-20261026/concurrent-setup-release-20261027.json) records the exact identities and limits; it does not independently repeat PR #59's complete CI or physical acceptance. The separately reviewed security candidate remains outside production, and the welcome-card changes are preserved in its next integration.
+
+## Startup visibility follow-up
+
+Four [public startup samples](../../evidence/performance/public-startup-20261027/startup-performance-review.md) measured the source `07ddf160` wallet over normal TLS. On the two warm samples the timed brand cover kept onboarding unreadable until 2.515 and 2.634 seconds, after WASM instantiation had completed. A constrained cold sample separately showed a longer SDK download and instantiation path. These are lab observations, not device or wallet-ready acceptance.
+
+The [local candidate correction](../../evidence/performance/welcome-visibility-20261027/candidate-review.md) removes only the welcome page's full-screen `BrandIntro` import and mount. The original hero, Start morph, passkey and SDK readiness behavior, and inline loading brand remain. Thirty-seven existing tests, types, build and file lint passed. A local pair confirmed the opaque cover is absent after the edit; the CSS legibility mark moved from 2.308 to 0.909 seconds. That single pair ran under concurrent compiler load and is not a stable production speedup. The settled screenshot is byte-for-byte identical to the public baseline layout. These local artifacts are not approved deployment artifacts, and broader A13 field/device acceptance remains open.

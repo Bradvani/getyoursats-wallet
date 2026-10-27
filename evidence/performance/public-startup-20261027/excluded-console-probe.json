@@ -1,0 +1,1629 @@
+{
+  "schema": 1,
+  "startedAt": "2026-10-27T00:25:37.420Z",
+  "origin": "https://wallet.getyoursats.com",
+  "expectedSource": "13f7ff73f89ccde9c633cde981ce306c285a0942",
+  "scope": "Public onboarding startup lab, disposable Chromium state, no wallet interaction",
+  "normalTls": true,
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "samples": [
+    {
+      "condition": "unthrottled-1",
+      "temperature": "cold",
+      "startedAt": "2026-10-27T00:25:37.528Z",
+      "network": [
+        {
+          "url": "https://wallet.getyoursats.com/",
+          "method": "GET",
+          "resourceType": "document",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737534.1501,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": 0.566,
+            "secureConnectionStart": 3.249,
+            "connectEnd": 13.893,
+            "requestStart": 14.136,
+            "responseStart": 93.151,
+            "responseEnd": 96.881
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 676,
+            "responseBodySize": 3621,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "text/html; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/theme-bootstrap.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737661.232,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.33,
+            "responseStart": 75.134,
+            "responseEnd": 76.535
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 573,
+            "responseBodySize": 994,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "791",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/sdkConnect-D38ok7iD.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737741.474,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 1.049,
+            "responseStart": 77.834,
+            "responseEnd": 79.692
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 590,
+            "responseBodySize": 1450,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/sw-register.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737742.223,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.592,
+            "responseStart": 78.68,
+            "responseEnd": 80.277
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 550,
+            "responseBodySize": 1004,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-stacked-light.svg",
+          "method": "GET",
+          "resourceType": "image",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737742.087,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.704,
+            "responseStart": 83.447,
+            "responseEnd": 121.026
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 659,
+            "responseBodySize": 4701,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-stacked-dark.svg",
+          "method": "GET",
+          "resourceType": "image",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737741.9072,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.807,
+            "responseStart": 121.156,
+            "responseEnd": 123.491
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 657,
+            "responseBodySize": 4690,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/ui-D3pRdcXD.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737741.3088,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 1.171,
+            "responseStart": 79.276,
+            "responseEnd": 125.562
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 574,
+            "responseBodySize": 70613,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/useStatusBarColor-C4Zgolws.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737741.169,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 1.248,
+            "responseStart": 123.441,
+            "responseEnd": 125.79
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 604,
+            "responseBodySize": 24206,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/dist-BEIwgXpU.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737740.9092,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 1.505,
+            "responseStart": 147.385,
+            "responseEnd": 148.837
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 578,
+            "responseBodySize": 3995,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/logger-q7Ib7-Yv.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737741.026,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 1.363,
+            "responseStart": 124.722,
+            "responseEnd": 147.604
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 582,
+            "responseBodySize": 110714,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/index-CGBwiMM5.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737740.404,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 1.215,
+            "responseStart": 148.763,
+            "responseEnd": 177.044
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 622,
+            "responseBodySize": 299755,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/index-B4UdtNmA.css",
+          "method": "GET",
+          "resourceType": "stylesheet",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737741.7751,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.512,
+            "responseStart": 210.84,
+            "responseEnd": 215.951
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 638,
+            "responseBodySize": 33837,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "text/css; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/plus-jakarta-sans-latin-ext-700-normal-BajbvANd.woff2",
+          "method": "GET",
+          "resourceType": "font",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738061.393,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.147,
+            "responseStart": 84.556,
+            "responseEnd": 107.657
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 717,
+            "responseBodySize": 11243,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "11008",
+            "content-type": "font/woff2",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/web-DTMwvBQm.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737981.967,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.204,
+            "responseStart": 169.167,
+            "responseEnd": 175.804
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 576,
+            "responseBodySize": 1279,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-bottom.svg",
+          "method": "GET",
+          "resourceType": "image",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738003.617,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.244,
+            "responseStart": 171.017,
+            "responseEnd": 172.637
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 645,
+            "responseBodySize": 2431,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/sw.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737995.228,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": -1,
+            "responseStart": 183.014,
+            "responseEnd": 183.014
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 58,
+            "responseBodySize": -1117,
+            "responseHeadersSize": 1234
+          },
+          "headers": {
+            "content-encoding": "br",
+            "age": "0",
+            "content-type": "application/javascript; charset=utf-8",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-coin.svg",
+          "method": "GET",
+          "resourceType": "image",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738003.721,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.158,
+            "responseStart": 174.943,
+            "responseEnd": 177.275
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 641,
+            "responseBodySize": 621,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "475",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/plus-jakarta-sans-latin-ext-500-normal-9VZagAe1.woff2",
+          "method": "GET",
+          "resourceType": "font",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738014.3599,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.414,
+            "responseStart": 181.452,
+            "responseEnd": 191.56
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 717,
+            "responseBodySize": 11039,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "10864",
+            "content-type": "font/woff2",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/storage-BolDz9RJ.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060737983.562,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.126,
+            "responseStart": 213.484,
+            "responseEnd": 215.112
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 651,
+            "responseBodySize": 8964,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-top.svg",
+          "method": "GET",
+          "resourceType": "image",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738003.287,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.544,
+            "responseStart": 209.73,
+            "responseEnd": 211.747
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 639,
+            "responseBodySize": 2462,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/plus-jakarta-sans-latin-700-normal-CfpNZvy6.woff2",
+          "method": "GET",
+          "resourceType": "font",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738161.698,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.179,
+            "responseStart": 69.916,
+            "responseEnd": 73.163
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 709,
+            "responseBodySize": 12418,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "12244",
+            "content-type": "font/woff2",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738184.39,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.438,
+            "responseStart": 68.289,
+            "responseEnd": 71.415
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 455,
+            "responseBodySize": 3556,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "504",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "text/html; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/web-CkvRYEUD.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738021.4421,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.346,
+            "responseStart": 241.379,
+            "responseEnd": 245.575
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 576,
+            "responseBodySize": 688,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-3d-transparent.png",
+          "method": "GET",
+          "resourceType": "image",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738031.158,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.323,
+            "responseStart": 237.172,
+            "responseEnd": 286.147
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 661,
+            "responseBodySize": 1123949,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "1123109",
+            "content-type": "image/png",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/plus-jakarta-sans-latin-ext-800-normal-B6BjB2Ju.woff2",
+          "method": "GET",
+          "resourceType": "font",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738060.767,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.243,
+            "responseStart": 256.502,
+            "responseEnd": 281.902
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 717,
+            "responseBodySize": 11024,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "10804",
+            "content-type": "font/woff2",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/theme-bootstrap.js",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738255.795,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.162,
+            "responseStart": 82.155,
+            "responseEnd": 156.083
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 491,
+            "responseBodySize": 989,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "504",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "791",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/index.html",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738184.5881,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.253,
+            "responseStart": 168.794,
+            "responseEnd": 171.836
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 475,
+            "responseBodySize": 2947,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "text/html; charset=utf-8",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/manifest.json",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738184.702,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.187,
+            "responseStart": 169.901,
+            "responseEnd": 172.527
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 481,
+            "responseBodySize": 1097,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "935",
+            "content-type": "application/json; charset=utf-8",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/plus-jakarta-sans-latin-ext-400-normal-D127hM_v.woff2",
+          "method": "GET",
+          "resourceType": "font",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738014.7012,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.17,
+            "responseStart": 362.84,
+            "responseEnd": 367.228
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 717,
+            "responseBodySize": 10769,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "10592",
+            "content-type": "font/woff2",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/tree-store-wH6g8lwa.js",
+          "method": "GET",
+          "resourceType": "script",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738201.565,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.183,
+            "responseStart": 222.369,
+            "responseEnd": 223.985
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 657,
+            "responseBodySize": 5322,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/javascript; charset=utf-8",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-stacked-light.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738359.85,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.26,
+            "responseStart": 74.977,
+            "responseEnd": 254.189
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 519,
+            "responseBodySize": 4700,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-stacked-dark.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738346.5002,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.2,
+            "responseStart": 96.267,
+            "responseEnd": 260.874
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 517,
+            "responseBodySize": 5272,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/plus-jakarta-sans-latin-400-normal-Dhut76fR.woff2",
+          "method": "GET",
+          "resourceType": "font",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738393.322,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 1.43,
+            "responseStart": 76.825,
+            "responseEnd": 80.838
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 709,
+            "responseBodySize": 11989,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "503",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "11816",
+            "content-type": "font/woff2",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-horizontal-dark.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738358.0872,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.17,
+            "responseStart": 167.263,
+            "responseEnd": 344.706
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 523,
+            "responseBodySize": 4667,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "242",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-top.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738445.885,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.41,
+            "responseStart": 96.876,
+            "responseEnd": 361.041
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 499,
+            "responseBodySize": 2489,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/plus-jakarta-sans-latin-800-normal-CusIZhrK.woff2",
+          "method": "GET",
+          "resourceType": "font",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738327.219,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.186,
+            "responseStart": 231.634,
+            "responseEnd": 236.243
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 709,
+            "responseBodySize": 12087,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "11896",
+            "content-type": "font/woff2",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-horizontal-light.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738437.916,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.184,
+            "responseStart": 201.311,
+            "responseEnd": 457.141
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 525,
+            "responseBodySize": 4621,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-coin.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738545.848,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.138,
+            "responseStart": 96.01,
+            "responseEnd": 459.758
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 501,
+            "responseBodySize": 617,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "475",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-bottom.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738529.5842,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.29,
+            "responseStart": 139.058,
+            "responseEnd": 487.048
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 505,
+            "responseBodySize": 2419,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-3d-transparent.png",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738671.604,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.545,
+            "responseStart": 90.09,
+            "responseEnd": 600.073
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 521,
+            "responseBodySize": 1123921,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "1123109",
+            "content-type": "image/png",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-top-light.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738642.3582,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.829,
+            "responseStart": 170.427,
+            "responseEnd": 631.041
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 511,
+            "responseBodySize": 2467,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/app-icon.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738784.9463,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.819,
+            "responseStart": 69.013,
+            "responseEnd": 672.232
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 491,
+            "responseBodySize": 4737,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "504",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "HIT"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/wordmark-bottom-light.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738645.992,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.403,
+            "responseStart": 222.573,
+            "responseEnd": 687.552
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 517,
+            "responseBodySize": 2443,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/monogram.svg",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738816.07,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.187,
+            "responseStart": 170.782,
+            "responseEnd": 804.303
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 491,
+            "responseBodySize": 1114,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "974",
+            "content-type": "image/svg+xml",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/favicon-48.png",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738860.758,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.161,
+            "responseStart": 174.237,
+            "responseEnd": 852.15
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 495,
+            "responseBodySize": 1766,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "1574",
+            "content-type": "image/png",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/app-icon-180.png",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738873.7869,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 1.824,
+            "responseStart": 196.946,
+            "responseEnd": 891.451
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 499,
+            "responseBodySize": 6523,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "6347",
+            "content-type": "image/png",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/app-icon-192.png",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060739084.2568,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 1.312,
+            "responseStart": 180.668,
+            "responseEnd": 1083.173
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 499,
+            "responseBodySize": 6916,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "6770",
+            "content-type": "image/png",
+            "x-vercel-cache": "MISS"
+          }
+        },
+        {
+          "url": "https://wallet.getyoursats.com/assets/breez_sdk_spark_wasm_bg-jQ-bgV27.wasm",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": false,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060738428.78,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.202,
+            "responseStart": 427.379,
+            "responseEnd": 588.516
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 624,
+            "responseBodySize": 4938112,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-encoding": "br",
+            "content-type": "application/wasm",
+            "x-vercel-cache": "MISS"
+          },
+          "decodedBytes": 12311382,
+          "sha256": "4fc7fb24e6244c7b94a6f869425537eaf47fe9ee721d31f273b58495d1554b25"
+        },
+        {
+          "url": "https://wallet.getyoursats.com/brand/app-icon-512.png",
+          "method": "GET",
+          "resourceType": "fetch",
+          "serviceWorker": true,
+          "status": 200,
+          "timing": {
+            "startTime": 1793060739182.499,
+            "domainLookupStart": -1,
+            "domainLookupEnd": -1,
+            "connectStart": -1,
+            "secureConnectionStart": -1,
+            "connectEnd": -1,
+            "requestStart": 0.193,
+            "responseStart": 160.651,
+            "responseEnd": 1165.996
+          },
+          "fromServiceWorker": false,
+          "sizes": {
+            "requestBodySize": 0,
+            "requestHeadersSize": 499,
+            "responseBodySize": 23427,
+            "responseHeadersSize": 0
+          },
+          "headers": {
+            "age": "0",
+            "cache-control": "public, max-age=0, must-revalidate",
+            "content-length": "23262",
+            "content-type": "image/png",
+            "x-vercel-cache": "MISS"
+          }
+        }
+      ],
+      "pageErrors": [],
+      "requestFailures": [],
+      "html": {
+        "status": 200,
+        "sha256": "933b9c4ee8bdd6a42cfd198974fe4531daeba190557f1b233459bb4954022eaf"
+      },
+      "finishedAt": "2026-10-27T00:26:18.025Z"
+    }
+  ],
+  "conditions": [
+    {
+      "name": "unthrottled-1",
+      "cpuRate": 1,
+      "network": null
+    },
+    {
+      "name": "unthrottled-2",
+      "cpuRate": 1,
+      "network": null
+    },
+    {
+      "name": "constrained-lab",
+      "cpuRate": 4,
+      "network": {
+        "latencyMs": 150,
+        "downloadMbps": 10,
+        "uploadMbps": 2
+      }
+    }
+  ],
+  "limits": {
+    "physicalDevice": false,
+    "fieldPerformance": false,
+    "walletReadyMeasured": false,
+    "explanation": "Onboarding readability and SDK instantiation are distinct from a connected wallet. No Start/Restore click, wallet connection, credential ceremony, funded operation or email. CDP throttling is a page-target lab simulation."
+  },
+  "browserVersion": "147.0.7727.0",
+  "complete": false,
+  "error": "TimeoutError: page.waitForFunction: Timeout 40000ms exceeded.",
+  "finishedAt": "2026-10-27T00:26:18.038Z"
+}

@@ -1,0 +1,2472 @@
+{
+  "schemaVersion": 1,
+  "title": "A13 candidate settled visual follow-up",
+  "startedAt": "2026-10-27T00:48:24.595Z",
+  "sourceCommit": "942d20a85cebb2d92b1bf174f9265cd4fb5b00dd",
+  "sourceTree": "b18c72ef8622d06de4e38fcc3c9662b3e915f664",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "scope": "One read-only local page load of the existing after build. No source edits, wallet actions or performance acceptance.",
+  "originalScreenshot": {
+    "file": "after-readable.png",
+    "sha256": "16b4445737ee6e19aaa52e5c94e8840e71be33af55e153512cc517a935befee3"
+  },
+  "requests": [
+    {
+      "url": "http://127.0.0.1:42189/",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/theme-bootstrap.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/index-94ZnkdAl.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/dist-Ct6Dr8jI.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/logger-DARXN4Gy.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/useStatusBarColor-DA8iJ6vX.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/ui-B9ANlfnV.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/sdkConnect-Bz1_Vvz8.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/definitions-BdWVgBTV.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/definitions-DlpntO5o.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/useUnilateralExitEngineLifecycle-CDC_YLpQ.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/index-C44TO1tc.css",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-stacked-dark.svg",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-stacked-light.svg",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/sw-register.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/web-DhQnEQpZ.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/storage-Cxv8D4z6.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/sw.js",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-top.svg",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-bottom.svg",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-coin.svg",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/index.html",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/manifest.json",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/theme-bootstrap.js",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-stacked-dark.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-horizontal-dark.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-stacked-light.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-horizontal-light.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-top.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-bottom.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-coin.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-top-light.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-bottom-light.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-3d-transparent.png",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/app-icon.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/monogram.svg",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/favicon-48.png",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/app-icon-180.png",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/app-icon-192.png",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/app-icon-512.png",
+      "method": "GET",
+      "serviceWorker": true
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/plus-jakarta-sans-latin-ext-500-normal-9VZagAe1.woff2",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/plus-jakarta-sans-latin-ext-400-normal-D127hM_v.woff2",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/web-BA4NCoH6.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/plus-jakarta-sans-latin-500-normal-Bf-nb4oT.woff2",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/tree-store-picGlnYB.js",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-3d-transparent.png",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/plus-jakarta-sans-latin-ext-800-normal-B6BjB2Ju.woff2",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/plus-jakarta-sans-latin-ext-700-normal-BajbvANd.woff2",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/plus-jakarta-sans-latin-400-normal-Dhut76fR.woff2",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/plus-jakarta-sans-latin-800-normal-CusIZhrK.woff2",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/plus-jakarta-sans-latin-700-normal-CfpNZvy6.woff2",
+      "method": "GET",
+      "serviceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/assets/breez_sdk_spark_wasm_bg-4gX78Mib.wasm",
+      "method": "GET",
+      "serviceWorker": false
+    }
+  ],
+  "pageErrors": [],
+  "requestFailures": [],
+  "assetResponses": [
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-3d-transparent.png",
+      "status": 200,
+      "contentType": "image/png",
+      "bytes": 1123109,
+      "sha256": "7b174cca6593622dd8112a7cfe6cb199bd087d5c33617b0402ab80e7901e5bf1",
+      "fromServiceWorker": false
+    },
+    {
+      "url": "http://127.0.0.1:42189/brand/wordmark-3d-transparent.png",
+      "status": 200,
+      "contentType": "image/png",
+      "bytes": 1123109,
+      "sha256": "7b174cca6593622dd8112a7cfe6cb199bd087d5c33617b0402ab80e7901e5bf1",
+      "fromServiceWorker": false
+    }
+  ],
+  "origin": "http://127.0.0.1:42189",
+  "browserVersion": "147.0.7727.0",
+  "html": {
+    "status": 200,
+    "sha256": "434a9dce305b37b13aad108e7d1ac0cb26071cf448facc8786b5db1435ae63a2"
+  },
+  "completion": {
+    "atMs": 1303.7000000029802,
+    "imageDecoded": true,
+    "fontsStatus": "loaded",
+    "finiteAnimations": [
+      {
+        "name": "gys-hero-arrive",
+        "playState": "running",
+        "target": "gys-welcome__content",
+        "duration": 750,
+        "endTime": 750
+      },
+      {
+        "name": "gys-hero-arrive",
+        "playState": "running",
+        "target": "gys-welcome__eyebrow",
+        "duration": 750,
+        "endTime": 830
+      },
+      {
+        "name": "gys-hero-arrive",
+        "playState": "running",
+        "target": "",
+        "duration": 850,
+        "endTime": 1010
+      },
+      {
+        "name": "gys-hero-arrive",
+        "playState": "running",
+        "target": "gys-welcome__subtitle",
+        "duration": 750,
+        "endTime": 1000
+      },
+      {
+        "name": "gys-hero-arrive",
+        "playState": "running",
+        "target": "gys-welcome__actions",
+        "duration": 800,
+        "endTime": 1110
+      },
+      {
+        "name": "gys-hero-arrive",
+        "playState": "finished",
+        "target": "gys-welcome__hero-mark",
+        "duration": 650,
+        "endTime": 650
+      }
+    ],
+    "finiteAnimationsCompleted": true,
+    "animationFrameTimes": [
+      1286.7,
+      1303.3
+    ]
+  },
+  "display": {
+    "atMs": 1308.7000000029802,
+    "elements": {
+      "header": {
+        "present": true,
+        "visible": true,
+        "combinedOpacity": 1,
+        "rect": {
+          "x": 20,
+          "y": 25,
+          "width": 350,
+          "height": 44,
+          "top": 25,
+          "right": 370,
+          "bottom": 69,
+          "left": 20
+        },
+        "inViewport": true,
+        "cssContent": "normal",
+        "fontFamily": "\"Plus Jakarta Sans\", system-ui, sans-serif",
+        "centerHit": {
+          "tag": "HEADER",
+          "className": "gys-welcome__header"
+        },
+        "ancestors": [
+          {
+            "tag": "HEADER",
+            "className": "gys-welcome__header",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "5",
+            "rect": {
+              "x": 20,
+              "y": 25,
+              "width": 350,
+              "height": 44,
+              "top": 25,
+              "right": 370,
+              "bottom": 69,
+              "left": 20
+            }
+          },
+          {
+            "tag": "MAIN",
+            "className": "gys-welcome",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "page-layout",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "app-shell",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "max-w-4xl mx-auto",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "main-wrapper",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "BODY",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "HTML",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          }
+        ]
+      },
+      "scarcity": {
+        "present": true,
+        "visible": true,
+        "combinedOpacity": 1,
+        "rect": {
+          "x": 20,
+          "y": 40.25,
+          "width": 98.84375,
+          "height": 13.5,
+          "top": 40.25,
+          "right": 118.84375,
+          "bottom": 53.75,
+          "left": 20
+        },
+        "inViewport": true,
+        "cssContent": "normal",
+        "fontFamily": "\"Plus Jakarta Sans\", system-ui, sans-serif",
+        "centerHit": {
+          "tag": "SPAN",
+          "className": "gys-welcome__scarcity-pill"
+        },
+        "ancestors": [
+          {
+            "tag": "SPAN",
+            "className": "gys-welcome__scarcity-pill",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 40.25,
+              "width": 98.84375,
+              "height": 13.5,
+              "top": 40.25,
+              "right": 118.84375,
+              "bottom": 53.75,
+              "left": 20
+            }
+          },
+          {
+            "tag": "HEADER",
+            "className": "gys-welcome__header",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "5",
+            "rect": {
+              "x": 20,
+              "y": 25,
+              "width": 350,
+              "height": 44,
+              "top": 25,
+              "right": 370,
+              "bottom": 69,
+              "left": 20
+            }
+          },
+          {
+            "tag": "MAIN",
+            "className": "gys-welcome",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "page-layout",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "app-shell",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "max-w-4xl mx-auto",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "main-wrapper",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "BODY",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "HTML",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          }
+        ]
+      },
+      "language": {
+        "present": true,
+        "visible": true,
+        "combinedOpacity": 1,
+        "rect": {
+          "x": 271,
+          "y": 25,
+          "width": 99,
+          "height": 44,
+          "top": 25,
+          "right": 370,
+          "bottom": 69,
+          "left": 271
+        },
+        "inViewport": true,
+        "cssContent": "normal",
+        "fontFamily": "\"DM Sans\", system-ui, sans-serif",
+        "centerHit": {
+          "tag": "SELECT",
+          "className": ""
+        },
+        "ancestors": [
+          {
+            "tag": "SELECT",
+            "className": "",
+            "opacity": "1",
+            "display": "inline-block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 271,
+              "y": 25,
+              "width": 99,
+              "height": 44,
+              "top": 25,
+              "right": 370,
+              "bottom": 69,
+              "left": 271
+            }
+          },
+          {
+            "tag": "LABEL",
+            "className": "gys-language-picker",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 271,
+              "y": 25,
+              "width": 99,
+              "height": 44,
+              "top": 25,
+              "right": 370,
+              "bottom": 69,
+              "left": 271
+            }
+          },
+          {
+            "tag": "HEADER",
+            "className": "gys-welcome__header",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "5",
+            "rect": {
+              "x": 20,
+              "y": 25,
+              "width": 350,
+              "height": 44,
+              "top": 25,
+              "right": 370,
+              "bottom": 69,
+              "left": 20
+            }
+          },
+          {
+            "tag": "MAIN",
+            "className": "gys-welcome",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "page-layout",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "app-shell",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "max-w-4xl mx-auto",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "main-wrapper",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "BODY",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "HTML",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          }
+        ],
+        "selectedText": "English"
+      },
+      "hero": {
+        "present": true,
+        "visible": true,
+        "combinedOpacity": 1,
+        "rect": {
+          "x": 88.09375,
+          "y": 172.296875,
+          "width": 213.8125,
+          "height": 160.359375,
+          "top": 172.296875,
+          "right": 301.90625,
+          "bottom": 332.65625,
+          "left": 88.09375
+        },
+        "inViewport": true,
+        "cssContent": "normal",
+        "fontFamily": "\"Plus Jakarta Sans\", system-ui, sans-serif",
+        "centerHit": {
+          "tag": "IMG",
+          "className": "gys-welcome__hero-mark"
+        },
+        "ancestors": [
+          {
+            "tag": "IMG",
+            "className": "gys-welcome__hero-mark",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "clip",
+            "overflowY": "clip",
+            "transform": "matrix(1, 0, 0, 1, 0, 0)",
+            "zIndex": "auto",
+            "rect": {
+              "x": 88.09375,
+              "y": 172.296875,
+              "width": 213.8125,
+              "height": 160.359375,
+              "top": 172.296875,
+              "right": 301.90625,
+              "bottom": 332.65625,
+              "left": 88.09375
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__visual",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "0",
+            "rect": {
+              "x": 88.09375,
+              "y": 172.296875,
+              "width": 213.8125,
+              "height": 160.359375,
+              "top": 172.296875,
+              "right": 301.90625,
+              "bottom": 332.65625,
+              "left": 88.09375
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__stage",
+            "opacity": "1",
+            "display": "grid",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 69,
+              "width": 350,
+              "height": 738,
+              "top": 69,
+              "right": 370,
+              "bottom": 807,
+              "left": 20
+            }
+          },
+          {
+            "tag": "MAIN",
+            "className": "gys-welcome",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "page-layout",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "app-shell",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "max-w-4xl mx-auto",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "main-wrapper",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "BODY",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "HTML",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          }
+        ],
+        "image": {
+          "src": "/brand/wordmark-3d-transparent.png",
+          "currentSrc": "http://127.0.0.1:42189/brand/wordmark-3d-transparent.png",
+          "complete": true,
+          "naturalWidth": 1448,
+          "naturalHeight": 1086
+        }
+      },
+      "heading": {
+        "present": true,
+        "visible": true,
+        "combinedOpacity": 1,
+        "rect": {
+          "x": 72.5,
+          "y": 356.15625,
+          "width": 245,
+          "height": 72.78125,
+          "top": 356.15625,
+          "right": 317.5,
+          "bottom": 428.9375,
+          "left": 72.5
+        },
+        "inViewport": true,
+        "cssContent": "normal",
+        "fontFamily": "\"Plus Jakarta Sans\", system-ui, sans-serif",
+        "centerHit": {
+          "tag": "EM",
+          "className": ""
+        },
+        "ancestors": [
+          {
+            "tag": "H1",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "matrix(1, 0, 0, 1, 0, 0)",
+            "zIndex": "auto",
+            "rect": {
+              "x": 72.5,
+              "y": 356.15625,
+              "width": 245,
+              "height": 72.78125,
+              "top": 356.15625,
+              "right": 317.5,
+              "bottom": 428.9375,
+              "left": 72.5
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__content",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "matrix(1, 0, 0, 1, 0, 0)",
+            "zIndex": "1",
+            "rect": {
+              "x": 20,
+              "y": 329.65625,
+              "width": 350,
+              "height": 374.03125,
+              "top": 329.65625,
+              "right": 370,
+              "bottom": 703.6875,
+              "left": 20
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__stage",
+            "opacity": "1",
+            "display": "grid",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 69,
+              "width": 350,
+              "height": 738,
+              "top": 69,
+              "right": 370,
+              "bottom": 807,
+              "left": 20
+            }
+          },
+          {
+            "tag": "MAIN",
+            "className": "gys-welcome",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "page-layout",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "app-shell",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "max-w-4xl mx-auto",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "main-wrapper",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "BODY",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "HTML",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          }
+        ]
+      },
+      "subtitle": {
+        "present": true,
+        "visible": true,
+        "combinedOpacity": 1,
+        "rect": {
+          "x": 20,
+          "y": 441.9375,
+          "width": 350,
+          "height": 73.75,
+          "top": 441.9375,
+          "right": 370,
+          "bottom": 515.6875,
+          "left": 20
+        },
+        "inViewport": true,
+        "cssContent": "normal",
+        "fontFamily": "\"Plus Jakarta Sans\", system-ui, sans-serif",
+        "centerHit": {
+          "tag": "P",
+          "className": "gys-welcome__subtitle"
+        },
+        "ancestors": [
+          {
+            "tag": "P",
+            "className": "gys-welcome__subtitle",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "matrix(1, 0, 0, 1, 0, 0)",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 441.9375,
+              "width": 350,
+              "height": 73.75,
+              "top": 441.9375,
+              "right": 370,
+              "bottom": 515.6875,
+              "left": 20
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__content",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "matrix(1, 0, 0, 1, 0, 0)",
+            "zIndex": "1",
+            "rect": {
+              "x": 20,
+              "y": 329.65625,
+              "width": 350,
+              "height": 374.03125,
+              "top": 329.65625,
+              "right": 370,
+              "bottom": 703.6875,
+              "left": 20
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__stage",
+            "opacity": "1",
+            "display": "grid",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 69,
+              "width": 350,
+              "height": 738,
+              "top": 69,
+              "right": 370,
+              "bottom": 807,
+              "left": 20
+            }
+          },
+          {
+            "tag": "MAIN",
+            "className": "gys-welcome",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "page-layout",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "app-shell",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "max-w-4xl mx-auto",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "main-wrapper",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "BODY",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "HTML",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          }
+        ]
+      },
+      "start": {
+        "present": true,
+        "visible": true,
+        "combinedOpacity": 1,
+        "rect": {
+          "x": 20,
+          "y": 528.6875,
+          "width": 350,
+          "height": 62,
+          "top": 528.6875,
+          "right": 370,
+          "bottom": 590.6875,
+          "left": 20
+        },
+        "inViewport": true,
+        "cssContent": "normal",
+        "fontFamily": "\"Plus Jakarta Sans\", system-ui, sans-serif",
+        "centerHit": {
+          "tag": "BUTTON",
+          "className": "gys-welcome__start"
+        },
+        "ancestors": [
+          {
+            "tag": "BUTTON",
+            "className": "gys-welcome__start",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 528.6875,
+              "width": 350,
+              "height": 62,
+              "top": 528.6875,
+              "right": 370,
+              "bottom": 590.6875,
+              "left": 20
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__actions",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "matrix(1, 0, 0, 1, 0, 0)",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 528.6875,
+              "width": 350,
+              "height": 175,
+              "top": 528.6875,
+              "right": 370,
+              "bottom": 703.6875,
+              "left": 20
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__content",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "matrix(1, 0, 0, 1, 0, 0)",
+            "zIndex": "1",
+            "rect": {
+              "x": 20,
+              "y": 329.65625,
+              "width": 350,
+              "height": 374.03125,
+              "top": 329.65625,
+              "right": 370,
+              "bottom": 703.6875,
+              "left": 20
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__stage",
+            "opacity": "1",
+            "display": "grid",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 69,
+              "width": 350,
+              "height": 738,
+              "top": 69,
+              "right": 370,
+              "bottom": 807,
+              "left": 20
+            }
+          },
+          {
+            "tag": "MAIN",
+            "className": "gys-welcome",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "page-layout",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "app-shell",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "max-w-4xl mx-auto",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "main-wrapper",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "BODY",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "HTML",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          }
+        ]
+      },
+      "restore": {
+        "present": true,
+        "visible": true,
+        "combinedOpacity": 1,
+        "rect": {
+          "x": 20,
+          "y": 599.6875,
+          "width": 350,
+          "height": 41,
+          "top": 599.6875,
+          "right": 370,
+          "bottom": 640.6875,
+          "left": 20
+        },
+        "inViewport": true,
+        "cssContent": "normal",
+        "fontFamily": "\"Plus Jakarta Sans\", system-ui, sans-serif",
+        "centerHit": {
+          "tag": "BUTTON",
+          "className": "gys-welcome__restore"
+        },
+        "ancestors": [
+          {
+            "tag": "BUTTON",
+            "className": "gys-welcome__restore",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 599.6875,
+              "width": 350,
+              "height": 41,
+              "top": 599.6875,
+              "right": 370,
+              "bottom": 640.6875,
+              "left": 20
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__actions",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "matrix(1, 0, 0, 1, 0, 0)",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 528.6875,
+              "width": 350,
+              "height": 175,
+              "top": 528.6875,
+              "right": 370,
+              "bottom": 703.6875,
+              "left": 20
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__content",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "matrix(1, 0, 0, 1, 0, 0)",
+            "zIndex": "1",
+            "rect": {
+              "x": 20,
+              "y": 329.65625,
+              "width": 350,
+              "height": 374.03125,
+              "top": 329.65625,
+              "right": 370,
+              "bottom": 703.6875,
+              "left": 20
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "gys-welcome__stage",
+            "opacity": "1",
+            "display": "grid",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 20,
+              "y": 69,
+              "width": 350,
+              "height": 738,
+              "top": 69,
+              "right": 370,
+              "bottom": 807,
+              "left": 20
+            }
+          },
+          {
+            "tag": "MAIN",
+            "className": "gys-welcome",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "page-layout",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "app-shell",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "max-w-4xl mx-auto",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "main-wrapper",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "visible",
+            "overflowY": "visible",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "DIV",
+            "className": "",
+            "opacity": "1",
+            "display": "flex",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "BODY",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          },
+          {
+            "tag": "HTML",
+            "className": "",
+            "opacity": "1",
+            "display": "block",
+            "visibility": "visible",
+            "overflowX": "hidden",
+            "overflowY": "hidden",
+            "transform": "none",
+            "zIndex": "auto",
+            "rect": {
+              "x": 0,
+              "y": 0,
+              "width": 390,
+              "height": 844,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "left": 0
+            }
+          }
+        ]
+      }
+    },
+    "splashPresent": false,
+    "fullScreenBrandPresent": false,
+    "safetyStops": [],
+    "brandCoverEverSeen": false
+  },
+  "screenshot": {
+    "file": "after-settled-verified.png",
+    "bytes": 137646,
+    "sha256": "544a33208f36e291b2b09e03f0956c80b940272a170c63864ca908a71f8184b2",
+    "method": "CDP Page.captureScreenshot fromSurface:true after normal finite animation completion and two requestAnimationFrame callbacks"
+  },
+  "storage": {
+    "localKeys": [],
+    "sessionKeys": [],
+    "databases": [
+      {
+        "name": "glow-logs",
+        "version": 2
+      }
+    ]
+  },
+  "complete": true,
+  "finishedAt": "2026-10-27T00:48:26.182Z",
+  "postCaptureFileChecks": {
+    "earlierScreenshotSha256": "16b4445737ee6e19aaa52e5c94e8840e71be33af55e153512cc517a935befee3",
+    "settledScreenshotSha256": "544a33208f36e291b2b09e03f0956c80b940272a170c63864ca908a71f8184b2",
+    "publicBaselineScreenshotSha256": "544a33208f36e291b2b09e03f0956c80b940272a170c63864ca908a71f8184b2",
+    "settledAndPublicBaselinePngBytesIdentical": true,
+    "settledAndPublicBaselinePixelsIdentical": true,
+    "earlierAndSettledOverallDifferenceBounds": [
+      20,
+      333,
+      370,
+      702
+    ],
+    "headerAndHeroRegions": {
+      "header": {
+        "box": [
+          19,
+          24,
+          371,
+          70
+        ],
+        "earlierAndSettledPixelsIdentical": true,
+        "brightPixels": 418,
+        "orangePixels": 0
+      },
+      "language": {
+        "box": [
+          270,
+          24,
+          371,
+          70
+        ],
+        "earlierAndSettledPixelsIdentical": true,
+        "brightPixels": 237,
+        "orangePixels": 0
+      },
+      "hero": {
+        "box": [
+          88,
+          172,
+          302,
+          333
+        ],
+        "earlierAndSettledPixelsIdentical": true,
+        "brightPixels": 10727,
+        "orangePixels": 1402
+      }
+    },
+    "interpretation": "The original and settled PNGs contain the same header, language picker and hero pixels. The settled PNG is byte-for-byte identical to the public baseline. No source/artifact omission was reproduced; this does not diagnose a differing inline preview."
+  },
+  "limitations": [
+    "This single follow-up verifies settled pixels and browser rendering state, not a new performance comparison.",
+    "The earlier >=95% predicate was a CSS opacity milestone. It was not proof of compositor completion at that instant. It remains a diagnostic sample.",
+    "No animations were forced, disabled or shortened. Existing finite entrance animations finished normally before two RAF callbacks and a fromSurface compositor screenshot.",
+    "No source, assets, SDK, dependencies, session logic or deployment changed. No wallet interaction was performed."
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-10-27T00:48:37.156426+00:00",
+  "purpose": "stateless anonymous QueryTransfersById availability only",
+  "preparationOperatorRequests": 0,
+  "files": {
+    "/tmp/gys-query-transfers-preflight.mjs": "e55d3495ea7086aa32e660ff61c115d1fafc9cf080df6ab5e435f8a0a7414c5d",
+    "/tmp/gys-query-transfers-preflight.test.mjs": "93e8eb7f6274271760293d78686baf3938b0dd8b4b31b12d683984f3b515aabe",
+    "/tmp/gys-query-transfers-preflight-offline-tests.log": "fc8c90144882645850827ec880b9c98d9940f0f7d1aaf6ecb2cd2b32efdb5e05",
+    "/tmp/gys-query-transfers-preflight-no-execute.log": "2b93987b0032f5cd182d4e7c8a3febe240c6301b55c8407dc1ffa98a574dfc9c"
+  },
+  "offlineTests": {
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0,
+    "initialHarnessSyntaxFailureRetained": "/tmp/gys-query-transfers-preflight-offline-attempt1.log"
+  },
+  "limits": {
+    "maximumRequestAttempts": 2,
+    "connectSeconds": 4,
+    "curlTotalSecondsPerAttempt": 8,
+    "hardProcessMillisecondsPerAttempt": 9000,
+    "maximumHeaderBytes": 8192,
+    "maximumBodyBytes": 8192,
+    "maximumCombinedCaptureBytes": 16384,
+    "maximumGrpcWebFrames": 2,
+    "retries": 0,
+    "redirectsFollowed": 0
+  },
+  "endpoint": "https://0.spark.lightspark.com/spark.SparkService/query_transfers_by_id",
+  "networkEnum": 2,
+  "noExecuteCheck": {
+    "exitCode": 2,
+    "networkRequests": 0
+  },
+  "providerCompatibilityAccepted": false,
+  "fundedAcceptance": false,
+  "executionRequires": "Root review and completed source/build gates, then explicit --execute; not run during preparation"
+}

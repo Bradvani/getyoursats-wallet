@@ -1,0 +1,501 @@
+{
+  "schemaVersion": 1,
+  "title": "A13 public wallet startup lab receipt",
+  "generatedAt": "2026-10-27T00:35:29.453712+00:00",
+  "status": "Measured application-only onboarding bottlenecks; A13 acceptance remains open",
+  "window": {
+    "startedAt": "2026-10-27T00:29:56.098Z",
+    "finishedAt": "2026-10-27T00:30:16.420Z"
+  },
+  "publicOrigin": "https://wallet.getyoursats.com",
+  "normalTls": true,
+  "provenance": {
+    "sourceRevision": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+    "tree": "54f64d701655ff5e3e0a1d6084f15cd80c0194ba",
+    "treeEvidence": "git show -s --format=%H%n%T; tree is not supplied by the public manifest",
+    "releaseId": "32be2cb598402c0344cc",
+    "sdk": {
+      "sourceRevision": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+      "packageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026"
+    },
+    "dependencyLockSha256": "642a25bebbea06222a1fb0dd38d5876467e7ba1959417cedf8d13983fd29bb47",
+    "manifestResponse": {
+      "requestedUrl": "https://wallet.getyoursats.com/release-manifest.json",
+      "responseUrl": "https://wallet.getyoursats.com/release-manifest.json",
+      "receivedAt": "2026-10-27T00:28:43.502079+00:00",
+      "status": 200,
+      "responseSha256": "c0b37434c82057302f4e5961421dd8009c71951183ea8d3665a13f19f22928f6",
+      "responseBytes": 109070
+    },
+    "everySampleHtmlMatchesManifest": true,
+    "firstColdWasmBytesAndHashMatchManifest": true,
+    "artifactHashes": {
+      "assets/breez_sdk_spark_wasm_bg-jQ-bgV27.wasm": "4fc7fb24e6244c7b94a6f869425537eaf47fe9ee721d31f273b58495d1554b25",
+      "index.html": "933b9c4ee8bdd6a42cfd198974fe4531daeba190557f1b233459bb4954022eaf"
+    },
+    "scopeChange": "Root independently verified concurrent PR59 deployment and authorized current source 07dd measurements. No rollback or production intervention was performed."
+  },
+  "environment": {
+    "browser": "147.0.7727.0",
+    "headless": true,
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "devicePixelRatio": 1,
+    "hardwareConcurrencyReported": 9,
+    "coldDefinition": "Fresh browser context and site storage; CDN/OS/connection caches not reset",
+    "warmDefinition": "First reload in the same context with newly active worker",
+    "conditions": [
+      {
+        "name": "unthrottled-1",
+        "cpuRate": 1,
+        "network": null
+      },
+      {
+        "name": "constrained-lab",
+        "cpuRate": 4,
+        "network": {
+          "latencyMs": 150,
+          "downloadMbps": 10,
+          "uploadMbps": 2
+        }
+      }
+    ],
+    "storageObserved": {
+      "localKeys": [],
+      "sessionKeys": [],
+      "indexedDbNames": [
+        "glow-logs"
+      ]
+    },
+    "noTlsBypass": true
+  },
+  "samples": [
+    {
+      "condition": "unthrottled-1",
+      "temperature": "cold",
+      "startedAt": "2026-10-27T00:29:56.342Z",
+      "finishedAt": "2026-10-27T00:30:00.596Z",
+      "fcpMs": 672.795,
+      "onboardingDomAvailableMs": 1134.15,
+      "onboardingReadableMs": 2950.65,
+      "heroDecodedMs": 919.07,
+      "brandRevealHiddenMs": 2950.345,
+      "splashRemovedMs": 1317.185,
+      "wasm": {
+        "url": "https://wallet.getyoursats.com/assets/breez_sdk_spark_wasm_bg-jQ-bgV27.wasm",
+        "fetchStartMs": 914.19,
+        "responseStartMs": 1006.21,
+        "responseEndMs": 1154.275,
+        "resourceDurationMs": 240.085,
+        "resourceTimingTransferSize": 4933840,
+        "resourceTimingEncodedBodySize": 4933540,
+        "decodedBodySize": 12311382,
+        "contentEncoding": "br",
+        "deliveryType": "",
+        "streamingInstantiateStartMs": 1008.155,
+        "streamingInstantiateEndMs": 1206.225,
+        "streamingInstantiateDurationMs": 198.07,
+        "streamingInstantiateSuccess": true,
+        "pageCdpEncodedDataLength": [
+          4937536
+        ],
+        "serviceWorkerInternalRequests": 0
+      },
+      "pageJavaScript": {
+        "resourceCount": 12,
+        "decodedBytes": 1639476,
+        "encodedBodyBytes": 526715
+      },
+      "longTasks": {
+        "count": 1,
+        "sumDurationMs": 51,
+        "maximumDurationMs": 51
+      },
+      "serviceWorker": {
+        "controlled": false,
+        "registrations": [
+          {
+            "active": "activated"
+          }
+        ]
+      },
+      "storage": {
+        "localKeys": [],
+        "sessionKeys": [],
+        "databases": [
+          {
+            "name": "glow-logs",
+            "version": 2
+          }
+        ]
+      },
+      "safetyStops": [],
+      "pageErrors": [],
+      "requestFailures": [],
+      "methodsObserved": [
+        "GET"
+      ],
+      "offOriginRequests": 0,
+      "htmlSha256": "933b9c4ee8bdd6a42cfd198974fe4531daeba190557f1b233459bb4954022eaf"
+    },
+    {
+      "condition": "unthrottled-1",
+      "temperature": "warm",
+      "startedAt": "2026-10-27T00:30:00.711Z",
+      "finishedAt": "2026-10-27T00:30:04.451Z",
+      "fcpMs": 318.755,
+      "onboardingDomAvailableMs": 698.895,
+      "onboardingReadableMs": 2514.895,
+      "heroDecodedMs": 482.825,
+      "brandRevealHiddenMs": 2514.72,
+      "splashRemovedMs": 864.685,
+      "wasm": {
+        "url": "https://wallet.getyoursats.com/assets/breez_sdk_spark_wasm_bg-jQ-bgV27.wasm",
+        "fetchStartMs": 543.865,
+        "responseStartMs": 621.72,
+        "responseEndMs": 698.175,
+        "resourceDurationMs": 154.31,
+        "resourceTimingTransferSize": 0,
+        "resourceTimingEncodedBodySize": 12311382,
+        "decodedBodySize": 12311382,
+        "contentEncoding": "br",
+        "deliveryType": "cache",
+        "streamingInstantiateStartMs": 622.27,
+        "streamingInstantiateEndMs": 745.665,
+        "streamingInstantiateDurationMs": 123.395,
+        "streamingInstantiateSuccess": true,
+        "pageCdpEncodedDataLength": [
+          0
+        ],
+        "serviceWorkerInternalRequests": 1
+      },
+      "pageJavaScript": {
+        "resourceCount": 12,
+        "decodedBytes": 1639476,
+        "encodedBodyBytes": 1638491
+      },
+      "longTasks": {
+        "count": 0,
+        "sumDurationMs": 0,
+        "maximumDurationMs": 0
+      },
+      "serviceWorker": {
+        "controlled": true,
+        "registrations": [
+          {
+            "active": "activated"
+          }
+        ]
+      },
+      "storage": {
+        "localKeys": [],
+        "sessionKeys": [],
+        "databases": [
+          {
+            "name": "glow-logs",
+            "version": 2
+          }
+        ]
+      },
+      "safetyStops": [],
+      "pageErrors": [],
+      "requestFailures": [],
+      "methodsObserved": [
+        "GET"
+      ],
+      "offOriginRequests": 0,
+      "htmlSha256": "933b9c4ee8bdd6a42cfd198974fe4531daeba190557f1b233459bb4954022eaf"
+    },
+    {
+      "condition": "constrained-lab",
+      "temperature": "cold",
+      "startedAt": "2026-10-27T00:30:04.503Z",
+      "finishedAt": "2026-10-27T00:30:12.519Z",
+      "fcpMs": 775.44,
+      "onboardingDomAvailableMs": 1828.155,
+      "onboardingReadableMs": 3942.39,
+      "heroDecodedMs": 3145.835,
+      "brandRevealHiddenMs": 3641.515,
+      "splashRemovedMs": 3958.38,
+      "wasm": {
+        "url": "https://wallet.getyoursats.com/assets/breez_sdk_spark_wasm_bg-jQ-bgV27.wasm",
+        "fetchStartMs": 1753.375,
+        "responseStartMs": 1824.595,
+        "responseEndMs": 6539.265,
+        "resourceDurationMs": 4785.89,
+        "resourceTimingTransferSize": 4933840,
+        "resourceTimingEncodedBodySize": 4933540,
+        "decodedBodySize": 12311382,
+        "contentEncoding": "br",
+        "deliveryType": "",
+        "streamingInstantiateStartMs": 1921.985,
+        "streamingInstantiateEndMs": 6742.87,
+        "streamingInstantiateDurationMs": 4820.885,
+        "streamingInstantiateSuccess": true,
+        "pageCdpEncodedDataLength": [
+          4937536
+        ],
+        "serviceWorkerInternalRequests": 0
+      },
+      "pageJavaScript": {
+        "resourceCount": 12,
+        "decodedBytes": 1639476,
+        "encodedBodyBytes": 526715
+      },
+      "longTasks": {
+        "count": 3,
+        "sumDurationMs": 408,
+        "maximumDurationMs": 212
+      },
+      "serviceWorker": {
+        "controlled": false,
+        "registrations": [
+          {
+            "active": "activated"
+          }
+        ]
+      },
+      "storage": {
+        "localKeys": [],
+        "sessionKeys": [],
+        "databases": [
+          {
+            "name": "glow-logs",
+            "version": 2
+          }
+        ]
+      },
+      "safetyStops": [],
+      "pageErrors": [],
+      "requestFailures": [],
+      "methodsObserved": [
+        "GET"
+      ],
+      "offOriginRequests": 0,
+      "htmlSha256": "933b9c4ee8bdd6a42cfd198974fe4531daeba190557f1b233459bb4954022eaf"
+    },
+    {
+      "condition": "constrained-lab",
+      "temperature": "warm",
+      "startedAt": "2026-10-27T00:30:12.526Z",
+      "finishedAt": "2026-10-27T00:30:16.406Z",
+      "fcpMs": 331.965,
+      "onboardingDomAvailableMs": 917.955,
+      "onboardingReadableMs": 2634.25,
+      "heroDecodedMs": 568.425,
+      "brandRevealHiddenMs": 2633.51,
+      "splashRemovedMs": 1281.45,
+      "wasm": {
+        "url": "https://wallet.getyoursats.com/assets/breez_sdk_spark_wasm_bg-jQ-bgV27.wasm",
+        "fetchStartMs": 659.325,
+        "responseStartMs": 733.38,
+        "responseEndMs": 931.545,
+        "resourceDurationMs": 272.22,
+        "resourceTimingTransferSize": 0,
+        "resourceTimingEncodedBodySize": 12311382,
+        "decodedBodySize": 12311382,
+        "contentEncoding": "br",
+        "deliveryType": "cache",
+        "streamingInstantiateStartMs": 737.405,
+        "streamingInstantiateEndMs": 1140.92,
+        "streamingInstantiateDurationMs": 403.515,
+        "streamingInstantiateSuccess": true,
+        "pageCdpEncodedDataLength": [
+          0
+        ],
+        "serviceWorkerInternalRequests": 1
+      },
+      "pageJavaScript": {
+        "resourceCount": 12,
+        "decodedBytes": 1639476,
+        "encodedBodyBytes": 1638491
+      },
+      "longTasks": {
+        "count": 0,
+        "sumDurationMs": 0,
+        "maximumDurationMs": 0
+      },
+      "serviceWorker": {
+        "controlled": true,
+        "registrations": [
+          {
+            "active": "activated"
+          }
+        ]
+      },
+      "storage": {
+        "localKeys": [],
+        "sessionKeys": [],
+        "databases": [
+          {
+            "name": "glow-logs",
+            "version": 2
+          }
+        ]
+      },
+      "safetyStops": [],
+      "pageErrors": [],
+      "requestFailures": [],
+      "methodsObserved": [
+        "GET"
+      ],
+      "offOriginRequests": 0,
+      "htmlSha256": "933b9c4ee8bdd6a42cfd198974fe4531daeba190557f1b233459bb4954022eaf"
+    }
+  ],
+  "sourceEvidence": [
+    {
+      "path": "src/components/BrandIntro.tsx",
+      "lines": "6-16",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/blob/07ddf16068cc5bd7ed09397e221800ad7b12d767/src/components/BrandIntro.tsx#L6-L16",
+      "finding": "The full-screen decorative brand component stays mounted until a 2200 ms timer."
+    },
+    {
+      "path": "src/components/premiumMotion.css",
+      "lines": "1-15",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/blob/07ddf16068cc5bd7ed09397e221800ad7b12d767/src/components/premiumMotion.css#L1-L15",
+      "finding": "The fixed opaque overlay exits after a 1.85 s delay with a 0.32 s animation."
+    },
+    {
+      "path": "src/main.tsx",
+      "lines": "217-242",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/blob/07ddf16068cc5bd7ed09397e221800ad7b12d767/src/main.tsx#L217-L242",
+      "finding": "Splash reveal waits for passkey capability or a 2500 ms timeout, then a 100 ms fade."
+    },
+    {
+      "path": "src/services/passkeyService.ts",
+      "lines": "429-434",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/blob/07ddf16068cc5bd7ed09397e221800ad7b12d767/src/services/passkeyService.ts#L429-L434",
+      "finding": "Browser passkey availability waits for sdkReady before calling its SDK-backed check."
+    },
+    {
+      "path": "src/main.tsx",
+      "lines": "350-391",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/blob/07ddf16068cc5bd7ed09397e221800ad7b12d767/src/main.tsx#L350-L391",
+      "finding": "Startup begins WASM initialization before rendering App without awaiting it directly."
+    },
+    {
+      "path": "src/services/sdkReady.ts",
+      "lines": "1-43",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/blob/07ddf16068cc5bd7ed09397e221800ad7b12d767/src/services/sdkReady.ts#L1-L43",
+      "finding": "SDK module is statically imported and initialization is memoized."
+    },
+    {
+      "path": "src/App.tsx",
+      "lines": "1-59",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/blob/07ddf16068cc5bd7ed09397e221800ad7b12d767/src/App.tsx#L1-L59",
+      "finding": "Root eagerly imports wallet services, passkey service and many route pages. WalletPage and selected settings/recovery pages are lazy."
+    },
+    {
+      "path": "src/hooks/useBreezSdk.ts",
+      "lines": "1260-1270",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/blob/07ddf16068cc5bd7ed09397e221800ad7b12d767/src/hooks/useBreezSdk.ts#L1260-L1270",
+      "finding": "SDK log initialization and capability checking run on mount."
+    },
+    {
+      "path": "src/services/passkeyService.ts",
+      "lines": "909-937",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/blob/07ddf16068cc5bd7ed09397e221800ad7b12d767/src/services/passkeyService.ts#L909-L937",
+      "finding": "Existing capability memoization protects transient WebAuthn user activation; moving preparation after a click requires preserving that constraint."
+    },
+    {
+      "path": "public/sw.js",
+      "lines": "52-58, 95-107",
+      "url": "https://github.com/Bradvani/getyoursats-wallet/blob/07ddf16068cc5bd7ed09397e221800ad7b12d767/public/sw.js#L52-L58",
+      "finding": "Initial installation precaches public static assets without claiming the current page. On first controlled reload the WASM cache can still need its first network/HTTP-cache fetch."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "scope": "Presentation only",
+      "action": "Remove the opaque full-screen decorative hold or render the brand motion within the already readable welcome layout. Preserve PR59 welcome-card fixes and existing state/security gates.",
+      "evidence": "Warm instantiation completed at 745.665 ms and 1140.920 ms, but readable onboarding waited until 2514.895 ms and 2634.250 ms; the brand overlay determined both warm visibility times."
+    },
+    {
+      "priority": 2,
+      "scope": "Capability preparation and reveal",
+      "action": "Decouple readable welcome rendering from the SDK-backed capability probe, exposing explicit preparation state without silently choosing a wallet creation method. Preserve SDK readiness checks and WebAuthn transient activation.",
+      "evidence": "Constrained cold readable state followed the bounded splash timeout near 3942 ms while WASM instantiation completed at 6743 ms."
+    },
+    {
+      "priority": 3,
+      "scope": "Follow-up payload optimization",
+      "action": "After the reveal fix, isolate the welcome shell from eager route/service imports and evaluate deferred SDK preparation with explicit safe readiness. Optimize the 1.123 MB hero asset. Do not change cryptographic SDK code or force worker activation to improve this metric.",
+      "evidence": "Cold page loaded 1.639 MB decoded JavaScript plus a 12.311 MB decoded WASM payload and 1.123 MB hero image before any wallet intent."
+    }
+  ],
+  "limits": [
+    "One cold and one immediate warm sample per condition. No medians, p95, distribution, benchmark stability or adoption acceptance is established.",
+    "Headless desktop Chromium 147.0.7727.0 with a 390 by 844 viewport and DPR 1. This is not a physical phone, field measurement or Safari/Firefox acceptance.",
+    "Cold means a fresh browser context with empty browser caches and site storage. OS, connection and CDN caches were not controlled; cold responses reported CDN HIT.",
+    "Warm means the first reload in the same context after initial worker activation. It is not a fully populated service-worker cache benchmark. Cold pages were uncontrolled and warm pages controlled.",
+    "Constrained values are page-target CDP settings: 4x CPU, 150 ms latency, 10 Mbps download and 2 Mbps upload. Service-worker internal network work may not inherit every page-target constraint; effective link behavior was not independently calibrated.",
+    "FCP and LCP can report splash or content painted beneath the brand overlay. Onboarding-readable is a separate RAF predicate requiring visible heading and Start/Restore with splash and brand overlay cleared to opacity <= 0.01.",
+    "WebAssembly.instantiateStreaming duration overlaps transfer and compilation. It is not pure CPU compile time or full SDK initialization, and is not wallet-ready/connected/settled state.",
+    "For warm service-worker responses ResourceTiming reports reconstructed decoded bytes as encodedBodySize while page transferSize is zero. Worker requests still occur. Do not treat those fields as fresh payload traffic or sum frame and worker rows as distinct logical downloads. Some Playwright service-worker size fields are negative API artifacts.",
+    "Instrumentation wraps allowed APIs without changing their arguments or return values but adds observation overhead. These measurements are a scoped diagnosis, not production telemetry.",
+    "No Start/Restore click, wallet connection, WebAuthn ceremony, key or wallet creation, transaction, email or funded flow was performed. No wallet-ready state is claimed.",
+    "Earlier source-mismatch cold observation is separate. The excluded console-marker attempt used an unavailable production log signal and is not an application startup failure."
+  ],
+  "excludedEvidence": [
+    {
+      "file": "separate-cold-provenance-observation.json",
+      "reason": "Valid single cold observation that triggered a provenance stop, kept outside the authorized paired measurement set."
+    },
+    {
+      "file": "excluded-console-probe.json",
+      "reason": "Harness waited for a production-disabled console marker; excluded from startup metrics."
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "measurement.json",
+      "bytes": 539054,
+      "sha256": "2002a36db3d321d4f1cb95bd577bb9d4383fc8a61ad79b69ef54c06bf7347c8b"
+    },
+    {
+      "file": "observed-manifest-identity.json",
+      "bytes": 2373,
+      "sha256": "ec91b97ceef7e423484123efd248ac6688ed40d3d2271bb44adbc4e5a3e3cc1b"
+    },
+    {
+      "file": "measure.cjs",
+      "bytes": 15953,
+      "sha256": "1db0de0e6ec272d3566fb509022a90f55569acf3876c5fd181e0b7601155fd13",
+      "published": false,
+      "retainedLocally": true,
+      "purpose": "Executed original harness reference; use the separately hashed sanitized reproduction copy for publication"
+    },
+    {
+      "file": "onboarding-readable.png",
+      "bytes": 137646,
+      "sha256": "544a33208f36e291b2b09e03f0956c80b940272a170c63864ca908a71f8184b2"
+    },
+    {
+      "file": "separate-cold-provenance-observation.json",
+      "bytes": 132127,
+      "sha256": "2f939ffd727cbef32780ad92e18a0eeb2712a74cdb3167a152231bc1cc2499b3"
+    },
+    {
+      "file": "excluded-console-probe.json",
+      "bytes": 53617,
+      "sha256": "fbaa0913f669141c9395f7cd700d75bf64f7798457a5a617b06a06a51f2df38d"
+    }
+  ],
+  "reproductionCopy": {
+    "file": "reproduce-startup.cjs",
+    "sha256": "bd744a08dbad2051676a4f6ed3b3e26db6718e7b10833c2831402482e0a1b236",
+    "executed": false,
+    "adaptation": "Only module, browser, existing trust directory and output locations are supplied via explicit environment variables. Measurement logic unchanged. No repeat measurement was run for this publication adaptation.",
+    "requiredEnvironmentVariables": [
+      "GYS_PLAYWRIGHT_MODULE",
+      "GYS_CHROMIUM_PATH",
+      "GYS_BROWSER_TRUST_HOME",
+      "GYS_STARTUP_LAB_OUTPUT"
+    ],
+    "executedOriginalSha256": "1db0de0e6ec272d3566fb509022a90f55569acf3876c5fd181e0b7601155fd13"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "requestedUrl": "https://wallet.getyoursats.com/release-manifest.json",
+  "responseUrl": "https://wallet.getyoursats.com/release-manifest.json",
+  "startedAt": "2026-10-27T00:28:43.413225+00:00",
+  "receivedAt": "2026-10-27T00:28:43.502079+00:00",
+  "status": 200,
+  "normalTls": true,
+  "responseSha256": "c0b37434c82057302f4e5961421dd8009c71951183ea8d3665a13f19f22928f6",
+  "responseBytes": 109070,
+  "headers": {
+    "age": "102",
+    "cache-control": "public, max-age=0, must-revalidate",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Tue, 27 Oct 2026 00:28:43 GMT",
+    "x-vercel-cache": "HIT"
+  },
+  "manifestKeys": [
+    "artifacts",
+    "dependencyLockSha256",
+    "nodeVersion",
+    "product",
+    "releaseId",
+    "restoredConfigFormatting",
+    "restoredConfigProjections",
+    "schemaVersion",
+    "sdk",
+    "sourceDirty",
+    "sourceRevision"
+  ],
+  "identity": {
+    "schema": null,
+    "product": "getyoursats-wallet",
+    "generatedAt": null,
+    "sourceRevision": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+    "sourceTree": null,
+    "sourceTreeSha": null,
+    "releaseId": "32be2cb598402c0344cc",
+    "sourceDirty": false,
+    "dependencyLockSha256": "642a25bebbea06222a1fb0dd38d5876467e7ba1959417cedf8d13983fd29bb47"
+  },
+  "sdk": {
+    "sourceRevision": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+    "packageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026",
+    "patchSha256": null
+  },
+  "relevantArtifacts": [
+    {
+      "path": "assets/breez_sdk_spark_wasm_bg-jQ-bgV27.wasm",
+      "bytes": 12311382,
+      "sha256": "4fc7fb24e6244c7b94a6f869425537eaf47fe9ee721d31f273b58495d1554b25"
+    },
+    {
+      "path": "assets/zxing_reader-Bb9Mx2Pu.wasm",
+      "bytes": 953527,
+      "sha256": "e8af31edb56d0522f4de74495839385ef019ba8bc90d38e5ecb2f18795d86fb2"
+    },
+    {
+      "path": "index.html",
+      "bytes": 7106,
+      "sha256": "933b9c4ee8bdd6a42cfd198974fe4531daeba190557f1b233459bb4954022eaf"
+    },
+    {
+      "path": "sw.js",
+      "bytes": 5362,
+      "sha256": "89d8fb16108f9fea9adc54bae022c2fefc568dac9623f457609ea9208ecdae58"
+    }
+  ],
+  "localGitObject": {
+    "sourceRevision": "07ddf16068cc5bd7ed09397e221800ad7b12d767",
+    "tree": "54f64d701655ff5e3e0a1d6084f15cd80c0194ba",
+    "evidence": "git show -s --format=%H%n%T; tree is not supplied by the public manifest"
+  }
+}
