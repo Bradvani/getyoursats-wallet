@@ -323,3 +323,31 @@ test('@public-smoke finite previews animate and reduced motion stays calm withou
   await expect(page.getByTestId('receive-button')).toBeFocused();
   expect(await page.locator('#root').evaluate(root => root.hasAttribute('inert'))).toBe(false);
 });
+
+test('@public-smoke welcome card exit persists across reload and stays wallet scoped', async ({page}) => {
+  await page.setViewportSize({width: 390, height: 844});
+  await page.goto(fixture + '?entry=existing&named=1');
+  const dismiss = page.getByRole('button', {name: 'Dismiss wallet setup'});
+  await usable(dismiss);
+  await dismiss.click();
+  await expect(card(page)).toHaveCount(0);
+  expect(await progress(page)).toMatchObject({cardDismissed: true, recoveryStatus: 'pending', tourStatus: 'not-started'});
+  await page.reload();
+  await expect(page.getByTestId('receive-button')).toBeVisible();
+  await expect(card(page)).toHaveCount(0);
+  await control(page, 'selectWallet', 'b');
+  await expect(card(page)).toBeVisible();
+  await control(page, 'selectWallet', 'a');
+  await expect(card(page)).toHaveCount(0);
+});
+
+test('@public-smoke named wallet with verified backup needs no completed tour to hide welcome', async ({page}) => {
+  await page.goto(fixture + '?entry=existing&named=1');
+  await page.getByTestId('wallet-setup-backup').click();
+  await page.getByRole('button', {name: 'Confirm Fixture Backup', exact: true}).click();
+  await expect(card(page)).toHaveCount(0);
+  expect(await progress(page)).toMatchObject({recoveryStatus: 'phrase-verified', tourStatus: 'not-started'});
+  await page.reload();
+  await expect(page.getByTestId('receive-button')).toBeVisible();
+  await expect(card(page)).toHaveCount(0);
+});
