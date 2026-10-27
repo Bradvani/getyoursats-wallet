@@ -1,0 +1,35 @@
+name: Preserve verified transfer contour revision
+on:
+  push:
+    branches: ['feat/transfer-contours-v2-20261027']
+    paths: ['.github/workflows/import-contours-source.yml']
+permissions:
+  contents: write
+jobs:
+  preserve:
+    if: github.repository == 'Bradvani/getyoursats-wallet'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: feat/transfer-contours-v2-20261027
+          fetch-depth: 2
+      - name: Verify exact reviewed tree and preserve application source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = '22ea24a409aad5b59bcdd526a01f36840d9a9acd'
+          curl --fail --silent --show-error --retry 2 --max-time 30 'https://sb-14rd0bbobsf2.vercel.run/source.patch.gz' -o /tmp/contours.patch.gz
+          echo '61e1e3ad52b0295e5e9e96aa42b79079c47d38148ebc16ef72a93351093f43a9  /tmp/contours.patch.gz' | sha256sum --check
+          gzip -dc /tmp/contours.patch.gz > /tmp/contours.patch
+          echo 'b0b2c3e33167d042760c8a91b3525ceb4579cbab3063a356a05dba63048525d4  /tmp/contours.patch' | sha256sum --check
+          git apply --check /tmp/contours.patch
+          git apply --index /tmp/contours.patch
+          git diff --cached --check
+          if git diff --cached --name-only | grep '^.github/workflows/'; then exit 1; fi
+          cp .git/index /tmp/contours-verify-index
+          GIT_INDEX_FILE=/tmp/contours-verify-index git update-index --force-remove .github/workflows/import-contours-source.yml
+          test "$(GIT_INDEX_FILE=/tmp/contours-verify-index git write-tree)" = '2970522fbd76a263069b98f0e6594744699e1210'
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat(payments): slow logo-bound contours and result-triggered vibration'
+          git push origin HEAD:refs/heads/feat/transfer-contours-v2-20261027
