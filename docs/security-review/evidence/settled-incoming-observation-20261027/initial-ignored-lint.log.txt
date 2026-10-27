@@ -1,0 +1,20 @@
+
+/tmp/gys-observation-compatibility-20261027/e2e/fixtures/settled-incoming-contract.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/tmp/gys-observation-compatibility-20261027/e2e/fixtures/settled-incoming-observation.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/tmp/gys-observation-compatibility-20261027/scripts/security/observe-settled-incoming.mjs
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/tmp/gys-observation-compatibility-20261027/scripts/security/settled-observation-files.mjs
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/tmp/gys-observation-compatibility-20261027/scripts/security/settled-observation-transport.mjs
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+/tmp/gys-observation-compatibility-20261027/tests/settled-incoming-observation.test.mjs
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+✖ 6 problems (0 errors, 6 warnings)

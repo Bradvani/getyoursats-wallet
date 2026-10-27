@@ -1,0 +1,37 @@
+✔ the exact two nonterminal literals are accepted in either generated order (2.253619ms)
+✔ an added string type fails despite the old literal extraction passing (1.344679ms)
+✔ an added any type fails despite the old literal extraction passing (0.268325ms)
+✔ an added unknown type fails despite the old literal extraction passing (0.228265ms)
+✔ an added undefined type fails despite the old literal extraction passing (0.145349ms)
+✔ an added OtherOutcome type fails despite the old literal extraction passing (0.168785ms)
+✔ an added never type fails despite the old literal extraction passing (0.124868ms)
+✔ duplicate, missing, terminal, and intersection outcome declarations are rejected (0.617862ms)
+✔ complete generated bindings and recursive snippets pass (6.461376ms)
+✔ omitting bundler/breez_sdk_spark_wasm_bg.js from the manifest fails after the old check passed (4.086103ms)
+✔ omitting web/snippets/public-fixture/nested/inline.js from the manifest fails after the old check passed (2.971622ms)
+✔ unlisted generated helper or nested snippet is rejected (3.616065ms)
+✔ a generated file whose content changes is rejected (2.740373ms)
+✔ a listed but missing generated file is rejected (2.072536ms)
+✔ a generated-file symlink cannot substitute bytes outside the inventory (2.2074ms)
+✔ manifest traversal paths and malformed digests are rejected (3.126235ms)
+✔ the generated optional storage method has an exact null/string predicate and boolean Promise (0.466303ms)
+✔ widened, absent, duplicate or non-Promise storage commit contracts are rejected (0.508457ms)
+✔ similarly named property fails after the old optional-substring check passed (0.25163ms)
+✔ comment without a real method fails after the old optional-substring check passed (0.127652ms)
+✔ second required declaration fails after the old optional-substring check passed (0.114072ms)
+✔ both installed browser adapters are bound to complete patch blob identities (1.309455ms)
+✔ omitting one browser adapter cannot pass a listed-files-only manifest check (0.794779ms)
+✔ changed adapter bytes are rejected even if their manifest hashes are changed together (1.22001ms)
+✔ changed installed adapter without a matching manifest is rejected (1.196275ms)
+✔ browser adapter file and parent-directory symlinks are rejected (3.306583ms)
+✔ unreviewed adapter baseline, manifest inventory and patch identity are rejected (1.015312ms)
+✔ ordinary SDK and binding exports pass the production-only guard (0.261535ms)
+✔ required SDK methods cannot conceal additional WASM test harness exports (0.597201ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55.814543

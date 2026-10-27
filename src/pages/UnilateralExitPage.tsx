@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   BottomSheetCard,
   BottomSheetContainer,
@@ -10,7 +10,11 @@ import {
 import { PinGate } from '@/components/PinEntry';
 import QrScannerDialog from '@/components/QrScannerDialog';
 import { useBackButton } from '@/hooks/useBackButton';
-import { isPinEnabled } from '@/services/appLock';
+import { isAppLockSupported, isPinEnabled, PIN_RECORD_UNAVAILABLE_MESSAGE } from '@/services/appLock';
+import {
+  assertNativeReadLease, captureNativeReadLease, getNativePinPolicyRevision, getNativeReadLeaseRevision,
+  subscribeNativeReadLease,
+} from '@/services/nativeReadLease';
 import { canContinueFromQuote, useUnilateralExitFlow } from '@/features/unilateral-exit/hooks/useUnilateralExitFlow';
 import { IntroStep } from '@/features/unilateral-exit/steps/IntroStep';
 import { DestinationField } from '@/components/DestinationField';
@@ -29,29 +33,120 @@ interface UnilateralExitPageProps {
   onFinished: () => void;
 }
 
+interface ExitPolicyProof {
+  request: number;
+  policyRevision: number;
+  readRevision: number;
+  native: boolean;
+  network: string;
+  unlock: (assertCurrent?: () => void) => Promise<void>;
+}
+
 const UnilateralExitPage: React.FC<UnilateralExitPageProps> = ({ network, onBack, onFinished }) => {
   const flow = useUnilateralExitFlow(network);
 
   // Reading the recovery phrase is gated on a PIN where one is set. Where none
   // is, the step passes straight through.
   const { unlock } = flow;
-  const [gate, setGate] = useState<'pin' | null>(null);
+  const [gate, setGate] = useState<'checking' | 'pin' | 'unavailable' | null>('checking');
+  const [policyAttempt, setPolicyAttempt] = useState(0);
+  const [policyProof, setPolicyProof] = useState<ExitPolicyProof | null>(null);
+  const policyRequest = useRef(0);
+  const activePolicy = useRef<ExitPolicyProof | null>(null);
+  const unlockingRequest = useRef<number | null>(null);
+  const mounted = useRef(false);
+  const currentPhase = useRef(flow.phase);
+  const currentNetwork = useRef(network);
+  const currentUnlock = useRef(unlock);
+  const policyBelongsToFlow = policyProof?.network === network && policyProof.unlock === unlock;
   const [isScanning, setIsScanning] = useState(false);
   // A sheet that opens on the tracker is one the user came back to. One that
   // moves to it has just started the exit.
   const [openedOnTracker] = useState(() => flow.phase === 'tracker');
+
+  useLayoutEffect(() => {
+    currentPhase.current = flow.phase;
+    currentNetwork.current = network;
+    currentUnlock.current = unlock;
+  }, [flow.phase, network, unlock]);
+
+  const cancelPolicy = useCallback(() => {
+    policyRequest.current += 1;
+    activePolicy.current = null;
+    unlockingRequest.current = null;
+  }, []);
+
+  const assertPolicyProof = useCallback((proof: ExitPolicyProof | null) => {
+    if (!proof || !mounted.current || currentPhase.current !== 'unlock' ||
+      proof.request !== policyRequest.current || proof.network !== currentNetwork.current ||
+      proof.unlock !== currentUnlock.current ||
+      proof.policyRevision !== getNativePinPolicyRevision() || proof.readRevision !== getNativeReadLeaseRevision()) {
+      throw new Error(PIN_RECORD_UNAVAILABLE_MESSAGE);
+    }
+    if (proof.native) assertNativeReadLease(proof.readRevision);
+  }, []);
+
+  useEffect(() => {
+    mounted.current = true;
+    const unsubscribe = subscribeNativeReadLease(() => {
+      if (!activePolicy.current || currentPhase.current !== 'unlock') return;
+      cancelPolicy();
+      setPolicyProof(null);
+      setGate('unavailable');
+    });
+    return () => { mounted.current = false; cancelPolicy(); unsubscribe(); };
+  }, [cancelPolicy]);
+
+  const unlockWithProof = useCallback(async (proof: ExitPolicyProof | null) => {
+    if (!proof || unlockingRequest.current === proof.request) return;
+    try {
+      assertPolicyProof(proof);
+      unlockingRequest.current = proof.request;
+      await proof.unlock(() => assertPolicyProof(proof));
+    } catch {
+      if (mounted.current && proof.request === policyRequest.current) setGate('unavailable');
+    } finally {
+      if (unlockingRequest.current === proof.request) unlockingRequest.current = null;
+    }
+  }, [assertPolicyProof]);
+
   useEffect(() => {
     if (flow.phase !== 'unlock') return;
     let cancelled = false;
-    void isPinEnabled().then(enabled => {
+    const request = ++policyRequest.current;
+    void (async () => {
+      const native = isAppLockSupported();
+      const proof = {
+        request, native, network, unlock, policyRevision: getNativePinPolicyRevision(),
+        readRevision: native ? captureNativeReadLease() : getNativeReadLeaseRevision(),
+      };
+      activePolicy.current = proof;
+      const enabled = await isPinEnabled();
       if (cancelled) return;
-      if (enabled) setGate('pin');
-      else void unlock();
+      assertPolicyProof(proof);
+      setPolicyProof(proof);
+      setGate(enabled ? 'pin' : null);
+      if (!enabled) await unlockWithProof(proof);
+    })().catch(() => {
+      if (!cancelled && mounted.current && request === policyRequest.current) {
+        setPolicyProof(null);
+        setGate('unavailable');
+      }
     });
     return () => {
       cancelled = true;
+      if (request === policyRequest.current) cancelPolicy();
     };
-  }, [flow.phase, unlock]);
+  }, [flow.phase, network, unlock, policyAttempt, assertPolicyProof, unlockWithProof, cancelPolicy]);
+
+  const retryPolicy = () => {
+    cancelPolicy();
+    setPolicyProof(null);
+    setGate('checking');
+    setPolicyAttempt(attempt => attempt + 1);
+  };
+
+  const close = () => { cancelPolicy(); onBack(); };
 
   // Once the exit lands the wallet list carries it, so the sheet closes,
   // whatever the step. The signal is the exit's txid reaching the archive.
@@ -71,9 +166,10 @@ const UnilateralExitPage: React.FC<UnilateralExitPageProps> = ({ network, onBack
   useBackButton(
     useCallback(() => {
       if (!canGoBack) return false;
+      cancelPolicy();
       back();
       return true;
-    }, [canGoBack, back]),
+    }, [canGoBack, back, cancelPolicy]),
     true,
   );
 
@@ -114,7 +210,11 @@ const UnilateralExitPage: React.FC<UnilateralExitPageProps> = ({ network, onBack
       case 'quote':
         if (!canContinueFromQuote(flow.quote)) return null;
         return (
-          <PrimaryButton onClick={() => flow.goTo('unlock')} className="w-full" data-testid="unilateral-exit-quote-continue">
+          <PrimaryButton onClick={() => {
+            setGate('checking');
+            setPolicyProof(null);
+            flow.goTo('unlock');
+          }} className="w-full" data-testid="unilateral-exit-quote-continue">
             Continue
           </PrimaryButton>
         );
@@ -166,14 +266,14 @@ const UnilateralExitPage: React.FC<UnilateralExitPageProps> = ({ network, onBack
     <>
       {/* Above the settings page's z-60 wrapper: the sheet portals to #root as
           its sibling, so at the default z-50 it opens behind that page. */}
-      <BottomSheetContainer isOpen onClose={onBack} zIndex={70} showBackdrop>
+      <BottomSheetContainer isOpen onClose={close} zIndex={70} showBackdrop>
         <BottomSheetCard>
           <DialogHeader
             // Names the flow, not the step: each step already labels its own
             // field, and the send sheet titles itself the same way.
             title="Unilateral Exit"
-            onClose={onBack}
-            onBack={flow.canGoBack ? flow.back : undefined}
+            onClose={close}
+            onBack={flow.canGoBack ? () => { cancelPolicy(); flow.back(); } : undefined}
           />
 
           {/* Bounded so the sheet stays content-sized: past 90% of the
@@ -204,12 +304,20 @@ const UnilateralExitPage: React.FC<UnilateralExitPageProps> = ({ network, onBack
 
             {flow.phase === 'unlock' && (
               <>
-                {gate === 'pin' && (
-                  <PinGate reason="Unilateral exit" onUnlocked={() => void flow.unlock()} />
+                {(gate === 'checking' || (gate === 'pin' && !policyBelongsToFlow)) && <LoadingSpinner text="Checking wallet access..." />}
+                {gate === 'unavailable' && (
+                  <>
+                    <ErrorMessageBox title="Wallet access is locked" error={PIN_RECORD_UNAVAILABLE_MESSAGE} />
+                    <PrimaryButton onClick={retryPolicy}>Retry wallet access</PrimaryButton>
+                  </>
+                )}
+                {gate === 'pin' && policyBelongsToFlow && (
+                  <PinGate reason="Unilateral exit" onUnlocked={() => { void unlockWithProof(policyProof); }} />
                 )}
                 {flow.unlockError && (
                   <ErrorMessageBox title="Cannot reach your recovery phrase" error={flow.unlockError} />
                 )}
+                {gate === null && flow.unlockError && <PrimaryButton onClick={retryPolicy}>Retry wallet access</PrimaryButton>}
               </>
             )}
 

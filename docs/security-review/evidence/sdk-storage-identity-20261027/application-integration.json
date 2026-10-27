@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "result": "PASS_APPLICATION_ONLY_PRE_SUCCESSOR",
+  "sourceCommit": "1beda56e4f3ad1a4b6f7609bc6ee5e914fd1256e",
+  "sourceTree": "08afc9a8cbfa7bf71e8639c95251d46e06844894",
+  "completionObservedUtc": "2026-10-27T08:00:16Z",
+  "tests": {
+    "passed": 1936,
+    "skipped": 1,
+    "filesPassed": 161,
+    "filesSkipped": 1,
+    "skippedScope": "opt-in Bitcoin Core integration"
+  },
+  "typecheck": "PASS",
+  "lint": {
+    "errors": 0,
+    "existingWarnings": 8
+  },
+  "installedSdk": {
+    "files": 125,
+    "sameNameFiles": 116,
+    "exactMetadataRenames": [
+      {
+        "archive": "bundler/.gitignore",
+        "installed": "bundler/.npmignore",
+        "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+      },
+      {
+        "archive": "deno/.gitignore",
+        "installed": "deno/.npmignore",
+        "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+      },
+      {
+        "archive": "examples/node/.gitignore",
+        "installed": "examples/node/.npmignore",
+        "sha256": "1813c29e64b428f059e5df624269a8b39dbfb7c4173dd4e12dfb2af4137ba8f2"
+      },
+      {
+        "archive": "examples/ssr/.gitignore",
+        "installed": "examples/ssr/.npmignore",
+        "sha256": "88b6b09796bc021a6f46b5964be1cbe30ef7a25d613ee43f868e720ee4d15587"
+      },
+      {
+        "archive": "examples/web/.gitignore",
+        "installed": "examples/web/.npmignore",
+        "sha256": "0ec4d6987701afa2e5f9302049ef211ab0fb8ba462e8bbd0772959ae20bdd5ad"
+      },
+      {
+        "archive": "itest/.gitignore",
+        "installed": "itest/.npmignore",
+        "sha256": "a8db166167d30d2c36fa95cc3163e77a4bc33205ede3b81a368750f25ded3879"
+      },
+      {
+        "archive": "nodejs/.gitignore",
+        "installed": "nodejs/.npmignore",
+        "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+      },
+      {
+        "archive": "ssr/.gitignore",
+        "installed": "ssr/.npmignore",
+        "sha256": "cdbcae15105d6b781e620813c79c7e868740d4e9cc53ce6f5fcbbc12387adf4b"
+      },
+      {
+        "archive": "web/.gitignore",
+        "installed": "web/.npmignore",
+        "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+      }
+    ],
+    "allFileBytesMatch": true,
+    "packageSha256": "f3cb177c5cb38cd3222b8279e8a9c5815f788d5ccd611a9e8a29d5caefb4bf37",
+    "packageVersion": "0.1.0-getyoursats.recovery.1",
+    "browserWasmSha256": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+    "archiveInventorySha256": "61822bc5951e6ce480d38d49f358c1f083bc884eabb39868073998a4c5e9f618",
+    "installedInventorySha256": "6a3155912537bfb6ad19a445505f8fae7a7ab15bc73b2a12afd9782a3788407c"
+  },
+  "logs": [
+    {
+      "kind": "unit",
+      "file": "application-unit.log.gz",
+      "exitCode": 0,
+      "originalSha256": "51657af75eb555574d42fbd8c0437408316706fe475189160eb3b663c2faf0e8",
+      "publishedTextSha256": "601a164bddc4ee1d71afb8f31da19f419f7319126dcc770de65de4478672bae7",
+      "gzipSha256": "c31ec431abfbc10a29803a0c7091e5db03674e85eac427d33a66856a69e643b0",
+      "normalization": "worktree absolute path prefix replaced with <worktree>; all other bytes retained"
+    },
+    {
+      "kind": "types",
+      "file": "application-types.log.gz",
+      "exitCode": 0,
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedTextSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "gzipSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "normalization": "worktree absolute path prefix replaced with <worktree>; all other bytes retained"
+    },
+    {
+      "kind": "lint",
+      "file": "application-lint.log.gz",
+      "exitCode": 0,
+      "originalSha256": "6f271c4f4539ffa3b8e2218b660a30982d3742b5047204dfcb4736ee69971f05",
+      "publishedTextSha256": "7265b97212374e82d64ce4e358d8c2e5ea26d518e16f5d1f12aea68b5646c597",
+      "gzipSha256": "1555ee69ff1c3f44c2662729700c3b1e17cbac042dc5d582c0f6464f663f66d7",
+      "normalization": "worktree absolute path prefix replaced with <worktree>; all other bytes retained"
+    }
+  ],
+  "inventoryCheck": {
+    "initialStrictComparison": "REJECTED for9 metadata filename differences",
+    "followup": "All125 contents equal canonical archive:116 unchanged names and9 exact same-directory metadata renames; per-mapping hashes retained",
+    "oldArchiveStillSelectedForThisApplicationRun": true
+  },
+  "scope": "Full application regression, types and lint using the retained recovery.1 package. The0007 source correction and10 new WASM controls remain uncompiled in this receipt. This is not canonical successor or provider acceptance.",
+  "compiledSuccessorVerified": false,
+  "providerAcceptance": false,
+  "realFundsUsed": false,
+  "productionPromoted": false,
+  "networkCallsInstrumented": false
+}

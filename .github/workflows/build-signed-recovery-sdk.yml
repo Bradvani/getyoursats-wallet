@@ -1,0 +1,189 @@
+name: Build isolated observation and recovery SDK
+on:
+  push:
+    branches: [build/sdk-storage-identity-20261027]
+    paths:
+      - vendor/patches/0007-signer-storage-identity.patch
+      - scripts/security/check-sdk-source.py
+      - scripts/security/package-seed-signer-sdk.py
+      - scripts/security/build-seed-signer-sdk.sh
+      - scripts/security/verify-observation-extension.mjs
+      - scripts/security/verify-installed-wasm-signers.mjs
+      - scripts/security/verify-signer-storage-identity.mjs
+      - scripts/security/verify-canonical-installed-sdk.*
+      - tests/canonical-installed-sdk.test.py
+      - tests/sdk-build-guards.test.py
+      - tests/sdk-build-guards.test.mjs
+      - scripts/security/sdk-storage-test-server.mjs
+      - e2e/tests/sdk-storage-cas.spec.ts
+      - playwright.sdk-storage.config.ts
+      - .github/workflows/build-signed-recovery-sdk.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: signed-recovery-sdk-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/build/sdk-storage-identity-20261027'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_PROFILE_TEST_DEBUG: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CC_wasm32_unknown_unknown: clang-18
+      AR_wasm32_unknown_unknown: llvm-ar-18
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 100
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Verify complete source and generated artifact proof guards
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/recovery-sdk-evidence
+          python3 tests/sdk-build-guards.test.py 2>&1 | tee /tmp/recovery-sdk-evidence/python-proof-guards.log
+          python3 -B tests/canonical-installed-sdk.test.py 2>&1 | tee /tmp/recovery-sdk-evidence/canonical-package-guards.log
+          node tests/sdk-build-guards.test.mjs 2>&1 | tee /tmp/recovery-sdk-evidence/node-proof-guards.log
+      - name: Prepare pinned SDK source and Rust/WASM toolchain
+        run: |
+          set -euo pipefail
+          # The previous run spent 37 minutes downloading signed Ubuntu
+          # packages from the Azure HTTP mirror. Keep the same Ubuntu suites
+          # and signing keys while selecting the official HTTPS archive.
+          sudo python3 -I -B - <<'PY'
+          from pathlib import Path
+          import re
+          paths = [Path('/etc/apt/sources.list'), Path('/etc/apt/apt-mirrors.txt')]
+          paths += list(Path('/etc/apt/sources.list.d').glob('*.list'))
+          paths += list(Path('/etc/apt/sources.list.d').glob('*.sources'))
+          pattern = re.compile(r'https?://azure\.archive\.ubuntu\.com/ubuntu(?=/|\s|$)')
+          replacements = 0
+          for path in paths:
+              if not path.is_file():
+                  continue
+              original = path.read_text()
+              updated, count = pattern.subn('https://archive.ubuntu.com/ubuntu', original)
+              if count:
+                  path.write_text(updated)
+                  replacements += count
+                  print(f'Updated the Ubuntu archive transport in {path}')
+          if replacements == 0:
+              raise SystemExit('Expected runner Ubuntu mirror was not found; inspect the runner sources')
+          PY
+          sudo apt-get update -qq
+          sudo apt-get install -y clang-18 llvm-18 libclang-18-dev protobuf-compiler cmake pkg-config
+          rustup toolchain install 1.95.0 --profile minimal --target wasm32-unknown-unknown
+          rustup default 1.95.0
+          mkdir -p /tmp/recovery-sdk-evidence
+          git clone --no-checkout --filter=blob:none https://github.com/breez/spark-sdk.git /tmp/recovery-sdk
+          git -C /tmp/recovery-sdk checkout 57c5b9e5f0749f97ffe5d93bce21c994f6957cf4
+          git fetch --no-tags origin d7b88b33defd4edc44d67060c9584093f9e5e97d
+          cargo install wasm-bindgen-cli --version 0.2.120 --locked --root /tmp/recovery-bindgen
+          {
+            rustc --version --verbose
+            cargo --version
+            /tmp/recovery-bindgen/bin/wasm-bindgen --version
+            clang-18 --version
+            llvm-ar-18 --version
+            protoc --version
+            cmake --version
+            pkg-config --version
+            node --version
+            npm --version
+          } > /tmp/recovery-sdk-evidence/toolchain.txt
+      - name: Test native boundaries and compile all SDK bindings
+        env:
+          SDK_WORKTREE: /tmp/recovery-sdk
+          WASM_BINDGEN: /tmp/recovery-bindgen/bin/wasm-bindgen
+        run: |
+          set -euo pipefail
+          bash scripts/security/build-seed-signer-sdk.sh 2>&1 | tee /tmp/recovery-sdk-evidence/native-and-wasm-build.log
+      - name: Retain the compiled package for diagnosis before verification
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/recovery-sdk-evidence/compiled-unverified
+          cp vendor/breeztech-breez-sdk-spark.tgz vendor/getyoursats-sdk-build.json /tmp/recovery-sdk-evidence/compiled-unverified/
+          git rev-parse HEAD > /tmp/recovery-sdk-evidence/compiled-unverified/build-source.txt
+          sha256sum vendor/breeztech-breez-sdk-spark.tgz vendor/getyoursats-sdk-build.json > /tmp/recovery-sdk-evidence/compiled-unverified/sha256.txt
+      - name: Verify the installed package, signer boundaries and application types
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts --package-lock-only ./vendor/breeztech-breez-sdk-spark.tgz
+          npm ci --ignore-scripts
+          npm run test:security:wasm 2>&1 | tee /tmp/recovery-sdk-evidence/installed-wasm-tests.log
+          npx tsc --noEmit 2>&1 | tee /tmp/recovery-sdk-evidence/typescript.log
+      - name: Install the three browser engines and their system dependencies
+        timeout-minutes: 35
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium firefox webkit 2>&1 | tee /tmp/recovery-sdk-evidence/browser-install.log
+      - name: Verify actual IndexedDB reservation behavior in all three engines
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          GYS_SDK_STORAGE_REPORT=/tmp/recovery-sdk-evidence/browser-storage-cas.json npx playwright test -c playwright.sdk-storage.config.ts 2>&1 | tee /tmp/recovery-sdk-evidence/browser-storage-cas.log
+      - name: Bind only the package, manifest and dependency lock to the frozen source
+        run: |
+          set -euo pipefail
+          git add package-lock.json vendor/breeztech-breez-sdk-spark.tgz vendor/getyoursats-sdk-build.json
+          git diff --quiet
+          git diff --cached --check
+          git diff --cached --binary --full-index > /tmp/recovery-sdk-evidence/sdk.patch
+          git rev-parse HEAD > /tmp/recovery-sdk-evidence/base.txt
+          cp vendor/getyoursats-sdk-build.json /tmp/recovery-sdk-evidence/artifact-manifest.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: recovery-sdk-${{ github.sha }}
+          path: /tmp/recovery-sdk-evidence/
+          retention-days: 14
+  preserve:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 100
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: recovery-sdk-${{ github.sha }}
+          path: /tmp/recovery-sdk-evidence
+      - name: Preserve the compiled SDK only on the unchanged isolated source branch
+        env:
+          SDK_BUILD_BRANCH: build/sdk-storage-identity-20261027
+        run: |
+          set -euo pipefail
+          test "$(cat /tmp/recovery-sdk-evidence/base.txt)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git ls-remote --exit-code origin "refs/heads/$SDK_BUILD_BRANCH" | cut -f1)" = "$GITHUB_SHA"
+          git apply --index /tmp/recovery-sdk-evidence/sdk.patch
+          python3 - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          expected = {'package-lock.json', 'vendor/breeztech-breez-sdk-spark.tgz', 'vendor/getyoursats-sdk-build.json'}
+          changed = set(filter(None, subprocess.check_output(['git', 'diff', '--cached', '--name-only', '-z']).decode().split('\0')))
+          if changed != expected:
+              raise SystemExit(f'Unexpected compiled SDK patch paths: {sorted(changed)}')
+          manifest = json.loads(pathlib.Path('vendor/getyoursats-sdk-build.json').read_text())
+          if hashlib.sha256(pathlib.Path('vendor/breeztech-breez-sdk-spark.tgz').read_bytes()).hexdigest() != manifest['packageSha256']:
+              raise SystemExit('Compiled package does not match its manifest')
+          if hashlib.sha256(pathlib.Path('vendor/patches/0007-signer-storage-identity.patch').read_bytes()).hexdigest() != manifest['patchSha256']:
+              raise SystemExit('Compiled package does not match the source patch')
+          if pathlib.Path('vendor/getyoursats-sdk-build.json').read_bytes() != pathlib.Path('/tmp/recovery-sdk-evidence/artifact-manifest.json').read_bytes():
+              raise SystemExit('Preserved manifest differs from build evidence')
+          PY
+          git diff --quiet
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'build(security): compile identity-bound storage and recovery guards'
+          git push origin "HEAD:refs/heads/$SDK_BUILD_BRANCH"
+          git rev-parse HEAD

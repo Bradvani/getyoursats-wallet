@@ -1,3 +1,4 @@
+import {hasWebWalletVault} from '../security/webWalletVault';
 import {useFlowText} from '@/hooks/useFlowText';
 import StableBalanceSettings from '../components/StableBalanceSettings';
 import PaymentFeedbackSetting from '../components/PaymentFeedbackSetting';
@@ -6,7 +7,7 @@ import {trustCopy} from '@/getyoursats/trustCopy';
 import { usePresentation } from '@/hooks/usePresentation';
 import { walletSetupCopy } from '@/locales/walletSetup';
 import { setAppearancePreference, type AppearancePreference } from '@/services/presentationPreferences';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {featureAvailability} from '../getyoursats/featureAvailability';
 import { ConfirmDialog, FormGroup, FormInput, LoadingSpinner, PrimaryButton, Switch } from '../components/ui';
 import { PinGate } from '../components/PinEntry';
@@ -16,7 +17,11 @@ import { useWallet } from '@/contexts/WalletContext';
 import { CurrencyIcon, ChevronRightIcon, DownloadIcon, KeyIcon, LockIcon, LogoutIcon, ShieldCheckIcon, TrashIcon, ExternalLinkIcon } from '../components/Icons';
 import { ACCOUNT_DELETION_GUIDE_URL } from '@/services/accountDeletion';
 import { openExternalUrl } from '@/utils/externalLink';
-import { isAppLockSupported, isPinEnabled } from '@/services/appLock';
+import { isAppLockSupported, isPinEnabled, PIN_RECORD_UNAVAILABLE_MESSAGE } from '@/services/appLock';
+import {
+  assertNativeReadLease, captureNativeReadLease, getNativePinPolicyRevision, getNativeReadLeaseRevision,
+  subscribeNativeReadLease,
+} from '@/services/nativeReadLease';
 import SlideInPage from '../components/layout/SlideInPage';
 import { logger, LogCategory } from '@/services/logger';
 import { shareOrDownloadLogs, exportDatabaseState } from '@/services/logExport';
@@ -35,6 +40,15 @@ interface SettingsPageProps {
   onOpenEmail: () => void;
   onOpenWalletTour?: () => void;
   onOpenUnilateralExit: () => void;
+}
+
+interface ExportProof {
+  request: number;
+  policyRevision: number;
+  readRevision: number;
+  native: boolean;
+  wallet: ReturnType<typeof useWallet>;
+  network: string;
 }
 
 const SettingsPage: React.FC<SettingsPageProps> = ({
@@ -154,23 +168,115 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   // so it goes behind the app lock. Where there is no lock to check
   // against (web, or no PIN set) a confirm step is all that is available.
   const [exportGate, setExportGate] = useState<'pin' | 'confirm' | null>(null);
+  const [exportProof, setExportProof] = useState<ExportProof | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [isCheckingExport, setIsCheckingExport] = useState(false);
+  const [exportOwner, setExportOwner] = useState<{ wallet: ReturnType<typeof useWallet>; network: string } | null>(null);
+  const exportRequest = useRef(0);
+  const exportConsumed = useRef<number | null>(null);
+  const activeExport = useRef<ExportProof | null>(null);
+  const exportMounted = useRef(false);
+  const currentExportWallet = useRef(wallet);
+  const currentExportNetwork = useRef(config?.network ?? 'mainnet');
+  const exportBelongsToWallet = exportOwner?.wallet === wallet && exportOwner.network === (config?.network ?? 'mainnet');
+  const shownExportGate = exportBelongsToWallet ? exportGate : null;
 
-  const handleExportDb = async () => {
-    setExportGate((await isPinEnabled()) ? 'pin' : 'confirm');
+  useLayoutEffect(() => {
+    currentExportWallet.current = wallet;
+    currentExportNetwork.current = config?.network ?? 'mainnet';
+  }, [wallet, config?.network]);
+
+  useEffect(() => {
+    exportMounted.current = true;
+    const unsubscribe = subscribeNativeReadLease(() => {
+      if (!activeExport.current) return;
+      exportRequest.current += 1;
+      activeExport.current = null;
+      setExportProof(null);
+      setExportGate(null);
+      setIsCheckingExport(false);
+      setIsExportingDb(false);
+      setExportError(PIN_RECORD_UNAVAILABLE_MESSAGE);
+    });
+    return () => {
+      exportMounted.current = false;
+      exportRequest.current += 1;
+      activeExport.current = null;
+      unsubscribe();
+    };
+  }, [wallet, config?.network]);
+
+  const assertExportProof = (proof: ExportProof | null) => {
+    if (!proof || !exportMounted.current || proof.request !== exportRequest.current ||
+      proof.wallet !== currentExportWallet.current || proof.network !== currentExportNetwork.current ||
+      proof.policyRevision !== getNativePinPolicyRevision() || proof.readRevision !== getNativeReadLeaseRevision()) {
+      throw new Error(PIN_RECORD_UNAVAILABLE_MESSAGE);
+    }
+    if (proof.native) assertNativeReadLease(proof.readRevision);
   };
 
-  const runExportDb = async () => {
+  const cancelExport = () => {
+    exportRequest.current += 1;
+    activeExport.current = null;
+    setExportProof(null);
     setExportGate(null);
-    setIsExportingDb(true);
+    setIsCheckingExport(false);
+    setIsExportingDb(false);
+  };
+
+  const handleExportDb = async () => {
+    const request = ++exportRequest.current;
+    setExportGate(null);
+    setExportProof(null);
+    setExportError(null);
+    setIsCheckingExport(true);
+    setExportOwner({ wallet, network: config?.network ?? 'mainnet' });
     try {
-      const info = await wallet.getInfo({});
-      await exportDatabaseState(info.identityPubkey, config?.network ?? 'mainnet');
+      const native = isAppLockSupported();
+      const proof = {
+        request, native, wallet, network: config?.network ?? 'mainnet',
+        policyRevision: getNativePinPolicyRevision(),
+        readRevision: native ? captureNativeReadLease() : getNativeReadLeaseRevision(),
+      };
+      activeExport.current = proof;
+      const enabled = await isPinEnabled();
+      assertExportProof(proof);
+      setExportProof(proof);
+      setExportGate(enabled ? 'pin' : 'confirm');
+    } catch {
+      if (exportMounted.current && request === exportRequest.current) {
+        activeExport.current = null;
+        setExportError(PIN_RECORD_UNAVAILABLE_MESSAGE);
+      }
+    } finally {
+      if (exportMounted.current && request === exportRequest.current) setIsCheckingExport(false);
+    }
+  };
+
+  const runExportDb = async (proof: ExportProof | null) => {
+    if (!proof || exportConsumed.current === proof.request) return;
+    try {
+      assertExportProof(proof);
+      exportConsumed.current = proof.request;
+      setExportGate(null);
+      setIsExportingDb(true);
+      const info = await proof.wallet.getInfo({});
+      assertExportProof(proof);
+      await exportDatabaseState(info.identityPubkey, proof.network, () => assertExportProof(proof));
     } catch (e) {
       logger.warn(LogCategory.SDK, 'Failed to export database state', {
         error: e instanceof Error ? e.message : String(e),
       });
+      if (exportMounted.current && proof.request === exportRequest.current) {
+        setExportError('Could not export your database. Please retry after checking your wallet access.');
+      }
     } finally {
-      setIsExportingDb(false);
+      if (exportMounted.current && proof.request === exportRequest.current) {
+        activeExport.current = null;
+        setExportProof(null);
+        setExportGate(null);
+        setIsExportingDb(false);
+      }
     }
   };
 
@@ -195,16 +301,16 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 
   // Same shape as BackupPage: the gate replaces the page body, and the
   // header's close button is the way out.
-  if (exportGate === 'pin') {
+  if (shownExportGate === 'pin') {
     return (
-      <SlideInPage title={copy.settings} onClose={() => setExportGate(null)} slideFrom="left">
-        <PinGate reason="Export database" onUnlocked={() => { void runExportDb(); }} />
+      <SlideInPage title={copy.settings} onClose={cancelExport} slideFrom="left">
+        <PinGate reason="Export database" onUnlocked={() => { void runExportDb(exportProof); }} />
       </SlideInPage>
     );
   }
 
   return (
-    <SlideInPage title={copy.settings} onClose={onBack} slideFrom="left" footer={footer}>
+    <SlideInPage title={copy.settings} onClose={() => { cancelExport(); onBack(); }} slideFrom="left" footer={footer}>
       <div className="p-4">
         <div className="max-w-xl mx-auto w-full space-y-4">
 <p className="text-xs text-spark-text-muted" role="status">{trustCopy(language).autosave}</p>
@@ -241,7 +347,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <LockIcon size="md" />
                 <div className="min-w-0">
                   <h3 className="font-display font-semibold text-spark-text-primary">{t("Wallet protection")}</h3>
-                  <p className="text-sm text-spark-text-muted leading-relaxed mt-1">{t("Wallet PIN and biometric approval are not available for imported recovery-word wallets in the browser yet. Keep your recovery words offline and secure your device.")}</p>
+                  <p className="text-sm text-spark-text-muted leading-relaxed mt-1">{hasWebWalletVault()?t("Your recovery words are encrypted on this device. Unlocking and payment approval use your wallet password. Keep your recovery words offline."):t("Wallet PIN and biometric approval are not available for imported recovery-word wallets in the browser yet. Keep your recovery words offline and secure your device.")}</p>
                 </div>
               </div>
               <details className="border-t border-spark-border pt-3">
@@ -422,15 +528,16 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors disabled:opacity-50"
                 type="button"
                 onClick={handleExportDb}
-                disabled={isExportingDb}
+                disabled={exportBelongsToWallet && (isExportingDb || isCheckingExport)}
               >
-                {isExportingDb ? (
+                {exportBelongsToWallet && (isExportingDb || isCheckingExport) ? (
                   <LoadingSpinner size="small" />
                 ) : (
                   <DownloadIcon size="md" />
                 )}
-                {isExportingDb ? 'Exporting...' : 'Export Database'}
+                {exportBelongsToWallet && isCheckingExport ? 'Checking wallet access...' : exportBelongsToWallet && isExportingDb ? 'Exporting...' : 'Export Database'}
               </button>
+              {exportBelongsToWallet && exportError && <p role="alert" className="mt-3 text-sm text-spark-primary">{exportError}</p>}
             </div>
           )}
 
@@ -577,13 +684,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
       </div>
 
       <ConfirmDialog
-        isOpen={exportGate === 'confirm'}
+        isOpen={shownExportGate === 'confirm'}
         title="Export Database"
         message="This saves your full payment history, including invoices and contacts, to a file you can share. Only do this if you were asked for it, and only send it to someone you trust."
         confirmLabel="Export"
         variant="warning"
-        onConfirm={() => { void runExportDb(); }}
-        onCancel={() => setExportGate(null)}
+        onConfirm={() => { void runExportDb(exportProof); }}
+        onCancel={cancelExport}
       />
     </SlideInPage>
   );

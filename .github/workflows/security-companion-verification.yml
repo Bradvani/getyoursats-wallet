@@ -1,0 +1,142 @@
+name: Companion security acceptance
+
+on:
+  pull_request:
+    branches: [release/browser-pwa-security-localization-20261025, main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: companion-security-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  software:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && (github.base_ref == 'release/browser-pwa-security-localization-20261025' || github.head_ref == 'release/gate1-integrated-rc-20261028')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Record immutable source
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test -z "$(git status --porcelain)"
+          mkdir -p /tmp/companion-evidence
+          git rev-parse HEAD HEAD^{tree} > /tmp/companion-evidence/source.txt
+          sha256sum package-lock.json > /tmp/companion-evidence/lock.sha256
+      - run: npm ci --ignore-scripts
+      - name: Verify the canonical SDK before exercising signing code
+        run: npm run test:security:wasm > /tmp/companion-evidence/wasm.log 2>&1
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - name: Application and service regressions
+        run: |
+          set -euo pipefail
+          npm test -- --reporter=json --outputFile=/tmp/companion-evidence/application.json
+          node --test tests/*.test.mjs > /tmp/companion-evidence/services.tap 2>&1
+          git diff --exit-code -- package.json package-lock.json vendor
+      - name: Build the exact candidate and retain its source manifest
+        run: |
+          set -euo pipefail
+          npm run build > /tmp/companion-evidence/build.log 2>&1
+          find dist -type f -name '*manifest*.json' -exec cp --parents '{}' /tmp/companion-evidence/ \;
+          expected_error='Error: Browser wallet security release is not approved. Resolve the blockers in docs/security-review/browser-continuation-release.md before production deployment.'
+          if VERCEL_ENV=production NO_COLOR=1 npx vite build > /tmp/companion-evidence/production-interlock.log 2>&1; then
+            echo 'Unexpected production authorization' >&2
+            exit 1
+          fi
+          grep -Fqx -- "$expected_error" /tmp/companion-evidence/production-interlock.log
+          git diff --exit-code -- package.json package-lock.json vendor
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: companion-software-${{ github.event.pull_request.head.sha }}
+          path: /tmp/companion-evidence/
+          if-no-files-found: error
+          retention-days: 30
+
+  browsers:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && (github.base_ref == 'release/browser-pwa-security-localization-20261025' || github.head_ref == 'release/gate1-integrated-rc-20261028')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Record immutable source
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test -z "$(git status --porcelain)"
+          mkdir -p /tmp/companion-evidence
+          git rev-parse HEAD HEAD^{tree} > /tmp/companion-evidence/source.txt
+          sha256sum package-lock.json > /tmp/companion-evidence/lock.sha256
+      - run: npm ci --ignore-scripts
+      - name: Verify the canonical SDK before exercising signing code
+        run: npm run test:security:wasm > /tmp/companion-evidence/wasm.log 2>&1
+      - name: Use the official HTTPS Ubuntu archive
+        run: |
+          set -euo pipefail
+          sudo python3 -I -B - <<'PY'
+          from pathlib import Path
+          import re
+          paths = [Path('/etc/apt/sources.list'), Path('/etc/apt/apt-mirrors.txt')]
+          paths += list(Path('/etc/apt/sources.list.d').glob('*.list'))
+          paths += list(Path('/etc/apt/sources.list.d').glob('*.sources'))
+          pattern = re.compile(r'https?://azure\.archive\.ubuntu\.com/ubuntu(?=/|\s|$)')
+          replacements = 0
+          for path in paths:
+              if not path.is_file():
+                  continue
+              original = path.read_text()
+              updated, count = pattern.subn('https://archive.ubuntu.com/ubuntu', original)
+              if count:
+                  path.write_text(updated)
+                  replacements += count
+                  print(f'Updated the Ubuntu archive transport in {path}')
+          if replacements == 0:
+              raise SystemExit('Expected runner Ubuntu mirror was not found; inspect the runner sources')
+          PY
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Vault restoration, real WASM locks and uncertain journals
+        run: PLAYWRIGHT_JSON_OUTPUT_FILE=/tmp/companion-evidence/security.json npx playwright test --config playwright.release-security.config.ts --project ${{ matrix.browser }} --reporter=line,json
+      - name: Same-origin rollback containment
+        run: |
+          set -euo pipefail
+          npx tsc --project rollback/tsconfig.json
+          npx vite build --config vite.rollback.config.ts
+          node scripts/security/package-rollback.mjs
+          PLAYWRIGHT_JSON_OUTPUT_FILE=/tmp/companion-evidence/rollback.json npx playwright test --config playwright.release-rollback.config.ts --project ${{ matrix.browser }} --reporter=line,json
+          git diff --exit-code -- package.json package-lock.json vendor
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: companion-${{ matrix.browser }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            dist-rollback/rollback-manifest.json
+            /tmp/companion-evidence/
+          if-no-files-found: error
+          retention-days: 30

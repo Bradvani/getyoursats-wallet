@@ -48,9 +48,14 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
   const balance = useBalanceValidation(isTokenMode, undefined, balanceSats, tokenBalance);
   useSheetBack(isLoading ? undefined : onBack);
 
-  const amount = Number(amountSats || 0n);
-  const fee = Number(feesSat || 0);
+  const amount = Number(amountSats ?? 0n);
+  const fee = feesSat ?? 0;
   const total = feesIncluded ? amount : amount + fee;
+  // Missing fees are not a zero-fee quote. Require whole, nonnegative sats
+  // and a positive recipient output before exposing a spend confirmation.
+  const validQuote = amountSats !== null && toSats(amount) !== null && amount > 0
+    && feesSat !== null && Number.isSafeInteger(feesSat) && feesSat >= 0
+    && toSats(total) !== null && (!feesIncluded || amount > fee);
 
   // Convert the total to a validated Sats for the balance check. `total` is
   // sourced from a prepare response so in practice this never exceeds the
@@ -80,10 +85,10 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
         <p className="text-spark-text-muted text-sm mb-2">{text.totalDeducted}</p>
         <div className="flex items-baseline justify-center gap-2">
           <span className="text-4xl font-mono font-bold text-spark-text-primary">
-            <SatAmount sats={total} />
+            {validQuote ? <SatAmount sats={total} /> : <span>&mdash;</span>}
           </span>
         </div>
-        {amountSats!==null&&<PaymentFiatAmount sats={total} className="mt-2 text-base text-spark-text-secondary"/>}
+        {validQuote&&<PaymentFiatAmount sats={total} className="mt-2 text-base text-spark-text-secondary"/>}
       </div>
 
       {destination && (
@@ -96,7 +101,11 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
       )}
 
       {/* Sats breakdown */}
-      <SimpleFeeBreakdown amount={feesIncluded ? amount - fee : amount} fee={fee} feeLabel={text.networkFee} totalLabel={ux.total} amountLabel={feesIncluded ? text.recipientReceives : ux.amount} />
+      {validQuote ? <SimpleFeeBreakdown amount={feesIncluded ? amount - fee : amount} fee={fee} feeLabel={text.networkFee} totalLabel={ux.total} amountLabel={feesIncluded ? text.recipientReceives : ux.amount} /> : <FeeBreakdownCard items={[
+        {label: ux.amount, pending: true},
+        {label: text.networkFee, pending: true},
+        {label: ux.total, pending: true},
+      ]} />}
 
       {/* Token conversion details */}
       {isTokenMode && tokenAmount && tokenFee && (
@@ -113,7 +122,7 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
 
       <PrimaryButton
         onClick={onConfirm}
-        disabled={isLoading || insufficientBalance || disableConfirm}
+        disabled={isLoading || !validQuote || insufficientBalance || disableConfirm}
         className="w-full"
         data-testid="send-confirm-button"
       >

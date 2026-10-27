@@ -26,7 +26,13 @@ async function loadAppLock(native: boolean) {
   const prefs = makePreferencesMock();
   vi.doMock('@capacitor/preferences', () => ({ Preferences: prefs.Preferences }));
   const mod = await import('./appLock');
-  return { ...mod, store: prefs.store };
+  return { ...mod, store: prefs.store, preferences: prefs.Preferences };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(finish => { resolve = finish; });
+  return { promise, resolve };
 }
 
 afterEach(() => {
@@ -86,6 +92,58 @@ describe('appLock PIN', () => {
     await appLock.clearPin();
     expect(appLock.isBiometricGateEnabledSync()).toBe(false);
   });
+  it('checks an automatic cleanup lease again at queued mutation entry', async () => {
+    const appLock = await loadAppLock(true);
+    await appLock.setPin('123456');
+    const lease = await import('./nativeReadLease');
+    const original = appLock.store.get('glow.appLock.pin');
+    const clearing = appLock.clearPin({
+      policyRevision: lease.getNativePinPolicyRevision(), readRevision: lease.getNativeReadLeaseRevision(),
+    });
+    lease.invalidateNativeReadBinding();
+    await expect(clearing).rejects.toBeInstanceOf(appLock.PinRecordUnavailableError);
+    expect(appLock.store.get('glow.appLock.pin')).toBe(original);
+    expect(() => lease.captureNativeReadLease()).toThrow(/locked/);
+  });
+
+  it('does not grant read access when a clear commits before its acknowledgement fails', async () => {
+    const appLock = await loadAppLock(true);
+    await appLock.setPin('123456');
+    const lease = await import('./nativeReadLease');
+    vi.spyOn(appLock.preferences, 'remove').mockImplementationOnce(async ({ key }) => {
+      appLock.store.delete(key);
+      throw new Error('Lost clear acknowledgement');
+    });
+    await expect(appLock.clearPin()).rejects.toThrow('Lost clear acknowledgement');
+    expect(await appLock.isPinEnabled()).toBe(false);
+    expect(() => lease.captureNativeReadLease()).toThrow(/locked/);
+  });
+
+  it('orders clear after an earlier delayed biometric enable so a new PIN does not inherit it', async () => {
+    const appLock = await loadAppLock(true);
+    await appLock.setPin('123456');
+    const entered = deferred<void>();
+    const release = deferred<void>();
+    const pinRemoved = deferred<void>();
+    vi.spyOn(appLock.preferences, 'set').mockImplementation(async ({ key, value }) => {
+      if (key === 'glow.appLock.biometricEnabled') { entered.resolve(); await release.promise; }
+      appLock.store.set(key, value);
+    });
+    vi.spyOn(appLock.preferences, 'remove').mockImplementation(async ({ key }) => {
+      appLock.store.delete(key);
+      if (key === 'glow.appLock.pin') pinRemoved.resolve();
+    });
+    const enabling = appLock.setBiometricGateEnabled(true);
+    await entered.promise;
+    const clearing = appLock.clearPin();
+    await pinRemoved.promise;
+    release.resolve();
+    await Promise.all([enabling, clearing]);
+    expect(await appLock.isBiometricGateEnabled()).toBe(false);
+    await appLock.setPin('654321');
+    expect(await appLock.isBiometricGateEnabled()).toBe(false);
+  });
+
 });
 
 describe('appLock failed-attempt backoff', () => {
@@ -222,9 +280,94 @@ describe('appLock PIN record upgrade', () => {
     const saltHex = '0f0e0d0c0b0a09080706050403020100';
     const record = { ...(await legacyRecord('123456', saltHex)), iterations: 0 };
     appLock.store.set('glow.appLock.pin', JSON.stringify(record));
-    // 0 would throw inside deriveBits; the read falls back to the
-    // pre-raise count, which is also what this hash was derived at.
-    expect((await appLock.verifyPin('123456')).ok).toBe(true);
+    const raw = appLock.store.get('glow.appLock.pin');
+    expect(await appLock.verifyPin('123456')).toMatchObject({ ok: false, error: expect.any(String) });
+    expect(appLock.store.get('glow.appLock.pin')).toBe(raw);
+  });
+  it('blocks transitional old-PIN reads while a replacement is being derived, including legacy upgrade', async () => {
+    const appLock = await loadAppLock(true);
+    const original = JSON.stringify(await legacyRecord('123456', '00'.repeat(16)));
+    appLock.store.set('glow.appLock.pin', original);
+    const entered = deferred<void>();
+    const release = deferred<void>();
+    const derive = crypto.subtle.deriveBits.bind(crypto.subtle);
+    vi.spyOn(crypto.subtle, 'deriveBits').mockImplementationOnce(async (...args) => {
+      entered.resolve();
+      await release.promise;
+      return derive(...args);
+    });
+    const write = vi.spyOn(appLock.preferences, 'set');
+    const replacement = appLock.setPin('654321');
+    await entered.promise;
+    expect(appLock.store.get('glow.appLock.pin')).toBe(original);
+    await expect(appLock.isPinEnabled()).rejects.toBeInstanceOf(appLock.PinRecordUnavailableError);
+    expect(await appLock.verifyPin('123456')).toMatchObject({ ok: false, error: expect.any(String) });
+    expect(write).not.toHaveBeenCalled();
+    release.resolve();
+    await replacement;
+    const replaced = appLock.store.get('glow.appLock.pin');
+    expect(replaced).not.toBe(original);
+    expect(write.mock.calls.filter(([entry]) => entry.key === 'glow.appLock.pin')).toHaveLength(1);
+    expect((await appLock.verifyPin('123456')).ok).toBe(false);
+    expect((await appLock.verifyPin('654321')).ok).toBe(true);
+    expect(appLock.store.get('glow.appLock.pin')).toBe(replaced);
+  });
+
+  it('rejects an old legacy verification delayed across a completed replacement without writing an upgrade', async () => {
+    const appLock = await loadAppLock(true);
+    appLock.store.set('glow.appLock.pin', JSON.stringify(await legacyRecord('123456', '00'.repeat(16))));
+    const entered = deferred<void>();
+    const release = deferred<void>();
+    const derive = crypto.subtle.deriveBits.bind(crypto.subtle);
+    vi.spyOn(crypto.subtle, 'deriveBits').mockImplementationOnce(async (...args) => {
+      entered.resolve();
+      await release.promise;
+      return derive(...args);
+    });
+    const oldVerification = appLock.verifyPin('123456');
+    await entered.promise;
+    await appLock.setPin('654321');
+    const replacement = appLock.store.get('glow.appLock.pin');
+    release.resolve();
+    expect(await oldVerification).toMatchObject({ ok: false });
+    expect(appLock.store.get('glow.appLock.pin')).toBe(replacement);
+    expect((await appLock.verifyPin('654321')).ok).toBe(true);
+  });
+
+  it('binds a legacy upgrade to the exact record observed before verification', async () => {
+    const appLock = await loadAppLock(true);
+    const original = JSON.stringify(await legacyRecord('123456', '00'.repeat(16)));
+    const replacement = JSON.stringify({ v: 1, salt: '22'.repeat(16), hash: '33'.repeat(32), iterations: 600_000 });
+    appLock.store.set('glow.appLock.pin', original);
+    let pinReads = 0;
+    vi.spyOn(appLock.preferences, 'get').mockImplementation(async ({ key }) => {
+      if (key === 'glow.appLock.pin' && ++pinReads === 2) appLock.store.set(key, replacement);
+      return { value: appLock.store.get(key) ?? null };
+    });
+    const write = vi.spyOn(appLock.preferences, 'set');
+    expect(await appLock.verifyPin('123456')).toMatchObject({ ok: false });
+    expect(pinReads).toBe(2);
+    expect(appLock.store.get('glow.appLock.pin')).toBe(replacement);
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it('preserves a replacement whose write committed before its acknowledgement failed', async () => {
+    const appLock = await loadAppLock(true);
+    await appLock.setPin('123456');
+    const old = appLock.store.get('glow.appLock.pin');
+    vi.spyOn(appLock.preferences, 'set').mockImplementationOnce(async ({ key, value }) => {
+      appLock.store.set(key, value);
+      throw new Error('Lost write acknowledgement');
+    });
+    await expect(appLock.setPin('654321')).rejects.toThrow('Lost write acknowledgement');
+    const replacement = appLock.store.get('glow.appLock.pin');
+    expect(replacement).not.toBe(old);
+    const lease = await import('./nativeReadLease');
+    expect(() => lease.captureNativeReadLease()).toThrow(/locked/);
+    expect((await appLock.verifyPin('123456')).ok).toBe(false);
+    expect((await appLock.verifyPin('654321')).ok).toBe(true);
+    expect(appLock.store.get('glow.appLock.pin')).toBe(replacement);
+    expect(() => lease.captureNativeReadLease()).toThrow(/locked/);
   });
 });
 
@@ -234,5 +377,54 @@ describe('appLock on web', () => {
     expect(appLock.isAppLockSupported()).toBe(false);
     expect(await appLock.isPinEnabled()).toBe(false);
     expect(await appLock.isBiometricGateEnabled()).toBe(false);
+  });
+});
+
+
+describe('strict durable PIN policy', () => {
+  const valid = { v: 1, salt: '00'.repeat(16), hash: '11'.repeat(32), iterations: 600_000 };
+  const malformed: [string, string][] = [
+    ['invalid JSON', '{'], ['JSON null', 'null'], ['array', '[]'],
+    ['version', JSON.stringify({ ...valid, v: 2 })],
+    ['salt length', JSON.stringify({ ...valid, salt: '00'.repeat(15) })],
+    ['salt alphabet', JSON.stringify({ ...valid, salt: 'GG'.repeat(16) })],
+    ['hash length', JSON.stringify({ ...valid, hash: '11'.repeat(31) })],
+    ['hash type', JSON.stringify({ ...valid, hash: [] })],
+    ['zero iterations', JSON.stringify({ ...valid, iterations: 0 })],
+    ['negative iterations', JSON.stringify({ ...valid, iterations: -1 })],
+    ['unbounded iterations', JSON.stringify({ ...valid, iterations: Number.MAX_SAFE_INTEGER })],
+    ['unsupported cost', JSON.stringify({ ...valid, iterations: 600_001 })],
+    ['string cost', JSON.stringify({ ...valid, iterations: '600000' })],
+    ['null cost', JSON.stringify({ ...valid, iterations: null })],
+    ['unknown field', JSON.stringify({ ...valid, enabled: false })],
+    ['oversized record', ' '.repeat(1025) + JSON.stringify(valid)],
+  ];
+
+  it.each(malformed)('preserves %s as unavailable instead of absent', async (_label, raw) => {
+    const appLock = await loadAppLock(true);
+    appLock.store.set('glow.appLock.pin', raw);
+    const derive = vi.spyOn(crypto.subtle, 'deriveBits');
+    const remove = vi.spyOn(appLock.preferences, 'remove');
+    const write = vi.spyOn(appLock.preferences, 'set');
+    await expect(appLock.isPinEnabled()).rejects.toBeInstanceOf(appLock.PinRecordUnavailableError);
+    expect(await appLock.verifyPin('123456')).toMatchObject({ ok: false, error: expect.any(String) });
+    expect(appLock.store.get('glow.appLock.pin')).toBe(raw);
+    expect(appLock.isPinEnabledSync()).toBe(true);
+    expect(derive).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it('heals a missing mirror only after reading a valid durable record', async () => {
+    const appLock = await loadAppLock(true);
+    await appLock.setPin('123456');
+    const raw = appLock.store.get('glow.appLock.pin');
+    localStorage.clear();
+    expect(appLock.isPinEnabledSync()).toBe(false);
+    expect(await appLock.isPinEnabled()).toBe(true);
+    expect(appLock.isPinEnabledSync()).toBe(true);
+    expect(appLock.store.get('glow.appLock.pin')).toBe(raw);
+    const lease = await import('./nativeReadLease');
+    expect(() => lease.captureNativeReadLease()).toThrow(/locked/);
   });
 });

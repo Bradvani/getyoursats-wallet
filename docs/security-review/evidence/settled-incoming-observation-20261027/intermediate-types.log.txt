@@ -1,0 +1,17 @@
+e2e/fixtures/settled-incoming-observation.ts(34,110): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+e2e/fixtures/settled-incoming-observation.ts(40,45): error TS18048: 'plan' is possibly 'undefined'.
+e2e/fixtures/settled-incoming-observation.ts(42,34): error TS18047: 'guarded' is possibly 'null'.
+e2e/fixtures/settled-incoming-observation.ts(53,7): error TS18047: 'guarded' is possibly 'null'.
+e2e/fixtures/settled-incoming-observation.ts(53,51): error TS18047: 'guarded' is possibly 'null'.
+e2e/fixtures/settled-incoming-observation.ts(54,54): error TS18047: 'signing' is possibly 'null'.
+e2e/fixtures/settled-incoming-observation.ts(54,98): error TS18047: 'signing' is possibly 'null'.
+e2e/fixtures/settled-incoming-observation.ts(55,51): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+e2e/fixtures/settled-incoming-observation.ts(56,54): error TS2345: Argument of type 'BreezSdk | null' is not assignable to parameter of type '{ observeIncomingTransfer: (id: string) => Promise<unknown>; }'.
+  Type 'null' is not assignable to type '{ observeIncomingTransfer: (id: string) => Promise<unknown>; }'.
+e2e/fixtures/settled-incoming-observation.ts(57,9): error TS18047: 'guarded' is possibly 'null'.
+e2e/fixtures/settled-incoming-observation.ts(58,34): error TS18048: 'plan' is possibly 'undefined'.
+e2e/fixtures/settled-incoming-observation.ts(58,92): error TS18047: 'guarded' is possibly 'null'.
+e2e/fixtures/settled-incoming-observation.ts(63,25): error TS18047: 'raw' is possibly 'null'.
+e2e/fixtures/settled-incoming-observation.ts(67,20): error TS18047: 'guarded' is possibly 'null'.

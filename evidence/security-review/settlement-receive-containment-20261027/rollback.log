@@ -1,0 +1,25 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+[WebServer] (node:102145) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 9 tests using 1 worker
+
+(node:102202) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:102202) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/9] e2e/tests/rollback-compatibility.spec.ts:15:1 › migrates the original phrase then reads it from the built rollback without altering any local or SDK state
+[2/9] e2e/tests/rollback-compatibility.spec.ts:32:1 › clears plaintext on page suspension and never persists recovery words
+[3/9] e2e/tests/rollback-compatibility.spec.ts:43:1 › retains malformed journal and exit records rather than deleting or upgrading them
+[4/9] e2e/tests/rollback-compatibility.spec.ts:50:1 › rejects an unsupported vault version without overwriting any record
+[5/9] e2e/tests/rollback-compatibility.spec.ts:60:1 › containment CSP blocks network calls and the build has no wallet SDK
+[6/9] e2e/tests/rollback-compatibility.spec.ts:69:1 › concurrent encrypted exit backups retain one shared key and both snapshots
+[7/9] e2e/tests/rollback-compatibility.spec.ts:84:1 › late service-worker takeover clears already revealed words and keeps unlock disabled
+[8/9] e2e/tests/rollback-compatibility.spec.ts:104:1 › an existing worker blocks recovery until explicit unregister and reload, preserving all wallet state
+[9/9] e2e/tests/rollback-compatibility.spec.ts:124:1 › an aborted IndexedDB commit rejects the save and preserves the old exit backup
+  9 passed (10.5s)

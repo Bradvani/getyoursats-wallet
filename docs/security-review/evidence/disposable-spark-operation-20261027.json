@@ -1,0 +1,206 @@
+{
+  "schema": 1,
+  "sourceCommit": "76fb6140aaa3712d57c3f57c0c7c2d1303a49171",
+  "network": "regtest",
+  "sourceTree": "93798dca27800e905fe6548134260fff756b65be",
+  "sourceDirty": true,
+  "realFunds": false,
+  "userSecrets": false,
+  "apiKey": false,
+  "fixtureApprovals": true,
+  "physicalDevice": false,
+  "fullProductAcceptance": false,
+  "settlementVerified": false,
+  "steps": [
+    {
+      "step": "two-real-disposable-wallets",
+      "result": "PASS",
+      "wallets": [
+        {
+          "identity": "034c01f28e4db50219ccbceb75d1b5bdf064a05ef58532d910775454e55d6fb5bd",
+          "balance": "0",
+          "address": "sparkrt1pgssxnqp728ymdgzr8xte6m46x6mmury5p00tpfjmyg8w4z5u4wklddarcanll",
+          "receiveFee": "0"
+        },
+        {
+          "identity": "03f9751e36385090cbcb11837dcace5a6aa204291ee04ab20a34d0d3f7c020df86",
+          "balance": "0",
+          "address": "sparkrt1pgss87t4rcmrs5yse093rqmaet89564zqs53acz2kg9rf5xn7lqzphuxzzdcfx",
+          "receiveFee": "0"
+        }
+      ]
+    },
+    {
+      "step": "faucet-funding-and-explicit-claim",
+      "result": "PASS",
+      "state": {
+        "identity": "034c01f28e4db50219ccbceb75d1b5bdf064a05ef58532d910775454e55d6fb5bd",
+        "balance": "1000",
+        "payments": [
+          {
+            "id": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+            "amount": "1000",
+            "fee": "0",
+            "status": "completed",
+            "type": "receive",
+            "method": "spark"
+          }
+        ],
+        "incoming": [
+          {
+            "version": 1,
+            "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+            "paymentId": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+            "network": "regtest",
+            "amountSats": "1000",
+            "expiresAt": 1793065822,
+            "state": "settled",
+            "revision": 1
+          }
+        ],
+        "outgoing": []
+      }
+    }
+  ],
+  "networkFailures": [
+    {
+      "host": "0.spark.lightspark.com",
+      "code": "net::ERR_ABORTED"
+    },
+    {
+      "host": "spark-operator.breez.technology",
+      "code": "net::ERR_ABORTED"
+    },
+    {
+      "host": "2.spark.flashnet.xyz",
+      "code": "net::ERR_ABORTED"
+    }
+  ],
+  "result": "BLOCKED",
+  "startedAt": "2026-10-27T01:48:57.079Z",
+  "sdk": {
+    "schema": 1,
+    "sdkSourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+    "patchSha256": "0881588afefe212b426854b06dc2b0956c1084bfec9b1981677d93642276baa4",
+    "baselinePackageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026",
+    "cargoLockSha256": "a4ff9d25f17511301751298d67caa1cd123d2ad220013f14875034ba1311b0b9",
+    "rustToolchain": "1.95.0",
+    "wasmBindgenVersion": "0.2.120",
+    "cargoProfile": "release (upstream profile, wasm-opt disabled)",
+    "rawCompiledWasmSha256": "8bd148f7d2219f38363876278ed8fda09a34e8d6876f4f02d467f8ce44b460ff",
+    "generatedArtifacts": {
+      "web/breez_sdk_spark_wasm.js": "87b0bed1139178b4ed734639a1448cbd36e9e65f078a352b22ef936d9153739a",
+      "web/breez_sdk_spark_wasm.d.ts": "96c85d7153c80135a15c1364d751cdfad29b6410b7a9c143ed5f460a40616f7a",
+      "web/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+      "nodejs/breez_sdk_spark_wasm.js": "d484061ddf6adbf4e128986caaf410e0a1481f13107388cc1741dc9cf550acd0",
+      "nodejs/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+      "nodejs/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+      "bundler/breez_sdk_spark_wasm.js": "6342628f134d0ad21d634559fe7b5a3cea6389e2e5a82134009cc94cfaec81e2",
+      "bundler/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+      "bundler/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+      "deno/breez_sdk_spark_wasm.js": "871574fb1e6cbd93ac0c631527b2344f15272f1c1d140f75c295894a2393be29",
+      "deno/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+      "deno/breez_sdk_spark_wasm_bg.wasm": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910"
+    },
+    "securityClaim": "same-wallet software signing with observation-only network queries; not isolated or hardware-backed",
+    "extensions": [
+      "seed-compatible-external-signers-v1",
+      "observation-only-wallet-state-v1",
+      "signed-recovery-v1",
+      "explicit-incoming-claim-v1",
+      "bounded-mature-deposit-claim-v1",
+      "unreceived-deposit-continuation-v1",
+      "recovery-signer-envelope-v1"
+    ],
+    "packageSha256": "f3cb177c5cb38cd3222b8279e8a9c5815f788d5ccd611a9e8a29d5caefb4bf37"
+  },
+  "testFiles": {
+    "e2e/fixtures/disposable-wallet-acceptance.ts": "d3cc05afe5c0151491fdaac0e1c8362a6e0450c5f33d000b2aa4811cbc794b36",
+    "scripts/security/accept-disposable-spark.mjs": "afac0bb87d3beefee9c26a351f038c078893f31e2bedda9c6a5661dd8091e14d",
+    "scripts/security/lightspark-response-url.mjs": "d3fb78ef5977db8e4883a4ae1bbe0b4875d09da29b57910e193ed4de5c9a6c3a"
+  },
+  "currentStep": "send-100-sats",
+  "faucet": {
+    "mode": "resume-existing-disposable-profiles",
+    "requestedSats": 0
+  },
+  "lastIncomingCandidate": {
+    "id": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+    "amount": "1000",
+    "fee": "0"
+  },
+  "error": "page.evaluate: UncertainPaymentError: A payment is still pending or its outcome is unknown. Check payment status before sending again.\n    at http://127.0.0.1:5183/src/security/operationGateway.ts:443:12",
+  "failureObservations": [
+    {
+      "identity": "034c01f28e4db50219ccbceb75d1b5bdf064a05ef58532d910775454e55d6fb5bd",
+      "balance": "900",
+      "payments": [
+        {
+          "id": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+          "amount": "100",
+          "fee": "0",
+          "status": "completed",
+          "type": "send",
+          "method": "spark"
+        },
+        {
+          "id": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+          "amount": "1000",
+          "fee": "0",
+          "status": "completed",
+          "type": "receive",
+          "method": "spark"
+        }
+      ],
+      "incoming": [
+        {
+          "version": 1,
+          "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+          "paymentId": "01a17af2-82f5-7b40-ae7e-d961eac979b7",
+          "network": "regtest",
+          "amountSats": "1000",
+          "expiresAt": 1793065822,
+          "state": "settled",
+          "revision": 1
+        }
+      ],
+      "outgoing": [
+        {
+          "version": 1,
+          "walletKey": "76b44302349e463c769ec3f6758027ccb3dda18401fc6f029d6108d3387de99a",
+          "operationId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+          "paymentId": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+          "intentHash": "c66135f1cdaa552ec82eb5dd1dab01ac72d0825897ddb543ddb2bc24f086d1f8",
+          "recipientHash": "e8e1731df92747bb20e7de8d3b0b935d7e80bf1da7bdca908e75c9235825bb02",
+          "network": "regtest",
+          "route": "spark",
+          "amountSats": "100",
+          "feeLimitSats": "0",
+          "state": "unknown",
+          "createdAt": 1793065765150,
+          "updatedAt": 1793065768057
+        }
+      ]
+    },
+    {
+      "identity": "03f9751e36385090cbcb11837dcace5a6aa204291ee04ab20a34d0d3f7c020df86",
+      "balance": "0",
+      "payments": [
+        {
+          "id": "cc62e536-6124-4abd-9f72-c4c33f75f8ad",
+          "amount": "100",
+          "fee": "0",
+          "status": "pending",
+          "type": "receive",
+          "method": "spark"
+        }
+      ],
+      "incoming": [],
+      "outgoing": []
+    }
+  ],
+  "finishedAt": "2026-10-27T01:49:29.758Z",
+  "walletProfilesClosed": true,
+  "disposableProfilesRetainedLocally": true,
+  "doNotFundReportedAddresses": true
+}

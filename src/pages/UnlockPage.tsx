@@ -1,3 +1,6 @@
+import {PASSKEY_INCOMPLETE_MESSAGE} from '../utils/passkeyUnlockFeedback';
+import {flowText} from '../locales/flowText';
+import {usePresentation} from '../hooks/usePresentation';
 /**
  * UnlockPage — interactive retry screen shown when the auto-triggered
  * biometric unlock was cancelled or hit the biometric lockout error.
@@ -24,6 +27,7 @@ import { FaceIdIcon, FingerprintIcon, PasskeyIcon } from '../components/Icons';
 import { AlertCard } from '../components/AlertCard';
 import { confirmDeviceOwner, getBiometryInfo, BiometryInfo, secureStorage } from '../services/secureStorage';
 import { isPasskeyMode } from '../services/passkeyService';
+import { getNativeSeedTier } from '../services/nativeSeedSelection';
 
 interface UnlockPageProps {
   isLoading: boolean;
@@ -40,6 +44,8 @@ const UnlockPage: React.FC<UnlockPageProps> = ({
 }) => {
   // Web hosts use passkey terminology; native uses biometric.
   const isWebPasskey = !secureStorage.isSupported();
+  const {language} = usePresentation();
+  const incomplete = isWebPasskey && error === PASSKEY_INCOMPLETE_MESSAGE;
 
   const [biometry, setBiometry] = useState<BiometryInfo | null>(null);
   // This escape erases every local artifact, and the screen it lives on is
@@ -47,10 +53,9 @@ const UnlockPage: React.FC<UnlockPageProps> = ({
   // behind the same confirm the side-menu logout uses.
   const [showEraseConfirm, setShowEraseConfirm] = useState(false);
   const isPasskey = isPasskeyMode();
-  // Only pre-app-lock installs keep the seed behind a biometric. With
-  // nothing in that tier this page is a plain reconnect retry (the
-  // silent start failed), so it must not promise a Face ID prompt.
-  const [isBiometricTier, setIsBiometricTier] = useState(true);
+  // Only the selected bound record needs a biometric prompt. Another retained
+  // bound record must not change the device-only wallet's retry label.
+  const isBiometricTier = isWebPasskey || getNativeSeedTier() === 'biometric';
 
   useEffect(() => {
     if (isWebPasskey) return;
@@ -58,9 +63,6 @@ const UnlockPage: React.FC<UnlockPageProps> = ({
     getBiometryInfo().then((info) => {
       if (!cancelled) setBiometry(info);
     });
-    secureStorage.hasStoredSeed().then((stored) => {
-      if (!cancelled) setIsBiometricTier(stored);
-    }).catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -71,9 +73,9 @@ const UnlockPage: React.FC<UnlockPageProps> = ({
     : !isBiometricTier ? 'Try Again'
       : biometry ? `Unlock with ${biometry.label}` : 'Unlock';
   const unlockDescription = isWebPasskey
-    ? 'Glow is locked. Unlock with your passkey to continue.'
-    : !isBiometricTier ? 'Glow could not start up. Please try again.'
-      : 'Glow is locked. Unlock with your biometric to continue.';
+    ? 'GetYourSats is locked. Unlock with your passkey to continue.'
+    : !isBiometricTier ? 'GetYourSats could not start up. Please try again.'
+      : 'GetYourSats is locked. Unlock with your biometric to continue.';
   const UnlockIcon = isWebPasskey
     ? PasskeyIcon
     : biometry?.kind === 'face' ? FaceIdIcon : FingerprintIcon;
@@ -95,8 +97,8 @@ const UnlockPage: React.FC<UnlockPageProps> = ({
 
           {/* Error banner */}
           {error && (
-            <AlertCard variant="error" title={isBiometricTier ? 'Unlock failed' : 'Could not start'}>
-              {error}
+            <AlertCard variant={incomplete ? 'info' : 'error'} title={incomplete ? flowText(language, 'Wallet locked') : isBiometricTier ? 'Unlock failed' : 'Could not start'}>
+              {isWebPasskey ? flowText(language, error) : error}
             </AlertCard>
           )}
 

@@ -1,3 +1,11 @@
+import UnavailableWalletAction from './security/UnavailableWalletAction';
+import {isRestrictedBrowserWallet} from './security/browserReleasePolicy';
+import WebWalletVaultPage from './security/WebWalletVaultPage';
+import {getSignedRecovery} from './security/signedRecoveryController';
+import {useBrowserSessionLock} from './security/useBrowserSessionLock';
+import WebVaultRecoveryPage from './security/WebVaultRecoveryPage';
+import SpendingApprovalDialog from './security/SpendingApprovalDialog';
+import {hasWebWalletVault,legacyWebMnemonic,enrollWebWallet,unlockWebWallet,removeMatchingLegacyMnemonic,resetWebWalletPasswordWithWords} from './security/webWalletVault';
 import DcaPage from './getyoursats/DcaPage';
 import * as bip39 from 'bip39';
 import {deviceOnlyStorage, SecureStorageError} from './services/secureStorage';
@@ -65,9 +73,9 @@ import { STATUS_BAR_LOADING } from './utils/statusBarManager';
 import { useBackButton } from './hooks/useBackButton';
 import type { Seed, Payment, BreezSdk } from '@breeztech/breez-sdk-spark';
 
-const PASSKEY_MIGRATION_ENABLED = true;
+const PASSKEY_MIGRATION_ENABLED = Capacitor.isNativePlatform();
 
-type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'email' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
+type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'email' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit' | 'web-vault-setup' | 'web-vault-locked' | 'web-vault-recover';
 
 // Full-screen dim spinner shown while sdk.isLoading is true (logout in
 // progress, SDK reconnect, etc). Wrapped as its own component so the
@@ -99,6 +107,10 @@ const AppContent: React.FC = () => {
   // 'unlocking', auto-'wallet' on reconnect) are layered in by
   // `currentScreen` below.
   const [userScreen, setUserScreen] = useState<Screen>('home');
+  // A phrase entered or generated in the current onboarding session is kept
+  // only in React memory until the browser encrypts it. No plaintext write.
+  const [pendingWebSeed,setPendingWebSeed] = useState<{mnemonic:string;restore:boolean}|null>(null);
+
   const [walletActionReturn, setWalletActionReturn] = useState<'wallet' | 'settings'>('settings');
   const [newWalletSetup, setNewWalletSetup] = useState<NewWalletSetup | null>(null);
   const [walletGuideReplay, setWalletGuideReplay] = useState(0);
@@ -143,6 +155,7 @@ const AppContent: React.FC = () => {
   useIOSViewportFix();
 
   const sdk = useBreezSdk(showToast);
+  const browserSessionLock=useBrowserSessionLock(sdk.isConnected, sdk.resumeBrowserWallet);
   const walletSetup = useWalletSetup(sdk.isConnected ? sdk.walletInfo?.identityPubkey : null, sdk.config?.network);
   useNewWalletSetup({creation: newWalletSetup, client: sdk.sdk, connected: sdk.isConnected, scope: walletSetup.scope});
   const setupSession = useLatest({client: sdk.sdk, scope: walletSetup.scope});
@@ -152,10 +165,15 @@ const AppContent: React.FC = () => {
   // while locked; rendered last in the tree so it stacks on top.
   const appLock = useAppLock();
 
-  // An in-flight recovery has to keep moving even when its page is
-  // closed: each step only becomes broadcastable once the one before it
-  // confirms, and those waits run for days.
-  useUnilateralExitEngineLifecycle(sdk.walletInfo?.identityPubkey, sdk.config?.network, sdk.sdk);
+  // Persisted exits broadcast outside the SDK gateway. Preserve their data but
+  // do not start that engine in the browser security preview until its bounded
+  // continuation policy is implemented. This is a production release blocker.
+  const browserExitUnavailable=!!sdk.sdk&&isRestrictedBrowserWallet(sdk.sdk);
+  useUnilateralExitEngineLifecycle(
+    browserExitUnavailable?undefined:sdk.walletInfo?.identityPubkey,
+    browserExitUnavailable?undefined:sdk.config?.network,
+    browserExitUnavailable?null:sdk.sdk,
+  );
 
   // SDK startup state takes precedence; otherwise the user's screen
   // wins, with one exception: an SDK auto-reconnect (saved mnemonic /
@@ -164,6 +182,8 @@ const AppContent: React.FC = () => {
   const currentScreen: Screen = useMemo(() => {
     if (sdk.startupState === 'native-unlocking') return 'unlocking';
     if (sdk.startupState === 'native-locked') return 'unlock';
+    if (sdk.startupState === 'web-vault-enroll') return 'web-vault-setup';
+    if (sdk.startupState === 'web-vault-locked') return userScreen==='web-vault-recover'?'web-vault-recover':'web-vault-locked';
     if (sdk.isConnected && userScreen === 'home') return 'wallet';
     return userScreen;
   }, [sdk.startupState, sdk.isConnected, userScreen]);
@@ -183,9 +203,8 @@ const AppContent: React.FC = () => {
     if (Capacitor.isNativePlatform() && deviceOnlyStorage.isSupported()) {
       try {
         setSetupIssue(null);
-        // Never call hasStoredSeed() here: the native implementation returns
-        // false on vault read errors, which is NOT proof that a wallet is absent.
-        // retrieveSeed() distinguishes a truly empty vault from failure.
+        // Decide from the actual record read, not an earlier presence probe.
+        // Only retrieveSeed()'s explicit NO_STORED_SEED permits creation.
         let existingSeed: Awaited<ReturnType<typeof deviceOnlyStorage.retrieveSeed>> | undefined;
         try {
           existingSeed = await deviceOnlyStorage.retrieveSeed();
@@ -244,7 +263,7 @@ const AppContent: React.FC = () => {
       try {
         // Never start a new passkey-derived wallet over a locally stored
         // manual wallet that might be temporarily disconnected.
-        if (localStorage.getItem('walletMnemonic') !== null) {
+        if (localStorage.getItem('walletMnemonic') !== null || hasWebWalletVault()) {
           setSetupIssue('A wallet already exists on this device. Reopen or restore it before creating another wallet.');
           setUserScreen('home');
           return;
@@ -275,14 +294,50 @@ const AppContent: React.FC = () => {
   const handleConnect = async (mnemonic: string, restore: boolean) => {
     const attempt = ++setupAttempt.current;
     setNewWalletSetup(null);
+    if (!Capacitor.isNativePlatform()) {
+      if (hasWebWalletVault()) throw new Error('A protected wallet already exists on this device. Unlock it first.');
+      setPendingWebSeed({mnemonic,restore});
+      setUserScreen('web-vault-setup');
+      return;
+    }
     const client = await sdk.connectWallet({ type: 'mnemonic', mnemonic }, restore);
     if (attempt !== setupAttempt.current) return;
     if (client) clearPasskeyMode();
-    // GeneratePage reaches this handler only after its offline backup check.
     if (!restore && client) setNewWalletSetup({client, phraseVerified: true});
     setUserScreen('wallet');
   };
 
+  const finishBrowserVaultSetup = async(password:string) => {
+    const attempt = ++setupAttempt.current;
+    setNewWalletSetup(null);
+    const legacy = pendingWebSeed ? null : legacyWebMnemonic();
+    const mnemonic = pendingWebSeed?.mnemonic ?? legacy;
+    if(!mnemonic)throw new Error('The existing wallet recovery words are unavailable. Restore the wallet again.');
+    const restore = pendingWebSeed?.restore ?? true;
+    await enrollWebWallet(mnemonic,password);
+    const client=await sdk.connectWallet({type:'mnemonic',mnemonic},restore,undefined,'secureStorage');
+    if (attempt !== setupAttempt.current) return;
+    if (!client) throw new Error('Wallet connection could not be verified. Your recovery data is preserved.');
+    clearPasskeyMode();
+    // Only remove the old plaintext when a persisted ciphertext matches the
+    // actual phrase. If connection fails, the legacy phrase remains.
+    if(legacy)await removeMatchingLegacyMnemonic(password);
+    if (!restore) setNewWalletSetup({client, phraseVerified: true});
+    setPendingWebSeed(null);
+    setUserScreen('wallet');
+  };
+  const unlockBrowserVault = async(password:string) => {
+    const mnemonic=await unlockWebWallet(password);
+    await sdk.connectWallet({type:'mnemonic',mnemonic},false,undefined,'secureStorage');
+    await removeMatchingLegacyMnemonic(password);
+    setUserScreen('wallet');
+  };
+  const recoverBrowserVault = async(mnemonic:string,password:string) => {
+    await resetWebWalletPasswordWithWords(mnemonic,password);
+    await sdk.connectWallet({type:'mnemonic',mnemonic},true,undefined,'secureStorage');
+    await removeMatchingLegacyMnemonic(password);
+    setUserScreen('wallet');
+  };
   // Navigate to wallet after passkey connect. A freshly registered passkey
   // derives a never-used seed, so there is nothing to restore: gating on the
   // sync would hide a balance we already know is zero.
@@ -327,7 +382,8 @@ const AppContent: React.FC = () => {
   // fresh shared passkey) or 'handled' (migration ran or the user cancelled).
   const requestMigrationCheck = useCallback((): Promise<MigrationOutcome> => {
     if (!PASSKEY_MIGRATION_ENABLED) {
-      return Promise.resolve('proceed');
+      if(!Capacitor.isNativePlatform())showToast('info','Wallet migration unavailable','Your existing wallet has not changed. Use its original sign-in or recovery words.');
+      return Promise.resolve(Capacitor.isNativePlatform()?'proceed':'handled');
     }
 
     return new Promise<MigrationOutcome>((resolve) => {
@@ -336,7 +392,7 @@ const AppContent: React.FC = () => {
       setMigrationModalOpen(true);
       setMigrationEverOpened(true);
     });
-  }, []);
+  }, [showToast]);
 
   const handleMigrationClose = useCallback((outcome: MigrationOutcome) => {
     setMigrationModalOpen(false);
@@ -357,10 +413,14 @@ const AppContent: React.FC = () => {
     setupAttempt.current += 1;
     setNewWalletSetup(null);
     setWalletActionReturn('settings');
-    setUserScreen('home');
-    hasAutoOpenedMigrationRef.current = false;
-    await sdk.handleLogout();
-    clearWalletSetupMemory();
+    try {
+      await sdk.handleLogout();
+      clearWalletSetupMemory();
+      setUserScreen('home');
+      hasAutoOpenedMigrationRef.current = false;
+    } catch(error) {
+      showToast('error','Wallet removal paused',error instanceof Error?error.message:'Check pending payments before removing this wallet.');
+    }
   };
 
   // Android hardware back button — screen navigation fallback at the
@@ -428,6 +488,10 @@ const AppContent: React.FC = () => {
 
   // Render screens
   const renderCurrentScreen = () => {
+    // Do not render private wallet pages during the browser vault privacy lock.
+    if(browserSessionLock.locked&&!Capacitor.isNativePlatform()&&sdk.isConnected){
+      return <WebWalletVaultPage mode="unlock" passkey={isPasskeyMode()} isLoading={false} onSubmit={browserSessionLock.unlock}/>;
+    }
     // Startup-state overlays take precedence and are derived directly
     // from `sdk.startupState`. The `currentScreen` memo above already
     // maps these to 'unlocking' / 'unlock', but the explicit early
@@ -440,6 +504,15 @@ const AppContent: React.FC = () => {
     // during render, UnlockingPage commits in the same render tick as
     // the state change, not on the tick-later commit that a routing
     // effect would have produced.
+    if (sdk.startupState === 'web-vault-enroll' && !sdk.isConnected) {
+      return <WebWalletVaultPage mode="enroll" isLoading={sdk.isLoading}
+        onSubmit={finishBrowserVaultSetup} error={sdk.error} legacy/>;
+    }
+    if (sdk.startupState === 'web-vault-locked' && userScreen!=='web-vault-recover' && !sdk.isConnected) {
+      return <WebWalletVaultPage mode="unlock" isLoading={sdk.isLoading}
+        onSubmit={unlockBrowserVault} error={sdk.error}
+        onRecover={()=>setUserScreen('web-vault-recover')}/>;
+    }
     if (sdk.startupState === 'native-unlocking') {
       return <UnlockingPage />;
     }
@@ -570,6 +643,17 @@ const AppContent: React.FC = () => {
     // remounted. Non-wallet cases (home / restore / generate / passkey /
     // unlock / unlocking) use their own distinct tree shapes.
     switch (currentScreen) {
+      case 'web-vault-setup':
+        return <WebWalletVaultPage mode="enroll" isLoading={sdk.isLoading}
+          onSubmit={finishBrowserVaultSetup} error={sdk.error}
+          onBack={pendingWebSeed?()=>{setPendingWebSeed(null);setUserScreen('restore');}:undefined}/>;
+      case 'web-vault-locked':
+        return <WebWalletVaultPage mode="unlock" isLoading={sdk.isLoading}
+          onSubmit={unlockBrowserVault} error={sdk.error}
+          onRecover={()=>setUserScreen('web-vault-recover')}/>;
+      case 'web-vault-recover':
+        return <WebVaultRecoveryPage onSubmit={recoverBrowserVault}
+          onBack={()=>setUserScreen('home')} busy={sdk.isLoading}/>;
       case 'home':
         return (
           <HomePage
@@ -627,6 +711,7 @@ const AppContent: React.FC = () => {
         );
 
       case 'getRefund':
+        if(sdk.sdk&&isRestrictedBrowserWallet(sdk.sdk)&&!getSignedRecovery(sdk.sdk))return <UnavailableWalletAction title="Deposit refund" onBack={()=>setUserScreen('wallet')}/>;
         return (
           <>
             {renderWalletPage()}
@@ -669,6 +754,7 @@ const AppContent: React.FC = () => {
         );
 
       case 'unilateralExit':
+        if(sdk.sdk&&isRestrictedBrowserWallet(sdk.sdk))return <UnavailableWalletAction title="Recover to Bitcoin" onBack={()=>setUserScreen('wallet')}/>;
         return (
           <>
             {renderWalletPage()}
@@ -839,15 +925,15 @@ const AppContent: React.FC = () => {
                   celebration auto-dismisses on a timer, so mounting it
                   behind the lock screen would burn it unseen. Deferring
                   the mount plays it in full after unlock. */}
-              <IncomingPaymentNotice key={sdk.walletInfo?.identityPubkey??'disconnected'} visible={!appLock.locked && sdk.isConnected && sdk.celebrationPayment===null}/>
-              {sdk.celebrationPayment !== null && !appLock.locked && (
+              <IncomingPaymentNotice key={sdk.walletInfo?.identityPubkey??'disconnected'} visible={!appLock.locked && !browserSessionLock.locked && sdk.isConnected && sdk.celebrationPayment===null}/>
+              {sdk.celebrationPayment !== null && !appLock.locked && !browserSessionLock.locked && (
                 <PaymentCelebration
                   key={sdk.celebrationPayment.id}
                   payment={sdk.celebrationPayment}
                   onClose={sdk.dismissCelebration}
                 />
               )}
-              {migrationEverOpened && (
+              {migrationEverOpened && !browserSessionLock.locked && (
                 <Suspense fallback={null}>
                   <PasskeyMigrationModal
                     isOpen={migrationModalOpen}
@@ -859,6 +945,7 @@ const AppContent: React.FC = () => {
                 </Suspense>
               )}
               <OfflineBanner />
+              <SpendingApprovalDialog />
               {appLock.locked && (
                 <LockScreen
                   biometricGate={appLock.biometricGate}

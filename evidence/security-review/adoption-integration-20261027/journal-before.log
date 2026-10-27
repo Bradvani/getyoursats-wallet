@@ -1,0 +1,185 @@
+
+ RUN  v4.1.12 /workspace/scratch/bc5943411884/getyoursats-security
+
+ ❯ src/security/operationJournal.integrity.test.ts (14 tests | 14 failed) 30ms
+     × preserves a pending attempt when an operation ID is accidentally reused 8ms
+     × rejects a delayed failure callback after authoritative completion 3ms
+     × does not reopen a completed attempt or rebind its provider ID 1ms
+     × does not reopen a returned attempt or rebind its provider ID 11ms
+     × rejects stale provider correlation while preserving the latest pending identity 1ms
+     × refuses a replay into submitting after the attempt is uncertain 0ms
+     × rejects an altered amountSats from a stale in-memory record 0ms
+     × rejects an altered feeLimitSats from a stale in-memory record 0ms
+     × rejects an altered intentHash from a stale in-memory record 0ms
+     × rejects an altered recipientHash from a stale in-memory record 0ms
+     × rejects an altered network from a stale in-memory record 0ms
+     × rejects an altered route from a stale in-memory record 0ms
+     × preserves incompatible journal versions and refuses to ignore their unresolved attempts 2ms
+     × rejects an unexpected conversion in an otherwise matching completion receipt 1ms
+
+ Test Files  1 failed (1)
+      Tests  14 failed (14)
+   Start at  22:44:47
+   Duration  511ms (transform 36ms, setup 57ms, import 24ms, tests 30ms, environment 230ms)
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > preserves a pending attempt when an operation ID is accidentally reused
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/security/operationJournal.integrity.test.ts:14:63
+     12|  it('preserves a pending attempt when an operation ID is accidentally …
+     13|   const pending=updateOperation(writeOperation(attempt()),{state:'pend…
+     14|   expect(()=>writeOperation({...attempt(),amountSats:'200'})).toThrow(…
+       |                                                               ^
+     15|   expect(readOperations(walletKey)).toEqual([pending]);
+     16|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > rejects a delayed failure callback after authoritative completion
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/security/operationJournal.integrity.test.ts:20:60
+     18|   const submitted=writeOperation(attempt());
+     19|   const completed=updateOperation(submitted,{state:'completed'});
+     20|   expect(()=>updateOperation(submitted,{state:'unknown'})).toThrow(/ch…
+       |                                                            ^
+     21|   expect(readOperations(walletKey)).toEqual([completed]);
+     22|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > does not reopen a completed attempt or rebind its provider ID
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > does not reopen a returned attempt or rebind its provider ID
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/security/operationJournal.integrity.test.ts:25:59
+     23|  it.each(['completed','returned'] as const)('does not reopen a %s atte…
+     24|   const terminal=updateOperation(writeOperation(attempt()),{state});
+     25|   expect(()=>updateOperation(terminal,{state:'pending'})).toThrow(/can…
+       |                                                           ^
+     26|   expect(()=>updateOperation(terminal,{paymentId:'different-provider-p…
+     27|   expect(readOperations(walletKey)).toEqual([terminal]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > rejects stale provider correlation while preserving the latest pending identity
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/security/operationJournal.integrity.test.ts:32:62
+     30|   const submitted=writeOperation(attempt());
+     31|   const correlated=updateOperation(submitted,{paymentId:'final-provide…
+     32|   expect(()=>updateOperation(submitted,{state:'completed'})).toThrow(/…
+       |                                                              ^
+     33|   expect(readOperations(walletKey)).toEqual([correlated]);
+     34|   expect(isUnresolved(correlated)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > refuses a replay into submitting after the attempt is uncertain
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/security/operationJournal.integrity.test.ts:38:63
+     36|  it('refuses a replay into submitting after the attempt is uncertain',…
+     37|   const uncertain=updateOperation(writeOperation(attempt()),{state:'un…
+     38|   expect(()=>updateOperation(uncertain,{state:'submitting'})).toThrow(…
+       |                                                               ^
+     39|   expect(readOperations(walletKey)).toEqual([uncertain]);
+     40|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > rejects an altered amountSats from a stale in-memory record
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > rejects an altered feeLimitSats from a stale in-memory record
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > rejects an altered intentHash from a stale in-memory record
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > rejects an altered recipientHash from a stale in-memory record
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > rejects an altered network from a stale in-memory record
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > rejects an altered route from a stale in-memory record
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/security/operationJournal.integrity.test.ts:46:61
+     44|    const changes={amountSats:'101',feeLimitSats:'3',intentHash:'d'.rep…
+     45|    const changed={...saved,[field]:changes[field]} as OperationRecord;
+     46|    expect(()=>updateOperation(changed,{state:'completed'})).toThrow(/c…
+       |                                                             ^
+     47|    expect(readOperations(walletKey)).toEqual([saved]);
+     48|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > preserves incompatible journal versions and refuses to ignore their unresolved attempts
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/security/operationJournal.integrity.test.ts:52:33
+     50|   const k='gys:payment-journal:v2:'+walletKey+':future-attempt',bytes=…
+     51|   localStorage.setItem(k,bytes);
+     52|   expect(hasOperationRecords()).toBe(true);
+       |                                 ^
+     53|   expect(()=>readOperations(walletKey)).toThrow(/damaged/);
+     54|   expect(()=>readAllOperations()).toThrow(/damaged/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  src/security/operationJournal.integrity.test.ts > outgoing attempt integrity after interruption > rejects an unexpected conversion in an otherwise matching completion receipt
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ src/security/operationJournal.integrity.test.ts:61:45
+     59|   const p={id:saved.paymentId,paymentType:'send',method:'spark',status…
+     60|    conversionDetails:{unexpected:true}} as unknown as Payment;
+     61|   expect(()=>operationFromPayment(saved,p)).toThrow(/does not match/);
+       |                                             ^
+     62|   expect(readOperations(walletKey)).toEqual([saved]);
+     63|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯

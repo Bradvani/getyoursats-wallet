@@ -1,0 +1,9 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+failed to load config from /workspace/scratch/bc5943411884/getyoursats-security/vite.config.ts
+error during build:
+Error: Browser wallet security release is not approved. Resolve the blockers in docs/security-review/browser-continuation-release.md before production deployment.
+    at file:///workspace/scratch/bc5943411884/getyoursats-security/node_modules/.vite-temp/vite.config.ts.timestamp-1793053849279-715e17a07a0ef.mjs:16:45
+    at loadConfigFromFile (file:///workspace/scratch/bc5943411884/getyoursats-security/node_modules/vite/dist/node/chunks/node.js:38068:62)
+    at async resolveConfig (file:///workspace/scratch/bc5943411884/getyoursats-security/node_modules/vite/dist/node/chunks/node.js:37668:22)
+    at async createBuilder (file:///workspace/scratch/bc5943411884/getyoursats-security/node_modules/vite/dist/node/chunks/node.js:35245:17)
+    at async CAC.<anonymous> (file:///workspace/scratch/bc5943411884/getyoursats-security/node_modules/vite/dist/node/cli.js:779:19)
