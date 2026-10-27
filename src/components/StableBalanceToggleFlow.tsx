@@ -1,266 +1,75 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import type { ConversionEstimate } from '@breeztech/breez-sdk-spark';
-import { useWallet } from '../contexts/WalletContext';
-import { useStableBalance } from '../contexts/StableBalanceContext';
-import { useFiatData } from '../contexts/FiatDataContext';
-import { USDB_TICKER, USDB_TOKEN_IDENTIFIER } from '../constants/stableBalance';
-import { getTokenBalance, fiatToSats, buildTokenDisplayConfig, type TokenDisplayConfig } from '../utils/tokenFormatting';
-import { hasAcceptedStableDisclaimer, setStableDisclaimerAccepted } from '../services/settings';
-import { logger, LogCategory } from '../services/logger';
+import {useEffect,useRef,useState} from 'react';
+import type {ConversionEstimate,GetInfoResponse} from '@breeztech/breez-sdk-spark';
+import {useWallet} from '../contexts/WalletContext';
+import {useStableBalance} from '../contexts/StableBalanceContext';
+import {useFiatData} from '../contexts/FiatDataContext';
+import {usePresentation} from '../hooks/usePresentation';
+import {USDB_TICKER,USDB_TOKEN_IDENTIFIER} from '../constants/stableBalance';
+import {getTokenBalance,fiatToSats,buildTokenDisplayConfig,type TokenDisplayConfig} from '../utils/tokenFormatting';
+import {STABLE_BALANCE_COPY} from '../locales/stableBalance';
 import StableBalanceDisclaimer from './StableBalanceDisclaimer';
-import { useLatest } from '../hooks/useLatest';
 import StableBalanceFeeConfirm from './StableBalanceFeeConfirm';
-
-type FlowStep = 'disclaimer' | 'estimating' | 'confirm' | 'executing';
-
-interface StableBalanceToggleFlowProps {
-  isOpen: boolean;
-  direction: 'toToken' | 'toBitcoin';
-  onComplete: () => void;
-  onCancel: () => void;
-  restorePrompt?: boolean;
+interface Props{isOpen:boolean;direction:'toToken'|'toBitcoin';onComplete:()=>void;onCancel:()=>void}
+type Review={source:bigint;activeLabel:string|null;expiresAt:number};
+const foreground=()=>document.visibilityState!=='hidden';
+/** Existing SDK mode change, now entered deliberately and fail-closed on a missing estimate.
+ * A prepare response is indicative: updateUserSettings does NOT execute that signed quote.
+ * This does not claim to resolve the separate operation-gateway/security release gates. */
+export default function StableBalanceToggleFlow({isOpen,direction,onComplete,onCancel}:Props){
+ const wallet=useWallet(),stable=useStableBalance();const {refreshFiatData}=useFiatData();
+ const {language}=usePresentation();const copy=STABLE_BALANCE_COPY[language];
+ const [step,setStep]=useState<'intro'|'estimating'|'review'|'executing'>('intro');
+ const [estimate,setEstimate]=useState<ConversionEstimate|null>(null),[config,setConfig]=useState<TokenDisplayConfig|null>(null);
+ const [error,setError]=useState<string|null>(null),[info,setInfo]=useState<string|null>(null),[review,setReview]=useState<Review|null>(null);
+ const mounted=useRef(true),executing=useRef(false),generation=useRef(0);
+ useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;generation.current+=1;}},[]);
+ const sourceOf=(value:GetInfoResponse):bigint=>direction==='toToken'?BigInt(value.balanceSats):getTokenBalance(value.tokenBalances,USDB_TOKEN_IDENTIFIER)?.balance??0n;
+ async function prepare(){
+  if(executing.current)return;const current=++generation.current;
+  setStep('estimating');setError(null);setInfo(null);setEstimate(null);setReview(null);
+  try{
+   const [balances,settings]=await Promise.all([wallet.getInfo({}),wallet.getUserSettings()]);
+   const source=sourceOf(balances);const activeLabel=settings.stableBalanceActiveLabel??null;
+   if((direction==='toToken'&&activeLabel!==null)||(direction==='toBitcoin'&&activeLabel!==USDB_TICKER))throw new Error('Mode changed');
+   if(source===0n){if(mounted.current&&current===generation.current){setInfo(copy.empty);setReview({source,activeLabel,expiresAt:Date.now()+60000});setStep('review');}return;}
+   const [fiat,metadata]=await Promise.all([refreshFiatData(),wallet.getTokensMetadata({tokenIdentifiers:[USDB_TOKEN_IDENTIFIER]})]);
+   const token=metadata.tokensMetadata.find(t=>t.identifier===USDB_TOKEN_IDENTIFIER);
+   if(!token||!fiat.fetchedAt||Date.now()-fiat.fetchedAt>120000)throw new Error('No fresh conversion data');
+   const display=buildTokenDisplayConfig(token,fiat.fiatCurrencies);
+   const rate=fiat.fiatRates.find(r=>r.coin===(display.fiatCurrencyId??'USD'))?.value;
+   if(!rate||!Number.isFinite(rate)||rate<=0)throw new Error('Rate unavailable');
+   const target=direction==='toToken'?Number(source)/100000000*rate*.9*10**token.decimals:fiatToSats(Number(source)/10**token.decimals*.9,rate);
+   if(!Number.isSafeInteger(Math.round(target))||target<1)throw new Error('Below conversion minimum');
+   const address=await wallet.receivePayment({paymentMethod:{type:'sparkAddress'}});
+   if(!address.paymentRequest)throw new Error('No destination');
+   const prepared=await wallet.prepareSendPayment({paymentRequest:{type:'input',input:address.paymentRequest},amount:BigInt(Math.round(target)),
+    tokenIdentifier:direction==='toToken'?USDB_TOKEN_IDENTIFIER:undefined,
+    conversionOptions:{conversionType:direction==='toToken'?{type:'fromBitcoin'}:{type:'toBitcoin',fromTokenIdentifier:USDB_TOKEN_IDENTIFIER}}});
+   const quote=prepared.conversionEstimate;
+   if(!quote||quote.fee<0n||quote.amountIn<=0n||quote.amountOut<=0n)throw new Error('No conversion estimate');
+   if(mounted.current&&current===generation.current){setEstimate(quote);setConfig(display);setReview({source,activeLabel,expiresAt:Date.now()+60000});setStep('review');}
+  }catch{if(mounted.current&&current===generation.current){setError(copy.quoteError);setReview(null);setStep('review');}}
+ }
+ async function confirm(){
+  if(executing.current||step!=='review'||!review||error)return;
+  if(!foreground()||Date.now()>=review.expiresAt){setReview(null);setError(copy.expired);return;}
+  executing.current=true;setStep('executing');
+  let submitted=false;
+  try{
+   const [balances,settings]=await Promise.all([wallet.getInfo({}),wallet.getUserSettings()]);
+   if(!mounted.current||!foreground()||Date.now()>=review.expiresAt||sourceOf(balances)!==review.source||(settings.stableBalanceActiveLabel??null)!==review.activeLabel){
+    if(mounted.current){setReview(null);setError(copy.expired);setStep('review');}return;
+   }
+   submitted=true;
+   await stable.toggleStableBalance(direction==='toToken'?USDB_TICKER:null);
+   // Completion here acknowledges only the saved preference, not conversion settlement.
+   if(mounted.current)onComplete();
+  }catch{if(mounted.current){setError(submitted?copy.failed:copy.quoteError);setReview(null);setStep('review');}}
+  finally{executing.current=false;}
+ }
+ if(!isOpen)return null;
+ if(step==='intro')return <StableBalanceDisclaimer isOpen title={direction==='toToken'?copy.toStable:copy.toBitcoin} onAccept={()=>void prepare()} onCancel={onCancel}/>;
+ return <StableBalanceFeeConfirm isOpen direction={direction} conversionEstimate={estimate} displayConfig={config}
+  isEstimating={step==='estimating'} isExecuting={step==='executing'} error={error} info={info} canConfirm={review!==null}
+  onConfirm={()=>void confirm()} onRefresh={()=>void prepare()} onCancel={onCancel}/>;
 }
-
-const StableBalanceToggleFlow: React.FC<StableBalanceToggleFlowProps> = ({
-  isOpen,
-  direction,
-  onComplete,
-  onCancel,
-  restorePrompt,
-}) => {
-  const wallet = useWallet();
-  const stableBalance = useStableBalance();
-  const { refreshFiatData } = useFiatData();
-
-  const [step, setStep] = useState<FlowStep>('disclaimer');
-  const [conversionEstimate, setConversionEstimate] = useState<ConversionEstimate | null>(null);
-  const [resolvedDisplayConfig, setResolvedDisplayConfig] = useState<TokenDisplayConfig | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
-
-  const startEstimation = useCallback(async () => {
-    setError(null);
-
-    try {
-      // The rate sizes the conversion's minimum output below, so it is fetched
-      // rather than read off the 60s refresh: a price move since the last tick
-      // would size the request against a price that no longer holds.
-      const [freshInfo, fiatData, metadataResult] = await Promise.all([
-        wallet.getInfo({}),
-        refreshFiatData(),
-        wallet.getTokensMetadata({ tokenIdentifiers: [USDB_TOKEN_IDENTIFIER] }),
-      ]);
-
-      // Build display config from fresh data
-      const metadata = metadataResult.tokensMetadata[0];
-      const config = metadata ? buildTokenDisplayConfig(metadata, fiatData.fiatCurrencies) : null;
-      if (config) setResolvedDisplayConfig(config);
-
-      const tokenBal = getTokenBalance(freshInfo.tokenBalances, USDB_TOKEN_IDENTIFIER);
-      const decimals = config?.decimals ?? 8;
-      const fiatCurrencyId = config?.fiatCurrencyId ?? 'USD';
-      const btcRate = fiatData.fiatRates.find(r => r.coin === fiatCurrencyId)?.value ?? 0;
-
-      // Skip fee dialog if no source balance
-      const hasBalance = direction === 'toToken'
-        ? freshInfo.balanceSats > 0
-        : (tokenBal !== null && tokenBal.balance > 0n);
-
-      if (!hasBalance) {
-        setInfo('Balance too low to convert — it will remain as change');
-        setStep('confirm');
-        return;
-      }
-
-      const receiveResponse = await wallet.receivePayment({
-        paymentMethod: { type: 'sparkAddress' },
-      });
-      const sparkAddress = receiveResponse.paymentRequest;
-
-      const conversionType = direction === 'toToken'
-        ? { type: 'fromBitcoin' as const }
-        : { type: 'toBitcoin' as const, fromTokenIdentifier: USDB_TOKEN_IDENTIFIER };
-
-      // Compute amount: SDK treats amount as MinAmountOut for the conversion validator.
-      // Use 90% of expected output to leave headroom for fees/slippage.
-      let amount: bigint;
-      const FEE_HEADROOM = 0.9;
-      if (direction === 'toToken') {
-        const btcValue = freshInfo.balanceSats / 100_000_000;
-        const fiatValue = btcValue * btcRate * FEE_HEADROOM;
-        amount = BigInt(Math.round(fiatValue * Math.pow(10, decimals)));
-      } else {
-        const fiatValue = Number(tokenBal?.balance ?? 0n) / Math.pow(10, decimals);
-        amount = BigInt(fiatToSats(fiatValue * FEE_HEADROOM, btcRate));
-      }
-
-      // If amount rounds to zero (e.g. fiat rate not loaded yet), skip fee dialog
-      if (amount <= 0n) {
-        setInfo('Balance too low to convert — it will remain as change');
-        setStep('confirm');
-        return;
-      }
-
-      // Show modal now — all quick checks passed, preparing fee estimate
-      setStep('estimating');
-
-      const prepareResponse = await wallet.prepareSendPayment({
-        paymentRequest: { type: 'input', input: sparkAddress },
-        amount,
-        tokenIdentifier: direction === 'toToken' ? USDB_TOKEN_IDENTIFIER : undefined,
-        conversionOptions: { conversionType },
-      });
-
-      if (prepareResponse.conversionEstimate) {
-        setConversionEstimate(prepareResponse.conversionEstimate);
-      }
-      setStep('confirm');
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : String(e);
-      if (errorMsg.includes('less than minimum required')) {
-        setInfo('Balance too low to convert — it will remain as change');
-        setStep('confirm');
-        return;
-      }
-      setStep('confirm');
-    }
-  }, [wallet, direction, refreshFiatData]);
-
-  // Use refs so the isOpen effect snapshots the latest props/callbacks
-  // without re-firing when they change mid-flow.
-  const startEstimationRef = useLatest(startEstimation);
-  const restorePromptRef = useLatest(restorePrompt);
-
-  // No reset-in-effect needed — parent (CollapsingWalletHeader) bumps
-  // `toggleFlowSession` on every open and passes it as `key`, so each
-  // open is a fresh mount with all useState at defaults. We only need to
-  // route into the right initial step on first mount.
-  useEffect(() => {
-    if (!isOpen) return;
-    if (restorePromptRef.current || !hasAcceptedStableDisclaimer()) {
-      setStep('disclaimer');
-    } else {
-      startEstimationRef.current();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /** One failure path for both ways in: say what did not happen, keep the
-   *  sheet, let them try again. The provider's own wording goes to the log. */
-  const showToggleFailure = useCallback((e: unknown) => {
-    logger.error(LogCategory.SDK, 'Failed to toggle stable balance', {
-      error: e instanceof Error ? e.message : String(e),
-    });
-    setError(
-      direction === 'toToken'
-        ? 'Could not switch to USD. Please try again.'
-        : 'Could not switch to BTC. Please try again.',
-    );
-    setStep('confirm');
-  }, [direction]);
-
-  const executeToggle = useCallback(async () => {
-    logger.debug(LogCategory.SDK, 'executeToggle: starting', { direction, hasEstimate: !!conversionEstimate });
-    setStep('executing');
-    try {
-      // Snapshot current balance before toggling so we can detect an increase
-      let balanceBefore = 0n;
-      if (conversionEstimate) {
-        const infoBefore = await wallet.getInfo({});
-        if (direction === 'toToken') {
-          const tokenBal = getTokenBalance(infoBefore.tokenBalances, USDB_TOKEN_IDENTIFIER);
-          balanceBefore = tokenBal?.balance ?? 0n;
-        } else {
-          balanceBefore = BigInt(infoBefore.balanceSats);
-        }
-        logger.debug(LogCategory.SDK, 'executeToggle: balance before toggle', { balanceBefore: balanceBefore.toString() });
-      }
-
-      const ticker = direction === 'toToken' ? USDB_TICKER : null;
-      logger.debug(LogCategory.SDK, 'executeToggle: calling toggleStableBalance', { ticker });
-      await stableBalance.toggleStableBalance(ticker);
-      logger.debug(LogCategory.SDK, 'executeToggle: toggleStableBalance returned');
-
-      // If we had a conversion estimate, poll until the new-mode balance increases
-      if (conversionEstimate) {
-        logger.debug(LogCategory.SDK, 'executeToggle: starting balance poll');
-        const maxAttempts = 30;
-        for (let i = 0; i < maxAttempts; i++) {
-          await new Promise(r => setTimeout(r, 1000));
-          const info = await wallet.getInfo({});
-          let currentBalance = 0n;
-          if (direction === 'toToken') {
-            const tokenBal = getTokenBalance(info.tokenBalances, USDB_TOKEN_IDENTIFIER);
-            currentBalance = tokenBal?.balance ?? 0n;
-          } else {
-            currentBalance = BigInt(info.balanceSats);
-          }
-          logger.debug(LogCategory.SDK, `executeToggle: poll ${i + 1}/${maxAttempts}`, { currentBalance: currentBalance.toString(), balanceBefore: balanceBefore.toString() });
-          if (currentBalance > balanceBefore) break;
-        }
-        logger.debug(LogCategory.SDK, 'executeToggle: poll finished');
-      } else {
-        logger.debug(LogCategory.SDK, 'executeToggle: no estimate, skipping poll');
-      }
-
-      logger.debug(LogCategory.SDK, 'executeToggle: calling onComplete');
-      onComplete();
-    } catch (e) {
-      showToggleFailure(e);
-    }
-  }, [direction, stableBalance, conversionEstimate, wallet, onComplete, showToggleFailure]);
-
-  const handleDisclaimerAccept = useCallback(() => {
-    setStableDisclaimerAccepted();
-    // The restore prompt only turns the mode on. Sats that came back with the
-    // restore are left to the SDK, which auto-converts them once they clear its
-    // dynamic minimum: quoting a conversion here only ever offers to convert
-    // change that is too small to convert, and then fails.
-    if (restorePrompt) {
-      void stableBalance.toggleStableBalance(USDB_TICKER).then(onComplete).catch(showToggleFailure);
-      return;
-    }
-    startEstimation();
-  }, [restorePrompt, stableBalance, onComplete, startEstimation, showToggleFailure]);
-
-  const handleConfirm = useCallback(() => {
-    executeToggle();
-  }, [executeToggle]);
-
-  if (!isOpen) return null;
-
-  if (step === 'disclaimer') {
-    return (
-      <StableBalanceDisclaimer
-        isOpen
-        onAccept={handleDisclaimerAccept}
-        onCancel={onCancel}
-        {...(restorePrompt ? {
-          title: 'USD Balance Detected',
-          description:
-            "We've detected USD funds. Would you like to switch to USD mode?" +
-            '\n\n' +
-            'Your balance will be held in USD. Incoming BTC is automatically converted to USD, ' +
-            'and outgoing payments are converted back to BTC.',
-        } : {})}
-      />
-    );
-  }
-
-  return (
-    <StableBalanceFeeConfirm
-      isOpen
-      direction={direction}
-      conversionEstimate={conversionEstimate}
-      displayConfig={resolvedDisplayConfig ?? stableBalance.displayConfig}
-      isEstimating={step === 'estimating'}
-      isExecuting={step === 'executing'}
-      error={error}
-      info={info}
-      onConfirm={handleConfirm}
-      onCancel={onCancel}
-    />
-  );
-};
-
-export default StableBalanceToggleFlow;

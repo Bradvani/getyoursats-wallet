@@ -1,3 +1,4 @@
+import StableBalanceSettings from '../components/StableBalanceSettings';
 import PaymentFeedbackSetting from '../components/PaymentFeedbackSetting';
 import LanguageSelect from '@/components/LanguageSelect';
 import {trustCopy} from '@/getyoursats/trustCopy';
@@ -286,6 +287,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               ? 'Link an email to your wallet. Keep your recovery words or passkey safe.'
               : 'Email verification is coming soon. Keep your recovery words or passkey safe.'}</p>
           </div>
+
+          {selectedNetwork==='mainnet'&&<StableBalanceSettings/>}
 
           {/* Display */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">

@@ -1,59 +1,23 @@
-import React from 'react';
-import { DialogContainer, DialogCard } from './ui';
-
-interface StableBalanceDisclaimerProps {
-  isOpen: boolean;
-  onAccept: () => void;
-  onCancel: () => void;
-  title?: string;
-  description?: string;
+import {useState} from 'react';
+import {DialogContainer,DialogCard} from './ui';
+import {usePresentation} from '../hooks/usePresentation';
+import {STABLE_BALANCE_COPY} from '../locales/stableBalance';
+interface Props{isOpen:boolean;onAccept:()=>void;onCancel:()=>void;title?:string;description?:string}
+export default function StableBalanceDisclaimer({isOpen,onAccept,onCancel,title,description}:Props){
+ const {language}=usePresentation();const copy=STABLE_BALANCE_COPY[language];
+ const [acknowledged,setAcknowledged]=useState(false);
+ if(!isOpen)return null;
+ return <DialogContainer><DialogCard maxWidth="sm"><div className="space-y-4 max-h-[calc(100dvh-160px)] overflow-y-auto overscroll-contain" data-testid="stable-mode-warning">
+  <h3 className="text-lg font-display font-bold text-spark-text-primary">{title??copy.section}</h3>
+  <p className="text-sm leading-relaxed text-spark-text-secondary">{description??copy.what}</p>
+  <p className="text-sm font-semibold leading-relaxed text-spark-text-primary">{copy.cost}</p>
+  <p className="text-sm leading-relaxed text-spark-text-secondary">{copy.automatic}</p>
+  <p className="text-xs leading-relaxed text-spark-text-muted">{copy.risk}</p>
+  <label className="flex items-start gap-3 min-h-11 text-sm leading-relaxed text-spark-text-primary cursor-pointer">
+   <input type="checkbox" checked={acknowledged} onChange={e=>setAcknowledged(e.target.checked)} className="mt-1 h-5 w-5 shrink-0 accent-[#F7931A]"/>
+   <span>{copy.ack}</span>
+  </label>
+  <div className="flex gap-3"><button type="button" onClick={onCancel} className="flex-1 min-h-11 rounded-xl border border-spark-border text-sm text-spark-text-secondary">{copy.cancel}</button>
+   <button type="button" disabled={!acknowledged} onClick={()=>{if(acknowledged)onAccept();}} className="button flex-1 min-h-11 text-sm disabled:opacity-40">{copy.review}</button></div>
+ </div></DialogCard></DialogContainer>;
 }
-
-const DEFAULT_TITLE = 'Stable Balance';
-const DEFAULT_DESCRIPTION =
-  'Your balance is held in USD. Incoming BTC is automatically converted to USD, ' +
-  'and outgoing payments are converted back to BTC. Amounts under the conversion ' +
-  'threshold remain as change until they accumulate.';
-
-const StableBalanceDisclaimer: React.FC<StableBalanceDisclaimerProps> = ({
-  isOpen,
-  onAccept,
-  onCancel,
-  title = DEFAULT_TITLE,
-  description = DEFAULT_DESCRIPTION,
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <DialogContainer>
-      <DialogCard maxWidth="sm">
-        <div className="text-center">
-          <h3 className="font-display text-lg font-bold text-spark-text-primary mb-3">
-            {title}
-          </h3>
-          <div className="text-sm text-spark-text-secondary mb-6 space-y-3">
-            {description.split('\n\n').map((paragraph, i) => (
-              <p key={i}>{paragraph}</p>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={onCancel}
-              className="flex-1 py-2.5 rounded-xl font-display font-semibold text-sm border border-spark-border text-spark-text-secondary hover:bg-white/5 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onAccept}
-              className="button flex-1 py-2.5"
-            >
-              Enable
-            </button>
-          </div>
-        </div>
-      </DialogCard>
-    </DialogContainer>
-  );
-};
-
-export default StableBalanceDisclaimer;
