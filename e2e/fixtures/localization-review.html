@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GetYourSats language review · disposable UI fixtures</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#ddd7cc;color:#28241f;font:14px system-ui,sans-serif}header{padding:12px 20px;background:#fff8ec;position:sticky;top:0;z-index:2;border-bottom:1px solid #c4b69e}h1{font-size:18px;margin:0 0 6px}p{margin:0 0 10px}nav{display:flex;gap:12px;flex-wrap:wrap}label{display:flex;align-items:center;gap:6px}select{padding:8px;border:1px solid #b5a58b;border-radius:6px;background:white}main{padding:16px;overflow:auto}iframe{display:block;margin:auto;border:0;outline:1px solid #9c8a6e;background:#fff;width:390px;height:844px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GetYourSats language review</h1>
+    <p>Disposable UI fixtures. Balances, quotes and payment responses are simulated. No wallet keys or real payments.</p>
+    <nav aria-label="Review controls">
+      <label>Review language <select id="review-language"><option value="en">English</option><option value="hi">हिन्दी</option><option value="es">Español</option><option value="pt">Português</option><option value="ja">日本語</option><option value="th">ไทย</option><option value="vi">Tiếng Việt</option><option value="ta">தமிழ்</option><option value="ar">العربية</option><option value="zh-CN">简体中文</option></select></label>
+      <label>Journey <select id="review-journey"><option value="wallet">Wallet</option><option value="settings">Settings</option><option value="lnurl">Lightning amount and review</option><option value="destination">Stablecoin destination</option><option value="sending">Payment processing</option><option value="sent">Payment result</option><option value="failed">Payment failure</option><option value="unknown">Payment result unknown</option><option value="setup">Welcome guide (simulated)</option></select></label>
+      <label>Viewport <select id="review-width"><option value="390">390 × 844</option><option value="768">768 × 1024</option><option value="1366">1366 × 900</option></select></label>
+    </nav>
+  </header>
+  <main><iframe id="review-frame" title="GetYourSats disposable wallet interface"></iframe></main>
+  <script type="module">
+    // Development-only entry. The production build never imports these fixtures.
+    const language=document.querySelector('#review-language');
+    const journey=document.querySelector('#review-journey');
+    const width=document.querySelector('#review-width');
+    const frame=document.querySelector('#review-frame');
+    const routes={lnurl:'payment-locales.html',destination:'send-destination.html',setup:'wallet-setup.html'};
+    function render(){
+      frame.width=width.value;
+      frame.style.width=`${width.value}px`;
+      frame.height=width.value==='768'?'1024':width.value==='1366'?'900':'844';
+      frame.style.height=`${frame.height}px`;
+      const url=new URL(routes[journey.value]||'premium-ui.html',location.href);
+      url.searchParams.set('lang',language.value);
+      if(!routes[journey.value])url.searchParams.set('screen',journey.value);
+      frame.src=url.href;
+    }
+    language.addEventListener('change',render);
+    journey.addEventListener('change',render);
+    width.addEventListener('change',()=>{frame.style.width=`${width.value}px`;frame.style.height=width.value==='768'?'1024px':width.value==='1366'?'900px':'844px'});
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,2796 @@
+{
+  "baseline": "b8a4dc9a745afdd9836a8484d81976b9930d278b",
+  "note": "Static JSX candidates, manually triage before translation. Excludes dynamic strings; not a complete untranslated-word count.",
+  "candidates": [
+    {
+      "file": "src/App.tsx",
+      "line": 80,
+      "text": "Loading wallet"
+    },
+    {
+      "file": "src/App.tsx",
+      "line": 822,
+      "text": "Unknown screen"
+    },
+    {
+      "file": "src/components/AppErrorBoundary.tsx",
+      "line": 47,
+      "text": "Something went wrong"
+    },
+    {
+      "file": "src/components/AppErrorBoundary.tsx",
+      "line": 50,
+      "text": "GetYourSats couldn't display this screen. Reloading does not intentionally erase wallet data. If a payment was in progress, check verified wallet activity before retrying."
+    },
+    {
+      "file": "src/components/AppErrorBoundary.tsx",
+      "line": 59,
+      "text": "Reload GetYourSats"
+    },
+    {
+      "file": "src/components/CollapsingWalletHeader.tsx",
+      "line": 330,
+      "text": "Open menu"
+    },
+    {
+      "file": "src/components/CollapsingWalletHeader.tsx",
+      "line": 349,
+      "text": "Refund"
+    },
+    {
+      "file": "src/components/CollapsingWalletHeader.tsx",
+      "line": 391,
+      "text": "Syncing"
+    },
+    {
+      "file": "src/components/CollapsingWalletHeader.tsx",
+      "line": 401,
+      "text": "Balance"
+    },
+    {
+      "file": "src/components/CollapsingWalletHeader.tsx",
+      "line": 451,
+      "text": "change"
+    },
+    {
+      "file": "src/components/DestinationField.tsx",
+      "line": 54,
+      "text": "Destination"
+    },
+    {
+      "file": "src/components/DestinationField.tsx",
+      "line": 83,
+      "text": "Paste"
+    },
+    {
+      "file": "src/components/DestinationField.tsx",
+      "line": 87,
+      "text": "Scan"
+    },
+    {
+      "file": "src/components/FeeBreakdownCard.tsx",
+      "line": 65,
+      "text": "&mdash;"
+    },
+    {
+      "file": "src/components/FeeRateSelector.tsx",
+      "line": 22,
+      "text": "Select Fee Rate"
+    },
+    {
+      "file": "src/components/InstallPrompt.tsx",
+      "line": 48,
+      "text": "Optional home-screen installation"
+    },
+    {
+      "file": "src/components/InstallPrompt.tsx",
+      "line": 51,
+      "text": "Keep GetYourSats a tap away"
+    },
+    {
+      "file": "src/components/InstallPrompt.tsx",
+      "line": 55,
+      "text": "You can also start in your browser."
+    },
+    {
+      "file": "src/components/InstallPrompt.tsx",
+      "line": 56,
+      "text": "Install from your browser for quick access. It is optional and does not change wallet custody."
+    },
+    {
+      "file": "src/components/InstallPrompt.tsx",
+      "line": 60,
+      "text": "Dismiss installation guidance"
+    },
+    {
+      "file": "src/components/LockScreen.tsx",
+      "line": 97,
+      "text": "Enter your PIN to unlock"
+    },
+    {
+      "file": "src/components/LockScreen.tsx",
+      "line": 116,
+      "text": "Forgot your PIN?"
+    },
+    {
+      "file": "src/components/LockScreen.tsx",
+      "line": 134,
+      "text": "Forgot your PIN?"
+    },
+    {
+      "file": "src/components/OfflineBanner.tsx",
+      "line": 31,
+      "text": "No internet connection"
+    },
+    {
+      "file": "src/components/PaymentCelebration.tsx",
+      "line": 127,
+      "text": "Done"
+    },
+    {
+      "file": "src/components/PinEntry.tsx",
+      "line": 102,
+      "text": "Use biometrics"
+    },
+    {
+      "file": "src/components/PinEntry.tsx",
+      "line": 108,
+      "text": "Clear PIN"
+    },
+    {
+      "file": "src/components/PinEntry.tsx",
+      "line": 115,
+      "text": "Delete digit"
+    },
+    {
+      "file": "src/components/PinEntry.tsx",
+      "line": 263,
+      "text": "Enter your PIN to continue"
+    },
+    {
+      "file": "src/components/PosErrorBoundary.tsx",
+      "line": 19,
+      "text": "Point of Sale unavailable"
+    },
+    {
+      "file": "src/components/PosErrorBoundary.tsx",
+      "line": 22,
+      "text": "Point of Sale interrupted"
+    },
+    {
+      "file": "src/components/PosErrorBoundary.tsx",
+      "line": 23,
+      "text": "We couldn't display this checkout. An invoice may already have been requested. Check verified wallet activity before attempting another charge."
+    },
+    {
+      "file": "src/components/PosErrorBoundary.tsx",
+      "line": 25,
+      "text": "Return to wallet"
+    },
+    {
+      "file": "src/components/PosQrBoundary.tsx",
+      "line": 19,
+      "text": "The invoice was created but its QR code could not be displayed. Use Copy invoice or the verified wallet history; do not create a second charge without checking."
+    },
+    {
+      "file": "src/components/QrScannerDialog.tsx",
+      "line": 217,
+      "text": "Camera not available"
+    },
+    {
+      "file": "src/components/QrScannerDialog.tsx",
+      "line": 230,
+      "text": "Switch camera"
+    },
+    {
+      "file": "src/components/QrScannerDialog.tsx",
+      "line": 242,
+      "text": "Pick image from gallery"
+    },
+    {
+      "file": "src/components/QrScannerDialog.tsx",
+      "line": 269,
+      "text": "Point camera at QR code"
+    },
+    {
+      "file": "src/components/QrScannerDialog.tsx",
+      "line": 275,
+      "text": "Cancel"
+    },
+    {
+      "file": "src/components/SatAmount.tsx",
+      "line": 26,
+      "text": "sats"
+    },
+    {
+      "file": "src/components/SideMenu.tsx",
+      "line": 239,
+      "text": "Close"
+    },
+    {
+      "file": "src/components/SideMenu.tsx",
+      "line": 247,
+      "text": "Wallet menu"
+    },
+    {
+      "file": "src/components/SideMenu.tsx",
+      "line": 286,
+      "text": "GetYourSats · v"
+    },
+    {
+      "file": "src/components/SideMenu.tsx",
+      "line": 339,
+      "text": "How to remove your passkey"
+    },
+    {
+      "file": "src/components/SideMenu.tsx",
+      "line": 348,
+      "text": "A unilateral exit is in progress, and logging out deletes what it needs to finish. Save its exit data first, from the exit&apos;s Advanced section."
+    },
+    {
+      "file": "src/components/SideMenu.tsx",
+      "line": 363,
+      "text": "Cancel"
+    },
+    {
+      "file": "src/components/StableBalanceDisclaimer.tsx",
+      "line": 43,
+      "text": "Cancel"
+    },
+    {
+      "file": "src/components/StableBalanceDisclaimer.tsx",
+      "line": 49,
+      "text": "Enable"
+    },
+    {
+      "file": "src/components/StableBalanceFeeConfirm.tsx",
+      "line": 61,
+      "text": "Conversion fee:"
+    },
+    {
+      "file": "src/components/StableBalanceFeeConfirm.tsx",
+      "line": 73,
+      "text": "Couldn't estimate fee"
+    },
+    {
+      "file": "src/components/StableBalanceFeeConfirm.tsx",
+      "line": 87,
+      "text": "Cancel"
+    },
+    {
+      "file": "src/components/StagingGate.tsx",
+      "line": 70,
+      "text": "Staging Environment"
+    },
+    {
+      "file": "src/components/StagingGate.tsx",
+      "line": 73,
+      "text": "This is a development build. Enter the password to continue."
+    },
+    {
+      "file": "src/components/StagingGate.tsx",
+      "line": 83,
+      "text": "Enter password"
+    },
+    {
+      "file": "src/components/StagingGate.tsx",
+      "line": 93,
+      "text": "Continue"
+    },
+    {
+      "file": "src/components/TransactionList.tsx",
+      "line": 110,
+      "text": "Payments"
+    },
+    {
+      "file": "src/components/TransactionList.tsx",
+      "line": 123,
+      "text": "No payments yet"
+    },
+    {
+      "file": "src/components/TransactionList.tsx",
+      "line": 124,
+      "text": "Your payment history will appear here once you send or receive your first payment."
+    },
+    {
+      "file": "src/components/TransactionList.tsx",
+      "line": 256,
+      "text": "fee"
+    },
+    {
+      "file": "src/components/TransactionList.tsx",
+      "line": 292,
+      "text": "Unilateral Exit"
+    },
+    {
+      "file": "src/components/WebSecurityNotice.tsx",
+      "line": 7,
+      "text": "Secure your wallet"
+    },
+    {
+      "file": "src/components/WebSecurityNotice.tsx",
+      "line": 9,
+      "text": "Make sure you have a secure, recoverable backup before adding real funds."
+    },
+    {
+      "file": "src/components/crossChain/CrossChainAssetStep.tsx",
+      "line": 42,
+      "text": "Select coin"
+    },
+    {
+      "file": "src/components/crossChain/CrossChainAssetStep.tsx",
+      "line": 60,
+      "text": "Continue"
+    },
+    {
+      "file": "src/components/crossChain/CrossChainChainStep.tsx",
+      "line": 54,
+      "text": "Select Network for"
+    },
+    {
+      "file": "src/components/crossChain/CrossChainChainStep.tsx",
+      "line": 108,
+      "text": "Continue"
+    },
+    {
+      "file": "src/components/layout/PageLayout.tsx",
+      "line": 46,
+      "text": "Go back"
+    },
+    {
+      "file": "src/components/ui/index.tsx",
+      "line": 356,
+      "text": "Tap to copy"
+    },
+    {
+      "file": "src/components/ui/index.tsx",
+      "line": 388,
+      "text": "Share"
+    },
+    {
+      "file": "src/features/buy/BuyBitcoinDialog.tsx",
+      "line": 136,
+      "text": "Amount"
+    },
+    {
+      "file": "src/features/buy/BuyBitcoinDialog.tsx",
+      "line": 185,
+      "text": "Cash App will show the equivalent amount in your local currency and charge your Cash or BTC balance."
+    },
+    {
+      "file": "src/features/buy/BuyBitcoinDialog.tsx",
+      "line": 225,
+      "text": "Open Cash App"
+    },
+    {
+      "file": "src/features/buy/BuyBitcoinDialog.tsx",
+      "line": 227,
+      "text": ", or scan from another device."
+    },
+    {
+      "file": "src/features/buy/BuyBitcoinDialog.tsx",
+      "line": 234,
+      "text": "Open Cash App"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/BlockedDepositsStep.tsx",
+      "line": 13,
+      "text": "Unclaimed deposits"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/BlockedDepositsStep.tsx",
+      "line": 14,
+      "text": "You have"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/BlockedDepositsStep.tsx",
+      "line": 15,
+      "text": "unclaimed deposit"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/BlockedDepositsStep.tsx",
+      "line": 15,
+      "text": "across your wallets. Please resolve"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/BlockedDepositsStep.tsx",
+      "line": 16,
+      "text": "before upgrading. You can come back and try again once done."
+    },
+    {
+      "file": "src/features/passkey-migration/steps/BlockedDepositsStep.tsx",
+      "line": 21,
+      "text": "Open unclaimed deposits"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ConfirmLabelsStep.tsx",
+      "line": 31,
+      "text": "(current)"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ConfirmLabelsStep.tsx",
+      "line": 37,
+      "text": "You'll be asked to verify your identity multiple times during the migration: once for each label being migrated, then a few more times to create your new passkey. Please keep this window open until the migration is compl"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ConfirmLabelsStep.tsx",
+      "line": 42,
+      "text": "Continue"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ConfirmLabelsStep.tsx",
+      "line": 43,
+      "text": "Not now"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/DoneStep.tsx",
+      "line": 14,
+      "text": "Your funds have been moved to your new passkey."
+    },
+    {
+      "file": "src/features/passkey-migration/steps/DoneStep.tsx",
+      "line": 40,
+      "text": "Done"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ErrorStep.tsx",
+      "line": 16,
+      "text": "Migration failed"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ErrorStep.tsx",
+      "line": 20,
+      "text": "Retry"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ErrorStep.tsx",
+      "line": 22,
+      "text": "Create a new passkey"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ErrorStep.tsx",
+      "line": 24,
+      "text": "Cancel"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ExplainStep.tsx",
+      "line": 15,
+      "text": "We'll create a new passkey and automatically transfer your funds. You'll be asked to verify your identity a few times during the process."
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ExplainStep.tsx",
+      "line": 20,
+      "text": "If you created your passkey with an earlier version of Glow, we'll create a new one and transfer your funds automatically. If this is your first time using Glow, choose"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ExplainStep.tsx",
+      "line": 22,
+      "text": "Skip"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ExplainStep.tsx",
+      "line": 22,
+      "text": "to continue."
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ExplainStep.tsx",
+      "line": 25,
+      "text": "Your funds will be transferred in a single transaction. Your payment history won't carry over."
+    },
+    {
+      "file": "src/features/passkey-migration/steps/ExplainStep.tsx",
+      "line": 29,
+      "text": "Continue"
+    },
+    {
+      "file": "src/features/passkey-migration/steps/MigrationProgressStep.tsx",
+      "line": 31,
+      "text": "Keep this window open"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 190,
+      "text": "Create Invoice"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 199,
+      "text": "Requested amount"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 201,
+      "text": "Request amount"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 204,
+      "text": "Settles in Bitcoin"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 206,
+      "text": "Choose amount currency"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 231,
+      "text": "Selected denomination"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 235,
+      "text": "Stable balance"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 252,
+      "text": "Suggested amounts"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 253,
+      "text": "Quick amounts ·"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 271,
+      "text": "Description (optional)"
+    },
+    {
+      "file": "src/features/receive/AmountPanel.tsx",
+      "line": 288,
+      "text": "What's this for?"
+    },
+    {
+      "file": "src/features/receive/LightningAddressDisplay.tsx",
+      "line": 38,
+      "text": "Create invoice with specific amount →"
+    },
+    {
+      "file": "src/features/receive/LightningAddressDisplay.tsx",
+      "line": 47,
+      "text": "Lightning addresses unavailable"
+    },
+    {
+      "file": "src/features/receive/LightningAddressDisplay.tsx",
+      "line": 48,
+      "text": "They&apos;re not supported in this environment."
+    },
+    {
+      "file": "src/features/receive/LightningAddressDisplay.tsx",
+      "line": 81,
+      "text": "Lightning Address"
+    },
+    {
+      "file": "src/features/receive/LightningAddressDisplay.tsx",
+      "line": 82,
+      "text": "Create a Lightning Address to receive payments easily"
+    },
+    {
+      "file": "src/features/receive/LightningAddressDisplay.tsx",
+      "line": 85,
+      "text": "Create Lightning Address"
+    },
+    {
+      "file": "src/features/receive/LightningAddressEditSheet.tsx",
+      "line": 67,
+      "text": "satoshi"
+    },
+    {
+      "file": "src/features/receive/LightningAddressEditSheet.tsx",
+      "line": 73,
+      "text": "@breez.tips"
+    },
+    {
+      "file": "src/features/receive/ReceivePaymentDialog.tsx",
+      "line": 71,
+      "text": "Scan to pay"
+    },
+    {
+      "file": "src/features/receive/ReceivePaymentDialog.tsx",
+      "line": 86,
+      "text": "Ready to receive"
+    },
+    {
+      "file": "src/features/receive/ReceivePaymentDialog.tsx",
+      "line": 86,
+      "text": "Share this invoice. Confirmation appears when payment arrives."
+    },
+    {
+      "file": "src/features/receive/ReceivePaymentDialog.tsx",
+      "line": 345,
+      "text": "Receive"
+    },
+    {
+      "file": "src/features/receive/ReceivePaymentDialog.tsx",
+      "line": 359,
+      "text": "BTC"
+    },
+    {
+      "file": "src/features/receive/ReceivePaymentDialog.tsx",
+      "line": 451,
+      "text": "Confirm Username Change"
+    },
+    {
+      "file": "src/features/receive/workflows/CrossChainReceiveWorkflow.tsx",
+      "line": 337,
+      "text": "Continue"
+    },
+    {
+      "file": "src/features/receive/workflows/CrossChainReceiveWorkflow.tsx",
+      "line": 384,
+      "text": "Select Provider for"
+    },
+    {
+      "file": "src/features/receive/workflows/CrossChainReceiveWorkflow.tsx",
+      "line": 409,
+      "text": "Continue"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 126,
+      "text": "Contacts"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 129,
+      "text": "Add contact"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 133,
+      "text": "Add"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 142,
+      "text": "Search contacts"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 163,
+      "text": "Search contacts..."
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 170,
+      "text": "Clear search"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 272,
+      "text": "Name"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 287,
+      "text": "Contact name"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 297,
+      "text": "Lightning Address"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 319,
+      "text": "user@domain.com"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 334,
+      "text": "Cancel"
+    },
+    {
+      "file": "src/features/send/components/ContactsSubView.tsx",
+      "line": 345,
+      "text": "Delete Contact"
+    },
+    {
+      "file": "src/features/send/components/SaveContactDialog.tsx",
+      "line": 65,
+      "text": "Contact saved"
+    },
+    {
+      "file": "src/features/send/components/SaveContactDialog.tsx",
+      "line": 69,
+      "text": "Save Contact"
+    },
+    {
+      "file": "src/features/send/components/SaveContactDialog.tsx",
+      "line": 79,
+      "text": "Contact name"
+    },
+    {
+      "file": "src/features/send/components/SaveContactDialog.tsx",
+      "line": 90,
+      "text": "Cancel"
+    },
+    {
+      "file": "src/features/send/steps/AmountStep.tsx",
+      "line": 204,
+      "text": "Destination"
+    },
+    {
+      "file": "src/features/send/steps/AmountStep.tsx",
+      "line": 217,
+      "text": "Amount"
+    },
+    {
+      "file": "src/features/send/steps/AmountStep.tsx",
+      "line": 257,
+      "text": "Live"
+    },
+    {
+      "file": "src/features/send/steps/AmountStep.tsx",
+      "line": 257,
+      "text": "/BTC rate unavailable. Choose sats or BTC."
+    },
+    {
+      "file": "src/features/send/steps/AmountStep.tsx",
+      "line": 258,
+      "text": "sats · Settlement is denominated in Bitcoin"
+    },
+    {
+      "file": "src/features/send/steps/AmountStep.tsx",
+      "line": 314,
+      "text": "Send All"
+    },
+    {
+      "file": "src/features/send/steps/AmountStep.tsx",
+      "line": 337,
+      "text": "Processing..."
+    },
+    {
+      "file": "src/features/send/steps/InputStep.tsx",
+      "line": 128,
+      "text": "Where would you like to send?"
+    },
+    {
+      "file": "src/features/send/steps/InputStep.tsx",
+      "line": 136,
+      "text": "Scan QR"
+    },
+    {
+      "file": "src/features/send/steps/InputStep.tsx",
+      "line": 145,
+      "text": "Paste"
+    },
+    {
+      "file": "src/features/send/steps/InputStep.tsx",
+      "line": 150,
+      "text": "Or enter a destination below. We’ll recognize the payment format."
+    },
+    {
+      "file": "src/features/send/steps/InputStep.tsx",
+      "line": 168,
+      "text": "Clear contact"
+    },
+    {
+      "file": "src/features/send/steps/InputStep.tsx",
+      "line": 245,
+      "text": "Payment type"
+    },
+    {
+      "file": "src/features/send/steps/InputStep.tsx",
+      "line": 246,
+      "text": "Payment type shortcuts"
+    },
+    {
+      "file": "src/features/send/steps/InputStep.tsx",
+      "line": 266,
+      "text": "Available networks, assets and fees are verified after you enter a destination."
+    },
+    {
+      "file": "src/features/send/steps/InputStep.tsx",
+      "line": 274,
+      "text": "Choose a contact"
+    },
+    {
+      "file": "src/features/send/steps/InputStep.tsx",
+      "line": 287,
+      "text": "Processing..."
+    },
+    {
+      "file": "src/features/send/steps/ProcessingStep.tsx",
+      "line": 11,
+      "text": "Check your activity before attempting another payment."
+    },
+    {
+      "file": "src/features/send/steps/ResultStep.tsx",
+      "line": 76,
+      "text": "Close"
+    },
+    {
+      "file": "src/features/send/steps/ResultStep.tsx",
+      "line": 101,
+      "text": "Done"
+    },
+    {
+      "file": "src/features/send/workflows/BitcoinWorkflow.tsx",
+      "line": 58,
+      "text": "Continue"
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 312,
+      "text": "Fetching routes..."
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 347,
+      "text": "Couldn’t get a quote"
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 352,
+      "text": "Select Provider for"
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 374,
+      "text": "Getting quote..."
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 380,
+      "text": "Receiving"
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 387,
+      "text": "Fee"
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 403,
+      "text": "Try Again"
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 406,
+      "text": "Change Amount"
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 423,
+      "text": "Continue"
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 436,
+      "text": "You're sending"
+    },
+    {
+      "file": "src/features/send/workflows/CrossChainWorkflow.tsx",
+      "line": 484,
+      "text": "Send"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlAuthWorkflow.tsx",
+      "line": 172,
+      "text": "wants you to"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlAuthWorkflow.tsx",
+      "line": 181,
+      "text": "is missing a CORS header ("
+    },
+    {
+      "file": "src/features/send/workflows/LnurlAuthWorkflow.tsx",
+      "line": 191,
+      "text": "LUD-01"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlAuthWorkflow.tsx",
+      "line": 203,
+      "text": "Done"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlAuthWorkflow.tsx",
+      "line": 208,
+      "text": "Cancel"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlAuthWorkflow.tsx",
+      "line": 214,
+      "text": "Processing..."
+    },
+    {
+      "file": "src/features/send/workflows/LnurlWithdrawWorkflow.tsx",
+      "line": 102,
+      "text": "from"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlWithdrawWorkflow.tsx",
+      "line": 108,
+      "text": "Amount to receive"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlWithdrawWorkflow.tsx",
+      "line": 113,
+      "text": "sats"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlWithdrawWorkflow.tsx",
+      "line": 119,
+      "text": "This withdraw link has no valid amount this wallet can receive."
+    },
+    {
+      "file": "src/features/send/workflows/LnurlWithdrawWorkflow.tsx",
+      "line": 142,
+      "text": "Receive"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlWorkflow.tsx",
+      "line": 299,
+      "text": "sats"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlWorkflow.tsx",
+      "line": 338,
+      "text": "sats"
+    },
+    {
+      "file": "src/features/send/workflows/LnurlWorkflow.tsx",
+      "line": 341,
+      "text": "sats"
+    },
+    {
+      "file": "src/features/unilateral-exit/ArchivedExitDialog.tsx",
+      "line": 54,
+      "text": "BTC Transfer"
+    },
+    {
+      "file": "src/features/unilateral-exit/ArchivedExitDialog.tsx",
+      "line": 55,
+      "text": "Unilateral Exit"
+    },
+    {
+      "file": "src/features/unilateral-exit/TrackerView.tsx",
+      "line": 162,
+      "text": "You can close this. Open Glow regularly until the exit finishes."
+    },
+    {
+      "file": "src/features/unilateral-exit/TrackerView.tsx",
+      "line": 168,
+      "text": "Your exit needs an update"
+    },
+    {
+      "file": "src/features/unilateral-exit/TrackerView.tsx",
+      "line": 169,
+      "text": "Part of your exit already went through, so the remaining transactions need an update. Your money is safe."
+    },
+    {
+      "file": "src/features/unilateral-exit/TrackerView.tsx",
+      "line": 175,
+      "text": "Glow could not continue the exit."
+    },
+    {
+      "file": "src/features/unilateral-exit/TrackerView.tsx",
+      "line": 190,
+      "text": "Choose a Different Fee"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 32,
+      "text": "Watching the address"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 86,
+      "text": "Exit fee received"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 121,
+      "text": "Could not continue the exit"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 123,
+      "text": "Continue the exit at"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 124,
+      "text": "sat/vB."
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 148,
+      "text": "Top Up to Continue"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 188,
+      "text": "Nothing is worth exiting right now"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 190,
+      "text": "sat/vB your balance would cost more to move on-chain than it is worth. Cancel it under Advanced and start again at a lower rate. The fee you sent counts toward it."
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 203,
+      "text": "received"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 211,
+      "text": "Waiting for a confirmation"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 213,
+      "text": "You can close this. Come back to start the exit once the fee confirms."
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/FundStep.tsx",
+      "line": 222,
+      "text": "Could not start the exit"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/IntroStep.tsx",
+      "line": 18,
+      "text": "Move your balance on-chain without Spark operators. Use this only if Spark stops operating. This is a last-resort action."
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/IntroStep.tsx",
+      "line": 24,
+      "text": "What you need"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/QuoteStep.tsx",
+      "line": 29,
+      "text": "Could not quote the exit"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/QuoteStep.tsx",
+      "line": 37,
+      "text": "Nothing here to exit"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/QuoteStep.tsx",
+      "line": 38,
+      "text": "This wallet holds no funds on Spark that can be moved on-chain. If you were expecting some, the leaf data this needs may be missing from this device."
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/QuoteStep.tsx",
+      "line": 50,
+      "text": "Nothing is worth exiting right now"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/QuoteStep.tsx",
+      "line": 51,
+      "text": "At this fee rate every part of your balance would cost more to move on-chain than it is worth. Try a lower fee rate, or wait for the network to get cheaper."
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/QuoteStep.tsx",
+      "line": 65,
+      "text": "You&apos;ll receive"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/QuoteStep.tsx",
+      "line": 91,
+      "text": "To start the process you need to pay the exit fee. These are the mining fees required to move the Spark tree on-chain."
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/QuoteStep.tsx",
+      "line": 97,
+      "text": "Some of your balance stays behind"
+    },
+    {
+      "file": "src/features/unilateral-exit/steps/QuoteStep.tsx",
+      "line": 99,
+      "text": "sits in pieces too small to be worth their own on-chain fee at this rate, so they are left out of this exit."
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 39,
+      "text": "Recurring Buys"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 41,
+      "text": "BUILD A BITCOIN HABIT"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 42,
+      "text": "Plan recurring Bitcoin purchases"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 43,
+      "text": "Choose an amount and interval. Purchases require a verified payment partner before activation."
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 44,
+      "text": "Purchase amount"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 48,
+      "text": "Conversion shown in"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 48,
+      "text": ". Provider minimums and fees are not available until activation."
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 49,
+      "text": "Purchase frequency"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 51,
+      "text": "Daily"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 51,
+      "text": "Weekly"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 51,
+      "text": "Every two weeks"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 51,
+      "text": "Monthly"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 53,
+      "text": "Save Plan Draft"
+    },
+    {
+      "file": "src/getyoursats/DcaPage.tsx",
+      "line": 55,
+      "text": "This screen does not schedule or execute any fiat purchase."
+    },
+    {
+      "file": "src/getyoursats/DenominationTabs.tsx",
+      "line": 14,
+      "text": "Amount denomination"
+    },
+    {
+      "file": "src/getyoursats/MarketPulse.tsx",
+      "line": 51,
+      "text": "Bitcoin market price"
+    },
+    {
+      "file": "src/getyoursats/MarketPulse.tsx",
+      "line": 55,
+      "text": "BITCOIN MARKET"
+    },
+    {
+      "file": "src/getyoursats/MarketPulse.tsx",
+      "line": 58,
+      "text": "Market currency"
+    },
+    {
+      "file": "src/getyoursats/MarketPulse.tsx",
+      "line": 59,
+      "text": "Cycle preferred fiat currency"
+    },
+    {
+      "file": "src/getyoursats/MarketPulse.tsx",
+      "line": 67,
+      "text": "for"
+    },
+    {
+      "file": "src/getyoursats/MarketPulse.tsx",
+      "line": 70,
+      "text": "Scroll to choose Bitcoin amount for market price"
+    },
+    {
+      "file": "src/getyoursats/MarketPulse.tsx",
+      "line": 81,
+      "text": "· Indicative only"
+    },
+    {
+      "file": "src/getyoursats/MarketPulse.tsx",
+      "line": 82,
+      "text": "Refresh Bitcoin price"
+    },
+    {
+      "file": "src/getyoursats/MarketPulse.tsx",
+      "line": 82,
+      "text": "↻ Refresh"
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 18,
+      "text": "Buy Bitcoin through partner"
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 23,
+      "text": "GETYOURSATS · THIRD-PARTY PARTNER"
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 24,
+      "text": "Buy Bitcoin"
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 26,
+      "text": "Close buy Bitcoin"
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 28,
+      "text": "Purchases are handled by an independent payment provider, not by GetYourSats. Your preferred display currency is"
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 30,
+      "text": ". Availability, identity checks, payment methods, purchase fees and delivery terms are set by the provider."
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 35,
+      "text": "Check the destination before paying."
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 36,
+      "text": "A provider checkout requires a compatible"
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 37,
+      "text": "Bitcoin on-chain receiving address"
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 37,
+      "text": "— a Lightning address or Lightning invoice is not a Bitcoin deposit address. Open Receive, confirm a current supported Bitcoin deposit address, its minimums and fees, then independently verify every detail at checkout."
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 43,
+      "text": "You will leave GetYourSats for an independent provider at buy.onramper.com. Review its identity checks, terms and fees before paying."
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 50,
+      "text": "I understand this is external checkout, and GetYourSats will not automatically fill or validate my destination."
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 53,
+      "text": "Open external checkout ↗"
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 57,
+      "text": "Partner checkout isn't active yet."
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 58,
+      "text": "We are evaluating approved payment partners and compatible Bitcoin delivery methods before enabling purchases. Existing Lightning payments remain available."
+    },
+    {
+      "file": "src/getyoursats/PartnerBuyDialog.tsx",
+      "line": 64,
+      "text": "No purchase is completed or recorded as paid in GetYourSats from opening this window. Payment methods and availability vary by country and provider."
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 217,
+      "text": "Merchant point of sale"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 219,
+      "text": "Point of Sale"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 220,
+      "text": "Close point of sale"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 225,
+      "text": "Merchant point of sale"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 228,
+      "text": "Point of Sale"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 230,
+      "text": "Payment history"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 230,
+      "text": "History"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 231,
+      "text": "Close point of sale"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 236,
+      "text": "Merchant sales"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 237,
+      "text": "Back"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 238,
+      "text": "Only completed payments matching invoices in this device’s merchant records are listed."
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 239,
+      "text": "Syncing wallet history…"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 240,
+      "text": "No completed incoming payments found."
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 249,
+      "text": "Payment received"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 250,
+      "text": "Scan this Lightning invoice to pay"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 256,
+      "text": "丰 sats"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 258,
+      "text": "Receives Lightning sats"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 264,
+      "text": "Estimated receiver fee:"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 264,
+      "text": "sats"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 265,
+      "text": "Copy invoice"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 267,
+      "text": "New charge"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 270,
+      "text": "Amount to charge"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 271,
+      "text": "Charge amount"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 276,
+      "text": "Approximately"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 277,
+      "text": "sats · Indicative SDK rate"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 281,
+      "text": "Decimal point"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 281,
+      "text": ". Decimal"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 282,
+      "text": "Clear amount"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 282,
+      "text": "Clear"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 287,
+      "text": "Order note (optional)"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 288,
+      "text": "Order reference"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 293,
+      "text": "Done"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 296,
+      "text": "Amount keypad"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 308,
+      "text": "Recent device POS orders"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 309,
+      "text": "Recent orders on this device · wallet verified for completed status"
+    },
+    {
+      "file": "src/getyoursats/PosPage.tsx",
+      "line": 315,
+      "text": "sats ·"
+    },
+    {
+      "file": "src/getyoursats/SetupOptionsPage.tsx",
+      "line": 12,
+      "text": "← Back"
+    },
+    {
+      "file": "src/getyoursats/SetupOptionsPage.tsx",
+      "line": 16,
+      "text": "SECURE WALLET SETUP"
+    },
+    {
+      "file": "src/getyoursats/SetupOptionsPage.tsx",
+      "line": 22,
+      "text": "Open GetYourSats beta ↗"
+    },
+    {
+      "file": "src/getyoursats/SetupOptionsPage.tsx",
+      "line": 23,
+      "text": "Set up with offline recovery"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 120,
+      "text": "Wallet activity and transaction history"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 123,
+      "text": "YOUR WALLET · ON CHAIN & LIGHTNING"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 132,
+      "text": "Sync wallet activity"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 134,
+      "text": "Wallet records"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 136,
+      "text": "Activity"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 138,
+      "text": "Transaction history"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 145,
+      "text": "Wallet connected"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 167,
+      "text": "Your first transaction starts here."
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 170,
+      "text": "View full transaction history"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 180,
+      "text": "Showing loaded records only. The export includes these loaded payment records."
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 181,
+      "text": "Retry history"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 182,
+      "text": "Unclaimed deposits appear below. CSV exports contain wallet payment records."
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 185,
+      "text": "Search transactions"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 186,
+      "text": "Payment ID, network or status"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 190,
+      "text": "Direction"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 192,
+      "text": "All directions"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 193,
+      "text": "Sent"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 194,
+      "text": "Received"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 197,
+      "text": "Status"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 199,
+      "text": "All statuses"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 200,
+      "text": "Completed"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 201,
+      "text": "Pending"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 202,
+      "text": "Failed"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 207,
+      "text": "wallet records"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 208,
+      "text": "Export CSV ↗"
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 218,
+      "text": "No transactions match these filters."
+    },
+    {
+      "file": "src/getyoursats/WalletActivityPanel.tsx",
+      "line": 220,
+      "text": "Clear filters"
+    },
+    {
+      "file": "src/getyoursats/WalletSetupTour.tsx",
+      "line": 80,
+      "text": "sats"
+    },
+    {
+      "file": "src/getyoursats/WalletSetupTour.tsx",
+      "line": 80,
+      "text": "BTC"
+    },
+    {
+      "file": "src/getyoursats/WalletSetupTour.tsx",
+      "line": 90,
+      "text": "Lightning"
+    },
+    {
+      "file": "src/getyoursats/WalletSetupTour.tsx",
+      "line": 111,
+      "text": "@getyoursats.com"
+    },
+    {
+      "file": "src/pages/BuyProvidersPage.tsx",
+      "line": 122,
+      "text": "Mainnet only"
+    },
+    {
+      "file": "src/pages/BuyProvidersPage.tsx",
+      "line": 130,
+      "text": "Move up"
+    },
+    {
+      "file": "src/pages/BuyProvidersPage.tsx",
+      "line": 138,
+      "text": "Move down"
+    },
+    {
+      "file": "src/pages/BuyProvidersPage.tsx",
+      "line": 165,
+      "text": "Mainnet only"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 219,
+      "text": "Request a New Code"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 222,
+      "text": "Try Again"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 225,
+      "text": "Email Verification"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 227,
+      "text": "Email verification"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 228,
+      "text": "Link an email to this wallet"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 229,
+      "text": "A verified email lets you choose your GetYourSats Lightning name. You can keep using your wallet without one."
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 232,
+      "text": "Checking your wallet..."
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 237,
+      "text": "Enter the six-digit code sent to"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 237,
+      "text": ". It expires in 10 minutes."
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 241,
+      "text": "Change Email"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 243,
+      "text": "Verification code"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 252,
+      "text": "Email address"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 262,
+      "text": "You can request a code after"
+    },
+    {
+      "file": "src/pages/EmailVerificationPage.tsx",
+      "line": 268,
+      "text": "Email cannot restore your wallet. Keep your recovery words or passkey safe."
+    },
+    {
+      "file": "src/pages/FiatCurrenciesPage.tsx",
+      "line": 152,
+      "text": "Currencies"
+    },
+    {
+      "file": "src/pages/FiatCurrenciesPage.tsx",
+      "line": 158,
+      "text": "Failed to load currencies. Please try again."
+    },
+    {
+      "file": "src/pages/FiatCurrenciesPage.tsx",
+      "line": 165,
+      "text": "Search currencies"
+    },
+    {
+      "file": "src/pages/FiatCurrenciesPage.tsx",
+      "line": 166,
+      "text": "Search code, name or symbol…"
+    },
+    {
+      "file": "src/pages/FiatCurrenciesPage.tsx",
+      "line": 173,
+      "text": "No matching currencies. Try a different name or code."
+    },
+    {
+      "file": "src/pages/FiatCurrenciesPage.tsx",
+      "line": 176,
+      "text": "Your currencies"
+    },
+    {
+      "file": "src/pages/FiatCurrenciesPage.tsx",
+      "line": 222,
+      "text": "Move up"
+    },
+    {
+      "file": "src/pages/FiatCurrenciesPage.tsx",
+      "line": 230,
+      "text": "Move down"
+    },
+    {
+      "file": "src/pages/FiatCurrenciesPage.tsx",
+      "line": 245,
+      "text": "More currencies"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 66,
+      "text": "Secure wallet setup"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 69,
+      "text": "Secure wallet setup"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 70,
+      "text": "Setup unavailable"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 73,
+      "text": "Verify my handwritten backup"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 74,
+      "text": "Verify offline backup"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 77,
+      "text": "Manual recovery"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 81,
+      "text": "Private backup checklist"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 82,
+      "text": "Your recovery words are hidden. Reveal them only when you are ready to write them down privately."
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 85,
+      "text": "I am somewhere private, away from cameras and other people."
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 89,
+      "text": "I will use paper and keep this backup offline. I will not screenshot, copy or share the words."
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 104,
+      "text": "Recovery phrase"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 111,
+      "text": "Recovery words hidden"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 118,
+      "text": "I have written down all the words in order and stored them in a secure, private place."
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 120,
+      "text": "Offline only"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 120,
+      "text": "Nobody at GetYourSats can recover your private keys for you. Store your handwritten backup securely and separately from your phone."
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 125,
+      "text": "Confirm two words from your handwritten backup. The recovery phrase is hidden during this check."
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 127,
+      "text": "Word"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 132,
+      "text": "Try again"
+    },
+    {
+      "file": "src/pages/GeneratePage.tsx",
+      "line": 133,
+      "text": "Verification happens on your device. Your recovery words are never sent to GetYourSats."
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 241,
+      "text": "Get Refund"
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 261,
+      "text": "All Clear!"
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 262,
+      "text": "No rejected deposits pending refund."
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 290,
+      "text": "Amount"
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 321,
+      "text": "Broadcasting"
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 327,
+      "text": "Continue"
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 345,
+      "text": "Refund to Bitcoin"
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 371,
+      "text": "Continue"
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 398,
+      "text": "Continue"
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 418,
+      "text": "Refund Failed"
+    },
+    {
+      "file": "src/pages/GetRefundPage.tsx",
+      "line": 427,
+      "text": "Refund"
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 117,
+      "text": "Done"
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 125,
+      "text": "Your Lightning Name"
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 127,
+      "text": "Verified email"
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 128,
+      "text": "Email verified"
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 130,
+      "text": "Email cannot restore your wallet. Keep your recovery words or passkey safe."
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 132,
+      "text": "Your Lightning username"
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 134,
+      "text": "Your existing Breez address continues to receive into this wallet. No purchase or activity requirement applies to your new name."
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 137,
+      "text": "Personalized GetYourSats names are not available yet. You can keep using your current Lightning address."
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 143,
+      "text": "Username"
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 146,
+      "text": "yourname"
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 150,
+      "text": "@getyoursats.com"
+    },
+    {
+      "file": "src/pages/GetYourSatsUsernameClaim.tsx",
+      "line": 152,
+      "text": "3 to 24 letters and numbers, starting with a letter. If this wallet already has a GetYourSats name, we will restore it."
+    },
+    {
+      "file": "src/pages/HomePage.tsx",
+      "line": 51,
+      "text": "Language"
+    },
+    {
+      "file": "src/pages/HomePage.tsx",
+      "line": 51,
+      "text": "Language"
+    },
+    {
+      "file": "src/pages/HomePage.tsx",
+      "line": 58,
+      "text": "Wallet setup"
+    },
+    {
+      "file": "src/pages/HomePage.tsx",
+      "line": 64,
+      "text": "Restore existing wallet"
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 162,
+      "text": "Try Again"
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 168,
+      "text": "Labels"
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 177,
+      "text": "Couldn't load labels"
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 190,
+      "text": "No labels yet"
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 193,
+      "text": "Add a label to organize multiple wallets under this passkey."
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 265,
+      "text": "Add new label"
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 269,
+      "text": "New label name"
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 281,
+      "text": "e.g. Savings"
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 287,
+      "text": "A label with this name already exists."
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 299,
+      "text": "Cancel"
+    },
+    {
+      "file": "src/pages/LabelsPage.tsx",
+      "line": 317,
+      "text": "Switch label?"
+    },
+    {
+      "file": "src/pages/PasskeyLocalStatePage.tsx",
+      "line": 150,
+      "text": "Local State"
+    },
+    {
+      "file": "src/pages/PasskeyLocalStatePage.tsx",
+      "line": 170,
+      "text": "Forget history?"
+    },
+    {
+      "file": "src/pages/PasskeyLocalStatePage.tsx",
+      "line": 181,
+      "text": "Wipe tracked passkeys?"
+    },
+    {
+      "file": "src/pages/PasskeyLocalStatePage.tsx",
+      "line": 192,
+      "text": "Clear provider info?"
+    },
+    {
+      "file": "src/pages/PasskeyLocalStatePage.tsx",
+      "line": 203,
+      "text": "Reset migration state?"
+    },
+    {
+      "file": "src/pages/PasskeyManagementPage.tsx",
+      "line": 145,
+      "text": "Passkey"
+    },
+    {
+      "file": "src/pages/PasskeyManagementPage.tsx",
+      "line": 153,
+      "text": "No passkey"
+    },
+    {
+      "file": "src/pages/PasskeyManagementPage.tsx",
+      "line": 165,
+      "text": "Passkey"
+    },
+    {
+      "file": "src/pages/PasskeyManagementPage.tsx",
+      "line": 256,
+      "text": "Active"
+    },
+    {
+      "file": "src/pages/PasskeyManagementPage.tsx",
+      "line": 283,
+      "text": "Sync"
+    },
+    {
+      "file": "src/pages/PasskeyManagementPage.tsx",
+      "line": 289,
+      "text": "First sign-in"
+    },
+    {
+      "file": "src/pages/PasskeyManagementPage.tsx",
+      "line": 295,
+      "text": "Last sign-in"
+    },
+    {
+      "file": "src/pages/PasskeyManagementPage.tsx",
+      "line": 319,
+      "text": "Use this passkey?"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 980,
+      "text": "Create your passkey"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 983,
+      "text": "A passkey will be created on your device to secure your funds."
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 988,
+      "text": "Your passkey is how you access your funds"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 989,
+      "text": "Deleting your passkey from your device, browser, or password manager may make your funds permanently inaccessible."
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1014,
+      "text": "Select a label"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1017,
+      "text": "Select an existing label or create a new one to connect with."
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1059,
+      "text": "Create a new label..."
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1066,
+      "text": "Create a new label"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1083,
+      "text": "Label name"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1090,
+      "text": "A label with this name already exists"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1121,
+      "text": "Passkey verification failed"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1124,
+      "text": "This device can't complete a passkey ceremony until the app's domain configuration is recognized."
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1130,
+      "text": "Diagnostic details"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1136,
+      "text": "Source:"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1140,
+      "text": "Reason:"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1146,
+      "text": "This typically happens when the app's domain configuration was recently deployed and the platform's verification cache hasn't refreshed, or when the configuration is missing entirely. There's no guaranteed refresh time. "
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1189,
+      "text": "Retry Check"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1201,
+      "text": "Share Diagnostic Logs"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1204,
+      "text": "Go Back"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1220,
+      "text": "Continue with Recovery Phrase"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1227,
+      "text": "Try Again"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1235,
+      "text": "Create Passkey"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1266,
+      "text": "Continue"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1283,
+      "text": "Continue with Recovery Phrase"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1302,
+      "text": "Use Another Passkey"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1312,
+      "text": "Create New Passkey"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1328,
+      "text": "Continue with Recovery Phrase"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1342,
+      "text": "Create Passkey"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1363,
+      "text": "Use Passkey"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1366,
+      "text": "Go Back"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1378,
+      "text": "Continue with Recovery Phrase"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1388,
+      "text": "Go Back"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1405,
+      "text": "Create Passkey"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1408,
+      "text": "Go Back"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1456,
+      "text": "Continue"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1459,
+      "text": "Go Back"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1470,
+      "text": "Get Started"
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1517,
+      "text": "I confirm that this passkey was deleted."
+    },
+    {
+      "file": "src/pages/PasskeyPage.tsx",
+      "line": 1520,
+      "text": "Optional. Continue without ticking if unsure."
+    },
+    {
+      "file": "src/pages/PasskeySettingsPage.tsx",
+      "line": 68,
+      "text": "Passkey & Labels"
+    },
+    {
+      "file": "src/pages/PasskeySettingsPage.tsx",
+      "line": 98,
+      "text": "Passkey RP ID"
+    },
+    {
+      "file": "src/pages/PasskeySettingsPage.tsx",
+      "line": 99,
+      "text": "(dev)"
+    },
+    {
+      "file": "src/pages/PasskeySettingsPage.tsx",
+      "line": 101,
+      "text": "Which Relying Party ID this device signs in under. Switching re-derives the wallet under the chosen RP and reconnects right away, so only change it to test migration."
+    },
+    {
+      "file": "src/pages/RestorePage.tsx",
+      "line": 71,
+      "text": "If you saved a GetYourSats passkey with your device's password manager, use it to sign in. Face unlock, fingerprint or your screen lock may be used by the operating system."
+    },
+    {
+      "file": "src/pages/RestorePage.tsx",
+      "line": 75,
+      "text": "Sign in with my passkey"
+    },
+    {
+      "file": "src/pages/RestorePage.tsx",
+      "line": 78,
+      "text": "If this device can't find the passkey, check its password manager or return here for offline recovery."
+    },
+    {
+      "file": "src/pages/RestorePage.tsx",
+      "line": 88,
+      "text": "Enter your existing 12 or 24-word phrase privately. Words must be in order, separated by spaces."
+    },
+    {
+      "file": "src/pages/RestorePage.tsx",
+      "line": 96,
+      "text": "word1 word2 word3 ..."
+    },
+    {
+      "file": "src/pages/SecurityPage.tsx",
+      "line": 177,
+      "text": "Create PIN"
+    },
+    {
+      "file": "src/pages/SecurityPage.tsx",
+      "line": 214,
+      "text": "Deactivate PIN"
+    },
+    {
+      "file": "src/pages/SecurityPage.tsx",
+      "line": 221,
+      "text": "Lock Automatically"
+    },
+    {
+      "file": "src/pages/SecurityPage.tsx",
+      "line": 229,
+      "text": "Lock automatically"
+    },
+    {
+      "file": "src/pages/SecurityPage.tsx",
+      "line": 246,
+      "text": "Change PIN"
+    },
+    {
+      "file": "src/pages/SecurityPage.tsx",
+      "line": 263,
+      "text": "Biometric Unlock Locked"
+    },
+    {
+      "file": "src/pages/SecurityPage.tsx",
+      "line": 264,
+      "text": "Too many failed attempts. Tap to unlock with your passcode."
+    },
+    {
+      "file": "src/pages/SecurityPage.tsx",
+      "line": 298,
+      "text": "Lock Screen"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 216,
+      "text": "Security"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 224,
+      "text": "PIN &amp; biometric unlock"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 235,
+      "text": "Wallet security availability"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 239,
+      "text": "Wallet protection"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 240,
+      "text": "Wallet PIN and biometric approval are not available for imported recovery-word wallets in the browser yet. Keep your recovery words offline and secure your device."
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 247,
+      "text": "Why is this unavailable?"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 250,
+      "text": "Passkeys are available when creating a new wallet. They cannot be added to an existing wallet restored from recovery words."
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 259,
+      "text": "Privacy &amp; recovery"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 267,
+      "text": "Recovery words"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 276,
+      "text": "Account identity"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 281,
+      "text": "Verify Email Address"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 282,
+      "text": "Coming soon"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 335,
+      "text": "Buy Bitcoin"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 337,
+      "text": "Coming soon"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 347,
+      "text": "Automatic Claims"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 348,
+      "text": "On-chain deposits are claimed automatically while the network fee stays under this limit."
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 356,
+      "text": "Max fee type"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 359,
+      "text": "Fixed"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 360,
+      "text": "Rate"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 362,
+      "text": "Network + leeway"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 389,
+      "text": "Passkey"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 397,
+      "text": "Passkey & Labels"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 406,
+      "text": "Diagnostics"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 425,
+      "text": "Database"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 445,
+      "text": "Network"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 460,
+      "text": "Changing network will reload the app and reconnect."
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 471,
+      "text": "Prefer Spark"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 472,
+      "text": "Use Spark address over Lightning invoice when available"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 485,
+      "text": "Sync Settings"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 487,
+      "text": "Sync interval (seconds)"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 509,
+      "text": "Unilateral Exit"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 510,
+      "text": "Move your balance on-chain without Spark operators."
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 521,
+      "text": "Start Unilateral Exit"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 529,
+      "text": "Use this only if Spark stops operating. This is a last-resort action."
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 552,
+      "text": "Account"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 560,
+      "text": "How to delete your account"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 571,
+      "text": "GetYourSats v"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 573,
+      "text": "(dev)"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 577,
+      "text": "more taps to"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 577,
+      "text": "dev mode"
+    },
+    {
+      "file": "src/pages/SettingsPage.tsx",
+      "line": 585,
+      "text": "Export Database"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 335,
+      "text": "Your claim did not go through: the fee changed from"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 625,
+      "text": "BTC Transfer"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 648,
+      "text": "Network fee changed"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 649,
+      "text": "The fee rose to"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 650,
+      "text": "while you were confirming. Approve to claim at the new fee."
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 664,
+      "text": "Approve to claim this transfer, or reject to process a refund."
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 679,
+      "text": "Speed"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 694,
+      "text": "Speed"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 695,
+      "text": "Speed"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 762,
+      "text": "Claim Failed"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 764,
+      "text": "You can reject to process a refund instead."
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 795,
+      "text": "Processing..."
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 807,
+      "text": "Reject"
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 813,
+      "text": "Processing..."
+    },
+    {
+      "file": "src/pages/UnclaimedDepositDetailsPage.tsx",
+      "line": 825,
+      "text": "Reject"
+    },
+    {
+      "file": "src/pages/UnilateralExitPage.tsx",
+      "line": 84,
+      "text": "Continue"
+    },
+    {
+      "file": "src/pages/UnilateralExitPage.tsx",
+      "line": 95,
+      "text": "Continue"
+    },
+    {
+      "file": "src/pages/UnilateralExitPage.tsx",
+      "line": 110,
+      "text": "Get Quote"
+    },
+    {
+      "file": "src/pages/UnilateralExitPage.tsx",
+      "line": 117,
+      "text": "Continue"
+    },
+    {
+      "file": "src/pages/UnilateralExitPage.tsx",
+      "line": 131,
+      "text": "Exit Spark"
+    },
+    {
+      "file": "src/pages/UnilateralExitPage.tsx",
+      "line": 154,
+      "text": "Continue Exit"
+    },
+    {
+      "file": "src/pages/UnilateralExitPage.tsx",
+      "line": 171,
+      "text": "Unilateral Exit"
+    },
+    {
+      "file": "src/pages/UnilateralExitPage.tsx",
+      "line": 211,
+      "text": "Cannot reach your recovery phrase"
+    },
+    {
+      "file": "src/pages/UnlockPage.tsx",
+      "line": 88,
+      "text": "Welcome back"
+    },
+    {
+      "file": "src/pages/UnlockPage.tsx",
+      "line": 117,
+      "text": "Erase and Start Over"
+    },
+    {
+      "file": "src/pages/UnlockPage.tsx",
+      "line": 126,
+      "text": "Erase and start over"
+    },
+    {
+      "file": "src/pages/UnlockingPage.tsx",
+      "line": 50,
+      "text": "Authenticating…"
+    },
+    {
+      "file": "src/pages/WalletPage.tsx",
+      "line": 318,
+      "text": "Wallet navigation"
+    },
+    {
+      "file": "src/pages/WalletPage.tsx",
+      "line": 327,
+      "text": "Bitcoin first. Every sat counts."
+    },
+    {
+      "file": "src/pages/WalletPage.tsx",
+      "line": 365,
+      "text": "Copy your Lightning address"
+    },
+    {
+      "file": "src/pages/WalletPage.tsx",
+      "line": 366,
+      "text": "Copy Lightning address"
+    },
+    {
+      "file": "src/pages/WalletPage.tsx",
+      "line": 378,
+      "text": "Merchant and planning actions"
+    },
+    {
+      "file": "src/pages/WalletPage.tsx",
+      "line": 380,
+      "text": "Open Point of Sale"
+    },
+    {
+      "file": "src/pages/WalletPage.tsx",
+      "line": 494,
+      "text": "Wallet actions"
+    },
+    {
+      "file": "src/pages/WalletPage.tsx",
+      "line": 495,
+      "text": "Receive Bitcoin"
+    },
+    {
+      "file": "src/pages/WalletPage.tsx",
+      "line": 497,
+      "text": "Send Bitcoin"
+    }
+  ]
+}

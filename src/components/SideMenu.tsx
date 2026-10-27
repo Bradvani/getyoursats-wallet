@@ -334,7 +334,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                   {isPasskey && (
                     <button
                       type="button"
-                      onClick={() => { void openExternalUrl(ACCOUNT_DELETION_GUIDE_URL); }}
+                      onClick={() => { void openExternalUrl(ACCOUNT_DELETION_GUIDE_URL+'?lang='+language); }}
                       className="mx-auto mb-6 flex items-center gap-1 text-xs text-spark-text-muted underline hover:text-spark-text-secondary transition-colors"
                     >
                       How to remove your passkey

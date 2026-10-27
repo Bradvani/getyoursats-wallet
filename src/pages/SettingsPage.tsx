@@ -553,7 +553,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             <button
               className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-warning/40 rounded-xl text-spark-warning hover:bg-spark-warning/10 transition-colors"
               type="button"
-              onClick={() => { void openExternalUrl(ACCOUNT_DELETION_GUIDE_URL); }}
+              onClick={() => { void openExternalUrl(ACCOUNT_DELETION_GUIDE_URL+'?lang='+language); }}
             >
               <div className="flex items-center gap-3">
                 <TrashIcon size="md" />

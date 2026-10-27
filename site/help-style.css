@@ -41,7 +41,7 @@
 .gys-submit:disabled{opacity:.48;cursor:not-allowed}
 #gys-contact-status{font-size:12px;color:#B7A88E;margin-top:15px;line-height:1.6;min-height:18px}
 .gys-language{background:#191817;border:1px solid rgba(247,147,26,.28);padding:9px 12px;border-radius:12px;color:#FAF9F6;font:inherit;font-size:12px;max-width:140px}
-.gys-contact-hidden{position:absolute;left:-9999px;width:1px;height:1px}
+.gys-contact-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;pointer-events:none}
 .gys-privacy-card{border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#191817;padding:21px}
 .gys-privacy-card h3{color:#FAF9F6;font-size:17px;margin:0 0 10px}
 .gys-privacy-card p{font-size:14px;color:#BCB7AF;line-height:1.72}

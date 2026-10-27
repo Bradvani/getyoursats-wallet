@@ -6,7 +6,7 @@ export const ASIAN_LOCALES = {
       scan: 'QRをスキャン',
       pointOfSale: '店舗決済',
       recurring: '定期購入',
-      buy: 'ビットコインを購入',
+      buy: 'Bitcoinを購入',
       logout: 'この端末からウォレットを削除',
       help: 'ヘルプと情報',
       privacy: 'プライバシー',
@@ -34,17 +34,17 @@ export const ASIAN_LOCALES = {
     },
     home: {
       scarcity: '上限は2,100万BTC。',
-      eyebrow: 'ビットコインには上限があります',
+      eyebrow: 'Bitcoinには上限があります',
       heading: 'すべてのsatに',
       emphasis: '価値がある。',
       subtitle:
-        'ビットコインの発行上限は2,100万枚。GetYourSatsで保管し、Lightningで支払いを送受信できます。',
+        'Bitcoinの発行上限は2,100万枚。GetYourSatsで保管し、Lightningで支払いを送受信できます。',
       start: '始める',
       restoreQuestion: 'GetYourSatsウォレットをお持ちですか？',
       restore: '復元する',
       passkey:
         '対応端末のパスキーでウォレットを作成します。端末の生体認証や画面ロックが使われる場合があります。設定の復元情報は安全に保管してください。',
-      footOne: 'ビットコインを中心に。',
+      footOne: 'Bitcoinを中心に。',
       footTwo: 'satsは有限です。',
     },
     ux: {
@@ -71,7 +71,7 @@ export const ASIAN_LOCALES = {
       search: '言語を検索',
       noResults: '該当する言語がありません',
       howWalletWorks: 'ウォレットの仕組み',
-      depositIntro: 'ビットコインをGetYourSatsウォレットで受け取ります。',
+      depositIntro: 'BitcoinをGetYourSatsウォレットで受け取ります。',
       stableIntro:
         'USDTまたはUSDCで入金できます。入金前に、ネットワーク、費用、受取資産と金額を確認してください。',
       depositAmount: '送金者が入金する金額（USD）',
@@ -88,7 +88,7 @@ export const ASIAN_LOCALES = {
       scan: 'สแกน QR',
       pointOfSale: 'จุดขาย',
       recurring: 'ซื้อเป็นประจำ',
-      buy: 'ซื้อบิตคอยน์',
+      buy: 'ซื้อBitcoin',
       logout: 'นำกระเป๋าออกจากอุปกรณ์นี้',
       help: 'ความช่วยเหลือและข้อมูล',
       privacy: 'ความเป็นส่วนตัว',
@@ -116,17 +116,17 @@ export const ASIAN_LOCALES = {
     },
     home: {
       scarcity: 'มีเพียง 21 ล้าน BTC',
-      eyebrow: 'บิตคอยน์มีจำนวนจำกัด',
+      eyebrow: 'Bitcoinมีจำนวนจำกัด',
       heading: 'ทุก sat',
       emphasis: 'มีความหมาย',
       subtitle:
-        'บิตคอยน์มีจำนวนสูงสุด 21 ล้านเหรียญ เก็บไว้กับ GetYourSats และส่งหรือรับเงินผ่าน Lightning',
+        'Bitcoinมีจำนวนสูงสุด 21 ล้านเหรียญ เก็บไว้กับ GetYourSats และส่งหรือรับเงินผ่าน Lightning',
       start: 'เริ่มต้น',
       restoreQuestion: 'มีกระเป๋า GetYourSats แล้วใช่ไหม?',
       restore: 'กู้คืน',
       passkey:
         'สร้างกระเป๋าด้วยพาสคีย์บนอุปกรณ์ที่รองรับ อุปกรณ์อาจใช้ไบโอเมตริกหรือการล็อกหน้าจอ เก็บข้อมูลการกู้คืนในหน้าการตั้งค่าให้เป็นความลับ',
-      footOne: 'บิตคอยน์มาก่อน',
+      footOne: 'Bitcoinมาก่อน',
       footTwo: 'sats มีจำกัด',
     },
     ux: {
@@ -153,7 +153,7 @@ export const ASIAN_LOCALES = {
       search: 'ค้นหาภาษา',
       noResults: 'ไม่พบภาษา',
       howWalletWorks: 'กระเป๋าทำงานอย่างไร',
-      depositIntro: 'รับบิตคอยน์เข้ากระเป๋า GetYourSats ของคุณ',
+      depositIntro: 'รับBitcoinเข้ากระเป๋า GetYourSats ของคุณ',
       stableIntro:
         'ฝากด้วย USDT หรือ USDC ตรวจสอบเครือข่าย ค่าใช้จ่าย สินทรัพย์และยอดที่จะได้รับก่อนฝาก',
       depositAmount: 'จำนวนที่ผู้ส่งฝาก (USD)',
@@ -253,7 +253,7 @@ export const ASIAN_LOCALES = {
       scan: 'QR ஸ்கேன்',
       pointOfSale: 'விற்பனை முனையம்',
       recurring: 'தொடர் கொள்முதல்',
-      buy: 'பிட்காயின் வாங்கு',
+      buy: 'Bitcoin வாங்கு',
       logout: 'இந்தச் சாதனத்திலிருந்து பணப்பையை அகற்று',
       help: 'உதவி மற்றும் தகவல்',
       privacy: 'தனியுரிமை',
@@ -281,17 +281,17 @@ export const ASIAN_LOCALES = {
     },
     home: {
       scarcity: 'மொத்தம் 2.1 கோடி BTC மட்டுமே.',
-      eyebrow: 'பிட்காயினுக்கு ஓர் வரம்பு உள்ளது',
+      eyebrow: 'Bitcoin-க்கு ஓர் வரம்பு உள்ளது',
       heading: 'ஒவ்வொரு sat-உம்',
       emphasis: 'மதிப்புடையது.',
       subtitle:
-        'பிட்காயினின் அதிகபட்ச அளவு 2.1 கோடி. GetYourSats இல் வைத்திருந்து Lightning மூலம் பணம் அனுப்பவும் பெறவும்.',
+        'Bitcoin இன் அதிகபட்ச அளவு 2.1 கோடி. GetYourSats இல் வைத்திருந்து Lightning மூலம் பணம் அனுப்பவும் பெறவும்.',
       start: 'தொடங்கு',
       restoreQuestion: 'GetYourSats பணப்பை உள்ளதா?',
       restore: 'மீட்டெடு',
       passkey:
         'ஆதரிக்கப்படும் சாதனத்தின் பாஸ்கீ மூலம் பணப்பையை உருவாக்கவும். சாதனம் உயிரளவியல் அல்லது திரைப் பூட்டைப் பயன்படுத்தலாம். அமைப்புகளில் உள்ள மீட்புத் தகவல்களை ரகசியமாக வைத்திருக்கவும்.',
-      footOne: 'பிட்காயின் முதலில்.',
+      footOne: 'Bitcoin முதலில்.',
       footTwo: 'SATS குறைவானவை.',
     },
     ux: {
@@ -319,7 +319,7 @@ export const ASIAN_LOCALES = {
       search: 'மொழியைத் தேடு',
       noResults: 'மொழி கிடைக்கவில்லை',
       howWalletWorks: 'பணப்பை செயல்படும் விதம்',
-      depositIntro: 'உங்கள் GetYourSats பணப்பையில் பிட்காயினைப் பெறவும்.',
+      depositIntro: 'உங்கள் GetYourSats பணப்பையில் Bitcoin ஐப் பெறவும்.',
       stableIntro:
         'USDT அல்லது USDC மூலம் செலுத்தவும். செலுத்தும் முன் நெட்வொர்க், செலவுகள், பெறும் சொத்து மற்றும் தொகையைச் சரிபார்க்கவும்.',
       depositAmount: 'அனுப்புநர் செலுத்தும் தொகை (USD)',
@@ -338,7 +338,7 @@ export const ASIAN_LOCALES = {
       scan: 'مسح QR',
       pointOfSale: 'نقطة البيع',
       recurring: 'الشراء الدوري',
-      buy: 'شراء بيتكوين',
+      buy: 'شراء Bitcoin',
       logout: 'إزالة المحفظة من هذا الجهاز',
       help: 'المساعدة والمعلومات',
       privacy: 'الخصوصية',
@@ -366,18 +366,18 @@ export const ASIAN_LOCALES = {
     },
     home: {
       scarcity: '21 مليون BTC فقط.',
-      eyebrow: 'لبيتكوين حد أقصى',
-      heading: 'كل ساتوشي',
+      eyebrow: 'كمية Bitcoin محدودة',
+      heading: 'كل وحدة من sats',
       emphasis: 'له قيمة.',
       subtitle:
-        'الحد الأقصى لبيتكوين هو 21 مليون عملة. احتفظ بها في GetYourSats وأرسل المدفوعات واستقبلها عبر Lightning.',
+        'الحد الأقصى من Bitcoin هو 21 مليون عملة. احتفظ بها في GetYourSats وأرسل المدفوعات واستقبلها عبر Lightning.',
       start: 'ابدأ',
       restoreQuestion: 'هل لديك محفظة GetYourSats؟',
       restore: 'استعادة',
       passkey:
         'أنشئ محفظة بمفتاح مرور على جهاز مدعوم. قد يستخدم الجهاز القياسات الحيوية أو قفل الشاشة. احتفظ بمعلومات الاستعادة في الإعدادات بسرية.',
-      footOne: 'بيتكوين أولاً.',
-      footTwo: 'الساتوشي محدود.',
+      footOne: 'Bitcoin أولاً.',
+      footTwo: 'عدد sats محدود.',
     },
     ux: {
       back: 'رجوع',
@@ -403,7 +403,7 @@ export const ASIAN_LOCALES = {
       search: 'ابحث عن لغة',
       noResults: 'لم يتم العثور على لغة',
       howWalletWorks: 'كيف تعمل المحفظة',
-      depositIntro: 'استقبل بيتكوين في محفظة GetYourSats الخاصة بك.',
+      depositIntro: 'استقبل Bitcoin في محفظة GetYourSats الخاصة بك.',
       stableIntro:
         'أودع باستخدام USDT أو USDC. راجع الشبكة والتكاليف والأصل والمبلغ المتوقع استلامه قبل الإيداع.',
       depositAmount: 'المبلغ الذي يودعه المرسل (USD)',
@@ -420,7 +420,7 @@ export const ASIAN_LOCALES = {
       scan: '扫描二维码',
       pointOfSale: '商户收款',
       recurring: '定期购买',
-      buy: '购买比特币',
+      buy: '购买Bitcoin',
       logout: '从此设备移除钱包',
       help: '帮助与信息',
       privacy: '隐私',
@@ -448,18 +448,18 @@ export const ASIAN_LOCALES = {
     },
     home: {
       scarcity: '总量仅 2100 万 BTC。',
-      eyebrow: '比特币总量有限',
-      heading: '每一聪',
+      eyebrow: 'Bitcoin总量有限',
+      heading: '每一个 sat',
       emphasis: '都很重要。',
       subtitle:
-        '比特币总量上限为 2100 万枚。使用 GetYourSats 保存比特币，通过 Lightning 发送和接收付款。',
+        'Bitcoin总量上限为 2100 万枚。使用 GetYourSats 保存Bitcoin，通过 Lightning 发送和接收付款。',
       start: '开始',
       restoreQuestion: '已有 GetYourSats 钱包？',
       restore: '恢复钱包',
       passkey:
         '使用受支持设备的通行密钥创建钱包。设备可能使用生物识别或屏幕锁。请妥善保管设置中的恢复信息。',
-      footOne: '比特币优先。',
-      footTwo: '聪是稀缺的。',
+      footOne: 'Bitcoin优先。',
+      footTwo: 'sats 是稀缺的。',
     },
     ux: {
       back: '返回',
@@ -485,7 +485,7 @@ export const ASIAN_LOCALES = {
       search: '搜索语言',
       noResults: '未找到语言',
       howWalletWorks: '钱包如何运作',
-      depositIntro: '将比特币存入你的 GetYourSats 钱包。',
+      depositIntro: '将Bitcoin存入你的 GetYourSats 钱包。',
       stableIntro:
         '使用 USDT 或 USDC 存款。存款前请核对网络、费用、到账资产和金额。',
       depositAmount: '付款方存入的金额（USD）',
