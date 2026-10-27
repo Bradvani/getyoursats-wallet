@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "repository": "Bradvani/getyoursats-wallet",
+  "preparedAtUtc": "2026-10-27T00:01:39.245825+00:00",
+  "name": "Main release checks",
+  "target": {
+    "include": [
+      "~DEFAULT_BRANCH"
+    ],
+    "defaultBranchAtPreparation": "main"
+  },
+  "proposedEnforcement": "active",
+  "bypassActors": [],
+  "pullRequestRequired": true,
+  "requiredApprovingReviewCount": 0,
+  "strictUpToDate": true,
+  "requiredStatusChecks": [
+    {
+      "context": "verify",
+      "app": "GitHub Actions",
+      "appId": 15368
+    },
+    {
+      "context": "setup-smoke",
+      "app": "GitHub Actions",
+      "appId": 15368
+    },
+    {
+      "context": "Analyze (javascript-typescript)",
+      "app": "GitHub Actions",
+      "appId": 15368
+    }
+  ],
+  "codeScanning": {
+    "tool": "CodeQL",
+    "securityAlertsThreshold": "high_or_higher",
+    "alertsThreshold": "errors"
+  },
+  "restrictDeletions": true,
+  "blockForcePushes": true,
+  "status": "prepared_not_created_pending_user_approval",
+  "activationAttempt": {
+    "result": "automatic_approval_review_rejected",
+    "reason": "The exact branch-protection policy and scope had not been explicitly approved. It can block legitimate merges and is a consequential workflow/access change.",
+    "retried": false,
+    "workaroundAttempted": false
+  },
+  "acceptanceBoundary": "This mechanical merge policy is not independent security approval. The draft candidate still needs its release-specific engineering and acceptance gates.",
+  "mergeRisk": "Direct pushes and merges with missing, failing or outdated required checks would be blocked, including for the owner. No bypass actor is configured. No second reviewer is imposed by this ruleset.",
+  "screenshot": {
+    "path": "main-protection-prepared-20261026.jpg",
+    "bytes": 344169,
+    "sha256": "6ee7cc97b7ca0e0a46d2eca067a8680047e72b845601b7896e0b32557aeb3df4"
+  }
+}

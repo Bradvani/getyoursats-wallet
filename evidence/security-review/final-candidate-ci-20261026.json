@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "repository": "Bradvani/getyoursats-wallet",
   "pullRequest": 43,
   "publishedHead": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
@@ -101,12 +101,12 @@
       "securityPassed": 0,
       "rollbackPassed": 0,
       "originalJobId": 121901355353,
-      "status": "Original setup timed out; no assertions executed and no retry submission yet observed."
+      "status": "Original setup timed out before assertions. One job-only retry call was invoked; its acknowledgment and acceptance remain unknown. Latest observed API state still showed attempt 1."
     }
   },
   "artifactMetadataProvenance": "GitHub API-reported artifact digests and sizes; archives were not downloaded or locally hashed for this receipt.",
   "observedAt": "2026-10-26 23:29:07 UTC",
-  "status": "Five workflows successful; release security matrix cancelled because Firefox setup timed out before tests. One authorized job-only retry has not yet been observed as submitted.",
+  "status": "Historical head 4c5: five of six Actions workflows successful; Firefox setup timed out. A separate CodeQL security verdict failed with one high-severity alert. One job-only retry tool call was invoked with no acknowledgment; acceptance remains unknown.",
   "workflowSummary": {
     "successful": 5,
     "total": 6,
@@ -357,8 +357,20 @@
       "scope": "Only original Firefox job121901355353 at the same commit, without workflow/source changes",
       "reason": "Root authorized one retry after confirmed transient setup/download failure; GitHub annotation and package-download log establish setup timeout."
     },
-    "retryRequested": false,
-    "finalOutcome": "pending authorized retry"
+    "finalOutcome": "Acceptance unknown. Original completed/cancelled attempt 1 remains the last observed run metadata; later source-triggered workflows are separate runs.",
+    "originalPreInvocationRetryRequested": false,
+    "retryToolCallInvoked": true,
+    "retryAccepted": null,
+    "retryAcknowledged": false,
+    "retryCallOutcome": {
+      "waitSeconds": 1375.4,
+      "toolResult": "aborted by user after 1375.4s",
+      "interruptedBy": "assistant interrupted the waiting agent",
+      "successResponseReceived": false,
+      "rejectionReasonReceived": false,
+      "secondAttemptIdObserved": false,
+      "duplicateRetrySubmitted": false
+    }
   },
   "artifacts": [
     {
@@ -428,6 +440,29 @@
     "The optional funded end-to-end workflow job was intentionally skipped.",
     "The earlier public-regtest attempt connected empty disposable wallets but obtained no funds after a faucet bot/CAPTCHA rejection; no funding retry occurred during this verification.",
     "The original Firefox setup timeout remains part of the record even if the one authorized retry later succeeds.",
-    "PR43 remains a draft security candidate with production NO-GO; passing CI is not release approval."
-  ]
+    "PR43 remains a draft security candidate with production NO-GO; passing CI is not release approval.",
+    "A successful CodeQL Actions workflow does not imply its separate security verdict passed. The latter failed on this source."
+  ],
+  "correctedAtUtc": "2026-10-27T00:01:39.245825+00:00",
+  "separateCodeqlVerdict": {
+    "checkId": 121901714007,
+    "name": "CodeQL",
+    "app": "GitHub Advanced Security",
+    "appId": 57789,
+    "conclusion": "failure",
+    "highSeverityAlertCount": 1,
+    "rule": "js/incomplete-url-substring-sanitization",
+    "affectedPath": "scripts/security/accept-disposable-spark.mjs",
+    "affectedLine": 87,
+    "receipt": "codeql-verdict-4c5-20261026.json",
+    "impactObserved": "Diagnostic faucet POST-host classification accepted misleading suffixes; this predicate did not authorize payments.",
+    "analysisWorkflowSuccessIsNotSecurityVerdictSuccess": true,
+    "alertSuppressedOrDismissed": false
+  },
+  "snapshotCorrection": {
+    "originalSnapshotObservedAt": "2026-10-26 23:29:07 UTC",
+    "reason": "The original summary missed the separate CodeQL verdict and preceded the retry invocation.",
+    "originalReceiptPreservedAtCommit": "c89dc46a0d0a646cf5591e0a1850a1af9f648d43",
+    "correctionDoesNotReattributeOldTestsToNewSource": true
+  }
 }

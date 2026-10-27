@@ -279,14 +279,15 @@
   },
   "securityCandidate": {
     "pullRequestUrl": "https://github.com/Bradvani/getyoursats-wallet/pull/43",
-    "head": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
-    "tree": "a271ade6929e72fc0f17f754242f29da1a96b896",
+    "head": "f5c319882d172ec2710a712aa02f15497b6eb2e7",
+    "tree": "aac378618ad62773216d2970ad121ca77b9fd9c2",
     "draft": true,
     "productionStatus": "NO-GO; not promoted",
     "contractsDocument": "https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/remaining-sdk-contracts-20261027.md",
     "ciReceipt": "../../security-review/final-candidate-ci-20261026.json",
     "ciObservedAt": "2026-10-26 23:29:07 UTC",
-    "ciStatus": "Five workflows successful; release security matrix cancelled because Firefox setup timed out before tests. One authorized job-only retry has not yet been observed as submitted."
+    "ciStatus": "Fresh follow-up CI pending. Earlier 4c5 snapshot corrected to include failed separate CodeQL verdict and ambiguous retry acceptance.",
+    "followUpReceipt": "../../security-review/candidate-followup-20261027.json"
   },
   "remainingGates": [
     "A01: encrypted mnemonic migration, locking, data preservation and physical recovery acceptance on the separate security candidate.",
@@ -296,8 +297,8 @@
     "Physical iPhone and Android, installed PWA, passkey and recovery phrase, separate-device restoration and original-origin old/new wallet-state rollout.",
     "Critical-flow translation, RTL and accessibility acceptance.",
     "Qualified independent review of the exact application source, SDK patch, lockfile and built artifacts.",
-    "GitHub repository About description/homepage still need owner-session editing; source README, site metadata and llms.txt are corrected.",
-    "Corrective lock still reports six high and four moderate dependency entries. All are marked dev in the lock; historical browser trace is not universal runtime or build-time clearance."
+    "Corrective lock still reports six high and four moderate dependency entries. All are marked dev in the lock; historical browser trace is not universal runtime or build-time clearance.",
+    "Activate the prepared main release-check ruleset after explicit owner approval; automatic approval review blocked creation and no rule was created."
   ],
   "otherLimits": [
     "History pagination lacks an SDK transactional snapshot or stable secondary key. Concurrent backfill, deletion and equal-timestamp reorder remain completeness limits.",
@@ -360,6 +361,26 @@
       "path": "github-signin-passkey-20261026.jpg",
       "bytes": 41116,
       "sha256": "e660e8fb096bfea190ed48e3e7a6a8fc02f84677ceb74b627912f2328cb673fd"
+    },
+    {
+      "path": "github-about-corrected-20261026.jpg",
+      "bytes": 143015,
+      "sha256": "f6ae856df756cd271af67fcc0d5a14032a20b1ec6410691e404655c6c9a2a067"
+    },
+    {
+      "path": "github-about-corrected-20261026.json",
+      "bytes": 733,
+      "sha256": "708d592df29f2ba3145d2d1582454027028d22716e30903e126117544421c7a7"
+    },
+    {
+      "path": "main-protection-prepared-20261026.jpg",
+      "bytes": 344169,
+      "sha256": "6ee7cc97b7ca0e0a46d2eca067a8680047e72b845601b7896e0b32557aeb3df4"
+    },
+    {
+      "path": "main-protection-prepared-20261026.json",
+      "bytes": 1884,
+      "sha256": "925ef0742082a38ef939adb330d2509322f9203b8438a982c746bdd42eabc1ca"
     }
   ],
   "repositoryMetadataFollowUp": {
@@ -368,7 +389,19 @@
     "homepageBefore": "https://glow-app.co",
     "preparedDescription": "GetYourSats: a Bitcoin wallet for everyday payments with Lightning, Spark and on-chain interoperability.",
     "preparedHomepage": "https://getyoursats.com",
-    "status": "Not changed. The connector cannot edit About fields. Secure browser authentication was offered; the user selected passkey. GitHub reports partial passkey support and is waiting for browser interaction. No successful owner sign-in was observed.",
-    "screenshot": "github-signin-passkey-20261026.jpg"
+    "status": "Saved in the authenticated owner session and independently verified by repository GET.",
+    "screenshot": "github-about-corrected-20261026.jpg",
+    "savedDescription": "GetYourSats: a Bitcoin wallet for everyday payments with Lightning, Spark and on-chain interoperability.",
+    "savedHomepage": "https://getyoursats.com",
+    "githubUpdatedAt": "2026-10-26T23:45:53Z",
+    "receipt": "github-about-corrected-20261026.json",
+    "historicalSignInScreenshot": "github-signin-passkey-20261026.jpg"
+  },
+  "continuedAtUtc": "2026-10-27T00:01:39.245825+00:00",
+  "branchProtectionFollowUp": {
+    "status": "prepared_not_created_pending_user_approval",
+    "receipt": "main-protection-prepared-20261026.json",
+    "activated": false,
+    "reason": "The exact branch-protection policy and scope had not been explicitly approved. It can block legitimate merges and is a consequential workflow/access change."
   }
 }

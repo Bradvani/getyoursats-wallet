@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-27T00:01:39.245825+00:00",
+  "pullRequest": 43,
+  "status": "draft_not_deployed_fresh_ci_pending",
+  "publishedHead": "f5c319882d172ec2710a712aa02f15497b6eb2e7",
+  "tree": "aac378618ad62773216d2970ad121ca77b9fd9c2",
+  "equivalentLocalCommit": "b042afc208d75ef4685aacd75d84f3e8027175a9",
+  "preservedConcurrentParent": "2993b24409f9734b7fc4f7c80a8b9cba39b13d63",
+  "priorCandidate": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+  "priorCodeqlVerdict": "codeql-verdict-4c5-20261026.json",
+  "offlineHostnameRegressionTests": {
+    "passed": 22,
+    "failed": 0,
+    "networkRequests": 0,
+    "fundingScriptImportedOrExecuted": false
+  },
+  "workflowChange": {
+    "uniqueDisplayNames": [
+      "verify-pinned-spark-integration",
+      "verify-rollback-compatibility",
+      "verify-vault-operation-coordination",
+      "verify-signed-recovery-wiring"
+    ],
+    "historicalSourceWritingWorkflowsNowManualOnly": [
+      "integrate-spark46.yml",
+      "vault-operation-coordination.yml",
+      "wire-signed-recovery.yml"
+    ],
+    "rollbackAutomationPreserved": true,
+    "jobIdsCommandsPermissionsBranchGuardsAndNeedsUnchanged": true,
+    "requiredVerifyContextNowUnique": true
+  },
+  "sdkPackageChanged": false,
+  "productionInterlockChanged": false,
+  "productionPromoted": false,
+  "realFundsAcceptance": false
+}

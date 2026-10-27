@@ -1,0 +1,40 @@
+{
+  "sourceCommit": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+  "check": {
+    "id": 121901714007,
+    "name": "CodeQL",
+    "head_sha": "4c5fe8bddb7c71e44f2d0d1748d2b2054d506134",
+    "status": "completed",
+    "conclusion": "failure",
+    "details_url": "https://github.com/Bradvani/getyoursats-wallet/runs/121901714007",
+    "output": {
+      "title": "1 new alert including 1 high severity security vulnerability",
+      "summary": "### New alerts in code changed by this pull request\n\nSecurity Alerts:\n * 1 high\n\n\n_Alerts not introduced by this pull request might have been detected because the code changes were too large._\n\nSee annotations below for details.\n\n[View all branch alerts](/Bradvani/getyoursats-wallet/security/code-scanning?query=pr%3A43+tool%3ACodeQL+is%3Aopen).",
+      "text": null,
+      "annotations_count": 1,
+      "annotations_url": "https://api.github.com/repos/Bradvani/getyoursats-wallet/check-runs/121901714007/annotations"
+    },
+    "started_at": "2026-10-26T23:03:06Z",
+    "completed_at": "2026-10-26T23:03:10Z"
+  },
+  "annotations": [
+    {
+      "path": "scripts/security/accept-disposable-spark.mjs",
+      "blob_href": "https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/scripts/security/accept-disposable-spark.mjs",
+      "start_line": 87,
+      "start_column": 61,
+      "end_line": 87,
+      "end_column": 113,
+      "annotation_level": "failure",
+      "title": "Incomplete URL substring sanitization",
+      "message": "'[lightspark.com](1)' may be preceded by an arbitrary host name.",
+      "raw_details": null
+    }
+  ],
+  "meaning": "The CodeQL analysis workflow completed successfully, while this separate GitHub Advanced Security check failed with one high-severity alert. This receipt is the observed pre-fix verdict; the correction needs a fresh verdict.",
+  "ruleReference": {
+    "id": "js/incomplete-url-substring-sanitization",
+    "securitySeverity": 7.8,
+    "url": "https://codeql.github.com/codeql-query-help/javascript/js-incomplete-url-substring-sanitization/"
+  }
+}

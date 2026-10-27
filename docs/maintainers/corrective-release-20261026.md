@@ -54,7 +54,7 @@ All four corrective workflows completed successfully: [Tests](https://github.com
 
 Redis tests use an actual isolated Redis instance with provider delivery mocked. The optional funded E2E job was intentionally skipped because its release/manual/label opt-in gate was not enabled. The optional Claude review on an earlier head stopped before reviewing because provider credentials were unavailable and did not run on this final head. Neither is recorded as passing.
 
-GitHub main had no required-check enforcement and no rulesets. The passing outcomes are explicit evidence, not a claim that branch protection enforces this release policy. The browser artifact upload is linked and its reported digest recorded; its archive was not independently downloaded and rehashed.
+GitHub main had no required-check enforcement and no rulesets at release time. A concrete policy is now prepared, but automatic approval review rejected activation because the exact policy had not been explicitly approved. No rule was created. The passing outcomes remain explicit evidence, not enforced merge policy. See the prepared policy below. The browser artifact upload is linked and its reported digest recorded; its archive was not independently downloaded and rehashed.
 
 ## Public production checks and exact artifacts
 
@@ -80,7 +80,7 @@ History scans still lack an SDK transactional snapshot and a stable secondary pa
 
 ## Remaining real-funds release gates
 
-The draft security candidate is `4c5fe8bddb7c71e44f2d0d1748d2b2054d506134`, tree `a271ade6929e72fc0f17f754242f29da1a96b896`. Its [remaining SDK contracts](https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/remaining-sdk-contracts-20261027.md) and [integration evidence](https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/final-main-integration-20261027.md) are separate from this live corrective release.
+The latest published draft security candidate is `f5c319882d172ec2710a712aa02f15497b6eb2e7`, tree `aac378618ad62773216d2970ad121ca77b9fd9c2`. It preserves the concurrent passkey guide and fixes the diagnostic hostname check. The following contract and integration records retain their earlier source identity. Its [remaining SDK contracts](https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/remaining-sdk-contracts-20261027.md) and [integration evidence](https://github.com/Bradvani/getyoursats-wallet/blob/4c5fe8bddb7c71e44f2d0d1748d2b2054d506134/docs/security-review/final-main-integration-20261027.md) are separate from this live corrective release.
 
 | Gate | Evidence still required |
 |---|---|
@@ -92,12 +92,18 @@ The draft security candidate is `4c5fe8bddb7c71e44f2d0d1748d2b2054d506134`, tree
 | Critical UX | Critical-flow translations, RTL and accessibility acceptance |
 | Independent approval | Qualified review of the exact application, SDK patch, dependency lock and deployed artifacts |
 
-The source README, site metadata and `llms.txt` are corrected. GitHub's repository About description and homepage remain stale because the available connector cannot edit those fields and the browser owner session is signed out. Search engine or third-party descriptions have not been proven refreshed. None of these metadata edits substitutes for the security gates.
+The source README, site metadata and `llms.txt` are corrected. GitHub's repository About description and homepage were also saved in the authenticated owner session and independently verified through repository GET at update time `2026-10-26T23:45:53Z`. Search engine or third-party descriptions have not been proven refreshed. None of these metadata edits substitutes for the security gates.
 
 No real-money transfer or support email was sent during this work. No existing wallet was reset or forcibly migrated. This evidence supports the corrective release described above and does not certify real-funds adoption.
 
-## Final security-CI snapshot and metadata continuation
+## Corrected security-CI snapshot and metadata completion
 
-The [separate security-CI snapshot](../security-review/final-candidate-ci-20261026.md) records the draft candidate at 23:29:07 UTC. Five of six workflows passed. A dedicated Firefox job exhausted its 20-minute budget downloading operating-system dependencies before running any security or rollback assertions. The completed broad browser suite still passed all 300 executions across its three engines. The receipt does not infer submission or success of the one permitted retry and does not alter the production NO-GO decision.
+The [separate corrected security-CI snapshot](../security-review/final-candidate-ci-20261026.md) covers historical candidate `4c5fe8bd`. Five of six Actions workflows passed, but the separate CodeQL security verdict failed with one high-severity diagnostic-host finding. The dedicated Firefox job timed out during dependency installation before any security or rollback assertions. One retry call was invoked but never acknowledged before interruption after 1,375.4 seconds; acceptance is unknown and no duplicate call was submitted. The original source-specific browser results remain valid within their stated limits.
 
-The prepared repository About description is **GetYourSats: a Bitcoin wallet for everyday payments with Lightning, Spark and on-chain interoperability.** The prepared homepage is **https://getyoursats.com**. Neither field has been changed. GitHub's secure sign-in choice was presented; the user selected passkey, after which GitHub reported partial passkey support and waited for browser interaction. No successful owner sign-in was observed. The [visible sign-in state](../../evidence/releases/corrective-20261026/github-signin-passkey-20261026.jpg) is retained for the owner handoff.
+The saved repository About description is **GetYourSats: a Bitcoin wallet for everyday payments with Lightning, Spark and on-chain interoperability.** The saved homepage is **https://getyoursats.com**. The [completion receipt](../../evidence/releases/corrective-20261026/github-about-corrected-20261026.json) and [owner-session screenshot](../../evidence/releases/corrective-20261026/github-about-corrected-20261026.jpg) establish those fields. The earlier passkey sign-in screenshot remains historical evidence of the resolved login blocker.
+
+## Prepared main protection policy
+
+The [exact prepared policy](../../evidence/releases/corrective-20261026/main-protection-prepared-20261026.json) targets the repository's default branch, currently `main`. It requires pull requests, up-to-date branches and the GitHub Actions checks `verify`, `setup-smoke` and `Analyze (javascript-typescript)`. A separate CodeQL rule blocks high-or-higher security alerts and errors. Force pushes and deletion are blocked with an empty bypass list, including no owner exception. The required reviewer count stays zero because a qualified independent security reviewer has not yet been established; independent release approval remains a separate gate.
+
+Automatic approval review rejected the Create action because the user had not explicitly approved this exact consequential policy. It can block legitimate merges if required checks are missing, failing or stale. The [prepared form](../../evidence/releases/corrective-20261026/main-protection-prepared-20261026.jpg) is retained, no rule was created and no workaround or second activation attempt was made. Explicit owner approval is the final step for this configuration.

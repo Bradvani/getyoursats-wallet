@@ -1,0 +1,18 @@
+{
+  "repository": "Bradvani/getyoursats-wallet",
+  "url": "https://github.com/Bradvani/getyoursats-wallet",
+  "status": "saved_and_verified",
+  "description": "GetYourSats: a Bitcoin wallet for everyday payments with Lightning, Spark and on-chain interoperability.",
+  "homepage": "https://getyoursats.com",
+  "githubUpdatedAt": "2026-10-26T23:45:53Z",
+  "verification": [
+    "Authenticated owner UI showed the saved About fields.",
+    "Independent repository GET returned the same description and homepage."
+  ],
+  "screenshot": {
+    "path": "github-about-corrected-20261026.jpg",
+    "bytes": 143015,
+    "sha256": "f6ae856df756cd271af67fcc0d5a14032a20b1ec6410691e404655c6c9a2a067"
+  },
+  "searchEngineRefreshVerified": false
+}
