@@ -449,7 +449,7 @@ export const ASIAN_LOCALES = {
     home: {
       scarcity: '总量仅 2100 万 BTC。',
       eyebrow: 'Bitcoin总量有限',
-      heading: '每一聪',
+      heading: '每一个 sat',
       emphasis: '都很重要。',
       subtitle:
         'Bitcoin总量上限为 2100 万枚。使用 GetYourSats 保存Bitcoin，通过 Lightning 发送和接收付款。',
@@ -459,7 +459,7 @@ export const ASIAN_LOCALES = {
       passkey:
         '使用受支持设备的通行密钥创建钱包。设备可能使用生物识别或屏幕锁。请妥善保管设置中的恢复信息。',
       footOne: 'Bitcoin优先。',
-      footTwo: '聪是稀缺的。',
+      footTwo: 'sats 是稀缺的。',
     },
     ux: {
       back: '返回',

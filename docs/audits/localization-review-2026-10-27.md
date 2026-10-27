@@ -2,6 +2,8 @@
 
 Date: 27 October 2026 (India). Review scope: wallet, marketing site, Privacy, Support, Learn, account-removal instructions, first-party links and the ten implemented language choices.
 
+Follow-up: [the browser journey review](browser-language-journey-review-2026-10-27.md) exercises all ten language selections, reproduces the mixed-language transitions, records screenshots and supplies a prioritized implementation handoff. It distinguishes live production pages from disposable UI fixtures.
+
 ## Decision
 
 The language menu overstates the completeness of the experience. GetYourSats has useful translations in selected flows, but it does not yet offer ten fully localized user journeys. A catalog with all required keys does not prove that the rest of the interface uses that catalog.

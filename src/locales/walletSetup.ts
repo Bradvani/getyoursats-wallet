@@ -227,14 +227,14 @@ const copy: Record<AppLanguage, WalletSetupCopy> = {
     stepNames: {language: '语言', protect: '备份', balance: '余额', receive: '收款', pos: '销售终端', identity: '你的名称'},
     steps: {
       language: {title: '选择你的语言', body: '使用设备语言或选择其他语言。你随时可以在设置中更改。', detail: '你的选择立即生效。'},
-      protect: {title: '为自己保留恢复途径', body: '添加更多聪之前，请写下恢复词并核对备份。', detail: '将每个词按正确顺序离线保存，切勿泄露。'},
+      protect: {title: '为自己保留恢复途径', body: '添加更多 sats 之前，请写下恢复词并核对备份。', detail: '将每个词按正确顺序离线保存，切勿泄露。'},
       balance: {title: '同一余额，不同视角。', body: '使用余额下方的选项卡，在 sats、BTC 和显示货币之间切换。', detail: '更改显示方式不会转移你的Bitcoin。'},
-      receive: {title: '随时准备收款', body: '分享你的 Lightning 地址或二维码。有人要给你发送聪时，打开收款。', detail: '可以分享收款地址。恢复词必须保密。'},
+      receive: {title: '随时准备收款', body: '分享你的 Lightning 地址或二维码。有人要给你发送 sats 时，打开收款。', detail: '可以分享收款地址。恢复词必须保密。'},
       pos: {title: '钱包也是收银台', body: '在销售终端设置价格，向顾客展示付款二维码。', detail: '请等待付款确认后再完成销售。'},
       identity: {title: '带有你名字的地址', body: '验证电子邮箱，为 GetYourSats Lightning 地址选择可用名称。', detail: '邮箱用于注册名称，无法恢复钱包。'},
     },
     verified: {title: '恢复备份已核对', body: '妥善保密手写恢复词，并与此设备分开存放。', detail: '已在此设备上核对恢复备份。'},
-    named: {title: '你的地址已就绪', body: '有人给你发送聪时，从主页或收款页面复制 GetYourSats Lightning 地址。', detail: '发往个人地址的款项将进入这个钱包。'},
+    named: {title: '你的地址已就绪', body: '有人给你发送 sats 时，从主页或收款页面复制 GetYourSats Lightning 地址。', detail: '发往个人地址的款项将进入这个钱包。'},
   },
 };
 

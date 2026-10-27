@@ -27,6 +27,6 @@ describe('complete privacy locale catalogs',()=>{
  });
  it('keeps protected terms in their original script in existing catalogs',()=>{
   const files=['src/locales/asian.ts','src/locales/walletSetup.ts','src/services/presentationPreferences.ts','site/help-center.js','site/wallet-guide.js'];
-  for(const f of files)expect(readFileSync(f,'utf8'),f).not.toMatch(/बिटकॉइन|ビットコイン|บิตคอยน์|பிட்காயின்|比特币|بيتكوين|लाइटनिंग|ライトニング|闪电网络|सैट|ساتوشي/);
+  for(const f of files)expect(readFileSync(f,'utf8'),f).not.toMatch(/बिटकॉइन|ビットコイン|บิตคอยน์|பிட்காயின்|比特币|بيتكوين|लाइटनिंग|ライトニング|闪电网络|सैट|ساتوشي|每一聪|更多聪|发送聪|聪是稀缺/);
  });
 });
