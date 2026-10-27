@@ -11,7 +11,7 @@ import type { ChainClient, ChainUtxo } from '@/services/chain';
 import { logger, LogCategory } from '@/services/logger';
 import { outputTotalSat } from '@/utils/rawTx';
 import { loadExitState, restoreExitState } from './exitState';
-import { deriveFundingKey, MnemonicNeedsPasskeyError, readWalletMnemonic, type FundingKey } from './funding';
+import { deriveFundingKeyFromSeed, MnemonicNeedsPasskeyError, readWalletSeed, type FundingKey } from './funding';
 import {EXIT_PLAN_STORAGE_PREFIX,EXIT_PENDING_STORAGE_PREFIX} from './removalProtection';
 
 /**
@@ -447,7 +447,7 @@ export async function startExit(
 ): Promise<StartOutcome> {
   const { network, destination, feeRateSatPerVbyte, fundingAddressIndex } = pending;
   const { publicKeyHex, secretKey } =
-    key ?? deriveFundingKey(await readWalletMnemonic({ interactive: true }), network, fundingAddressIndex);
+    key ?? deriveFundingKeyFromSeed(await readWalletSeed({ interactive: true }), network, fundingAddressIndex);
   await restoreExitState(sdk, null, await loadExitState(identityPubkey).catch(() => null));
 
   const quote = await sdk.prepareRecoverFunds({
@@ -550,8 +550,8 @@ export async function rebuildExit(
   identityPubkey: string,
   { interactive = false }: { interactive?: boolean } = {},
 ): Promise<UnilateralExitPlan | null> {
-  const key = deriveFundingKey(
-    await readWalletMnemonic({ interactive }),
+  const key = deriveFundingKeyFromSeed(
+    await readWalletSeed({ interactive }),
     plan.network,
     plan.fundingAddressIndex,
   );

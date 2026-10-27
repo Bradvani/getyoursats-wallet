@@ -1,5 +1,7 @@
-import { deriveFundingKey, MnemonicNeedsPasskeyError, MnemonicUnavailableError, readWalletMnemonic } from './funding';
+import { deriveFundingKey, deriveFundingKeyFromSeed, readWalletSeed, MnemonicNeedsPasskeyError, MnemonicUnavailableError, readWalletMnemonic } from './funding';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mnemonicToSeedSync, entropyToMnemonic } from 'bip39';
+import type { Seed } from '@breeztech/breez-sdk-spark';
 import { signInPinnedToActiveCredential } from '@/services/passkeyService';
 
 vi.mock('@/services/secureStorage', () => ({
@@ -124,5 +126,40 @@ describe('readWalletMnemonic', () => {
     localStorage.setItem('walletMnemonic', VECTOR_MNEMONIC);
     await expect(readWalletMnemonic({ interactive: true })).resolves.toBe(VECTOR_MNEMONIC);
     expect(signIn).not.toHaveBeenCalled();
+  });
+});
+
+// Public deterministic test vectors only. No user wallet material.
+describe('seed-preserving exit funding', () => {
+  const raw = (bytes: number[]): Seed => Object.assign(bytes, { type: 'entropy' as const });
+  it('uses raw BIP32 bytes directly and leaves the caller seed unchanged', () => {
+    const bytes = Array.from(mnemonicToSeedSync(VECTOR_MNEMONIC));
+    const seed = raw(bytes.slice());
+    expect(deriveFundingKeyFromSeed(seed, 'mainnet', 0)).toEqual(deriveFundingKey(VECTOR_MNEMONIC, 'mainnet', 0));
+    expect(Array.from(seed as number[])).toEqual(bytes);
+  });
+  it('preserves the mnemonic passphrase', () => {
+    const seed: Seed = { type: 'mnemonic', mnemonic: VECTOR_MNEMONIC, passphrase: 'TREZOR' };
+    const expected = deriveFundingKeyFromSeed(raw(Array.from(mnemonicToSeedSync(VECTOR_MNEMONIC, 'TREZOR'))), 'regtest', 2);
+    expect(deriveFundingKeyFromSeed(seed, 'regtest', 2)).toEqual(expected);
+    expect(expected.address).not.toBe(deriveFundingKey(VECTOR_MNEMONIC, 'regtest', 2).address);
+  });
+  it('never turns raw bytes into new BIP39 words', () => {
+    const bytes = Array.from({ length: 32 }, (_, i) => i);
+    expect(deriveFundingKeyFromSeed(raw(bytes), 'mainnet', 0).address).not.toBe(
+      deriveFundingKey(entropyToMnemonic(Buffer.from(bytes)), 'mainnet', 0).address,
+    );
+  });
+  it.each([[], Array(15).fill(0), Array(65).fill(0), [...Array(31).fill(0), 256], [...Array(31).fill(0), -1], [...Array(31).fill(0), 1.5], new Array(32)].map(bytes => ({ bytes })))('rejects invalid seed bytes %#', ({ bytes }) => {
+    expect(() => deriveFundingKeyFromSeed(raw(bytes), 'mainnet', 0)).toThrow(/seed/);
+  });
+  it('retains a passkey-returned raw seed without changing its variant', async () => {
+    localStorage.setItem('passkeyLabel', 'Default');
+    const seed = raw(Array(32).fill(7));
+    vi.mocked(signInPinnedToActiveCredential).mockResolvedValue({ wallet: { seed } } as never);
+    try {
+      await expect(readWalletSeed({ interactive: true })).resolves.toBe(seed);
+      await expect(readWalletMnemonic({ interactive: true })).rejects.toThrow(MnemonicUnavailableError);
+    } finally { localStorage.clear(); }
   });
 });

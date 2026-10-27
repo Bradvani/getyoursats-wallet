@@ -43,6 +43,7 @@ describe('connection operation gateway',()=>{
   expect(getDepositClaims(wallet)).not.toBeNull();
   expect(()=>wallet.claimDeposit({txid:'00'.repeat(32),vout:0})).toThrow(/unavailable/);
   expect(()=>Reflect.get(wallet,'claimMatureDepositOnce')({txid:'00'.repeat(32),vout:0,identityPubkey:'wallet',network:'regtest',amountSats:100,maxFeeSats:1,expiresAt:1})).toThrow(/unavailable/);
+  expect(()=>Reflect.get(wallet,'continueMatureDepositClaim')({txid:'00'.repeat(32),vout:0,identityPubkey:'wallet',network:'regtest',amountSats:100,maxFeeSats:1,expiresAt:1})).toThrow(/unavailable/);
   vi.stubEnv('DEV',false);
   expect(getDepositClaims(wallet)).toBeNull();
  });

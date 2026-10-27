@@ -6,7 +6,7 @@ root=$(cd "$(dirname "$0")/../.." && pwd)
 : "${WASM_BINDGEN:?Set WASM_BINDGEN to the verified wasm-bindgen 0.2.120 binary}"
 source_commit=57c5b9e5f0749f97ffe5d93bce21c994f6957cf4
 baseline_commit=d7b88b33defd4edc44d67060c9584093f9e5e97d
-patch="$root/vendor/patches/0004-complete-signed-recovery-source.patch"
+patch="$root/vendor/patches/0005-operation-recovery-source.patch"
 test "$(git -C "$SDK_WORKTREE" rev-parse HEAD)" = "$source_commit"
 test "$(rustc --version | awk '{print $2}')" = 1.95.0
 test "$("$WASM_BINDGEN" --version)" = 'wasm-bindgen 0.2.120'
@@ -25,6 +25,7 @@ cargo test --locked -p breez-sdk-spark signed_recovery_ --lib
 cargo test --locked -p breez-sdk-spark incoming_claim_ --lib
 cargo test --locked -p breez-sdk-spark mature_deposit_ --lib
 cargo test --locked -p breez-sdk-spark outspend_ --lib
+cargo test --locked -p breez-sdk-spark sdk::unilateral_exit::tests --lib
 cargo build --locked -p breez-sdk-spark-wasm --target wasm32-unknown-unknown --release
 baseline=$(mktemp)
 trap 'rm -f "$baseline"' EXIT

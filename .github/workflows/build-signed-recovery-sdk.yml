@@ -3,7 +3,7 @@ on:
   push:
     branches: [release/browser-pwa-security-localization-20261025]
     paths:
-      - vendor/patches/0004-complete-signed-recovery-source.patch
+      - vendor/patches/0005-operation-recovery-source.patch
       - scripts/security/check-sdk-source.py
       - scripts/security/package-seed-signer-sdk.py
       - scripts/security/build-seed-signer-sdk.sh
@@ -45,8 +45,8 @@ jobs:
           mkdir -p /tmp/recovery-sdk-evidence
           git clone --no-checkout --filter=blob:none https://github.com/breez/spark-sdk.git /tmp/recovery-sdk
           git -C /tmp/recovery-sdk checkout 57c5b9e5f0749f97ffe5d93bce21c994f6957cf4
-          git -C /tmp/recovery-sdk apply "$GITHUB_WORKSPACE/vendor/patches/0004-complete-signed-recovery-source.patch"
-          python3 scripts/security/check-sdk-source.py --source /tmp/recovery-sdk --patch vendor/patches/0004-complete-signed-recovery-source.patch
+          git -C /tmp/recovery-sdk apply "$GITHUB_WORKSPACE/vendor/patches/0005-operation-recovery-source.patch"
+          python3 scripts/security/check-sdk-source.py --source /tmp/recovery-sdk --patch vendor/patches/0005-operation-recovery-source.patch
           cargo install wasm-bindgen-cli --version 0.2.120 --locked --root /tmp/recovery-bindgen
       - name: Compile and test Rust envelope validation, identity and observation
         working-directory: /tmp/recovery-sdk
@@ -58,12 +58,13 @@ jobs:
           cargo test --locked -p breez-sdk-spark signed_recovery_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/refund-rust-tests.log
           cargo test --locked -p breez-sdk-spark seed_factory --lib 2>&1 | tee /tmp/recovery-sdk-evidence/seed-rust-tests.log
           cargo test --locked -p breez-sdk-spark observation_ --lib 2>&1 | tee /tmp/recovery-sdk-evidence/observation-rust-tests.log
+          cargo test --locked -p breez-sdk-spark sdk::unilateral_exit::tests --lib 2>&1 | tee /tmp/recovery-sdk-evidence/exit-signer-rust-tests.log
           cargo build --locked -p breez-sdk-spark-wasm --target wasm32-unknown-unknown --release 2>&1 | tee /tmp/recovery-sdk-evidence/wasm-build.log
       - name: Package reproducible SDK and lock dependency
         run: |
           set -euo pipefail
           git show d7b88b33defd4edc44d67060c9584093f9e5e97d:vendor/breeztech-breez-sdk-spark.tgz > /tmp/original-sdk.tgz
-          python3 scripts/security/package-seed-signer-sdk.py --source /tmp/recovery-sdk --baseline /tmp/original-sdk.tgz --wasm /tmp/recovery-sdk/target/wasm32-unknown-unknown/release/breez_sdk_spark_wasm.wasm --bindgen /tmp/recovery-bindgen/bin/wasm-bindgen --output vendor/breeztech-breez-sdk-spark.tgz --patch vendor/patches/0004-complete-signed-recovery-source.patch > /tmp/recovery-sdk-evidence/package.json
+          python3 scripts/security/package-seed-signer-sdk.py --source /tmp/recovery-sdk --baseline /tmp/original-sdk.tgz --wasm /tmp/recovery-sdk/target/wasm32-unknown-unknown/release/breez_sdk_spark_wasm.wasm --bindgen /tmp/recovery-bindgen/bin/wasm-bindgen --output vendor/breeztech-breez-sdk-spark.tgz --patch vendor/patches/0005-operation-recovery-source.patch > /tmp/recovery-sdk-evidence/package.json
           npm install --ignore-scripts --package-lock-only ./vendor/breeztech-breez-sdk-spark.tgz
           npm ci --ignore-scripts
           npm run test:security:wasm
@@ -97,7 +98,7 @@ jobs:
         run: |
           set -euo pipefail
           git merge-base --is-ancestor "$(cat /tmp/recovery-sdk-evidence/base.txt)" HEAD
-          for path in vendor/patches/0004-complete-signed-recovery-source.patch scripts/security/check-sdk-source.py scripts/security/package-seed-signer-sdk.py; do
+          for path in vendor/patches/0005-operation-recovery-source.patch scripts/security/check-sdk-source.py scripts/security/package-seed-signer-sdk.py; do
             test "$(git rev-parse HEAD:$path)" = "$(git rev-parse $(cat /tmp/recovery-sdk-evidence/base.txt):$path)"
           done
           git apply --3way --index /tmp/recovery-sdk-evidence/sdk.patch
