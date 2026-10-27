@@ -5,6 +5,8 @@ import { useStableBalance } from '../contexts/StableBalanceContext';
 import { SatAmount } from './SatAmount';
 import { useFiatData } from '../contexts/FiatDataContext';
 import { getTokenAmountFromPayment, formatTokenAmount, buildTokenDisplayConfig, withAssetDecimals } from '../utils/tokenFormatting';
+import TransferProgress from './TransferProgress';
+import {notifyPaymentFeedback} from '../utils/transferHaptics';
 import PaymentMotion from './PaymentMotion';
 
 interface PaymentCelebrationProps {
@@ -42,11 +44,12 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
       setIsVisible(false);
       revealFrame = requestAnimationFrame(() => {
         setIsVisible(true);
+        notifyPaymentFeedback('success',payment.id);
       });
       closeTimer = setTimeout(() => {
         setIsVisible(false);
         exitTimer = setTimeout(() => onCloseRef.current(), 350);
-      }, 5200);
+      }, 8000);
     };
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') {
@@ -92,6 +95,8 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
         }`}
       >
         <PaymentMotion state={isSent ? 'sent' : 'received'} animate={isVisible} settlementId={payment.status==='completed'?payment.id:undefined}/>
+
+        <TransferProgress confirmed/>
 
         {/* Title */}
         <h2 className="gys-moment__title text-2xl font-display font-bold text-spark-text-primary mb-2">

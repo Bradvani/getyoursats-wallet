@@ -1,3 +1,4 @@
+import {notifyPaymentFeedback} from '@/utils/transferHaptics';
 import {classifyLookupFailure} from '@/getyoursats/lookupFailure';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {paymentOutcome,type PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
@@ -345,6 +346,8 @@ export function useSendPayment(): UseSendPaymentReturn {
     try {
       const outcome = await wallet.sendPayment({ prepareResponse, options });
       setPaymentResult(paymentOutcome(outcome));
+      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id);
+      else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
       setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
       logger.error(LogCategory.PAYMENT, 'Payment failed', { error: formatError(err) });
@@ -397,6 +400,8 @@ export function useSendPayment(): UseSendPaymentReturn {
     try {
       const outcome = await runner();
       setPaymentResult(paymentOutcome(outcome));
+      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id);
+      else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
       setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
       logger.error(LogCategory.PAYMENT, 'Operation failed during payment flow', { error: formatError(err) });

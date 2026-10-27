@@ -4,6 +4,7 @@ import React, { type ReactNode } from 'react';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 import {displayPaymentAmount} from '@/getyoursats/paymentDisplay';
 import { PrimaryButton } from '../../../components/ui';
+import TransferProgress from '../../../components/TransferProgress';
 import PaymentMotion from '../../../components/PaymentMotion';
 
 export interface ResultStepProps {
@@ -80,6 +81,7 @@ const ResultStep: React.FC<ResultStepProps> = ({ result, error, onClose, operati
     <div className="gys-payment-stage" data-testid={isSuccess ? 'payment-success' : 'payment-failure'}>
       <PaymentMotion state="sent" animate={operationType==='payment'}
         settlementId={operationType==='payment' && payment?.status==='completed' && payment.paymentType==='send'?payment.id:undefined}/>
+      {operationType==='payment'&&payment?.status==='completed'&&<TransferProgress confirmed/>}
       {payment?.status==='completed'&&<div className="gys-payment-stage__amount" data-testid="sent-payment-amount">{displayPaymentAmount(payment)}</div>}
 
       {/* Title */}

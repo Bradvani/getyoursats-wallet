@@ -444,3 +444,26 @@ export const TransferStateIcon = ({ state }: { state: 'sending' | 'receiving' | 
     {state === 'failed' ? <path d="m15 15 18 18m0-18L15 33" /> : state === 'sent' || state === 'received' ? <path className="gys-transfer__check" d="m12 24 8 8 17-18" /> : state === 'converting' ? <path d="M12 19h24l-6-6m6 16H12l6 6" /> : <path className="gys-transfer__arrow" d={state === 'receiving' ? 'M34 14 14 34m0-16v16h16' : 'M14 34 34 14m-16 0h16v16'} />}
   </svg>
 );
+
+/** Outlines copied exactly from the approved asset; never re-generated artwork. */
+export const TransferBrandMark = React.forwardRef<SVGSVGElement,{direction:'sent'|'received';settled?:boolean;animate?:boolean}>(function TransferMark({direction,settled=false,animate=true},ref){
+ return <svg ref={ref} viewBox="0 0 512 512" aria-hidden="true" className={`gys-contour-mark gys-contour-mark--${direction} ${settled?'gys-contour-mark--settled':''} ${!animate?'gys-contour-mark--static':''}`}>
+  <image href="/brand/monogram.svg" width="512" height="512" className="gys-contour-mark__image"/>
+  <rect x="2.5" y="2.5" width="507" height="507" rx="107.5" pathLength="1000" className="gys-contour-mark__trace"/>
+  <path transform="translate(75 75)" d="M315 12C265 5 122 34 67 72C22 103 5 145 17 176C32 212 98 202 148 202C178 202 178 217 145 232C101 251 51 260 23 267C13 270 10 281 7 296L1 330C-2 347 11 350 25 347C109 328 244 294 290 252C321 224 334 192 320 167C303 137 246 141 204 143L105 149C78 151 83 137 105 126C157 104 245 85 293 79C308 77 311 66 314 52L322 28C326 18 323 13 315 12Z" pathLength="1000" className="gys-contour-mark__trace"/>
+  <path transform="translate(298 290) scale(1.5) rotate(14 50 55)" d="M34 18h7v8h6v-8h7v9c11 2 17 7 17 15 0 6-3 10-8 12 8 2 12 7 12 14 0 11-8 17-21 18v9h-7v-9h-6v9h-7v-9H22v-9h7V35h-7v-9h12zm7 17v15h8c7 0 11-2 11-7s-4-8-11-8zm0 24v18h9c9 0 14-3 14-9s-5-9-14-9z" pathLength="1000" className="gys-contour-mark__trace"/>
+ </svg>;
+});
+
+/** Viewport canvas for the payment contours. No hit target or opaque layer. */
+export function TransferContourCanvas({svgRef,maskRef,paths,maskId}:{
+ svgRef:React.RefObject<SVGSVGElement|null>;maskRef:React.RefObject<SVGRectElement|null>;
+ paths:React.RefObject<Array<SVGPathElement|null>>;maskId:string;
+}){
+ return <svg ref={svgRef} className="gys-pulse__contours" width="100%" height="100%">
+  <defs><mask id={maskId}><rect width="100%" height="100%" fill="white"/><rect ref={maskRef} fill="black"/></mask></defs>
+  <g mask={`url(#${maskId})`} fill="none" stroke="#F7931A" strokeWidth="1.4" strokeLinejoin="round">
+   {Array.from({length:6},(_,i)=><path key={i} ref={el=>{paths.current[i]=el;}} className="gys-pulse__contour"/>)}
+  </g>
+ </svg>;
+}

@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {usePresentation} from '../hooks/usePresentation';
-import {paymentHapticsEnabled,setPaymentHapticsEnabled} from '../utils/transferHaptics';
+import {paymentHapticsEnabled,setPaymentHapticsEnabled,paymentVibrationSupported,playPaymentFeedback} from '../utils/transferHaptics';
+import {TRANSFER_FEEDBACK} from '../locales/transferFeedback';
 import type {AppLanguage} from '../services/presentationPreferences';
 const labels:Record<AppLanguage,{title:string;detail:string}>={
  en:{title:'Payment haptics',detail:'Gentle feedback on confirmed payments, where supported.'},
@@ -17,11 +18,18 @@ const labels:Record<AppLanguage,{title:string;detail:string}>={
 export default function PaymentFeedbackSetting(){
  const {language}=usePresentation();const copy=labels[language];
  const [enabled,setEnabled]=useState(paymentHapticsEnabled);
- return <label className="flex items-center justify-between gap-4 pt-4 mt-3 border-t border-spark-border cursor-pointer">
+ const [result,setResult]=useState('');const feedback=TRANSFER_FEEDBACK[language];
+ const supported=paymentVibrationSupported();
+ return <div><label className="flex items-center justify-between gap-4 pt-4 mt-3 border-t border-spark-border cursor-pointer">
   <span><span className="block text-sm font-semibold text-spark-text-primary">{copy.title}</span>
    <span className="block mt-1 text-xs text-spark-text-muted">{copy.detail}</span></span>
   <input type="checkbox" role="switch" checked={enabled} aria-label={copy.title}
    onChange={event=>{setPaymentHapticsEnabled(event.target.checked);setEnabled(event.target.checked);}}
    className="h-6 w-6 shrink-0 accent-[#F7931A]"/>
- </label>;
+ </label>
+ <div className="mt-3 flex flex-col gap-2">
+  <button type="button" disabled={!supported||!enabled} className="min-h-11 rounded-xl border border-spark-border px-4 text-sm disabled:opacity-50"
+   onClick={()=>{void playPaymentFeedback('test').then(value=>setResult(value==='accepted'?feedback.accepted:value==='unsupported'?feedback.unsupported:value==='disabled'?feedback.disabled:feedback.blocked));}}>{feedback.test}</button>
+  <p role="status" className="text-xs text-spark-text-muted leading-relaxed">{!supported?feedback.unsupported:result}</p>
+ </div></div>;
 }
