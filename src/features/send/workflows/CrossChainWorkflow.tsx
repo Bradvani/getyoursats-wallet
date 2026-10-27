@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type {
@@ -40,7 +41,7 @@ interface CrossChainWorkflowProps {
   feesIncluded: boolean;
   tokenIdentifier?: string | null;
   onBack: () => void;
-  onRun: (runner: () => Promise<PaymentExecutionResult>) => Promise<void>;
+  onRun: (runner: () => {t("Promise")}<PaymentExecutionResult>) => {t("Promise")}<void>;
 }
 
 interface ProviderQuote {
@@ -59,6 +60,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
   onBack,
   onRun,
 }) => {
+  const t=useFlowText();
   const wallet = useWallet();
   const stableBalance = useStableBalance();
   const [step, setStep] = useState<WorkflowStep>('loading');
@@ -309,7 +311,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
       {step === 'loading' && (
         <div className="flex flex-col items-center justify-center py-12 space-y-3">
           <SpinnerIcon size="lg" className="text-spark-primary animate-spin" />
-          <p className="text-sm text-spark-text-secondary">Fetching routes...</p>
+          <p className="text-sm text-spark-text-secondary">{t("Fetching routes...")}</p>
         </div>
       )}
 
@@ -321,7 +323,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
           onPendingChange={setPendingAsset}
           onBack={onBack}
           onContinue={() => { if (pendingAsset) selectAsset(pendingAsset, routes); }}
-          error={error}
+          error={t(error)}
         />
       )}
 
@@ -344,13 +346,13 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
         <div className="flex flex-col" style={{ maxHeight: '60dvh' }}>
           {allProvidersFailed ? (
             <div className="mb-4 p-4 bg-spark-warn-surface border border-spark-warn-border rounded-xl">
-              <p className="text-sm font-medium text-spark-warn-title mb-1">Couldn’t get a quote</p>
-              <p className="text-sm text-spark-warn-text">{providerFailureReason}</p>
+              <p className="text-sm font-medium text-spark-warn-title mb-1">{t("Couldn’t get a quote")}</p>
+              <p className="text-sm text-spark-warn-text">{t(providerFailureReason)}</p>
             </div>
           ) : (
             <div className="mb-4 min-h-0 flex flex-col">
               <label className="block text-sm font-medium text-spark-text-primary mb-2 shrink-0">
-                Select Provider for {selectedAsset} ({formatChainName(routesForSelection[0]?.chain ?? '')})
+                {t('Select Provider for {asset}',{asset:selectedAsset??''})} ({formatChainName(routesForSelection[0]?.chain ?? '')})
               </label>
               <div className="space-y-2 overflow-y-auto overscroll-y-none touch-pan-y min-h-0 pr-1">
                 {visibleProviders.map((pq) => {
@@ -371,20 +373,20 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
                       {pq.loading && (
                         <div className="flex items-center gap-2 mt-2">
                           <SpinnerIcon size="xs" className="animate-spin text-spark-text-secondary" />
-                          <span className="text-xs text-spark-text-secondary">Getting quote...</span>
+                          <span className="text-xs text-spark-text-secondary">{t("Getting quote...")}</span>
                         </div>
                       )}
                       {ready && pQuote && (
                         <div className="mt-2 space-y-1.5">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-spark-text-secondary">Receiving</span>
+                            <span className="text-sm text-spark-text-secondary">{t("Receiving")}</span>
                             <span className="font-mono text-sm text-spark-text-primary">
                               ~{formatReceiveAmount(BigInt(pQuote.estimatedOut), pq.route.decimals)} {pq.route.asset}
                             </span>
                           </div>
                           <div className="border-t border-spark-border/50" />
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-spark-text-secondary">Fee</span>
+                            <span className="text-sm text-spark-text-secondary">{t("Fee")}</span>
                             <span className="font-mono text-sm text-spark-text-primary">
                               {formatCrossChainAmount(BigInt(pQuote.feeAmount), pq.route.decimals)} {pq.route.asset}
                             </span>
@@ -401,10 +403,10 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
             {allProvidersFailed ? (
               <>
                 <PrimaryButton onClick={() => prepareAllProviders(routesForSelection)} className="w-full">
-                  Try Again
+                  {t("Try Again")}
                 </PrimaryButton>
                 <SecondaryButton onClick={onBack} className="w-full">
-                  Change Amount
+                  {t("Change Amount")}
                 </SecondaryButton>
               </>
             ) : anyProviderReady ? (
@@ -421,7 +423,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
                 className="w-full"
                 disabled={!pendingProvider}
               >
-                Continue
+                {t("Continue")}
               </PrimaryButton>
             ) : null}
           </div>
@@ -433,7 +435,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
         <>
           {/* Amount header */}
           <div className="text-center py-4">
-            <p className="text-spark-text-muted text-sm mb-2">You're sending</p>
+            <p className="text-spark-text-muted text-sm mb-2">{t("You're sending")}</p>
             <div className="flex items-baseline justify-center gap-2">
               <span className="text-4xl font-mono font-bold text-spark-text-primary">
                 {effectiveTokenId && stableBalance.displayConfig ? (
@@ -482,7 +484,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
           )}
 
           <PrimaryButton onClick={handleSend} className="w-full">
-            Send
+            {t("Send")}
           </PrimaryButton>
         </>
       )}

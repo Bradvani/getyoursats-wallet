@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import React, { useMemo, useState } from 'react';
 import type { LnurlWithdrawRequestDetails, LnurlWithdrawResponse } from '@breeztech/breez-sdk-spark';
 import { FormError, PrimaryButton, AMOUNT_FIELD_CLASS } from '../../../components/ui';
@@ -18,13 +19,14 @@ interface LnurlWithdrawWorkflowProps {
   onBack: () => void;
   /** Runs the withdrawal for `amountSats`. The SDK creates the invoice and posts
    *  it to the LNURL callback; the funds arrive as an ordinary Lightning receive. */
-  onWithdraw: (amountSats: number) => Promise<LnurlWithdrawResponse>;
+  onWithdraw: (amountSats: number) => {t("Promise")}<LnurlWithdrawResponse>;
   /** Close the flow once the incoming payment is confirmed. The app-wide
    *  "Payment Received" celebration is driven by the SDK event, not here. */
   onDone: () => void;
 }
 
 const LnurlWithdrawWorkflow: React.FC<LnurlWithdrawWorkflowProps> = ({ parsed, onBack, onWithdraw, onDone }) => {
+  const t=useFlowText();
   // LNURL bounds are in msat; this wallet receives whole sats. Round the floor up
   // and the ceiling down so any chosen amount stays inside the server's msat
   // window, and require at least 1 sat. If no whole sat fits that window (a
@@ -62,9 +64,9 @@ const LnurlWithdrawWorkflow: React.FC<LnurlWithdrawWorkflowProps> = ({ parsed, o
     : !isInteger
       ? 'Enter a whole number of sats'
       : amountNum < minSats
-        ? `Amount must be at least ${formatWithSpaces(minSats)} sats`
+        ? t('Amount must be at least {min} sats',{min:formatWithSpaces(minSats)})
         : amountNum > maxSats
-          ? `Amount must be at most ${formatWithSpaces(maxSats)} sats`
+          ? t('Amount must be at most {max} sats',{max:formatWithSpaces(maxSats)})
           : null;
 
   // Reached only with a valid, in-range amount: the Receive button is disabled
@@ -99,25 +101,25 @@ const LnurlWithdrawWorkflow: React.FC<LnurlWithdrawWorkflowProps> = ({ parsed, o
       {(description || sourceHost) && (
         <div className="text-center">
           {description && <p className="text-spark-text-primary font-medium">{description}</p>}
-          {sourceHost && <p className="text-spark-text-secondary text-sm mt-1">from {sourceHost}</p>}
+          {sourceHost && <p className="text-spark-text-secondary text-sm mt-1">{t('from {source}',{source:sourceHost})}</p>}
         </div>
       )}
 
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="block text-sm font-medium text-spark-text-primary">
-            Amount to receive
+            {t("Amount to receive")}
           </label>
           {!isFixed && !unserviceable && (
             <span className="text-xs text-spark-text-secondary">
-              {formatWithSpaces(minSats)} to {formatWithSpaces(maxSats)} sats
+              {t('Between {min} and {max} sats',{min:formatWithSpaces(minSats),max:formatWithSpaces(maxSats)})}
             </span>
           )}
         </div>
 
         {unserviceable ? (
           <div className="w-full p-4 bg-spark-dark border border-spark-border rounded-xl text-spark-text-secondary text-sm text-center">
-            This withdraw link has no valid amount this wallet can receive.
+            {t("This withdraw link has no valid amount this wallet can receive.")}
           </div>
         ) : isFixed ? (
           <div className="w-full p-4 bg-spark-dark border border-spark-border rounded-xl text-spark-text-primary flex items-center justify-center text-2xl font-semibold">
@@ -129,7 +131,7 @@ const LnurlWithdrawWorkflow: React.FC<LnurlWithdrawWorkflowProps> = ({ parsed, o
             inputMode="numeric"
             value={amount}
             onChange={(e) => { setAmount(e.target.value); setError(null); }}
-            placeholder={`Between ${formatWithSpaces(minSats)} and ${formatWithSpaces(maxSats)} sats`}
+            placeholder={t('Between {min} and {max} sats',{min:formatWithSpaces(minSats),max:formatWithSpaces(maxSats)})}
             className={`${AMOUNT_FIELD_CLASS} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
             min={minSats}
             max={maxSats}
@@ -140,7 +142,7 @@ const LnurlWithdrawWorkflow: React.FC<LnurlWithdrawWorkflowProps> = ({ parsed, o
       <FormError error={inlineError || error} />
 
       <PrimaryButton onClick={onReceive} disabled={!validAmount} className="w-full">
-        Receive
+        {t("Receive")}
       </PrimaryButton>
     </div>
   );

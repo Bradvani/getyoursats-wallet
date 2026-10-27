@@ -1,9 +1,11 @@
+import {TRUST_COPY} from '../getyoursats/trustCopy';
 import type {AppLanguage} from '../services/presentationPreferences';
 import completion from './flowCompletion.json';
 import {PAYMENT_UX} from './paymentUx';
 import {PAYMENT_EXPERIENCE} from './paymentExperience';
 
 const aliases:Record<string,string>={
+ 'Scan':'Scan QR','Enter amount in sats':'Enter amount in {currency}',
  'Processing...':'Processing…','Search contacts...':'Search contacts','Lightning Address':'Lightning address','Lightning Invoice':'Lightning invoice',
  'Authenticated!':'Signed in','Refund Sent!':'Refund sent','Refund Failed':'Refund failed','Payment Sent!':'Payment sent','Payment Failed':'Payment failed',
  'Your payment has been successfully sent to the recipient.':'Your payment has been sent to the recipient.',
@@ -21,10 +23,8 @@ const aliases:Record<string,string>={
  'Failed to update contact':'Unable to complete this request. Check the details before trying again.',
  'Failed to add contact':'Unable to complete this request. Check the details before trying again.'
 };
-const dictionaries:Record<AppLanguage,Record<string,string>>=Object.fromEntries(
- Object.entries(completion).map(([language,copy])=>[language,{...copy}])
-) as Record<AppLanguage,Record<string,string>>;
-for(const catalog of [PAYMENT_UX,PAYMENT_EXPERIENCE]){
+const dictionaries:Record<AppLanguage,Record<string,string>>={...completion};
+for(const catalog of [PAYMENT_UX,PAYMENT_EXPERIENCE,TRUST_COPY]){
  for(const [key,english] of Object.entries(catalog.en)){
   for(const language of Object.keys(dictionaries) as AppLanguage[]){
    const translated=(catalog[language] as Record<string,string>)[key];
@@ -32,10 +32,11 @@ for(const catalog of [PAYMENT_UX,PAYMENT_EXPERIENCE]){
   }
  }
 }
+export function isLocalizedFlowText(language:AppLanguage,text:string):boolean{return Object.values(dictionaries[language]).includes(text);}
 export function hasFlowText(text:string):boolean{return Boolean(dictionaries.en[aliases[text]||text]);}
 export function flowText(language:AppLanguage,text:string,values:Record<string,string|number>={}):string{
  // Preserve protocol/user/provider data. Only known application copy is translated.
  const key=aliases[text]||text;
  const result=language==='en'?text:dictionaries[language]?.[key]||text;
- return result.replace(/\{([A-Za-z]+)\}/g,(match,name)=>Object.hasOwn(values,name)?String(values[name]):match);
+ return result.replace(/\{([A-Za-z]+)\}/g,(match,name)=>Object.prototype.hasOwnProperty.call(values,name)?String(values[name]):match);
 }

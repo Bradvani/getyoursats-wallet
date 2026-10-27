@@ -6,8 +6,8 @@ const hero=document.querySelector('.hero h1');const lead=document.querySelector(
 const isPrivacy=location.pathname.indexOf('/privacy')>=0;
 const supportCopy={en:['Help for your next step.','Check a payment, recover wallet access or find the right answer for your business.'],hi:['आपके अगले कदम में मदद।','भुगतान जाँचें, वॉलेट तक पहुँच बहाल करें या अपने व्यवसाय के सवाल का जवाब पाएँ।'],es:['Ayuda para tu próximo paso.','Consulta un pago, recupera el acceso a tu cartera o encuentra ayuda para tu negocio.'],pt:['Ajuda para o próximo passo.','Verifique um pagamento, recupere o acesso à carteira ou encontre ajuda para o seu negócio.']};
 const isSupport=document.body.dataset.helpPage==='support';
-if(hero)hero.textContent=isPrivacy?d.privacyTitle:isSupport?supportCopy[l][0]:d.title;
-if(lead)lead.textContent=isPrivacy?d.privacyLead:isSupport?supportCopy[l][1]:d.lead;
+if(hero)hero.textContent=isPrivacy?d.privacyTitle:isSupport?(supportCopy[l]||supportCopy.en)[0]:d.title;
+if(lead)lead.textContent=isPrivacy?d.privacyLead:isSupport?(supportCopy[l]||supportCopy.en)[1]:d.lead;
 document.querySelectorAll('.navbar .links a').forEach(a=>{
  if(a.getAttribute('href')?.endsWith('/privacy'))a.textContent=({en:'Privacy',hi:'गोपनीयता',es:'Privacidad',pt:'Privacidade'})[l];
  if(a.getAttribute('href')?.endsWith('/support'))a.textContent=({en:'Support',hi:'सहायता',es:'Soporte',pt:'Apoio'})[l];

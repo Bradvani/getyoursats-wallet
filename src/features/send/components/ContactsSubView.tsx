@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import {classifyLookupFailure} from '@/getyoursats/lookupFailure';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import React, { useState, useMemo, useRef } from 'react';
@@ -15,6 +16,7 @@ interface ContactsSubViewProps {
 }
 
 const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) => {
+  const t=useFlowText();
   const wallet = useWallet();
   const { contacts, isLoading, hasSynced, addContact, updateContact, deleteContact } = useContactsContext();
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,14 +125,14 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
           >
             <BackIcon />
           </button>
-          <h2 className="font-display text-lg font-bold text-spark-text-primary flex-1">Contacts</h2>
+          <h2 className="font-display text-lg font-bold text-spark-text-primary flex-1">{t("Contacts")}</h2>
           <button
             onClick={handleStartAdd}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-spark-primary text-white text-sm font-medium rounded-xl hover:bg-spark-primary-light transition-colors"
-            aria-label="Add contact"
+            aria-label={t("Add contact")}
           >
             <PlusIcon size="sm" />
-            <span>Add</span>
+            <span>{t("Add")}</span>
           </button>
         </div>
 
@@ -140,7 +142,7 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
           <input
             id="contacts-search"
             name="contacts-search"
-            aria-label="Search contacts"
+            aria-label={t("Search contacts")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={async (e) => {
@@ -161,14 +163,14 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
             autoCorrect="off"
             autoComplete="off"
             spellCheck={false}
-            placeholder="Search contacts..."
+            placeholder={t("Search contacts...")}
             className={`${FIELD_BASE_CLASS} pl-9 pr-9 py-2.5 text-sm`}
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              aria-label="Clear search"
+              aria-label={t("Clear search")}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-spark-text-muted hover:text-spark-text-primary transition-colors"
             >
               <CloseIcon size="sm" />
@@ -187,10 +189,10 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
               <ContactsIcon className="w-7 h-7 text-spark-text-muted" />
             </div>
             <h3 className="text-base font-semibold text-spark-text-primary mb-1">
-              {searchQuery ? 'No matches' : 'No contacts yet'}
+              {searchQuery ? t('No matches') : t('No contacts yet')}
             </h3>
             <p className="text-spark-text-muted text-sm text-center max-w-xs">
-              {searchQuery ? 'Try a different search term.' : 'Add contacts to quickly send payments.'}
+              {searchQuery ? t('Try a different search term.') : t('Add contacts to quickly send payments.')}
             </p>
           </div>
         ) : (
@@ -225,14 +227,14 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
                   <button
                     onClick={() => handleStartEdit(contact)}
                     className="p-1.5 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
-                    aria-label={`Edit ${contact.name}`}
+                    aria-label={t('Edit {name}',{name:contact.name})}
                   >
                     <EditPencilIcon />
                   </button>
                   <button
                     onClick={() => setDeletingContact(contact)}
                     className="p-1.5 text-spark-text-muted hover:text-spark-primary-light rounded-lg hover:bg-white/5 transition-colors"
-                    aria-label={`Delete ${contact.name}`}
+                    aria-label={t('Delete {name}',{name:contact.name})}
                   >
                     <TrashIcon />
                   </button>
@@ -262,14 +264,14 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
             <BackIcon />
           </button>
           <h2 className="font-display text-lg font-bold text-spark-text-primary">
-            {editingContact ? 'Edit Contact' : 'New Contact'}
+            {editingContact ? t('Edit Contact') : t('New Contact')}
           </h2>
         </div>
 
         {/* Form fields take the natural content height */}
         <div className="space-y-4">
           <div>
-            <label htmlFor="subview-contact-name" className="block text-sm font-medium text-spark-text-primary mb-2">Name</label>
+            <label htmlFor="subview-contact-name" className="block text-sm font-medium text-spark-text-primary mb-2">{t("Name")}</label>
             <input
               id="subview-contact-name"
               value={formName}
@@ -285,7 +287,7 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
                 }
               }}
               enterKeyHint="next"
-              placeholder="Contact name"
+              placeholder={t("Contact name")}
               disabled={isSaving}
               autoComplete="off"
               autoCorrect="off"
@@ -294,7 +296,7 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
             />
           </div>
           <div>
-            <label htmlFor="subview-contact-address" className="block text-sm font-medium text-spark-text-primary mb-2">Lightning Address</label>
+            <label htmlFor="subview-contact-address" className="block text-sm font-medium text-spark-text-primary mb-2">{t("Lightning Address")}</label>
             <FormInput
               id="subview-contact-address"
               inputRef={addressInputRef}
@@ -332,10 +334,10 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
             onClick={resetForm}
             className="flex-1 py-3 text-sm font-medium border border-spark-border text-spark-text-secondary rounded-xl hover:text-spark-text-primary transition-colors"
           >
-            Cancel
+            {t("Cancel")}
           </button>
           <PrimaryButton onClick={handleSave} disabled={isSaving} className="flex-1">
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving ? t('Saving...') : t('Save')}
           </PrimaryButton>
         </div>
       </div>
@@ -343,9 +345,9 @@ const ContactsSubView: React.FC<ContactsSubViewProps> = ({ onSelect, onBack }) =
       {/* Delete confirmation */}
       <ConfirmDialog
         isOpen={!!deletingContact}
-        title="Delete Contact"
-        message={`Are you sure you want to delete "${deletingContact?.name}"?`}
-        confirmLabel="Delete"
+        title={t("Delete Contact")}
+        message={t('Are you sure you want to delete "{name}"?',{name:deletingContact?.name??''})}
+        confirmLabel={t("Delete")}
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeletingContact(null)}

@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import React, { Fragment, useLayoutEffect, useRef, useState } from 'react';
 import type { LnurlAuthRequestDetails, LnurlCallbackStatus } from '@breeztech/breez-sdk-spark';
 import { FormError, PrimaryButton, SecondaryButton } from '../../../components/ui';
@@ -11,7 +12,7 @@ import ResultStep from '../steps/ResultStep';
 interface LnurlAuthWorkflowProps {
   parsed: LnurlAuthRequestDetails;
   onBack: () => void;
-  onAuth: (requestData: LnurlAuthRequestDetails) => Promise<LnurlCallbackStatus>;
+  onAuth: (requestData: LnurlAuthRequestDetails) => {t("Promise")}<LnurlCallbackStatus>;
   /** Closes the sheet: after a login, or to decline one. */
   onClose: () => void;
 }
@@ -112,6 +113,7 @@ const DomainName: React.FC<{ domain: string }> = ({ domain }) => {
 };
 
 const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, onAuth, onClose }) => {
+  const t=useFlowText();
   const [failure, setFailure] = useState<Failure | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -159,7 +161,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
         result="success"
         error={null}
         operationType="auth"
-        description={`${domain} confirmed it's you.`}
+        description={t('{domain} confirmed it’s you.',{domain})}
         onClose={onClose}
       />
     );
@@ -169,7 +171,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
     <div className="space-y-5">
       <div className="text-center">
         <DomainName domain={domain} />
-        <p className="text-spark-text-secondary text-sm mt-1">wants you to {action.ask}</p>
+        <p className="text-spark-text-secondary text-sm mt-1">{t('Request from this website: {action}',{action:t(action.label)})}</p>
       </div>
 
       {failure && (
@@ -178,7 +180,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
           {/* Indented to the error's text, so it reads as that error's detail line. */}
           {failure.missingCors && (
             <p className="ml-6 text-xs text-spark-text-muted [overflow-wrap:anywhere]">
-              {domain} is missing a CORS header (
+              {t('{domain} is missing a CORS header.',{domain})} (
               <a
                 href={LUD_01_URL}
                 target="_blank"
@@ -189,7 +191,7 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
                 }}
                 className="whitespace-nowrap underline underline-offset-4 hover:text-spark-text-secondary transition-colors"
               >
-                LUD-01
+                {t("LUD-01")}
               </a>
               ).
             </p>
@@ -201,20 +203,20 @@ const LnurlAuthWorkflow: React.FC<LnurlAuthWorkflowProps> = ({ parsed, onBack, o
           single-use code would only report it as used. */}
       {failure?.missingCors ? (
         <PrimaryButton onClick={onClose} className="w-full">
-          Done
+          {t("Done")}
         </PrimaryButton>
       ) : (
         <div className="flex gap-3">
           <SecondaryButton onClick={onClose} disabled={isLoading} className="flex-1">
-            Cancel
+            {t("Cancel")}
           </SecondaryButton>
           <PrimaryButton onClick={handleAuth} disabled={isLoading} className="flex-1">
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
                 <SpinnerIcon size="md" />
-                Processing...
+                {t("Processing...")}
               </span>
-            ) : action.label}
+            ) : t(action.label)}
           </PrimaryButton>
         </div>
       )}

@@ -201,7 +201,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
 
     return {
       ...info,
-      value: formatFiat(fiatValue,info.currencyId,language,{numberOnly:true,maximumFractionDigits:info.fractionSize,minimumFractionDigits:info.fractionSize}),
+      value: formatFiat(fiatValue,info.currencyId,language,{numberOnly:true,maximumFractionDigits:info.fractionSize}),
     };
   }, [stableBalance.isActive, fiatCurrencyInfo, activeFiatIndex, displayBalance, btcBalanceSat, hasSecondaryData, language]);
 

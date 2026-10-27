@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import React, { useState } from 'react';
 import type { CrossChainRoutePair } from '@breeztech/breez-sdk-spark';
 import { PrimaryButton } from '../ui';
@@ -35,6 +36,7 @@ export const CrossChainChainStep: React.FC<CrossChainChainStepProps> = ({
   onContinue,
   error,
 }) => {
+  const t=useFlowText();
   const [expandedChain, setExpandedChain] = useState<string | null>(null);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const isSheetFull = useSheetFullSnap();
@@ -48,11 +50,11 @@ export const CrossChainChainStep: React.FC<CrossChainChainStepProps> = ({
     >
       {error && (
         <div className="mb-4 p-3 bg-spark-warn-surface border border-spark-warn-border rounded-xl text-sm text-spark-warn-text shrink-0">
-          {error}
+          {t(error)}
         </div>
       )}
       <label className="block text-sm font-medium text-spark-text-primary mb-2 shrink-0">
-        Select Network for {selectedAsset}
+        {t('Select Network for {asset}',{asset:selectedAsset??''})}
       </label>
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-none touch-pan-y space-y-2 pr-1">
         {chains.map(r => {
@@ -106,7 +108,7 @@ export const CrossChainChainStep: React.FC<CrossChainChainStepProps> = ({
       </div>
       <div className="shrink-0 pt-2">
         <PrimaryButton onClick={onContinue} className="w-full" disabled={!pending}>
-          Continue
+          {t('Continue')}
         </PrimaryButton>
       </div>
     </div>
