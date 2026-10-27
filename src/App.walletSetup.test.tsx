@@ -7,6 +7,7 @@ import type {WalletSetupController} from './hooks/useWalletSetup';
 
 const harness = vi.hoisted(() => ({
   native: false,
+  browserLocked: false,
   snapshot: {} as Record<string, unknown>,
   listeners: new Set<() => void>(),
   connect: vi.fn<(...args: unknown[]) => Promise<object | null>>(),
@@ -64,7 +65,7 @@ vi.mock('./contexts/StableBalanceContext', () => ({
 vi.mock('./contexts/ContactsContext', () => ({ContactsProvider: harness.PassThrough}));
 vi.mock('./components/StagingGate', () => ({default: harness.PassThrough}));
 vi.mock('./components/layout/AppShell', () => ({default: harness.PassThrough}));
-vi.mock('./security/useBrowserSessionLock', () => ({useBrowserSessionLock: () => ({locked:false,unlock:vi.fn()})}));
+vi.mock('./security/useBrowserSessionLock', () => ({useBrowserSessionLock: () => ({locked:harness.browserLocked,unlock:vi.fn()})}));
 vi.mock('./security/webWalletVault', () => ({hasWebWalletVault:()=>false,legacyWebMnemonic:()=>null,enrollWebWallet:(...args:unknown[])=>harness.encrypt(...args),unlockWebWallet:vi.fn(),removeMatchingLegacyMnemonic:vi.fn(),resetWebWalletPasswordWithWords:vi.fn()}));
 vi.mock('./security/WebWalletVaultPage', () => ({default: ({onSubmit}: {onSubmit:(password:string)=>Promise<void>}) => <button onClick={()=>{void onSubmit('disposable-wallet-password').catch(()=>{});}}>Encrypt wallet</button>}));
 vi.mock('./security/SpendingApprovalDialog',()=>({default:()=>null}));
@@ -77,6 +78,8 @@ vi.mock('./hooks/useBackButton', () => ({useBackButton: vi.fn()}));
 vi.mock('./components/LoadingSpinner', () => ({default: () => null}));
 vi.mock('./components/BrandIntro', () => ({default: () => null}));
 vi.mock('./components/PaymentCelebration', () => ({default: () => null}));
+// Incoming-event ownership is exercised in IncomingPaymentNotice.test.tsx.
+vi.mock('./components/IncomingPaymentNotice', () => ({default: ({visible}:{visible:boolean}) => visible?<div data-testid="incoming-notice-visible"/>:null}));
 vi.mock('./components/OfflineBanner', () => ({default: () => null}));
 vi.mock('./components/LockScreen', () => ({default: () => null}));
 vi.mock('./getyoursats/DcaPage', () => ({default: () => null}));
@@ -170,6 +173,7 @@ beforeEach(async () => {
   localStorage.clear();
   clearWalletSetupMemory();
   harness.native = false;
+  harness.browserLocked = false;
   harness.encrypt.mockReset().mockResolvedValue();
   harness.retrieveSeed.mockReset();
   harness.storeSeed.mockReset().mockResolvedValue();
@@ -191,6 +195,17 @@ afterEach(() => {
 });
 
 describe('App wallet setup enrollment and recovery mode', () => {
+  it('suppresses incoming payment presentation during a browser session lock', async () => {
+    publishWallet();
+    const {rerender}=render(<App />);
+    await waitFor(()=>expect(screen.getByTestId('incoming-notice-visible')).toBeInTheDocument());
+    harness.browserLocked=true;rerender(<App />);
+    expect(screen.queryByTestId('incoming-notice-visible')).toBeNull();
+    harness.browserLocked=false;rerender(<App />);
+    expect(screen.getByTestId('incoming-notice-visible')).toBeInTheDocument();
+    act(()=>{harness.snapshot={...harness.snapshot,isConnected:false};harness.listeners.forEach(listener=>listener());});
+    expect(screen.queryByTestId('incoming-notice-visible')).toBeNull();
+  });
   it('enrolls a fresh passkey without claiming a verified backup or clearing its mode', async () => {
     const user = userEvent.setup();
     render(<App />);

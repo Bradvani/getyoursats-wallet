@@ -80,7 +80,7 @@ function Fixture() {
   : screen==='backup' ? <h1>Recovery entry reached</h1>
   : screen==='startup' ? <><BrandIntro inline /><StartupLogo className="w-36 h-36 object-contain" /></>
   : screen==='received' ? <PaymentCelebration payment={received} onClose={close}/>
-  : screen==='sent' || screen==='failed' ? <ResultStep result={screen==='sent'?'success':'failure'} error={screen==='failed'?'Network unavailable':null} onClose={close}/>
+  : screen==='sent' || screen==='failed' ? <ResultStep payment={screen==='sent'?{...received,id:'fixture-send',paymentType:'send'}:null} result={screen==='sent'?'success':'failure'} error={screen==='failed'?'Network unavailable':null} onClose={close}/>
   : <ProcessingStep processingPhase={screen==='converting'?'converting':'sending'} operationType={screen==='receiving'?'withdraw':'payment'} />}
  </ContactsProvider></StableBalanceProvider></FiatDataProvider></WalletInfoProvider></WalletProvider></ToastProvider>;
 }

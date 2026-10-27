@@ -2,7 +2,7 @@ import {isRestrictedBrowserWallet,UNAVAILABLE_PAYMENT_MESSAGE,UNAVAILABLE_MAX_ME
 import {usePresentation} from '@/hooks/usePresentation';
 import {sendDestinationCopy} from '@/locales/sendDestination';
 import {PAYMENT_UX} from '@/locales/paymentUx';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useId } from 'react';
 import {motion, useReducedMotion} from 'motion/react';
 import { DialogHeader, BottomSheetContainer, BottomSheetCard } from '../../components/ui';
 import { useWallet } from '../../contexts/WalletContext';
@@ -21,8 +21,9 @@ import LnurlWithdrawWorkflow, { LNURL_WITHDRAW_COMPLETION_TIMEOUT_SECS } from '.
 import CrossChainWorkflow from './workflows/CrossChainWorkflow';
 import AmountStep from './steps/AmountStep';
 import ConfirmStep from './steps/ConfirmStep';
-import ProcessingStep from './steps/ProcessingStep';
-import ResultStep from './steps/ResultStep';
+import TransferExperience from '../../components/TransferExperience';
+import {displayPaymentAmount} from '@/getyoursats/paymentDisplay';
+import PaymentFiatAmount from '../../components/PaymentFiatAmount';
 import ContactsSubView from './components/ContactsSubView';
 import { setSendSheetOpen } from './sendSheetVisibility';
 import { holdIdleLock } from '@/services/appLock';
@@ -50,6 +51,8 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
   const wallet = useWallet();
   const [destination, setDestination] = useState<StablecoinDestination | null>(null);
   const send = useSendPayment();
+  const transferId=useId();
+  const inTransfer=send.currentStep==='processing'||send.currentStep==='result';
   const { findContactByAddress } = useContactsContext();
   const [showContactsView, setShowContactsView] = useState(false);
   const [selectedContactAddress, setSelectedContactAddress] = useState<string | null>(null);
@@ -207,7 +210,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
               icon={headerIcon}
             />
 
-            <motion.div key={resolvingInput ? 'resolving' : send.currentStep}
+            <motion.div key={resolvingInput ? 'resolving' : inTransfer ? 'transfer' : send.currentStep}
               data-send-stage={resolvingInput ? 'resolving' : send.currentStep}
               initial={reducedMotion ? false : {opacity: 0, y: 6}}
               animate={{opacity: 1, y: 0}}
@@ -388,16 +391,15 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
               </>
             )}
 
-            {send.currentStep === 'processing' && (
-              <ProcessingStep processingPhase={send.processingPhase} />
-            )}
-
-            {send.currentStep === 'result' && (
-              <ResultStep
-                result={send.paymentResult ?? 'unknown'}
-                error={send.error}
-                onClose={handleClose}
-              />
+            {inTransfer && isOpen && !coveredByScanner && (
+              <TransferExperience operationId={transferId} direction="sent"
+                phase={send.currentStep==='processing' ? send.transferStage
+                  : send.paymentResult==='success'&&send.completedPayment?.status==='completed'&&send.completedPayment.paymentType==='send'?'confirmed'
+                  : send.paymentResult==='failure'?'failed':'unknown'}
+                receiptId={send.completedPayment?.id}
+                amount={send.completedPayment?.status==='completed'?displayPaymentAmount(send.completedPayment):undefined}
+                fiatAmount={send.completedPayment?.status==='completed'?<PaymentFiatAmount payment={send.completedPayment}/>:undefined}
+                error={send.error} onClose={handleClose}/>
             )}
             </>}
             </motion.div>

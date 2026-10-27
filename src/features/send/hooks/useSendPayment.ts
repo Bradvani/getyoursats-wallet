@@ -1,9 +1,10 @@
 import {browserPaymentRestriction,isRestrictedBrowserWallet,UNAVAILABLE_PAYMENT_MESSAGE,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
+import {notifyPaymentFeedback} from '@/utils/transferHaptics';
 import {classifyLookupFailure} from '@/getyoursats/lookupFailure';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {paymentOutcome,type PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
 import { useState, useCallback, useMemo, useRef, useLayoutEffect } from 'react';
-import type { PrepareSendPaymentResponse, FeePolicy, SendPaymentOptions, SdkEvent, ConversionOptions, InputType } from '@breeztech/breez-sdk-spark';
+import type { Payment, PrepareSendPaymentResponse, FeePolicy, SendPaymentOptions, SdkEvent, ConversionOptions, InputType } from '@breeztech/breez-sdk-spark';
 import type { SendInput } from '@/types/domain';
 import { useWallet, useWalletInfo } from '../../../contexts/WalletContext';
 import { useStableBalance } from '../../../contexts/StableBalanceContext';
@@ -49,10 +50,14 @@ export interface UseSendPaymentReturn {
   isLoading: boolean;
   prepareResponse: PrepareSendPaymentResponse | null;
   paymentResult: 'success' | 'failure' | 'unknown' | null;
+  /** Completed SDK receipt for presentation only; never inferred from a timer. */
+  completedPayment: Payment | null;
   balanceSats: number | undefined;
   tokenBalance: bigint | undefined;
   feesIncluded: boolean;
   processingPhase: ProcessingPhase;
+  /** Presentation milestone: preparation versus actual SDK invocation. */
+  transferStage: 'preparing' | 'processing';
   /** True when the destination carried its own amount (a BIP21 `amount` or a
    *  bolt11's embedded amount), so the amount step was skipped. Lets the confirm
    *  step send "back" to input instead of the amount step the user never saw. */
@@ -85,8 +90,10 @@ export function useSendPayment(): UseSendPaymentReturn {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [prepareResponse, setPrepareResponse] = useState<PrepareSendPaymentResponse | null>(null);
   const [paymentResult, setPaymentResult] = useState<'success' | 'failure' | 'unknown' | null>(null);
+  const [completedPayment,setCompletedPayment] = useState<Payment|null>(null);
   const [feesIncluded, setFeesIncluded] = useState(false);
   const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('sending');
+  const [transferStage,setTransferStage]=useState<'preparing'|'processing'>('preparing');
   const [amountFixed, setAmountFixed] = useState(false);
   const [tokenIdentifier, setTokenIdentifier] = useState<string | null>(null);
 
@@ -310,6 +317,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   const handleSend = useCallback(async (options?: SendPaymentOptions) => {
     if (!prepareResponse || executionStarted.current) return;
     executionStarted.current = true;
+    setTransferStage('preparing');
     const hasConversion = !!prepareResponse.conversionEstimate;
     logger.info(LogCategory.PAYMENT, 'handleSend called', {
       hasConversion,
@@ -346,8 +354,12 @@ export function useSendPayment(): UseSendPaymentReturn {
     }
 
     try {
+      setTransferStage('processing');
       const outcome = await wallet.sendPayment({ prepareResponse, options });
       setPaymentResult(paymentOutcome(outcome));
+      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id);
+      else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
+      setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
       logger.error(LogCategory.PAYMENT, 'Payment failed', { error: formatError(err) });
       setError(`Payment failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -366,6 +378,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   const handleRun = useCallback(async (runner: () => Promise<PaymentExecutionResult>, hasConversion?: boolean) => {
     if (executionStarted.current) return;
     executionStarted.current = true;
+    setTransferStage('preparing');
     setProcessingPhase(hasConversion ? 'converting' : 'sending');
     setCurrentStep('processing');
     setIsLoading(true);
@@ -397,8 +410,12 @@ export function useSendPayment(): UseSendPaymentReturn {
     }
 
     try {
+      setTransferStage('processing');
       const outcome = await runner();
       setPaymentResult(paymentOutcome(outcome));
+      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id);
+      else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
+      setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
       logger.error(LogCategory.PAYMENT, 'Operation failed during payment flow', { error: formatError(err) });
       setError(`Operation failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -426,6 +443,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     setFeesIncluded(false);
     setPaymentInput(null);
     setPaymentResult(null);
+    setCompletedPayment(null);
     setProcessingPhase('sending');
     setAmountFixed(false);
     setTokenIdentifier(null);
@@ -455,10 +473,12 @@ export function useSendPayment(): UseSendPaymentReturn {
     isLoading,
     prepareResponse,
     paymentResult,
+    completedPayment,
     balanceSats,
     tokenBalance,
     feesIncluded,
     processingPhase,
+    transferStage,
     amountFixed,
     tokenIdentifier,
     confirmDestination: useCallback((input: SendInput) => {

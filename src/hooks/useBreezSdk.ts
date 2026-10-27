@@ -1,3 +1,4 @@
+import {notifyPaymentFeedback} from '../utils/transferHaptics';
 import { Capacitor } from '@capacitor/core';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { initLogging } from '@breeztech/breez-sdk-spark';
@@ -377,6 +378,7 @@ export function useBreezSdk(
         method: event.payment.method,
       });
       if (!alreadyShown) {
+        if(event.payment.status==='completed'&&!isConversionPayment(event.payment)&&!isMigrationInProgress())notifyPaymentFeedback('success',paymentId);
         // Keep payment IDs for this active wallet session. A 30-second
         // expiration let a subsequent SDK sync replay the same success.
         rememberPaymentId(shownPaymentIdsRef.current, paymentId);
@@ -411,6 +413,7 @@ export function useBreezSdk(
         method: event.payment.method,
       });
     } else if (event.type === 'paymentFailed') {
+      if(event.payment.status==='failed'&&!isConversionPayment(event.payment)&&!isMigrationInProgress())notifyPaymentFeedback('error',event.payment.id);
       logger.info(LogCategory.PAYMENT, 'Payment failed event received', {
         paymentId: event.payment.id,
         paymentType: event.payment.paymentType,

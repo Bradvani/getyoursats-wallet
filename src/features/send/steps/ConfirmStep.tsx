@@ -7,6 +7,7 @@ import { useSheetBack } from '../../../components/ui/sheets/BottomSheetCardConte
 import { FeeBreakdownCard, SimpleFeeBreakdown } from '../../../components/FeeBreakdownCard';
 import { SpinnerIcon } from '../../../components/Icons';
 import { SatAmount } from '../../../components/SatAmount';
+import PaymentFiatAmount from '../../../components/PaymentFiatAmount';
 import { formatTokenAmount } from '../../../utils/tokenFormatting';
 import { truncateAddress } from '../../../utils/crossChainFormat';
 import { useStableBalance } from '../../../contexts/StableBalanceContext';
@@ -82,6 +83,7 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
             <SatAmount sats={total} />
           </span>
         </div>
+        {amountSats!==null&&<PaymentFiatAmount sats={total} className="mt-2 text-base text-spark-text-secondary"/>}
       </div>
 
       {destination && (

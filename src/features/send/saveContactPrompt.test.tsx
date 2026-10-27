@@ -52,7 +52,7 @@ async function renderSend(parsed: unknown, contacts: unknown[] = []) {
   );
 
   await waitForSheetOpen();
-  return { onSuccessfulSend };
+  return { onSuccessfulSend, client };
 }
 
 /** Drives input -> amount -> confirm -> pay -> Done, the close that prompts. */
@@ -189,4 +189,26 @@ describe('save-as-contact prompt after a send', () => {
     await payAndClose(LNURL);
     expect(onSuccessfulSend).not.toHaveBeenCalled();
   });
+});
+
+
+it('keeps one transfer screen from actual SDK invocation through a verified result',async()=>{
+ const {client}=await renderSend({type:'lightningAddress',address:ADDRESS,payRequest:payRequest(ADDRESS)});
+ let finish!:(value:Awaited<ReturnType<BreezSdk['lnurlPay']>>)=>void;
+ client.lnurlPay=vi.fn(()=>new Promise<Awaited<ReturnType<BreezSdk['lnurlPay']>>>(resolve=>{finish=resolve}));
+ fireEvent.change(await screen.findByTestId('payment-input'),{target:{value:ADDRESS}});
+ fireEvent.click(screen.getByTestId('continue-button'));
+ fireEvent.change(await screen.findByLabelText('Amount'),{target:{value:'1000'}});
+ fireEvent.click(screen.getByText('Continue'));
+ fireEvent.click(await screen.findByTestId('send-confirm-button'));
+ const view=await screen.findByTestId('transfer-experience');
+ await waitFor(()=>expect(view).toHaveAttribute('data-phase','processing'));
+ await waitFor(()=>expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','50'));
+ expect(client.lnurlPay).toHaveBeenCalledOnce();
+ finish({payment:{id:'sequence-real-hook-fixture',status:'completed',paymentType:'send',method:'lightning',amount:1000n,fees:1n,timestamp:1700000000}} as Awaited<ReturnType<BreezSdk['lnurlPay']>>);
+ await waitFor(()=>expect(view).toHaveAttribute('data-phase','confirmed'));
+ expect(screen.getByTestId('transfer-experience')).toBe(view);
+ expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','100');
+ expect(client.lnurlPay).toHaveBeenCalledOnce();
+ expect(await screen.findByTestId('payment-fiat-amount')).toHaveTextContent('≈ $1.00 USD');
 });

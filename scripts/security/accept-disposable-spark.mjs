@@ -5,12 +5,18 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 import {parseLightsparkResponseUrl} from './lightspark-response-url.mjs';
+import {acceptanceSourceBinding,bindAcceptanceDirectory} from './acceptance-run-binding.mjs';
 const manualFunding=process.env.GYS_MANUAL_REGTEST_FUNDING==='1';
+const prepareOnly=process.env.GYS_ACCEPTANCE_PREPARE_ONLY==='1';
+const resume=process.env.GYS_ACCEPTANCE_RESUME==='1';
+assert(!(prepareOnly&&resume),'Preparation requires a new run');
 const output=process.env.GYS_ACCEPTANCE_EVIDENCE_DIR||'/tmp/gys-disposable-acceptance';
 const origin=process.env.GYS_ACCEPTANCE_ORIGIN||'http://127.0.0.1:5173';
 assert.match(origin,/^http:\/\/127\.0\.0\.1:\d+$/,'Acceptance fixture must be local');
-await mkdir(output,{recursive:true});
+const sourceBinding=await acceptanceSourceBinding(origin);
+await bindAcceptanceDirectory(output,sourceBinding,resume);
 const report={schema:1,sourceCommit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),network:'regtest',
+ sourceBinding,
  sourceTree:execFileSync('git',['rev-parse','HEAD^{tree}'],{encoding:'utf8'}).trim(),
  sourceDirty:execFileSync('git',['status','--porcelain','--untracked-files=no'],{encoding:'utf8'}).trim()!=='',
  realFunds:false,userSecrets:false,apiKey:false,fixtureApprovals:true,physicalDevice:false,fullProductAcceptance:false,
@@ -18,8 +24,9 @@ const report={schema:1,sourceCommit:execFileSync('git',['rev-parse','HEAD'],{enc
 report.sdk=JSON.parse(await readFile('vendor/getyoursats-sdk-build.json','utf8'));
 report.testFiles={};
 for(const file of ['e2e/fixtures/disposable-wallet-acceptance.ts','scripts/security/accept-disposable-spark.mjs','scripts/security/lightspark-response-url.mjs'])report.testFiles[file]=createHash('sha256').update(await readFile(file)).digest('hex');
-const launchOptions={headless:process.env.GYS_ACCEPTANCE_HEADED!=='1',...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})};
-const resume=process.env.GYS_ACCEPTANCE_RESUME==='1';
+const launchOptions={headless:process.env.GYS_ACCEPTANCE_HEADED!=='1',
+ ...(process.env.GYS_ACCEPTANCE_PROXY?{proxy:{server:process.env.GYS_ACCEPTANCE_PROXY,bypass:'127.0.0.1,localhost'}}:{}),
+ ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH}:{})};
 if(resume){
  // Keep every prior failure receipt before resuming the retained profiles.
  try{const previous=await readFile(output+'/disposable-spark-acceptance.json');await writeFile(output+'/previous-'+Date.now()+'.json',previous,{flag:'wx'});}catch(e){if(e.code!=='ENOENT')throw e;}
@@ -98,6 +105,11 @@ async function send(page,address,amount,recipientIdentity){
 try{
  await checkpoint('connect-first-disposable-wallet');const a=await fresh();await checkpoint('connect-second-disposable-wallet');const b=await fresh();assert.notEqual(a.wallet.identity,b.wallet.identity);if(!resume){assert.equal(a.wallet.balance,'0');assert.equal(b.wallet.balance,'0');}
  report.steps.push({step:'two-real-disposable-wallets',result:'PASS',wallets:[a.wallet,b.wallet]});
+ if(prepareOnly){
+  report.result='READY_FOR_MANUAL_REGTEST_FUNDING';
+  report.faucet={mode:'not-requested',requestedSats:0};
+  report.fundingRequest={network:'regtest',address:a.wallet.address,amountSats:1000,realBitcoin:false};
+ }else{
  if(resume){
   const states=await Promise.all([a.page,b.page].map(p=>p.evaluate(()=>window.gysDisposableAcceptance.status())));
   // A resumed diagnostic must never repeat an already-started payment sequence.
@@ -147,6 +159,7 @@ try{
  assert(back.payments.some(p=>p.id===returned.id&&p.type==='receive'&&p.status==='completed'&&p.amount==='50'&&p.fee==='0'));
  report.steps.push({step:'return-transfer',result:'PASS',returned,receiver:back,sender:residual});
  report.settlementVerified=true;report.result='PASS_DIRECT_SPARK_ACCEPTANCE_ONLY';
+ }
 }catch(error){
  report.error=String(error.message).slice(0,2000);process.exitCode=2;
  report.failureObservations=[];
@@ -154,7 +167,8 @@ try{
 }
 finally{
  clearTimeout(deadline);for(const ctx of contexts)await ctx.close();
- report.finishedAt=new Date().toISOString();report.walletProfilesClosed=true;report.disposableProfilesRetainedLocally=true;report.doNotFundReportedAddresses=true;
+ report.finishedAt=new Date().toISOString();report.walletProfilesClosed=true;report.disposableProfilesRetainedLocally=true;
+ report.doNotFundReportedAddresses=report.result!=='READY_FOR_MANUAL_REGTEST_FUNDING';
  await writeFile(output+'/disposable-spark-acceptance.json',JSON.stringify(report,null,2)+'\n');
- console.log(JSON.stringify({source:report.sourceCommit,result:report.result,settlementVerified:report.settlementVerified,steps:report.steps.map(s=>({step:s.step,result:s.result})),error:report.error}));
+ console.log(JSON.stringify({source:report.sourceCommit,result:report.result,settlementVerified:report.settlementVerified,steps:report.steps.map(s=>({step:s.step,result:s.result})),fundingRequest:report.fundingRequest,error:report.error}));
 }

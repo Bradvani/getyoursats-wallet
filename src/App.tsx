@@ -19,6 +19,7 @@ import { WalletProvider, WalletInfoProvider, WalletStatusProvider } from './cont
 import LoadingSpinner from './components/LoadingSpinner';
 import BrandIntro from './components/BrandIntro';
 import PaymentCelebration from './components/PaymentCelebration';
+import IncomingPaymentNotice from './components/IncomingPaymentNotice';
 import OfflineBanner from './components/OfflineBanner';
 import StagingGate from './components/StagingGate';
 import { ToastProvider, useToast } from './contexts/ToastContext';
@@ -924,6 +925,7 @@ const AppContent: React.FC = () => {
                   celebration auto-dismisses on a timer, so mounting it
                   behind the lock screen would burn it unseen. Deferring
                   the mount plays it in full after unlock. */}
+              <IncomingPaymentNotice key={sdk.walletInfo?.identityPubkey??'disconnected'} visible={!appLock.locked && !browserSessionLock.locked && sdk.isConnected && sdk.celebrationPayment===null}/>
               {sdk.celebrationPayment !== null && !appLock.locked && !browserSessionLock.locked && (
                 <PaymentCelebration
                   key={sdk.celebrationPayment.id}
