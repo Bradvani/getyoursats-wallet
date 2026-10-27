@@ -1,34 +1,29 @@
 import {useEffect,useRef,useState} from 'react';
-import {createPortal} from 'react-dom';
 import {useSdkEvents} from '../contexts/WalletContext';
-import {usePresentation} from '../hooks/usePresentation';
 import {isConversionPayment} from '../utils/paymentDescription';
 import {isMigrationInProgress} from '../services/passkeyService';
-import {TRANSFER_FEEDBACK} from '../locales/transferFeedback';
-import PaymentMotion from './PaymentMotion';
-/** Only actual incoming SDK events create this indicator. Opening a QR is not an incoming payment. */
+import TransferExperience from './TransferExperience';
+type Entry={id:string;phase:'confirming'|'failed'};
+/** A pending receive and its final receipt share a single motion record keyed to the SDK payment. */
 export default function IncomingPaymentNotice({visible=true}:{visible?:boolean}){
- const subscribe=useSdkEvents();const [pending,setPending]=useState<string[]>([]);
+ const subscribe=useSdkEvents();const [pending,setPending]=useState<Entry[]>([]);
  const dismissed=useRef(new Set<string>());
- const {language}=usePresentation();const copy=TRANSFER_FEEDBACK[language];
  useEffect(()=>subscribe(event=>{
   if(event.type!=='paymentPending'&&event.type!=='paymentSucceeded'&&event.type!=='paymentFailed')return;
   const payment=event.payment;
-  if(event.type!=='paymentPending'){
-   setPending(ids=>ids.filter(id=>id!==payment.id));dismissed.current.delete(payment.id);return;
+  if(payment.paymentType!=='receive'||!payment.id||isConversionPayment(payment)||isMigrationInProgress())return;
+  if(event.type==='paymentSucceeded'){
+   setPending(entries=>entries.filter(entry=>entry.id!==payment.id));dismissed.current.delete(payment.id);return;
   }
-  if(payment.paymentType!=='receive'||payment.status!=='pending'||!payment.id||dismissed.current.has(payment.id)
-    ||isConversionPayment(payment)||isMigrationInProgress())return;
-  setPending(ids=>ids.includes(payment.id)?ids:[...ids,payment.id].slice(-8));
+  if(event.type==='paymentFailed'){
+   setPending(entries=>entries.map(entry=>entry.id===payment.id?{...entry,phase:'failed'}:entry));return;
+  }
+  if(payment.status!=='pending'||dismissed.current.has(payment.id))return;
+  setPending(entries=>entries.some(entry=>entry.id===payment.id)?entries:[...entries,{id:payment.id,phase:'confirming'}].slice(-8) as Entry[]);
  }),[subscribe]);
- const id=pending[0];
- if(!visible||!id)return null;
- return createPortal(<aside className="gys-incoming-notice" data-testid="incoming-payment-notice">
-  <PaymentMotion key={id} state="receiving"/>
-  <div role="status" aria-live="polite"><strong className="block text-sm">{copy.incoming}</strong><span className="text-xs text-spark-text-secondary">{copy.waiting}</span></div>
-  <button type="button" aria-label={copy.dismiss} onClick={()=>{
-   dismissed.current.add(id);if(dismissed.current.size>64)dismissed.current.delete(dismissed.current.values().next().value!);
-   setPending(ids=>ids.filter(value=>value!==id));
-  }}>×</button>
- </aside>,document.body);
+ const entry=pending[0];
+ if(!visible||!entry)return null;
+ const dismiss=()=>{dismissed.current.add(entry.id);if(dismissed.current.size>64)dismissed.current.delete(dismissed.current.values().next().value!);setPending(entries=>entries.filter(value=>value.id!==entry.id));};
+ return <div data-testid="incoming-payment-notice"><TransferExperience key={entry.id} operationId={entry.id}
+  direction="received" phase={entry.phase} onClose={dismiss}/></div>;
 }

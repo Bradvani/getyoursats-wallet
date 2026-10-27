@@ -59,7 +59,7 @@ export default function TransferPulse({direction,paymentId,anchor,pending=false}
    paths.current.forEach((path,i)=>{
     if(!path)return;
     const raw=(elapsed-i*260)/(pending?4200:3000);
-    const phase=pending?((raw%1)+1)%1:Math.max(0,Math.min(1,raw));
+    const phase=Math.max(0,Math.min(pending?.66:1,raw));
     if(raw<0||(!pending&&raw>1)){path.style.opacity='0';return;}
     // Smooth, near-linear travel. No abrupt expansion in the first frames.
     const travel=phase*phase*(3-2*phase);

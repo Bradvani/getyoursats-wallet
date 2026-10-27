@@ -446,12 +446,22 @@ export const TransferStateIcon = ({ state }: { state: 'sending' | 'receiving' | 
 );
 
 /** Outlines copied exactly from the approved asset; never re-generated artwork. */
-export const TransferBrandMark = React.forwardRef<SVGSVGElement,{direction:'sent'|'received';settled?:boolean;animate?:boolean}>(function TransferMark({direction,settled=false,animate=true},ref){
- return <svg ref={ref} viewBox="0 0 512 512" aria-hidden="true" className={`gys-contour-mark gys-contour-mark--${direction} ${settled?'gys-contour-mark--settled':''} ${!animate?'gys-contour-mark--static':''}`}>
-  <image href="/brand/monogram.svg" width="512" height="512" className="gys-contour-mark__image"/>
-  <rect x="2.5" y="2.5" width="507" height="507" rx="107.5" pathLength="1000" className="gys-contour-mark__trace"/>
-  <path transform="translate(75 75)" d="M315 12C265 5 122 34 67 72C22 103 5 145 17 176C32 212 98 202 148 202C178 202 178 217 145 232C101 251 51 260 23 267C13 270 10 281 7 296L1 330C-2 347 11 350 25 347C109 328 244 294 290 252C321 224 334 192 320 167C303 137 246 141 204 143L105 149C78 151 83 137 105 126C157 104 245 85 293 79C308 77 311 66 314 52L322 28C326 18 323 13 315 12Z" pathLength="1000" className="gys-contour-mark__trace"/>
-  <path transform="translate(298 290) scale(1.5) rotate(14 50 55)" d="M34 18h7v8h6v-8h7v9c11 2 17 7 17 15 0 6-3 10-8 12 8 2 12 7 12 14 0 11-8 17-21 18v9h-7v-9h-6v9h-7v-9H22v-9h7V35h-7v-9h12zm7 17v15h8c7 0 11-2 11-7s-4-8-11-8zm0 24v18h9c9 0 14-3 14-9s-5-9-14-9z" pathLength="1000" className="gys-contour-mark__trace"/>
+export const TransferBrandMark = React.forwardRef<SVGSVGElement,{direction:'sent'|'received';settled?:boolean;animate?:boolean;fillFraction?:number}>(function TransferMark({direction,settled=false,fillFraction},ref){
+ const clipId=React.useId().replace(/:/g,'');
+ const fill=Math.max(0,Math.min(1,fillFraction??(direction==='received'?(settled?1:0):(settled?0:1))));
+ const bitcoin='M34 18h7v8h6v-8h7v9c11 2 17 7 17 15 0 6-3 10-8 12 8 2 12 7 12 14 0 11-8 17-21 18v9h-7v-9h-6v9h-7v-9H22v-9h7V35h-7v-9h12zm7 17v15h8c7 0 11-2 11-7s-4-8-11-8zm0 24v18h9c9 0 14-3 14-9s-5-9-14-9z';
+ return <svg ref={ref} viewBox="0 0 512 512" aria-hidden="true" shapeRendering="geometricPrecision" className="gys-contour-mark" data-bitcoin-fill={fill.toFixed(3)}>
+  <rect x="1" y="1" width="510" height="510" rx="109" fill="#242424" stroke="#5b5b5b" strokeWidth="2"/>
+  <g fill="#FAF9F6" transform="translate(75 75)"><path d="M315 12C265 5 122 34 67 72C22 103 5 145 17 176C32 212 98 202 148 202C178 202 178 217 145 232C101 251 51 260 23 267C13 270 10 281 7 296L1 330C-2 347 11 350 25 347C109 328 244 294 290 252C321 224 334 192 320 167C303 137 246 141 204 143L105 149C78 151 83 137 105 126C157 104 245 85 293 79C308 77 311 66 314 52L322 28C326 18 323 13 315 12Z"/></g>
+  <circle cx="373" cy="373" r="91" fill="#FAF9F6"/>
+  <g transform="translate(298 290) scale(1.5)">
+   <circle cx="50" cy="55" r="49" fill="#242424"/>
+   <g transform="rotate(14 50 55)">
+    <defs><clipPath id={clipId}><rect x="0" y={95-77*fill} width="100" height={77*fill}/></clipPath></defs>
+    <path fill="#FAF9F6" fillRule="evenodd" d={bitcoin}/>
+    <path data-testid="bitcoin-orange-fill" fill="#F7931A" fillRule="evenodd" clipPath={`url(#${clipId})`} d={bitcoin}/>
+   </g>
+  </g>
  </svg>;
 });
 
@@ -464,6 +474,21 @@ export function TransferContourCanvas({svgRef,maskRef,paths,maskId}:{
   <defs><mask id={maskId}><rect width="100%" height="100%" fill="white"/><rect ref={maskRef} fill="black"/></mask></defs>
   <g mask={`url(#${maskId})`} fill="none" stroke="#F7931A" strokeWidth="1.4" strokeLinejoin="round">
    {Array.from({length:6},(_,i)=><path key={i} ref={el=>{paths.current[i]=el;}} className="gys-pulse__contour"/>)}
+  </g>
+ </svg>;
+}
+
+/** Thick radiance is applied only to the waves; the stationary logo stays unfiltered. */
+export function TransferSequenceCanvas({paths,fillPath,fillOpacity,cutout,glowId}:{paths:string[];fillPath:string;fillOpacity:number;cutout:{x:number;y:number;size:number};glowId:string}){
+ return <svg className="gys-sequence__canvas" width="100%" height="100%" aria-hidden="true">
+  <defs>
+   <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB"><feGaussianBlur stdDeviation="7"/></filter>
+   <mask id={`${glowId}-mask`}><rect width="100%" height="100%" fill="white"/><rect x={cutout.x} y={cutout.y} width={cutout.size} height={cutout.size} rx={cutout.size*110/512} fill="black"/></mask>
+  </defs>
+  <path className="gys-sequence__fill" data-testid="sequence-orange-fill" d={fillPath} fill="#F7931A" fillRule="evenodd" opacity={fillOpacity}/>
+  <g mask={`url(#${glowId}-mask)`} fill="none" stroke="#F7931A" strokeLinejoin="round">
+   <g filter={`url(#${glowId})`} strokeWidth="19" opacity=".8">{paths.map((d,i)=><path key={i} d={d}/>)}</g>
+   <g strokeWidth="5" opacity=".98">{paths.map((d,i)=><path key={i} d={d} className="gys-sequence__wave"/>)}</g>
   </g>
  </svg>;
 }

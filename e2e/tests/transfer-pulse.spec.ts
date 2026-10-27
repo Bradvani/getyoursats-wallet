@@ -1,49 +1,74 @@
 import {test,expect} from '@playwright/test';
+const fixture='/e2e/fixtures/transfer-pulse.html';
 for(const viewport of [{width:390,height:844},{width:1366,height:900}]){
- for(const direction of ['sent','received'])test(`${direction}: slow transparent logo-anchored contours at ${viewport.width}`,async({page})=>{
-  await page.setViewportSize(viewport);await page.goto('/e2e/fixtures/transfer-pulse.html');
-  await page.getByTestId(`preview-${direction}`).click();const pulse=page.getByTestId('transfer-pulse');
-  await expect(pulse).toHaveAttribute('data-direction',direction);await expect(pulse).toHaveCSS('pointer-events','none');
-  await expect(pulse).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
-  const box=await pulse.boundingBox();expect(box?.width).toBe(viewport.width);expect(box?.height).toBe(viewport.height);
-  await expect(pulse.locator('.gys-pulse__contour')).toHaveCount(6);await expect(pulse.locator('img,image')).toHaveCount(0);
-  await expect.poll(()=>pulse.locator('.gys-pulse__contour').first().getAttribute('d')).not.toBeNull();
-  await page.waitForTimeout(1600);await expect(pulse).toBeAttached();
-  const geometry=await page.evaluate(()=>{
-   const logo=document.querySelector('.gys-contour-mark')!.getBoundingClientRect();
-   const cut=document.querySelector('mask rect[fill="black"]')!;
-   return {logo:{x:logo.x,y:logo.y,w:logo.width},mask:{x:Number(cut.getAttribute('x')),y:Number(cut.getAttribute('y')),w:Number(cut.getAttribute('width'))}};
-  });
-  expect(geometry.mask.x).toBeCloseTo(geometry.logo.x,0);expect(geometry.mask.y).toBeCloseTo(geometry.logo.y,0);expect(geometry.mask.w).toBeCloseTo(geometry.logo.w,0);
-  await page.screenshot({path:`test-artifacts/contours-${direction}-${viewport.width}.png`});
-  await expect(page.getByRole('button',{name:'Done',exact:true})).toBeEnabled();
-  await expect(pulse).toHaveCount(0,{timeout:5000});
+ for(const direction of ['send','receive'])test(`${direction}: one bright burst and an orange finish at ${viewport.width}`,async({page})=>{
+  await page.setViewportSize(viewport);await page.goto(fixture);
+  await page.getByTestId(`preview-${direction}`).click();
+  const view=page.getByTestId('transfer-experience');
+  await expect(view).toHaveAttribute('data-direction',direction==='send'?'sent':'received');
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','25');
+  const mark=page.locator('.gys-contour-mark');
+  await expect(mark.locator('image,img,filter,animate')).toHaveCount(0);
+  const before=await mark.boundingBox();
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','50');
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','75');
+  await expect(page.locator('.gys-sequence__wave')).toHaveCount(6);
+  await expect(page.locator('.gys-sequence__wave').first()).toHaveCSS('stroke-width','5px');
+  await expect(page.getByTestId('sequence-orange-fill')).toHaveAttribute('opacity','0');
+  await page.screenshot({path:`test-artifacts/sequence-${direction}-${viewport.width}-pending.png`});
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','100',{timeout:5000});
+  await expect(view).toHaveAttribute('data-full-orange','true',{timeout:12000});
+  const after=await mark.boundingBox();expect(after).toEqual(before);
+  await expect(mark).toHaveAttribute('data-bitcoin-fill',direction==='send'?'0.000':'1.000');
+  const finalPath=await page.getByTestId('sequence-orange-fill').getAttribute('d');
+  await page.waitForTimeout(1200);
+  expect(await page.getByTestId('sequence-orange-fill').getAttribute('d')).toBe(finalPath);
+  await page.screenshot({path:`test-artifacts/sequence-${direction}-${viewport.width}-confirmed.png`});
+  await page.getByRole('button',{name:'Done',exact:true}).click();await expect(view).toHaveCount(0);
  });
 }
-test('pending never invents a percentage or auto-completes',async({page})=>{
- await page.goto('/e2e/fixtures/transfer-pulse.html');await page.getByTestId('preview-pending').click();
- await expect(page.getByTestId('transfer-flow')).toBeAttached();await page.waitForTimeout(6000);
- await expect(page.getByRole('progressbar')).not.toHaveAttribute('aria-valuenow');await expect(page.getByText('100%',{exact:true})).toHaveCount(0);
- await page.getByTestId('preview-sent').click();await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','100');
+for(const phase of ['failed','unknown'])test(`${phase} freezes the sequence before full orange and never displays 100%`,async({page})=>{
+ await page.setViewportSize({width:390,height:844});await page.goto(fixture);
+ await page.getByTestId('manual-send').click();await page.getByTestId('stage-processing').click();
+ await page.waitForTimeout(1600);await page.getByTestId(`stage-${phase}`).click();
+ const view=page.getByTestId('transfer-experience');await expect(view).toHaveAttribute('data-stopped','true');
+ const stopped=await view.getAttribute('data-visual-progress');await page.waitForTimeout(2400);
+ expect(await view.getAttribute('data-visual-progress')).toBe(stopped);
+ await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','50');
+ await expect(page.getByTestId('sequence-orange-fill')).toHaveAttribute('opacity','0');
+ await expect(page.getByRole('alert')).toHaveText(phase==='failed'?'Payment failed':'Payment status unknown');
+ await page.screenshot({path:`test-artifacts/sequence-${phase}.png`});
 });
-test('unsupported vibration is not shown as delivered',async({page})=>{
- await page.addInitScript(()=>Object.defineProperty(navigator,'vibrate',{value:undefined,configurable:true}));
- await page.goto('/e2e/fixtures/transfer-pulse.html');await expect(page.getByRole('button',{name:'Test vibration',exact:true})).toBeDisabled();
- await expect(page.getByText('This browser does not expose vibration. Visual feedback stays on.')).toBeVisible();
+test('pending holds its checkpoint and its shape without looping',async({page})=>{
+ await page.goto(fixture);await page.getByTestId('manual-receive').click();await page.getByTestId('stage-confirming').click();
+ const view=page.getByTestId('transfer-experience');await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','75');
+ await expect(view).toHaveAttribute('data-visual-progress','0.6600',{timeout:10000});
+ const line=await page.locator('.gys-sequence__wave').first().getAttribute('d');await page.waitForTimeout(1800);
+ expect(await page.locator('.gys-sequence__wave').first().getAttribute('d')).toBe(line);
+ await expect(page.getByTestId('sequence-orange-fill')).toHaveAttribute('opacity','0');
 });
-test('explicit vibration test and definite error use distinct patterns',async({page})=>{
+test('reduced motion preserves the percentage and status without a screen sweep',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});await page.goto(fixture);await page.getByTestId('manual-send').click();
+ await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','25');
+ await expect(page.locator('.gys-sequence__canvas')).toBeHidden();
+ await page.getByTestId('stage-confirmed').click();await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','100');
+ await expect(page.getByTestId('sequence-orange-fill')).toHaveAttribute('opacity','0');
+});
+test('explicit vibration and definite failure remain independent of the motion clock',async({page})=>{
  await page.addInitScript(()=>{
-  Object.defineProperty(navigator,'vibrate',{configurable:true,value:(pattern:unknown)=>{(window as unknown as {patterns:unknown[]}).patterns.push(pattern);return true;}});
+  Object.defineProperty(navigator,'vibrate',{configurable:true,value:(p:unknown)=>{(window as unknown as {patterns:unknown[]}).patterns.push(p);return true;}});
   Object.defineProperty(navigator,'userActivation',{configurable:true,value:{hasBeenActive:true}});
   (window as unknown as {patterns:unknown[]}).patterns=[];
  });
- await page.goto('/e2e/fixtures/transfer-pulse.html');await page.getByRole('button',{name:'Test vibration',exact:true}).click();
- await expect(page.getByText(/Request accepted/)).toBeVisible();await page.getByTestId('preview-failed').click();
+ await page.goto(fixture);await page.getByRole('button',{name:'Test vibration',exact:true}).click();
+ await page.getByTestId('manual-send').click();await page.getByTestId('stage-failed').click();
  expect(await page.evaluate(()=>(window as unknown as {patterns:unknown[]}).patterns)).toEqual([120,[80,60,100]]);
- await expect(page.getByTestId('transfer-pulse')).toHaveCount(0);
 });
-test('reduced motion has no travelling contours',async({page})=>{
- await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/e2e/fixtures/transfer-pulse.html');
- await page.getByTestId('preview-pending').click();await expect(page.locator('.gys-pulse__contours')).toBeHidden();
- await expect(page.getByRole('progressbar')).not.toHaveAttribute('aria-valuenow');
+test('high pixel density keeps a stationary vector-only logo and orange isolated to B',async({browser})=>{
+ const context=await browser.newContext({viewport:{width:412,height:915},deviceScaleFactor:3,isMobile:true,hasTouch:true});
+ const page=await context.newPage();await page.goto(fixture);await page.getByTestId('manual-receive').click();await page.getByTestId('stage-confirming').click();
+ const logo=page.locator('.gys-contour-mark');await expect(logo.locator('image,img')).toHaveCount(0);
+ await expect(logo).toHaveCSS('filter','none');await expect(logo).toHaveCSS('animation-name','none');
+ expect(await logo.locator('[fill="#F7931A"]').count()).toBe(1);
+ await page.waitForTimeout(1400);await page.screenshot({path:'test-artifacts/sequence-android-density3.png'});await context.close();
 });

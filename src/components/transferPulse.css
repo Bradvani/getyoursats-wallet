@@ -28,3 +28,7 @@
 @keyframes gys-confirmation-wait{0%{transform:translateX(-105%)}50%{transform:translateX(90%)}100%{transform:translateX(290%)}}
 @media(prefers-reduced-motion:reduce){.gys-pulse__contours{display:none!important}.gys-contour-mark__trace,.gys-transfer-progress__line:before{animation:none!important}.gys-contour-mark__image{transition:none}.gys-contour-mark__trace{stroke-dasharray:none;opacity:.25}}
 @media(forced-colors:active){.gys-pulse,.gys-contour-mark__trace{display:none}}
+
+/* v3: no logo trace or rasterized filter; secondary receipts remain static. */
+.gys-contour-mark__trace{display:none!important}
+.gys-contour-mark{filter:none!important;animation:none!important}

@@ -13,13 +13,13 @@ describe('receive success evidence',()=>{
  it('does not render or time out a pending payment as a success',()=>{
   const onClose=vi.fn();render(<PaymentCelebration payment={payment('pending')} onClose={onClose}/>);
   act(()=>{vi.advanceTimersByTime(6000)});
-  expect(screen.queryByTestId('transfer-pulse')).toBeNull();expect(screen.queryByText('Payment Received!')).toBeNull();expect(onClose).not.toHaveBeenCalled();
+  expect(screen.queryByTestId('transfer-experience')).toBeNull();expect(screen.queryByText('Payment Received!')).toBeNull();expect(onClose).not.toHaveBeenCalled();
  });
  it('starts when the same payment is actually completed, then closes its receipt',()=>{
   const onClose=vi.fn();const {rerender}=render(<PaymentCelebration payment={payment('pending')} onClose={onClose}/>);
   rerender(<PaymentCelebration payment={payment('completed')} onClose={onClose}/>);
   act(()=>{vi.advanceTimersByTime(50)});act(()=>{vi.advanceTimersByTime(1)});
-  expect(screen.getByTestId('transfer-pulse')).toHaveAttribute('data-direction','received');
+  expect(screen.getByTestId('transfer-experience')).toHaveAttribute('data-direction','received');
   act(()=>{vi.advanceTimersByTime(6000)});expect(onClose).not.toHaveBeenCalled();
   act(()=>{vi.advanceTimersByTime(2400)});expect(onClose).toHaveBeenCalledTimes(1);
  });
