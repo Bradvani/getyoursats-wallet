@@ -1,5 +1,6 @@
 import {DialogContainer,DialogCard} from './ui';
 import {SpinnerIcon} from './Icons';
+import {SatAmount} from './SatAmount';
 import {formatTokenAmount,type TokenDisplayConfig} from '../utils/tokenFormatting';
 import type {ConversionEstimate} from '@breeztech/breez-sdk-spark';
 import {usePresentation} from '../hooks/usePresentation';
@@ -16,7 +17,11 @@ export default function StableBalanceFeeConfirm({isOpen,direction,conversionEsti
   <h3 className="font-display text-lg font-bold text-spark-text-primary">{direction==='toToken'?copy.toStable:copy.toBitcoin}</h3>
   <p className="text-sm leading-relaxed text-spark-text-secondary">{copy.cost}</p>
   {isEstimating&&<div className="flex justify-center py-5" role="status"><SpinnerIcon size="lg"/></div>}
-  {!isEstimating&&fee&&<div className="rounded-xl border border-spark-border p-4 space-y-2"><p className="text-sm text-spark-text-secondary">{copy.fee}</p><p className="font-mono text-lg text-spark-text-primary">{fee}</p><p className="text-xs leading-relaxed text-spark-text-muted">{copy.quoteNote}</p></div>}
+  {!isEstimating&&fee&&conversionEstimate&&displayConfig&&<div className="rounded-xl border border-spark-border p-4 space-y-2"><div className="flex flex-wrap items-center gap-2 text-sm text-spark-text-primary" data-testid="stable-estimate-amounts" dir="ltr">
+   {direction==='toToken'?<SatAmount sats={conversionEstimate.amountIn}/>:<span>{formatTokenAmount(conversionEstimate.amountIn,displayConfig,{fullPrecision:true})}</span>}
+   <span aria-hidden="true">→</span>
+   {direction==='toToken'?<span>{formatTokenAmount(conversionEstimate.amountOut,displayConfig,{fullPrecision:true})}</span>:<SatAmount sats={conversionEstimate.amountOut}/>}
+  </div><p className="text-sm text-spark-text-secondary">{copy.fee}</p><p className="font-mono text-lg text-spark-text-primary">{fee}</p><p className="text-xs leading-relaxed text-spark-text-muted">{copy.quoteNote}</p></div>}
   {!isEstimating&&info&&<p className="text-sm leading-relaxed text-spark-text-secondary">{info}</p>}
   {error&&<p role="alert" className="text-sm leading-relaxed text-spark-warning">{error}</p>}
   {!isEstimating&&!canConfirm&&!isExecuting&&<button type="button" onClick={onRefresh} className="min-h-11 text-sm text-spark-primary underline">{copy.review}</button>}

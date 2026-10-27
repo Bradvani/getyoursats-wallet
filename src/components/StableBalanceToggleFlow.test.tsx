@@ -34,6 +34,8 @@ describe('intentional USDB conversion',()=>{
  it('cancel leaves the wallet untouched',()=>{const {onCancel}=renderFlow();fireEvent.click(screen.getByRole('button',{name:'Cancel'}));expect(onCancel).toHaveBeenCalledOnce();expect(mock.toggle).not.toHaveBeenCalled();});
  it('reviews the estimate before an explicit mode change',async()=>{
   const {onComplete}=renderFlow();await review();expect(screen.getByText('Estimated conversion fee')).toBeInTheDocument();expect(mock.toggle).not.toHaveBeenCalled();
+  expect(screen.getByTestId('stable-estimate-amounts')).toHaveTextContent('100 000 sats');
+  expect(screen.getByText(/not necessarily your whole balance/)).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'Confirm balance mode'}));await waitFor(()=>expect(mock.toggle).toHaveBeenCalledExactlyOnceWith('USDB'));expect(onComplete).toHaveBeenCalledOnce();
  });
  it.each(['provider error','no quote','stale rate'])('fails closed on %s',async problem=>{
