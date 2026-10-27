@@ -8,7 +8,7 @@ import {bitcoinFill,finalFillProgress,isInterrupted,type TransferPhase,type Tran
 import {contourPoint} from '../utils/transferContours';
 import './transferSequence.css';
 
-type Props={operationId:string;direction:TransferDirection;phase:TransferPhase;receiptId?:string;amount?:ReactNode;error?:string|null;onClose:()=>void;children?:ReactNode};
+type Props={operationId:string;direction:TransferDirection;phase:TransferPhase;receiptId?:string;amount?:ReactNode;fiatAmount?:ReactNode;error?:string|null;onClose:()=>void;children?:ReactNode};
 function pathAt(progress:number,layer:number,width:number,height:number,cx:number,cy:number,size:number){
  const p=Math.max(0,Math.min(1,progress));
  const w=size+(width+36-size)*p,h=size+(height+36-size)*p;
@@ -25,7 +25,7 @@ function pathAt(progress:number,layer:number,width:number,height:number,cx:numbe
  return points.join(' ')+'Z';
 }
 /** One payment screen owns pending, confirmation and interruption. No UI timer changes SDK state. */
-export default function TransferExperience({operationId,direction,phase:requestedPhase,receiptId,amount,error,onClose,children}:Props){
+export default function TransferExperience({operationId,direction,phase:requestedPhase,receiptId,amount,fiatAmount,error,onClose,children}:Props){
  const phase=requestedPhase==='confirmed'&&!receiptId?'unknown':requestedPhase;
  const {language}=usePresentation();const copy=TRANSFER_SEQUENCE_COPY[language];
  const sequence=useTransferSequence(direction,operationId,phase,receiptId);
@@ -66,25 +66,28 @@ export default function TransferExperience({operationId,direction,phase:requeste
  const title=phase==='confirmed'?(direction==='sent'?copy.sent:copy.received):copy[phase];
  const orange=fill===1;
  const bitcoin=bitcoinFill(direction,sequence.visual);
- return createPortal(<section ref={surface} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`}
+ return createPortal(<section ref={surface} role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} aria-describedby={interrupted?`${id}-description`:undefined}
   data-testid="transfer-experience" data-phase={phase} data-direction={direction}
   data-visual-progress={sequence.visual.toFixed(4)} data-full-orange={orange} data-stopped={interrupted}
   className={`gys-sequence ${orange?'gys-sequence--orange':''} ${interrupted?'gys-sequence--interrupted':''} ${sequence.reduced?'gys-sequence--reduced':''}`}>
   <TransferSequenceCanvas paths={waves} fillPath={fillPath} fillOpacity={fill>0?1:0} cutout={{x:cx-size/2,y:cy-size/2,size}} glowId={`${id}-radiance`}/>
   <div className="gys-sequence__content" data-testid={phase==='confirmed'?'payment-success':phase==='failed'?'payment-failure':phase==='unknown'?'payment-unknown':'payment-processing'}>
    <div className="gys-sequence__identity"><TransferBrandMark ref={logo} direction={direction} fillFraction={bitcoin}/></div>
+   {amount&&<div className="gys-sequence__money">
+    <div className="gys-sequence__amount" data-testid="transfer-amount">{amount}</div>
+    {fiatAmount&&<div className="gys-sequence__fiat">{fiatAmount}</div>}
+   </div>}
+   <h2 id={`${id}-title`} role={interrupted?'alert':undefined}>{title}</h2>
    <div className="gys-sequence__evidence" role="progressbar" aria-label={interrupted?copy.lastStep:copy.steps}
-    aria-valuemin={0} aria-valuemax={100} aria-valuenow={sequence.percent} aria-valuetext={`${sequence.percent}% · ${title}. ${copy.basis}`}>
+    aria-valuemin={0} aria-valuemax={100} aria-valuenow={sequence.percent} aria-valuetext={`${sequence.percent}% · ${title}`}>
     <span className="gys-sequence__percent" data-testid="transfer-percentage">{sequence.percent}<span>%</span></span>
     <span className="gys-sequence__caption">{interrupted?copy.lastStep:copy.steps}</span>
     <div className="gys-sequence__steps" aria-hidden="true">{[25,50,75,100].map(n=><i key={n} data-done={sequence.percent>=n}/>)}</div>
    </div>
-   <h2 id={`${id}-title`} role={interrupted?'alert':undefined}>{title}</h2>
-   <div id={`${id}-description`} className="gys-sequence__description">
-    {interrupted?<p>{phase==='unknown'?copy.unknownBody:copy.failedBody}</p>:<p>{copy.basis}</p>}
+   {interrupted&&<div id={`${id}-description`} className="gys-sequence__description">
+    <p>{phase==='unknown'?copy.unknownBody:copy.failedBody}</p>
     {phase==='failed'&&error&&<p className="gys-sequence__error-detail">{error}</p>}
-   </div>
-   {amount&&<div className="gys-sequence__amount" data-testid="transfer-amount">{amount}</div>}
+   </div>}
   </div>
   <footer className="gys-sequence__footer">
    <button ref={close} type="button" className="gys-sequence__close" onClick={onClose}>{phase==='confirmed'?copy.done:copy.returnWallet}</button>

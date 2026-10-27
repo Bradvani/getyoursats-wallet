@@ -4,6 +4,8 @@ import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import PaymentMotion from './PaymentMotion';
 import TransferPulse,{TRANSFER_PULSE_DURATION_MS} from './TransferPulse';
 import TransferProgress from './TransferProgress';
+// This isolated motion test has no wallet; quote behavior has its own provider tests.
+vi.mock('../contexts/FiatDataContext',()=>({useFiatData:()=>({fiatRates:[],fiatCurrencies:[]})}));
 import ResultStep from '../features/send/steps/ResultStep';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 let visibility='visible';
