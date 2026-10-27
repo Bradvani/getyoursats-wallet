@@ -12,7 +12,7 @@ from pathlib import Path
 BASE_PACKAGE_SHA256 = '4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026'
 BASE_SOURCE = '57c5b9e5f0749f97ffe5d93bce21c994f6957cf4'
 BINDGEN_VERSION = '0.2.120'
-PACKAGE_VERSION = '0.1.0-getyoursats.recovery.2'
+PACKAGE_VERSION = '0.1.0-getyoursats.recovery.3'
 BROWSER_STORAGE_SOURCE = 'crates/breez-sdk/wasm/js/web-storage/index.js'
 BROWSER_STORAGE_TARGETS = ('web/storage/index.js', 'bundler/storage/index.js')
 BASE_BROWSER_STORAGE_SHA256 = '1c4562a4b62898422d4ed11324e9622a337429cc322e030ed502eccd2fc6fc0d'
@@ -22,7 +22,7 @@ EXTENSIONS = [
     'strict-transfer-evidence-v1', 'bounded-deposit-observation-v1',
     'incoming-lightning-observation-v1', 'external-exit-envelope-validation-v1',
     'unreceived-deposit-continuation-v1', 'recovery-signer-envelope-v1',
-    'atomic-cache-reservation-v1',
+    'atomic-cache-reservation-v1', 'external-signer-storage-identity-v1',
 ]
 
 def assert_nonterminal_outcome(declarations: str, target: str) -> None:

@@ -1,10 +1,10 @@
 /** Offline artifact/API checks only. Does not connect a wallet or prove settlement. */
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { verifyCanonicalInstalledSdk } from './verify-canonical-installed-sdk.mjs';
 
 const targets = ['web', 'nodejs', 'bundler', 'deno'];
 const browserStorageSource = 'crates/breez-sdk/wasm/js/web-storage/index.js';
@@ -117,24 +117,20 @@ export function verifyGeneratedArtifacts(root, generatedArtifacts) {
 }
 
 export async function verifyInstalledSdk() {
-  const require = createRequire(import.meta.url);
-  const entry = require.resolve('@breeztech/breez-sdk-spark');
-  const root = path.resolve(path.dirname(entry), '..');
-  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'getyoursats-build.json'), 'utf8'));
-  const metadata = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const { packageRoot: root, manifest, metadata } = verifyCanonicalInstalledSdk();
   const extensions = [
     'seed-compatible-external-signers-v1', 'observation-only-wallet-state-v1',
     'signed-recovery-v1', 'explicit-incoming-claim-v1', 'bounded-mature-deposit-claim-v1',
     'strict-transfer-evidence-v1', 'bounded-deposit-observation-v1',
     'incoming-lightning-observation-v1', 'external-exit-envelope-validation-v1',
     'unreceived-deposit-continuation-v1', 'recovery-signer-envelope-v1',
-    'atomic-cache-reservation-v1',
+    'atomic-cache-reservation-v1', 'external-signer-storage-identity-v1',
   ];
-  assert.equal(metadata.version, '0.1.0-getyoursats.recovery.2');
+  assert.equal(metadata.version, '0.1.0-getyoursats.recovery.3');
   assert.equal(manifest.sdkSourceCommit, '57c5b9e5f0749f97ffe5d93bce21c994f6957cf4');
   assert.deepEqual([...manifest.extensions].sort(), [...extensions].sort(), 'Exact reviewed extension set');
   const artifacts = verifyGeneratedArtifacts(root, manifest.generatedArtifacts);
-  const patch = fs.readFileSync('vendor/patches/0006-reconciled-recovery-source.patch');
+  const patch = fs.readFileSync('vendor/patches/0007-signer-storage-identity.patch');
   assert.equal(crypto.createHash('sha256').update(patch).digest('hex'), manifest.patchSha256);
   const storageAdapterArtifacts = verifyStorageAdapters(root, manifest.storageAdapters, patch);
   for (const target of targets) {

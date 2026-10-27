@@ -19,6 +19,7 @@ import {Capacitor} from '@capacitor/core';
 import { logger, LogCategory } from './logger';
 import { formatError } from '../utils/formatError';
 import { USDB_TOKEN_IDENTIFIER, USDB_TICKER } from '../constants/stableBalance';
+import {assertNoLegacyExternalSignerStorage} from './browserSdkStorage';
 
 function localCluster(): SparkConfig | null {
   const raw = import.meta.env.VITE_SPARK_LOCAL_CONFIG;
@@ -108,6 +109,20 @@ export function buildConnectConfig(overrideNetwork?: Network): Config {
   return config;
 }
 
+function snapshotConnectionSeed(seed: Seed): Seed {
+  if (seed?.type === 'mnemonic' && typeof seed.mnemonic === 'string'
+    && (seed.passphrase == null || typeof seed.passphrase === 'string')) {
+    return Object.freeze({type:'mnemonic', mnemonic:seed.mnemonic, passphrase:seed.passphrase});
+  }
+  if (seed?.type === 'entropy' && Array.isArray(seed)) {
+    const bytes = Array.from(seed);
+    if (bytes.every(value => Number.isInteger(value) && value >= 0 && value <= 255)) {
+      return Object.freeze(Object.assign(bytes, {type:'entropy' as const})) as Seed;
+    }
+  }
+  throw new Error('Wallet seed is invalid');
+}
+
 /**
  * Connects a wallet. A config built for a local cluster is pointed at that
  * cluster's own indexer, since the hosted one knows nothing about its chain.
@@ -117,10 +132,20 @@ export async function connectSdk(params: {
   seed: Seed;
   storageDir: string;
 }): Promise<BreezSdk> {
-  const { config, seed, storageDir } = params;
+  const { storageDir } = params;
+  // Preserve the entry seed and network across all connection awaits. This is
+  // a representation-preserving copy, not seed conversion or key derivation.
+  const seed = snapshotConnectionSeed(params.seed);
+  const config = {...params.config};
+  const isNative = Capacitor.isNativePlatform();
+  if (!isNative) {
+    const epoch = getSpendingSessionEpoch();
+    await assertNoLegacyExternalSignerStorage(storageDir, config.network);
+    assertCurrentSession(epoch);
+  }
   await rememberSignerIdentity(seed);
   const chainApiUrl = import.meta.env.VITE_ESPLORA_BASE_URL;
-  if (!Capacitor.isNativePlatform()) {
+  if (!isNative) {
     const epoch=getSpendingSessionEpoch();
     await waitForBrowserSdkShutdowns();
     assertCurrentSession(epoch);

@@ -6,13 +6,15 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {stripTypeScriptTypes} from 'node:module';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
+import {verifyCanonicalInstalledSdk} from './verify-canonical-installed-sdk.mjs';
+const canonicalSdk=verifyCanonicalInstalledSdk();
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const base=join(root,'node_modules')+'/';
 const req=createRequire(base+'bip39/package.json');
 const {mnemonicToSeedSync}=req('bip39');
 const {HDKey}=await import(base+'@scure/bip32/index.js');
-const sdk=await import(base+'@breeztech/breez-sdk-spark/web/breez_sdk_spark_wasm.js');
-const wasmBytes=readFileSync(base+'@breeztech/breez-sdk-spark/web/breez_sdk_spark_wasm_bg.wasm');
+const sdk=await import(pathToFileURL(join(canonicalSdk.packageRoot,'web/breez_sdk_spark_wasm.js')).href);
+const wasmBytes=readFileSync(join(canonicalSdk.packageRoot,'web/breez_sdk_spark_wasm_bg.wasm'));
 sdk.initSync({module:wasmBytes});
 // Published BIP39 fixture only. No SDK build/connect/storage/network calls.
 const mnemonic='abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
