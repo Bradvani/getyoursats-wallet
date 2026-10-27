@@ -23,7 +23,10 @@ export function useTransferSequence(direction:TransferDirection,operationId:stri
   const tick=(now:number)=>{
    if(document.visibilityState==='hidden')return;
    if(last===undefined){last=now;frame=requestAnimationFrame(tick);return;}
-   const delta=Math.min(50,Math.max(0,now-last));last=now;
+   // Account for elapsed foreground time, not frame count. A 50 ms clamp
+   // made WebKit/software-rendered frames stretch the 5.6s motion indefinitely.
+   // Visibility changes reset `last`, so background time is still excluded.
+   const delta=Math.max(0,now-last);last=now;
    const target=sequenceTarget(phase);
    const visual=Math.min(target,record.current.visual+delta/TRANSFER_SEQUENCE_DURATION_MS);
    record.current={...record.current,visual,finished:phase==='confirmed'&&visual===1};publish();

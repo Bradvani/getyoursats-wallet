@@ -64,11 +64,12 @@ test('explicit vibration and definite failure remain independent of the motion c
  await page.getByTestId('manual-send').click();await page.getByTestId('stage-failed').click();
  expect(await page.evaluate(()=>(window as unknown as {patterns:unknown[]}).patterns)).toEqual([120,[80,60,100]]);
 });
-test('high pixel density keeps a stationary vector-only logo and orange isolated to B',async({browser})=>{
- const context=await browser.newContext({viewport:{width:412,height:915},deviceScaleFactor:3,isMobile:true,hasTouch:true});
+test('high pixel density keeps a stationary vector-only logo and orange isolated to B',async({browser,browserName})=>{
+ const context=await browser.newContext({viewport:{width:412,height:915},deviceScaleFactor:3,hasTouch:true,...(browserName==='firefox'?{}:{isMobile:true})});
  const page=await context.newPage();await page.goto(fixture);await page.getByTestId('manual-receive').click();await page.getByTestId('stage-confirming').click();
  const logo=page.locator('.gys-contour-mark');await expect(logo.locator('image,img')).toHaveCount(0);
  await expect(logo).toHaveCSS('filter','none');await expect(logo).toHaveCSS('animation-name','none');
  expect(await logo.locator('[fill="#F7931A"]').count()).toBe(1);
- await page.waitForTimeout(1400);await page.screenshot({path:'test-artifacts/sequence-android-density3.png'});await context.close();
+ await page.waitForTimeout(1400);await page.screenshot({path:`test-artifacts/sequence-${browserName}-density3.png`});await context.close();
 });
+
