@@ -1,0 +1,762 @@
+{
+  "environment": "Chromium browser with iframe viewport and root text scaling; not a physical HiOS device",
+  "fixtures": "Simulated values; no signing material or funded payment",
+  "observations": [
+    {
+      "lang": "en",
+      "screen": "confirm",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 1324
+        }
+      ],
+      "text": "Pay\n\nTotal deducted\n\n1 500 002\nsats\n\nApproximate fiat value: ≈ ₹1,20,000.16 INR\n\nRecipient\n\ndisposable@example.invalid\n\nAmount\n1 500 000\nsats\nNetwork fee\n2\nsats\nTotal\n1 500 002\nsats\nConfirm payment"
+    },
+    {
+      "lang": "en",
+      "screen": "sent",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 845
+        },
+        {
+          "class": "gys-transfer gys-transfer--sent  gys-transfer--success  ",
+          "height": 120,
+          "scroll": 140
+        }
+      ],
+      "text": "Pay\n✓\nPayment sent\n\nYour payment has been sent to the recipient.\n\nDone"
+    },
+    {
+      "lang": "hi",
+      "screen": "confirm",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 1324
+        }
+      ],
+      "text": "भुगतान करें\n\nकुल कटौती\n\n1 500 002\nsats\n\nस्थानीय मुद्रा में अनुमानित मूल्य: ≈ ₹1,20,000.16 INR\n\nप्राप्तकर्ता\n\ndisposable@example.invalid\n\nराशि\n1 500 000\nsats\nनेटवर्क शुल्क\n2\nsats\nकुल\n1 500 002\nsats\nभुगतान की पुष्टि करें"
+    },
+    {
+      "lang": "hi",
+      "screen": "sent",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 845
+        },
+        {
+          "class": "gys-transfer gys-transfer--sent  gys-transfer--success  ",
+          "height": 120,
+          "scroll": 134
+        }
+      ],
+      "text": "भुगतान करें\n✓\nभुगतान भेज दिया गया\n\nआपका भुगतान प्राप्तकर्ता को भेज दिया गया है।\n\nहो गया"
+    },
+    {
+      "lang": "es",
+      "screen": "confirm",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 1324
+        }
+      ],
+      "text": "Pagar\n\nTotal descontado\n\n1 500 002\nsats\n\nValor aproximado en moneda local: ≈ ₹1,20,000.16 INR\n\nDestinatario\n\ndisposable@example.invalid\n\nImporte\n1 500 000\nsats\nComisión de red\n2\nsats\nTotal\n1 500 002\nsats\nConfirmar pago"
+    },
+    {
+      "lang": "es",
+      "screen": "sent",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-root ",
+          "height": 568,
+          "scroll": 1001
+        },
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 845
+        },
+        {
+          "class": "gys-transfer gys-transfer--sent  gys-transfer--success  ",
+          "height": 120,
+          "scroll": 134
+        }
+      ],
+      "text": "Pagar\n✓\nPago enviado\n\nTu pago se ha enviado al destinatario.\n\nListo"
+    },
+    {
+      "lang": "pt",
+      "screen": "confirm",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 1324
+        }
+      ],
+      "text": "Pagar\n\nTotal debitado\n\n1 500 002\nsats\n\nValor aproximado em moeda local: ≈ ₹1,20,000.16 INR\n\nDestinatário\n\ndisposable@example.invalid\n\nMontante\n1 500 000\nsats\nTaxa de rede\n2\nsats\nTotal\n1 500 002\nsats\nConfirmar pagamento"
+    },
+    {
+      "lang": "pt",
+      "screen": "sent",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-root ",
+          "height": 568,
+          "scroll": 595
+        },
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 965
+        },
+        {
+          "class": "gys-transfer gys-transfer--sent  gys-transfer--success  ",
+          "height": 120,
+          "scroll": 134
+        }
+      ],
+      "text": "Pagar\n✓\nPagamento enviado\n\nO seu pagamento foi enviado ao destinatário.\n\nConcluído"
+    },
+    {
+      "lang": "ja",
+      "screen": "confirm",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 1324
+        }
+      ],
+      "text": "支払う\n\n合計引落額\n\n1 500 002\nsats\n\n現地通貨での概算: ≈ ₹1,20,000.16 INR\n\n受取人\n\ndisposable@example.invalid\n\n金額\n1 500 000\nsats\nネットワーク手数料\n2\nsats\n合計\n1 500 002\nsats\n支払いを確認"
+    },
+    {
+      "lang": "ja",
+      "screen": "sent",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-root ",
+          "height": 568,
+          "scroll": 913
+        },
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 870
+        },
+        {
+          "class": "gys-transfer gys-transfer--sent  gys-transfer--success  ",
+          "height": 120,
+          "scroll": 134
+        }
+      ],
+      "text": "支払う\n✓\n支払いを送信しました\n\n受取人へ支払いを送信しました。\n\n完了"
+    },
+    {
+      "lang": "th",
+      "screen": "confirm",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 1364
+        }
+      ],
+      "text": "ชำระเงิน\n\nยอดหักรวม\n\n1 500 002\nsats\n\nมูลค่าโดยประมาณในสกุลเงินท้องถิ่น: ≈ ₹1,20,000.16 INR\n\nผู้รับ\n\ndisposable@example.invalid\n\nจำนวนเงิน\n1 500 000\nsats\nค่าธรรมเนียมเครือข่าย\n2\nsats\nรวม\n1 500 002\nsats\nยืนยันการชำระเงิน"
+    },
+    {
+      "lang": "th",
+      "screen": "sent",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 798
+        },
+        {
+          "class": "gys-transfer gys-transfer--sent  gys-transfer--success  ",
+          "height": 120,
+          "scroll": 134
+        }
+      ],
+      "text": "ชำระเงิน\n✓\nส่งการชำระเงินแล้ว\n\nส่งการชำระเงินของคุณให้ผู้รับแล้ว\n\nเสร็จสิ้น"
+    },
+    {
+      "lang": "vi",
+      "screen": "confirm",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-root ",
+          "height": 568,
+          "scroll": 672
+        },
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 1372
+        }
+      ],
+      "text": "Thanh toán\n\nTổng khấu trừ\n\n1 500 002\nsats\n\nGiá trị ước tính theo nội tệ: ≈ ₹1,20,000.16 INR\n\nNgười nhận\n\ndisposable@example.invalid\n\nSố tiền\n1 500 000\nsats\nPhí mạng\n2\nsats\nTổng cộng\n1 500 002\nsats\nXác nhận thanh toán"
+    },
+    {
+      "lang": "vi",
+      "screen": "sent",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 917
+        },
+        {
+          "class": "gys-transfer gys-transfer--sent  gys-transfer--success  ",
+          "height": 120,
+          "scroll": 134
+        }
+      ],
+      "text": "Thanh toán\n✓\nĐã gửi thanh toán\n\nKhoản thanh toán đã được gửi đến người nhận.\n\nXong"
+    },
+    {
+      "lang": "ta",
+      "screen": "confirm",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 1444
+        }
+      ],
+      "text": "செலுத்து\n\nமொத்தக் கழிவு\n\n1 500 002\nsats\n\nஉள்ளூர் நாணயத்தில் தோராயமான மதிப்பு: ≈ ₹1,20,000.16 INR\n\nபெறுநர்\n\ndisposable@example.invalid\n\nதொகை\n1 500 000\nsats\nநெட்வொர்க் கட்டணம்\n2\nsats\nமொத்தம்\n1 500 002\nsats\nகட்டணத்தை உறுதிசெய்"
+    },
+    {
+      "lang": "ta",
+      "screen": "sent",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 965
+        },
+        {
+          "class": "gys-transfer gys-transfer--sent  gys-transfer--success  ",
+          "height": 120,
+          "scroll": 134
+        }
+      ],
+      "text": "செலுத்து\n✓\nபணம் அனுப்பப்பட்டது\n\nஉங்கள் பணம் பெறுநருக்கு அனுப்பப்பட்டது.\n\nமுடிந்தது"
+    },
+    {
+      "lang": "ar",
+      "screen": "confirm",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 1276
+        }
+      ],
+      "text": "دفع\n\nإجمالي الخصم\n\n1 500 002\nsats\n\nالقيمة التقريبية بالعملة المحلية: ≈ ₹1,20,000.16 INR\n\nالمستلم\n\ndisposable@example.invalid\n\nالمبلغ\n1 500 000\nsats\nرسوم الشبكة\n2\nsats\nالإجمالي\n1 500 002\nsats\nتأكيد الدفع"
+    },
+    {
+      "lang": "ar",
+      "screen": "sent",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 798
+        },
+        {
+          "class": "gys-transfer gys-transfer--sent  gys-transfer--success  ",
+          "height": 120,
+          "scroll": 134
+        },
+        {
+          "class": "font-display text-2xl font-bold mb-2 text-spark-primary",
+          "height": 144,
+          "scroll": 165
+        }
+      ],
+      "text": "دفع\n✓\nتم إرسال الدفعة\n\nتم إرسال دفعتك إلى المستلم.\n\nتم"
+    },
+    {
+      "lang": "zh-CN",
+      "screen": "confirm",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 1236
+        }
+      ],
+      "text": "付款\n\n总扣款\n\n1 500 002\nsats\n\n本地货币估值: ≈ ₹1,20,000.16 INR\n\n收款人\n\ndisposable@example.invalid\n\n金额\n1 500 000\nsats\n网络手续费\n2\nsats\n总计\n1 500 002\nsats\n确认付款"
+    },
+    {
+      "lang": "zh-CN",
+      "screen": "sent",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "scrollers": [
+        {
+          "class": "react-modal-sheet-content-scroller scrollbar-hidden",
+          "height": 535,
+          "scroll": 798
+        },
+        {
+          "class": "gys-transfer gys-transfer--sent  gys-transfer--success  ",
+          "height": 120,
+          "scroll": 134
+        }
+      ],
+      "text": "付款\n✓\n付款已发送\n\n付款已发送给收款人。\n\n完成"
+    },
+    {
+      "lang": "en",
+      "screen": "receive-personal",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "Receive\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\nCopy\n\nYour personal GetYourSats address is ready to receive payments.\n\nCreate invoice with specific amount →"
+    },
+    {
+      "lang": "en",
+      "screen": "sending",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "Pay\nPREPARING YOUR TRANSFER\nSending…\n\nYour payment is processing. The result will appear when the network responds.\n\nCheck payment history before sending again."
+    },
+    {
+      "lang": "en",
+      "screen": "received",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "✓\nPayment received\n\nConfirmed by your wallet\n\n5 000\nsats\n\nApproximate fiat value: ≈ ₹400.00 INR\n\nDone"
+    },
+    {
+      "lang": "hi",
+      "screen": "receive-personal",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "प्राप्त करें\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\nकॉपी करें\n\nआपका व्यक्तिगत GetYourSats पता भुगतान प्राप्त करने के लिए तैयार है।\n\nतय राशि का भुगतान अनुरोध बनाएँ →"
+    },
+    {
+      "lang": "hi",
+      "screen": "sending",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "भुगतान करें\nआपका भुगतान तैयार हो रहा है\nभेज रहे हैं…\n\nआपका भुगतान प्रक्रिया में है। नेटवर्क से जवाब मिलने पर परिणाम दिखेगा।\n\nदोबारा भेजने से पहले भुगतान का इतिहास जाँचें।"
+    },
+    {
+      "lang": "hi",
+      "screen": "received",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "✓\nभुगतान प्राप्त हुआ\n\nआपके वॉलेट ने पुष्टि की\n\n5 000\nsats\n\nस्थानीय मुद्रा में अनुमानित मूल्य: ≈ ₹400.00 INR\n\nहो गया"
+    },
+    {
+      "lang": "es",
+      "screen": "receive-personal",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "Recibir\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\nCopiar\n\nTu dirección personal de GetYourSats está lista para recibir pagos.\n\nCrear una factura con un importe concreto →"
+    },
+    {
+      "lang": "es",
+      "screen": "sending",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "Pagar\nPREPARANDO TU TRANSFERENCIA\nEnviando…\n\nTu pago se está procesando. Verás el resultado cuando responda la red.\n\nConsulta el historial antes de volver a enviar el pago."
+    },
+    {
+      "lang": "es",
+      "screen": "received",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "✓\nPago recibido\n\nConfirmado por tu cartera\n\n5 000\nsats\n\nValor aproximado en moneda local: ≈ ₹400.00 INR\n\nListo"
+    },
+    {
+      "lang": "pt",
+      "screen": "receive-personal",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "Receber\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\nCopiar\n\nO seu endereço pessoal GetYourSats está pronto para receber pagamentos.\n\nCriar fatura com um montante específico →"
+    },
+    {
+      "lang": "pt",
+      "screen": "sending",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "Pagar\nA PREPARAR A TRANSFERÊNCIA\nA enviar…\n\nO seu pagamento está a ser processado. O resultado aparecerá quando a rede responder.\n\nConsulte o histórico antes de enviar o pagamento novamente."
+    },
+    {
+      "lang": "pt",
+      "screen": "received",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "✓\nPagamento recebido\n\nConfirmado pela sua carteira\n\n5 000\nsats\n\nValor aproximado em moeda local: ≈ ₹400.00 INR\n\nConcluído"
+    },
+    {
+      "lang": "ja",
+      "screen": "receive-personal",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "受け取る\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\nコピー\n\n個人用の GetYourSats アドレスで支払いを受け取れます。\n\n金額を指定して請求書を作成 →"
+    },
+    {
+      "lang": "ja",
+      "screen": "sending",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "支払う\n送金を準備しています\n送信中…\n\n支払いを処理しています。ネットワークから応答が届くと結果が表示されます。\n\n再送する前に支払い履歴を確認してください。"
+    },
+    {
+      "lang": "ja",
+      "screen": "received",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "✓\n支払いを受け取りました\n\nウォレットで確認済み\n\n5 000\nsats\n\n現地通貨での概算: ≈ ₹400.00 INR\n\n完了"
+    },
+    {
+      "lang": "th",
+      "screen": "receive-personal",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "รับ\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\n\nที่อยู่ GetYourSats ส่วนตัวของคุณพร้อมรับการชำระเงินแล้ว\n\nสร้างใบแจ้งชำระเงินตามจำนวนที่ระบุ →"
+    },
+    {
+      "lang": "th",
+      "screen": "sending",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "ชำระเงิน\nกำลังเตรียมการโอนของคุณ\nกำลังส่ง…\n\nกำลังดำเนินการชำระเงิน ผลจะแสดงเมื่อเครือข่ายตอบกลับ\n\nตรวจสอบประวัติการชำระเงินก่อนส่งอีกครั้ง"
+    },
+    {
+      "lang": "th",
+      "screen": "received",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "✓\nได้รับการชำระเงินแล้ว\n\nกระเป๋าของคุณยืนยันแล้ว\n\n5 000\nsats\n\nมูลค่าโดยประมาณในสกุลเงินท้องถิ่น: ≈ ₹400.00 INR\n\nเสร็จสิ้น"
+    },
+    {
+      "lang": "vi",
+      "screen": "receive-personal",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "Nhận\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\n\nĐịa chỉ GetYourSats cá nhân của bạn đã sẵn sàng nhận thanh toán.\n\nTạo hóa đơn với số tiền cụ thể →"
+    },
+    {
+      "lang": "vi",
+      "screen": "sending",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "Thanh toán\nĐANG CHUẨN BỊ CHUYỂN TIỀN\nĐang gửi…\n\nThanh toán đang được xử lý. Kết quả sẽ xuất hiện khi mạng phản hồi.\n\nKiểm tra lịch sử thanh toán trước khi gửi lại."
+    },
+    {
+      "lang": "vi",
+      "screen": "received",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "✓\nĐã nhận thanh toán\n\nVí của bạn đã xác nhận\n\n5 000\nsats\n\nGiá trị ước tính theo nội tệ: ≈ ₹400.00 INR\n\nXong"
+    },
+    {
+      "lang": "ta",
+      "screen": "receive-personal",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "பெறு\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\n\nஉங்கள் தனிப்பட்ட GetYourSats முகவரி பணம் பெறத் தயார்.\n\nகுறிப்பிட்ட தொகைக்கான கட்டணக் கோரிக்கையை உருவாக்கு →"
+    },
+    {
+      "lang": "ta",
+      "screen": "sending",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "செலுத்து\nஉங்கள் பரிமாற்றம் தயாராகிறது\nஅனுப்பப்படுகிறது…\n\nஉங்கள் கட்டணம் செயலாக்கப்படுகிறது. வலையமைப்பு பதிலளித்ததும் முடிவு தெரியும்.\n\nமீண்டும் அனுப்பும் முன் கட்டண வரலாற்றைச் சரிபார்க்கவும்."
+    },
+    {
+      "lang": "ta",
+      "screen": "received",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "✓\nபணம் பெறப்பட்டது\n\nஉங்கள் பணப்பை உறுதிப்படுத்தியது\n\n5 000\nsats\n\nஉள்ளூர் நாணயத்தில் தோராயமான மதிப்பு: ≈ ₹400.00 INR\n\nமுடிந்தது"
+    },
+    {
+      "lang": "ar",
+      "screen": "receive-personal",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "استلام\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\nنسخ\n\nعنوان GetYourSats الشخصي جاهز لاستلام المدفوعات.\n\nإنشاء فاتورة بمبلغ محدد ←"
+    },
+    {
+      "lang": "ar",
+      "screen": "sending",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "دفع\nجارٍ تجهيز التحويل\nجارٍ الإرسال…\n\nتجري معالجة دفعتك. ستظهر النتيجة عندما تستجيب الشبكة.\n\nتحقق من سجل المدفوعات قبل الإرسال مرة أخرى."
+    },
+    {
+      "lang": "ar",
+      "screen": "received",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "✓\nتم استلام الدفعة\n\nأكدت محفظتك العملية\n\n5 000\nsats\n\nالقيمة التقريبية بالعملة المحلية: ≈ ₹400.00 INR\n\nتم"
+    },
+    {
+      "lang": "zh-CN",
+      "screen": "receive-personal",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "接收\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\n复制\n\n你的 GetYourSats 个人地址已可接收付款。\n\n创建指定金额的付款请求 →"
+    },
+    {
+      "lang": "zh-CN",
+      "screen": "sending",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "付款\n正在准备转账\n正在发送…\n\n正在处理付款。网络响应后会显示结果。\n\n再次发送前，请先检查付款记录。"
+    },
+    {
+      "lang": "zh-CN",
+      "screen": "received",
+      "width": 320,
+      "scale": 200,
+      "overflow": [],
+      "scroll": 320,
+      "text": "✓\n已收到付款\n\n钱包已确认\n\n5 000\nsats\n\n本地货币估值: ≈ ₹400.00 INR\n\n完成"
+    },
+    {
+      "screen": "market",
+      "lang": "en",
+      "width": 320,
+      "scale": 100,
+      "text": "BITCOIN MARKET\nINR ↕\n₹80,00,000.00\nfor 1 Bitcoin\n1 BTC\n1K sats\n10K sats\n100K sats\n1M sats\n10M sats\nUpdated 06:08 PM · Indicative only\n↻ Refresh"
+    },
+    {
+      "screen": "missing-rate",
+      "lang": "en",
+      "text": "Pay\n\nTotal deducted\n\n1 500 002\nsats\n\nFiat estimate unavailable. Check the sats amount and fees.\n\nRecipient\n\ndisposable@example.invalid\n\nAmount\n1 500 000\nsats\nNetwork fee\n2\nsats\nTotal\n1 500 002\nsats\nConfirm payment"
+    },
+    {
+      "screen": "USD-estimate",
+      "lang": "en",
+      "text": "Pay\n\nTotal deducted\n\n1 500 002\nsats\n\nApproximate fiat value: ≈ $1,500.00 USD\n\nRecipient\n\ndisposable@example.invalid\n\nAmount\n1 500 000\nsats\nNetwork fee\n2\nsats\nTotal\n1 500 002\nsats\nConfirm payment"
+    },
+    {
+      "screen": "receive-anonymous",
+      "lang": "en",
+      "text": "Receive\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@example.invalid\nCopy\n\nPersonalize your address in Settings after email verification.\n\nCreate invoice with specific amount →"
+    },
+    {
+      "screen": "confirm-scroll",
+      "lang": "ar",
+      "width": 320,
+      "scale": 200,
+      "button": {
+        "height": 96,
+        "text": "تأكيد الدفع",
+        "width": 288,
+        "x": 16,
+        "y": 439.59375
+      }
+    },
+    {
+      "screen": "manual-scroll",
+      "lang": "ar",
+      "width": 320,
+      "scale": 200,
+      "button": {
+        "height": 96,
+        "text": "تأكيد الدفع",
+        "width": 288,
+        "x": 16,
+        "y": 439.59375
+      }
+    },
+    {
+      "screen": "amount-entry",
+      "lang": "en",
+      "width": 320,
+      "scale": 200,
+      "text": "Pay\nRecipient\ndisposable@example.invalid\nAmount\nsats\n\nApproximate fiat value: ≈ ₹160.00 INR\n\n丰 sats\nBTC\nINR\n20 000\nsats\n100 000\nsats\n500 000\nsats\nMax\nContinue"
+    },
+    {
+      "width": 360,
+      "scale": "150",
+      "lang": "th",
+      "screen": "receive-personal",
+      "overflow": [],
+      "scroll": 360,
+      "text": "รับ\n₿\nBTC\n$\nUSDT / USDC\nLIGHTNING\npreview@getyoursats.com\nคัดลอก\n\nที่อยู่ GetYourSats ส่วนตัวของคุณพร้อมรับการชำระเงินแล้ว\n\nสร้างใบแจ้งชำระเงินตามจำนวนที่ระบุ →"
+    },
+    {
+      "width": 390,
+      "scale": "100",
+      "lang": "vi",
+      "screen": "confirm",
+      "overflow": [],
+      "scroll": 390,
+      "text": "Thanh toán\n\nTổng khấu trừ\n\n1 500 002\nsats\n\nGiá trị ước tính theo nội tệ: ≈ ₹1,20,000.16 INR\n\nNgười nhận\n\ndisposable@example.invalid\n\nSố tiền\n1 500 000\nsats\nPhí mạng\n2\nsats\nTổng cộng\n1 500 002\nsats\nXác nhận thanh toán"
+    },
+    {
+      "lang": "ta",
+      "screen": "confirm",
+      "scale": 200,
+      "overflow": [],
+      "scroll": 768,
+      "text": "செலுத்து\n\nமொத்தக் கழிவு\n\n1 500 002\nsats\n\nஉள்ளூர் நாணயத்தில் தோராயமான மதிப்பு: ≈ ₹1,20,000.16 INR\n\nபெறுநர்\n\ndisposable@example.invalid\n\nதொகை\n1 500 000\nsats\nநெட்வொர்க் கட்டணம்\n2\nsats\nமொத்தம்\n1 500 002\nsats\nகட்டணத்தை உறுதிசெய்",
+      "width": 768
+    },
+    {
+      "lang": "ar",
+      "screen": "sent",
+      "scale": 100,
+      "overflow": [],
+      "scroll": 1366,
+      "text": "دفع\n✓\nتم إرسال الدفعة\n\nتم إرسال دفعتك إلى المستلم.\n\nتم",
+      "width": 1366
+    }
+  ]
+}

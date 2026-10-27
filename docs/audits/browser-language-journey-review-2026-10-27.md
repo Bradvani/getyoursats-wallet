@@ -2,6 +2,8 @@
 
 Reviewed 27 October 2026. Companion to [the source localization review](localization-review-2026-10-27.md) and [PR #58](https://github.com/Bradvani/getyoursats-wallet/pull/58).
 
+**Android follow-up:** [The Tecno/HiOS display report and implementation evidence](android-display-review-2026-10-27.md) now tracks INR grouping, missing scanned-payment fiat estimates, localized payment states, configured-address guidance and 200% text reflow. It advances B03, B07 and B11 without marking the wider translation work or physical-device testing complete.
+
 ## Decision
 
 The product does **not yet provide ten complete localized journeys**. The largest problem is a language changing between steps: a translated menu leads to an English security screen, or a translated recipient screen leads to an English payment approval. These are comprehension defects at the points where users make consequential decisions.
