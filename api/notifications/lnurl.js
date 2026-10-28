@@ -38,7 +38,7 @@ export async function POST(request){
       return response(400,{error:'Invalid payment reference'});
     if(!Number.isSafeInteger(payload.timestamp)||Math.abs(Date.now()-payload.timestamp)>7*86400_000)
       return response(400,{error:'Invalid event age'});
-    const result=await notifyWallet(pub,'lnurl:'+hash.toLowerCase(),payload.timestamp,cfg.vapid);
+    const result=await notifyWallet(pub,'lightning:'+hash.toLowerCase(),payload.timestamp,cfg.vapid);
     if(result.status!==200)return response(503,{error:'Push temporarily unavailable'});
     return response(200,{accepted:true,notified:result.notified});
   }catch{
