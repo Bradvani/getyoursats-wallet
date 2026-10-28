@@ -28,7 +28,7 @@ export async function POST(request){
     const parsed=verifySparkWebhook(raw,pub,wallet.secret,request.headers.get('x-spark-signature'));
     if(!parsed.ok)return response(parsed.reason==='unauthenticated'?401:400,{error:'Invalid webhook'});
     if(!parsed.notify)return response(200,{accepted:true,notified:false});
-    const result=await notifyWallet(pub,'spark:'+parsed.id,parsed.ts,config);
+    const result=await notifyWallet(pub,parsed.paymentHash?'lightning:'+parsed.paymentHash:'spark:'+parsed.id,parsed.ts,config);
     if(result.status!==200)return response(503,{error:'Push service unavailable'});
     return response(200,{accepted:true});
   }catch(err){
