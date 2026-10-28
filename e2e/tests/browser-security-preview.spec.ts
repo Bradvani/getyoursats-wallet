@@ -8,8 +8,8 @@ for(const width of [390,768,1366]){
   page.on('pageerror',error=>errors.push(error.message));
   await page.setViewportSize({width,height:900});
   await page.goto('/e2e/fixtures/premium-ui.html?securityPreview=yes');
-  await expect(page.getByText('Security preview — live synchronization unavailable.')).toBeVisible();
-  await expect(page.getByText('Balance and history may be out of date. Use disposable test wallets only.')).toBeVisible();
+  await expect(page.getByText('Security preview: payment claims and some recovery routes remain restricted.')).toBeVisible();
+  await expect(page.getByText('Refresh checks provider balances and payment history without starting a claim. A missing or failed payment status is not proof that funds have returned. Use disposable test wallets only.')).toBeVisible();
   await expect(page.getByRole('button',{name:'Copy your Lightning address'})).toHaveCount(0);
   await expect(page.getByText('preview@example.invalid',{exact:true})).toHaveCount(0);
   await page.getByRole('button',{name:'Receive Bitcoin',exact:true}).click();

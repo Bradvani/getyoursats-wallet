@@ -3,11 +3,13 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import type {ListPaymentsRequest, Payment} from '@breeztech/breez-sdk-spark';
 import PosPage from './PosPage';
 import {savePosOrders, type PosOrder} from './posLedger';
+import {BROWSER_SPENDING_POLICY} from '../security/browserReleasePolicy';
 
-const mocks = vi.hoisted(() => ({getInfo: vi.fn(), listPayments: vi.fn()}));
+const mocks = vi.hoisted(() => ({getInfo: vi.fn(), listPayments: vi.fn(), observe:vi.fn(),onPaid:null as null|(()=>void)}));
 vi.mock('../contexts/WalletContext', () => ({useWallet: () => mocks}));
 vi.mock('../contexts/FiatDataContext', () => ({useFiatData: () => ({fiatRates: [], fetchedAt: null, refreshFiatData: vi.fn()})}));
-vi.mock('../hooks/useInvoicePaid', () => ({useInvoicePaid: () => {}}));
+vi.mock('../hooks/useInvoicePaid', () => ({useInvoicePaid: (_invoice:string,callback:()=>void) => {mocks.onPaid=callback;}}));
+vi.mock('../security/operationGateway',()=>({getOperationReconciliation:()=>({observe:mocks.observe})}));
 vi.mock('../hooks/useInvoiceExpiry', () => ({useInvoiceExpiry: () => ({usable: true, expired: false})}));
 vi.mock('../components/BrandedQrCode', () => ({default: () => <div>QR</div>}));
 vi.mock('../components/PaymentMotion', () => ({default: () => <div>Payment motion</div>}));
@@ -26,6 +28,8 @@ async function flush() {
 
 beforeEach(() => {
   vi.useFakeTimers();
+  mocks.onPaid=null;mocks.observe.mockReset();mocks.observe.mockResolvedValue(undefined);
+  Reflect.set(mocks,BROWSER_SPENDING_POLICY,false);
   mocks.getInfo.mockResolvedValue({identityPubkey: identity});
   savePosOrders(identity, [order]);
 });
@@ -90,4 +94,33 @@ describe('POS receipt reconciliation across pages', () => {
     expect(screen.getByRole('button', {name: /Older receipt.*Awaiting verification/})).toBeTruthy();
     expect(screen.queryByRole('button', {name: /Older receipt.*Confirmed/})).toBeNull();
   });
+});
+
+
+describe('POS provider and settlement authority',()=>{
+ it('does not mark a charge paid merely because an SDK event fired',async()=>{
+  ledger([]);
+  render(<PosPage onClose={vi.fn()}/>);
+  await flush();
+  fireEvent.click(screen.getByRole('button',{name:'Payment history'}));
+  await flush();
+  fireEvent.click(screen.getByRole('button',{name:/Older receipt.*Awaiting verification/}));
+  await flush();
+  expect(screen.queryByText('Payment received')).toBeNull();
+  expect(mocks.onPaid).not.toBeNull();
+  await act(async()=>{mocks.onPaid?.();});
+  await flush();
+  expect(screen.queryByText('Payment received')).toBeNull();
+  expect(screen.getByText('Waiting for payment confirmation')).toBeTruthy();
+ });
+ it('never treats cached completed receipts as settlement when live provider observation fails',async()=>{
+  ledger([receive(0)]);
+  Reflect.set(mocks,BROWSER_SPENDING_POLICY,true);
+  mocks.observe.mockRejectedValue(Error('Provider unreachable'));
+  render(<PosPage onClose={vi.fn()}/>);
+  await flush();
+  expect(mocks.observe).toHaveBeenCalled();
+  expect(mocks.listPayments).not.toHaveBeenCalled();
+  expect(screen.queryByText('Payment received')).toBeNull();
+ });
 });

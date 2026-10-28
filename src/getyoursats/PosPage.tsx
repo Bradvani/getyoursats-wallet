@@ -1,4 +1,3 @@
-import {invoiceExpiresAt} from './invoiceExpiry';
 import {useInvoiceExpiry} from '../hooks/useInvoiceExpiry';
 import {trustCopy} from './trustCopy';
 import {usePresentation} from '../hooks/usePresentation';
@@ -17,8 +16,10 @@ import {amountToSats,getDenomination,saveDenomination,satsToAmount,type Denomina
 import DenominationTabs from './DenominationTabs';
 import PosQrBoundary from '../components/PosQrBoundary';
 import {readPosOrders,savePosOrders,reconcilePosOrders,type PosOrder} from './posLedger';
-import {validatePosInvoiceResponse} from './posInvoice';
-import {browserReceivingRestriction} from '../security/browserReleasePolicy';
+import {validatePosInvoiceResponse,verifyPosInvoiceIntent} from './posInvoice';
+import {selectedNetwork} from '../services/sdkConnect';
+import {getOperationReconciliation} from '../security/operationGateway';
+import {browserReceivingRestriction,isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
 
 const isFiat=(unit:Denomination)=>unit!=='sats'&&unit!=='BTC';
 /** OS number-keyboards have obscured Charge in iOS Safari/standalone mode.
@@ -78,7 +79,8 @@ export default function PosPage({onClose}:{onClose:()=>void}){
   const validRate=typeof fiatRate==='number'&&Number.isFinite(fiatRate)&&fiatRate>0?fiatRate:undefined;
   const priceSats=amountToSats(amount,unit,validRate);
   const activeOrder=orders.find(order=>order.invoice.toLowerCase()===invoice.toLowerCase());
-  const settled=paid || (!!activeOrder && confirmedIds.has(activeOrder.id));
+  // Only correlated completed SDK history can establish a paid order.
+  const settled=!!activeOrder && confirmedIds.has(activeOrder.id);
   useEffect(()=>{
     const viewport=window.visualViewport;
     const update=()=>{
@@ -89,8 +91,15 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     update();viewport?.addEventListener('resize',update);viewport?.addEventListener('scroll',update);
     return()=>{viewport?.removeEventListener('resize',update);viewport?.removeEventListener('scroll',update)};
   },[]);
-  const loadAllReceipts=useCallback((signal?:AbortSignal)=>
-    readPaymentHistory(sdk,{typeFilter:['receive'],signal}),[sdk]);
+  const loadAllReceipts=useCallback(async(signal?:AbortSignal)=>{
+    if (isRestrictedBrowserWallet(sdk)) {
+      const reader=getOperationReconciliation(sdk);
+      if(!reader)throw new Error('Read-only provider receipt verification is unavailable.');
+      await reader.observe();
+      if(signal?.aborted)throw new DOMException('Receipt verification cancelled','AbortError');
+    }
+    return readPaymentHistory(sdk,{typeFilter:['receive'],signal});
+  },[sdk]);
   const applyReceipts=useCallback((payments:Payment[])=>{
     const currentInvoice=invoiceRef.current.toLowerCase();
     const matches=reconcilePosOrders(ordersRef.current,payments);
@@ -100,11 +109,8 @@ export default function PosPage({onClose}:{onClose:()=>void}){
       order.invoice.toLowerCase()===currentInvoice && matches.has(order.id));
     if(matchingCurrent){
       if(checkedExistingReceiptsRef.current && !paidRef.current)setFreshlyConfirmed(true);
-      setPaid(true);
-    }else if(currentInvoice && payments.some(payment=>payment.details?.type==='lightning' &&
-      payment.details.invoice?.toLowerCase()===currentInvoice)){
-      setPaid(false);setFreshlyConfirmed(false);
-    }
+    }else setFreshlyConfirmed(false);
+    setPaid(matchingCurrent);
     checkedExistingReceiptsRef.current=true;
   },[ordersRef,invoiceRef,paidRef]);
   const loadHistory=useCallback(async()=>{
@@ -120,9 +126,8 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     finally{if(!controller.signal.aborted)setHistoryBusy(false)}
   },[walletIdentity,loadAllReceipts,applyReceipts]);
   useInvoicePaid(walletIdentity?invoice:'',()=>{
-    setFreshlyConfirmed(true);
-    setPaid(true);
-    // A successful SDK event, never an editable local flag, confirms paid.
+    // SDK events are notifications, not settlement receipts. Reconcile the
+    // exact invoice against completed provider-observed history before Paid.
     void loadHistory();
   });
   const selectUnit=(next:Denomination)=>{
@@ -162,12 +167,17 @@ export default function PosPage({onClose}:{onClose:()=>void}){
       const sats=amountToSats(amount,unit,rate);
       if(!sats)throw new Error('The amount must equal at least one satoshi.');
       if(!walletIdentity)throw new Error('Wallet identity is still loading. Retry the charge.');
+      const snapshot=await sdk.getInfo({ensureSynced:false});
+      if(snapshot.identityPubkey!==walletIdentity)throw Error('Merchant wallet identity changed.');
+      const network=selectedNetwork();
       const response=await sdk.receivePayment({paymentMethod:{
         type:'bolt11Invoice',description:(note.trim()||'Payment').slice(0,200),amountSats:sats
       }});
       const validated=validatePosInvoiceResponse(response);
       const parsed=await sdk.parse(validated.invoice);
-      const expiresAt=invoiceExpiresAt(parsed);
+      const after=await sdk.getInfo({ensureSynced:false});
+      if(after.identityPubkey!==walletIdentity)throw Error('Merchant wallet identity changed.');
+      const expiresAt=verifyPosInvoiceIntent(parsed,{invoice:validated.invoice,amountSats:sats,network});
       if(!expiresAt||expiresAt<=Date.now())throw Error(text.invoiceExpiryUnknown);
       const order:PosOrder={
         id:crypto.randomUUID(),invoice:validated.invoice,amountSats:sats,unit,
@@ -177,7 +187,9 @@ export default function PosPage({onClose}:{onClose:()=>void}){
       };
       const updated=[order,...orders];
       if(!savePosOrders(walletIdentity,updated)){
-        setJournalWarning('This invoice was created, but its local order history could not be saved. Copy the invoice before closing.');
+        // The invoice may exist at the provider, but cannot be safely
+        // reconciled on this device. Do not expose its payable QR.
+        throw Error('Invoice created but merchant history could not be saved. Do not share this charge. Review wallet payments before trying again.');
       }
       setOrders(updated);
       setInvoice(validated.invoice);
