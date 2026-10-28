@@ -1,0 +1,34 @@
+name: Export exact Gate 1 source for isolated engineering
+on:
+  push:
+    branches: [build/gate1-source-transfer-20261028]
+    paths: [.github/workflows/export-gate1-source.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    if: github.repository == 'Bradvani/getyoursats-wallet'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: d7558ce00934b09bc8cbf387374e222853bb91a1
+          persist-credentials: false
+      - name: Pack and attest unchanged source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = d7558ce00934b09bc8cbf387374e222853bb91a1
+          test "$(git rev-parse HEAD^{tree})" = b17c22b0066d0291d5cdf16ed3fd0ce860b22913
+          test -z "$(git status --porcelain)"
+          mkdir -p /tmp/source-artifact
+          git archive --format=tar HEAD | gzip -n -9 > /tmp/source-artifact/source.tar.gz
+          sha256sum /tmp/source-artifact/source.tar.gz > /tmp/source-artifact/source.sha256
+          echo 'd7558ce00934b09bc8cbf387374e222853bb91a1 b17c22b0066d0291d5cdf16ed3fd0ce860b22913' > /tmp/source-artifact/revision.txt
+          du -h /tmp/source-artifact/source.tar.gz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gate1-source-d7558ce
+          path: /tmp/source-artifact
+          if-no-files-found: error
+          retention-days: 7
