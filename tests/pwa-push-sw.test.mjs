@@ -37,9 +37,9 @@ test('a received payment notification is private and contains no wallet metadata
     amount: 12000, sender: 'Someone', seed: 'NEVER SHOW THIS',
   })}});
   assert.equal(h.shown.length, 1);
-  assert.equal(h.shown[0].title, 'GetYourSats');
+  assert.equal(h.shown[0].title, 'Payment received ⚡');
   assert.match(h.shown[0].options.body, /Bitcoin received/);
-  assert.equal(h.shown[0].options.tag, 'gys-received-evt_123');
+  assert.equal(h.shown[0].options.tag, 'gys.payment.received:evt_123');
   assert.equal(h.shown[0].options.data.path, '/');
   assert.doesNotMatch(JSON.stringify(h.shown), /Someone|12000|NEVER SHOW/);
 });
@@ -72,4 +72,40 @@ test('notification tap opens canonical home if wallet has no open window', async
   const h = workerHarness();
   await h.fire('notificationclick', {notification: {close() {}}});
   assert.deepEqual(h.opened, ['https://wallet.getyoursats.com/']);
+});
+
+test('DCA and on-ramp events use approved private copy and no supplied text', async () => {
+  const h = workerHarness();
+  const expected = [
+    ['gys.dca.purchase.settled', 'Your stack just grew'],
+    ['gys.dca.purchase.failed', 'Scheduled purchase needs attention'],
+    ['gys.onramp.purchase.processing', 'Bitcoin purchase processing'],
+    ['gys.onramp.purchase.settled', 'Bitcoin purchase delivered'],
+    ['gys.onramp.availability', 'More ways to stack sats'],
+  ];
+  for (const [type, title] of expected) {
+    await h.fire('push', {data: {json: () => ({
+      type, version: 1, id: 'safe_evt_1',
+      title: 'PROMOTIONAL SPOOF', body: 'SECRET ACCOUNT', amount: 23100,
+      navigate: 'https://wrong-website.example',
+    })}});
+    const actual = h.shown.at(-1);
+    assert.equal(actual.title, title);
+    assert(!JSON.stringify(actual).includes('SECRET ACCOUNT'));
+    assert(!JSON.stringify(actual).includes('PROMOTIONAL SPOOF'));
+    assert(!JSON.stringify(actual).includes('23100'));
+    assert(!JSON.stringify(actual).includes('wrong-website.example'));
+    assert.equal(actual.options.data.path, '/');
+    assert.equal(actual.options.tag, type + ':safe_evt_1');
+  }
+});
+
+test('unknown versions never impersonate payment completion', async () => {
+  const h = workerHarness();
+  await h.fire('push', {data: {json: () => ({
+    type: 'gys.dca.purchase.settled', version: 999, id: 'untrusted',
+  })}});
+  assert.equal(h.shown[0].title, 'GetYourSats');
+  assert.equal(h.shown[0].options.tag, undefined);
+  assert.match(h.shown[0].options.body, /Wallet activity/);
 });
