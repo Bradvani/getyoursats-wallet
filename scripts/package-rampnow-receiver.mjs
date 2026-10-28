@@ -32,15 +32,17 @@ export async function packageRampnowReceiver({repoRoot = REPO_ROOT} = {}) {
   files.push({file: 'package.json', data: json({
     name: 'gys-rampnow-sandbox-webhook', private: true, type: 'module', engines: {node: '24.x'},
   }), encoding: 'utf-8'});
+  files.push({file: 'public/404.txt', data: 'Not found\n', encoding: 'utf-8'});
   files.push({file: 'vercel.json', data: json({
     $schema: 'https://openapi.vercel.sh/vercel.json',
     framework: null,
     buildCommand: '',
     installCommand: '',
+    outputDirectory: 'public',
     functions: {'api/rampnow/webhook.js': {maxDuration: 30, includeFiles: 'server/{rampnow,rampnowStore}.mjs'}},
     routes: [
       {src: '^/api/rampnow/webhook$', dest: '/api/rampnow/webhook.js'},
-      {src: '^/.*$', status: 404},
+      {src: '^/.*$', dest: '/404.txt', status: 404},
     ],
   }), encoding: 'utf-8'});
   return files.sort((left, right) => left.file < right.file ? -1 : left.file > right.file ? 1 : 0);

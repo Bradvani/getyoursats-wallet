@@ -32,7 +32,7 @@ test('receiver package is deterministic and excludes repository config, wallet f
   const files = await packageRampnowReceiver({repoRoot});
   assert.deepEqual(files, await packageRampnowReceiver({repoRoot}));
   assert.deepEqual(files.map(entry => entry.file), [
-    'api/rampnow/webhook.js', 'package.json', 'server/rampnow.mjs', 'server/rampnowStore.mjs', 'vercel.json',
+    'api/rampnow/webhook.js', 'package.json', 'public/404.txt', 'server/rampnow.mjs', 'server/rampnowStore.mjs', 'vercel.json',
   ]);
   for (const entry of files) {
     assert.deepEqual(Object.keys(entry), ['file', 'data', 'encoding']);
@@ -52,10 +52,16 @@ test('receiver package is deterministic and excludes repository config, wallet f
   assert.equal(config.framework, null);
   assert.equal(config.buildCommand, '');
   assert.equal(config.installCommand, '');
+  assert.equal(config.outputDirectory, 'public');
+  assert.deepEqual(files.filter(entry => entry.file.startsWith('public/')),
+    [{file: 'public/404.txt', data: 'Not found\n', encoding: 'utf-8'}]);
   const routeFor = path => config.routes.find(route => new RegExp(route.src, 'i').test(path));
   assert.equal(routeFor('/api/rampnow/webhook').dest, '/api/rampnow/webhook.js');
   for (const path of ['/', '/package.json', '/server/rampnow.mjs', '/api/wallet', '/api/rampnow/webhook.js', '/api/rampnow/webhook/extra']) {
     assert.equal(routeFor(path).status, 404);
+    assert.equal(routeFor(path).dest, '/404.txt');
+    const responseFile = config.outputDirectory + routeFor(path).dest;
+    assert.equal(files.find(entry => entry.file === responseFile).data, 'Not found\n');
   }
 });
 
@@ -97,7 +103,7 @@ test('CLI writes only the files array and never serializes its environment', asy
   const raw = await readFile(output, 'utf8');
   assert.deepEqual(JSON.parse(raw), await packageRampnowReceiver());
   assert.equal((raw + stdout + stderr).includes('environment-canary-never-package'), false);
-  assert.equal(stdout, 'Wrote 5 receiver deployment files.\n');
+  assert.equal(stdout, 'Wrote 6 receiver deployment files.\n');
   assert.equal(stderr, '');
   await assert.rejects(exec(process.execPath, [script, output]));
   assert.equal(await readFile(output, 'utf8'), raw);
