@@ -95,6 +95,28 @@ function equalDecimal(left, right) {
   return normal(left) === normal(right);
 }
 
+/** Only provider-declared Bitcoin chain metadata. A testnet flag does not
+ * identify testnet3/testnet4/signet or prove wallet/settlement compatibility.
+ * Never expose provider names, address regexes or arbitrary response fields.
+ */
+function bitcoinNetworkMetadata(data) {
+  const code = 'RAMPNOW_BITCOIN_NETWORK_INVALID';
+  requireValue(object(data) && Array.isArray(data.chains) && data.chains.length <= 512
+    && data.chains.every(object), code);
+  const matches = data.chains.filter(chain => chain.code === 'bitcoin');
+  requireValue(matches.length === 1, code);
+  const chain = matches[0];
+  requireValue(chain.type === 'utxo' && chain.nodeType === 'btc' && chain.nativeToken === 'BTC'
+    && typeof chain.isTestnet === 'boolean'
+    && typeof chain.addressType === 'string' && /^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(chain.addressType)
+    && Array.isArray(chain.supportedAssets)
+    && chain.supportedAssets.some(asset => asset === 'BTC' || asset === 'BTC:bitcoin'), code);
+  return {
+    chain: 'bitcoin', networkClassification: chain.isTestnet ? 'testnet_unspecified' : 'mainnet',
+    isTestnet: chain.isTestnet, addressType: chain.addressType, nativeToken: 'BTC',
+  };
+}
+
 async function readResponse(response) {
   if (!response.ok || response.redirected) {
     const error = new RampnowError('RAMPNOW_UPSTREAM_UNAVAILABLE');
@@ -148,6 +170,9 @@ export function createRampnowClient({ environment, apiKey, apiSecret, fetchImpl 
   }
   return Object.freeze({
     getConfig: () => request('GET', ROOT + '/config'),
+    async getBitcoinNetwork() {
+      return bitcoinNetworkMetadata(await request('GET', ROOT + '/chain_config'));
+    },
     getBitcoinAsset(fiatCurrency) {
       requireValue(currencyCode(fiatCurrency), 'RAMPNOW_FIAT_INVALID');
       return request('GET', ROOT + '/asset_config?' + new URLSearchParams({ currency: 'BTC', chain: 'bitcoin', orderCurrency: fiatCurrency }));

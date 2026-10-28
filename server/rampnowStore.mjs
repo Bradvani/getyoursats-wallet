@@ -1,7 +1,7 @@
 /** Sandbox webhook storage only. No checkout creation or wallet crediting.
  * Bindings are written by a future authenticated intent service, not webhooks.
- * Dedicated RAMPNOW_REDIS_REST_* storage is mandatory; account/support stores
- * are never a fallback. Redis must provide persistent storage without eviction.
+ * Dedicated sandbox storage is mandatory; account/support stores are never an
+ * automatic fallback. Redis must provide persistent storage without eviction.
  */
 import {applyRampnowOrderEvent, decimalAmount, rampnowOrderState, RampnowError} from './rampnow.mjs';
 
@@ -17,8 +17,11 @@ function need(value, code = 'RAMPNOW_STORE_UNAVAILABLE') { if (!value) throw new
 
 export function sandboxRampnowConfig(env = process.env) {
   need(env.VERCEL_ENV === 'preview' && env.RAMPNOW_ENVIRONMENT === 'sandbox', 'RAMPNOW_SANDBOX_ONLY');
-  const endpoint = env.RAMPNOW_REDIS_REST_URL;
-  const token = env.RAMPNOW_REDIS_REST_TOKEN;
+  const source = env.RAMPNOW_STORAGE_SOURCE ?? 'rampnow';
+  need(source === 'rampnow' || source === 'upstash_sandbox');
+  // Explicit operator selection only. Never fall back to shared KV credentials.
+  const endpoint = source === 'upstash_sandbox' ? env.UPSTASH_REDIS_REST_URL : env.RAMPNOW_REDIS_REST_URL;
+  const token = source === 'upstash_sandbox' ? env.UPSTASH_REDIS_REST_TOKEN : env.RAMPNOW_REDIS_REST_TOKEN;
   need(typeof endpoint === 'string' && typeof token === 'string' && token.length > 0 && !/[\r\n]/.test(token));
   let url;
   try { url = new URL(endpoint); } catch { throw new RampnowError('RAMPNOW_STORE_UNAVAILABLE'); }

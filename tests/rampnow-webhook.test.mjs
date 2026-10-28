@@ -8,6 +8,18 @@ import {createRampnowStore, normalizeRampnowEvent, sandboxRampnowConfig} from '.
 const env = {VERCEL_ENV: 'preview', RAMPNOW_ENVIRONMENT: 'sandbox', RAMPNOW_API_SECRET: 'test-only-secret',
   RAMPNOW_REDIS_REST_URL: 'https://sandbox-storage.invalid', RAMPNOW_REDIS_REST_TOKEN: 'test-only-token'};
 const now = () => Date.parse('2026-10-28T12:00:00Z');
+
+test('alternate sandbox credentials require explicit source and never mix pairs or fall back', () => {
+  const alternate = {VERCEL_ENV: 'preview', RAMPNOW_ENVIRONMENT: 'sandbox',
+    UPSTASH_REDIS_REST_URL: 'https://dedicated-test.invalid', UPSTASH_REDIS_REST_TOKEN: 'test-token'};
+  assert.throws(() => sandboxRampnowConfig(alternate), /STORE_UNAVAILABLE/);
+  assert.deepEqual(sandboxRampnowConfig({...alternate, RAMPNOW_STORAGE_SOURCE: 'upstash_sandbox'}),
+    {url: 'https://dedicated-test.invalid/', token: 'test-token'});
+  for (const patch of [{RAMPNOW_STORAGE_SOURCE: 'unknown'}, {UPSTASH_REDIS_REST_TOKEN: undefined},
+    {VERCEL_ENV: 'production'}, {RAMPNOW_ENVIRONMENT: 'production'}]) {
+    assert.throws(() => sandboxRampnowConfig({...env, ...alternate, RAMPNOW_STORAGE_SOURCE: 'upstash_sandbox', ...patch}));
+  }
+});
 const event = () => ({eventUid: 'event-1', eventType: 'ramp_order.status_change', payload: {
   orderUid: 'order-1', externalOrderUid: 'intent-1', orderType: 'buy', orderStatus: 'created',
   srcCurrency: 'INR', srcChain: 'fiat', dstCurrency: 'BTC', dstChain: 'bitcoin',

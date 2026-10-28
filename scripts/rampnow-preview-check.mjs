@@ -1,12 +1,17 @@
-/** Build-time, read-only sandbox check. Credentials never leave server-side code.
+/** Build-time sandbox check. Provider calls are read-only; storage probes use
+ * synthetic records that are removed after verification.
  * Emits only fixed labels/booleans to private build logs, never provider bodies.
  */
 import { pathToFileURL } from 'node:url';
 import { createRampnowClient, RampnowError } from '../server/rampnow.mjs';
+import { checkRampnowStorage } from '../server/rampnowStorageCheck.mjs';
+import { checkRampnowWebhook } from '../server/rampnowWebhookCheck.mjs';
 
-export async function checkRampnowPreview(env = process.env, clientFactory = createRampnowClient) {
+export async function checkRampnowPreview(env = process.env, clientFactory = createRampnowClient,
+  {storageCheck = checkRampnowStorage, webhookCheck = checkRampnowWebhook} = {}) {
   const report = { check: 'rampnow_sandbox', authentication: false, btcBuyCandidate: false,
-    btcSellCandidate: false, webhookStorageConfigured: false, productionReady: false };
+    btcSellCandidate: false, bitcoinNetwork: 'unverified', networkStatus: 'not_checked',
+    webhookStorageConfigured: false, providerDeliveryVerified: false, productionReady: false };
   if (env.VERCEL_ENV !== 'preview'
     || env.VERCEL_GIT_COMMIT_REF !== 'feat/rampnow-integration-20261028') {
     return { ...report, status: 'skipped_outside_integration_preview' };
@@ -14,11 +19,19 @@ export async function checkRampnowPreview(env = process.env, clientFactory = cre
   if (env.RAMPNOW_ENVIRONMENT !== 'sandbox' || !env.RAMPNOW_API_KEY || !env.RAMPNOW_API_SECRET) {
     return { ...report, status: 'sandbox_configuration_required' };
   }
-  report.webhookStorageConfigured = !!(env.RAMPNOW_REDIS_REST_URL && env.RAMPNOW_REDIS_REST_TOKEN);
+  // Storage and capability failures are independent and remain separately visible.
+  report.storage = await storageCheck(env);
+  report.webhookStorageConfigured = report.storage.configured === true;
+  if (report.storage.status === 'sandbox_storage_verified') report.webhookSelfTest = await webhookCheck(env);
   try {
     const client = clientFactory({ environment: 'sandbox', apiKey: env.RAMPNOW_API_KEY, apiSecret: env.RAMPNOW_API_SECRET });
     await client.getConfig();
     report.authentication = true;
+    try {
+      const network = await client.getBitcoinNetwork();
+      report.bitcoinNetwork = network.networkClassification;
+      report.networkStatus = 'provider_metadata_read';
+    } catch { report.networkStatus = 'bitcoin_network_confirmation_required'; }
     const [asset, countries] = await Promise.all([client.getBitcoinAsset('INR'), client.getBlockedCurrencies('IN')]);
     const rule = Array.isArray(countries.countries) ? countries.countries.find(item => item?.country === 'IN') : null;
     const route = asset.currency === 'BTC' && asset.chain === 'bitcoin' && asset.orderCurrency === 'INR'

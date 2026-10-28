@@ -6,6 +6,7 @@ import { createRampnowClient } from '../server/rampnow.mjs';
 const env = { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'feat/rampnow-integration-20261028',
   RAMPNOW_ENVIRONMENT: 'sandbox', RAMPNOW_API_KEY: 'private-key', RAMPNOW_API_SECRET: 'private-secret' };
 const factory = () => ({ getConfig: async () => ({}),
+  getBitcoinNetwork: async () => ({networkClassification: 'testnet_unspecified'}),
   getBitcoinAsset: async () => ({ currency: 'BTC', chain: 'bitcoin', orderCurrency: 'INR', status: 'active',
     buyOrderRange: { status: 'active' }, sellOrderRange: { status: 'active' }, payinModes: ['upi'], payoutModes: ['upi'] }),
   getBlockedCurrencies: async () => ({ countries: [{ country: 'IN', blockedCurrencies: [] }] }) });
@@ -33,7 +34,34 @@ test('reports capability candidates without claiming tested settlement or printi
   assert.equal(result.btcSellCandidate, true);
   assert.equal(result.productionReady, false);
   assert.equal(result.webhookStorageConfigured, false);
+  assert.equal(result.bitcoinNetwork, 'testnet_unspecified');
+  assert.equal(result.networkStatus, 'provider_metadata_read');
+  assert.equal(result.providerDeliveryVerified, false);
   assert.doesNotMatch(JSON.stringify(result), /private-key|private-secret/);
+});
+test('runs webhook self-test only after verified storage, without claiming provider delivery', async () => {
+  for (const status of ['sandbox_storage_verified', 'sandbox_storage_check_failed']) {
+    let called = false;
+    const result = await checkRampnowPreview(env, factory, {
+      storageCheck: async () => ({configured: true, status}),
+      webhookCheck: async () => {called = true; return {status: 'sandbox_webhook_selftest_verified'};},
+    });
+    assert.equal(called, status === 'sandbox_storage_verified');
+    assert.equal(result.webhookStorageConfigured, true);
+    assert.equal(result.providerDeliveryVerified, false);
+    assert.equal(result.productionReady, false);
+  }
+});
+test('unavailable network metadata stays unverified even when BTC capability is active', async () => {
+  const result = await checkRampnowPreview(env, () => ({...factory(),
+    getBitcoinNetwork: async () => {throw Error('private-secret');},
+  }));
+  assert.equal(result.authentication, true);
+  assert.equal(result.btcBuyCandidate, true);
+  assert.equal(result.bitcoinNetwork, 'unverified');
+  assert.equal(result.networkStatus, 'bitcoin_network_confirmation_required');
+  assert.equal(result.productionReady, false);
+  assert.doesNotMatch(JSON.stringify(result), /private-secret/);
 });
 test('missing country rule and mismatched network fail closed', async () => {
   for (const overrides of [{ getBlockedCurrencies: async () => ({ countries: [] }) },

@@ -4,11 +4,17 @@
 
 ## Preview configuration follow-up
 
+The new separate `gys-rampnow-sandbox` database credentials are saved on wallet Preview under `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. Vercel does not permit renaming sensitive variables, so both were scoped to `feat/rampnow-integration-20261028` and selected explicitly with branch-scoped `RAMPNOW_STORAGE_SOURCE=upstash_sandbox`. No secret values were retrieved. The existing production identity database and its integration were not changed.
+
+The updated build check verifies a random expiring Redis record, atomic duplicate handling, readback and exact cleanup. It also invokes the actual raw-body webhook handler in-process with synthetic signed bytes, verifies tamper rejection and duplicate stability, and removes only the matching probe record. These are sandbox infrastructure tests, not proof of provider delivery or disk durability across an outage. A separate read-only chain-config request reports Bitcoin's provider-declared mainnet/testnet classification without inferring testnet3, testnet4, signet or wallet compatibility.
+
+Local follow-up validation: 82 focused unit tests, seven real Redis concurrency/retention scenarios, full wallet build, and lint (eight existing warnings) passed. The previous integration deployment authenticated to RampNow and read active BTC/INR buy and sell capabilities. Its webhook handler was present, but unauthenticated external requests hit Vercel Authentication before reaching the handler. Provider callbacks still require a reachable sandbox endpoint; a handler self-test does not resolve deployment protection.
+
 The user initially saved all three `RAMPNOW_*` API configuration variables on **getyoursats-site**, then corrected the target to **getyoursats-wallet** during this follow-up. Metadata now confirms all three on wallet Preview; key and secret are sensitive variables. The user redeployed main as Preview (`dpl_D1BKFVVprmzLZ5WdLGgSLSdC5JAW`), which does not yet contain this integration. Deploy branch `feat/rampnow-integration-20261028` to run the new check. No secret values were retrieved or copied.
 
 `scripts/rampnow-preview-check.mjs` now runs after the build. It makes read-only provider requests only for that exact Preview branch with explicit sandbox configuration. It checks API authentication first, then BTC/INR account capability and India eligibility. Build logs contain fixed status labels and booleans only. Missing configuration or failed probes do not break unrelated wallet builds and never enable checkout. A successful capability probe is not proof of Bitcoin settlement.
 
-The sandbox webhook receiver at `/api/rampnow/webhook` requires **dedicated test storage**, configured as server secrets `RAMPNOW_REDIS_REST_URL` and `RAMPNOW_REDIS_REST_TOKEN`. It must not fall back to production account storage. Verify durable storage and provider access through deployment protection before registering the URL in RampNow. A successful local test does not establish provider-to-preview delivery.
+The sandbox webhook receiver at `/api/rampnow/webhook` requires **dedicated test storage**, configured as server secrets `RAMPNOW_REDIS_REST_URL` and `RAMPNOW_REDIS_REST_TOKEN`, or the explicit Upstash sandbox pair described above. It must not fall back to production account storage. Verify storage and provider access through deployment protection before registering the URL in RampNow. A successful local test does not establish provider-to-preview delivery.
 
 Validation for this follow-up: 47 focused unit tests passed, plus seven real Redis concurrency/retention scenarios. The full wallet build passed. Application lint passed with eight existing UI warnings; the repository lint configuration excludes the new server/scripts/tests, which were checked by Node imports and syntax tests. Review corrected the receiver to avoid Vercel's lazy `req.body` parser entirely. CI now runs the Redis scenarios after installing its isolated Redis dependency.
 
@@ -30,7 +36,7 @@ Validation for this follow-up: 47 focused unit tests passed, plus seven real Red
 - `scripts/rampnow-preflight.mjs`: private operator-run capability and optional quote checks. No customer registration, order creation, financial submission or wallet signing. It never reports production readiness.
 - `tests/rampnow.test.mjs`: 32 passing Node tests, including both official signing vectors, tampering/replay, quote-route binding, no retry, missing configuration and late settlement handling. No new dependencies. Existing CI includes `tests/*.test.mjs`.
 
-Checkout and wallet binding remain incomplete. The sandbox receiver still needs configured storage, deployment verification and a reconciliation worker for quarantined or delayed events. No browser or wallet flow imports this module yet.
+Checkout and wallet binding remain incomplete. The sandbox receiver still needs deployed storage verification, public provider reachability and a reconciliation worker for quarantined or delayed events. No browser or wallet flow imports this module yet.
 
 ## Account inspection next
 
