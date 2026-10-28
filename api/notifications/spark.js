@@ -1,4 +1,4 @@
-import {walletPubkey, verifySparkWebhook, vapidConfig} from '../../server/pushCore.mjs';
+import {walletPubkey, verifySparkWebhook, vapidConfig, readBoundedRawBody} from '../../server/pushCore.mjs';
 import {notifyWallet} from '../../server/notifyFanout.mjs';
 import {storeReady, getWallet} from '../../server/pushStore.mjs';
 
@@ -20,10 +20,7 @@ export async function POST(request){
     const wallet=await getWallet(pub);
     if(!wallet || wallet.registered!==true)
       return response(404,{error:'Webhook not registered'});
-    const contentLength=request.headers.get('content-length');
-    if(contentLength!=null&&(!/^\\d+$/.test(contentLength)||Number(contentLength)>MAX_RAW))
-      return response(413,{error:'Invalid payload size'});
-    const raw=Buffer.from(await request.arrayBuffer());
+    const raw=await readBoundedRawBody(request,MAX_RAW);
     if(!raw.length||raw.length>MAX_RAW)return response(413,{error:'Invalid payload size'});
     const parsed=verifySparkWebhook(raw,pub,wallet.secret,request.headers.get('x-spark-signature'));
     if(!parsed.ok)return response(parsed.reason==='unauthenticated'?401:400,{error:'Invalid webhook'});
