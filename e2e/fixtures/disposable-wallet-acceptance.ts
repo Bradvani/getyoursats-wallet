@@ -63,6 +63,7 @@ const fixture={
  },
  async depositQuote(txid:string,vout:number){return current().fetchClaimDepositQuote({txid,vout});},
  async depositClaim(request:{txid:string;vout:number;maxFee:{onchain:{type:'fixed';amount:number}}}){return getDepositClaims(current())!.claim(request);},
+ async depositContinue(request:{txid:string;vout:number}){return getDepositClaims(current())!.continueClaim(request);},
  async depositReconcile(){return getDepositClaims(current())!.reconcile();},
  async depositRecords(){return getDepositClaims(current())!.list();},
  async status(){

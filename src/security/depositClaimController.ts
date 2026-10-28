@@ -1,3 +1,4 @@
+import {continueExistingDeposit} from './depositContinuation';
 /** Mature-deposit acceptance boundary. Production activation awaits live acceptance. */
 import type {BreezSdk,ClaimDepositRequest,ClaimDepositResponse,Network,Payment} from '@breeztech/breez-sdk-spark';
 import {prepareDepositClaim,executeDepositClaim,verifyClaimReceipt} from './depositClaimAuthorization';
@@ -15,6 +16,7 @@ export interface DepositClaimController {
  list:()=>Promise<readonly StoredClaim[]>;
  claim:(request:ClaimDepositRequest)=>Promise<ClaimDepositResponse>;
  reconcile:()=>Promise<readonly StoredClaim[]>;
+ continueClaim:(request:{txid:string;vout:number})=>Promise<ClaimDepositResponse>;
 }
 export function getDepositClaims(wallet:BreezSdk):DepositClaimController|null {
  const c:unknown=Reflect.get(wallet,DEPOSIT_CLAIMS);
@@ -54,6 +56,10 @@ export function createDepositClaimController(options:{network:Network;raw:()=>Br
      amountSats:intent.amountSats,maxFeeSats:intent.maxFeeSats,expiresAt:Math.floor(intent.expiresAt/1000)}),
    });
   }),
+  continueClaim:async(request:{txid:string;vout:number})=>{
+   const copied={txid:request.txid,vout:request.vout};
+   return lock(async(key,epoch)=>continueExistingDeposit({sdk:sdk(),network,walletKey:key,request:copied,assertLive:()=>live(epoch)}));
+  },
   reconcile:async()=>lock(async(key,epoch)=>{
    const s=sdk();
    for(const record of rows(key).filter(r=>r.state!=='settled')){
