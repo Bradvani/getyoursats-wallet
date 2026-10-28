@@ -9,7 +9,7 @@ const wallet='02'+'45'.repeat(32);
 const secret='s'.repeat(64);
 const lnurlSecret='l'.repeat(64);
 const endpoint='https://web.push.apple.com/test-device-webpush-id-123456';
-function setup(){
+function setup(endpointOwner=wallet){
   const {privateKey,publicKey}=generateKeyPairSync('ec',{namedCurve:'prime256v1'});
   const priv=privateKey.export({format:'jwk'});
   const pub=publicKey.export({format:'jwk'});
@@ -28,8 +28,10 @@ function setup(){
   const savedFetch=globalThis.fetch;
   const table=new Map();
   const subscriptions={};
-  subscriptions['device-a']=JSON.stringify({active:true,
+  const deviceId=createHash('sha256').update(endpoint).digest('hex');
+  subscriptions[deviceId]=JSON.stringify({active:true,
     enabledAt:Date.now()-60000,endpoint});
+  table.set('gys:notify:v1:endpoint:'+deviceId,endpointOwner);
   table.set('gys:notify:v1:wallet:'+wallet,JSON.stringify({
     secret,registered:true,webhookId:'provider-wh-id-123'
   }));
@@ -40,6 +42,7 @@ function setup(){
       let value=null;
       if(command==='GET')value=table.get(args[0])??null;
       else if(command==='HGETALL')value=subscriptions;
+      else if(command==='HGET')value=subscriptions[args[1]]??null;
       else if(command==='SET'){
         const [key,v,...rest]=args;
         if(rest.includes('NX')&&table.has(key))value=null;
@@ -146,5 +149,17 @@ test('the same payment delivered by Spark and Breez LNURL generates only one ale
     });
     assert.equal((await lnurlHandler(lnurlRequest)).status,200);
     assert.equal(ctx.pushes,1);
+  }finally{ctx.restore();}
+});
+
+test('moving a push endpoint to another wallet blocks the old wallet callback',async()=>{
+  const ctx=setup('03'+'22'.repeat(32));
+  try{
+    const event=signed(sparkEvent(),secret);
+    const request=new Request('https://wallet.getyoursats.com/api/notifications/spark?wallet='+wallet,{
+      method:'POST',headers:{'x-spark-signature':event.hmac},body:event.text,
+    });
+    assert.equal((await sparkHandler(request)).status,200);
+    assert.equal(ctx.pushes,0);
   }finally{ctx.restore();}
 });
