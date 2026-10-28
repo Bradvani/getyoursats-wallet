@@ -153,9 +153,14 @@ self.addEventListener('push', (event) => {
       body: 'Explore available Bitcoin purchase options and fees.',
     },
   };
-  const type = message && message.version === 1 && typeof message.type === 'string'
+  // PWA Lightning notifications are delivered as *empty encrypted-data-free*
+  // pushes: the push service authenticates the VAPID sender while the server
+  // validates the settled Lightning webhook. The empty payload prevents
+  // sensitive wallet/payment identifiers entering any push relay.
+  const type = !event.data ? 'gys.payment.received'
+    : message && message.version === 1 && typeof message.type === 'string'
     && Object.prototype.hasOwnProperty.call(copyByType, message.type)
-    ? message.type : null;
+      ? message.type : null;
   const copy = type ? copyByType[type] : {
     title: 'GetYourSats',
     body: 'Wallet activity. Open GetYourSats to review.',
