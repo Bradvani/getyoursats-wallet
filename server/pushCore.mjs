@@ -8,6 +8,33 @@ const TRUSTED_PUSH_HOSTS = new Set([
   'updates.push.services.mozilla.com', 'push.services.mozilla.com',
   'fcm-xm.googleapis.com',
 ]);
+/**
+ * Read original raw bytes without ever buffering more than the configured
+ * webhook limit. Reject oversized requests before checking HMAC.
+ */
+export async function readBoundedRawBody(request,maxBytes=16_384) {
+  const declared=request.headers.get('content-length');
+  if(declared!=null&&(!/^\\d+$/.test(declared)||Number(declared)>maxBytes))
+    throw Object.assign(new Error('Invalid event size'),{status:413});
+  if(!request.body)return Buffer.alloc(0);
+  const reader=request.body.getReader();
+  let size=0;const chunks=[];
+  try {
+    while(true) {
+      const {done,value}=await reader.read();
+      if(done)break;
+      size+=value.byteLength;
+      if(size>maxBytes) {
+        await reader.cancel().catch(()=>{});
+        throw Object.assign(new Error('Invalid event size'),{status:413});
+      }
+      chunks.push(Buffer.from(value));
+    }
+    return Buffer.concat(chunks,size);
+  }finally{
+    try{reader.releaseLock();}catch{}
+  }
+}
 export const walletPubkey = (value) => {
   if (typeof value !== 'string' || !/^(02|03)[0-9a-f]{64}$/i.test(value))
     throw new Error('Invalid wallet identifier');
