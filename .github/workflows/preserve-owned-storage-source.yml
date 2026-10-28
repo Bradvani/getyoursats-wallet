@@ -1,0 +1,64 @@
+name: Preserve owned storage source
+on:
+  push:
+    branches: [build/owned-storage-source-20261028]
+    paths: [.github/workflows/preserve-owned-storage-source.yml]
+permissions:
+  contents: write
+jobs:
+  preserve:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/build/owned-storage-source-20261028'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 1ffe3e1ba443711b3253256de5688b8ee80bedd1
+          persist-credentials: false
+      - name: Verify source patch and upload immutable blobs only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/owned-storage-evidence
+          python3 -I -B - <<'PY'
+          import base64,hashlib,json,os,subprocess,urllib.request
+          from pathlib import Path
+          root=Path('/tmp/owned-storage-evidence')
+          base='1ffe3e1ba443711b3253256de5688b8ee80bedd1'
+          expected='b8ddab071b3251901d28690ac38c7da6caa027d3'
+          def git(*args): return subprocess.check_output(['git',*args])
+          assert git('rev-parse','HEAD').decode().strip()==base
+          assert not git('status','--porcelain')
+          url='https://sb-2mqbnqkpuycf.vercel.run/source-c7d4bc064bbd68b3ef1a8262ea812e25047143ec55d5fd04055e26179b4fec49.patch'
+          with urllib.request.urlopen(url,timeout=60) as response: data=response.read(1000000)
+          assert len(data)==69804
+          assert hashlib.sha256(data).hexdigest()=='c7d4bc064bbd68b3ef1a8262ea812e25047143ec55d5fd04055e26179b4fec49'
+          patch=root/'candidate.patch';patch.write_bytes(data)
+          subprocess.run(['git','apply','--check',str(patch)],check=True)
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          assert git('write-tree').decode().strip()==expected
+          subprocess.run(['git','diff','--check','--cached'],check=True)
+          entries=[]
+          for path in git('diff','--cached','--name-only','-z').decode().split('\0'):
+              if not path: continue
+              header=git('ls-files','--stage','--',path).decode().split('\t')[0].split()
+              mode,sha=header[:2]
+              body=git('cat-file','blob',sha)
+              payload=json.dumps({'encoding':'base64','content':base64.b64encode(body).decode()}).encode()
+              request=urllib.request.Request('https://api.github.com/repos/Bradvani/getyoursats-wallet/git/blobs',data=payload,method='POST',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'})
+              with urllib.request.urlopen(request,timeout=30) as response: result=json.load(response)
+              assert result['sha']==sha
+              entries.append({'path':path,'mode':mode,'type':'blob','sha':sha})
+              print(path,sha)
+          manifest={'baseCommit':base,'baseTree':git('rev-parse',base+'^{tree}').decode().strip(),'expectedTree':expected,'treeElements':entries,'refUpdatesPerformed':False,'productionAuthorized':False}
+          (root/'tree.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          print('Source tree verified; only immutable blobs uploaded:',expected)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: owned-storage-source-b8ddab0
+          path: /tmp/owned-storage-evidence/
+          if-no-files-found: error
+          retention-days: 30
