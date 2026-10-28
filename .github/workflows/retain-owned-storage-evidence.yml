@@ -1,0 +1,32 @@
+name: Retain owned storage evidence
+on:
+  push:
+    branches: [build/owned-storage-source-20261028]
+    paths: [.github/workflows/retain-owned-storage-evidence.yml]
+permissions:
+  contents: read
+jobs:
+  retain:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Download and verify original local evidence without executing it
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/owned-storage-receipts
+          python3 -I -B - <<'PY'
+          import hashlib,urllib.request
+          from pathlib import Path
+          url='https://sb-2mqbnqkpuycf.vercel.run/evidence-e5dffa3ce3077169ccc064b42a5193d9866277afda73fd963752b0168cacf68f.zip'
+          with urllib.request.urlopen(url,timeout=45) as response: data=response.read(1000000)
+          assert len(data)==188967
+          assert hashlib.sha256(data).hexdigest()=='e5dffa3ce3077169ccc064b42a5193d9866277afda73fd963752b0168cacf68f'
+          Path('/tmp/owned-storage-receipts/local-evidence.zip').write_bytes(data)
+          print('Original archive checksum verified; contents not executed')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owned-storage-local-evidence-e5dffa3
+          path: /tmp/owned-storage-receipts/
+          retention-days: 30
+          if-no-files-found: error
