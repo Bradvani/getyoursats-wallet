@@ -12,14 +12,23 @@ const held:IDBDatabase[]=[];
 const lab={
  async setupLegacyShared(root:string,kind:'empty'|'sdk-populated'|'tree-populated'='empty'){
   active=true;const base=root+'/regtest/2687e55a';
-  const sdk=await new IndexedDBStorage(base).initialize(),tree=await createWebTreeStore(base+'-tree');
-  try{
-   if(kind==='sdk-populated')await sdk.compareAndSwapCachedItem('original-wallet-recovery',null,'must-remain-quarantined');
-   if(kind==='tree-populated'){
-    const tx=tree.db.transaction('spent','readwrite'),done=transactionDone(tx);
-    tx.objectStore('spent').put({id:'legacy-live-leaf',data:{value:1234n}});await done;
-   }
-  }finally{sdk.close();tree.close();}
+  for(const [i,name] of [base,base+'-tree'].entries()){
+   const schema=i===0?pinned.sdk:pinned.tree;
+   const db=await openDatabase(name,schema.version,(database,_tx,oldVersion)=>{
+    if(oldVersion!==0)throw Error('Legacy fixture already existed');
+    createSchema(database,schema);
+   },check);
+   try{
+    if(kind==='sdk-populated'&&i===0){
+     const tx=db.transaction('settings','readwrite'),done=transactionDone(tx);
+     tx.objectStore('settings').put({key:'legacy-public-fixture',value:'must-remain-quarantined'});await done;
+    }
+    if(kind==='tree-populated'&&i===1){
+     const tx=db.transaction('spent','readwrite'),done=transactionDone(tx);
+     tx.objectStore('spent').put({id:'legacy-live-leaf',data:{value:1234n}});await done;
+    }
+   }finally{db.close();}
+  }
  },
  async fenceLegacyShared(root:string){await assertNoUnfencedPopulatedLegacyStorage(root,'regtest',check);},
  async inspectLegacyShared(root:string){
