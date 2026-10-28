@@ -109,3 +109,53 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(result.then(({ response }) => response));
   event.waitUntil(result.then(({ copy }) => copy ? remember(cacheKey, copy) : undefined));
 });
+
+
+/**
+ * Web Push display layer only. The subscribing UI and authenticated delivery
+ * endpoint must be shipped separately before this feature can be activated.
+ * No balance, seed, invoice, contact information or payment proof belongs in
+ * the notification. The wallet rechecks actual settlement after opening.
+ */
+self.addEventListener('push', (event) => {
+  let message = null;
+  try {
+    message = event.data ? event.data.json() : null;
+  } catch {
+    // Always present a visible fallback: iOS Home Screen Web Push requires it.
+  }
+  const isReceived = message && message.type === 'gys.payment.received'
+    && message.version === 1;
+  const id = isReceived && typeof message.id === 'string'
+    && /^[a-zA-Z0-9_-]{1,80}$/.test(message.id) ? message.id : null;
+  const options = {
+    body: isReceived
+      ? 'Bitcoin received. Open your wallet to confirm the details.'
+      : 'Wallet activity. Open GetYourSats to review.',
+    icon: '/brand/app-icon-192.png',
+    badge: '/brand/app-icon-192.png',
+    data: { path: '/' },
+  };
+  if (id) options.tag = 'gys-received-' + id;
+  event.waitUntil(self.registration.showNotification('GetYourSats', options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  // Ignore all payload URLs; only the canonical wallet origin can be opened.
+  event.waitUntil((async () => {
+    const home = new URL('/', self.location.origin).href;
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const existing = windows.find((client) => {
+      try {
+        return new URL(client.url).origin === self.location.origin
+          && typeof client.focus === 'function';
+      } catch {
+        return false;
+      }
+    });
+    if (existing) return existing.focus();
+    if (typeof self.clients.openWindow === 'function') return self.clients.openWindow(home);
+    return undefined;
+  })());
+});
