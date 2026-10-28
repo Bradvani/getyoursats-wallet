@@ -14,6 +14,9 @@ const fixtures = vi.hoisted(() => ({
   wallet: null as unknown,
 }));
 vi.mock('@/contexts/WalletContext', () => ({ useWallet: () => fixtures.wallet }));
+// This harness isolates native export authorization. The real conversion section
+// is covered by SettingsPage, StableBalanceToggleFlow and browser containment tests.
+vi.mock('../components/StableBalanceSettings', () => ({ default: () => null }));
 vi.mock('@/services/appLock', () => ({
   isAppLockSupported: () => true, isPinEnabled: fixtures.pin,
   PIN_RECORD_UNAVAILABLE_MESSAGE: 'PIN settings could not be verified. Your wallet is preserved.',

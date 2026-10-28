@@ -1,3 +1,5 @@
+import LocalizedErrorText from '@/components/LocalizedErrorText';
+import {useFlowText} from '@/hooks/useFlowText';
 import React from 'react';
 import { useSheetBack, useSheetFullSnap, useSheetOwnsScroll } from '../ui/sheets/BottomSheetCardContext';
 import { PrimaryButton } from '../ui';
@@ -24,6 +26,7 @@ export const CrossChainAssetStep: React.FC<CrossChainAssetStepProps> = ({
   onContinue,
   error,
 }) => {
+  const t=useFlowText();
   const isSheetFull = useSheetFullSnap();
   useSheetBack(onBack);
   useSheetOwnsScroll();
@@ -34,12 +37,12 @@ export const CrossChainAssetStep: React.FC<CrossChainAssetStepProps> = ({
   >
     {error && (
       <div className="mb-4 p-3 bg-spark-warn-surface border border-spark-warn-border rounded-xl text-sm text-spark-warn-text shrink-0">
-        {error}
+        <LocalizedErrorText message={error}/>
       </div>
     )}
     {assets.length > 0 && (
       <div className="mb-4 min-h-0 flex flex-col">
-        <label className="block text-sm font-medium text-spark-text-primary mb-2 shrink-0">Select coin</label>
+        <label className="block text-sm font-medium text-spark-text-primary mb-2 shrink-0">{t('Select coin')}</label>
         <div className="space-y-2 overflow-y-auto overscroll-y-none touch-pan-y min-h-0 pr-1">
           {assets.map(asset => (
             <button
@@ -58,7 +61,7 @@ export const CrossChainAssetStep: React.FC<CrossChainAssetStepProps> = ({
     )}
     <div className="shrink-0 pt-2">
       <PrimaryButton onClick={onContinue} className="w-full" disabled={!pending}>
-        Continue
+        {t('Continue')}
       </PrimaryButton>
     </div>
   </div>

@@ -66,7 +66,7 @@
     revealHash();
   }
   function storedLanguage() {
-    try { return localStorage.getItem('gys:help-lang') || localStorage.getItem('gys:language:v1'); }
+    try { return localStorage.getItem('gys:language:v1') || localStorage.getItem('gys:help-lang'); }
     catch { return null; }
   }
   function deviceLanguage() {

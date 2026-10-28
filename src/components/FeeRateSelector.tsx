@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import React, { type ReactNode } from 'react';
 import { RadioCheckIcon } from './Icons';
 
@@ -17,9 +18,11 @@ export const FeeRateSelector: React.FC<{
   selected: FeeSpeed | null;
   onSelect: (speed: FeeSpeed) => void;
   detail: (speed: FeeSpeed) => ReactNode;
-}> = ({ selected, onSelect, detail }) => (
+}> = ({ selected, onSelect, detail }) => {
+ const t=useFlowText();
+ return (
   <div>
-    <span className="block text-sm font-medium text-spark-text-primary mb-2">Select Fee Rate</span>
+    <span className="block text-sm font-medium text-spark-text-primary mb-2">{t('Select Fee Rate')}</span>
     <div className="flex gap-2">
       {SPEEDS.map(({ key, label }) => (
         <button
@@ -34,10 +37,11 @@ export const FeeRateSelector: React.FC<{
           }`}
         >
           {selected === key && <RadioCheckIcon className="absolute top-2 right-2" />}
-          <div>{label}</div>
+          <div>{t(label)}</div>
           <div className="text-xs opacity-70">{detail(key)}</div>
         </button>
       ))}
     </div>
   </div>
 );
+};

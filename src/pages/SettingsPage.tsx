@@ -1,3 +1,5 @@
+import {useFlowText} from '@/hooks/useFlowText';
+import StableBalanceSettings from '../components/StableBalanceSettings';
 import PaymentFeedbackSetting from '../components/PaymentFeedbackSetting';
 import LanguageSelect from '@/components/LanguageSelect';
 import {trustCopy} from '@/getyoursats/trustCopy';
@@ -60,6 +62,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onOpenWalletTour,
   onOpenUnilateralExit,
 }) => {
+  const t=useFlowText();
   const wallet = useWallet();
   const appVersion = useAppVersion();
   const { language, appearance, copy } = usePresentation();
@@ -319,7 +322,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               own PIN gate when one is set. */}
           {isAppLockSupported() && (
             <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-              <h3 className="font-display font-semibold text-spark-text-primary mb-3">Security</h3>
+              <h3 className="font-display font-semibold text-spark-text-primary mb-3">{t("Security")}</h3>
               <button
                 className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors"
                 type="button"
@@ -327,7 +330,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <LockIcon size="md" />
-                  <span>PIN &amp; biometric unlock</span>
+                  <span>{t("PIN & biometric unlock")}</span>
                 </div>
                 <ChevronRightIcon size="md" />
               </button>
@@ -338,31 +341,24 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               Keep the limitation visible, but put implementation details
               behind a disclosure rather than a frightening warning panel. */}
           {!isAppLockSupported() && !isPasskeyMode() && (
-            <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-3" aria-label="Wallet security availability">
+            <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-3" aria-label={t("Wallet security availability")}>
               <div className="flex items-start gap-3">
                 <LockIcon size="md" />
                 <div className="min-w-0">
-                  <h3 className="font-display font-semibold text-spark-text-primary">Wallet protection</h3>
-                  <p className="text-sm text-spark-text-muted leading-relaxed mt-1">
-                    Wallet PIN and biometric approval are not available for imported recovery-word wallets in the browser yet.
-                    Keep your recovery words offline and secure your device.
-                  </p>
+                  <h3 className="font-display font-semibold text-spark-text-primary">{t("Wallet protection")}</h3>
+                  <p className="text-sm text-spark-text-muted leading-relaxed mt-1">{t("Wallet PIN and biometric approval are not available for imported recovery-word wallets in the browser yet. Keep your recovery words offline and secure your device.")}</p>
                 </div>
               </div>
               <details className="border-t border-spark-border pt-3">
-                <summary className="cursor-pointer text-xs font-medium text-spark-text-secondary hover:text-spark-text-primary">
-                  Why is this unavailable?
-                </summary>
-                <p className="mt-2 text-xs text-spark-text-muted leading-relaxed">
-                  Passkeys are available when creating a new wallet. They cannot be added to an existing wallet restored from recovery words.
-                </p>
+                <summary className="cursor-pointer text-xs font-medium text-spark-text-secondary hover:text-spark-text-primary">{t("Why is this unavailable?")}</summary>
+                <p className="mt-2 text-xs text-spark-text-muted leading-relaxed">{t("Passkeys are available when creating a new wallet. They cannot be added to an existing wallet restored from recovery words.")}</p>
               </details>
             </section>
           )}
 
           {/* Backup */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-            <h3 className="font-display font-semibold text-spark-text-primary mb-3">Privacy &amp; recovery</h3>
+            <h3 className="font-display font-semibold text-spark-text-primary mb-3">{t("Privacy & recovery")}</h3>
             <button
               className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors"
               type="button"
@@ -370,7 +366,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             >
               <div className="flex items-center gap-3">
                 <KeyIcon size="md" />
-                <span>Recovery words</span>
+                <span>{t("Recovery words")}</span>
               </div>
               <ChevronRightIcon size="md" />
             </button>
@@ -379,18 +375,20 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           {/* This is not email-based wallet recovery. Identity must be
               signed by the active Spark wallet and confirmed server-side. */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-2">
-            <h3 className="font-display font-semibold text-spark-text-primary">Account identity</h3>
+            <h3 className="font-display font-semibold text-spark-text-primary">{t("Account identity")}</h3>
             <button type="button"
               disabled={!featureAvailability.emailVerification}
               onClick={featureAvailability.emailVerification ? onOpenEmail : undefined}
               className="flex w-full items-center justify-between rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary transition-colors disabled:cursor-default disabled:opacity-70">
-              <span>Verify Email Address</span>
-              {featureAvailability.emailVerification ? <ChevronRightIcon size="md"/> : <span className="gys-feature-soon">Coming soon</span>}
+              <span>{t("Verify Email Address")}</span>
+              {featureAvailability.emailVerification ? <ChevronRightIcon size="md"/> : <span className="gys-feature-soon">{t("Coming soon")}</span>}
             </button>
             <p className="text-xs text-spark-text-muted">{featureAvailability.emailVerification
-              ? 'Link an email to your wallet. Keep your recovery words or passkey safe.'
-              : 'Email verification is coming soon. Keep your recovery words or passkey safe.'}</p>
+              ? t('Link an email to your wallet. Keep your recovery words or passkey safe.')
+              : t('Email verification is coming soon. Keep your recovery words or passkey safe.')}</p>
           </div>
+
+          {selectedNetwork==='mainnet'&&<StableBalanceSettings/>}
 
           {/* Display */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
@@ -420,10 +418,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   ))}
                 </div>
                 <p className="mt-2 text-xs text-spark-text-muted leading-relaxed">
-                  {language==='hi'?'ऑरेंज एक हल्का, गर्म रंग है। सिस्टम आपके डिवाइस की सेटिंग का पालन करता है।':
-                   language==='es'?'Naranja ofrece una apariencia clara y cálida. Sistema sigue el aspecto del dispositivo.':
-                   language==='pt'?'Laranja usa tons claros e quentes. Sistema segue as definições do dispositivo.':
-                   'Orange is a warm, light experience. System follows your device appearance.'}
+                  {t('Orange is a warm, light experience. System follows your device appearance.')}
                 </p>
               </div>
               <div className="pt-4 border-t border-spark-border mt-3">
@@ -439,9 +434,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <CurrencyIcon size="md" />
-                    <span>Buy Bitcoin</span>
+                    <span>{t("Buy Bitcoin")}</span>
                   </div>
-                  {featureAvailability.buyBitcoin ? <ChevronRightIcon size="md" /> : <span className="gys-feature-soon">Coming soon</span>}
+                  {featureAvailability.buyBitcoin ? <ChevronRightIcon size="md" /> : <span className="gys-feature-soon">{t("Coming soon")}</span>}
                 </button>
               )}
             </div>
@@ -451,22 +446,20 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               paragraph to explain, so it stays in developer mode unless it
               is already what the user picked. */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-            <h3 className="font-display font-semibold text-spark-text-primary mb-1">Automatic Claims</h3>
-            <p className="text-sm text-spark-text-muted mb-3">
-              On-chain deposits are claimed automatically while the network fee stays under this limit.
-            </p>
+            <h3 className="font-display font-semibold text-spark-text-primary mb-1">{t("Automatic Claims")}</h3>
+            <p className="text-sm text-spark-text-muted mb-3">{t("On-chain deposits are claimed automatically while the network fee stays under this limit.")}</p>
             <FormGroup>
               <div className="flex gap-2 items-center">
                 <select
                   value={feeType}
                   onChange={(e) => setFeeType(e.currentTarget.value as DepositMaxFeeType)}
                   className="min-w-[160px] bg-spark-surface border border-spark-border rounded-xl px-3 py-3 text-spark-text-primary text-sm focus:border-spark-primary focus:ring-2 focus:ring-spark-primary/20"
-                  aria-label="Max fee type"
+                  aria-label={t("Max fee type")}
                 >
-                  <option className="bg-spark-surface" value="fixed">Fixed</option>
-                  <option className="bg-spark-surface" value="rate">Rate</option>
+                  <option className="bg-spark-surface" value="fixed">{t("Fixed")}</option>
+                  <option className="bg-spark-surface" value="rate">{t("Rate")}</option>
                   {(isDevMode || feeType === 'networkRecommended') && (
-                    <option className="bg-spark-surface" value="networkRecommended">Network + leeway</option>
+                    <option className="bg-spark-surface" value="networkRecommended">{t("Network + leeway")}</option>
                   )}
                 </select>
                 <div className="flex-1">
@@ -484,7 +477,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <span className="text-sm text-spark-text-muted shrink-0">{feeUnit}</span>
               </div>
               {!enteredFee && (
-                <p className="text-xs text-spark-warning">{feeError}</p>
+                <p className="text-xs text-spark-warning">{t(feeError)}</p>
               )}
             </FormGroup>
           </div>
@@ -510,7 +503,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 
           {/* Diagnostics */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-            <h3 className="font-display font-semibold text-spark-text-primary mb-3">Diagnostics</h3>
+            <h3 className="font-display font-semibold text-spark-text-primary mb-3">{t("Diagnostics")}</h3>
             <button
               className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors disabled:opacity-50"
               type="button"
@@ -522,7 +515,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               ) : (
                 <DownloadIcon size="md" />
               )}
-              {isDownloadingLogs ? 'Preparing...' : 'Download Logs'}
+              {isDownloadingLogs ? t('Preparing...') : t('Download Logs')}
             </button>
           </div>
 
@@ -550,7 +543,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           {/* Network */}
           {isDevMode && (
             <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-              <h3 className="font-display font-semibold text-spark-text-primary mb-3">Network</h3>
+              <h3 className="font-display font-semibold text-spark-text-primary mb-3">{t("Network")}</h3>
               <div className="flex gap-2">
                 {(['mainnet', 'regtest'] as Network[]).map((network) => (
                   <button
@@ -657,15 +650,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               device) and remove the passkey. Reachable without dev
               mode. Stays the last section: new ones go above it. */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-            <h3 className="font-display font-semibold text-spark-text-primary mb-3">Account</h3>
+            <h3 className="font-display font-semibold text-spark-text-primary mb-3">{t("Account")}</h3>
             <button
               className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-warning/40 rounded-xl text-spark-warning hover:bg-spark-warning/10 transition-colors"
               type="button"
-              onClick={() => { void openExternalUrl(ACCOUNT_DELETION_GUIDE_URL); }}
+              onClick={() => { void openExternalUrl(ACCOUNT_DELETION_GUIDE_URL+'?lang='+encodeURIComponent(language)); }}
             >
               <div className="flex items-center gap-3">
                 <TrashIcon size="md" />
-                <span>How to delete your account</span>
+                <span>{t("How to delete your account")}</span>
               </div>
               <ExternalLinkIcon size="sm" />
             </button>

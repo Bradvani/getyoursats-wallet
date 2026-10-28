@@ -54,6 +54,10 @@ function publish(): void {
 export function setAppLanguage(value:AppLanguage): void {
   if(!langCodes.has(value))throw new Error('Unsupported language');
   try{localStorage.setItem(LANGUAGE_KEY,value);}catch{/* transient environments */}
+  if(typeof window!=='undefined'){
+    const url=new URL(window.location.href);
+    if(url.searchParams.has('lang')){url.searchParams.set('lang',value);window.history.replaceState(window.history.state,'',url);}
+  }
   applyLanguage(value);
   publish();
 }
@@ -89,6 +93,11 @@ export function applyLanguage(language:AppLanguage):void {
   document.documentElement.dir=language==='ar'?'rtl':'ltr';
 }
 export function initPresentation(): void {
+  // Public support links carry the preference across the website/wallet origins.
+  if(typeof window!=='undefined'){
+    const requested=new URL(window.location.href).searchParams.get('lang') as AppLanguage|null;
+    if(requested&&langCodes.has(requested)){try{localStorage.setItem(LANGUAGE_KEY,requested);}catch{/* transient environments */}}
+  }
   applyAppearance();
   applyLanguage(getAppLanguage());
 }

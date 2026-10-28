@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import { usePresentation } from '@/hooks/usePresentation';
 import { PAYMENT_UX } from '@/locales/paymentUx';
 import React, { ReactNode, forwardRef, useContext } from 'react';
@@ -268,6 +269,7 @@ export const CopyableRow: React.FC<{
   display?: string;
   'data-testid'?: string;
 }> = ({ label, value, display, 'data-testid': testId }) => {
+  const t=useFlowText();
   const [copied, setCopied] = React.useState(false);
   const handleCopy = () => {
     copyToClipboard(value)
@@ -287,7 +289,7 @@ export const CopyableRow: React.FC<{
     // sat 4px inside theirs, and at rounded-xl its corners were tighter.
     <div className="flex items-center gap-2 p-4 bg-spark-dark border border-spark-border rounded-2xl">
       <div className="min-w-0 flex-1">
-        <p className="text-xs text-spark-text-muted mb-0.5">{label}</p>
+        <p className="text-xs text-spark-text-muted mb-0.5">{t(label)}</p>
         <p className="text-sm font-mono text-spark-text-secondary truncate" title={value} data-testid={testId}>
           {display ?? value}
         </p>
@@ -295,7 +297,7 @@ export const CopyableRow: React.FC<{
       <button
         onClick={handleCopy}
         className="shrink-0 p-1.5 rounded-md hover:bg-white/5 transition-colors"
-        aria-label={`Copy ${label}`}
+        aria-label={t('Copy {label}',{label:t(label)})}
       >
         {copied
           ? <CheckIcon size="sm" className="text-spark-success" />
@@ -320,6 +322,7 @@ export const CopyableText: React.FC<{
   shareLabel?: string;
   'data-testid'?: string;
 }> = ({ text, truncate = false, hideText = false, showShare = false, onCopied, onShareError, label = 'Address', additionalActions, textColor = 'text-spark-text-muted', textToCopy, textToShare, shareLabel, 'data-testid': testId }) => {
+  const t=useFlowText();
   const [copied, setCopied] = React.useState(false);
   const [shareAvailable] = React.useState(canShare);
 
@@ -354,7 +357,7 @@ export const CopyableText: React.FC<{
         <button
           onClick={handleCopy}
           className={`text-center font-mono text-xs sm:text-sm break-all hover:opacity-80 transition-opacity ${textColor}`}
-          title="Tap to copy"
+          title={t('Tap to copy')}
           data-testid="copyable-text-content"
         >
           {displayText}
@@ -372,21 +375,21 @@ export const CopyableText: React.FC<{
               : 'bg-spark-primary text-white hover:bg-spark-primary-light'
             }
           `}
-          title={`Copy ${label}`}
+          title={t('Copy {label}',{label:t(label)})}
           data-testid="copy-button"
         >
           <CopyIcon size="sm" />
-          {copied ? 'Copied!' : 'Copy'}
+          {copied ? t('Copied!') : t('Copy')}
         </button>
 
         {showShare && shareAvailable && (
           <button
             onClick={handleShare}
             className="flex items-center gap-2 px-4 py-2 border border-spark-border text-spark-text-secondary rounded-xl font-medium text-sm hover:text-spark-text-primary hover:border-spark-border-light transition-colors"
-            title={`Share ${label}`}
+            title={t('Share {label}',{label:t(label)})}
           >
             <ShareIcon />
-            Share
+            {t('Share')}
           </button>
         )}
 

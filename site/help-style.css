@@ -41,7 +41,7 @@
 .gys-submit:disabled{opacity:.48;cursor:not-allowed}
 #gys-contact-status{font-size:12px;color:#B7A88E;margin-top:15px;line-height:1.6;min-height:18px}
 .gys-language{background:#191817;border:1px solid rgba(247,147,26,.28);padding:9px 12px;border-radius:12px;color:#FAF9F6;font:inherit;font-size:12px;max-width:140px}
-.gys-contact-hidden{position:absolute;left:-9999px;width:1px;height:1px}
+.gys-contact-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;pointer-events:none}
 .gys-privacy-card{border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#191817;padding:21px}
 .gys-privacy-card h3{color:#FAF9F6;font-size:17px;margin:0 0 10px}
 .gys-privacy-card p{font-size:14px;color:#BCB7AF;line-height:1.72}
@@ -127,4 +127,22 @@
   display:block;margin:1px 0 7px;padding:11px 13px;
   background:rgba(247,147,26,.055);border:1px solid rgba(247,147,26,.21);
   border-radius:12px;color:#C8BAA7;font-size:12px;line-height:1.65
+}
+
+/* Long translated navigation labels must reflow on narrow screens. */
+.navbar{flex-wrap:wrap}
+.navbar .links{min-width:0;max-width:100%;flex-wrap:wrap;white-space:normal}
+.navbar .links a{overflow-wrap:anywhere}
+.hero h1,.hero-actions a{overflow-wrap:anywhere}
+.layout>.prose,.gys-contact-surface,.gys-contact-grid,.gys-field{min-width:0;overflow-wrap:anywhere}
+.gys-field input,.gys-field select,.gys-field textarea{min-width:0;max-width:100%}
+.toc{min-width:0;max-width:100%}
+.prose [id]{scroll-margin-top:160px}
+@media(max-width:420px){
+ .navbar{flex-wrap:wrap;padding-block:12px}
+ .navbar>a{flex-shrink:0}
+ .navbar .links{flex:1 1 190px;min-width:0;flex-wrap:wrap;justify-content:flex-end}
+ .navbar .links .wallet{flex:1 1 105px;white-space:normal;text-align:center;max-width:100%}
+ .navbar .links label{flex:0 0 auto}
+ .hero h1,.hero-actions a{overflow-wrap:anywhere}
 }

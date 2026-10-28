@@ -1,4 +1,5 @@
 import {isRestrictedBrowserWallet,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
+import {useFlowText} from '@/hooks/useFlowText';
 import {useFiatData} from '../../../contexts/FiatDataContext';
 import DenominationTabs from '../../../getyoursats/DenominationTabs';
 import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
@@ -43,6 +44,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   amountFirst = false,
   destinationReviewed = false,
 }) => {
+  const t=useFlowText();
   // USD entry without a stable-balance token, funded from BTC. Cross-chain
   // ("Send USD", amountFirst) starts in USD; plain BTC sends start in sats
   // with USD as a toggleable secondary option (#253).
@@ -142,7 +144,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const handleNext = async () => {
     if (!validAmount) return;
     if (!amountFirst && isFiatDenomination(denomination) && (!fetchedAt || Date.now()-fetchedAt>120_000)) {
-      setLocalError('The '+denomination+'/BTC rate has expired. Refresh the wallet before sending.');
+      setLocalError(t('The {currency}/BTC rate has expired. Refresh the wallet before sending.',{currency:denomination}));
       return;
     }
     setLocalError(null);
@@ -205,7 +207,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const destinationSection = (
     <div>
       <label className="block text-sm font-medium text-spark-text-primary mb-2">
-        Destination
+        {t("Destination")}
       </label>
       <div className="w-full p-4 bg-spark-dark border border-spark-border rounded-xl text-spark-text-secondary font-mono text-sm break-all">
         {paymentInput}
@@ -218,7 +220,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const amountSection = (
     <div>
         <label className="block text-sm font-medium text-spark-text-primary mb-2">
-          Amount
+          {t("Amount")}
         </label>
         <div className="relative">
           <input
@@ -238,7 +240,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
                 }
               }
             }}
-            placeholder={isDenominated?`Enter amount in ${denomination}`:isTokenMode&&config?`Enter amount in ${config.currencyCode}`:'Enter amount in sats'}
+            placeholder={t('Enter amount in {currency}',{currency:isDenominated?denomination:isTokenMode&&config?config.currencyCode:'sats'})}
             className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none read-only:cursor-not-allowed`}
             disabled={isLoading}
             readOnly={isSendAll}
@@ -257,8 +259,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
         </div>
 
         {!amountFirst&&<DenominationTabs value={denomination} onChange={selectDenomination} disabled={isLoading} fiatAvailable={!!currentRate}/>}
-        {unitUnavailable&&<p role="status" className="text-xs text-spark-warning mt-2">Live {denomination}/BTC rate unavailable. Choose sats or BTC.</p>}
-        {isDenominated&&!!localAmount&&<p className="text-xs text-spark-text-muted mt-2">≈ {localAmount} sats · Settlement is denominated in Bitcoin</p>}
+        {unitUnavailable&&<p role="status" className="text-xs text-spark-warning mt-2">{t('Live {currency}/BTC rate unavailable. Choose sats or BTC.',{currency:denomination})}</p>}
+        {isDenominated&&!!localAmount&&<p className="text-xs text-spark-text-muted mt-2">≈ {localAmount} {t('sats · Settlement is denominated in Bitcoin')}</p>}
         {/* Quick amount buttons */}
         <div className="flex gap-2 mt-3">
           {quickAmounts.map((quickAmount) => {
@@ -303,7 +305,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
                 setLocalError(null);
               }}
               disabled={maxUnavailable || tokenSendAllBelowThreshold || hasPendingConversion}
-              title={maxUnavailable?UNAVAILABLE_MAX_MESSAGE:hasPendingConversion ? 'Balance is updating. Try again in a moment.' : undefined}
+              title={maxUnavailable?UNAVAILABLE_MAX_MESSAGE:hasPendingConversion ? t('Balance is updating. Try again in a moment.') : undefined}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                 maxUnavailable || tokenSendAllBelowThreshold || hasPendingConversion
                   ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
@@ -315,9 +317,9 @@ const AmountStep: React.FC<AmountStepProps> = ({
               {hasPendingConversion ? (
                 <span className="inline-flex items-center justify-center gap-1.5">
                   <SpinnerIcon size="xs" />
-                  Send All
+                  {t("Send All")}
                 </span>
-              ) : 'Send All'}
+              ) : t('Send All')}
             </button>
           )}
         </div>
@@ -338,9 +340,9 @@ const AmountStep: React.FC<AmountStepProps> = ({
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
             <SpinnerIcon />
-            Processing...
+            {t("Processing...")}
           </span>
-        ) : 'Continue'}
+        ) : t('Continue')}
       </PrimaryButton>
     </div>
   );

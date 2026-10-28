@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {featureAvailability} from '@/getyoursats/featureAvailability';
 import React, { type ReactNode } from 'react';
@@ -29,25 +30,22 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
   qrSize = 200,
   qrCardClassName,
 }) => {
+  const t=useFlowText();
   const { showToast } = useToast();
   const amountLink = (className: string) => (
     <TextButton
       onClick={onCustomizeAmount}
       className={`${className} show-amount-panel-button`}
       data-testid="show-amount-panel-button"
-    >
-      Create invoice with specific amount →
-    </TextButton>
+    >{t("Create invoice with specific amount →")}</TextButton>
   );
   // A message in the QR slot takes the card's width, so the dock and caption stay put.
   const slot = (children: ReactNode) => <div style={{ width: qrSize + 32 }}>{children}</div>;
 
   if (!isSupported) {
     return section === 'qr' ? slot(
-      <AlertCard variant="info" title="Lightning addresses unavailable" className="w-full text-left">
-        <p className="text-spark-text-secondary text-sm" data-testid="lightning-address-unsupported">
-          They&apos;re not supported in this environment.
-        </p>
+      <AlertCard variant="info" title={t("Lightning addresses unavailable")} className="w-full text-left">
+        <p className="text-spark-text-secondary text-sm" data-testid="lightning-address-unsupported">{t("They're not supported in this environment.")}</p>
       </AlertCard>,
     ) : (
       <div className="w-full flex justify-center">{amountLink('text-sm')}</div>
@@ -78,11 +76,9 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
   if (!address) {
     return section === 'qr' ? slot(
       <div className="text-center">
-        <h3 className="font-display text-lg font-semibold text-spark-text-primary mb-2">Lightning Address</h3>
-        <p className="text-spark-text-secondary text-sm mb-4">
-          Create a Lightning Address to receive payments easily
-        </p>
-        <PrimaryButton onClick={onEdit}>Create Lightning Address</PrimaryButton>
+        <h3 className="font-display text-lg font-semibold text-spark-text-primary mb-2">{t('Lightning Address')}</h3>
+        <p className="text-spark-text-secondary text-sm mb-4">{t("Create a Lightning Address to receive payments easily")}</p>
+        <PrimaryButton onClick={onEdit}>{t("Create Lightning Address")}</PrimaryButton>
       </div>,
     ) : (
       <div className="w-full flex justify-center">{amountLink('text-sm')}</div>
@@ -101,8 +97,8 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
         showShare
         label="Lightning Address"
         textColor="text-spark-primary"
-        onCopied={() => showToast('success', 'Copied!')}
-        onShareError={() => showToast('error', 'Failed to share')}
+        onCopied={() => showToast('success', t('Copied!'))}
+        onShareError={() => showToast('error', t('Failed to share'))}
         textToCopy={address.lightningAddress}
         textToShare={address.lnurl.bech32}
         shareLabel="LNURL-Pay"
@@ -110,7 +106,7 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
       />
 
       <p className="text-xs text-center text-spark-text-muted max-w-xs">
-        {featureAvailability.emailVerification?'Personalize your address in Settings after email verification.':trustCopy().personalSoon}
+        {featureAvailability.emailVerification?t('Personalize your address in Settings after email verification.'):trustCopy().personalSoon}
       </p>
       {amountLink('mt-2')}
     </div>

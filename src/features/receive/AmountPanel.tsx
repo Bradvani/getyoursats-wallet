@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import {useFiatData} from '../../contexts/FiatDataContext';
 import DenominationTabs from '../../getyoursats/DenominationTabs';
 import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../getyoursats/denomination';
@@ -57,6 +58,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   onClose,
   resetCount,
 }) => {
+  const t=useFlowText();
   // Fiat entry without a stable-balance token: the typed amount is converted to
   // sats client-side (#356). Denominated in whatever currency the balance
   // header is showing, including one the user cycled to by tapping it.
@@ -97,7 +99,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
   const [rateError,setRateError]=React.useState('');
   const requestInvoice=()=>{
     if(isFiatDenomination(denomination) && (!fetchedAt || Date.now()-fetchedAt>120_000)){
-      setRateError(denomination+'/BTC quote has expired. Refresh the wallet and try again.');
+      setRateError(t('The {currency}/BTC rate has expired. Refresh the wallet and try again.',{currency:denomination}));
       return;
     }
     setRateError('');
@@ -188,7 +190,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
     <BottomSheetContainer isOpen={isOpen} onClose={onClose} showBackdrop>
       <BottomSheetCard>
         <DialogHeader
-          title="Create Invoice"
+          title={t("Create Invoice")}
           onClose={onClose}
           icon={<LightningBoltIcon />}
         />
@@ -196,14 +198,12 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
         {/* Currency first: choose how to express the requested Bitcoin amount,
             then enter it in a single-line numeric field. */}
         <div className="space-y-4">
-          <section className="rounded-2xl border border-spark-border bg-spark-elevated/30 p-4 space-y-3" aria-label="Requested amount">
+          <section className="rounded-2xl border border-spark-border bg-spark-elevated/30 p-4 space-y-3" aria-label={t("Requested amount")}>
             <div className="flex items-center justify-between gap-2">
-              <label htmlFor="receive-request-amount" className="block text-sm font-medium text-spark-text-primary">
-                Request amount
-              </label>
-              <span className="text-xs text-spark-text-muted">Settles in Bitcoin</span>
+              <label htmlFor="receive-request-amount" className="block text-sm font-medium text-spark-text-primary">{t("Request amount")}</label>
+              <span className="text-xs text-spark-text-muted">{t("Settles in Bitcoin")}</span>
             </div>
-            <div aria-label="Choose amount currency">
+            <div aria-label={t("Choose amount currency")}>
               <DenominationTabs value={denomination} onChange={chooseUnit} disabled={isLoading} fiatAvailable={!!currentRate}/>
             </div>
             <div className="rounded-xl border border-spark-border bg-spark-dark px-4 py-3 flex items-center gap-3 focus-within:border-spark-primary">
@@ -228,11 +228,11 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
                 data-testid="invoice-amount-input"
                 aria-describedby="receive-amount-equivalent"
               />
-              <span aria-label="Selected denomination" className="shrink-0 rounded-lg bg-spark-elevated px-2 py-1 text-sm text-spark-text-secondary font-semibold">{amountUnitLabel}</span>
+              <span aria-label={t("Selected denomination")} className="shrink-0 rounded-lg bg-spark-elevated px-2 py-1 text-sm text-spark-text-secondary font-semibold">{amountUnitLabel}</span>
             </div>
             {tokenSymbol && denomination==='sats' && (
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-spark-text-secondary">Stable balance</span>
+                <span className="text-xs text-spark-text-secondary">{t("Stable balance")}</span>
                 <CurrencySwitcher
                   isTokenMode={isTokenMode}
                   tokenSymbol={tokenSymbol}
@@ -242,15 +242,15 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
               </div>
             )}
             <div id="receive-amount-equivalent" className="min-h-5 text-xs text-spark-text-muted" aria-live="polite">
-              {unitUnavailable ? `Live ${denomination}/BTC price unavailable. Select sats or BTC.`
-                : customUnit && amountEquivalent ? `≈ ${formatWithSpaces(Number(amountEquivalent))} sats · indicative conversion`
-                : denomination==='sats'&&!isTokenMode ? 'Enter an exact amount in satoshis'
-                : 'The exact satoshi amount will appear after conversion'}
+              {unitUnavailable ? t('Live {currency}/BTC rate unavailable. Choose sats or BTC.',{currency:denomination})
+                : customUnit && amountEquivalent ? `≈ ${formatWithSpaces(Number(amountEquivalent))} sats · ${t('Indicative conversion')}`
+                : denomination==='sats'&&!isTokenMode ? t('Enter an exact amount in satoshis')
+                : t('The exact satoshi amount will appear after conversion')}
             </div>
           </section>
 
-          <section className="space-y-2 hide-on-keyboard" aria-label="Suggested amounts">
-            <p className="text-xs text-spark-text-muted">Quick amounts · {amountUnitLabel}</p>
+          <section className="space-y-2 hide-on-keyboard" aria-label={t("Suggested amounts")}>
+            <p className="text-xs text-spark-text-muted">{t('Quick amounts')} · {amountUnitLabel}</p>
             <div className="grid grid-cols-3 gap-2">
               {quickAmounts.map(value=>(
                 <button key={value} type="button" onClick={()=>handleQuickAmount(value)}
@@ -268,7 +268,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-spark-text-primary mb-2">Description (optional)</label>
+            <label className="block text-sm font-medium text-spark-text-primary mb-2">{t("Description (optional)")}</label>
             <textarea
               ref={descriptionInputRef}
               enterKeyHint="done"
@@ -286,7 +286,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
                   }
                 }
               }}
-              placeholder="What's this for?"
+              placeholder={t("What's this for?")}
               disabled={isLoading}
               rows={1}
               className={`${AMOUNT_FIELD_CLASS} resize-none`}
@@ -309,7 +309,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
             className="w-full"
             data-testid="generate-invoice-button"
           >
-            {isLoading ? <LoadingSpinner size="small" /> : 'Generate Invoice'}
+            {isLoading ? <LoadingSpinner size="small" /> : t('Generate Invoice')}
           </PrimaryButton>
         </div>
       </BottomSheetCard>

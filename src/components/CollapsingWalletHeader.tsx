@@ -1,3 +1,5 @@
+import {formatFiat} from '../utils/formatFiat';
+import {useFlowText} from '@/hooks/useFlowText';
 import GetYourSatsWordmark from './GetYourSatsWordmark';
 import DenominationTabs from '../getyoursats/DenominationTabs';
 import {getDenomination,saveDenomination,satsToAmount,satoshiSymbol,type Denomination} from '../getyoursats/denomination';
@@ -8,12 +10,13 @@ import { getFiatSettings, getDisplayFiatCurrency, setDisplayFiatCurrency, buyCop
 import { formatWithSpaces } from '../utils/formatNumber';
 import { SatAmount } from './SatAmount';
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber';
-import { ChevronDownIcon, AlertTriangleIcon, CurrencyIcon, CashAppIcon, SpinnerIcon, SwapVerticalIcon } from './Icons';
+import { ChevronDownIcon, AlertTriangleIcon, CurrencyIcon, CashAppIcon, SpinnerIcon } from './Icons';
 import { useStableBalance } from '../contexts/StableBalanceContext';
 import { useFiatData } from '../contexts/FiatDataContext';
 import { getTokenBalance, formatTokenAmount } from '../utils/tokenFormatting';
-import StableBalanceToggleFlow from './StableBalanceToggleFlow';
-import { useRestoreStableBalancePrompt } from '../hooks/useRestoreStableBalancePrompt';
+import {USDB_TOKEN_IDENTIFIER} from '../constants/stableBalance';
+import {usePresentation} from '../hooks/usePresentation';
+import {STABLE_BALANCE_COPY} from '../locales/stableBalance';
 
 // Module-level flag: once the balance count-up has played, skip it on remount.
 // Resets on full page reload.
@@ -38,10 +41,10 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
   onOpenBuyBitcoin,
   isBuyLoading,
   isSyncing,
-  refreshWalletData,
   hasRejectedDeposits,
   onOpenGetRefund,
 }) => {
+  const t=useFlowText();
   const { fiatRates, fiatCurrencies } = useFiatData();
   const stableBalance = useStableBalance();
   // Persisted rather than a plain index: the receive amount input reads the
@@ -65,56 +68,9 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
       window.removeEventListener('gys:currency-pref-changed',sync);
     };
   },[]);
-  // User-driven open. session is bumped on every tap so the dialog
-  // remounts with fresh state via key-based remount (no reset effect).
-  const [userToggle, setUserToggle] = useState<{
-    direction: 'toToken' | 'toBitcoin';
-    session: number;
-  } | null>(null);
-
-  // One-shot latch for the restore-prompt auto-open. Set true on the
-  // false→true edge of `restorePrompt.shouldPrompt` and cleared only on
-  // dismiss, so the dialog doesn't auto-close if shouldPrompt later
-  // becomes false (e.g. after token metadata loads and isActive flips).
-  const [autoOpened, setAutoOpened] = useState(false);
-
-  const restorePrompt = useRestoreStableBalancePrompt({
-    isSyncing: !!isSyncing,
-    walletInfo,
-    isStableBalanceActive: stableBalance.isActive,
-  });
-
-  // Adjust state on prop change (React docs pattern): latch the auto-open
-  // when shouldPrompt rises, without using an effect.
-  const [prevShouldPrompt, setPrevShouldPrompt] = useState(restorePrompt.shouldPrompt);
-  if (prevShouldPrompt !== restorePrompt.shouldPrompt) {
-    setPrevShouldPrompt(restorePrompt.shouldPrompt);
-    if (restorePrompt.shouldPrompt && !userToggle && !autoOpened) {
-      setAutoOpened(true);
-    }
-  }
-
-  // userToggle wins over restorePrompt (user already saw the pill).
-  const isOpen = userToggle !== null || autoOpened;
-  const direction: 'toToken' | 'toBitcoin' = userToggle?.direction ?? 'toToken';
-  const dialogKey = userToggle ? `user-${userToggle.session}` : 'restore';
-
-  const handleSuffixTap = useCallback(() => {
-    if (stableBalance.isToggling) return;
-    setUserToggle((prev) => ({
-      direction: stableBalance.isActive ? 'toBitcoin' : 'toToken',
-      session: (prev?.session ?? 0) + 1,
-    }));
-  }, [stableBalance]);
-
-  // Every close answers for the USD held right now: dismissing the prompt, or
-  // switching modes, whose conversion back to sats may still be running. Only
-  // USD beyond that balance prompts again.
-  const closeToggleFlow = useCallback(() => {
-    restorePrompt.markPrompted();
-    setUserToggle(null);
-    setAutoOpened(false);
-  }, [restorePrompt]);
+  const {language}=usePresentation();
+  const stableCopy=STABLE_BALANCE_COPY[language];
+  const detectedUsdb=!stableBalance.activeLabel&&walletInfo?.tokenBalances&&(getTokenBalance(walletInfo.tokenBalances,USDB_TOKEN_IDENTIFIER)?.balance??0n)>0n;
 
   // Build lookup maps for O(1) access (js-index-maps optimization)
   const ratesMap = useMemo(() => {
@@ -194,7 +150,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
     : fiatCurrencyInfo.length > 0;
   // activeLabel is cache-seeded but displayConfig loads async, so a stable
   // balance shows sats for the first frames. Arming the one-shot there spends
-  // it on the wrong balance and the token amount never animates.
+  // it on the wrong balance and the token amount never animates. So wait.
   const stableBalanceLoading = !!stableBalance.activeLabel && !stableBalance.isActive;
   const skipAnimation = hasPlayedInitialAnimation;
   const [animationReady, setAnimationReady] = useState(skipAnimation);
@@ -245,9 +201,9 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
 
     return {
       ...info,
-      value: fiatValue.toFixed(info.fractionSize),
+      value: formatFiat(fiatValue,info.currencyId,language,{numberOnly:true,maximumFractionDigits:info.fractionSize}),
     };
-  }, [stableBalance.isActive, fiatCurrencyInfo, activeFiatIndex, displayBalance, btcBalanceSat, hasSecondaryData]);
+  }, [stableBalance.isActive, fiatCurrencyInfo, activeFiatIndex, displayBalance, btcBalanceSat, hasSecondaryData, language]);
 
   // Stable balance secondary line. Sats only: the "change" label renders beside
   // the amount rather than inside it, so it keeps a normal word space.
@@ -269,10 +225,10 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
     if(bitcoinUnit!=='sats'&&bitcoinUnit!=='BTC'&&primaryFiatRate){
       const v=satsToAmount(Math.round(displayBalance),bitcoinUnit,primaryFiatRate);
       const numeric=Number(v);
-      return Number.isFinite(numeric)?formatWithSpaces(numeric):v;
+      return Number.isFinite(numeric)?formatFiat(numeric,bitcoinUnit,language,{numberOnly:true}):v;
     }
     return formatWithSpaces(displayBalance);
-  }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, primaryFiatRate]);
+  }, [stableBalance.isActive, stableBalance.displayConfig, displayBalance, bitcoinUnit, primaryFiatRate, language]);
 
   // The Bitcoin glyph denotes BTC, never sats. Sats are labelled by their unit selector.
   const currencySymbol = stableBalance.isActive && stableBalance.displayConfig?.symbol
@@ -281,7 +237,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
 
   if (!walletInfo) return null;
 
-  const balanceSuffix = stableBalance.isActive ? 'USD' : bitcoinUnit;
+  const balanceSuffix = stableBalance.isActive ? 'USDB' : bitcoinUnit;
 
   // Hide the fiat secondary line while stable balance config is still loading
   const hasSecondaryLine = stableBalance.isActive ? !!stableSecondarySats : (!stableBalanceLoading && !!currentFiat);
@@ -328,7 +284,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
           <button
             onClick={onOpenMenu}
             className="inline-flex min-h-11 min-w-11 items-center justify-center gap-0.5 p-2 -ml-2 text-[#F7931A] hover:text-[#FFB25E] transition-colors rounded-xl hover:bg-white/5"
-            aria-label="Open menu"
+            aria-label={t("Open menu")}
             data-testid="menu-button"
           >
             <span className="font-semibold text-[25px] leading-none" aria-hidden="true">{satoshiSymbol}</span>
@@ -347,7 +303,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
                 className="flex items-center gap-1 h-9 px-3 rounded-xl text-spark-warning border border-spark-warning/20 hover:border-spark-warning/40 hover:bg-spark-warning/5 transition-colors text-xs font-medium"
               >
                 <AlertTriangleIcon size="xs" />
-                Refund
+                {t("Refund")}
               </button>
             )}
             {/* Buy Bitcoin */}
@@ -355,7 +311,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
               <button
                 type="button"
                 disabled={isBuyLoading}
-                aria-label={buyCopy('Buy')}
+                aria-label={buyCopy(t('Buy'))}
                 className={`flex items-center justify-center gap-1.5 h-9 rounded-xl transition-colors text-sm font-medium disabled:opacity-50 ${
                   isBuyIconOnly()
                     ? 'w-9 bg-[#00D632] hover:bg-[#00bf2d] border border-black/15 hover:border-black/25'
@@ -373,7 +329,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
                 ) : (
                   <CurrencyIcon size="sm" />
                 )}
-                {!isBuyIconOnly() && <span>{buyCopy('Buy')}</span>}
+                {!isBuyIconOnly() && <span>{buyCopy(t('Buy'))}</span>}
               </button>
             )}
           </div>
@@ -389,7 +345,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
               }`}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-spark-primary animate-pulse" />
-              Syncing
+              {t("Syncing")}
             </span>
             {/* inline-flex + items-center keeps the suffix pill on the
                 same vertical axis as the BALANCE text (inline baseline
@@ -399,25 +355,9 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
                 isSyncing ? 'opacity-0' : 'opacity-100'
               }`}
             >
-              Balance
-              {/* Amber chip + swap glyph so the suffix reads as a
-                  currency-switch control, not part of the label (#300).
-                  Hover never fires on touch; active: is the mobile
-                  feedback path. Chip uses tighter tracking than the
-                  label so it stays compact and button-like. */}
-              <button
-                type="button"
-                onClick={handleSuffixTap}
-                disabled={stableBalance.isToggling}
-                aria-label={`Switch balance to ${stableBalance.isActive ? 'Bitcoin' : 'USD'}`}
-                className="group inline-flex items-center cursor-pointer transition-colors disabled:opacity-50 font-display text-xs font-medium uppercase"
-              >
-                <span className="mx-1.5 tracking-widest">·</span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full tracking-wide text-spark-text-primary bg-white/10 border border-white/25 hover:bg-white/15 active:bg-white/20 active:scale-95 transition-all">
-                  <SwapVerticalIcon size="xs" className="w-2.5 h-2.5 transition-transform duration-300 group-active:rotate-180" />
-                  {balanceSuffix}
-                </span>
-              </button>
+              {t("Balance")}
+              <span className="mx-1.5" aria-hidden="true">·</span>
+              <span data-testid="balance-holding-label">{balanceSuffix}</span>
             </span>
           </div>
 
@@ -448,7 +388,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
                 stableSecondarySats ? (
                   <span className="inline-flex items-center">
                     <SatAmount sats={stableSecondarySats} />
-                    <span className="ml-1">change</span>
+                    <span className="ml-1">{t("change")}</span>
                   </span>
                 ) : (
                   <span className="invisible">$0.00</span>
@@ -481,17 +421,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
 
     </div>
 
-    <StableBalanceToggleFlow
-      key={dialogKey}
-      isOpen={isOpen}
-      direction={direction}
-      restorePrompt={autoOpened}
-      onComplete={() => {
-        refreshWalletData?.();
-        closeToggleFlow();
-      }}
-      onCancel={closeToggleFlow}
-    />
+    {detectedUsdb&&<p className="mx-5 mb-3 text-center text-sm text-spark-text-secondary" data-testid="detected-usdb-notice">{stableCopy.detected}</p>}
   </>
   );
 };
