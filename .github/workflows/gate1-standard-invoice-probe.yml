@@ -1,0 +1,52 @@
+name: Valueless standard BOLT11 invoice issuance acceptance
+on:
+  push:
+    branches: [build/gate1-standard-invoice-probe-20261028]
+    paths: [.github/workflows/gate1-standard-invoice-probe.yml]
+permissions:
+  contents: read
+jobs:
+  public-regtest:
+    if: github.repository == 'Bradvani/getyoursats-wallet'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    env:
+      GYS_REGTEST_STANDARD_INVOICE: '1'
+      GYS_NETWORK_EVIDENCE_DIR: /tmp/gate1-standard-invoice
+      VITE_BREEZ_API_KEY: ''
+      VITE_SPARK_LOCAL_CONFIG: ''
+      VITE_STAGING_PASSWORD: ''
+      VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: c099174eedef7a7867dc359b6d649eb5d9abdb12
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install pinned SDK, application and test browser
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Issue and parse ordinary invoices only, with no funding
+        run: |
+          set -euo pipefail
+          mkdir -p "$GYS_NETWORK_EVIDENCE_DIR"
+          npm run dev -- --host 127.0.0.1 --port 5173 --strictPort >"$GYS_NETWORK_EVIDENCE_DIR/server.log" 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          for n in $(seq 1 100); do
+            if curl -fsS http://127.0.0.1:5173/e2e/fixtures/public-spark-regtest.html?network=regtest >/dev/null; then break; fi
+            sleep 0.2
+          done
+          node scripts/security/probe-public-spark-regtest.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: standard-regtest-bolt11-c099174
+          path: /tmp/gate1-standard-invoice/
+          if-no-files-found: error
+          retention-days: 14
