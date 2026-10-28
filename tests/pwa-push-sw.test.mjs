@@ -109,3 +109,12 @@ test('unknown versions never impersonate payment completion', async () => {
   assert.equal(h.shown[0].options.tag, undefined);
   assert.match(h.shown[0].options.body, /Wallet activity/);
 });
+
+test('private payload-free Lightning push displays confirmed incoming payment',async()=>{
+  const h=workerHarness();
+  await h.fire('push',{data:null});
+  assert.equal(h.shown.length,1);
+  assert.equal(h.shown[0].title,'Payment received ⚡');
+  assert.equal(h.shown[0].options.body,'Bitcoin received. Open GetYourSats for details.');
+  assert.equal(h.shown[0].options.tag,undefined);
+});
