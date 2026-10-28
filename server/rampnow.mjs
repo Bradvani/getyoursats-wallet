@@ -101,6 +101,7 @@ function equalDecimal(left, right) {
  */
 function bitcoinNetworkMetadata(data) {
   let bitcoinMatchCount;
+  let networkFacts;
   const check = (condition, reason) => {
     if (condition) return;
     const error = new RampnowError('RAMPNOW_BITCOIN_NETWORK_INVALID');
@@ -108,6 +109,7 @@ function bitcoinNetworkMetadata(data) {
     // assigned only after the bounded chain array passes structural checks.
     error.reason = reason;
     if (Number.isInteger(bitcoinMatchCount)) error.bitcoinMatchCount = bitcoinMatchCount;
+    if (networkFacts) error.networkFacts = networkFacts;
     throw error;
   };
   check(object(data) && Array.isArray(data.chains), 'chains_missing');
@@ -118,13 +120,25 @@ function bitcoinNetworkMetadata(data) {
   check(matches.length > 0, 'bitcoin_absent');
   check(matches.length === 1, 'bitcoin_ambiguous');
   const chain = matches[0];
+  const classify = (value, allowed) => value === undefined || value === null || value === ''
+    ? 'missing' : allowed.find(label => value === label) ?? 'other';
+  // Diagnose every relevant field together without retaining provider strings,
+  // regexes, addresses or other payload data. Facts never authorize a route.
+  networkFacts = {
+    nodeProtocol: classify(chain.nodeType, ['btc', 'bitcoin', 'bitcoind', 'utxo', 'evm', 'svm']),
+    testnetFlag: typeof chain.isTestnet === 'boolean' ? chain.isTestnet : null,
+    nativeAsset: classify(chain.nativeToken, ['BTC', 'BTC:bitcoin']),
+    addressTypePresent: chain.addressType !== undefined && chain.addressType !== null,
+    addressTypeValid: typeof chain.addressType === 'string' && /^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(chain.addressType),
+    btcAssetSupported: Array.isArray(chain.supportedAssets)
+      && chain.supportedAssets.some(asset => asset === 'BTC' || asset === 'BTC:bitcoin'),
+  };
   check(chain.type === 'utxo', 'ledger_model');
   check(chain.nodeType === 'btc', 'node_protocol');
   check(chain.nativeToken === 'BTC', 'native_token');
   check(typeof chain.isTestnet === 'boolean', 'testnet_flag');
-  check(typeof chain.addressType === 'string' && /^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(chain.addressType), 'address_type');
-  check(Array.isArray(chain.supportedAssets)
-    && chain.supportedAssets.some(asset => asset === 'BTC' || asset === 'BTC:bitcoin'), 'supported_assets');
+  check(networkFacts.addressTypeValid, 'address_type');
+  check(networkFacts.btcAssetSupported, 'supported_assets');
   return {
     chain: 'bitcoin', networkClassification: chain.isTestnet ? 'testnet_unspecified' : 'mainnet',
     isTestnet: chain.isTestnet, addressType: chain.addressType, nativeToken: 'BTC',

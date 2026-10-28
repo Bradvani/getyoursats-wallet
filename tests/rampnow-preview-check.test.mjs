@@ -59,9 +59,15 @@ test('network diagnostics expose only fixed reasons and bounded counts', async (
     const error = new RampnowError('RAMPNOW_BITCOIN_NETWORK_INVALID');
     error.reason = valid ? 'bitcoin_absent' : 'private-secret';
     error.bitcoinMatchCount = valid ? 0 : 'private-secret';
+    error.networkFacts = {nodeProtocol: valid ? 'bitcoin' : 'private-secret',
+      testnetFlag: valid ? true : 'private-secret', nativeAsset: valid ? 'BTC' : 'private-secret',
+      addressTypePresent: true, addressTypeValid: valid, btcAssetSupported: true, unwanted: 'private-secret'};
     const result = await checkRampnowPreview(env, () => ({...factory(), getBitcoinNetwork: async () => {throw error;}}));
     assert.equal(result.networkReason, valid ? 'bitcoin_absent' : 'unavailable');
     assert.equal(result.bitcoinMatchCount, valid ? 0 : undefined);
+    assert.deepEqual(result.bitcoinNetworkFacts, {nodeProtocol: valid ? 'bitcoin' : 'other',
+      testnetFlag: valid ? true : null, nativeAsset: valid ? 'BTC' : 'other',
+      addressTypePresent: true, addressTypeValid: valid, btcAssetSupported: true});
     assert.equal(result.bitcoinNetwork, 'unverified');
     assert.doesNotMatch(JSON.stringify(result), /private-secret/);
   }

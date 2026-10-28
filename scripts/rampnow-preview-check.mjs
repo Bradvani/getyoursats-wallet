@@ -50,6 +50,18 @@ export async function checkRampnowPreview(env = process.env, clientFactory = cre
         if (Number.isInteger(error.bitcoinMatchCount) && error.bitcoinMatchCount >= 0 && error.bitcoinMatchCount <= 512) {
           report.bitcoinMatchCount = error.bitcoinMatchCount;
         }
+        const facts = error.networkFacts;
+        if (facts && typeof facts === 'object' && !Array.isArray(facts)) {
+          report.bitcoinNetworkFacts = {
+            nodeProtocol: ['btc', 'bitcoin', 'bitcoind', 'utxo', 'evm', 'svm', 'missing', 'other'].includes(facts.nodeProtocol)
+              ? facts.nodeProtocol : 'other',
+            testnetFlag: typeof facts.testnetFlag === 'boolean' ? facts.testnetFlag : null,
+            nativeAsset: ['BTC', 'BTC:bitcoin', 'missing', 'other'].includes(facts.nativeAsset) ? facts.nativeAsset : 'other',
+            addressTypePresent: facts.addressTypePresent === true,
+            addressTypeValid: facts.addressTypeValid === true,
+            btcAssetSupported: facts.btcAssetSupported === true,
+          };
+        }
       }
     }
     const [asset, countries] = await Promise.all([client.getBitcoinAsset('INR'), client.getBlockedCurrencies('IN')]);

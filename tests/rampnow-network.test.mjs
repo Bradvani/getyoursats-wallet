@@ -52,6 +52,7 @@ for (const [label, data, reason, count] of [
     assert.equal(error.message, error.code);
     assert.equal(error.reason, reason);
     assert.equal(error.bitcoinMatchCount, count);
+    assert.equal(error.networkFacts, undefined);
     assert.equal(error.cause, undefined);
     return true;
   });
@@ -76,7 +77,52 @@ for (const [label, changes, reason] of [
     assert.equal(error.reason, reason);
     assert.equal(error.bitcoinMatchCount, 1);
     assert.doesNotMatch(JSON.stringify(error), /private/);
-    assert.deepEqual(Object.keys(error).sort(), ['bitcoinMatchCount', 'code', 'name', 'reason']);
+    assert.deepEqual(Object.keys(error).sort(), ['bitcoinMatchCount', 'code', 'name', 'networkFacts', 'reason']);
     return true;
   });
+});
+
+test('invalid unique Bitcoin metadata reports all safe facts without reflecting provider strings', async () => {
+  const malformed = {...bitcoin, nodeType: 'private-node-secret', nativeToken: 'private-native-secret',
+    isTestnet: 'private-testnet-secret', addressType: 'https://private-address-secret.test',
+    supportedAssets: ['private-asset-secret'], name: 'private-name-secret', addressRegex: 'private-regex-secret'};
+  await assert.rejects(clientFor({chains: [malformed]}).getBitcoinNetwork(), error => {
+    assert.equal(error.reason, 'node_protocol');
+    assert.equal(error.bitcoinMatchCount, 1);
+    assert.deepEqual(error.networkFacts, {nodeProtocol: 'other', testnetFlag: null,
+      nativeAsset: 'other', addressTypePresent: true, addressTypeValid: false, btcAssetSupported: false});
+    assert.doesNotMatch(JSON.stringify(error), /private|secret|https/);
+    return true;
+  });
+});
+
+test('diagnostic protocol alternatives stay rejected and never relax route validation', async () => {
+  for (const protocol of ['bitcoin', 'bitcoind', 'utxo', 'evm', 'svm']) {
+    await assert.rejects(clientFor({chains: [{...bitcoin, nodeType: protocol}]}).getBitcoinNetwork(), error => {
+      assert.equal(error.reason, 'node_protocol');
+      assert.deepEqual(error.networkFacts, {nodeProtocol: protocol, testnetFlag: true,
+        nativeAsset: 'BTC', addressTypePresent: true, addressTypeValid: true, btcAssetSupported: true});
+      return true;
+    });
+  }
+});
+
+test('native asset diagnostic recognizes the qualified code without treating it as valid', async () => {
+  await assert.rejects(clientFor({chains: [{...bitcoin, nativeToken: 'BTC:bitcoin', isTestnet: false}]}).getBitcoinNetwork(), error => {
+    assert.equal(error.reason, 'native_token');
+    assert.deepEqual(error.networkFacts, {nodeProtocol: 'btc', testnetFlag: false,
+      nativeAsset: 'BTC:bitcoin', addressTypePresent: true, addressTypeValid: true, btcAssetSupported: true});
+    return true;
+  });
+});
+
+test('absent field diagnostics use only missing, null and booleans', async () => {
+  for (const missing of [undefined, null, '']) {
+    await assert.rejects(clientFor({chains: [{...bitcoin, nodeType: missing, nativeToken: missing,
+      isTestnet: missing, addressType: missing, supportedAssets: missing}]}).getBitcoinNetwork(), error => {
+      assert.deepEqual(error.networkFacts, {nodeProtocol: 'missing', testnetFlag: null,
+        nativeAsset: 'missing', addressTypePresent: missing === '', addressTypeValid: false, btcAssetSupported: false});
+      return true;
+    });
+  }
 });
