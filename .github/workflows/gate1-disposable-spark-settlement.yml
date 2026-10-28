@@ -1,0 +1,55 @@
+name: Isolated disposable Spark regtest settlement acceptance
+on:
+  push:
+    branches: [build/gate1-disposable-spark-acceptance-20261028]
+    paths: [.github/workflows/gate1-disposable-spark-settlement.yml]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    if: github.repository == 'Bradvani/getyoursats-wallet'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GYS_ACCEPTANCE_EVIDENCE_DIR: /tmp/gys-disposable-acceptance
+      GYS_ACCEPTANCE_ORIGIN: http://127.0.0.1:5173
+      VITE_BREEZ_API_KEY: ''
+      VITE_SPARK_LOCAL_CONFIG: ''
+      VITE_STAGING_PASSWORD: ''
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 29e49bee563e462824e5c7f61539dbe16436ff59
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install pinned application and Chromium
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium
+      - name: Run only valueless regtest faucet and two disposable wallets
+        run: |
+          set -euo pipefail
+          mkdir -p "$GYS_ACCEPTANCE_EVIDENCE_DIR"
+          test -z "${VITE_BREEZ_API_KEY}"
+          test "${GYS_ACCEPTANCE_ORIGIN}" = 'http://127.0.0.1:5173'
+          npm run dev -- --host 127.0.0.1 --port 5173 --strictPort >"$GYS_ACCEPTANCE_EVIDENCE_DIR/server.log" 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          for n in $(seq 1 120); do
+            if curl -fsS http://127.0.0.1:5173/e2e/fixtures/disposable-wallet-acceptance.html?network=regtest >/dev/null; then break; fi
+            sleep 0.2
+          done
+          node scripts/security/accept-disposable-spark.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: disposable-spark-regtest-29e49bee
+          path: |
+            /tmp/gys-disposable-acceptance/*.json
+            /tmp/gys-disposable-acceptance/server.log
+          if-no-files-found: warn
+          retention-days: 14
