@@ -124,20 +124,52 @@ self.addEventListener('push', (event) => {
   } catch {
     // Always present a visible fallback: iOS Home Screen Web Push requires it.
   }
-  const isReceived = message && message.type === 'gys.payment.received'
-    && message.version === 1;
-  const id = isReceived && typeof message.id === 'string'
+  // The backend must authorize the wallet, verify payment settlement and
+  // enforce the independent marketing opt-in before sending a Web Push event.
+  // This worker never trusts caller-supplied text, amount, destination or URL.
+  const copyByType = {
+    'gys.payment.received': {
+      title: 'Payment received ⚡',
+      body: 'Bitcoin received. Open GetYourSats for details.',
+    },
+    'gys.dca.purchase.settled': {
+      title: 'Your stack just grew',
+      body: 'Your scheduled Bitcoin purchase is complete. View your receipt.',
+    },
+    'gys.dca.purchase.failed': {
+      title: 'Scheduled purchase needs attention',
+      body: 'Your scheduled Bitcoin purchase did not complete. Review your plan.',
+    },
+    'gys.onramp.purchase.processing': {
+      title: 'Bitcoin purchase processing',
+      body: 'Your purchase is still processing. Check its current status.',
+    },
+    'gys.onramp.purchase.settled': {
+      title: 'Bitcoin purchase delivered',
+      body: 'Your Bitcoin has arrived. Open your wallet to verify the receipt.',
+    },
+    'gys.onramp.availability': {
+      title: 'More ways to stack sats',
+      body: 'Explore available Bitcoin purchase options and fees.',
+    },
+  };
+  const type = message && message.version === 1 && typeof message.type === 'string'
+    && Object.prototype.hasOwnProperty.call(copyByType, message.type)
+    ? message.type : null;
+  const copy = type ? copyByType[type] : {
+    title: 'GetYourSats',
+    body: 'Wallet activity. Open GetYourSats to review.',
+  };
+  const id = type && typeof message.id === 'string'
     && /^[a-zA-Z0-9_-]{1,80}$/.test(message.id) ? message.id : null;
   const options = {
-    body: isReceived
-      ? 'Bitcoin received. Open your wallet to confirm the details.'
-      : 'Wallet activity. Open GetYourSats to review.',
+    body: copy.body,
     icon: '/brand/app-icon-192.png',
     badge: '/brand/app-icon-192.png',
     data: { path: '/' },
   };
-  if (id) options.tag = 'gys-received-' + id;
-  event.waitUntil(self.registration.showNotification('GetYourSats', options));
+  if (id) options.tag = type + ':' + id;
+  event.waitUntil(self.registration.showNotification(copy.title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
