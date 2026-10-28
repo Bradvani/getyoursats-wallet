@@ -1,3 +1,33 @@
+## Implementation status checked 2026-10-29
+
+**Not yet live, feature flag remains disabled.** Draft PR #73 now includes:
+
+- `src/components/PaymentPushSetting.tsx`: opt-in UI in wallet Settings. iOS Home Screen installation is required. Permission is requested only after user taps.
+- `api/notifications/device.js`: wallet-signed nonce registration, authorization and subscription revocation against Redis.
+- `server/pushCore.mjs`: VAPID ES256 signing, Apple/Google/Mozilla Web Push endpoint allowlist, HMAC verifier for completed Spark Lightning receives.
+- `server/pushStore.mjs` and `server/notifyFanout.mjs`: endpoint ownership isolation, bounded device subscriptions and idempotent delivery, including per-device delivery marks across webhook retries.
+- `api/notifications/spark.js`: signed Spark completion callback verifying unmodified request bytes, wallet identity, mainnet network, completed status and timestamp.
+- `api/notifications/lnurl.js`: separately gated Breez Lightning Address signed callback for the verified `@getyoursats.com` domain. Not enabled without provider configuration and Breez signing secret.
+- `public/sw.js`: privacy-preserving push presentation and safe click-to-wallet behavior. Empty pushes carry no invoice, amount, contact, preimage or balance data.
+- `tests/push-core.test.mjs`, `tests/push-api.test.mjs` and `tests/pwa-push-sw.test.mjs`: signature, URL, payload, deduplication and worker assertions.
+
+Production VAPID credentials are configured in Vercel (public key, server-only signing secret and mailto contact). The credentials do not by themselves activate anything.
+
+### Activation checklist
+
+1. Review and finish passing CI on PR #73, with no critical diagnostics. Re-run production browser smoke where unrelated existing navigation flakes occur.
+2. Preview acceptance of wallet unlock and SDK `registerWebhook` on a throwaway **funded** wallet using a legitimate mainnet Lightning invoice. Validate no seed exfiltration, an actual signed provider callback and at most one delivered push.
+3. Enable the server flag `GYS_PUSH_ENABLED=true` only after a reviewed production deploy. The existing production Redis/KV may be reused under the isolated `gys:notify:v1:` namespace; do not expose server Redis credentials to the client. Disable the flag to roll back push delivery.
+4. Have Breez register the separate `https://wallet.getyoursats.com/api/notifications/lnurl` endpoint for the root `getyoursats.com` domain and transfer its HMAC signing secret over an authenticated private channel, then configure `GYS_BREEZ_LNURL_WEBHOOK_SECRET` on Vercel and `GYS_BREEZ_LNURL_PUSH_ENABLED=true`.
+5. Have a user grant notification permissions in the installed iOS Home Screen PWA or Android Chrome PWA and send tiny-value Lightning payments from another wallet while GetYourSats is fully closed. Test both (A) invoice QR and (B) custom Lightning Address. Tap should open only canonical wallet, then the SDK must independently confirm funds.
+6. Monitor one day of signed callbacks, duplicate suppression, opt-out and delivery errors. Web Push delivery is best effort and dependent on OS policies.
+
+### Breez configuration request (provider action required)
+
+Please register our signed Lightning Address receipt webhook at `https://wallet.getyoursats.com/api/notifications/lnurl` for the `getyoursats.com` domain. The LNURL proxy serves our custom usernames and backs them with individual Breez Spark wallets. Confirm whether callbacks include all addresses on the root domain, how the signing secret will be delivered securely and whether direct `@breez.tips` payments can also be covered.
+
+**Do not place the HMAC signing secret in a chat, a public issue, a client-side Vite variable, or source control.** The webhook must stay disabled until provider setup has been tested with an actual paid invoice.
+
 # Closed-app payment notifications: implementation and release gate
 
 Status: **Client service-worker display is in a draft PR. This is not a live push service.**
