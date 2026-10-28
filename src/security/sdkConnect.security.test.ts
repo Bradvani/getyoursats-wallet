@@ -1,22 +1,25 @@
 import {afterEach,beforeEach,describe,it,expect,vi} from 'vitest';
 import type {BreezSdk,Config} from '@breeztech/breez-sdk-spark';
-const mocks=vi.hoisted(()=>({raw:{refundDeposit:vi.fn(),getInfo:vi.fn(async()=>({balanceSats:1n})),disconnect:vi.fn(async()=>{}),free:vi.fn()},observed:vi.fn(),config:vi.fn(),connect:vi.fn(),factory:vi.fn(),internalBuilder:vi.fn(),native:vi.fn(()=>false)}));
+const mocks=vi.hoisted(()=>({storage:vi.fn(),directory:vi.fn(),identity:vi.fn(),spark:vi.fn(),raw:{refundDeposit:vi.fn(),getInfo:vi.fn(async()=>({balanceSats:1n})),disconnect:vi.fn(async()=>{}),free:vi.fn()},observed:vi.fn(),config:vi.fn(),connect:vi.fn(),factory:vi.fn(),internalBuilder:vi.fn(),native:vi.fn(()=>false)}));
 vi.mock('@capacitor/core',()=>({Capacitor:{isNativePlatform:mocks.native}}));
 vi.mock('@breeztech/breez-sdk-spark',()=>{
- const create=vi.fn(config=>{
+ const create=vi.fn((config,_breez,spark)=>{mocks.spark(spark);
   mocks.config(config);
   const builder={withPaymentObserver:vi.fn(observer=>{mocks.observed(observer);return builder}),
-   withRestChainService:()=>builder,withDefaultStorage:async()=>builder,build:async()=>mocks.raw};
+   withRestChainService:()=>builder,withDefaultStorage:async(directory:string)=>{mocks.directory(directory);return builder;},build:async()=>mocks.raw};
   return builder;
  });
  return {connect:mocks.connect,SdkBuilder:{new:mocks.internalBuilder,newWithSigner:create},defaultExternalSignersFromSeed:(...args:unknown[])=>{
-  mocks.factory(...args);return {breezSigner:{free:vi.fn()},sparkSigner:{free:vi.fn()},free:vi.fn()};
+  mocks.factory(...args);return {breezSigner:{free:vi.fn()},sparkSigner:{getIdentityPublicKey:mocks.identity,free:vi.fn()},free:vi.fn()};
  }};
 });
+vi.mock('./storageMigration/ownedStorage',()=>({prepareOwnedWalletStorage:mocks.storage}));
 import {connectSdk} from '../services/sdkConnect';
 import {clearSignerIdentity,getSignerIdentityToken,getSpendingSessionEpoch,lockSpendingSession,matchesSignerIdentity,rememberSignerIdentity} from './spendApproval';
 beforeEach(()=>{
  mocks.native.mockReturnValue(false);
+ mocks.identity.mockReset().mockResolvedValue({bytes:[2,...Array(32).fill(17)]});
+ mocks.storage.mockReset().mockResolvedValue('test-identity-owned-directory');
  vi.stubGlobal('indexedDB',{databases:vi.fn(async()=>[])});
 });
 afterEach(()=>{clearSignerIdentity();vi.clearAllMocks();vi.unstubAllGlobals()});
@@ -147,5 +150,37 @@ describe('browser SDK connection security wiring',()=>{
   expect(await connectSdk({config:{network:'mainnet'} as Config,seed,storageDir:'spark-wallet-example'})).toBe(mocks.raw);
   expect(mocks.connect).toHaveBeenCalledWith({config:{network:'mainnet'},seed,storageDir:'spark-wallet-example'});
   expect(mocks.factory).not.toHaveBeenCalled();
+ });
+});
+
+
+describe('owned browser storage integration',()=>{
+ it('selects storage from the actual public signer identity before building the wallet',async()=>{
+  await connectSdk({config:{network:'regtest'} as Config,seed:{type:'mnemonic',mnemonic:'public fixture'},storageDir:'test-root'});
+  expect(mocks.storage).toHaveBeenCalledWith({root:'test-root',network:'regtest',identity:'02'+'11'.repeat(32),assertCurrent:expect.any(Function)});
+  expect(mocks.directory).toHaveBeenCalledWith('test-identity-owned-directory');
+  expect(mocks.storage.mock.invocationCallOrder[0]).toBeLessThan(mocks.config.mock.invocationCallOrder[0]);
+ });
+ it('does not construct a wallet or fall back when storage ownership is unresolved',async()=>{
+  mocks.storage.mockRejectedValueOnce(new Error('Ownership review required'));
+  await expect(connectSdk({config:{network:'mainnet'} as Config,seed:{type:'mnemonic',mnemonic:'public fixture'},storageDir:'test-root'})).rejects.toThrow('Ownership review required');
+  expect(mocks.config).not.toHaveBeenCalled();expect(mocks.internalBuilder).not.toHaveBeenCalled();expect(mocks.connect).not.toHaveBeenCalled();
+ });
+ it('keeps storage selection bound to the original signer even on a later SDK identity read',async()=>{
+  await connectSdk({config:{network:'regtest'} as Config,seed:{type:'mnemonic',mnemonic:'public fixture'},storageDir:'test-root'});
+  const pinned=mocks.spark.mock.calls[0][0];
+  expect(await pinned.getIdentityPublicKey()).toEqual({bytes:[2,...Array(32).fill(17)]});
+  mocks.identity.mockResolvedValueOnce({bytes:[3,...Array(32).fill(18)]});
+  await expect(pinned.getIdentityPublicKey()).rejects.toThrow(/identity changed/);
+ });
+ it.each([[],[2,1],[4,...Array(32).fill(17)],[2,...Array(31).fill(17),256]].map(bytes=>({bytes})))('rejects malformed public identity before migration %#',async({bytes})=>{
+  mocks.identity.mockResolvedValueOnce({bytes});
+  await expect(connectSdk({config:{network:'mainnet'} as Config,seed:{type:'mnemonic',mnemonic:'public fixture'},storageDir:'test-root'})).rejects.toThrow(/public storage identity/);
+  expect(mocks.storage).not.toHaveBeenCalled();expect(mocks.config).not.toHaveBeenCalled();
+ });
+ it('rejects a completed storage handover if its unlocking session was revoked',async()=>{
+  mocks.storage.mockImplementationOnce(async()=>{lockSpendingSession();return 'unused-directory';});
+  await expect(connectSdk({config:{network:'mainnet'} as Config,seed:{type:'mnemonic',mnemonic:'public fixture'},storageDir:'test-root'})).rejects.toThrow(/session changed/);
+  expect(mocks.config).not.toHaveBeenCalled();
  });
 });

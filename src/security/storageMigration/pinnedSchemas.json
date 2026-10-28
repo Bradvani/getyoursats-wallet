@@ -1,0 +1,272 @@
+{
+  "sdk": {
+    "version": 23,
+    "stores": [
+      {
+        "name": "chain_transactions",
+        "keyPath": "txid",
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "contacts",
+        "keyPath": "id",
+        "autoIncrement": false,
+        "indexes": [
+          {
+            "name": "name",
+            "keyPath": "name",
+            "unique": false,
+            "multiEntry": false
+          },
+          {
+            "name": "name_identifier",
+            "keyPath": [
+              "name",
+              "paymentIdentifier"
+            ],
+            "unique": false,
+            "multiEntry": false
+          }
+        ]
+      },
+      {
+        "name": "cross_chain_swaps",
+        "keyPath": [
+          "provider",
+          "id"
+        ],
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "leaf_recoveries",
+        "keyPath": "leafId",
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "lnurl_receive_metadata",
+        "keyPath": "paymentHash",
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "payment_metadata",
+        "keyPath": "paymentId",
+        "autoIncrement": false,
+        "indexes": [
+          {
+            "name": "parentPaymentId",
+            "keyPath": "parentPaymentId",
+            "unique": false,
+            "multiEntry": false
+          }
+        ]
+      },
+      {
+        "name": "payments",
+        "keyPath": "id",
+        "autoIncrement": false,
+        "indexes": [
+          {
+            "name": "invoice",
+            "keyPath": "details.invoice",
+            "unique": false,
+            "multiEntry": false
+          },
+          {
+            "name": "paymentType",
+            "keyPath": "paymentType",
+            "unique": false,
+            "multiEntry": false
+          },
+          {
+            "name": "status",
+            "keyPath": "status",
+            "unique": false,
+            "multiEntry": false
+          },
+          {
+            "name": "timestamp",
+            "keyPath": "timestamp",
+            "unique": false,
+            "multiEntry": false
+          }
+        ]
+      },
+      {
+        "name": "settings",
+        "keyPath": "key",
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "sync_incoming",
+        "keyPath": [
+          "type",
+          "dataId",
+          "revision"
+        ],
+        "autoIncrement": false,
+        "indexes": [
+          {
+            "name": "revision",
+            "keyPath": "revision",
+            "unique": false,
+            "multiEntry": false
+          }
+        ]
+      },
+      {
+        "name": "sync_outgoing",
+        "keyPath": [
+          "type",
+          "dataId",
+          "revision"
+        ],
+        "autoIncrement": false,
+        "indexes": [
+          {
+            "name": "revision",
+            "keyPath": "revision",
+            "unique": false,
+            "multiEntry": false
+          }
+        ]
+      },
+      {
+        "name": "sync_revision",
+        "keyPath": "id",
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "sync_state",
+        "keyPath": [
+          "type",
+          "dataId"
+        ],
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "unclaimed_deposits",
+        "keyPath": [
+          "txid",
+          "vout"
+        ],
+        "autoIncrement": false,
+        "indexes": [
+          {
+            "name": "txid",
+            "keyPath": "txid",
+            "unique": false,
+            "multiEntry": false
+          }
+        ]
+      },
+      {
+        "name": "unilateral_exit_sweeps",
+        "keyPath": "leafId",
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "watched_deposit_addresses",
+        "keyPath": "address",
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "watchtower_exit_outputs",
+        "keyPath": "leafId",
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "watchtower_exit_recoveries",
+        "keyPath": [
+          "leafId",
+          "txid"
+        ],
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "watchtower_exit_spends",
+        "keyPath": "leafId",
+        "autoIncrement": false,
+        "indexes": []
+      }
+    ]
+  },
+  "tree": {
+    "version": 6,
+    "stores": [
+      {
+        "name": "ancestors",
+        "keyPath": [
+          "leaf_id",
+          "id"
+        ],
+        "autoIncrement": false,
+        "indexes": [
+          {
+            "name": "leaf_id",
+            "keyPath": "leaf_id",
+            "unique": false,
+            "multiEntry": false
+          }
+        ]
+      },
+      {
+        "name": "leaves",
+        "keyPath": "id",
+        "autoIncrement": false,
+        "indexes": [
+          {
+            "name": "chain_complete",
+            "keyPath": "chain_complete",
+            "unique": false,
+            "multiEntry": false
+          },
+          {
+            "name": "reservation_id",
+            "keyPath": "reservation_id",
+            "unique": false,
+            "multiEntry": false
+          },
+          {
+            "name": "status",
+            "keyPath": "status",
+            "unique": false,
+            "multiEntry": false
+          }
+        ]
+      },
+      {
+        "name": "reservations",
+        "keyPath": "id",
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "spent",
+        "keyPath": "id",
+        "autoIncrement": false,
+        "indexes": []
+      },
+      {
+        "name": "swapStatus",
+        "keyPath": "id",
+        "autoIncrement": false,
+        "indexes": []
+      }
+    ]
+  },
+  "adapterSha256": {
+    "sdk": "1e9be66757efedb89624faebaf4e6e176ce2c3bb5be2b3cc492bbaeac7fc1349",
+    "tree": "1891c11059553658b06bc28856d09439f29564a0dfa6e37a6434b7e003a5a751"
+  }
+}

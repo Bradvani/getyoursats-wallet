@@ -3,7 +3,7 @@ import {defineConfig} from '@playwright/test';
 // Disposable fixtures only. Never record recovery screens or payment credentials.
 export default defineConfig({
   testDir:'./e2e/tests',
-  testMatch:['browser-vault-security.spec.ts','browser-vault-concurrency.spec.ts','browser-vault-clean-restore.spec.ts','browser-security-preview.spec.ts','recovery-history.spec.ts'],
+  testMatch:['browser-vault-security.spec.ts','browser-vault-concurrency.spec.ts','browser-vault-clean-restore.spec.ts','browser-security-preview.spec.ts','recovery-history.spec.ts','storage-migration.spec.ts'],
   workers:1,
   timeout:60000,
   reporter:'line',

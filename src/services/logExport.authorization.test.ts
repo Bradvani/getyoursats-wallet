@@ -30,7 +30,7 @@ function database({ manualOpen = false, manualRows = false } = {}) {
     if (!manualOpen) queueMicrotask(() => request.onsuccess?.());
     return request;
   });
-  vi.stubGlobal('indexedDB', { open });
+  vi.stubGlobal('indexedDB', { open, databases:vi.fn(async()=>[]) });
   return { db, open, getAll, request, rows };
 }
 

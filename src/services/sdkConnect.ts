@@ -1,3 +1,5 @@
+import {prepareOwnedWalletStorage} from '../security/storageMigration/ownedStorage';
+import {hex} from '../security/storageMigration/database';
 import {isConfiguredSdkKey} from '../getyoursats/walletReadiness';
 import {
   Config,
@@ -165,11 +167,31 @@ export async function connectSdk(params: {
       tokenOptimizationConfig:{...config.tokenOptimizationConfig,autoEnabled:false},
     };
     try {
-      let builder = SdkBuilder.newWithSigner(browserConfig,signers.breezSigner,signers.sparkSigner)
+      const identityBytes=(await signers.sparkSigner.getIdentityPublicKey()).bytes;
+      if(!Array.isArray(identityBytes)||identityBytes.length!==33
+        ||![2,3].includes(identityBytes[0])||identityBytes.some(b=>!Number.isInteger(b)||b<0||b>255))
+        throw new Error('Wallet signer did not provide a valid public storage identity');
+      const identity=hex(Uint8Array.from(identityBytes));
+      assertCurrentSession(epoch);
+      const ownedDirectory=await prepareOwnedWalletStorage({root:storageDir,network:config.network,identity,
+        assertCurrent:()=>assertCurrentSession(epoch)});
+      assertCurrentSession(epoch);
+      // Bind EVERY subsequent SDK identity read, not just the preflight read.
+      const identityPinnedSigner=new Proxy(signers.sparkSigner,{
+        get:(target,key)=>key==='getIdentityPublicKey'?async()=>{
+          const result=await target.getIdentityPublicKey();
+          if(!Array.isArray(result.bytes)||result.bytes.length!==33
+            ||result.bytes.some(b=>!Number.isInteger(b)||b<0||b>255)
+            ||hex(Uint8Array.from(result.bytes))!==identity)
+            throw new Error('Wallet signer identity changed after storage was selected');
+          return {bytes:[...result.bytes]};
+        }:Reflect.get(target,key),
+      });
+      let builder = SdkBuilder.newWithSigner(browserConfig,signers.breezSigner,identityPinnedSigner)
         .withPaymentObserver(gateway.observer);
       if (chainApiUrl && config.apiKey == null && config.sparkConfig)
         builder = builder.withRestChainService(chainApiUrl, 'esplora');
-      const raw=await (await builder.withDefaultStorage(storageDir)).build();
+      const raw=await (await builder.withDefaultStorage(ownedDirectory)).build();
       const wallet=gateway.protect(await lifetime.attach(raw));
       registerBrowserSdkLifetime(wallet,lifetime);
       return wallet;

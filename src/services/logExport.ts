@@ -1,3 +1,5 @@
+import type {Network} from '@breeztech/breez-sdk-spark';
+import {resolveWalletExportDatabase} from '../security/storageMigration/ownedStorage';
 import { logger, LogCategory, redactDeep } from './logger';
 import { getAllSessions, isStorageAvailable, peekCurrentSessionId } from './logStorage';
 import JSZip from 'jszip';
@@ -102,7 +104,9 @@ export const exportDatabaseState = async (
   assertAuthorized?: () => void,
 ): Promise<void> => {
   assertAuthorized?.();
-  const dbName = await buildSdkDatabaseName(identityPubkey, network);
+  const dbName = Capacitor.isNativePlatform()
+    ? await buildSdkDatabaseName(identityPubkey, network)
+    : await resolveWalletExportDatabase(STORAGE_DIR,network as Network,identityPubkey,assertAuthorized??(()=>{}));
   assertAuthorized?.();
   let db: IDBDatabase;
   try {
