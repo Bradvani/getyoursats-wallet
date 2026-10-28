@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   software:
-    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && (github.base_ref == 'release/browser-pwa-security-localization-20261025' || github.head_ref == 'release/gate1-integrated-rc-20261028')
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && (github.base_ref == 'release/browser-pwa-security-localization-20261025' || github.head_ref == 'release/gate1-integrated-rc-20261028' || github.head_ref == 'feat/same-wallet-passkey-20261028')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -51,6 +51,8 @@ jobs:
         run: |
           set -euo pipefail
           npm run build > /tmp/companion-evidence/build.log 2>&1
+          npx tsc --noEmit --project acceptance/protection/tsconfig.json
+          npx vite build --config vite.protection-acceptance.config.ts > /tmp/companion-evidence/protection-lab-build.log 2>&1
           find dist -type f -name '*manifest*.json' -exec cp --parents '{}' /tmp/companion-evidence/ \;
           expected_error='Error: Browser wallet security release is not approved. Resolve the blockers in docs/security-review/browser-continuation-release.md before production deployment.'
           if VERCEL_ENV=production NO_COLOR=1 npx vite build > /tmp/companion-evidence/production-interlock.log 2>&1; then
@@ -68,7 +70,7 @@ jobs:
           retention-days: 30
 
   browsers:
-    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && (github.base_ref == 'release/browser-pwa-security-localization-20261025' || github.head_ref == 'release/gate1-integrated-rc-20261028')
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && (github.base_ref == 'release/browser-pwa-security-localization-20261025' || github.head_ref == 'release/gate1-integrated-rc-20261028' || github.head_ref == 'feat/same-wallet-passkey-20261028')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:

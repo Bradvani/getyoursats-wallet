@@ -1,23 +1,31 @@
-import {useState,useSyncExternalStore} from 'react';
+import {flowText} from '../locales/flowText';
+import {usePresentation} from '../hooks/usePresentation';
+import {useState,useSyncExternalStore,useRef,useEffect} from 'react';
 import {Capacitor} from '@capacitor/core';
 import {authenticateDeviceOwner} from '../services/secureStorage';
 import {getPasskeyLabel,isPasskeyMode,signInPinnedToActiveCredential} from '../services/passkeyService';
-import {checkWebWalletPassword} from './webWalletVault';
+import {checkWebWalletPassword,hasLinkedWebPasskey,approveWebWalletWithPasskey} from './webWalletVault';
 import {finishSpendingApproval,getSpendingRequest,getSpendingRequestServerSnapshot,matchesSignerIdentity,subscribeSpendingApproval,type SpendingRequest} from './spendApproval';
 
 function ApprovalPrompt({pending}:{pending:SpendingRequest}){
  // A new component instance is mounted for every request ID; cancelled or
  // externally expired requests cannot leave a password in the next prompt.
+ const {language}=usePresentation();
  const [password,setPassword]=useState('');
  const [error,setError]=useState('');
  const [busy,setBusy]=useState(false);
  const id=pending.id;
  const native=Capacitor.isNativePlatform(),passkey=!native&&isPasskeyMode();
- const submit=async()=>{
-  if(busy)return;
+ const request=useRef<AbortController|null>(null),inFlight=useRef(false);
+ useEffect(()=>()=>request.current?.abort(),[]);
+ const linked=!native&&!passkey&&hasLinkedWebPasskey();
+ const submit=async(useLinked=false)=>{
+  if(inFlight.current)return;
+  inFlight.current=true;
   setBusy(true);setError('');
   try{
-   if(native)await authenticateDeviceOwner('Approve this GetYourSats transfer');
+   if(useLinked&&linked){request.current=new AbortController();await approveWebWalletWithPasskey(request.current.signal);}
+   else if(native)await authenticateDeviceOwner('Approve this GetYourSats transfer');
    else if(passkey){
     const response=await signInPinnedToActiveCredential(getPasskeyLabel()??undefined);
     if(!await matchesSignerIdentity(response.wallet.seed))
@@ -31,7 +39,7 @@ function ApprovalPrompt({pending}:{pending:SpendingRequest}){
   }catch(e){
    setPassword('');
    setError(e instanceof Error?e.message:'Approval failed');
-  }finally{setBusy(false);}
+  }finally{inFlight.current=false;setBusy(false);}
  };
  return <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/85 p-4" role="presentation">
    <section role="dialog" aria-modal="true" aria-labelledby="gys-approve-title"
@@ -63,8 +71,10 @@ function ApprovalPrompt({pending}:{pending:SpendingRequest}){
         className="w-full rounded-xl border border-spark-border bg-spark-dark p-3 text-spark-text-primary"/>
     </label>}
     {error&&<p role="alert" className="text-sm text-spark-warning">{error}</p>}
+    {linked&&<button type="button" disabled={busy} onClick={()=>void submit(true)}
+       className="w-full min-h-12 rounded-xl bg-spark-primary px-4 font-semibold text-spark-dark disabled:opacity-40">{flowText(language,'Approve with linked passkey')}</button>}
     <div className="grid grid-cols-2 gap-3">
-     <button type="button" onClick={()=>{setPassword('');finishSpendingApproval(id,false);}}
+     <button type="button" onClick={()=>{request.current?.abort();setPassword('');finishSpendingApproval(id,false);}}
        className="min-h-12 rounded-xl border border-spark-border text-spark-text-secondary font-semibold">Cancel</button>
      <button type="button" disabled={busy||(!native&&!passkey&&!password)} onClick={()=>void submit()}
        className="min-h-12 rounded-xl bg-[#F7931A] text-black font-bold disabled:opacity-40">

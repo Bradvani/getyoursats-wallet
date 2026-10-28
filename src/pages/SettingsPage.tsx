@@ -1,3 +1,4 @@
+import WalletPasskeyProtection from '../security/WalletPasskeyProtection';
 import {hasWebWalletVault} from '../security/webWalletVault';
 import {useFlowText} from '@/hooks/useFlowText';
 import StableBalanceSettings from '../components/StableBalanceSettings';
@@ -341,7 +342,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           {/* Web/PWA imports do not have a secure, wallet-bound app lock.
               Keep the limitation visible, but put implementation details
               behind a disclosure rather than a frightening warning panel. */}
-          {!isAppLockSupported() && !isPasskeyMode() && (
+          {!isAppLockSupported() && !isPasskeyMode() && hasWebWalletVault() && <WalletPasskeyProtection/>}
+          {!isAppLockSupported() && !isPasskeyMode() && !hasWebWalletVault() && (
             <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-3" aria-label={t("Wallet security availability")}>
               <div className="flex items-start gap-3">
                 <LockIcon size="md" />

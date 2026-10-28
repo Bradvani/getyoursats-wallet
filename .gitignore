@@ -41,3 +41,5 @@ dist-rollback/
 # Generated from lockfile-pinned fonts at build time
 /public/locale-fonts/
 /site/locale-fonts/
+
+dist-protection-acceptance/

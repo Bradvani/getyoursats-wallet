@@ -15,3 +15,9 @@ export function passkeyUnlockErrorMessage(error: unknown): string {
       || /\b(?:NotAllowedError|AbortError)\b/.test(message)) return PASSKEY_INCOMPLETE_MESSAGE;
   return friendlyPasskeyError(error) ?? PASSKEY_FAILED_MESSAGE;
 }
+
+/** For setup/recovery forms: non-authentication errors need actionable copy. */
+export function walletProtectionErrorMessage(error:unknown):string {
+  const feedback=passkeyUnlockErrorMessage(error);
+  return feedback===PASSKEY_FAILED_MESSAGE&&error instanceof Error?error.message:feedback;
+}

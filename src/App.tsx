@@ -1,3 +1,4 @@
+import {hasLinkedWebPasskey,unlockWebWalletWithPasskey,restoreWebPasskeyBackup,restoreWebPasswordBackup} from './security/webWalletVault';
 import UnavailableWalletAction from './security/UnavailableWalletAction';
 import {isRestrictedBrowserWallet} from './security/browserReleasePolicy';
 import WebWalletVaultPage from './security/WebWalletVaultPage';
@@ -332,6 +333,20 @@ const AppContent: React.FC = () => {
     await removeMatchingLegacyMnemonic(password);
     setUserScreen('wallet');
   };
+  const unlockLinkedBrowserVault = async(signal:AbortSignal) => {
+    const mnemonic=await unlockWebWalletWithPasskey(signal);
+    signal.throwIfAborted();
+    const client=await sdk.connectWallet({type:'mnemonic',mnemonic},false,undefined,'secureStorage');
+    if(!client)throw new Error('Wallet connection could not be verified. Your encrypted recovery data is preserved.');
+    clearPasskeyMode();setUserScreen('wallet');
+  };
+  const restoreProtectedFile = async(text:string,signal:AbortSignal,password?:string) => {
+    const mnemonic=password===undefined?await restoreWebPasskeyBackup(text,signal):await restoreWebPasswordBackup(text,password,signal);
+    signal.throwIfAborted();
+    const client=await sdk.connectWallet({type:'mnemonic',mnemonic},true,undefined,'secureStorage');
+    if(!client)throw new Error('Wallet connection could not be verified. Your encrypted recovery data is preserved.');
+    clearPasskeyMode();setUserScreen('wallet');
+  };
   const recoverBrowserVault = async(mnemonic:string,password:string) => {
     await resetWebWalletPasswordWithWords(mnemonic,password);
     await sdk.connectWallet({type:'mnemonic',mnemonic},true,undefined,'secureStorage');
@@ -490,7 +505,8 @@ const AppContent: React.FC = () => {
   const renderCurrentScreen = () => {
     // Do not render private wallet pages during the browser vault privacy lock.
     if(browserSessionLock.locked&&!Capacitor.isNativePlatform()&&sdk.isConnected){
-      return <WebWalletVaultPage mode="unlock" passkey={isPasskeyMode()} isLoading={false} onSubmit={browserSessionLock.unlock}/>;
+      return <WebWalletVaultPage mode="unlock" passkey={isPasskeyMode()} isLoading={false} onSubmit={browserSessionLock.unlock}
+        onLinkedPasskeyUnlock={!isPasskeyMode()&&hasLinkedWebPasskey()?browserSessionLock.unlockWithLinkedPasskey:undefined}/>;
     }
     // Startup-state overlays take precedence and are derived directly
     // from `sdk.startupState`. The `currentScreen` memo above already
@@ -511,6 +527,7 @@ const AppContent: React.FC = () => {
     if (sdk.startupState === 'web-vault-locked' && userScreen!=='web-vault-recover' && !sdk.isConnected) {
       return <WebWalletVaultPage mode="unlock" isLoading={sdk.isLoading}
         onSubmit={unlockBrowserVault} error={sdk.error}
+          onLinkedPasskeyUnlock={hasLinkedWebPasskey()?unlockLinkedBrowserVault:undefined}
         onRecover={()=>setUserScreen('web-vault-recover')}/>;
     }
     if (sdk.startupState === 'native-unlocking') {
@@ -650,6 +667,7 @@ const AppContent: React.FC = () => {
       case 'web-vault-locked':
         return <WebWalletVaultPage mode="unlock" isLoading={sdk.isLoading}
           onSubmit={unlockBrowserVault} error={sdk.error}
+          onLinkedPasskeyUnlock={hasLinkedWebPasskey()?unlockLinkedBrowserVault:undefined}
           onRecover={()=>setUserScreen('web-vault-recover')}/>;
       case 'web-vault-recover':
         return <WebVaultRecoveryPage onSubmit={recoverBrowserVault}
@@ -879,6 +897,7 @@ const AppContent: React.FC = () => {
       case 'restore':
         return (
           <RestorePage
+            onRestoreProtectedFile={restoreProtectedFile}
             onConnect={(mnemonic) => handleConnect(mnemonic, true)}
             onUsePasskey={() => {
               setPasskeySkipDetection(false);

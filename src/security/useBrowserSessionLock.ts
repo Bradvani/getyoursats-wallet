@@ -7,8 +7,8 @@ import {useEffect,useRef,useState} from 'react';
 import type {Seed} from '@breeztech/breez-sdk-spark';
 import {Capacitor} from '@capacitor/core';
 import {isPasskeyMode,getPasskeyLabel,signInPinnedToActiveCredential} from '../services/passkeyService';
-import {hasWebWalletVault,unlockWebWallet,clearUnlockedWebMnemonic} from './webWalletVault';
-import {lockSpendingSession,unlockSpendingSession,assertCurrentSession,getSpendingSessionEpoch,isSpendingSessionLocked} from './spendApproval';
+import {hasWebWalletVault,unlockWebWallet,unlockWebWalletWithPasskey,clearUnlockedWebMnemonic} from './webWalletVault';
+import {lockSpendingSession,unlockSpendingSession,assertCurrentSession,getSpendingSessionEpoch,isSpendingSessionLocked,subscribeSpendingSessionLock} from './spendApproval';
 
 export function useBrowserSessionLock(isConnected:boolean,resume?:(seed:Seed)=>Promise<number>){
  const [locked,setLocked]=useState(false);
@@ -22,6 +22,7 @@ export function useBrowserSessionLock(isConnected:boolean,resume?:(seed:Seed)=>P
    const onStorage=(event:StorageEvent)=>{
     if(event.key===null || event.key.startsWith('gys:wallet-vault:') || event.key==='walletMnemonic')lock();
    };
+   const unsubscribe=subscribeSpendingSessionLock(()=>{clearUnlockedWebMnemonic();setLocked(true);});
    document.addEventListener('visibilitychange',onVisibility);
    window.addEventListener('pagehide',lock);
    window.addEventListener('storage',onStorage);
@@ -32,6 +33,7 @@ export function useBrowserSessionLock(isConnected:boolean,resume?:(seed:Seed)=>P
       if(document.visibilityState==='visible'&&Date.now()-lastActive.current>=5*60*1000)lock();
    },15_000);
    return()=>{
+      unsubscribe();
       document.removeEventListener('visibilitychange',onVisibility);
       window.removeEventListener('pagehide',lock);
       window.removeEventListener('storage',onStorage);
@@ -40,10 +42,12 @@ export function useBrowserSessionLock(isConnected:boolean,resume?:(seed:Seed)=>P
       window.clearInterval(timer);
    };
  },[isConnected]);
- const unlock=async(password:string)=>{
+ const authenticate=async(password:string,linked=false,signal?:AbortSignal)=>{
    try {
      const startedEpoch=getSpendingSessionEpoch();
-     const seed=isPasskeyMode()
+     const seed=linked
+       ? {type:'mnemonic' as const,mnemonic:await unlockWebWalletWithPasskey(signal)}
+       : isPasskeyMode()
        ? (await signInPinnedToActiveCredential(getPasskeyLabel()??undefined)).wallet.seed
        : {type:'mnemonic' as const,mnemonic:await unlockWebWallet(password)};
      assertCurrentSession(startedEpoch);
@@ -60,5 +64,5 @@ export function useBrowserSessionLock(isConnected:boolean,resume?:(seed:Seed)=>P
      throw error;
    }
  };
- return {locked,unlock};
+ return {locked,unlock:(password:string)=>authenticate(password),unlockWithLinkedPasskey:(signal?:AbortSignal)=>authenticate('',true,signal)};
 }
