@@ -1,5 +1,5 @@
 import {createHmac,timingSafeEqual} from 'node:crypto';
-import {walletPubkey,vapidConfig} from '../../server/pushCore.mjs';
+import {walletPubkey,vapidConfig ,readBoundedRawBody} from '../../server/pushCore.mjs';
 import {storeReady} from '../../server/pushStore.mjs';
 import {notifyWallet} from '../../server/notifyFanout.mjs';
 
@@ -16,10 +16,7 @@ export async function POST(request){
   const cfg=ready();
   if(!cfg)return response(503,{error:'Lightning Address notifications unavailable'});
   try{
-    const declared=request.headers.get('content-length');
-    if(declared!=null&&(!/^\d+$/.test(declared)||Number(declared)>MAX_RAW))
-      return response(413,{error:'Invalid event size'});
-    const raw=Buffer.from(await request.arrayBuffer());
+    const raw=await readBoundedRawBody(request,MAX_RAW);
     if(!raw.length||raw.length>MAX_RAW)return response(413,{error:'Invalid event size'});
     const signature=request.headers.get('x-breez-signature');
     if(!signature||!/^[a-f0-9]{64}$/i.test(signature))
