@@ -33,10 +33,10 @@ jobs:
       - name: Run only valueless regtest faucet and two disposable wallets
         run: |
           set -euo pipefail
-          mkdir -p "$GYS_ACCEPTANCE_EVIDENCE_DIR"
+          # The acceptance runner creates its evidence directory atomically and refuses reused profiles.
           test -z "${VITE_BREEZ_API_KEY}"
           test "${GYS_ACCEPTANCE_ORIGIN}" = 'http://127.0.0.1:5173'
-          npm run dev -- --host 127.0.0.1 --port 5173 --strictPort >"$GYS_ACCEPTANCE_EVIDENCE_DIR/server.log" 2>&1 &
+          npm run dev -- --host 127.0.0.1 --port 5173 --strictPort >/tmp/gys-disposable-server.log 2>&1 &
           server=$!
           trap 'kill "$server" || true' EXIT
           for n in $(seq 1 120); do
@@ -50,6 +50,6 @@ jobs:
           name: disposable-spark-regtest-29e49bee
           path: |
             /tmp/gys-disposable-acceptance/*.json
-            /tmp/gys-disposable-acceptance/server.log
+            /tmp/gys-disposable-server.log
           if-no-files-found: warn
           retention-days: 14
