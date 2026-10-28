@@ -75,7 +75,13 @@ export function verifySparkWebhook(raw, pub, secret, signatureHeader, now = Date
   const ts = Date.parse(data.timestamp);
   if (!Number.isFinite(ts) || Math.abs(now - ts) > 7*86400_000)
     return {ok:false, reason:'stale_event'};
-  return {ok:true, notify:true, id:data.id, ts};
+  // Derive the invoice payment hash without storing or returning a preimage.
+  // This unifies Spark's event ID with the Breez LNURL payment_hash, allowing
+  // the same incoming Lightning payment to be deduplicated across both rails.
+  const preimage=typeof data.payment_preimage==='string'&&/^[0-9a-f]{64}$/i.test(data.payment_preimage)
+    ?Buffer.from(data.payment_preimage,'hex'):null;
+  const paymentHash=preimage?createHash('sha256').update(preimage).digest('hex'):null;
+  return {ok:true, notify:true, id:data.id, paymentHash, ts};
 }
 export function vapidConfig(env = process.env) {
   const pub = env.GYS_PUSH_VAPID_PUBLIC_KEY;
