@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/build-public-locale-fonts.mjs && tsc && vite build",
+    "build": "node scripts/build-public-locale-fonts.mjs && tsc && vite build && node scripts/rampnow-preview-check.mjs",
     "lint": "eslint . --report-unused-disable-directives",
     "preview": "vite preview",
     "test": "vitest run",

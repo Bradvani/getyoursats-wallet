@@ -24,4 +24,6 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y redis-server
       - name: Verify cross-instance support quotas without external delivery
         run: node --test tests/contact-budget.integration.mjs
+      - name: Verify sandbox webhook persistence and concurrency
+        run: node --test tests/rampnow-webhook.integration.mjs
       - run: npm run lint

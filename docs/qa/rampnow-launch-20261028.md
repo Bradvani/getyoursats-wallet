@@ -1,6 +1,16 @@
 # RampNow integration and launch evidence
 
-28 October 2026. Scope: GetYourSats BTC on/off ramps. **Not deployed; public Buy/Sell remains disabled.**
+28 October 2026. Scope: GetYourSats BTC on/off ramps. **Integration in progress; public Buy/Sell remains disabled.**
+
+## Preview configuration follow-up
+
+The user initially saved all three `RAMPNOW_*` API configuration variables on **getyoursats-site**, then corrected the target to **getyoursats-wallet** during this follow-up. Metadata now confirms all three on wallet Preview; key and secret are sensitive variables. The user redeployed main as Preview (`dpl_D1BKFVVprmzLZ5WdLGgSLSdC5JAW`), which does not yet contain this integration. Deploy branch `feat/rampnow-integration-20261028` to run the new check. No secret values were retrieved or copied.
+
+`scripts/rampnow-preview-check.mjs` now runs after the build. It makes read-only provider requests only for that exact Preview branch with explicit sandbox configuration. It checks API authentication first, then BTC/INR account capability and India eligibility. Build logs contain fixed status labels and booleans only. Missing configuration or failed probes do not break unrelated wallet builds and never enable checkout. A successful capability probe is not proof of Bitcoin settlement.
+
+The sandbox webhook receiver at `/api/rampnow/webhook` requires **dedicated test storage**, configured as server secrets `RAMPNOW_REDIS_REST_URL` and `RAMPNOW_REDIS_REST_TOKEN`. It must not fall back to production account storage. Verify durable storage and provider access through deployment protection before registering the URL in RampNow. A successful local test does not establish provider-to-preview delivery.
+
+Validation for this follow-up: 47 focused unit tests passed, plus seven real Redis concurrency/retention scenarios. The full wallet build passed. Application lint passed with eight existing UI warnings; the repository lint configuration excludes the new server/scripts/tests, which were checked by Node imports and syntax tests. Review corrected the receiver to avoid Vercel's lazy `req.body` parser entirely. CI now runs the Redis scenarios after installing its isolated Redis dependency.
 
 ## Verified current state
 
@@ -16,10 +26,11 @@
 
 - `server/rampnow.mjs`: server-only HMAC request signing, fixed sandbox/production hosts, non-binding BTC quotes, asset/country config reads and order lookup. Response bounds, sanitized errors and no automatic retries or arbitrary signed requests.
 - Raw-body webhook signature verification with the documented five-minute replay window. Normalization binds events to an existing order intent, retains actual delivered amounts as decimal strings, handles delayed/late/out-of-order status and excludes bank/identity fields from the normalized record.
+- `api/rampnow/webhook.js` and `server/rampnowStore.mjs`: sandbox-only raw-body intake and dedicated Redis persistence. Atomic compare-and-set protects bound order state; unbound events are held in a bounded, expiring quarantine. No webhook creates a wallet binding or credits funds. Test storage uses seven-day event retention and thirty-day state retention; this is not a production accounting ledger.
 - `scripts/rampnow-preflight.mjs`: private operator-run capability and optional quote checks. No customer registration, order creation, financial submission or wallet signing. It never reports production readiness.
 - `tests/rampnow.test.mjs`: 32 passing Node tests, including both official signing vectors, tampering/replay, quote-route binding, no retry, missing configuration and late settlement handling. No new dependencies. Existing CI includes `tests/*.test.mjs`.
 
-These are integration primitives, not a completed checkout or webhook service. In particular, the event reducer must be used behind authenticated raw-body intake and a durable atomic event/intent store. It is not a substitute for them. No browser or wallet flow imports this module yet.
+Checkout and wallet binding remain incomplete. The sandbox receiver still needs configured storage, deployment verification and a reconciliation worker for quarantined or delayed events. No browser or wallet flow imports this module yet.
 
 ## Account inspection next
 
@@ -35,7 +46,7 @@ These are integration primitives, not a completed checkout or webhook service. I
 - Buy: get the destination from the unlocked wallet's verified BTC deposit flow, bind it to the order and enforce deposit minimums/claim fees. Provider `completed` does not mean spendable Spark credit. Confirm the wallet received and credited the actual BTC delivery.
 - Sell: use the provider's verified deposit instructions and their expiry. Bind amount/address/network to GYS's own send confirmation and fee quote. Never sign from widget messages. Network fees must not reduce the required provider deposit. Complete the protected on-chain exit path before enabling Sell.
 - Prefer an external provider checkout initially: current CSP, COOP/COEP and Permissions-Policy block arbitrary payment iframes. Preserve wallet isolation rather than weakening it for a widget. Return safely to GYS and poll authoritative status; redirects and UI events are not receipts.
-- Implement an HTTPS raw-body webhook handler with a configured, constant path, HMAC verification, durable `eventUid` deduplication and atomic `payload.updateTime` ordering. Persist before returning 2xx; use bounded retention and minimize PII. Configure the account-level URL and `ramp_order.status_change` subscription. Do not rely on per-order `webhookUrl` (current webhook guide says it is not used despite the OpenAPI field description).
+- Deploy and verify the sandbox webhook handler with dedicated storage. Complete authenticated binding creation and quarantine reconciliation, then establish production retention and support operations before adapting it for production. Configure the account-level URL and `ramp_order.status_change` subscription only after provider reachability is verified. Do not rely on per-order `webhookUrl` (current webhook guide says it is not used despite the OpenAPI field description).
 - Authorize status reads to the owning wallet, poll as a webhook fallback and reconcile `dstFillAmount`. `failed` means delayed, and late payments may revive `expired` or `payment_failed`. Sell `walletAddress` is the bank account and sell `transactionHash` is a payout reference, not the BTC deposit hash.
 - Integrate localized Buy/Sell UI, settings/support disclosure and restart-safe activity records. Keep the public feature gate off until each direction is proven.
 

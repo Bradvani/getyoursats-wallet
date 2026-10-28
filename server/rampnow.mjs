@@ -96,7 +96,11 @@ function equalDecimal(left, right) {
 }
 
 async function readResponse(response) {
-  requireValue(response.ok && !response.redirected, 'RAMPNOW_UPSTREAM_UNAVAILABLE');
+  if (!response.ok || response.redirected) {
+    const error = new RampnowError('RAMPNOW_UPSTREAM_UNAVAILABLE');
+    if (Number.isInteger(response.status) && response.status >= 400 && response.status <= 599) error.httpStatus = response.status;
+    throw error;
+  }
   requireValue(response.body, 'RAMPNOW_RESPONSE_INVALID');
   const reader = response.body.getReader();
   let total = 0;
