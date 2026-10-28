@@ -1,0 +1,32 @@
+name: Retain deposit continuation evidence
+on:
+  push:
+    branches: [build/deposit-continuation-source-20261028]
+    paths: [.github/workflows/retain-deposit-continuation-evidence.yml]
+permissions:
+  contents: read
+jobs:
+  retain:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Verify original evidence archive without executing its contents
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/deposit-continuation-receipts
+          python3 -I -B - <<'PY'
+          import hashlib,urllib.request
+          from pathlib import Path
+          url='https://sb-3g6numa6z80x.vercel.run/evidence-9cc203383d4709c6a1bb3a3f641fe47f6fb0efcbd2b3606196849d4440ca2727.zip'
+          with urllib.request.urlopen(url,timeout=45) as response: data=response.read(1000000)
+          assert len(data)==182513
+          assert hashlib.sha256(data).hexdigest()=='9cc203383d4709c6a1bb3a3f641fe47f6fb0efcbd2b3606196849d4440ca2727'
+          Path('/tmp/deposit-continuation-receipts/local-evidence.zip').write_bytes(data)
+          print('Original archive checksum verified; contents not executed')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deposit-continuation-local-evidence-9cc2033
+          path: /tmp/deposit-continuation-receipts/
+          retention-days: 30
+          if-no-files-found: error
