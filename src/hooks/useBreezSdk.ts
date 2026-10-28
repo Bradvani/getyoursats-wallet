@@ -52,7 +52,7 @@ import {
 import { isSendSheetOpen } from '../features/send/sendSheetVisibility';
 import { clearPin, isAppLockSupported } from '../services/appLock';
 import {hasWebWalletVault,hasLegacyWebMnemonic,clearUnlockedWebMnemonic,getUnlockedWebMnemonic} from '../security/webWalletVault';
-import {clearSignerIdentity,assertCurrentSession,getSpendingSessionEpoch,matchesSignerIdentity,lockSpendingSession} from '../security/spendApproval';
+import {clearSignerIdentity,assertCurrentSession,getSpendingSessionEpoch,isSpendingSessionLocked,matchesSignerIdentity,lockSpendingSession} from '../security/spendApproval';
 import {stopBrowserSdk} from '../security/browserSdkLifetime';
 import {getOperationReconciliation} from '../security/operationGateway';
 import { hasConversionInFlight } from '../contexts/WalletContext';

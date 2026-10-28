@@ -1,6 +1,6 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { BreezSdk } from '@breeztech/breez-sdk-spark';
+import type { BreezSdk,DepositInfo } from '@breeztech/breez-sdk-spark';
 import { useBreezSdk } from './useBreezSdk';
 import { SecureStorageError } from '../services/secureStorage';
 import { resetNativeSeedSelection } from '../services/nativeSeedSelection';
@@ -111,7 +111,7 @@ afterEach(() => { cleanup(); resetNativeSeedSelection(); clearSignerIdentity(); 
 
 function fakeWallet(){
  return {getInfo:vi.fn(async()=>({identityPubkey:IDENTITY,balanceSats:1000,recoverableFundsSats:0,tokenBalances:new Map()})),
- listPayments:vi.fn(async()=>({payments:[]})),listUnclaimedDeposits:vi.fn(async()=>({deposits:[]})),
+ listPayments:vi.fn(async()=>({payments:[]})),listUnclaimedDeposits:vi.fn(async()=>({deposits:[] as DepositInfo[]})),
  addEventListener:vi.fn(async (_listener:{onEvent:(event:unknown)=>void})=> 'listener'),removeEventListener:vi.fn(async()=>true),disconnect:vi.fn(async()=>{}),free:vi.fn()};
 }
 async function hookWith(wallet:ReturnType<typeof fakeWallet>,showToast=vi.fn()){
@@ -248,7 +248,7 @@ describe('source-bound browser wallet refresh leases',()=>{
   await act(async()=>{await h.result.current.connectWallet(SEED,true,undefined,'secureStorage');});
   await vi.waitFor(()=>expect(wallet.addEventListener).toHaveBeenCalled());
   vi.mocked(getOperationReconciliation).mockReturnValue({status:vi.fn()} as never);
-  const onEvent=wallet.addEventListener.mock.calls.at(-1)![0].onEvent;
+  const onEvent=wallet.addEventListener.mock.calls[wallet.addEventListener.mock.calls.length-1][0].onEvent;
   await act(async()=>{onEvent({type:'paymentFailed',payment:{
     id:'synthetic-first',paymentType:'send',method:'lightning',status:'failed',amount:100n,fees:0n,timestamp:1}});});
   expect(toast).toHaveBeenCalledWith('info','Check payment status',expect.stringMatching(/Do not repeat/));
