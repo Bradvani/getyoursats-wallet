@@ -1,6 +1,6 @@
 import {randomBytes} from 'node:crypto';
 import {sendEmptyWebPush} from './pushCore.mjs';
-import {listSubscriptions, receiptKey, redis, removeSubscription} from './pushStore.mjs';
+import {listSubscriptions, receiptKey, redis, removeSubscription, subscriptionId, PREFIX} from './pushStore.mjs';
 
 /** Never report or create a wallet receipt here. This only attempts a private
  * OS alert after the upstream provider has cryptographically signed a settled
@@ -20,10 +20,18 @@ export async function notifyWallet(pub,id,eventAt,vapid) {
   }
   let retry=false;
   for(const sub of targets){
+    const deviceReceipt=PREFIX+'receipt-device:'+pub+':'+receiptKey(pub,id).split(':').at(-1)
+      +':'+subscriptionId(sub.endpoint);
     try{
+      // A partial fanout can be retried by Breez. Preserve already successful
+      // device delivery markers so one broken handset cannot double-alert
+      // every other subscribed device.
+      if(await redis('GET',deviceReceipt)==='delivered')continue;
       const result=await sendEmptyWebPush(sub.endpoint,vapid);
       if(result.expired)await removeSubscription(pub,sub.endpoint);
-      else if(!result.delivered)retry=true;
+      if(result.delivered||result.expired){
+        await redis('SET',deviceReceipt,'delivered','EX',30*86400);
+      }else retry=true;
     }catch{retry=true;}
   }
   if(retry){
