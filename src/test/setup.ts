@@ -1,6 +1,12 @@
 import '@testing-library/jest-dom';
 import { vi, beforeEach, afterEach } from 'vitest';
 
+// happy-dom 21 creates and rejects an eager Animation.finished promise on
+// cancellation even when Motion uses only onfinish. Run component tests on
+// Motion's JavaScript animation path; actual WAAPI is covered in Chromium.
+// Do not suppress unhandled rejections, including payment-related failures.
+Reflect.deleteProperty(Element.prototype, 'animate');
+
 // Mock localStorage
 const localStorageMock = (() => {
   let store: Record<string, string> = {};

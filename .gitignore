@@ -36,6 +36,8 @@ local-regtest/cluster/target/
 /e2e/demo/
 /playwright.demo.config.ts
 
+# Read-only rollback build output
+dist-rollback/
 # Generated from lockfile-pinned fonts at build time
 /public/locale-fonts/
 /site/locale-fonts/

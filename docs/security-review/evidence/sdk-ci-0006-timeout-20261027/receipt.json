@@ -1,0 +1,203 @@
+{
+  "schema": 1,
+  "checkedAt": "2026-10-27T08:19:18.139693+00:00",
+  "purpose": "Independent offline reconstruction of artifacts from a cancelled diagnostic CI run",
+  "result": "ARTIFACT RECONSTRUCTION AND RECORDED SUBTEST COUNTS VERIFIED; OVERALL CI REMAINS CANCELLED",
+  "workflow": {
+    "runId": 40466031487,
+    "jobId": 122061530504,
+    "url": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40466031487/job/122061530504",
+    "overallConclusion": "cancelled",
+    "preserveJob": "skipped",
+    "overallStatusSource": "GitHub status reported by root; no network re-query performed"
+  },
+  "source": {
+    "commit": "c4236476b9d7bb52ae0da278ea2171a7018fa979",
+    "tree": "2c007e3c1b202db0ca013dc28496d669ebaa5999",
+    "sdkSourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+    "sdkPatchSha256": "526a66a84989313aa91a391e2681635d147bfa934d8d8310358e19725609e195"
+  },
+  "inputEvidence": {
+    "zipSha256": "4cf54d1a95cc8e79c990bf88144eb4587a7c50529be8661fa694a3c0af407c0e",
+    "zipRegularFiles": 12,
+    "allExtractedFilesMatchZip": true,
+    "sdkPatchSha256": "abb9330172f2f777eda839114c9aec4c673825cd3bfa1e663f945e6df5389d48",
+    "sdkPatchBytes": 43054710
+  },
+  "reconstruction": {
+    "method": "git archive to a disposable filesystem checkout followed by git apply; no repository refs changed",
+    "patchAppliesCleanly": true,
+    "exactChangedPaths": [
+      "package-lock.json",
+      "vendor/breeztech-breez-sdk-spark.tgz",
+      "vendor/getyoursats-sdk-build.json"
+    ],
+    "oldAndNewGitBlobsMatchPatch": true,
+    "baselineFileInventoryCount": 891,
+    "noOtherFileChanges": true,
+    "reconstructedArtifacts": {
+      "package-lock.json": {
+        "sha256": "a058c7fb7084f614db1966a6898cd2b873c1dbfc50f3abf1fc1edaa2d053d410",
+        "bytes": 218400
+      },
+      "vendor/breeztech-breez-sdk-spark.tgz": {
+        "sha256": "a140f22e7314bfd8cccc679da18111225bb4b91df23453857be11e3ee5b1bfec",
+        "bytes": 21075080
+      },
+      "vendor/getyoursats-sdk-build.json": {
+        "sha256": "50d0ef195aa402d37d16a347eb14ab9762381b33dabc4860fdba18c68201b145",
+        "bytes": 3955
+      }
+    }
+  },
+  "package": {
+    "version": "0.1.0-getyoursats.recovery.2",
+    "archiveSha256": "a140f22e7314bfd8cccc679da18111225bb4b91df23453857be11e3ee5b1bfec",
+    "regularFileCount": 125,
+    "allArchiveMembersSafeAndUnique": true,
+    "sidecarMatchesUploadedManifestBytes": true,
+    "embeddedManifestEqualsSidecarWithoutArchiveHash": true,
+    "generatedArtifactHashesVerified": 17,
+    "browserAdapterHashesVerified": 2,
+    "lockfileSha512MatchesArchive": true,
+    "webWasmSha256": "bc435667e1398dd38e10660cf937620bbda50c4ccd247119cd1bdf52bc9c5bbe"
+  },
+  "recordedResults": {
+    "nativeCasesPassed": 221,
+    "nativeGateGroups": 16,
+    "wasmBridgeCasesPassed": 6,
+    "wasmGateGroups": 1,
+    "rustGateRecords": [
+      {
+        "rustGate": "seed_factory",
+        "crate": "breez-sdk-spark",
+        "passed": 3
+      },
+      {
+        "rustGate": "sdk::observation::tests::",
+        "crate": "breez-sdk-spark",
+        "passed": 8
+      },
+      {
+        "rustGate": "signed_recovery_",
+        "crate": "breez-sdk-spark",
+        "passed": 8
+      },
+      {
+        "rustGate": "incoming_claim_",
+        "crate": "breez-sdk-spark",
+        "passed": 16
+      },
+      {
+        "rustGate": "mature_deposit_",
+        "crate": "breez-sdk-spark",
+        "passed": 68
+      },
+      {
+        "rustGate": "outspend_",
+        "crate": "breez-sdk-spark",
+        "passed": 6
+      },
+      {
+        "rustGate": "incoming_lightning_",
+        "crate": "breez-sdk-spark",
+        "passed": 15
+      },
+      {
+        "rustGate": "sdk::unilateral_exit::tests::",
+        "crate": "breez-sdk-spark",
+        "passed": 46
+      },
+      {
+        "rustGate": "signer::single_key_signer::tests::",
+        "crate": "breez-sdk-spark",
+        "passed": 3
+      },
+      {
+        "rustGate": "sdk::attempt_store::tests::",
+        "crate": "breez-sdk-spark",
+        "passed": 8
+      },
+      {
+        "rustGate": "cached_item_compare_and_swap_",
+        "crate": "breez-sdk-spark",
+        "passed": 5
+      },
+      {
+        "rustGate": "strict_transfer_",
+        "crate": "spark",
+        "passed": 8
+      },
+      {
+        "rustGate": "strict_htlc_",
+        "crate": "spark",
+        "passed": 7
+      },
+      {
+        "rustGate": "wallet::deposit_observation::tests::",
+        "crate": "spark-wallet",
+        "passed": 10
+      },
+      {
+        "rustGate": "wallet::direct_observation::tests::",
+        "crate": "spark-wallet",
+        "passed": 6
+      },
+      {
+        "rustGate": "wallet::incoming_lightning::tests::",
+        "crate": "spark-wallet",
+        "passed": 4
+      },
+      {
+        "rustGate": "storage_cas_bridge_",
+        "crate": "breez-sdk-spark-wasm",
+        "passed": 6
+      }
+    ],
+    "browserCasesPassed": 27,
+    "browserByEngine": {
+      "chromium": 9,
+      "firefox": 9,
+      "webkit": 9
+    },
+    "browserUnexpected": 0,
+    "browserSkipped": 0,
+    "browserFlaky": 0,
+    "browserReportErrors": 0,
+    "browserDurationMs": 14594.190999999999,
+    "browserAdapterAttestations": {
+      "chromium": {
+        "source": "installed-sdk",
+        "sha256": "1e9be66757efedb89624faebaf4e6e176ce2c3bb5be2b3cc492bbaeac7fc1349",
+        "bytes": 101819
+      },
+      "firefox": {
+        "source": "installed-sdk",
+        "sha256": "1e9be66757efedb89624faebaf4e6e176ce2c3bb5be2b3cc492bbaeac7fc1349",
+        "bytes": 101819
+      },
+      "webkit": {
+        "source": "installed-sdk",
+        "sha256": "1e9be66757efedb89624faebaf4e6e176ce2c3bb5be2b3cc492bbaeac7fc1349",
+        "bytes": 101819
+      }
+    },
+    "browserReportSha256": "abd52f9203323187f2a83c4c6512420a3d60e1d94da9dcdb8ad2b56daeaaf48f",
+    "typescriptLogEmpty": true
+  },
+  "timingEvidence": {
+    "directlyObservedInDownloadedBrowserInstallLog": "Fetched 119 MB in 27min 11s (72.9 kB/s)",
+    "archiveTransport": "HTTP azure.archive.ubuntu.com",
+    "initial45_6MbDownloadTiming": "Reported by root from job logs, not present in this 12-file artifact set"
+  },
+  "limits": [
+    "No SDK code imported or executed",
+    "No tests, browser, provider, profile or network operations rerun",
+    "No git branch or remote refs changed and no artifacts published",
+    "The cancelled workflow is not a passing CI run",
+    "Preservation job did not run; reconstruction is diagnostic only",
+    "This is cumulative0006/recovery.2 and retains the known external-signer namespace defect",
+    "New0007 identity controls are not covered by this historical run",
+    "No production or funded-release approval"
+  ]
+}

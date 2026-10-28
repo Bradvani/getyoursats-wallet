@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "reviewType": "implementer-peer-source-review",
+  "sourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+  "patchSha256": "526a66a84989313aa91a391e2681635d147bfa934d8d8310358e19725609e195",
+  "sourceWorkingTreeClean": false,
+  "walletConnections": 0,
+  "providerRequests": 0,
+  "executionApproved": false,
+  "executionBlock": "BLOCKED_PENDING_SUCCESSOR_STORAGE_PROVENANCE",
+  "unchangedBootFiles": {
+    "crates/breez-sdk/core/src/sdk_builder.rs": {
+      "sha256": "ae61387d6320c258eaad7f65094fc84aa2bbc297fd129c0e6389b48aa787e9ff",
+      "gitBlob": "2da9f39a61f98b846658a7cece7fce3e9162fba9",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/breez-sdk/core/src/sdk_context.rs": {
+      "sha256": "a924f1387a8ffc8add6ed4ac412398e288e8742644cbdf4c9f10b87d12e9174d",
+      "gitBlob": "3093175a67efc75bb19132340f29113742c7d503",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/breez-sdk/core/src/sdk/init.rs": {
+      "sha256": "09d5ee345bf8ebd9f2a4e96333a1e1978e64ae0354e6fa752957ffec83c486dc",
+      "gitBlob": "a885ae6ef95bbba4db9d79c21e87bb6b764a5368",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/breez-sdk/core/src/sdk/runtime/mod.rs": {
+      "sha256": "4f9164b46cc3ee608257568cfb0345e763e5c9307ad992e9045f45ef08ba4170",
+      "gitBlob": "1ff3a6f0f289f25e86d2ce9181e53f42e4bfac0d",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/breez-sdk/core/src/sdk/runtime/server.rs": {
+      "sha256": "df34de753ceda43d7ad29c899b23ab3759e4a1006b56fe209aea36f80613d69e",
+      "gitBlob": "d513446e231d700c0c68ed886ec5d03261bf0a12",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/breez-sdk/core/src/token_conversion/flashnet.rs": {
+      "sha256": "ea04168208619edf222b27a49bb4e1a5bbf0fe424aea118accef9c887f19940e",
+      "gitBlob": "3357967cc4f996d4f16252b4f9e0a510609e7d20",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/breez-sdk/wasm/src/sdk_builder.rs": {
+      "sha256": "001c1b5fb49c099b71b15e7152daae171ba54897ac0dd6774c54f65c59c3f4e5",
+      "gitBlob": "a17e917bb160ea09abf3ce285e68e0881623b627",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/spark-wallet/src/wallet_builder.rs": {
+      "sha256": "151f1566ce705dd7b55bb4847466f82416a99759a3e910e8b89887d82c165b35",
+      "gitBlob": "5fe43f27849c50a3f541f7772415d93abf649e16",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/spark/src/operator/pool.rs": {
+      "sha256": "93236695d22f69d5d3c04299adc5ea9ae7e9fe29a99002e47957c1a3a6797cde",
+      "gitBlob": "9666d6246431b487989bdbf9afbacaa7290ff2b2",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/spark/src/operator/rpc/connection_manager/default.rs": {
+      "sha256": "7e0dfc75f672377b94618b91857dca63f0e64a9c68f7ad03cec1ca870032a358",
+      "gitBlob": "7bdb014dc7c000952ce7fb9b59595b263cfc025a",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/spark/src/operator/rpc/transport/grpc_client_wasm.rs": {
+      "sha256": "ccd804e383ae05cc0795d174b689f439c74cca82640131f93dc5ba782b148f0c",
+      "gitBlob": "facc4358e2737eef56ec88b6fd69d8b4883ddd6c",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/spark/src/ssp/service_provider.rs": {
+      "sha256": "508556e62e8daae7608d17f5454274252bf25c7b2446b30c68ca1d50bd24d0a4",
+      "gitBlob": "219d84830dafc3251f78192c1737f2eb63e88b04",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/spark/src/operator/rpc/auth.rs": {
+      "sha256": "12a71a76042faf811e46305c40267df3a1237186d1974f5d83bd431fba58284c",
+      "gitBlob": "fd455979b32a4f5295651ec3114cca0dda0bdebd",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/spark/src/ssp/auth.rs": {
+      "sha256": "a95a99dd0749e390298f947784a31be4670d14986e06cc3264821299d4e033ed",
+      "gitBlob": "7f3e400a92f59164660087c71fcf3baaeead67fa",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    },
+    "crates/spark/src/signer/spark_signer_adapter.rs": {
+      "sha256": "c87ec1f1b31968356a9ab20f004441355b274b55e249844f4f1fd747a83ef5ed",
+      "gitBlob": "f9d02fbe1a048dbb05b8eb83cf73275b9f67a83b",
+      "workingBytesMatchPinned": true,
+      "notChangedBy0006": true
+    }
+  },
+  "limits": [
+    "Pinned reference checkout also contains prior0004 modifications; only these listed files were compared to pinned Git blobs.",
+    "SparkWallet construction and strict incoming observation were separately source-reviewed; their complete files have cumulative patch modifications.",
+    "Server-mode source and restricted settings do not start client background workers; authentication and copied local database initialization may write session/schema state.",
+    "Signer authentication restriction is not cryptographic domain separation.",
+    "0006 retains a proven external-signer default-storage namespace bug; a successor and reviewed legacy-storage provenance handling are required before any live observation.",
+    "This source trace and offline harness do not establish provider revision, funded execution, physical recovery, or real-funds release approval."
+  ]
+}

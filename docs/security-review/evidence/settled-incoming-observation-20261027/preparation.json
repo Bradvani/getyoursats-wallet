@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "scope": "offline-harness-preparation-only",
+  "baseCommit": "2f01c410a5d4e5a419f3a945cecc4cc93871a435",
+  "sdkSourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+  "expectedPatchSha256": "526a66a84989313aa91a391e2681635d147bfa934d8d8310358e19725609e195",
+  "canonicalPackageSupplied": false,
+  "walletConnections": 0,
+  "profileCopies": 0,
+  "providerRequests": 0,
+  "fullProductAcceptance": false,
+  "files": {
+    "e2e/fixtures/settled-incoming-contract.ts": "df8eadb1a3c42ee6fecd703b9065f39ebbcc37ee1064bb17bb09178cf9f42eca",
+    "e2e/fixtures/settled-incoming-observation.ts": "a0c7254046d1c26d31442cfae4c538d7117515e656ed02854d3f9520944d5ff2",
+    "e2e/fixtures/settled-incoming-observation.html": "677bafab75e90bd6f016b19231194785113bff5ebadc7bcffc65c4cd86115c7d",
+    "scripts/security/observe-settled-incoming.mjs": "579f4526fc01a52733928190793704fb62d87b9f85db1076dfacdfd1902a3728",
+    "scripts/security/settled-observation-transport.mjs": "a8cfb64ca1b85e5df0a4ed0e39fd39a0d13a3c4101502ce86ec3237cb2b67658",
+    "scripts/security/settled-observation-files.mjs": "7e9b2254eec31806ebfdceb8e6fe5bdf33afc43214576a3d96504f7a387394fc",
+    "scripts/security/verify-observation-package.py": "5d9831b027d2bd09c6a232d2003cd2b4f4473f03dc2f4bb79520670042afb40b",
+    "tests/settled-incoming-observation.test.mjs": "d2c57dd7b88670adbb5c3837b0bf6635bc5571c764b5bf533e35f0a80b52404f",
+    "src/security/settledIncomingObservation.test.ts": "7e61cda08fd0fdf4b62c2a22aea5c5e328f5ccc4e0b81aa36c92f3b46f6b40e8",
+    "vitest.observation.config.ts": "76a3c7858e0fd9f1af818bef3c3bf8980e356aa3e2a5e1907c2f356846b70c80",
+    "tests/fixtures/settled-observation/queries.graphql.json": "c805b26001b06dd0ca37267d5a08858499814efcd5af9fb69152a1c89ea88c26"
+  },
+  "checks": [
+    {
+      "command": "node --experimental-strip-types --test tests/settled-incoming-observation.test.mjs",
+      "exit": 0,
+      "passed": 62,
+      "failed": 0,
+      "skipped": 0,
+      "receipt": "offline-node.log.txt"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --noEmit",
+      "exit": 0
+    },
+    {
+      "command": "node node_modules/eslint/bin/eslint.js --no-ignore e2e/fixtures/settled-incoming-contract.ts e2e/fixtures/settled-incoming-observation.ts src/security/settledIncomingObservation.test.ts vitest.observation.config.ts --report-unused-disable-directives --max-warnings 0",
+      "exit": 0
+    },
+    {
+      "command": "node --check (each new runner/helper .mjs)",
+      "exit": 0
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --config vitest.observation.config.ts --configLoader runner",
+      "exit": 0,
+      "filesPassed": 1,
+      "passed": 1,
+      "failed": 0,
+      "receipt": "direct-fixture.log.txt"
+    }
+  ],
+  "initialRestrictedAttempt": {
+    "result": "FAILED_SETUP",
+    "receipt": "restricted-run.log.txt",
+    "note": "Restricted node test invocation did not run its child test file. A direct diagnostic reached55passing controls before Python spawnSync EPERM. The successful rerun used authorized local child-process permission and synthetic fixtures only."
+  },
+  "review": {
+    "scope": "Internal implementer source-level review only; no qualified release approval",
+    "reviewer": "audit_gate_review",
+    "status": "No remaining concrete source blocker in offline preparation scope",
+    "findingsResolved": [
+      "Signer/callback rejections latch and revoke, including after cleanup",
+      "CLI and direct fixture entry both block before storage/unlock/init",
+      "Transport denies all later forwarding after a policy violation"
+    ],
+    "independentTestRerun": false,
+    "providerAcceptance": false,
+    "bootReceipt": "boot-source-review.json",
+    "bootReceiptSha256": "4c8d41196b649be47642fed488c7f773cb01e084be9312643427cbf9e9029d70"
+  },
+  "executionBlock": "BLOCKED_PENDING_SUCCESSOR_STORAGE_PROVENANCE",
+  "namespaceFinding": "Confirmed on compiled0005 and unchanged0006builder source; no live0006probe permitted. A successor and explicit retained-placeholder storage provenance handling are required.",
+  "additionalIntermediateEvidence": [
+    "intermediate-types.log.txt",
+    "initial-ignored-lint.log.txt"
+  ],
+  "evidenceFiles": {
+    "boot-source-review.json": "4c8d41196b649be47642fed488c7f773cb01e084be9312643427cbf9e9029d70",
+    "direct-fixture.log.txt": "d1102016aab0ed27a61b331f1afa570397fba71efb77cc707c05a6a88406dbd8",
+    "initial-ignored-lint.log.txt": "ba86ce551d42787935e033d618ef97d43b0170078648fafdbba0af5b63aceb2e",
+    "intermediate-types.log.txt": "964a03b7c4c8827996ffcd3d3ba58a26e3794234304d01e6caedbce604a26b94",
+    "offline-node.log.txt": "1ba04ddb7fd2fff4a1fabc27e904a911f0f294ead3b7ce5a2070e959782e2348",
+    "restricted-run.log.txt": "54360a77e8f08dd5cbff937a5e67ebddc3347ac4160cb8979d1f6b313d08c54d"
+  },
+  "logNormalization": {
+    "direct-fixture.log.txt": {
+      "operation": "Remove exactly one final newline; original logs retained under /tmp",
+      "originalSha256": "2bd0123dace68742f746cd0e341f45de9873f221ed44872c75e9c432f50afef6",
+      "publishedSha256": "d1102016aab0ed27a61b331f1afa570397fba71efb77cc707c05a6a88406dbd8"
+    },
+    "initial-ignored-lint.log.txt": {
+      "operation": "Remove exactly one final newline; original logs retained under /tmp",
+      "originalSha256": "7b077089388dc7dc332be563377df9f3d7bec71af7205c8ed7660e70e956bb79",
+      "publishedSha256": "ba86ce551d42787935e033d618ef97d43b0170078648fafdbba0af5b63aceb2e"
+    }
+  }
+}

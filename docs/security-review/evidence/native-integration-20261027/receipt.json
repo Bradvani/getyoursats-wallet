@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "2f01c410a5d4e5a419f3a945cecc4cc93871a435",
+  "sourceTree": "84b642670e150f799051ac71856fec53302a9e4d",
+  "nativeWiringCommit": "80be6abc3673a2db8cafb8d544869729bc28dfed",
+  "sdk": {
+    "version": "0.1.0-getyoursats.recovery.1",
+    "packageSha256": "f3cb177c5cb38cd3222b8279e8a9c5815f788d5ccd611a9e8a29d5caefb4bf37",
+    "installedBrowserWasmSha256": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+    "packageLockSha256": "746f1c2cce6e58c6ab20105c2eed318e944e94f5a3002ba4507a80340ea84d60"
+  },
+  "applicationUnit": {
+    "passed": 1897,
+    "skipped": 1,
+    "failed": 0,
+    "filesPassed": 159,
+    "filesSkipped": 1,
+    "skip": "Opt-in Bitcoin Core regtest integration",
+    "exitCode": 0
+  },
+  "nativeFocused": {
+    "passed": 395,
+    "files": 11,
+    "realAppLockLifecycleCases": 6,
+    "countsOverlapApplicationUnit": true,
+    "nativePluginAndSdkIdentityResponsesMocked": true
+  },
+  "typecheck": {
+    "exitCode": 0
+  },
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "existingWarnings": 8
+  },
+  "initialSetupFailures": [
+    {
+      "cause": "Shared dependency WASM path rejected by Vite filesystem boundary",
+      "passedTests": 1891,
+      "skippedTests": 1,
+      "suitesUnableToLoad": 2,
+      "sourceChangedForResolution": false
+    },
+    {
+      "cause": "Dereferenced copied CLI entry point lost its package-relative import path",
+      "testsExecuted": 0,
+      "sourceChangedForResolution": false
+    }
+  ],
+  "resolution": "Materialize dependencies under the checkout and restore local executable links; no application or test access-control bypass.",
+  "artifacts": [
+    {
+      "path": "application-unit.log.gz",
+      "exitCode": 0,
+      "originalSha256": "ea4f48702c5f4d04459f18e0828c836816f55a7dafb6d6f1aa78aee3b902ff92",
+      "normalizedSha256": "7e3126317b3bdb5c99e76bdd1ac9564865d60b1900ee64af2fbc569156497da6",
+      "gzipSha256": "8824dcd53738c25000921aea7d7f1838d386cc51a5d8c75cb9e7e683b2d6c89d",
+      "bytes": 22505,
+      "uncompressedBytes": 273841
+    },
+    {
+      "path": "application-shared-dependencies-failure.log.gz",
+      "exitCode": 1,
+      "originalSha256": "9fc09fed517132e82903e5e6ad6da6c50b8188c4315331bdf5007938764a1003",
+      "normalizedSha256": "d5eae43b49c7e858cdb6b069186b374519d1a950e25942122f8083818df9217e",
+      "gzipSha256": "fb3ce6a605e532e36b2bafab301c9fc4d79fd7bb80b45a79f1bba5e98d063924",
+      "bytes": 22587,
+      "uncompressedBytes": 273767
+    },
+    {
+      "path": "application-copied-cli-failure.log.gz",
+      "exitCode": 1,
+      "originalSha256": "6ca21f59fafa8f5b7d222ed2d5c21319aea521c446a77d37899dbd450d93414b",
+      "normalizedSha256": "ee5b38eab7fa5c394c81bbef77efc66f30559e1791c165b35f770f355c07570c",
+      "gzipSha256": "1eafe896a58c592623c69584d7b25c64ad1fd61e3b116cd5e52ce15b73fbfa62",
+      "bytes": 508,
+      "uncompressedBytes": 1197
+    },
+    {
+      "path": "typecheck.log.gz",
+      "exitCode": 0,
+      "originalSha256": "7125f194612fcff2f454c05d848e7cb71facc1967b4d5017e25b34fdee3ba74f",
+      "normalizedSha256": "7125f194612fcff2f454c05d848e7cb71facc1967b4d5017e25b34fdee3ba74f",
+      "gzipSha256": "934a9d56e1b77b540f21becd97102d1b7088e8e2eba852118cfc29df5c6f4bb7",
+      "bytes": 101,
+      "uncompressedBytes": 99
+    },
+    {
+      "path": "lint.log.gz",
+      "exitCode": 0,
+      "originalSha256": "6f271c4f4539ffa3b8e2218b660a30982d3742b5047204dfcb4736ee69971f05",
+      "normalizedSha256": "d10c654533a2c124b875cc87d9ccdfef7111049b9679104de07242fed58a3732",
+      "gzipSha256": "1c0f7b6867a0c047e682ef1e927a0c0080df5ab983bc32e86863648c3f88960d",
+      "bytes": 1707,
+      "uncompressedBytes": 6141
+    },
+    {
+      "path": "native-wiring.log.gz",
+      "exitCode": 0,
+      "originalSha256": "88a26097df138c405c8708ec966f05c796a2b676ec83eeb0a36016adfa7da1ef",
+      "normalizedSha256": "ab39572a576966a000765c8a1209a9131b72a92e3480b7348532b1e1475aa7f6",
+      "gzipSha256": "3659a29730ca001d25a90242d6b08075789c328b5917ecb01b230a7872bdc7e3",
+      "bytes": 4964,
+      "uncompressedBytes": 94656
+    }
+  ],
+  "normalization": {
+    "pathReplacements": {
+      "/tmp/getyoursats-sdk-isolated-build": "<repo>",
+      "/workspace/scratch/e6199376df79/getyoursats-operation-final": "<dependency-source>",
+      "/tmp/gys-native-read-wiring-20261027": "<native-review-worktree>",
+      "/tmp/gys-native-lease-restored-repo": "<native-lease-worktree>"
+    },
+    "otherLogContentChanged": false,
+    "compression": "gzip, timestamp zero"
+  },
+  "peerReview": "Internal source review of recorded runtime hashes; not qualified independent release approval.",
+  "scope": "Local combined application/native checks with the earlier0005 installed package. Fresh canonical0006 artifact and final combined CI remain required.",
+  "physicalDeviceAcceptance": false,
+  "fundedAcceptanceFor0006": false,
+  "productionPromotion": false
+}

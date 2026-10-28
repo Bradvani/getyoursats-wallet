@@ -6,10 +6,10 @@
  * its own top-level Settings entry; BackupPage gates itself.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import SlideInPage from '../components/layout/SlideInPage';
 import { PinEntry, PinGate, PinScreenLayout } from '../components/PinEntry';
-import { Switch, LoadingSpinner } from '../components/ui';
+import { Switch, LoadingSpinner, ErrorMessageBox, PrimaryButton } from '../components/ui';
 import { ChevronRightIcon, FaceIdIcon, FingerprintIcon, ShieldCheckIcon } from '../components/Icons';
 import {
   AUTO_LOCK_OPTIONS_SECONDS,
@@ -21,7 +21,12 @@ import {
   isPinEnabled,
   setPin,
   clearPin,
+  isAppLockSupported,
+  PIN_RECORD_UNAVAILABLE_MESSAGE,
 } from '@/services/appLock';
+import {
+  assertNativeReadLease, captureNativeReadLease, getNativePinPolicyRevision, getNativeReadLeaseRevision,
+} from '@/services/nativeReadLease';
 import {
   authenticateBiometric,
   authenticateDeviceOwner,
@@ -32,6 +37,7 @@ import { logger, LogCategory } from '@/services/logger';
 
 type View =
   | 'loading'
+  | 'unavailable'
   | 'gate'        // PIN/biometric gate before the options are shown
   | 'no-pin'      // PIN not set: just the Create PIN row
   | 'options'     // PIN set + gate passed
@@ -40,6 +46,13 @@ type View =
 
 interface SecurityPageProps {
   onBack: () => void;
+}
+
+interface PolicyProof {
+  request: number;
+  policyRevision: number;
+  readRevision: number;
+  native: boolean;
 }
 
 const SecurityPage: React.FC<SecurityPageProps> = ({ onBack }) => {
@@ -51,14 +64,65 @@ const SecurityPage: React.FC<SecurityPageProps> = ({ onBack }) => {
   // shows a recovery row instead of silently dropping the biometric one.
   const [biometryLockedOut, setBiometryLockedOut] = useState(false);
   const [optionsError, setOptionsError] = useState<string | null>(null);
+  const [policyAttempt, setPolicyAttempt] = useState(0);
+  const [policyProof, setPolicyProof] = useState<PolicyProof | null>(null);
+  const policyRequest = useRef(0);
+  const mounted = useRef(false);
 
   // Two-step PIN flow state (shared by create + change).
   const [pinStep, setPinStep] = useState<'enter' | 'verify'>('enter');
   const firstPinRef = useRef<string | null>(null);
 
+  const assertPolicyProof = useCallback((proof: PolicyProof | null) => {
+    if (!proof || !mounted.current || proof.request !== policyRequest.current ||
+      proof.policyRevision !== getNativePinPolicyRevision() || proof.readRevision !== getNativeReadLeaseRevision()) {
+      throw new Error(PIN_RECORD_UNAVAILABLE_MESSAGE);
+    }
+    if (proof.native) assertNativeReadLease(proof.readRevision);
+  }, []);
+
+  const blockPolicy = () => {
+    if (!mounted.current) return;
+    policyRequest.current += 1;
+    firstPinRef.current = null;
+    setPolicyProof(null);
+    setOptionsError(PIN_RECORD_UNAVAILABLE_MESSAGE);
+    setView('unavailable');
+  };
+
+  const retryPolicy = () => {
+    policyRequest.current += 1;
+    firstPinRef.current = null;
+    setPolicyProof(null);
+    setOptionsError(null);
+    setView('loading');
+    setPolicyAttempt(attempt => attempt + 1);
+  };
+
+  const close = () => {
+    policyRequest.current += 1;
+    firstPinRef.current = null;
+    onBack();
+  };
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      policyRequest.current += 1;
+      firstPinRef.current = null;
+    };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
+    const request = ++policyRequest.current;
     void (async () => {
+      const native = isAppLockSupported();
+      const proof = {
+        request, native, policyRevision: getNativePinPolicyRevision(),
+        readRevision: native ? captureNativeReadLease() : getNativeReadLeaseRevision(),
+      };
       const [pin, gate, seconds, biometryStatus] = await Promise.all([
         isPinEnabled(),
         isBiometricGateEnabled(),
@@ -66,22 +130,30 @@ const SecurityPage: React.FC<SecurityPageProps> = ({ onBack }) => {
         getBiometryStatus(),
       ]);
       if (cancelled) return;
+      assertPolicyProof(proof);
+      setPolicyProof(proof);
       setBiometricGate(gate);
       setAutoLock(seconds);
       setBiometry(biometryStatus.info);
       setBiometryLockedOut(biometryStatus.lockedOut);
       setView(pin ? 'gate' : 'no-pin');
-    })();
+    })().catch(() => {
+      if (cancelled || request !== policyRequest.current || !mounted.current) return;
+      setPolicyProof(null);
+      setOptionsError(PIN_RECORD_UNAVAILABLE_MESSAGE);
+      setView('unavailable');
+    });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [policyAttempt, assertPolicyProof]);
 
   // Mismatch feedback lives here, not in PinEntry: the step flip back
   // to 'enter' remounts PinEntry (key={pinStep}) and would eat it.
   const [flowError, setFlowError] = useState<string | null>(null);
 
   const startPinFlow = (target: 'create-pin' | 'change-pin') => {
+    try { assertPolicyProof(policyProof); } catch { blockPolicy(); return; }
     firstPinRef.current = null;
     setFlowError(null);
     setPinStep('enter');
@@ -89,6 +161,7 @@ const SecurityPage: React.FC<SecurityPageProps> = ({ onBack }) => {
   };
 
   const handlePinFlowSubmit = async (pin: string): Promise<string | null> => {
+    try { assertPolicyProof(policyProof); } catch { blockPolicy(); return PIN_RECORD_UNAVAILABLE_MESSAGE; }
     if (pinStep === 'enter') {
       firstPinRef.current = pin;
       setFlowError(null);
@@ -101,33 +174,48 @@ const SecurityPage: React.FC<SecurityPageProps> = ({ onBack }) => {
       setPinStep('enter');
       return null;
     }
-    await setPin(pin);
-    setView('options');
+    try {
+      await setPin(pin);
+      if (mounted.current) retryPolicy();
+    } catch {
+      if (mounted.current) blockPolicy();
+      return PIN_RECORD_UNAVAILABLE_MESSAGE;
+    } finally {
+      firstPinRef.current = null;
+    }
     return null;
   };
 
   const handleDeactivatePin = async () => {
-    await clearPin();
-    setBiometricGate(false);
-    setView('no-pin');
+    try {
+      assertPolicyProof(policyProof);
+      await clearPin({ policyRevision: policyProof!.policyRevision, readRevision: policyProof!.readRevision });
+      if (mounted.current) retryPolicy();
+    } catch {
+      if (mounted.current) blockPolicy();
+    }
   };
 
   const handleToggleBiometric = async () => {
     setOptionsError(null);
-    if (biometricGate) {
-      await setBiometricGateEnabled(false);
-      setBiometricGate(false);
-      return;
-    }
     try {
+      assertPolicyProof(policyProof);
+      if (biometricGate) {
+        await setBiometricGateEnabled(false);
+        if (mounted.current) retryPolicy();
+        return;
+      }
       // Confirm the user can actually pass the prompt before enabling,
       // mirroring Misty's enable flow.
       await authenticateBiometric(`Enable ${biometry?.label ?? 'biometric'} unlock`);
+      assertPolicyProof(policyProof);
       await setBiometricGateEnabled(true);
-      setBiometricGate(true);
+      if (mounted.current) retryPolicy();
     } catch (e) {
       const code = (e as { code?: string }).code;
       logger.warn(LogCategory.AUTH, 'Enable biometric gate failed', { code });
+      if (!mounted.current) return;
+      try { assertPolicyProof(policyProof); } catch { blockPolicy(); return; }
       if (code !== 'USER_CANCELLED') {
         setOptionsError('Biometric authentication is not available. Check your device settings.');
       }
@@ -137,14 +225,19 @@ const SecurityPage: React.FC<SecurityPageProps> = ({ onBack }) => {
   const handleRecoverBiometry = async () => {
     setOptionsError(null);
     try {
+      assertPolicyProof(policyProof);
       // Passcode-allowed prompt: succeeding clears the OS lockout.
       await authenticateDeviceOwner('Re-enable biometric unlock');
+      assertPolicyProof(policyProof);
       const status = await getBiometryStatus();
+      assertPolicyProof(policyProof);
       setBiometry(status.info);
       setBiometryLockedOut(status.lockedOut);
     } catch (e) {
       const code = (e as { code?: string }).code;
       logger.warn(LogCategory.AUTH, 'Biometry lockout recovery failed', { code });
+      if (!mounted.current) return;
+      try { assertPolicyProof(policyProof); } catch { blockPolicy(); return; }
       if (code !== 'USER_CANCELLED') {
         setOptionsError('Could not unlock biometrics. Check your device settings.');
       }
@@ -160,8 +253,18 @@ const SecurityPage: React.FC<SecurityPageProps> = ({ onBack }) => {
           </div>
         );
 
+      case 'unavailable':
+        return (
+          <div className="space-y-4">
+            <ErrorMessageBox title="Lock Screen settings are locked" error={optionsError ?? PIN_RECORD_UNAVAILABLE_MESSAGE} />
+            <PrimaryButton onClick={retryPolicy}>Retry</PrimaryButton>
+          </div>
+        );
+
       case 'gate':
-        return <PinGate reason="Unlock Lock Screen settings" onUnlocked={() => setView('options')} />;
+        return <PinGate reason="Unlock Lock Screen settings" onUnlocked={() => {
+          try { assertPolicyProof(policyProof); setView('options'); } catch { blockPolicy(); }
+        }} />;
 
       case 'no-pin':
         return (
@@ -223,8 +326,12 @@ const SecurityPage: React.FC<SecurityPageProps> = ({ onBack }) => {
                 value={autoLock}
                 onChange={(e) => {
                   const seconds = parseInt(e.currentTarget.value, 10);
-                  setAutoLock(seconds);
-                  void setAutoLockSeconds(seconds);
+                  void (async () => {
+                    assertPolicyProof(policyProof);
+                    await setAutoLockSeconds(seconds);
+                    assertPolicyProof(policyProof);
+                    setAutoLock(seconds);
+                  })().catch(() => { if (mounted.current) blockPolicy(); });
                 }}
                 className="bg-spark-surface border border-spark-border rounded-xl px-3 py-2 text-spark-text-primary text-sm focus:border-spark-primary focus:ring-2 focus:ring-spark-primary/20"
                 aria-label="Lock automatically"
@@ -295,7 +402,7 @@ const SecurityPage: React.FC<SecurityPageProps> = ({ onBack }) => {
   };
 
   return (
-    <SlideInPage title="Lock Screen" onClose={onBack} slideFrom="left">
+    <SlideInPage title="Lock Screen" onClose={close} slideFrom="left">
       {/* min-h-full + flexed chain so the PIN views (gate, create,
           change) can split the viewport 1/3 header / 2/3 input; the
           list views just flow from the top as before. p-4 keeps the

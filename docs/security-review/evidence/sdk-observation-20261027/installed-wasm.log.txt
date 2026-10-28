@@ -1,0 +1,21 @@
+{
+  "test": "installed WASM identity preservation",
+  "result": "PASS",
+  "comparisons": 36,
+  "seedFixtures": 2,
+  "networks": 3,
+  "accountModes": 3,
+  "wasmSha256": "a72c3295496c8a706ffcc2ac0f9085d612911b35324b66e972efcf400c2392ae",
+  "publicFixtureIdentity": {
+    "mainnet": "0281363910b0dc0015a4a25e758da30f0e28388ea5252c0e3713936f2d4ef7d3d5",
+    "regtest": "02698b27ac308b275671b3ca25436346469d04a5bba578ae39feba1d65897a6abc",
+    "signet": "02698b27ac308b275671b3ca25436346469d04a5bba578ae39feba1d65897a6abc"
+  },
+  "networkCalls": 0
+}
+{"test":"compiled seed factory identity and derivation","result":"PASS","comparisons":108,"rawSeedByteLengths":[32,64],"networks":3,"accountModes":3,"networkCalls":0}
+(node:6) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"test":"installed WASM application signer guard","result":"PASS","assertions":6,"seedType":"mnemonic","idempotentDisposal":true,"networkCalls":0}
+{"test":"installed WASM application signer guard","result":"PASS","assertions":6,"seedType":"entropy","seedByteLength":32,"idempotentDisposal":true,"networkCalls":0}
+{"test":"installed WASM application signer guard","result":"PASS","assertions":6,"seedType":"entropy","seedByteLength":64,"idempotentDisposal":true,"networkCalls":0}
