@@ -6,7 +6,7 @@ const out=process.env.GYS_NETWORK_EVIDENCE_DIR||'/tmp/public-spark-evidence';
 await mkdir(out,{recursive:true});
 const report={schema:1,sourceCommit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),
  network:'regtest',usesRealFunds:false,usesUserSecrets:false,apiKeySupplied:false,
- gatewayUsed:true,spendingAttempted:false,claimsAttempted:false,settlementVerified:false,wallets:[],errors:[]};
+ gatewayUsed:true,spendingAttempted:false,claimsAttempted:false,settlementVerified:false,wallets:[],invoices:[],errors:[]};
 const browser=await chromium.launch({headless:true});
 try{
  for(let i=0;i<2;i++){
@@ -24,12 +24,28 @@ try{
    assert.equal(result.network,'regtest');assert.match(result.bitcoinAddress,/^bcrt1/);
    assert.equal(result.balanceSats,'0');assert.equal(result.gatewayInstalled,true);
    report.wallets.push({...result,index:i,connected:true});
+   if(process.env.GYS_REGTEST_STANDARD_INVOICE==='1'){
+    const invoice=await page.evaluate(()=>window.gysPublicRegtestProbe.standardInvoice());
+    assert.equal(invoice.network,'regtest');assert.equal(invoice.identityPubkey,result.identityPubkey);
+    assert.equal(invoice.amountSats,100);assert.equal(invoice.quotedFeeSats,'0');
+    assert.match(invoice.paymentRequest,/^lnbcrt/i);assert.match(invoice.paymentHash,/^[a-f0-9]{64}$/);
+    assert(invoice.expirySeconds>0&&invoice.expirySeconds<=600);
+    // Never persist payable requests or payment hashes outside this valueless fixture.
+    report.invoices.push({index:i,kind:'standard-non-hodl',issued:true,amountSats:100,
+      expirySeconds:invoice.expirySeconds});
+   }
    await page.evaluate(()=>window.gysPublicRegtestProbe.stop());
   }catch(error){
    report.errors.push({wallet:i,name:error.name,message:String(error.message).slice(0,1800)});
   }finally{await context.close();}
  }
- if(report.wallets.length===2){assert.notEqual(report.wallets[0].identityPubkey,report.wallets[1].identityPubkey);report.result='PASS_OBSERVATION_ONLY';}
+ if(report.wallets.length===2){
+  assert.notEqual(report.wallets[0].identityPubkey,report.wallets[1].identityPubkey);
+  if(process.env.GYS_REGTEST_STANDARD_INVOICE==='1'){
+    assert.equal(report.invoices.length,2);
+    report.result='PASS_STANDARD_INVOICE_ISSUANCE_ONLY';
+  }else report.result='PASS_OBSERVATION_ONLY';
+ }
  else report.result='BLOCKED_OR_FAILED';
  // Inspect only the public faucet UI, without logging in, solving a challenge,
  // requesting coins or submitting any form. This identifies the remaining
@@ -48,4 +64,4 @@ try{
  await writeFile(out+'/public-spark-observation.json',JSON.stringify(report,null,2)+'\n');
  console.log(JSON.stringify({source:report.sourceCommit,result:report.result,wallets:report.wallets.length,errors:report.errors,settlementVerified:false},null,2));
 }
-if(report.result!=='PASS_OBSERVATION_ONLY')process.exitCode=1;
+if(!['PASS_OBSERVATION_ONLY','PASS_STANDARD_INVOICE_ISSUANCE_ONLY'].includes(report.result))process.exitCode=1;

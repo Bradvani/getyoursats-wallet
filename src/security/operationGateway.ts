@@ -20,6 +20,7 @@ import {assertNoUnresolvedRecovery} from './signedRecoveryJournal';
 import {observationSdk,verifyObservationWithoutCommit} from './paymentObservation';
 
 import {INCOMING_CLAIMS,createIncomingClaimController} from './incomingClaimController';
+import {REGTEST_STANDARD_INVOICE,createStandardRegtestInvoiceIssuer} from './regtestStandardInvoice';
 
 const RECONCILIATION=Symbol('wallet-operation-reconciliation');
 const STORAGE_GENERATION_KEY='gys:wallet-operation-generation:v1';
@@ -348,6 +349,16 @@ export function createOperationGateway(network:Network) {
         if(key===SIGNED_RECOVERY)return recovery;
         if(key==='refundDeposit')return recovery.refund;
         if(key===BROWSER_SPENDING_POLICY)return true;
+        // Isolated valueless test only. Normal invoices use operator-stored encrypted
+        // preimage shares; HODL/custom-hash requests remain blocked. Never expose
+        // this capability in a production bundle or in the ordinary receive UI.
+        if(key===REGTEST_STANDARD_INVOICE){
+          if(!import.meta.env.DEV||network!=='regtest')return null;
+          const epoch=getSpendingSessionEpoch();
+          return createStandardRegtestInvoiceIssuer({network,
+            raw:()=>{if(!client)throw new Error('Wallet is not connected');return client;},
+            assertCurrent:()=>{assertConnection();assertUnlocked(epoch);}});
+        }
         if(key==='signMessage')return async(request:Parameters<BreezSdk['signMessage']>[0])=>{
           assertConnection();const epoch=getSpendingSessionEpoch();assertUnlocked(epoch);
           const input=frozenCopy(request);

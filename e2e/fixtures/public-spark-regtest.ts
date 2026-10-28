@@ -2,6 +2,7 @@ import {defaultConfig,type BreezSdk} from '@breeztech/breez-sdk-spark';
 import {entropyToMnemonic} from 'bip39';
 import {sdkReady} from '../../src/services/sdkReady';
 import {connectSdk} from '../../src/services/sdkConnect';
+import {getRegtestStandardInvoiceIssuer} from '../../src/security/regtestStandardInvoice';
 import {enrollWebWallet} from '../../src/security/webWalletVault';
 import {stopBrowserSdk} from '../../src/security/browserSdkLifetime';
 
@@ -13,6 +14,17 @@ let connecting=false;
 const currentNetwork=new URLSearchParams(location.search).get('network');
 function regtestOnly(){if(currentNetwork!=='regtest')throw new Error('This fixture only supports explicit regtest');}
 const probe={
+ async standardInvoice(){
+  regtestOnly();if(!import.meta.env.DEV||!wallet)throw new Error('Disposable regtest wallet is required');
+  const capability=getRegtestStandardInvoiceIssuer(wallet);
+  if(!capability)throw new Error('Standard invoice test capability is not installed');
+  const result=await capability.issue({amountSats:100,description:'Disposable regtest acceptance',expirySecs:600});
+  // Regtest-only public invoice, no private preimage, claim or signing material.
+  return {network:'regtest',identityPubkey:result.identityPubkey,amountSats:result.amountSats,
+    expirySeconds:result.expiresAt-Math.floor(Date.now()/1000),
+    paymentRequest:result.paymentRequest,paymentHash:result.paymentHash,quotedFeeSats:result.quotedFeeSats};
+ },
+
  async connect(){
   regtestOnly();if(wallet||connecting)throw new Error('Fixture is already connected or connecting');
   if(localStorage.getItem('gys:wallet-vault:v1')!==null||localStorage.getItem('walletMnemonic')!==null)

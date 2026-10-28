@@ -2,6 +2,7 @@ import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
 import type {BreezSdk,PrepareSendPaymentResponse,ProvisionalPayment,PrepareLnurlPayResponse,SendPaymentRequest,ReceivePaymentRequest,Network} from '@breeztech/breez-sdk-spark';
 import {createOperationGateway,getOperationReconciliation} from './operationGateway';
 import {getDepositClaims} from './depositClaimController';
+import {getRegtestStandardInvoiceIssuer} from './regtestStandardInvoice';
 import {writeOperation,updateOperation,operationWalletKey,readAllOperations} from './operationJournal';
 import type {ObservationSdk,PaymentObservation} from './paymentObservation';
 import {rememberSignerIdentity,clearSignerIdentity,getSpendingRequest,finishSpendingApproval,cancelSpendingApproval,lockSpendingSession} from './spendApproval';
@@ -34,6 +35,16 @@ async function approve(){await approvalReady();finishSpendingApproval(getSpendin
 beforeEach(async()=>{localStorage.clear();installOperationTestLock();await rememberSignerIdentity(seed)});
 afterEach(()=>{cancelSpendingApproval();clearSignerIdentity();vi.useRealTimers();vi.unstubAllEnvs()});
 describe('connection operation gateway',()=>{
+
+ it('exposes only explicit standard non-HODL invoice issuance in disposable development regtest',()=>{
+  vi.stubEnv('DEV',true);
+  expect(getRegtestStandardInvoiceIssuer(harness(undefined,'regtest').wallet)).not.toBeNull();
+  expect(getRegtestStandardInvoiceIssuer(harness(undefined,'mainnet').wallet)).toBeNull();
+  expect(getRegtestStandardInvoiceIssuer(harness(undefined,'signet').wallet)).toBeNull();
+  vi.stubEnv('DEV',false);
+  expect(getRegtestStandardInvoiceIssuer(harness(undefined,'regtest').wallet)).toBeNull();
+ });
+
  it.each(['mainnet','signet'] as const)('keeps mature claims unavailable on %s',network=>{
   expect(getDepositClaims(harness(undefined,network).wallet)).toBeNull();
  });
