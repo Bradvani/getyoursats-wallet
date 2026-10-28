@@ -73,9 +73,17 @@ describe('read-only integrated recovery readiness',()=>{
   const client=sdk();client.getInfo.mockResolvedValue({...info(),balanceSats:balance});
   await expect(readBrowserRecoveryReadiness(client,network,()=>{})).rejects.toThrow(/balance/);
  });
- it('does not claim the first page is complete history',async()=>{
-  const client=sdk();client.listPayments.mockResolvedValue({payments:Array.from({length:100},(_,i)=>({id:`public-fixture-${i}`,method:'spark',paymentType:'receive',status:'completed',amount:1n,fees:0n,timestamp:i}))});
-  expect((await readBrowserRecoveryReadiness(client,network,()=>{})).historyMayHaveMore).toBe(true);
+ it('checks history beyond the display page without filling the initial mobile UI with every record',async()=>{
+  const client=sdk(),rows:Payment[]=Array.from({length:205},(_,i)=>({id:`public-fixture-${i}`,method:'spark',paymentType:'receive',status:'completed',amount:1n,fees:0n,timestamp:i}));
+  client.listPayments.mockImplementation(async (...args:unknown[])=>{const q=args[0] as {offset:number;limit:number};return {payments:rows.slice(q.offset,q.offset+q.limit)};});
+  const result=await readBrowserRecoveryReadiness(client,network,()=>{});
+  expect(result.historyMayHaveMore).toBe(true);expect(result.localHistoryVerifiedCount).toBe(205);
+  expect(result.payments).toHaveLength(100);expect(client.listPayments).toHaveBeenCalledTimes(6);
+ });
+ it('rejects changed records between complete scans even when count and balance are unchanged',async()=>{
+  const client=sdk(),row:Payment={id:'history-fixture',method:'spark',paymentType:'send',status:'pending',amount:1n,fees:0n,timestamp:1};
+  client.listPayments.mockResolvedValueOnce({payments:[row]}).mockResolvedValueOnce({payments:[{...row,status:'completed'}]});
+  await expect(readBrowserRecoveryReadiness(client,network,()=>{})).rejects.toThrow(/history changed/);
  });
  it('checks session freshness after an asynchronous read and performs no durable changes',async()=>{
   await pendingRecords();const before=storage(),client=sdk();let active=true;
@@ -85,6 +93,6 @@ describe('read-only integrated recovery readiness',()=>{
  });
  it('does not accept malformed history/deposit container shapes',async()=>{
   const client=sdk();client.listPayments.mockResolvedValue({payments:null} as never);
-  await expect(readBrowserRecoveryReadiness(client,network,()=>{})).rejects.toThrow(/history or deposits/);
+  await expect(readBrowserRecoveryReadiness(client,network,()=>{})).rejects.toThrow(/history pagination|history or deposits/);
  });
 });

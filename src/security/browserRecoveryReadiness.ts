@@ -1,3 +1,4 @@
+import {readRecoveryHistory} from './recoveryHistory';
 import type {BreezSdk,Network,GetInfoResponse,Payment,DepositInfo} from '@breeztech/breez-sdk-spark';
 import {operationWalletKey,readOperations,isUnresolved} from './operationJournal';
 import {readRecoveries,recoveryUnresolved} from './signedRecoveryJournal';
@@ -29,9 +30,12 @@ export interface BrowserRecoveryReadiness {
   deposits:DepositInfo[];
   unresolved:Readonly<{payments:number;incoming:number;deposits:number;recoveries:number}>;
   historyMayHaveMore:boolean;
+  localHistoryVerifiedCount:number;
+  localHistoryDigest:string;
 }
 /** Required local reads before publishing a connected/restored browser wallet.
- * This is NOT operator settlement evidence, a full history export or proof of
+ * This verifies two matching complete LOCAL history reads, NOT provider
+ * completeness, settlement evidence, a database snapshot or proof of
  * cross-device exactly-once execution. It never syncs, signs, sends, claims,
  * broadcasts, rewrites a journal or infers failure from a missing payment.
  * Unresolved valid records remain unresolved and accessible for reconciliation.
@@ -54,19 +58,24 @@ export async function readBrowserRecoveryReadiness(
       ||deposits.some(r=>r.intent.network!==network)||recoveries.some(r=>r.network!==network))
     throw new Error('Wallet recovery records do not match the connected network. No records were changed.');
   const [history,unclaimed]=await Promise.all([
-    sdk.listPayments({offset:0,limit:100}),sdk.listUnclaimedDeposits({}),
+    readRecoveryHistory(sdk,assertCurrent),sdk.listUnclaimedDeposits({}),
   ]);
   assertCurrent();
-  if(!history||!Array.isArray(history.payments)||!unclaimed||!Array.isArray(unclaimed.deposits))
+  if(!unclaimed||!Array.isArray(unclaimed.deposits))
     throw new Error('Wallet history or deposits could not be read. Retry without removing browser data.');
+  if(journalBytes()!==original)
+    throw new Error('Wallet recovery records changed during connection. Retry without removing browser data.');
+  const verifiedHistory=await readRecoveryHistory(sdk,assertCurrent);
+  if(verifiedHistory.count!==history.count||verifiedHistory.digest!==history.digest)
+    throw new Error('Wallet history changed during recovery verification. Retry without removing wallet data.');
   const finalInfo=await sdk.getInfo({ensureSynced:false});
   assertCurrent();validateInfo(finalInfo);
   if(finalInfo.identityPubkey!==info.identityPubkey)
     throw new Error('Wallet identity changed while loading recovery data. No records were changed.');
   if(journalBytes()!==original)
     throw new Error('Wallet recovery records changed during connection. Retry without removing browser data.');
-  return {info:finalInfo,payments:history.payments,deposits:unclaimed.deposits,
-    historyMayHaveMore:history.payments.length>=100,
+  return {info:finalInfo,payments:history.payments.slice(0,100),deposits:unclaimed.deposits,
+    historyMayHaveMore:history.count>100,localHistoryVerifiedCount:history.count,localHistoryDigest:history.digest,
     unresolved:Object.freeze({payments:outgoing.filter(isUnresolved).length,
       incoming:incoming.filter(r=>r.state!=='settled').length,
       deposits:deposits.filter(r=>r.state!=='settled').length,

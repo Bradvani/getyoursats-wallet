@@ -146,3 +146,53 @@ jobs:
             /tmp/companion-evidence/
           if-no-files-found: error
           retention-days: 30
+
+  local-bitcoin-recovery:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'fix/integrated-recovery-readiness-20261028'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Record exact immutable source
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test -z "$(git status --porcelain)"
+          mkdir -p /tmp/gys-core-evidence
+          git rev-parse HEAD HEAD^{tree} > /tmp/gys-core-evidence/source.txt
+      - run: npm ci --ignore-scripts
+      - name: Verify installed SDK before acceptance
+        run: npm run test:security:wasm > /tmp/gys-core-evidence/wasm.log 2>&1
+      - name: Fetch the fixed Bitcoin Core test runtime and enforce its reviewed checksum
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gys-core-tools
+          curl --fail --show-error --silent --proto '=https' --tlsv1.2 --max-time 120 --retry 2 \
+            https://bitcoincore.org/bin/bitcoin-core-29.0/bitcoin-29.0-x86_64-linux-gnu.tar.gz \
+            -o /tmp/gys-core-tools/bitcoin.tar.gz
+          echo 'a681e4f6ce524c338a105f214613605bac6c33d58c31dc5135bbc02bc458bb6c  /tmp/gys-core-tools/bitcoin.tar.gz' | sha256sum --check
+          tar -xzf /tmp/gys-core-tools/bitcoin.tar.gz -C /tmp/gys-core-tools
+      - name: Execute the real-node acknowledgement-loss and recovery test
+        run: |
+          set -euo pipefail
+          node scripts/security/run-local-bitcoin-recovery.mjs \
+            --bitcoind /tmp/gys-core-tools/bitcoin-29.0/bin/bitcoind \
+            --bitcoin-cli /tmp/gys-core-tools/bitcoin-29.0/bin/bitcoin-cli \
+            --evidence-dir /tmp/gys-core-evidence/local-node
+          test -z "$(git status --porcelain)"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: local-bitcoin-recovery-${{ github.event.pull_request.head.sha }}
+          path: /tmp/gys-core-evidence/
+          if-no-files-found: error
+          retention-days: 30
