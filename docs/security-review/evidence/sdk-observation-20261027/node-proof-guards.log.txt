@@ -1,0 +1,24 @@
+✔ the exact two nonterminal literals are accepted in either generated order (2.082418ms)
+✔ an added string type fails despite the old literal extraction passing (1.257555ms)
+✔ an added any type fails despite the old literal extraction passing (0.159591ms)
+✔ an added unknown type fails despite the old literal extraction passing (0.151409ms)
+✔ an added undefined type fails despite the old literal extraction passing (0.116255ms)
+✔ an added OtherOutcome type fails despite the old literal extraction passing (0.123586ms)
+✔ an added never type fails despite the old literal extraction passing (0.155715ms)
+✔ duplicate, missing, terminal, and intersection outcome declarations are rejected (0.608687ms)
+✔ complete generated bindings and recursive snippets pass (5.633607ms)
+✔ omitting bundler/breez_sdk_spark_wasm_bg.js from the manifest fails after the old check passed (4.398647ms)
+✔ omitting web/snippets/public-fixture/nested/inline.js from the manifest fails after the old check passed (3.788918ms)
+✔ unlisted generated helper or nested snippet is rejected (3.569919ms)
+✔ a generated file whose content changes is rejected (3.840847ms)
+✔ a listed but missing generated file is rejected (2.93365ms)
+✔ a generated-file symlink cannot substitute bytes outside the inventory (2.908442ms)
+✔ manifest traversal paths and malformed digests are rejected (3.799254ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42.432741

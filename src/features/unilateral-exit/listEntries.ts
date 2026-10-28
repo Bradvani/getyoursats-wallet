@@ -66,12 +66,13 @@ const archivedEntry = (exit: ArchivedExit): UnilateralExitEntry => ({
  * The group's rows, the exit in flight first. A completed exit stays as its own
  * row, so the group outlives the plan that produced it.
  */
-export function unilateralExitEntries(state: UnilateralExitEngineState): UnilateralExitEntry[] {
+export function unilateralExitEntries(state: UnilateralExitEngineState, fundingUnavailable=false): UnilateralExitEntry[] {
   const archived = state.archive.map(archivedEntry);
   const { plan, pending } = state;
   if (!plan && pending) {
+    const text=fundingUnavailable?{title:'Saved pending exit',subtitle:'Additional exit funding is unavailable in this preview. Do not send more bitcoin.'}:pendingText(state,pending);
     return [
-      { id: 'pending', ...pendingText(state, pending), amountSat: pending.willReceiveSat, isActive: true },
+      { id: 'pending', ...text, amountSat: pending.willReceiveSat, isActive: true },
       ...archived,
     ];
   }

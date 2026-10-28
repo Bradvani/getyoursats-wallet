@@ -22,6 +22,7 @@ import { logger, LogCategory } from './logger';
 import { buildBrowserPasskeyClient, recordMigratedSharedCredential, recordMigrationCredentialPair, getActivePasskeyCredentialIdBytes, adoptSessionPasskeyClient, setMigrationSharedCredentialId, getMigrationSharedCredentialIdBytes, bytesToBase64 } from './passkeyService';
 import { LEGACY_RP_ID, SHARED_RP_ID, createPasskeyTimestampLabel, PasskeyCredentialNotFoundError } from './passkeyPrfProvider';
 import { formatError } from '../utils/formatError';
+import {Capacitor} from '@capacitor/core';
 
 const STORAGE_DIR = 'spark-wallet-example';
 
@@ -89,6 +90,8 @@ export function isNoCredentialError(e: unknown): boolean {
 
 /** Connect a temporary SDK for a derived seed. */
 export async function connectForSeed(seed: Seed): Promise<BreezSdk> {
+  if (!Capacitor.isNativePlatform())
+    throw new Error('Browser wallet migration is unavailable pending complete spending authorization review. Your existing wallet is unchanged.');
   await sdkReady();
   const cfg = buildConnectConfig();
   return connect({ config: cfg, seed, storageDir: STORAGE_DIR });

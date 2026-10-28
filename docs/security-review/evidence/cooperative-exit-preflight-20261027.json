@@ -1,0 +1,29 @@
+{
+  "network": "regtest",
+  "realFunds": false,
+  "mutationSubmitted": false,
+  "sourceCommit": "76fb6140aaa3712d57c3f57c0c7c2d1303a49171",
+  "sdkPackageSha256": "f3cb177c5cb38cd3222b8279e8a9c5815f788d5ccd611a9e8a29d5caefb4bf37",
+  "amount": 500,
+  "result": "QUOTE_ONLY",
+  "address": "bcrt1pwfajeemd4w7ax3efznwgne0xseqwrj6sgq4rqjw4wqjeuxk8pyns905wnn",
+  "quote": {
+    "id": "SparkCoopExitFeeQuote:01a17b11-ce23-510c-0000-4f1adf60e3b6",
+    "expiresAt": 1793066186,
+    "speedFast": {
+      "userFeeSat": 750,
+      "l1BroadcastFeeSat": 1680
+    },
+    "speedMedium": {
+      "userFeeSat": 750,
+      "l1BroadcastFeeSat": 1440
+    },
+    "speedSlow": {
+      "userFeeSat": 750,
+      "l1BroadcastFeeSat": 1200
+    },
+    "isEstimate": false
+  },
+  "availableSats": 950,
+  "finishedAt": "2026-10-27T01:55:27.152Z"
+}

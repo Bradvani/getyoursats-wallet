@@ -1,0 +1,13 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> wasm-example-app@1.1.0 test
+> vitest run --maxWorkers=2
+
+
+ RUN  v4.1.12 /workspace/scratch/bc5943411884/getyoursats-security
+
+
+ Test Files  147 passed | 1 skipped (148)
+      Tests  1482 passed | 1 skipped (1483)
+   Start at  23:55:28
+   Duration  69.66s (transform 3.88s, setup 7.20s, import 22.48s, tests 49.48s, environment 39.07s)

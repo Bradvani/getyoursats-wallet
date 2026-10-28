@@ -1,0 +1,43 @@
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.48s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 16 tests
+test sdk::incoming_claim::tests::incoming_claim_exact_intent ... ok
+test sdk::incoming_claim::tests::incoming_claim_expired ... ok
+test sdk::incoming_claim::tests::incoming_claim_invalid_transfer_id ... ok
+test sdk::incoming_claim::tests::incoming_claim_identity_binding ... ok
+test sdk::incoming_claim::tests::incoming_claim_network_binding ... ok
+test sdk::incoming_claim::tests::incoming_claim_plain_peer_receipt ... ok
+test sdk::incoming_claim::tests::incoming_claim_plain_ssp_receipt ... ok
+test sdk::incoming_claim::tests::incoming_claim_standing_mandate_rejected ... ok
+test sdk::incoming_claim::tests::incoming_claim_rejects_ssp_request_on_plain_transfer ... ok
+test sdk::incoming_claim::tests::incoming_claim_wrong_amount ... ok
+test sdk::incoming_claim::tests::incoming_claim_wrong_direction ... ok
+test sdk::incoming_claim::tests::incoming_claim_rejects_htlc_on_plain_transfer ... ok
+test sdk::incoming_claim::tests::incoming_claim_wrong_transfer_id ... ok
+test sdk::incoming_claim::tests::incoming_claim_rejects_other_protocols ... ok
+test sdk::incoming_claim::tests::incoming_claim_zero_amount ... ok
+test sdk::incoming_claim::tests::incoming_claim_wrong_receiver ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 1160 filtered out; finished in 0.00s

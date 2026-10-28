@@ -1,0 +1,2380 @@
+diff --git a/crates/breez-sdk/core/src/chain/rest_client.rs b/crates/breez-sdk/core/src/chain/rest_client.rs
+index 849e45ecee29eb14abde96e74acdd908c5a6f52c..ad5e55b2c2b33dfef3e66f04c65cffc0dda72fbe 100644
+--- a/crates/breez-sdk/core/src/chain/rest_client.rs
++++ b/crates/breez-sdk/core/src/chain/rest_client.rs
+@@ -423,10 +423,21 @@ impl RestClientChainServiceInner {
+         txid: String,
+         vout: u32,
+     ) -> Result<Outspend, ChainServiceError> {
+-        let outspend = self
++        match self
+             .get_response_json::<Outspend>(format!("/tx/{txid}/outspend/{vout}").as_str())
+-            .await?;
+-        Ok(outspend)
++            .await
++        {
++            Ok(outspend) => Ok(outspend),
++            // Some Esplora-compatible backends expose only the transaction-wide
++            // endpoint. A 404 is never itself evidence that an output is unspent.
++            Err(ChainServiceError::NotFound(_)) => {
++                let outputs = self.get_response_json::<Vec<Outspend>>(
++                    format!("/tx/{txid}/outspends").as_str()).await?;
++                outputs.into_iter().nth(vout as usize).ok_or_else(||
++                    ChainServiceError::NotFound("Outspend response omits the requested output".into()))
++            },
++            Err(error) => Err(error),
++        }
+     }
+ 
+     /// Safe to retry: a re-broadcast of a transaction the server did accept is
+@@ -528,6 +539,40 @@ mod tests {
+     #[cfg(test)]
+     use breez_sdk_common::test_utils::mock_rest_client::{MockResponse, MockRestClient};
+ 
++    async fn outspend_service(responses: Vec<(u16, &str)>) -> RestClientChainService {
++        let mock = MockRestClient::new();
++        for (status, body) in responses { mock.add_response(MockResponse::new(status, body.into())); }
++        RestClientChainService::new("http://localhost:8080".into(), Network::Regtest, 0,
++            Arc::new(mock), None, ChainApiType::Esplora)
++    }
++    #[async_test_all]
++    async fn outspend_404_falls_back_to_exact_bulk_index() {
++        let service = outspend_service(vec![(404,"missing route"),(200,r#"[{"spent":true,"txid":"other","vin":0,"status":{"confirmed":false}},{"spent":false}]"#)]).await;
++        assert_eq!(service.get_outspend("funding".into(),1).await.unwrap(),Outspend::Unspent);
++    }
++    #[async_test_all]
++    async fn outspend_404_never_implies_unspent() {
++        for body in ["[]", "{}", r#"[{"spent":true}]"#] {
++            let service = outspend_service(vec![(404,"missing route"),(200,body)]).await;
++            assert!(service.get_outspend("funding".into(),0).await.is_err());
++        }
++    }
++    #[async_test_all]
++    async fn outspend_fallback_preserves_spent_evidence() {
++        let service = outspend_service(vec![(404,"missing route"),(200,r#"[{"spent":true,"txid":"spending","vin":2,"status":{"confirmed":false}}]"#)]).await;
++        assert!(matches!(service.get_outspend("funding".into(),0).await.unwrap(),Outspend::Spent{vin:2,..}));
++    }
++    #[async_test_all]
++    async fn outspend_connectivity_error_is_not_a_fallback() {
++        let service = outspend_service(vec![(503,"offline"),(200,r#"[{"spent":false}]"#)]).await;
++        assert!(service.get_outspend("funding".into(),0).await.is_err());
++    }
++    #[async_test_all]
++    async fn outspend_primary_result_does_not_need_fallback() {
++        let service = outspend_service(vec![(200,r#"{"spent":false}"#)]).await;
++        assert_eq!(service.get_outspend("funding".into(),0).await.unwrap(),Outspend::Unspent);
++    }
++
+     #[async_test_all]
+     async fn test_get_address_utxos() {
+         // Mock JSON response from the actual API call
+diff --git a/crates/breez-sdk/core/src/lib.rs b/crates/breez-sdk/core/src/lib.rs
+index c6647728ca00b05a4e247a78f956daeec7b85245..83e5f77234434f9efaa399ad6409780e0a6ba14b 100644
+--- a/crates/breez-sdk/core/src/lib.rs
++++ b/crates/breez-sdk/core/src/lib.rs
+@@ -91,7 +91,10 @@ pub use {
+     sdk::{connect, connect_with_signer, connect_with_signing_only_signer},
+ };
+ 
+-pub use sdk::{ExternalSigners, SigningOnlyExternalSigners, default_external_signers};
++pub use sdk::{
++    ExternalSigners, SigningOnlyExternalSigners, default_external_signers,
++    default_external_signers_from_seed,
++};
+ 
+ #[cfg(feature = "test-utils")]
+ pub use persist::tests as storage_tests;
+diff --git a/crates/breez-sdk/core/src/models/mod.rs b/crates/breez-sdk/core/src/models/mod.rs
+index 212d9f77e8d11798e5c95ab4aeb1cc4e10b57d06..5915fbbeb0b73da8f122452af46b5cabf60260a0 100644
+--- a/crates/breez-sdk/core/src/models/mod.rs
++++ b/crates/breez-sdk/core/src/models/mod.rs
+@@ -2812,6 +2812,38 @@ pub struct GetPaymentResponse {
+     pub payment: Payment,
+ }
+ 
++/// A journal-bound query. The commitment is SHA256(rail + NUL + canonical recipient).
++#[derive(Debug, Clone)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
++pub struct ObservePaymentRequest {
++    pub payment_id: String,
++    pub recipient_commitment: String,
++}
++
++/// Result of a fresh operator/provider query, not a cached SDK status.
++/// Unresolved and NotFound never authorize a retry.
++#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Enum))]
++pub enum PaymentObservationOutcome {
++    Completed,
++    Returned,
++    Unresolved,
++    NotFound,
++}
++
++#[derive(Debug, Clone)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
++pub struct ObservePaymentResponse {
++    pub payment_id: String,
++    pub recipient_commitment: Option<String>,
++    pub identity_pubkey: String,
++    pub network: Network,
++    pub observed_at: u64,
++    pub outcome: PaymentObservationOutcome,
++    pub payment: Option<Payment>,
++}
++
++
+ #[cfg_attr(feature = "uniffi", uniffi::export(callback_interface))]
+ pub trait Logger: Send + Sync {
+     fn log(&self, l: LogEntry);
+@@ -3917,3 +3949,75 @@ mod tests {
+         );
+     }
+ }
++
++/// Validates a refund against the exact source, destination, amount and fixed fee.
++#[derive(Debug, Clone)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
++pub struct VerifyRefundTransactionRequest {
++    pub refund: RefundDepositRequest,
++    pub tx_id: String,
++    pub tx_hex: String,
++    pub expected_amount_sats: u64,
++}
++#[derive(Debug, Clone)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
++pub struct InspectRecoveryTransactionRequest { pub tx_hex: String }
++#[derive(Debug, Clone)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
++pub struct InspectedRecoveryOutput {
++    pub value_sats: u64,
++    pub script_hex: String,
++    pub address: Option<String>,
++}
++#[derive(Debug, Clone)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
++pub struct InspectRecoveryTransactionResponse {
++    pub tx_id: String,
++    pub input_outpoints: Vec<String>,
++    pub outputs: Vec<InspectedRecoveryOutput>,
++}
++
++#[derive(Debug, Clone)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
++pub struct IncomingTransferRequest {
++    pub payment_id: String,
++    pub identity_pubkey: String,
++    pub network: Network,
++    pub amount_sats: u64,
++    pub expires_at: u64,
++}
++
++#[derive(Debug, Clone)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
++pub struct ObserveIncomingTransferResponse {
++    pub payment_id: String,
++    pub identity_pubkey: String,
++    pub network: Network,
++    pub observed_at: u64,
++    pub completed: bool,
++    pub payment: Option<Payment>,
++}
++
++#[derive(Debug, Clone)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
++pub struct MatureDepositClaimRequest {
++    pub txid: String,
++    pub vout: u32,
++    pub identity_pubkey: String,
++    pub network: Network,
++    pub amount_sats: u64,
++    pub max_fee_sats: u64,
++    pub expires_at: u64,
++}
++
++#[derive(Debug, Clone)]
++#[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
++pub struct ObserveDepositClaimResponse {
++    pub txid: String,
++    pub vout: u32,
++    pub identity_pubkey: String,
++    pub network: Network,
++    pub observed_at: u64,
++    pub completed: bool,
++    pub payment: Option<Payment>,
++}
+diff --git a/crates/breez-sdk/core/src/sdk/deposits.rs b/crates/breez-sdk/core/src/sdk/deposits.rs
+index 36c837c0e27731646a8e191fdece96bba5456974..55ce5a8c01d6a832fa36406d64c4372588efeae1 100644
+--- a/crates/breez-sdk/core/src/sdk/deposits.rs
++++ b/crates/breez-sdk/core/src/sdk/deposits.rs
+@@ -213,6 +213,84 @@ impl BreezSdk {
+         })
+     }
+ 
++    pub async fn sign_refund_deposit(
++        &self,
++        request: RefundDepositRequest,
++    ) -> Result<RefundDepositResponse, SdkError> {
++        if !matches!(request.fee, Fee::Fixed { .. }) {
++            return Err(SdkError::InvalidInput("A fixed refund fee is required".to_string()));
++        }
++        let detailed_utxo =
++            CachedUtxoFetcher::new(self.chain_service.clone(), self.storage.clone())
++                .fetch_detailed_utxo(&request.txid, request.vout)
++                .await?;
++
++        let existing = self
++            .storage
++            .list_deposits()
++            .await?
++            .into_iter()
++            .find(|d| d.txid == detailed_utxo.txid.to_string() && d.vout == detailed_utxo.vout);
++        // This API is single-signing, never an implicit RBF/replacement request.
++        if existing.as_ref().is_some_and(|d| d.refund_tx.is_some()) {
++            return Err(SdkError::InvalidInput("A signed refund already exists; resume it without signing again".to_string()));
++        }
++        let _claim_guard = self.claim_guards.try_acquire(TxOutput {
++            txid: detailed_utxo.txid.to_string(), vout: detailed_utxo.vout,
++        }).ok_or_else(|| SdkError::InvalidInput("This deposit is already being processed".to_string()))?;
++        // Nothing stored means no refund to outbid.
++        let fee_to_outbid = match &existing {
++            Some(deposit) => self.refund_fee_to_outbid(&detailed_utxo, deposit).await?,
++            None => None,
++        };
++
++        let tx = self
++            .spark_wallet
++            .refund_static_deposit(
++                detailed_utxo.clone().tx,
++                Some(detailed_utxo.vout),
++                &request.destination_address,
++                request.fee.into(),
++            )
++            .await?;
++        let tx_hex = serialize(&tx).as_hex().to_string();
++        let tx_id = tx.compute_txid().to_string();
++
++        check_replacement_fee(&tx, detailed_utxo.value, fee_to_outbid)?;
++
++        // `store_refund` only ever updates, so the row has to exist: without one the
++        // refund would be broadcast, persisted nowhere and never rebroadcast. A
++        // refund can be asked for before the background sync has inserted the row.
++        // Insert it only once the operators have signed, so a txid and vout they do
++        // not recognise leaves nothing behind.
++        if existing.is_none() {
++            // Mature: the operators only sign a refund once the deposit has enough
++            // confirmations.
++            self.storage
++                .add_deposit(
++                    detailed_utxo.txid.to_string(),
++                    detailed_utxo.vout,
++                    detailed_utxo.value,
++                    true,
++                )
++                .await?;
++        }
++
++        // Store before broadcasting: a signed refund that is only in flight is
++        // lost if the process dies, and the rebroadcast on sync needs it.
++        self.store_refund(
++            &detailed_utxo,
++            &tx_hex,
++            &tx_id,
++            RefundState::BroadcastPending { last_error: None },
++        )
++        .await?;
++
++        // Signed bytes are durable inside the SDK before they leave this API.
++        // The application must validate, journal and separately authorize broadcast.
++        Ok(RefundDepositResponse { tx_id, tx_hex })
++    }
++
+     pub async fn refund_deposit(
+         &self,
+         request: RefundDepositRequest,
+diff --git a/crates/breez-sdk/core/src/sdk/incoming_claim.rs b/crates/breez-sdk/core/src/sdk/incoming_claim.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..b5d962cf8a6e956b8a7ddcdc28d7a505c906a802
+--- /dev/null
++++ b/crates/breez-sdk/core/src/sdk/incoming_claim.rs
+@@ -0,0 +1,140 @@
++//! Explicit, single-transfer BTC claims. Never a bulk sync or standing mandate.
++use std::str::FromStr;
++use spark_wallet::{ListTransfersRequest, TransferId, TransferStatus, TransferType, TransferDirection, WalletTransfer};
++use crate::{BreezSdk, SdkError, Network, IncomingTransferRequest, ObserveIncomingTransferResponse,
++    Payment, PaymentType, PaymentMethod, utils::deposit_chain_syncer::TxOutput};
++
++fn invalid(message: &str) -> SdkError { SdkError::InvalidInput(message.to_string()) }
++fn validate_intent(request: &IncomingTransferRequest, identity: &str, network: Network, now: u64) -> Result<(), SdkError> {
++    if request.identity_pubkey != identity || request.network != network || request.amount_sats == 0 ||
++        request.amount_sats > 2_100_000_000_000_000 || request.expires_at <= now ||
++        request.expires_at > now.saturating_add(60) {
++        return Err(invalid("Incoming claim identity, amount, network or expiry is invalid"));
++    }
++    TransferId::from_str(&request.payment_id).map_err(|_| invalid("Invalid incoming transfer id"))?;
++    Ok(())
++}
++fn exact_transfer(t: &WalletTransfer, request: &IncomingTransferRequest) -> Result<(), SdkError> {
++    if t.id.to_string() != request.payment_id { return Err(invalid("Incoming transfer id differs from authorization")); }
++    if t.receiver_id.to_string() != request.identity_pubkey { return Err(invalid("Incoming transfer receiver differs from this wallet")); }
++    if t.direction != TransferDirection::Incoming { return Err(invalid("Incoming transfer direction is not receive")); }
++    if t.transfer_type != TransferType::Transfer { return Err(invalid("Incoming transfer is not a plain transfer")); }
++    if t.total_value_sat != request.amount_sats { return Err(invalid("Incoming transfer amount differs from authorization")); }
++    // An SSP identity can send an ordinary BTC transfer (including the faucet).
++    // Classify the operation by its protocol type and attached obligations, not
++    // by the sender's identity. Never allow an SSP request or HTLC through here.
++    if t.user_request.is_some() { return Err(invalid("Incoming transfer has an SSP user request")); }
++    if t.htlc_preimage_request.is_some() { return Err(invalid("Incoming transfer has an HTLC preimage request")); }
++    Ok(())
++}
++#[cfg_attr(feature = "uniffi", uniffi::export(async_runtime = "tokio"))]
++impl BreezSdk {
++    /// Fresh operator evidence for one incoming transfer. Missing is unresolved.
++    /// Does not claim, sign, resume, renew, broadcast or consume an approval.
++    pub async fn observe_incoming_transfer(&self, payment_id: String) -> Result<ObserveIncomingTransferResponse, SdkError> {
++        let id = TransferId::from_str(&payment_id).map_err(|_| invalid("Invalid incoming transfer id"))?;
++        let transfers = self.spark_wallet.list_transfers(ListTransfersRequest { transfer_ids: vec![id], ..Default::default() }).await?;
++        let identity = self.spark_wallet.get_identity_public_key().to_string();
++        let mut result = ObserveIncomingTransferResponse { payment_id: payment_id.clone(), identity_pubkey: identity.clone(),
++            network: self.config.network, observed_at: u64::from(breez_sdk_common::utils::now()), completed: false, payment: None };
++        if let Some(t) = transfers.items.into_iter().find(|t| t.id.to_string() == payment_id) {
++            let request = IncomingTransferRequest { payment_id, identity_pubkey: identity, network: self.config.network,
++                amount_sats: t.total_value_sat, expires_at: 0 };
++            exact_transfer(&t, &request)?;
++            result.completed = t.status == TransferStatus::Completed;
++            let payment = Payment::try_from(t)?;
++            if payment.payment_type != PaymentType::Receive || payment.method != PaymentMethod::Spark || payment.fees != 0 || payment.conversion_details.is_some() {
++                return Err(invalid("Unexpected direct transfer projection"));
++            }
++            result.payment = Some(payment);
++        }
++        Ok(result)
++    }
++    /// Claims only this exact direct BTC transfer, never Lightning, deposits,
++    /// tokens or counter-swaps. An attempt cannot be repeated after uncertainty.
++    pub async fn claim_incoming_transfer(&self, request: IncomingTransferRequest) -> Result<ObserveIncomingTransferResponse, SdkError> {
++        let identity = self.spark_wallet.get_identity_public_key().to_string();
++        validate_intent(&request, &identity, self.config.network, u64::from(breez_sdk_common::utils::now()))?;
++        let id = TransferId::from_str(&request.payment_id).map_err(|_| invalid("Invalid incoming transfer id"))?;
++        let _guard = self.claim_guards.try_acquire(TxOutput { txid: format!("incoming:{}", request.payment_id), vout: 0 })
++            .ok_or_else(|| invalid("Incoming claim already in progress"))?;
++        let key = format!("gys:incoming-claim:v1:{}", request.payment_id);
++        if self.storage.get_cached_item(key.clone()).await?.is_some() {
++            return Err(invalid("Incoming claim already attempted; reconcile without claiming again"));
++        }
++        let result = self.spark_wallet.list_transfers(ListTransfersRequest { transfer_ids: vec![id], ..Default::default() }).await?;
++        let transfer = result.items.into_iter().find(|t| t.id.to_string() == request.payment_id)
++            .ok_or_else(|| invalid("Incoming transfer not found"))?;
++        exact_transfer(&transfer, &request)?;
++        if transfer.status == TransferStatus::Completed || transfer.status == TransferStatus::Returned {
++            return Err(invalid("Incoming transfer no longer claimable"));
++        }
++        validate_intent(&request, &identity, self.config.network, u64::from(breez_sdk_common::utils::now()))?;
++        let intent = serde_json::json!({"paymentId": request.payment_id, "identityPubkey": request.identity_pubkey, "network": format!("{:?}", request.network), "amountSats": request.amount_sats, "expiresAt": request.expires_at}).to_string();
++        self.storage.set_cached_item(key.clone(), intent.clone()).await?;
++        if self.storage.get_cached_item(key).await? != Some(intent) { return Err(invalid("Incoming claim persistence failed")); }
++        validate_intent(&request, &identity, self.config.network, u64::from(breez_sdk_common::utils::now()))?;
++        self.spark_wallet.process_transfer(transfer).await?;
++        // Never manufacture Completed from a successful claim call. Re-query the
++        // operators; a pending or unavailable result remains uncertain in the UI.
++        self.observe_incoming_transfer(request.payment_id).await
++    }
++}
++#[cfg(test)]
++mod tests {
++    use super::*;
++    fn request() -> IncomingTransferRequest { IncomingTransferRequest {
++        payment_id: "00000000-0000-4000-8000-000000000001".into(), identity_pubkey: "disposable".into(),
++        network: Network::Regtest, amount_sats: 500, expires_at: 120 } }
++    #[test] fn incoming_claim_exact_intent() { assert!(validate_intent(&request(), "disposable", Network::Regtest, 100).is_ok()); }
++    #[test] fn incoming_claim_identity_binding() { assert!(validate_intent(&request(), "other", Network::Regtest, 100).is_err()); }
++    #[test] fn incoming_claim_network_binding() { assert!(validate_intent(&request(), "disposable", Network::Mainnet, 100).is_err()); }
++    #[test] fn incoming_claim_expired() { assert!(validate_intent(&request(), "disposable", Network::Regtest, 120).is_err()); }
++    #[test] fn incoming_claim_standing_mandate_rejected() { assert!(validate_intent(&request(), "disposable", Network::Regtest, 59).is_err()); }
++    #[test] fn incoming_claim_zero_amount() { let mut r=request(); r.amount_sats=0; assert!(validate_intent(&r,"disposable",Network::Regtest,100).is_err()); }
++    #[test] fn incoming_claim_invalid_transfer_id() { let mut r=request(); r.payment_id="not-a-transfer".into(); assert!(validate_intent(&r,"disposable",Network::Regtest,100).is_err()); }
++    fn receipt(from_ssp: bool) -> (WalletTransfer, IncomingTransferRequest) {
++        use spark_wallet::{PublicKey, Transfer};
++        let pk = |fill: u8| { let mut b = [fill; 33]; b[0] = 2; PublicKey::from_slice(&b).unwrap() };
++        let (ours, other, ssp) = (pk(1), pk(7), pk(2));
++        let r = IncomingTransferRequest { identity_pubkey: ours.to_string(), ..request() };
++        let t = Transfer { id: TransferId::from_str(&r.payment_id).unwrap(),
++            sender_identity_public_key: if from_ssp { ssp } else { other }, receiver_identity_public_key: ours,
++            status: TransferStatus::SenderKeyTweaked, total_value: r.amount_sats, expiry_time: None,
++            leaves: Vec::new(), created_time: None, updated_time: None,
++            transfer_type: TransferType::Transfer, spark_invoice: None };
++        (WalletTransfer::from_transfer(t, None, None, ours, ssp), r)
++    }
++    #[test] fn incoming_claim_plain_peer_receipt() { let (t,r)=receipt(false); assert!(exact_transfer(&t,&r).is_ok()); }
++    #[test] fn incoming_claim_plain_ssp_receipt() { let (t,r)=receipt(true); assert!(t.is_ssp_transfer); assert!(exact_transfer(&t,&r).is_ok()); }
++    #[test] fn incoming_claim_wrong_receiver() { let (t,mut r)=receipt(true); r.identity_pubkey=t.sender_id.to_string(); assert!(exact_transfer(&t,&r).is_err()); }
++    #[test] fn incoming_claim_wrong_transfer_id() { let (t,mut r)=receipt(true); r.payment_id=TransferId::generate().to_string(); assert!(exact_transfer(&t,&r).is_err()); }
++    #[test] fn incoming_claim_wrong_direction() { let (mut t,r)=receipt(true); t.direction=TransferDirection::Outgoing; assert!(exact_transfer(&t,&r).is_err()); }
++    #[test] fn incoming_claim_wrong_amount() { let (t,mut r)=receipt(true); r.amount_sats+=1; assert!(exact_transfer(&t,&r).is_err()); }
++    #[test] fn incoming_claim_rejects_other_protocols() {
++        for ty in [TransferType::PreimageSwap,TransferType::CooperativeExit,TransferType::UtxoSwap,
++            TransferType::Swap,TransferType::CounterSwap,TransferType::PrimarySwapV3,TransferType::CounterSwapV3,TransferType::Unknown] {
++            let (mut t,r)=receipt(true);t.transfer_type=ty;assert!(exact_transfer(&t,&r).is_err());
++        }
++    }
++    #[test] fn incoming_claim_rejects_htlc_on_plain_transfer() {
++        use bitcoin::hashes::{sha256,Hash};
++        let (mut t,r)=receipt(true);
++        t.htlc_preimage_request=Some(spark_wallet::PreimageRequest { payment_hash:sha256::Hash::hash(b"test"),
++            status:spark_wallet::PreimageRequestStatus::WaitingForPreimage,
++            created_time:platform_utils::time::UNIX_EPOCH,expiry_time:platform_utils::time::UNIX_EPOCH,preimage:None });
++        assert!(exact_transfer(&t,&r).is_err());
++    }
++    #[test] fn incoming_claim_rejects_ssp_request_on_plain_transfer() {
++        use spark_wallet::{SspUserRequest,LightningSendRequest,LightningSendRequestStatus,BitcoinNetwork,CurrencyAmount,CurrencyUnit};
++        let (mut t,r)=receipt(true);
++        t.user_request=Some(SspUserRequest::LightningSendRequest(LightningSendRequest {
++            id:"request".into(),created_at:chrono::Utc::now(),updated_at:chrono::Utc::now(),network:BitcoinNetwork::Regtest,
++            encoded_invoice:"not an invoice".into(),fee:CurrencyAmount { original_value:0,original_unit:CurrencyUnit::Satoshi,
++                preferred_currency_unit:CurrencyUnit::Satoshi,preferred_currency_value_rounded:0 },
++            idempotency_key:"test".into(),status:LightningSendRequestStatus::LightningPaymentSucceeded,
++            transfer:None,lightning_send_payment_preimage:None }));
++        assert!(exact_transfer(&t,&r).is_err());
++    }
++
++}
+diff --git a/crates/breez-sdk/core/src/sdk/mature_deposit.rs b/crates/breez-sdk/core/src/sdk/mature_deposit.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..52eda0df43af57cb3bd98079dbcdef10dfe86288
+--- /dev/null
++++ b/crates/breez-sdk/core/src/sdk/mature_deposit.rs
+@@ -0,0 +1,876 @@
++//! Explicit one-shot mature BTC deposit claims. No early route or standing fee mandate.
++use crate::{
++    BreezSdk, ClaimDepositOutcome, ClaimDepositResponse, FetchClaimDepositQuoteRequest,
++    MatureDepositClaimRequest, Network, ObserveDepositClaimResponse, Payment, PaymentDetails,
++    PaymentMethod, PaymentStatus, PaymentType, SdkError,
++    utils::{deposit_chain_syncer::TxOutput, utxo_fetcher::CachedUtxoFetcher},
++};
++use bitcoin::Txid;
++use spark_wallet::{
++    ListTransfersRequest, SspUserRequest, TransferDirection, TransferId, TransferStatus,
++    TransferType, WalletTransfer,
++};
++use std::str::FromStr;
++fn invalid(s: &str) -> SdkError {
++    SdkError::InvalidInput(s.into())
++}
++fn validate(
++    r: &MatureDepositClaimRequest,
++    identity: &str,
++    network: Network,
++    now: u64,
++) -> Result<(), SdkError> {
++    let txid = Txid::from_str(&r.txid).map_err(|_| invalid("Invalid deposit transaction"))?;
++    if txid.to_string() != r.txid
++        || r.identity_pubkey != identity
++        || r.network != network
++        || r.amount_sats == 0
++        || r.amount_sats > 2_100_000_000_000_000
++        || r.max_fee_sats >= r.amount_sats
++        || r.expires_at <= now
++        || r.expires_at > now.saturating_add(60)
++    {
++        return Err(invalid(
++            "Deposit claim identity, amount, fee, network or expiry is invalid",
++        ));
++    }
++    Ok(())
++}
++fn depth(confirmed: bool, height: Option<u32>, tip: u32, network: Network) -> Result<(), SdkError> {
++    let required = if network == Network::Regtest { 1 } else { 3 };
++    let h = height.ok_or_else(|| invalid("Confirmed deposit height is unavailable"))?;
++    if !confirmed || h > tip || u64::from(tip) - u64::from(h) + 1 < required {
++        return Err(invalid("Deposit is not mature on the current chain"));
++    }
++    Ok(())
++}
++fn credit(amount: u64, max_fee: u64, credited: u64) -> Result<(), SdkError> {
++    if credited == 0 || credited > amount || amount - credited > max_fee {
++        return Err(invalid("Deposit quote exceeds the authorized fee ceiling"));
++    }
++    Ok(())
++}
++fn receipt(
++    t: &WalletTransfer,
++    txid: &str,
++    vout: u32,
++    identity: &str,
++    network: Network,
++) -> Result<Payment, SdkError> {
++    if t.receiver_id.to_string() != identity
++        || t.direction != TransferDirection::Incoming
++        || t.transfer_type != TransferType::UtxoSwap
++        || t.htlc_preimage_request.is_some()
++    {
++        return Err(invalid("Transfer is not this wallet's deposit receipt"));
++    }
++    let Some(SspUserRequest::ClaimStaticDeposit(deposit)) = &t.user_request else {
++        return Err(invalid("Deposit has no authoritative SSP correlation"));
++    };
++    let transfer_id = t.id.to_string();
++    let expected_network = match network {
++        Network::Mainnet => spark_wallet::BitcoinNetwork::Mainnet,
++        Network::Regtest => spark_wallet::BitcoinNetwork::Regtest,
++        Network::Signet => spark_wallet::BitcoinNetwork::Signet,
++    };
++    if deposit.network != expected_network
++        || deposit.bitcoin_network != expected_network
++        || deposit.transaction_id != txid
++        || deposit.output_index != i64::from(vout)
++        || deposit.transfer_spark_id.as_deref() != Some(transfer_id.as_str())
++        || deposit.credit_amount.as_sats().ok() != Some(t.total_value_sat)
++        || !deposit
++            .deposit_amount
++            .as_sats()
++            .is_ok_and(|amount| amount >= t.total_value_sat && amount <= 2_100_000_000_000_000)
++    {
++        return Err(invalid(
++            "Deposit SSP correlation differs from the operator transfer",
++        ));
++    }
++    let p = Payment::try_from(t.clone())?;
++    if p.payment_type != PaymentType::Receive
++        || p.method != PaymentMethod::Deposit
++        || p.conversion_details.is_some()
++        || !matches!(&p.details,Some(PaymentDetails::Deposit{tx_id,vout:output,..}) if tx_id==txid && *output==vout)
++    {
++        return Err(invalid(
++            "Deposit receipt does not match the authorized outpoint",
++        ));
++    }
++    Ok(p)
++}
++fn economics(p: &Payment, r: &MatureDepositClaimRequest) -> Result<(), SdkError> {
++    if p.amount == 0
++        || p.fees > u128::from(r.max_fee_sats)
++        || p.amount.checked_add(p.fees) != Some(u128::from(r.amount_sats))
++    {
++        return Err(invalid(
++            "Deposit settlement differs from its approved economics",
++        ));
++    }
++    Ok(())
++}
++fn marker(txid: &str, vout: u32) -> String {
++    format!("gys:mature-deposit:v1:{txid}:{vout}")
++}
++
++/// Version one is retained so existing attempts stay readable. Unknown fields
++/// and malformed optional fields must never turn an attempted claim into a new one.
++#[derive(Clone, serde::Deserialize, serde::Serialize)]
++#[serde(rename_all = "camelCase", deny_unknown_fields)]
++struct DepositAttempt {
++    version: u32,
++    txid: String,
++    vout: u32,
++    identity: String,
++    network: String,
++    amount: u64,
++    max_fee: u64,
++    expires_at: u64,
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    transfer_id: Option<String>,
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    receiving_attempted: Option<bool>,
++}
++impl DepositAttempt {
++    fn decode(
++        raw: &str,
++        txid: &str,
++        vout: u32,
++        identity: &str,
++        network: Network,
++    ) -> Result<Self, SdkError> {
++        let value: serde_json::Value =
++            serde_json::from_str(raw).map_err(|_| invalid("Deposit claim record is damaged"))?;
++        // Explicit null is not the same as the field having never been written.
++        for field in ["transferId", "receivingAttempted"] {
++            if value.get(field).is_some_and(serde_json::Value::is_null) {
++                return Err(invalid(
++                    "Deposit claim record has an invalid attempt boundary",
++                ));
++            }
++        }
++        let attempt: Self =
++            serde_json::from_str(raw).map_err(|_| invalid("Deposit claim record is damaged"))?;
++        if attempt.version != 1
++            || attempt.txid != txid
++            || attempt.vout != vout
++            || attempt.identity != identity
++            || attempt.network != format!("{network:?}")
++            || attempt.amount == 0
++            || attempt.amount > 2_100_000_000_000_000
++            || attempt.max_fee >= attempt.amount
++            || attempt.expires_at == 0
++            || attempt.receiving_attempted == Some(false)
++            || (attempt.receiving_attempted.is_some() && attempt.transfer_id.is_none())
++        {
++            return Err(invalid("Deposit claim record is incompatible"));
++        }
++        if let Some(id) = &attempt.transfer_id {
++            let parsed = TransferId::from_str(id)
++                .map_err(|_| invalid("Deposit transfer record is invalid"))?;
++            if parsed.to_string() != *id {
++                return Err(invalid("Deposit transfer record is noncanonical"));
++            }
++        }
++        Ok(attempt)
++    }
++    fn matches_authorization(&self, r: &MatureDepositClaimRequest) -> Result<(), SdkError> {
++        if self.txid != r.txid
++            || self.vout != r.vout
++            || self.identity != r.identity_pubkey
++            || self.network != format!("{:?}", r.network)
++            || self.amount != r.amount_sats
++            || self.max_fee != r.max_fee_sats
++        {
++            return Err(invalid(
++                "Deposit continuation changed the original economic intent",
++            ));
++        }
++        Ok(())
++    }
++    fn authorize_receiving(&mut self, id: &str) -> Result<(), SdkError> {
++        if self.receiving_attempted.is_some()
++            || self.transfer_id.as_deref().is_some_and(|old| old != id)
++        {
++            return Err(invalid(
++                "Deposit receiving was already attempted or its transfer changed",
++            ));
++        }
++        self.transfer_id = Some(id.to_owned());
++        self.receiving_attempted = Some(true);
++        Ok(())
++    }
++}
++#[cfg_attr(feature = "uniffi", uniffi::export(async_runtime = "tokio"))]
++impl BreezSdk {
++    /// Observe only. A missing receipt is unresolved, never permission to retry.
++    pub async fn observe_deposit_claim(
++        &self,
++        request: FetchClaimDepositQuoteRequest,
++    ) -> Result<ObserveDepositClaimResponse, SdkError> {
++        let txid = Txid::from_str(&request.txid)
++            .map_err(|_| invalid("Invalid deposit transaction"))?
++            .to_string();
++        let identity = self.spark_wallet.get_identity_public_key().to_string();
++        let stored = self
++            .storage
++            .get_cached_item(marker(&txid, request.vout))
++            .await?
++            .map(|raw| {
++                DepositAttempt::decode(&raw, &txid, request.vout, &identity, self.config.network)
++            })
++            .transpose()?;
++        let transfer = self
++            .find_deposit_transfer(
++                &txid,
++                request.vout,
++                &identity,
++                stored.as_ref().and_then(|s| s.transfer_id.as_deref()),
++            )
++            .await?;
++        let mut response = ObserveDepositClaimResponse {
++            txid: txid.clone(),
++            vout: request.vout,
++            identity_pubkey: identity.clone(),
++            network: self.config.network,
++            observed_at: u64::from(breez_sdk_common::utils::now()),
++            completed: false,
++            payment: None,
++        };
++        if let Some(t) = transfer {
++            let p = receipt(&t, &txid, request.vout, &identity, self.config.network)?;
++            if let Some(attempt) = stored {
++                if p.amount.checked_add(p.fees) != Some(u128::from(attempt.amount))
++                    || p.fees > u128::from(attempt.max_fee)
++                {
++                    return Err(invalid(
++                        "Deposit receipt differs from the persisted economic intent",
++                    ));
++                }
++            }
++            response.completed =
++                t.status == TransferStatus::Completed && p.status == PaymentStatus::Completed;
++            response.payment = Some(p);
++        }
++        Ok(response)
++    }
++    /// Each SDK outpoint can be invoked once. No general claim_deposit call,
++    /// automatic sync, saved fee ceiling, early claim, refund or replacement.
++    pub async fn claim_mature_deposit_once(
++        &self,
++        r: MatureDepositClaimRequest,
++    ) -> Result<ClaimDepositResponse, SdkError> {
++        let identity = self.spark_wallet.get_identity_public_key().to_string();
++        let now = || u64::from(breez_sdk_common::utils::now());
++        validate(&r, &identity, self.config.network, now())?;
++        let _guard = self
++            .claim_guards
++            .try_acquire(TxOutput {
++                txid: r.txid.clone(),
++                vout: r.vout,
++            })
++            .ok_or_else(|| invalid("Deposit operation already in progress"))?;
++        let key = marker(&r.txid, r.vout);
++        if self.storage.get_cached_item(key.clone()).await?.is_some() {
++            return Err(invalid(
++                "Deposit claim already attempted; reconcile without resubmitting",
++            ));
++        }
++        if self
++            .stored_deposit(&r.txid, r.vout)
++            .await?
++            .is_some_and(|d| {
++                d.refund_tx.is_some()
++                    || d.instant_claim_status.is_some()
++                    || d.max_claim_fee.is_some()
++            })
++        {
++            return Err(invalid(
++                "An existing refund or deposit mandate requires reconciliation",
++            ));
++        }
++        let utxo = CachedUtxoFetcher::new(self.chain_service.clone(), self.storage.clone())
++            .fetch_detailed_utxo(&r.txid, r.vout)
++            .await?;
++        if utxo.value != r.amount_sats {
++            return Err(invalid("Funding output value differs from authorization"));
++        }
++        let quote = self
++            .spark_wallet
++            .fetch_static_deposit_claim_quote(utxo.tx.clone(), Some(r.vout))
++            .await?;
++        if quote.txid != utxo.txid || quote.output_index != r.vout {
++            return Err(invalid("Deposit quote names another outpoint"));
++        }
++        credit(r.amount_sats, r.max_fee_sats, quote.credit_amount_sats)?;
++        // Never use cached maturity or treat a failed chain query as mature.
++        let status = self
++            .chain_service
++            .get_transaction_status(r.txid.clone())
++            .await?;
++        let tip = self.chain_service.tip_height().await?;
++        depth(
++            status.confirmed,
++            status.block_height,
++            tip,
++            self.config.network,
++        )?;
++        if !matches!(
++            self.chain_service
++                .get_outspend(r.txid.clone(), r.vout)
++                .await?,
++            crate::chain::Outspend::Unspent
++        ) {
++            return Err(invalid("Deposit output is already spent"));
++        }
++        validate(&r, &identity, self.config.network, now())?;
++        let mut intent = serde_json::json!({"version":1,"txid":r.txid,"vout":r.vout,"identity":identity,
++            "network":format!("{:?}",r.network),"amount":r.amount_sats,"maxFee":r.max_fee_sats,"expiresAt":r.expires_at});
++        let encoded = intent.to_string();
++        self.storage
++            .set_cached_item(key.clone(), encoded.clone())
++            .await?;
++        if self.storage.get_cached_item(key.clone()).await? != Some(encoded) {
++            return Err(invalid("Deposit intent was not durably saved"));
++        }
++        validate(&r, &identity, self.config.network, now())?;
++        let transfer_id = self
++            .spark_wallet
++            .claim_static_deposit(&utxo.tx, quote)
++            .await?;
++        intent["transferId"] = serde_json::Value::String(transfer_id.clone());
++        let encoded = intent.to_string();
++        self.storage
++            .set_cached_item(key.clone(), encoded.clone())
++            .await?;
++        if self.storage.get_cached_item(key.clone()).await? != Some(encoded) {
++            return Err(invalid("Deposit receipt id was not durably saved"));
++        }
++        let id = TransferId::from_str(&transfer_id)
++            .map_err(|_| invalid("Invalid claimed transfer id"))?;
++        let transfers = self
++            .spark_wallet
++            .list_transfers(ListTransfersRequest {
++                transfer_ids: vec![id],
++                ..Default::default()
++            })
++            .await?;
++        let transfer = transfers
++            .items
++            .into_iter()
++            .find(|t| t.id.to_string() == transfer_id)
++            .ok_or_else(|| invalid("Deposit transfer is not yet observable"))?;
++        let p = receipt(&transfer, &r.txid, r.vout, &identity, self.config.network)?;
++        economics(&p, &r)?;
++        if transfer.status != TransferStatus::Completed {
++            if transfer.status == TransferStatus::Returned
++                || transfer.status == TransferStatus::Expired
++            {
++                return Err(invalid("Deposit transfer is no longer claimable"));
++            }
++            validate(&r, &identity, self.config.network, now())?;
++            intent["receivingAttempted"] = serde_json::Value::Bool(true);
++            let encoded = intent.to_string();
++            self.storage
++                .set_cached_item(key.clone(), encoded.clone())
++                .await?;
++            if self.storage.get_cached_item(key).await? != Some(encoded) {
++                return Err(invalid("Deposit receiving attempt was not durably saved"));
++            }
++            validate(&r, &identity, self.config.network, now())?;
++            self.spark_wallet.process_transfer(transfer).await?;
++        }
++        let observed = self
++            .observe_deposit_claim(FetchClaimDepositQuoteRequest {
++                txid: r.txid.clone(),
++                vout: r.vout,
++            })
++            .await?;
++        if !observed.completed {
++            return Err(invalid("Deposit settlement requires reconciliation"));
++        }
++        let payment = observed
++            .payment
++            .ok_or_else(|| invalid("Deposit receipt missing"))?;
++        economics(&payment, &r)?;
++        self.storage.apply_payment_update(payment.clone()).await?;
++        self.storage.delete_deposit(r.txid, r.vout).await?;
++        Ok(ClaimDepositResponse {
++            outcome: ClaimDepositOutcome::Settled { payment },
++        })
++    }
++
++    /// Continue only a positively correlated deposit whose receiving boundary
++    /// was never crossed. This NEVER submits a static-deposit claim again.
++    /// An interrupted receiving attempt remains observation-only.
++    pub async fn continue_mature_deposit_claim(
++        &self,
++        r: MatureDepositClaimRequest,
++    ) -> Result<ClaimDepositResponse, SdkError> {
++        let identity = self.spark_wallet.get_identity_public_key().to_string();
++        let now = || u64::from(breez_sdk_common::utils::now());
++        validate(&r, &identity, self.config.network, now())?;
++        let _guard = self
++            .claim_guards
++            .try_acquire(TxOutput {
++                txid: r.txid.clone(),
++                vout: r.vout,
++            })
++            .ok_or_else(|| invalid("Deposit operation already in progress"))?;
++        let key = marker(&r.txid, r.vout);
++        let original = self
++            .storage
++            .get_cached_item(key.clone())
++            .await?
++            .ok_or_else(|| invalid("Deposit continuation requires its original durable intent"))?;
++        let mut attempt =
++            DepositAttempt::decode(&original, &r.txid, r.vout, &identity, self.config.network)?;
++        attempt.matches_authorization(&r)?;
++        let transfer = self
++            .find_deposit_transfer(&r.txid, r.vout, &identity, attempt.transfer_id.as_deref())
++            .await?
++            .ok_or_else(|| invalid("Deposit submission remains unresolved; never resubmit"))?;
++        let payment = receipt(&transfer, &r.txid, r.vout, &identity, self.config.network)?;
++        economics(&payment, &r)?;
++        if transfer.status != TransferStatus::Completed {
++            if self
++                .stored_deposit(&r.txid, r.vout)
++                .await?
++                .is_some_and(|d| {
++                    d.refund_tx.is_some()
++                        || d.instant_claim_status.is_some()
++                        || d.max_claim_fee.is_some()
++                })
++            {
++                return Err(invalid(
++                    "A conflicting refund or deposit mandate requires reconciliation",
++                ));
++            }
++            // Only the pre-receiving state is eligible. Intermediate key-tweak,
++            // expired, returned and unknown states require further recovery work.
++            if transfer.status != TransferStatus::SenderKeyTweaked {
++                return Err(invalid(
++                    "Deposit transfer requires observation-only reconciliation",
++                ));
++            }
++            attempt.authorize_receiving(&transfer.id.to_string())?;
++            validate(&r, &identity, self.config.network, now())?;
++            if self.storage.get_cached_item(key.clone()).await? != Some(original) {
++                return Err(invalid("Deposit intent changed during continuation"));
++            }
++            let encoded = serde_json::to_string(&attempt)
++                .map_err(|_| invalid("Cannot encode deposit continuation"))?;
++            self.storage
++                .set_cached_item(key.clone(), encoded.clone())
++                .await?;
++            if self.storage.get_cached_item(key).await? != Some(encoded) {
++                return Err(invalid("Deposit continuation was not durably saved"));
++            }
++            validate(&r, &identity, self.config.network, now())?;
++            self.spark_wallet.process_transfer(transfer).await?;
++        }
++        // Even a completed response is re-observed. No retry or resubmission is
++        // inferred from timeouts, missing history or the funding output's state.
++        let observed = self
++            .observe_deposit_claim(FetchClaimDepositQuoteRequest {
++                txid: r.txid.clone(),
++                vout: r.vout,
++            })
++            .await?;
++        if !observed.completed {
++            return Err(invalid("Deposit settlement requires reconciliation"));
++        }
++        let payment = observed
++            .payment
++            .ok_or_else(|| invalid("Deposit receipt missing"))?;
++        economics(&payment, &r)?;
++        self.storage.apply_payment_update(payment.clone()).await?;
++        self.storage.delete_deposit(r.txid, r.vout).await?;
++        Ok(ClaimDepositResponse {
++            outcome: ClaimDepositOutcome::Settled { payment },
++        })
++    }
++}
++
++impl BreezSdk {
++    async fn find_deposit_transfer(
++        &self,
++        txid: &str,
++        vout: u32,
++        identity: &str,
++        expected_id: Option<&str>,
++    ) -> Result<Option<WalletTransfer>, SdkError> {
++        let ids = expected_id
++            .map(|id| {
++                TransferId::from_str(id).map_err(|_| invalid("Deposit transfer record is invalid"))
++            })
++            .transpose()?
++            .into_iter()
++            .collect();
++        // None paging invokes the upstream all-page query. This is positive
++        // receipt discovery, never authoritative evidence of non-execution.
++        let transfers = self
++            .spark_wallet
++            .list_transfers(ListTransfersRequest {
++                transfer_ids: ids,
++                ..Default::default()
++            })
++            .await?;
++        let mut found = None;
++        for t in transfers.items {
++            if expected_id.is_some_and(|id| id != t.id.to_string()) {
++                continue;
++            }
++            let is_outpoint = matches!(&t.user_request,Some(SspUserRequest::ClaimStaticDeposit(d)) if d.transaction_id==txid && d.output_index==i64::from(vout));
++            if expected_id.is_none() && !is_outpoint {
++                continue;
++            }
++            receipt(&t, txid, vout, identity, self.config.network)?;
++            if found.is_some() {
++                return Err(invalid("Multiple deposit receipts require review"));
++            }
++            found = Some(t);
++        }
++        Ok(found)
++    }
++}
++#[cfg(test)]
++mod tests {
++    use super::*;
++    fn req() -> MatureDepositClaimRequest {
++        MatureDepositClaimRequest {
++            txid: "a".repeat(64),
++            vout: 0,
++            identity_pubkey: "wallet".into(),
++            network: Network::Regtest,
++            amount_sats: 1000,
++            max_fee_sats: 10,
++            expires_at: 150,
++        }
++    }
++    #[test]
++    fn mature_deposit_exact_intent() {
++        assert!(validate(&req(), "wallet", Network::Regtest, 100).is_ok());
++    }
++    #[test]
++    fn mature_deposit_wrong_identity() {
++        assert!(validate(&req(), "other", Network::Regtest, 100).is_err());
++    }
++    #[test]
++    fn mature_deposit_wrong_network() {
++        assert!(validate(&req(), "wallet", Network::Mainnet, 100).is_err());
++    }
++    #[test]
++    fn mature_deposit_expired() {
++        assert!(validate(&req(), "wallet", Network::Regtest, 150).is_err());
++    }
++    #[test]
++    fn mature_deposit_standing_approval() {
++        assert!(validate(&req(), "wallet", Network::Regtest, 89).is_err());
++    }
++    #[test]
++    fn mature_deposit_fee_consumes_output() {
++        let mut r = req();
++        r.max_fee_sats = 1000;
++        assert!(validate(&r, "wallet", Network::Regtest, 100).is_err());
++    }
++    #[test]
++    fn mature_deposit_noncanonical_txid() {
++        let mut r = req();
++        r.txid = "A".repeat(64);
++        assert!(validate(&r, "wallet", Network::Regtest, 100).is_err());
++    }
++    #[test]
++    fn mature_deposit_chain_depth() {
++        assert!(depth(true, Some(100), 100, Network::Regtest).is_ok());
++        assert!(depth(true, Some(100), 102, Network::Mainnet).is_ok());
++    }
++    #[test]
++    fn mature_deposit_missing_or_reorged_height() {
++        for (c, h, t) in [
++            (false, Some(100), 102),
++            (true, None, 102),
++            (true, Some(103), 102),
++        ] {
++            assert!(depth(c, h, t, Network::Regtest).is_err());
++        }
++    }
++    #[test]
++    fn mature_deposit_no_early_route() {
++        assert!(depth(true, Some(100), 101, Network::Mainnet).is_err());
++        assert!(depth(true, Some(100), 101, Network::Signet).is_err());
++    }
++    #[test]
++    fn mature_deposit_credit_bound() {
++        assert!(credit(1000, 10, 990).is_ok());
++        for c in [0, 989, 1001] {
++            assert!(credit(1000, 10, c).is_err());
++        }
++    }
++}
++
++#[cfg(test)]
++mod continuation_tests {
++    use super::*;
++    fn original() -> serde_json::Value {
++        serde_json::json!({"version":1,"txid":"a".repeat(64),"vout":2,"identity":"wallet","network":"Regtest","amount":1000,"maxFee":10,"expiresAt":150})
++    }
++    fn decode(v: serde_json::Value) -> Result<DepositAttempt, SdkError> {
++        DepositAttempt::decode(
++            &v.to_string(),
++            &"a".repeat(64),
++            2,
++            "wallet",
++            Network::Regtest,
++        )
++    }
++    fn authorization() -> MatureDepositClaimRequest {
++        MatureDepositClaimRequest {
++            txid: "a".repeat(64),
++            vout: 2,
++            identity_pubkey: "wallet".into(),
++            network: Network::Regtest,
++            amount_sats: 1000,
++            max_fee_sats: 10,
++            expires_at: 210,
++        }
++    }
++    const ID: &str = "00000000-0000-4000-8000-000000000001";
++    #[test]
++    fn mature_deposit_continuation_accepts_original_version_one_intent() {
++        let a = decode(original()).unwrap();
++        assert!(a.matches_authorization(&authorization()).is_ok());
++        assert!(a.receiving_attempted.is_none());
++    }
++    #[test]
++    fn mature_deposit_continuation_preserves_original_expiry() {
++        let mut a = decode(original()).unwrap();
++        a.authorize_receiving(ID).unwrap();
++        assert_eq!(a.expires_at, 150);
++        let b = decode(serde_json::to_value(a).unwrap()).unwrap();
++        assert_eq!(b.receiving_attempted, Some(true));
++        assert_eq!(b.transfer_id.as_deref(), Some(ID));
++    }
++    #[test]
++    fn mature_deposit_continuation_never_repeats_receiving() {
++        let mut a = decode(original()).unwrap();
++        a.authorize_receiving(ID).unwrap();
++        let saved = serde_json::to_string(&a).unwrap();
++        assert!(a.authorize_receiving(ID).is_err());
++        assert_eq!(serde_json::to_string(&a).unwrap(), saved);
++    }
++    #[test]
++    fn mature_deposit_continuation_never_replaces_transfer() {
++        let mut v = original();
++        v["transferId"] = ID.into();
++        let mut a = decode(v).unwrap();
++        assert!(
++            a.authorize_receiving("00000000-0000-4000-8000-000000000002")
++                .is_err()
++        );
++        assert_eq!(a.transfer_id.as_deref(), Some(ID));
++        assert!(a.receiving_attempted.is_none());
++    }
++    #[test]
++    fn mature_deposit_continuation_rejects_changed_economics() {
++        for field in ["amount", "maxFee", "vout", "identity", "network", "txid"] {
++            let mut v = original();
++            v[field] = match field {
++                "amount" => 999.into(),
++                "maxFee" => 11.into(),
++                "vout" => 3.into(),
++                "identity" => "other".into(),
++                "network" => "Mainnet".into(),
++                _ => "b".repeat(64).into(),
++            };
++            assert!(
++                decode(v)
++                    .and_then(|a| a.matches_authorization(&authorization()))
++                    .is_err(),
++                "{field}"
++            );
++        }
++    }
++    #[test]
++    fn mature_deposit_continuation_rejects_damaged_boundaries() {
++        for (field, value) in [
++            ("receivingAttempted", serde_json::Value::Null),
++            ("receivingAttempted", false.into()),
++            ("receivingAttempted", "true".into()),
++            ("receivingAttempted", true.into()),
++            ("transferId", serde_json::Value::Null),
++            ("transferId", "not-a-transfer".into()),
++            ("version", 2.into()),
++            ("newAuthorization", true.into()),
++        ] {
++            let mut v = original();
++            v[field] = value;
++            assert!(decode(v).is_err(), "{field}");
++        }
++    }
++    #[test]
++    fn mature_deposit_continuation_rejects_missing_economic_fields() {
++        for field in [
++            "amount",
++            "maxFee",
++            "expiresAt",
++            "network",
++            "identity",
++            "txid",
++            "version",
++            "vout",
++        ] {
++            let mut v = original();
++            v.as_object_mut().unwrap().remove(field);
++            assert!(decode(v).is_err(), "{field}");
++        }
++    }
++    #[test]
++    fn mature_deposit_continuation_rejects_duplicate_fields() {
++        let raw = original().to_string();
++        let raw = format!("{{\"amount\":1,{}", &raw[1..]);
++        assert!(
++            DepositAttempt::decode(&raw, &"a".repeat(64), 2, "wallet", Network::Regtest).is_err()
++        );
++    }
++    fn transfer() -> WalletTransfer {
++        use spark_wallet::{
++            BitcoinNetwork, ClaimStaticDepositInfo, ClaimStaticDepositStatus, CurrencyAmount,
++            CurrencyUnit, PublicKey, Transfer,
++        };
++        let pk = |fill: u8| {
++            let mut b = [fill; 33];
++            b[0] = 2;
++            PublicKey::from_slice(&b).unwrap()
++        };
++        let (ours, ssp) = (pk(1), pk(2));
++        let raw = Transfer {
++            id: TransferId::from_str(ID).unwrap(),
++            sender_identity_public_key: ssp,
++            receiver_identity_public_key: ours,
++            status: TransferStatus::SenderKeyTweaked,
++            total_value: 990,
++            expiry_time: None,
++            leaves: Vec::new(),
++            created_time: None,
++            updated_time: None,
++            transfer_type: TransferType::UtxoSwap,
++            spark_invoice: None,
++        };
++        let amount = |sats| CurrencyAmount {
++            original_value: sats,
++            original_unit: CurrencyUnit::Satoshi,
++            preferred_currency_unit: CurrencyUnit::Satoshi,
++            preferred_currency_value_rounded: sats,
++        };
++        let mut t = WalletTransfer::from_transfer(raw, None, None, ours, ssp);
++        t.user_request = Some(SspUserRequest::ClaimStaticDeposit(ClaimStaticDepositInfo {
++            id: "ssp-request".into(),
++            created_at: chrono::Utc::now(),
++            updated_at: chrono::Utc::now(),
++            network: BitcoinNetwork::Regtest,
++            deposit_amount: amount(1000),
++            deposit_status: ClaimStaticDepositStatus::TransferCreated,
++            credit_amount: amount(990),
++            max_fee: amount(10),
++            transaction_id: "a".repeat(64),
++            output_index: 2,
++            bitcoin_network: BitcoinNetwork::Regtest,
++            transfer_spark_id: Some(ID.into()),
++        }));
++        t
++    }
++    fn check(t: &WalletTransfer) -> Result<Payment, SdkError> {
++        receipt(
++            t,
++            &"a".repeat(64),
++            2,
++            &transfer().receiver_id.to_string(),
++            Network::Regtest,
++        )
++    }
++    #[test]
++    fn mature_deposit_receipt_requires_exact_ssp_operator_correlation() {
++        assert!(check(&transfer()).is_ok());
++    }
++    #[test]
++    fn mature_deposit_receipt_rejects_missing_or_other_transfer() {
++        for id in [None, Some("00000000-0000-4000-8000-000000000002".into())] {
++            let mut t = transfer();
++            let Some(SspUserRequest::ClaimStaticDeposit(d)) = &mut t.user_request else {
++                panic!()
++            };
++            d.transfer_spark_id = id;
++            assert!(check(&t).is_err());
++        }
++    }
++    #[test]
++    fn mature_deposit_receipt_rejects_other_networks() {
++        for field in [0, 1] {
++            let mut t = transfer();
++            let Some(SspUserRequest::ClaimStaticDeposit(d)) = &mut t.user_request else {
++                panic!()
++            };
++            if field == 0 {
++                d.network = spark_wallet::BitcoinNetwork::Mainnet;
++            } else {
++                d.bitcoin_network = spark_wallet::BitcoinNetwork::Mainnet;
++            }
++            assert!(check(&t).is_err());
++        }
++    }
++    #[test]
++    fn mature_deposit_receipt_rejects_other_credit() {
++        let mut t = transfer();
++        let Some(SspUserRequest::ClaimStaticDeposit(d)) = &mut t.user_request else {
++            panic!()
++        };
++        d.credit_amount.original_value = 989;
++        assert!(check(&t).is_err());
++    }
++    #[test]
++    fn mature_deposit_receipt_rejects_other_wallet() {
++        let mut t = transfer();
++        t.receiver_id = t.sender_id;
++        assert!(check(&t).is_err());
++    }
++    #[tokio::test]
++    async fn mature_deposit_receiving_boundary_survives_sqlite_reopen() {
++        use crate::{Storage, persist::sqlite::SqliteStorage};
++        let path =
++            std::env::temp_dir().join(format!("gys-deposit-boundary-{}", uuid::Uuid::new_v4()));
++        let key = marker(&"a".repeat(64), 2);
++        let first = SqliteStorage::new(&path).unwrap();
++        first
++            .set_cached_item(key.clone(), original().to_string())
++            .await
++            .unwrap();
++        let raw = first.get_cached_item(key.clone()).await.unwrap().unwrap();
++        let mut attempt =
++            DepositAttempt::decode(&raw, &"a".repeat(64), 2, "wallet", Network::Regtest).unwrap();
++        attempt.authorize_receiving(ID).unwrap();
++        let encoded = serde_json::to_string(&attempt).unwrap();
++        first
++            .set_cached_item(key.clone(), encoded.clone())
++            .await
++            .unwrap();
++        assert_eq!(
++            first.get_cached_item(key.clone()).await.unwrap(),
++            Some(encoded.clone())
++        );
++        drop(first);
++        // A process interruption after this commit must not permit receiving again.
++        let reopened = SqliteStorage::new(&path).unwrap();
++        let saved = reopened.get_cached_item(key).await.unwrap().unwrap();
++        assert_eq!(saved, encoded);
++        let mut restored =
++            DepositAttempt::decode(&saved, &"a".repeat(64), 2, "wallet", Network::Regtest).unwrap();
++        assert!(restored.authorize_receiving(ID).is_err());
++        assert_eq!(restored.amount, 1000);
++        assert_eq!(restored.max_fee, 10);
++        drop(reopened);
++        std::fs::remove_dir_all(path).unwrap();
++    }
++}
+diff --git a/crates/breez-sdk/core/src/sdk/mod.rs b/crates/breez-sdk/core/src/sdk/mod.rs
+index ca49aaaf806894e1873a04527eef2383d9ba6e18..59abeae31a8412df858b8e9f7565328a4ad0cc51 100644
+--- a/crates/breez-sdk/core/src/sdk/mod.rs
++++ b/crates/breez-sdk/core/src/sdk/mod.rs
+@@ -3,6 +3,7 @@ mod buy;
+ mod chain_queries;
+ mod contacts;
+ mod deposits;
++mod signed_recovery;
+ pub(crate) mod exit_chain_downloader;
+ mod helpers;
+ mod init;
+@@ -13,6 +14,9 @@ mod payments;
+ mod recover_funds;
+ mod runtime;
+ mod sync;
++mod observation;
++mod incoming_claim;
++mod mature_deposit;
+ mod sync_coordinator;
+ mod token_allowances;
+ mod unilateral_exit;
+@@ -32,6 +36,7 @@ use spark_wallet::SparkWallet;
+ use std::sync::Arc;
+ use tokio::sync::{Mutex, OnceCell, oneshot, watch};
+ 
++use crate::Seed;
+ use crate::{
+     BitcoinChainService, LeafOptimizationConfig, Logger, Network, TokenOptimizationConfig,
+     error::SdkError, events::EventEmitter, lnurl::LnurlServerClient, logger, models::Config,
+@@ -434,16 +439,35 @@ pub fn default_external_signers(
+     network: Network,
+     account_number: Option<u32>,
+ ) -> Result<ExternalSigners, SdkError> {
+-    use crate::signer::{DefaultExternalSigner, DefaultExternalSparkSigner};
+-
+-    let breez_signer = DefaultExternalSigner::new(
+-        mnemonic.clone(),
+-        passphrase.clone(),
++    default_external_signers_from_seed(
++        Seed::Mnemonic {
++            mnemonic,
++            passphrase,
++        },
+         network,
+         account_number,
+-    )?;
+-    let spark_signer =
+-        DefaultExternalSparkSigner::new(mnemonic, passphrase, network, account_number)?;
++    )
++}
++
++/// Creates the default external signers from either supported seed representation.
++///
++/// Uses the same seed bytes and account derivation as `SdkBuilder::new`. In
++/// particular, `Seed::Entropy` is raw BIP32 seed material, not BIP39 entropy to
++/// convert to words. Converting it to a mnemonic would derive a different wallet.
++/// An unset account number preserves the network default: 1 on Mainnet, otherwise 0.
++///
++/// These signers retain keys in process. Wrapping them adds application policy;
++/// it does not turn them into hardware-backed or isolated signing devices.
++#[cfg_attr(feature = "uniffi", uniffi::export)]
++pub fn default_external_signers_from_seed(
++    seed: Seed,
++    network: Network,
++    account_number: Option<u32>,
++) -> Result<ExternalSigners, SdkError> {
++    use crate::signer::{DefaultExternalSigner, DefaultExternalSparkSigner};
++
++    let breez_signer = DefaultExternalSigner::from_seed(&seed, network, account_number)?;
++    let spark_signer = DefaultExternalSparkSigner::from_seed(&seed, network, account_number)?;
+ 
+     Ok(ExternalSigners {
+         breez_signer: Arc::new(breez_signer),
+@@ -531,6 +555,128 @@ pub async fn get_spark_status(
+ mod tests {
+     use super::*;
+ 
++    // Disposable BIP39 test vector only. No network, storage or wallet build.
++    const SIGNER_TEST_MNEMONIC: &str = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
++
++    async fn assert_seed_factory_preserves_identity(
++        seed: Seed,
++        network: Network,
++        account_number: Option<u32>,
++    ) {
++        use bitcoin::bip32::DerivationPath;
++        use bitcoin::secp256k1::Message;
++        use crate::signer::{BreezSigner, breez::BreezSignerImpl};
++        use crate::signer::external_types::MessageBytes;
++        use spark_wallet::SparkSigner;
++
++        let seed_bytes = seed.to_bytes().unwrap();
++        let external = default_external_signers_from_seed(seed, network, account_number).unwrap();
++        // These are the exact roots selected by sdk_builder::prepare_signers.
++        let original_breez = BreezSignerImpl::new(
++            spark_wallet::identity_master_key(&seed_bytes, network.into(), account_number)
++                .unwrap(),
++        );
++        let original_spark = spark_wallet::SparkSignerAdapter::new(Arc::new(
++            spark_wallet::DefaultSigner::from_master(
++                spark_wallet::account_master_key(&seed_bytes, network.into(), account_number)
++                    .unwrap(),
++            ),
++        ));
++        let external_identity = external.spark_signer.get_identity_public_key().await.unwrap();
++        assert_eq!(
++            external_identity.to_public_key().unwrap(),
++            original_spark.get_identity_public_key().await.unwrap(),
++        );
++        assert_eq!(
++            external.breez_signer.derive_public_key("m".to_string()).await.unwrap().bytes,
++            external_identity.bytes,
++        );
++        let path: DerivationPath = "m/2'/7".parse().unwrap();
++        assert_eq!(
++            external.breez_signer.derive_public_key(path.to_string()).await.unwrap()
++                .to_public_key().unwrap(),
++            original_breez.derive_public_key(&path).await.unwrap(),
++        );
++        assert_eq!(
++            external.breez_signer.sign_ecdsa(
++                MessageBytes::new(vec![42; 32]), path.to_string(),
++            ).await.unwrap().to_signature().unwrap(),
++            original_breez.sign_ecdsa(Message::from_digest([42; 32]), &path).await.unwrap(),
++        );
++        assert_eq!(
++            external.spark_signer.get_static_deposit_public_key(3).await.unwrap()
++                .to_public_key().unwrap(),
++            original_spark.get_static_deposit_public_key(3).await.unwrap(),
++        );
++    }
++
++    #[macros::async_test_all]
++    async fn seed_factory_preserves_mnemonic_and_raw_entropy_wallets() {
++        for network in [Network::Mainnet, Network::Signet, Network::Regtest] {
++            for account_number in [None, Some(0), Some(7)] {
++                for seed in [
++                    Seed::Mnemonic {
++                        mnemonic: SIGNER_TEST_MNEMONIC.to_string(),
++                        passphrase: Some("disposable test passphrase".to_string()),
++                    },
++                    Seed::Entropy(vec![17; 32]),
++                    Seed::Entropy((0..64).collect()),
++                ] {
++                    assert_seed_factory_preserves_identity(seed, network, account_number).await;
++                }
++            }
++        }
++    }
++
++    #[macros::async_test_all]
++    async fn seed_factory_keeps_mnemonic_api_and_network_defaults_compatible() {
++        for network in [Network::Mainnet, Network::Signet, Network::Regtest] {
++            let legacy = default_external_signers(
++                SIGNER_TEST_MNEMONIC.to_string(), None, network, None,
++            ).unwrap();
++            let from_seed = default_external_signers_from_seed(
++                Seed::Mnemonic {
++                    mnemonic: SIGNER_TEST_MNEMONIC.to_string(), passphrase: None,
++                }, network, None,
++            ).unwrap();
++            assert_eq!(
++                legacy.spark_signer.get_identity_public_key().await.unwrap().bytes,
++                from_seed.spark_signer.get_identity_public_key().await.unwrap().bytes,
++            );
++            let default_account = match network {
++                Network::Mainnet => 1,
++                _ => 0,
++            };
++            let explicit = default_external_signers_from_seed(
++                Seed::Mnemonic {
++                    mnemonic: SIGNER_TEST_MNEMONIC.to_string(), passphrase: None,
++                }, network, Some(default_account),
++            ).unwrap();
++            assert_eq!(
++                from_seed.spark_signer.get_identity_public_key().await.unwrap().bytes,
++                explicit.spark_signer.get_identity_public_key().await.unwrap().bytes,
++            );
++        }
++    }
++
++    #[macros::async_test_all]
++    async fn seed_factory_does_not_reinterpret_raw_entropy_as_mnemonic_entropy() {
++        let raw_entropy = vec![17; 32];
++        let converted_mnemonic = bip39::Mnemonic::from_entropy(&raw_entropy).unwrap();
++        let raw = default_external_signers_from_seed(
++            Seed::Entropy(raw_entropy), Network::Mainnet, None,
++        ).unwrap();
++        let converted = default_external_signers_from_seed(
++            Seed::Mnemonic {
++                mnemonic: converted_mnemonic.to_string(), passphrase: None,
++            }, Network::Mainnet, None,
++        ).unwrap();
++        assert_ne!(
++            raw.spark_signer.get_identity_public_key().await.unwrap().bytes,
++            converted.spark_signer.get_identity_public_key().await.unwrap().bytes,
++        );
++    }
++
+     #[test]
+     fn default_server_config_disables_background_tasks() {
+         for network in [Network::Mainnet, Network::Regtest, Network::Signet] {
+diff --git a/crates/breez-sdk/core/src/sdk/observation.rs b/crates/breez-sdk/core/src/sdk/observation.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..5ea52bbe5c6df64df4d62d650b74118b71fab2fd
+--- /dev/null
++++ b/crates/breez-sdk/core/src/sdk/observation.rs
+@@ -0,0 +1,207 @@
++//! Observation-only operations deliberately do not use `sync_wallet_internal`.
++//! In particular, they never call resume_pending_sends, claim_pending_transfers,
++//! check_and_claim_static_deposits, leaf renewal, recover_funds or a broadcaster.
++use std::str::FromStr;
++use bitcoin::hashes::{sha256, Hash};
++use spark_wallet::{ListTransfersRequest, TransferId, TransferStatus, TransferDirection,
++    SspUserRequest, LightningSendStatus};
++use crate::{GetInfoRequest, GetInfoResponse, ObservePaymentRequest, ObservePaymentResponse,
++    Payment, PaymentDetails, PaymentMethod, PaymentStatus, PaymentType,
++    PaymentObservationOutcome, SparkHtlcStatus, SdkError};
++use crate::sync::SparkSyncService;
++use crate::utils::payments::update_balances;
++use super::BreezSdk;
++
++fn recipient_commitment(rail: &str, recipient: &str) -> String {
++    let mut material = rail.as_bytes().to_vec();
++    material.push(0);
++    material.extend_from_slice(recipient.as_bytes());
++    sha256::Hash::hash(&material).to_string()
++}
++
++fn proven_lightning_completion(payment: &Payment) -> bool {
++    let Some(PaymentDetails::Lightning { invoice, htlc_details, .. }) = &payment.details else { return false; };
++    let Some(preimage) = &htlc_details.preimage else { return false; };
++    let Ok(preimage) = hex::decode(preimage) else { return false; };
++    if preimage.len() != 32 { return false; }
++    let Some(parsed) = breez_sdk_common::input::parse_invoice(invoice) else { return false; };
++    let actual = sha256::Hash::hash(&preimage).to_string();
++    actual.eq_ignore_ascii_case(&htlc_details.payment_hash)
++        && actual.eq_ignore_ascii_case(&parsed.payment_hash)
++}
++
++/// Non-payment requires returned ownership, not a lossy SDK "failed" label.
++fn classify_observation(payment: &Payment, returned: bool, completed: bool,
++    lightning_return_confirmed: bool) -> PaymentObservationOutcome {
++    use PaymentObservationOutcome as O;
++    if payment.payment_type != PaymentType::Send || payment.conversion_details.is_some() { return O::Unresolved; }
++    match payment.method {
++        PaymentMethod::Lightning => {
++            if proven_lightning_completion(payment) { return O::Completed; }
++            let htlc_returned = matches!(&payment.details,
++                Some(PaymentDetails::Lightning { htlc_details, .. })
++                if htlc_details.status == SparkHtlcStatus::Returned && htlc_details.preimage.is_none());
++            if returned && lightning_return_confirmed && htlc_returned { O::Returned } else { O::Unresolved }
++        },
++        PaymentMethod::Spark if completed && payment.status == PaymentStatus::Completed => O::Completed,
++        PaymentMethod::Spark if returned && payment.status == PaymentStatus::Failed => O::Returned,
++        // Withdrawal acceptance alone is not evidence of a final Bitcoin payout.
++        _ => O::Unresolved,
++    }
++}
++
++#[cfg_attr(feature = "uniffi", uniffi::export(async_runtime = "tokio"))]
++impl BreezSdk {
++    /// Observe balances and history without starting new value-moving work.
++    /// Does not claim incoming funds, renew expired leaves or resume a send.
++    pub async fn observe_wallet_state(&self) -> Result<GetInfoResponse, SdkError> {
++        self.spark_wallet.observe_outputs().await?;
++        update_balances(self.spark_wallet.clone(), self.storage.clone()).await?;
++        SparkSyncService::new(self.spark_wallet.clone(), self.storage.clone(), self.event_emitter.clone())
++            .sync_payments(false).await?;
++        self.get_info(GetInfoRequest { ensure_synced: Some(false) }).await
++    }
++
++    /// Query an exact transfer from operators/provider. Missing data is unknown,
++    /// never proof of failure. The caller must also enforce its original intent.
++    pub async fn observe_payment(&self, request: ObservePaymentRequest) -> Result<ObservePaymentResponse, SdkError> {
++        if request.recipient_commitment.len() != 64 || !request.recipient_commitment.bytes().all(|b| b.is_ascii_hexdigit()) {
++            return Err(SdkError::Generic("Invalid recipient commitment".to_string()));
++        }
++        let id = TransferId::from_str(&request.payment_id)
++            .map_err(|_| SdkError::Generic("Invalid observation transfer id".to_string()))?;
++        let result = self.spark_wallet.list_transfers(ListTransfersRequest {
++            transfer_ids: vec![id], ..Default::default()
++        }).await?;
++        let mut response = ObservePaymentResponse {
++            payment_id: request.payment_id.clone(), recipient_commitment: None,
++            identity_pubkey: self.spark_wallet.get_identity_public_key().to_string(),
++            network: self.config.network,
++            observed_at: u64::from(breez_sdk_common::utils::now()),
++            outcome: PaymentObservationOutcome::NotFound, payment: None,
++        };
++        let Some(transfer) = result.items.into_iter().find(|t| t.id.to_string() == request.payment_id) else { return Ok(response); };
++        if transfer.direction != TransferDirection::Outgoing {
++            return Err(SdkError::Generic("Observed transfer does not originate from this wallet".to_string()));
++        }
++        let returned = transfer.status == TransferStatus::Returned;
++        let completed = transfer.status == TransferStatus::Completed;
++        let lightning_return_confirmed = match &transfer.user_request {
++            Some(SspUserRequest::LightningSendRequest(r)) => matches!(
++                LightningSendStatus::from(r.status.clone()), LightningSendStatus::UserSwapReturned),
++            _ => false,
++        };
++        let spark_recipient = transfer.receiver_id.to_string();
++        let mut payment = Payment::try_from(transfer)?;
++        response.outcome = classify_observation(&payment, returned, completed, lightning_return_confirmed);
++        let commitment = match &payment.details {
++            Some(PaymentDetails::Lightning { invoice, .. }) => Some(recipient_commitment("lightning", &invoice.to_lowercase())),
++            Some(PaymentDetails::Withdraw { tx_id }) => {
++                // Provider acceptance is not enough. Check the independently fetched
++                // Bitcoin transaction, txid and exact approved destination/amount.
++                let status = self.chain_service.get_transaction_status(tx_id.clone()).await?;
++                if !status.confirmed { None } else {
++                    let encoded = self.chain_service.get_transaction_hex(tx_id.clone()).await?;
++                    let bytes = hex::decode(encoded).map_err(|_| SdkError::Generic("Invalid payout transaction".to_string()))?;
++                    let transaction: bitcoin::Transaction = bitcoin::consensus::deserialize(&bytes)
++                        .map_err(|_| SdkError::Generic("Invalid payout transaction".to_string()))?;
++                    if transaction.compute_txid().to_string() != *tx_id {
++                        return Err(SdkError::Generic("Payout transaction id mismatch".to_string()));
++                    }
++                    let mut received = 0u128;
++                    for output in &transaction.output {
++                        let Ok(address) = bitcoin::Address::from_script(&output.script_pubkey, bitcoin::Network::from(self.config.network)) else { continue; };
++                        if recipient_commitment("bitcoin", &address.to_string()) == request.recipient_commitment {
++                            received = received.checked_add(u128::from(output.value.to_sat()))
++                                .ok_or_else(|| SdkError::Generic("Invalid payout value".to_string()))?;
++                        }
++                    }
++                    if received >= payment.amount && payment.amount > 0 {
++                        response.outcome = PaymentObservationOutcome::Completed;
++                        Some(request.recipient_commitment.clone())
++                    } else { None }
++                }
++            },
++            _ if payment.method == PaymentMethod::Spark => Some(recipient_commitment("spark", &spark_recipient)),
++            _ => None,
++        };
++        if let Some(actual) = &commitment {
++            if actual != &request.recipient_commitment {
++                return Err(SdkError::Generic("Observed recipient differs from approved payment".to_string()));
++            }
++        } else { response.outcome = PaymentObservationOutcome::Unresolved; }
++        if response.outcome == PaymentObservationOutcome::Completed { payment.status = PaymentStatus::Completed; }
++        if response.outcome == PaymentObservationOutcome::Returned { payment.status = PaymentStatus::Failed; }
++        response.recipient_commitment = commitment;
++        response.payment = Some(payment);
++        Ok(response)
++    }
++}
++
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    fn fixture(method: PaymentMethod, status: PaymentStatus) -> Payment {
++        Payment { id: "disposable-observation-fixture".to_string(), payment_type: PaymentType::Send,
++            status, amount: 100, fees: 2, timestamp: 1, method, details: None, conversion_details: None }
++    }
++    fn lightning_return() -> Payment {
++        let mut p = fixture(PaymentMethod::Lightning, PaymentStatus::Failed);
++        p.details = Some(PaymentDetails::Lightning {
++            description: None, invoice: "unpayable-test-fixture".to_string(), destination_pubkey: "".to_string(),
++            htlc_details: crate::SparkHtlcDetails { payment_hash: "00".repeat(32), preimage: None,
++                expiry_time: 1, status: SparkHtlcStatus::Returned },
++            lnurl_pay_info: None, lnurl_withdraw_info: None, lnurl_receive_metadata: None, conversion_info: None,
++        }); p
++    }
++    #[test]
++    fn observation_generic_failure_is_never_a_refund() {
++        for method in [PaymentMethod::Spark, PaymentMethod::Lightning, PaymentMethod::Withdraw] {
++            assert_eq!(classify_observation(&fixture(method, PaymentStatus::Failed), false, false, false),
++                PaymentObservationOutcome::Unresolved);
++        }
++    }
++    #[test]
++    fn observation_spark_return_requires_operator_return_and_failed_projection() {
++        assert_eq!(classify_observation(&fixture(PaymentMethod::Spark, PaymentStatus::Failed), true, false, false), PaymentObservationOutcome::Returned);
++        assert_eq!(classify_observation(&fixture(PaymentMethod::Spark, PaymentStatus::Pending), true, false, false), PaymentObservationOutcome::Unresolved);
++    }
++    #[test]
++    fn observation_spark_completion_requires_final_operator_status() {
++        let p = fixture(PaymentMethod::Spark, PaymentStatus::Completed);
++        assert_eq!(classify_observation(&p, false, false, false), PaymentObservationOutcome::Unresolved);
++        assert_eq!(classify_observation(&p, false, true, false), PaymentObservationOutcome::Completed);
++    }
++    #[test]
++    fn observation_lightning_return_needs_operator_provider_and_htlc_agreement() {
++        let p = lightning_return();
++        assert_eq!(classify_observation(&p, true, false, true), PaymentObservationOutcome::Returned);
++        assert_eq!(classify_observation(&p, false, false, true), PaymentObservationOutcome::Unresolved);
++        assert_eq!(classify_observation(&p, true, false, false), PaymentObservationOutcome::Unresolved);
++    }
++    #[test]
++    fn observation_preimage_conflict_keeps_return_unresolved() {
++        let mut p = lightning_return();
++        if let Some(PaymentDetails::Lightning { htlc_details, .. }) = &mut p.details {
++            htlc_details.preimage = Some("11".repeat(32));
++        }
++        assert_eq!(classify_observation(&p, true, false, true), PaymentObservationOutcome::Unresolved);
++    }
++    #[test]
++    fn observation_withdrawal_acceptance_is_not_payout_proof() {
++        let p = fixture(PaymentMethod::Withdraw, PaymentStatus::Completed);
++        assert_eq!(classify_observation(&p, false, true, false), PaymentObservationOutcome::Unresolved);
++    }
++    #[test]
++    fn observation_completed_label_without_preimage_never_proves_lightning_payment() {
++        let p = fixture(PaymentMethod::Lightning, PaymentStatus::Completed);
++        assert_eq!(classify_observation(&p, false, true, false), PaymentObservationOutcome::Unresolved);
++    }
++    #[test]
++    fn observation_incoming_record_cannot_resolve_outgoing_operation() {
++        let mut p = fixture(PaymentMethod::Spark, PaymentStatus::Completed);
++        p.payment_type = PaymentType::Receive;
++        assert_eq!(classify_observation(&p, false, true, false), PaymentObservationOutcome::Unresolved);
++    }
++}
+diff --git a/crates/breez-sdk/core/src/sdk/signed_recovery.rs b/crates/breez-sdk/core/src/sdk/signed_recovery.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..26353716809b34484618d8897b792c6fe0813db1
+--- /dev/null
++++ b/crates/breez-sdk/core/src/sdk/signed_recovery.rs
+@@ -0,0 +1,80 @@
++use std::str::FromStr;
++use bitcoin::{Address, Transaction, Txid, Script, consensus::encode::deserialize_hex, hex::DisplayHex};
++use crate::{SdkError, Fee, RefundDepositResponse, VerifyRefundTransactionRequest,
++    InspectRecoveryTransactionRequest, InspectRecoveryTransactionResponse, InspectedRecoveryOutput,
++    utils::utxo_fetcher::CachedUtxoFetcher};
++use super::BreezSdk;
++
++fn invalid(message: &str) -> SdkError { SdkError::InvalidInput(message.to_string()) }
++fn parse_transaction(hex: &str) -> Result<Transaction, SdkError> {
++    if hex.is_empty() || hex.len()>8_000_000 || hex.len()%2!=0 {
++        return Err(invalid("Invalid recovery transaction size"));
++    }
++    deserialize_hex(hex).map_err(|_| invalid("Invalid recovery transaction encoding"))
++}
++fn verify_refund_envelope(tx: &Transaction, source: Txid, vout: u32, value: u64,
++    destination: &Script, fee: u64, expected_txid: &str) -> Result<(), SdkError> {
++    if tx.compute_txid().to_string()!=expected_txid.to_lowercase() || tx.input.len()!=1 ||
++        tx.input[0].previous_output.txid!=source || tx.input[0].previous_output.vout!=vout ||
++        tx.output.len()!=1 || tx.output[0].script_pubkey.as_script()!=destination ||
++        value.checked_sub(tx.output[0].value.to_sat())!=Some(fee) ||
++        tx.output[0].value.to_sat()==0 ||
++        (tx.input[0].witness.is_empty() && tx.input[0].script_sig.is_empty()) {
++        return Err(invalid("Signed refund differs from the authorized source, destination or fee"));
++    }
++    Ok(())
++}
++
++#[macros::instance_span]
++#[cfg_attr(feature = "uniffi", uniffi::export(async_runtime = "tokio"))]
++impl BreezSdk {
++    /// Observation and envelope validation only: no signing, claims or broadcasts.
++    pub async fn verify_refund_transaction(&self, request: VerifyRefundTransactionRequest) -> Result<RefundDepositResponse,SdkError> {
++        let fee=match request.refund.fee {Fee::Fixed{amount}=>amount,_=>return Err(invalid("A fixed refund fee is required"))};
++        let destination=Address::from_str(&request.refund.destination_address)
++            .map_err(|_|invalid("Invalid refund destination"))?
++            .require_network(bitcoin::Network::from(self.config.network))
++            .map_err(|_|invalid("Refund destination network mismatch"))?;
++        let utxo=CachedUtxoFetcher::new(self.chain_service.clone(),self.storage.clone())
++            .fetch_detailed_utxo(&request.refund.txid,request.refund.vout).await?;
++        if utxo.value!=request.expected_amount_sats {return Err(invalid("Refund source value changed"));}
++        let tx=parse_transaction(&request.tx_hex)?;
++        verify_refund_envelope(&tx,utxo.txid,utxo.vout,utxo.value,
++            destination.script_pubkey().as_script(),fee,&request.tx_id)?;
++        Ok(RefundDepositResponse{tx_id:tx.compute_txid().to_string(),tx_hex:request.tx_hex})
++    }
++    /// Decode an already signed plan without granting any signing capability.
++    /// This verifies serialization and transaction identity, not consensus signatures.
++    pub fn inspect_recovery_transaction(&self, request: InspectRecoveryTransactionRequest) -> Result<InspectRecoveryTransactionResponse,SdkError> {
++        let tx=parse_transaction(&request.tx_hex)?;
++        let network=bitcoin::Network::from(self.config.network);
++        Ok(InspectRecoveryTransactionResponse {
++            tx_id:tx.compute_txid().to_string(),
++            input_outpoints:tx.input.iter().map(|i|i.previous_output.to_string()).collect(),
++            outputs:tx.output.iter().map(|o|InspectedRecoveryOutput {
++                value_sats:o.value.to_sat(), script_hex:o.script_pubkey.as_bytes().as_hex().to_string(),
++                address:Address::from_script(&o.script_pubkey,network).ok().map(|a|a.to_string()),
++            }).collect(),
++        })
++    }
++}
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use bitcoin::{Amount, OutPoint, TxIn, TxOut, Witness, ScriptBuf, Sequence, absolute::LockTime, transaction::Version, hashes::Hash};
++    fn tx()->Transaction {
++        Transaction {version:Version::TWO,lock_time:LockTime::ZERO,
++            input:vec![TxIn {previous_output:OutPoint{txid:Txid::all_zeros(),vout:1},
++                script_sig:ScriptBuf::new(),sequence:Sequence::MAX,witness:Witness::from_slice(&[vec![1u8;64]])}],
++            output:vec![TxOut{value:Amount::from_sat(900),script_pubkey:ScriptBuf::new()}]}
++    }
++    fn verify(t:&Transaction)->Result<(),SdkError>{verify_refund_envelope(t,Txid::all_zeros(),1,1000,Script::new(),100,&t.compute_txid().to_string())}
++    #[test] fn signed_recovery_exact_refund_envelope(){assert!(verify(&tx()).is_ok());}
++    #[test] fn signed_recovery_wrong_outpoint(){let mut t=tx();t.input[0].previous_output.vout=2;assert!(verify(&t).is_err());}
++    #[test] fn signed_recovery_wrong_fee(){let mut t=tx();t.output[0].value=Amount::from_sat(899);assert!(verify(&t).is_err());}
++    #[test] fn signed_recovery_extra_output(){let mut t=tx();t.output.push(t.output[0].clone());assert!(verify(&t).is_err());}
++    #[test] fn signed_recovery_unsigned(){let mut t=tx();t.input[0].witness=Witness::new();assert!(verify(&t).is_err());}
++    #[test] fn signed_recovery_mismatched_txid(){let t=tx();assert!(verify_refund_envelope(&t,Txid::all_zeros(),1,1000,Script::new(),100,&"11".repeat(32)).is_err());}
++    #[test] fn signed_recovery_changed_destination(){let mut t=tx();t.output[0].script_pubkey=ScriptBuf::from_bytes(vec![0x51]);assert!(verify(&t).is_err());}
++    #[test] fn signed_recovery_malformed_encoding(){for s in ["","00","abcd","zz"]{assert!(parse_transaction(s).is_err());}}
++}
+diff --git a/crates/breez-sdk/core/src/sdk/unilateral_exit.rs b/crates/breez-sdk/core/src/sdk/unilateral_exit.rs
+index 075f8fdee504df8692abb3bdba013e9479690644..bfcad6ab3c1dd0f5c68a93e86fbc85427009d4e4 100644
+--- a/crates/breez-sdk/core/src/sdk/unilateral_exit.rs
++++ b/crates/breez-sdk/core/src/sdk/unilateral_exit.rs
+@@ -1217,6 +1217,7 @@ async fn sign_psbt_via(
+         .map_err(|e| SdkError::Signer(format!("CPFP signer error: {e}")))?;
+     let out_psbt = bitcoin::Psbt::deserialize(&out_bytes)
+         .map_err(|e| SdkError::Generic(format!("Failed to deserialize signed PSBT: {e}")))?;
++    verify_signer_transaction(&psbt, &out_psbt)?;
+     ensure_all_inputs_finalized(&out_psbt)?;
+     Ok(serialize_hex(&out_psbt.extract_tx_unchecked_fee_rate()))
+ }
+@@ -1237,9 +1238,11 @@ async fn finalize_sweep(
+             .sign_psbt(psbt.serialize())
+             .await
+             .map_err(|e| SdkError::Signer(format!("Sweep signer error: {e}")))?;
+-        bitcoin::Psbt::deserialize(&out_bytes).map_err(|e| {
++        let signed = bitcoin::Psbt::deserialize(&out_bytes).map_err(|e| {
+             SdkError::Generic(format!("Failed to deserialize signed sweep PSBT: {e}"))
+-        })?
++        })?;
++        verify_signer_transaction(&psbt, &signed)?;
++        signed
+     } else {
+         psbt
+     };
+@@ -1251,6 +1254,43 @@ fn no_signer() -> SdkError {
+     SdkError::InvalidInput("A signer is needed to sign the funding inputs".to_string())
+ }
+ 
++/// An external signer may add signatures, not replace the reviewed transaction
++/// or its funding evidence. In particular, a CPFP signer must preserve refund
++/// signatures that the leaf signer already supplied for a mixed-input sweep.
++/// This is envelope integrity, not a consensus-signature verification.
++fn verify_signer_transaction(
++    original: &bitcoin::Psbt,
++    signed: &bitcoin::Psbt,
++) -> Result<(), SdkError> {
++    if original.unsigned_tx != signed.unsigned_tx
++        || original.inputs.len() != signed.inputs.len()
++        || original.outputs.len() != signed.outputs.len()
++    {
++        return Err(SdkError::Signer(
++            "Signer changed the recovery transaction".to_string(),
++        ));
++    }
++    for (before, after) in original.inputs.iter().zip(&signed.inputs) {
++        if before.witness_utxo != after.witness_utxo
++            || before.non_witness_utxo != after.non_witness_utxo
++            || before.sighash_type != after.sighash_type
++            || before
++                .final_script_witness
++                .as_ref()
++                .is_some_and(|w| after.final_script_witness.as_ref() != Some(w))
++            || before
++                .final_script_sig
++                .as_ref()
++                .is_some_and(|s| after.final_script_sig.as_ref() != Some(s))
++        {
++            return Err(SdkError::Signer(
++                "Signer changed recovery funding or existing signatures".to_string(),
++            ));
++        }
++    }
++    Ok(())
++}
++
+ /// Rejects a PSBT with any input the signer left unfinalized (neither a witness
+ /// nor a scriptSig), so a missing signature fails here instead of at broadcast.
+ fn ensure_all_inputs_finalized(psbt: &bitcoin::Psbt) -> Result<(), SdkError> {
+@@ -1460,6 +1500,107 @@ mod tests {
+         assert!(result.is_ok());
+     }
+ 
++    #[macros::async_test_all]
++    async fn recovery_envelope_accepts_builtin_p2wpkh_and_taproot_signer() {
++        let secret = bitcoin::secp256k1::SecretKey::from_slice(&[7; 32]).unwrap();
++        let secp = bitcoin::secp256k1::Secp256k1::new();
++        let public = secret.public_key(&secp);
++        let wpkh = bitcoin::PublicKey::new(public).wpubkey_hash().unwrap();
++        let (xonly, _) = public.x_only_public_key();
++        let signer = crate::signer::single_key_cpfp_signer(secret.secret_bytes().to_vec()).unwrap();
++        for script in [
++            ScriptBuf::new_p2wpkh(&wpkh),
++            ScriptBuf::new_p2tr(&secp, xonly, None),
++        ] {
++            let mut psbt = unsigned_two_input_psbt();
++            for input in &mut psbt.inputs {
++                input.witness_utxo.as_mut().unwrap().script_pubkey = script.clone();
++            }
++            assert!(
++                sign_psbt_via(psbt.clone(), Some(signer.as_ref()))
++                    .await
++                    .is_ok()
++            );
++            assert!(finalize_sweep(psbt, Some(signer.as_ref())).await.is_ok());
++        }
++    }
++
++    struct AlteringSigner {
++        change: usize,
++    }
++    #[macros::async_trait]
++    impl CpfpSigner for AlteringSigner {
++        async fn sign_psbt(&self, bytes: Vec<u8>) -> Result<Vec<u8>, SignerError> {
++            let mut p = bitcoin::Psbt::deserialize(&bytes).unwrap();
++            match self.change {
++                0 => p.unsigned_tx.output[0].value = Amount::from_sat(999),
++                1 => p.unsigned_tx.output[0].script_pubkey = ScriptBuf::from_bytes(vec![0x51]),
++                2 => p.unsigned_tx.input[0].previous_output.vout = 9,
++                3 => p.unsigned_tx.input[0].sequence = bitcoin::Sequence::ZERO,
++                4 => p.unsigned_tx.lock_time = bitcoin::absolute::LockTime::from_consensus(100),
++                5 => p.inputs[0].witness_utxo.as_mut().unwrap().value = Amount::from_sat(1),
++                6 => p.inputs[0].witness_utxo = None,
++                7 => p.inputs[0].sighash_type = Some(bitcoin::EcdsaSighashType::None.into()),
++                8 => p.unsigned_tx.version = bitcoin::transaction::Version::ONE,
++                _ => panic!("unknown alteration"),
++            }
++            p.inputs.iter_mut().for_each(finalize_input);
++            Ok(p.serialize())
++        }
++    }
++    #[macros::async_test_all]
++    async fn recovery_signer_cannot_change_approved_transaction_or_funding() {
++        for change in 0..9 {
++            let signer = AlteringSigner { change };
++            assert!(
++                matches!(
++                    sign_psbt_via(unsigned_two_input_psbt(), Some(&signer)).await,
++                    Err(SdkError::Signer(_))
++                ),
++                "CPFP change {change}"
++            );
++            assert!(
++                matches!(
++                    finalize_sweep(unsigned_two_input_psbt(), Some(&signer)).await,
++                    Err(SdkError::Signer(_))
++                ),
++                "sweep change {change}"
++            );
++        }
++    }
++    #[test]
++    fn recovery_signer_preserves_existing_leaf_signatures() {
++        let mut original = unsigned_two_input_psbt();
++        finalize_input(&mut original.inputs[0]);
++        let mut signed = original.clone();
++        finalize_input(&mut signed.inputs[1]);
++        assert!(verify_signer_transaction(&original, &signed).is_ok());
++        signed.inputs[0].final_script_witness = Some(bitcoin::Witness::from_slice(&[vec![2u8]]));
++        assert!(verify_signer_transaction(&original, &signed).is_err());
++    }
++    #[test]
++    fn recovery_signer_preserves_existing_script_sig_and_previous_transaction() {
++        let mut original = unsigned_two_input_psbt();
++        original.inputs[0].final_script_sig = Some(ScriptBuf::from_bytes(vec![0x51]));
++        let mut signed = original.clone();
++        signed.inputs[0].final_script_sig = None;
++        assert!(verify_signer_transaction(&original, &signed).is_err());
++        signed = original.clone();
++        signed.inputs[1].non_witness_utxo = Some(original.unsigned_tx.clone());
++        assert!(verify_signer_transaction(&original, &signed).is_err());
++    }
++    #[macros::async_test_all]
++    async fn recovery_signer_accepts_same_transaction_with_completed_signatures() {
++        assert!(
++            finalize_sweep(
++                unsigned_two_input_psbt(),
++                Some(&PartialSigner { finalize: 2 })
++            )
++            .await
++            .is_ok()
++        );
++    }
++
+     /// A transaction spending `parent` under a relative timelock of `csv` blocks.
+     fn timelocked_tx(parent: Txid, csv: u32) -> Transaction {
+         Transaction {
+diff --git a/crates/breez-sdk/core/src/signer/default_external.rs b/crates/breez-sdk/core/src/signer/default_external.rs
+index 4fe53139bf94115601427d83ca7a4ba3be7851fe..1eb860bd0e2bbe87a1f59631ab62c99de4d10c3e 100644
+--- a/crates/breez-sdk/core/src/signer/default_external.rs
++++ b/crates/breez-sdk/core/src/signer/default_external.rs
+@@ -11,7 +11,7 @@ use crate::signer::{
+ use crate::{Network, SdkError, Seed};
+ 
+ /// Derives the identity master Xpriv (the `BreezSigner` derivation root) from a
+-/// mnemonic seed. Key derivation lives in the Spark layer; the SDK-layer
++/// wallet seed. Key derivation lives in the Spark layer; the SDK-layer
+ /// `BreezSigner` just consumes the resulting master.
+ fn identity_master_key(
+     seed: &Seed,
+@@ -50,7 +50,17 @@ impl DefaultExternalSigner {
+             mnemonic,
+             passphrase,
+         };
+-        let master = identity_master_key(&seed, network, account_number)?;
++        Self::from_seed(&seed, network, account_number)
++    }
++
++    /// Creates the signer without changing the seed representation or derivation.
++    /// `Seed::Entropy` is used directly, exactly as in the seed-based SDK path.
++    pub fn from_seed(
++        seed: &Seed,
++        network: Network,
++        account_number: Option<u32>,
++    ) -> Result<Self, SdkError> {
++        let master = identity_master_key(seed, network, account_number)?;
+         let inner = BreezSignerImpl::new(master);
+         Ok(Self { inner })
+     }
+diff --git a/crates/breez-sdk/core/src/signer/default_external_spark.rs b/crates/breez-sdk/core/src/signer/default_external_spark.rs
+index 9ffe386a800ea660bcb9e06acbc47f23c09b2544..e9aefa8070d25f52fea20bad5a38d6b9502ddad9 100644
+--- a/crates/breez-sdk/core/src/signer/default_external_spark.rs
++++ b/crates/breez-sdk/core/src/signer/default_external_spark.rs
+@@ -55,11 +55,24 @@ impl DefaultExternalSparkSigner {
+         network: Network,
+         account_number: Option<u32>,
+     ) -> Result<Self, SdkError> {
+-        let seed_bytes = Seed::Mnemonic {
+-            mnemonic,
+-            passphrase,
+-        }
+-        .to_bytes()?;
++        Self::from_seed(
++            &Seed::Mnemonic {
++                mnemonic,
++                passphrase,
++            },
++            network,
++            account_number,
++        )
++    }
++
++    /// Creates the signer from the same seed bytes used by the seed-based SDK.
++    /// Raw entropy is not converted to a mnemonic or passed through BIP39 again.
++    pub fn from_seed(
++        seed: &Seed,
++        network: Network,
++        account_number: Option<u32>,
++    ) -> Result<Self, SdkError> {
++        let seed_bytes = seed.to_bytes()?;
+         let master = spark_wallet::account_master_key(&seed_bytes, network.into(), account_number)
+             .map_err(|e| SdkError::Generic(e.to_string()))?;
+         Ok(Self {
+diff --git a/crates/breez-sdk/wasm/src/models/mod.rs b/crates/breez-sdk/wasm/src/models/mod.rs
+index 606f13f9910568e935a9708e5a84024590e51e58..4d6093552129c92d38ffe775c81817a6bdcd7047 100644
+--- a/crates/breez-sdk/wasm/src/models/mod.rs
++++ b/crates/breez-sdk/wasm/src/models/mod.rs
+@@ -1854,6 +1854,27 @@ pub struct GetPaymentResponse {
+     pub payment: Payment,
+ }
+ 
++#[macros::extern_wasm_bindgen(breez_sdk_spark::PaymentObservationOutcome)]
++pub enum PaymentObservationOutcome { Completed, Returned, Unresolved, NotFound }
++
++#[macros::extern_wasm_bindgen(breez_sdk_spark::ObservePaymentRequest)]
++pub struct ObservePaymentRequest {
++    pub payment_id: String,
++    pub recipient_commitment: String,
++}
++
++#[macros::extern_wasm_bindgen(breez_sdk_spark::ObservePaymentResponse)]
++pub struct ObservePaymentResponse {
++    pub payment_id: String,
++    pub recipient_commitment: Option<String>,
++    pub identity_pubkey: String,
++    pub network: Network,
++    pub observed_at: u64,
++    pub outcome: PaymentObservationOutcome,
++    pub payment: Option<Payment>,
++}
++
++
+ #[macros::extern_wasm_bindgen(breez_sdk_spark::LogEntry)]
+ pub struct LogEntry {
+     pub line: String,
+@@ -2670,3 +2691,66 @@ pub struct UnregisterWebhookRequest {
+ 
+ #[cfg(test)]
+ mod tests;
++
++#[macros::extern_wasm_bindgen(breez_sdk_spark::VerifyRefundTransactionRequest)]
++pub struct VerifyRefundTransactionRequest {
++    pub refund: RefundDepositRequest,
++    pub tx_id: String,
++    pub tx_hex: String,
++    pub expected_amount_sats: u64,
++}
++#[macros::extern_wasm_bindgen(breez_sdk_spark::InspectRecoveryTransactionRequest)]
++pub struct InspectRecoveryTransactionRequest { pub tx_hex: String }
++#[macros::extern_wasm_bindgen(breez_sdk_spark::InspectedRecoveryOutput)]
++pub struct InspectedRecoveryOutput {
++    pub value_sats: u64,
++    pub script_hex: String,
++    pub address: Option<String>,
++}
++#[macros::extern_wasm_bindgen(breez_sdk_spark::InspectRecoveryTransactionResponse)]
++pub struct InspectRecoveryTransactionResponse {
++    pub tx_id: String,
++    pub input_outpoints: Vec<String>,
++    pub outputs: Vec<InspectedRecoveryOutput>,
++}
++
++#[macros::extern_wasm_bindgen(breez_sdk_spark::IncomingTransferRequest)]
++pub struct IncomingTransferRequest {
++    pub payment_id: String,
++    pub identity_pubkey: String,
++    pub network: Network,
++    pub amount_sats: u64,
++    pub expires_at: u64,
++}
++
++#[macros::extern_wasm_bindgen(breez_sdk_spark::ObserveIncomingTransferResponse)]
++pub struct ObserveIncomingTransferResponse {
++    pub payment_id: String,
++    pub identity_pubkey: String,
++    pub network: Network,
++    pub observed_at: u64,
++    pub completed: bool,
++    pub payment: Option<Payment>,
++}
++
++#[macros::extern_wasm_bindgen(breez_sdk_spark::MatureDepositClaimRequest)]
++pub struct MatureDepositClaimRequest {
++    pub txid: String,
++    pub vout: u32,
++    pub identity_pubkey: String,
++    pub network: Network,
++    pub amount_sats: u64,
++    pub max_fee_sats: u64,
++    pub expires_at: u64,
++}
++
++#[macros::extern_wasm_bindgen(breez_sdk_spark::ObserveDepositClaimResponse)]
++pub struct ObserveDepositClaimResponse {
++    pub txid: String,
++    pub vout: u32,
++    pub identity_pubkey: String,
++    pub network: Network,
++    pub observed_at: u64,
++    pub completed: bool,
++    pub payment: Option<Payment>,
++}
+diff --git a/crates/breez-sdk/wasm/src/sdk.rs b/crates/breez-sdk/wasm/src/sdk.rs
+index 0390978f7ae3fb5d94c3163171427adf162b9562..5149dccc5b808ed0aa349a0fc7a9beace3ace3f9 100644
+--- a/crates/breez-sdk/wasm/src/sdk.rs
++++ b/crates/breez-sdk/wasm/src/sdk.rs
+@@ -195,6 +195,30 @@ pub fn default_external_signers(
+     })
+ }
+ 
++/// Creates the default external signers from a mnemonic or raw seed bytes.
++///
++/// Preserves the identity of `SdkBuilder.new(config, seed)` when the network and
++/// account number are unchanged. Raw entropy is never reinterpreted as BIP39
++/// mnemonic entropy. Omit `accountNumber` to preserve the network default.
++/// The keys remain in process; this factory does not provide hardware isolation.
++#[wasm_bindgen(js_name = "defaultExternalSignersFromSeed")]
++pub fn default_external_signers_from_seed(
++    seed: Seed,
++    network: Network,
++    account_number: Option<u32>,
++) -> WasmResult<ExternalSigners> {
++    let signers = breez_sdk_spark::default_external_signers_from_seed(
++        seed.into(),
++        network.into(),
++        account_number,
++    )?;
++
++    Ok(ExternalSigners {
++        breez_signer: crate::signer::ExternalBreezSignerHandle::new(signers.breez_signer),
++        spark_signer: crate::signer::ExternalSparkSignerHandle::new(signers.spark_signer),
++    })
++}
++
+ /// Creates a default CPFP signer backed by a single private key.
+ #[wasm_bindgen(js_name = "singleKeyCpfpSigner")]
+ pub fn single_key_cpfp_signer(
+@@ -512,11 +536,57 @@ impl BreezSdk {
+         Ok(self.sdk.list_payments(request.into()).await?.into())
+     }
+ 
++    #[wasm_bindgen(js_name = "observeWalletState")]
++    pub async fn observe_wallet_state(&self) -> WasmResult<GetInfoResponse> {
++        Ok(self.sdk.observe_wallet_state().await?.into())
++    }
++
++    #[wasm_bindgen(js_name = "observePayment")]
++    pub async fn observe_payment(&self, request: ObservePaymentRequest) -> WasmResult<ObservePaymentResponse> {
++        Ok(self.sdk.observe_payment(request.into()).await?.into())
++    }
++
+     #[wasm_bindgen(js_name = "getPayment")]
+     pub async fn get_payment(&self, request: GetPaymentRequest) -> WasmResult<GetPaymentResponse> {
+         Ok(self.sdk.get_payment(request.into()).await?.into())
+     }
+ 
++    #[wasm_bindgen(js_name = "signRefundDeposit")]
++    pub async fn sign_refund_deposit(&self, request: RefundDepositRequest) -> WasmResult<RefundDepositResponse> {
++        Ok(self.sdk.sign_refund_deposit(request.into()).await?.into())
++    }
++    #[wasm_bindgen(js_name = "verifyRefundTransaction")]
++    pub async fn verify_refund_transaction(&self, request: VerifyRefundTransactionRequest) -> WasmResult<RefundDepositResponse> {
++        Ok(self.sdk.verify_refund_transaction(request.into()).await?.into())
++    }
++    #[wasm_bindgen(js_name = "inspectRecoveryTransaction")]
++    pub fn inspect_recovery_transaction(&self, request: InspectRecoveryTransactionRequest) -> WasmResult<InspectRecoveryTransactionResponse> {
++        Ok(self.sdk.inspect_recovery_transaction(request.into())?.into())
++    }
++
++    #[wasm_bindgen(js_name = "claimIncomingTransfer")]
++    pub async fn claim_incoming_transfer(&self, request: IncomingTransferRequest) -> WasmResult<ObserveIncomingTransferResponse> {
++        Ok(self.sdk.claim_incoming_transfer(request.into()).await?.into())
++    }
++    #[wasm_bindgen(js_name = "observeIncomingTransfer")]
++    pub async fn observe_incoming_transfer(&self, payment_id: String) -> WasmResult<ObserveIncomingTransferResponse> {
++        Ok(self.sdk.observe_incoming_transfer(payment_id).await?.into())
++    }
++
++    #[wasm_bindgen(js_name = "claimMatureDepositOnce")]
++    pub async fn claim_mature_deposit_once(&self, request: MatureDepositClaimRequest) -> WasmResult<ClaimDepositResponse> {
++        Ok(self.sdk.claim_mature_deposit_once(request.into()).await?.into())
++    }
++    #[wasm_bindgen(js_name = "observeDepositClaim")]
++    pub async fn observe_deposit_claim(&self, request: FetchClaimDepositQuoteRequest) -> WasmResult<ObserveDepositClaimResponse> {
++        Ok(self.sdk.observe_deposit_claim(request.into()).await?.into())
++    }
++
++    #[wasm_bindgen(js_name = "continueMatureDepositClaim")]
++    pub async fn continue_mature_deposit_claim(&self, request: MatureDepositClaimRequest) -> WasmResult<ClaimDepositResponse> {
++        Ok(self.sdk.continue_mature_deposit_claim(request.into()).await?.into())
++    }
++
+     #[wasm_bindgen(js_name = "claimDeposit")]
+     pub async fn claim_deposit(
+         &self,
+diff --git a/crates/spark-wallet/src/wallet.rs b/crates/spark-wallet/src/wallet.rs
+index 2f2ba230b4e633010b5551cab275240db2573fc3..3cf3a0fd203c62f0de41bd811a08885adea29438 100644
+--- a/crates/spark-wallet/src/wallet.rs
++++ b/crates/spark-wallet/src/wallet.rs
+@@ -1526,6 +1526,14 @@ impl SparkWallet {
+         .map_err(|e| SparkWalletError::ValidationError(e.to_string()))
+     }
+ 
++    /// Read-only network observation: never claim transfers or renew leaves.
++    /// RPC session authentication/public derivation may still be required.
++    pub async fn observe_outputs(&self) -> Result<(), SparkWalletError> {
++        self.tree_service.refresh_leaves_observation().await?;
++        self.token_output_service.refresh_tokens_outputs().await?;
++        Ok(())
++    }
++
+     pub async fn sync(&self) -> Result<(), SparkWalletError> {
+         self.tree_service.refresh_leaves().await?;
+         self.token_output_service.refresh_tokens_outputs().await?;
+diff --git a/crates/spark/src/tree/mod.rs b/crates/spark/src/tree/mod.rs
+index a71bcc510580c1d34287514686ed3adafbc8622e..f7008b008966aa59a05299bad9625f41811899b9 100644
+--- a/crates/spark/src/tree/mod.rs
++++ b/crates/spark/src/tree/mod.rs
+@@ -1143,6 +1143,13 @@ pub trait TreeService: Send + Sync {
+     /// ```
+     async fn refresh_leaves(&self) -> Result<(), TreeServiceError>;
+ 
++    /// Query and validate owned leaves without renewing them or emitting work notifications.
++    /// Implementations must opt in; the default must never fall back to the active sync path.
++    async fn refresh_leaves_observation(&self) -> Result<(), TreeServiceError> {
++        Err(TreeServiceError::Generic("Observation-only leaf refresh is unsupported".to_string()))
++    }
++
++
+     /// Inserts new leaves into the tree, each with the ancestors the caller
+     /// already knows.
+     ///
+diff --git a/crates/spark/src/tree/service.rs b/crates/spark/src/tree/service.rs
+index 0713118a9db055686601065207ea9c3c778a5c47..093d2981636fab438d602316d534b048323e52bc 100644
+--- a/crates/spark/src/tree/service.rs
++++ b/crates/spark/src/tree/service.rs
+@@ -374,6 +374,36 @@ impl TreeService for SynchronousTreeService {
+     }
+ 
+     async fn refresh_leaves(&self) -> Result<(), TreeServiceError> {
++        self.refresh_leaves_with_policy(true).await
++    }
++
++    async fn refresh_leaves_observation(&self) -> Result<(), TreeServiceError> {
++        self.refresh_leaves_with_policy(false).await
++    }
++
++    async fn get_available_balance(&self) -> Result<u64, TreeServiceError> {
++        self.state.get_available_balance().await
++    }
++
++    async fn leaves_to_send(
++        &self,
++        leaves: Vec<TreeNode>,
++    ) -> Result<Vec<LeafKeyTweak>, TreeServiceError> {
++        let owned = self
++            .retain_owned(&leaves.iter().collect::<Vec<_>>())
++            .await?;
++        if let Some(leaf) = leaves.iter().find(|leaf| !owned.contains(&leaf.id)) {
++            return Err(TreeServiceError::Generic(format!(
++                "leaf {} is not held under the key derived from its node id",
++                leaf.id
++            )));
++        }
++        Ok(with_node_id_keys(leaves))
++    }
++}
++
++impl SynchronousTreeService {
++    async fn refresh_leaves_with_policy(&self, allow_renewal: bool) -> Result<(), TreeServiceError> {
+         // Capture the start time before any network calls from the store's clock.
+         // This uses the DB server time for database-backed stores to avoid clock skew.
+         // Leaves added after this time will be preserved even if not in the refresh data.
+@@ -520,6 +550,12 @@ impl TreeService for SynchronousTreeService {
+         // A refresh writes no chains, so an already-stored one is left alone
+         // rather than rewritten every minute. Collecting the chains of anything
+         // newly reported is what the notification below sets off.
++        if !allow_renewal {
++            // No renewal signatures, chain reparenting, claims or notifications.
++            // Ownership and operator-consistency checks above are identical to normal refresh.
++            self.state.set_leaves(&new_leaves, &missing_operator_leaves, refresh_started_at).await?;
++            return Ok(());
++        }
+         let (renewable, exiting) = partition_renewable(new_leaves);
+         let RenewalOutcome {
+             pedigrees,
+@@ -542,28 +578,7 @@ impl TreeService for SynchronousTreeService {
+         Ok(())
+     }
+ 
+-    async fn get_available_balance(&self) -> Result<u64, TreeServiceError> {
+-        self.state.get_available_balance().await
+-    }
+-
+-    async fn leaves_to_send(
+-        &self,
+-        leaves: Vec<TreeNode>,
+-    ) -> Result<Vec<LeafKeyTweak>, TreeServiceError> {
+-        let owned = self
+-            .retain_owned(&leaves.iter().collect::<Vec<_>>())
+-            .await?;
+-        if let Some(leaf) = leaves.iter().find(|leaf| !owned.contains(&leaf.id)) {
+-            return Err(TreeServiceError::Generic(format!(
+-                "leaf {} is not held under the key derived from its node id",
+-                leaf.id
+-            )));
+-        }
+-        Ok(with_node_id_keys(leaves))
+-    }
+-}
+ 
+-impl SynchronousTreeService {
+     /// The ids of `leaves` this wallet can prove it owns: our signing share plus
+     /// the operators' must come to the leaf's verifying key.
+     async fn retain_owned(

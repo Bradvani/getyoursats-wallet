@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "48e1659da9f57cf008e6b22f525cf106fd9aae29",
+  "sourceTree": "a7db33b0916a25b6a45af45a36ba2d81ac3484fe",
+  "applicationSourceChanged": false,
+  "checkoutDuringNetworkAttempt": "Only documentation was uncommitted; application and SDK bytes match the tested source.",
+  "sdkPackageSha256": "cbb19e1e16760d63e8cba74a33e21ec75dac6684bc8d389da6c9921b8ba58505",
+  "installedWasmSha256": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+  "network": "regtest",
+  "realFunds": false,
+  "apiKeySupplied": false,
+  "physicalDevice": false,
+  "fullProductAcceptance": false,
+  "result": "BLOCKED",
+  "settlementVerified": false,
+  "startedAt": "2026-10-26T22:40:44.627Z",
+  "finishedAt": "2026-10-26T22:41:46.432Z",
+  "harness": "scripts/security/accept-disposable-spark.mjs",
+  "testFiles": {
+    "e2e/fixtures/disposable-wallet-acceptance.ts": "d3cc05afe5c0151491fdaac0e1c8362a6e0450c5f33d000b2aa4811cbc794b36",
+    "scripts/security/accept-disposable-spark.mjs": "3430e52ad7f4bc965f70645c4123213d6ee10046cb5031a4f335c512ed688584"
+  },
+  "originalPrivateReceiptSha256": "08d901bae8aa17f27f7ce52700a151816415fd17414d46fa6910c0fcbb40e4e8",
+  "privateReceiptPublished": false,
+  "environmentRemediation": {
+    "initialError": "net::ERR_CERT_AUTHORITY_INVALID",
+    "affectedAuthHosts": [
+      "0.spark.lightspark.com",
+      "2.spark.flashnet.xyz",
+      "spark-operator.breez.technology"
+    ],
+    "browserVersion": "Chromium 147.0.7727.0",
+    "existingLegacyNssDatabase": false,
+    "isolatedXdgNssDatabase": true,
+    "trustSource": "CA already supplied by SSL_CERT_FILE in the environment",
+    "caMaterialPublished": false,
+    "caSha256": "ab6933a81e6f0d142e6d5f58ed465589d899a523c2752055761af11d4ee38f2b",
+    "tlsVerificationEnabled": true,
+    "userOrSystemTrustChanged": false,
+    "connectionSucceededAfterTrustConfiguration": true,
+    "readOnlyConnectionBalanceSats": "0",
+    "certificateTool": "Official Ubuntu libnss3-tools 2:3.98-1ubuntu0.2, extracted into a temporary directory"
+  },
+  "connectedWallets": [
+    {
+      "index": 0,
+      "identitySha256": "df405216015ccb54a153918856b2e260af265f0b8f20d21872a6764eb17b7d61",
+      "initialBalanceSats": "0",
+      "addressNetwork": "sparkrt1",
+      "receiveFeeSats": "0"
+    },
+    {
+      "index": 1,
+      "identitySha256": "8741899c89b963be84ca089a8deb45e3b53aef04ee62ec7dc455456b71f7f49a",
+      "initialBalanceSats": "0",
+      "addressNetwork": "sparkrt1",
+      "receiveFeeSats": "0"
+    }
+  ],
+  "faucet": {
+    "url": "https://app.lightspark.com/regtest-faucet",
+    "requestedSats": 1000,
+    "requestCount": 1,
+    "botRejectionObserved": true,
+    "responseExcerpt": "We have detected bot behaviour from your system.",
+    "recaptchaFrameObserved": true,
+    "challengeBypassed": false,
+    "automaticRetriesAfterRejection": 0,
+    "publicPostStatusCodes": [
+      {
+        "path": "/graphql/frontend",
+        "status": 200
+      },
+      {
+        "path": "/graphql/frontend",
+        "status": 200
+      }
+    ],
+    "fundingObserved": false
+  },
+  "finalWalletObservations": [
+    {
+      "index": 0,
+      "identitySha256": "df405216015ccb54a153918856b2e260af265f0b8f20d21872a6764eb17b7d61",
+      "balanceSats": "0",
+      "paymentCount": 0,
+      "incomingClaimRecordCount": 0,
+      "outgoingOperationRecordCount": 0
+    },
+    {
+      "index": 1,
+      "identitySha256": "8741899c89b963be84ca089a8deb45e3b53aef04ee62ec7dc455456b71f7f49a",
+      "balanceSats": "0",
+      "paymentCount": 0,
+      "incomingClaimRecordCount": 0,
+      "outgoingOperationRecordCount": 0
+    }
+  ],
+  "incomingCandidateObserved": false,
+  "claimAttempted": false,
+  "sendAttempted": false,
+  "withdrawalAttempted": false,
+  "depositAttempted": false,
+  "remainingSequence": [
+    "Manual authorized valueless funding after fresh state checks",
+    "Explicit faucet-transfer claim",
+    "100-sat direct Spark settlement",
+    "Same-profile receiver restart",
+    "50-sat return transfer",
+    "Cooperative regtest withdrawal with exact quote and bounded fee",
+    "Confirmed-output mature deposit claim and same-identity restart"
+  ],
+  "oldStrandedDepositTouched": false,
+  "profilesRetainedLocally": true,
+  "profilePathsPublished": false,
+  "secretsPublished": false,
+  "error": "Actual regtest funding or settlement was not observed within the acceptance window",
+  "releaseDecision": "NO-GO; connection success is not funded protocol acceptance."
+}

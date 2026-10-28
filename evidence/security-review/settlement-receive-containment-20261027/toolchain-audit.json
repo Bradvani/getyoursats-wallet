@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "48e1659da9f57cf008e6b22f525cf106fd9aae29",
+  "sourceTree": "a7db33b0916a25b6a45af45a36ba2d81ac3484fe",
+  "scope": "Security candidate only; corrective release dependency findings remain separate.",
+  "completedAt": "2026-10-26T22:30:21.688664+00:00",
+  "dependencyChangesMade": false,
+  "reasonNoPatchRequired": "All identified dependency fixes were already present in the candidate lockfile; fresh npm audit is clean. Existing Vite and Zod versions are newer than the reviewed minimum fixes and were preserved.",
+  "nodeVersion": "v24.22.1",
+  "npmVersion": "11.9.0",
+  "audit": {
+    "command": "npm audit --json --ignore-scripts --registry=https://registry.npmjs.org",
+    "exitCode": 0,
+    "provider": "https://registry.npmjs.org",
+    "retrievedAt": "2026-10-26T22:28:40.749046+00:00",
+    "reportSha256": "cc48f6136251dc4dc578c326fc5f6385e888ccad148df284a214b78232c185bd",
+    "report": {
+      "auditReportVersion": 2,
+      "vulnerabilities": {},
+      "metadata": {
+        "vulnerabilities": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        },
+        "dependencies": {
+          "prod": 97,
+          "dev": 439,
+          "optional": 126,
+          "peer": 8,
+          "peerOptional": 0,
+          "total": 579
+        }
+      }
+    }
+  },
+  "verifiedFiles": [
+    {
+      "path": "package.json",
+      "sha256": "0c9f6a40584466772f0835d377f02f46b06caba7d184b5e9a9736ecb2c617d9b",
+      "gitBlob": "c91ef21900d397ee10f345f13f9f3ede81675de1",
+      "matchesBase": true
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "93dcb8e7d76f5de9a2e73f3f162df30aadeb71d2169dfb2490611b4b5fb8b4bb",
+      "gitBlob": "5d0ee775a224094e139c563be180625c5fe19401",
+      "matchesBase": true
+    },
+    {
+      "path": "vendor/SOURCE_COMMIT",
+      "sha256": "34eafe3a86f085aec398e8ca1355704c9d6717d24e09b56791ed427cb6ef9825",
+      "gitBlob": "b527a163101ec102e4753dcd0e36b7bcd060f449",
+      "matchesBase": true
+    },
+    {
+      "path": "vendor/breeztech-breez-sdk-spark.tgz",
+      "sha256": "cbb19e1e16760d63e8cba74a33e21ec75dac6684bc8d389da6c9921b8ba58505",
+      "gitBlob": "b77779a5f18d4ec887020b5ef84a4d08209c7407",
+      "matchesBase": true
+    },
+    {
+      "path": "src/test/setup.ts",
+      "sha256": "2d11f3ac0e4c18f5c7a8ada6e8b75dd79de330b24a4707227a3be101d8fd13f5",
+      "gitBlob": "cdadb215cdbce1579a315efbe620666f12b00d8c",
+      "matchesBase": true
+    }
+  ],
+  "sdkSourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+  "installedSdkWasm": [
+    {
+      "path": "bundler/breez_sdk_spark_wasm_bg.wasm",
+      "sha256": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+      "bytes": 12402381
+    },
+    {
+      "path": "deno/breez_sdk_spark_wasm_bg.wasm",
+      "sha256": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+      "bytes": 12402381
+    },
+    {
+      "path": "nodejs/breez_sdk_spark_wasm_bg.wasm",
+      "sha256": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+      "bytes": 12402381
+    },
+    {
+      "path": "web/breez_sdk_spark_wasm_bg.wasm",
+      "sha256": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+      "bytes": 12402381
+    }
+  ],
+  "packageVersions": {
+    "pbkdf2": {
+      "locked": "3.1.7",
+      "installed": "3.1.7"
+    },
+    "brace-expansion": {
+      "locked": "5.0.12",
+      "installed": "5.0.12"
+    },
+    "source-map-js": {
+      "locked": "1.2.2",
+      "installed": "1.2.2"
+    },
+    "zod": {
+      "locked": "4.6.7",
+      "installed": "4.6.7"
+    },
+    "vite": {
+      "locked": "8.3.5",
+      "installed": "8.3.5"
+    },
+    "vitest": {
+      "locked": "4.1.12",
+      "installed": "4.1.12"
+    },
+    "@vitest/mocker": {
+      "locked": "4.1.12",
+      "installed": "4.1.12"
+    },
+    "@vitest/coverage-v8": {
+      "locked": "4.1.12",
+      "installed": "4.1.12"
+    },
+    "happy-dom": {
+      "locked": "21.0.4",
+      "installed": "21.0.4"
+    },
+    "sharp": {
+      "locked": "0.35.5",
+      "installed": "0.35.5"
+    },
+    "motion": {
+      "locked": "12.40.0",
+      "installed": "12.40.0"
+    },
+    "typescript": {
+      "locked": "6.0.3",
+      "installed": "6.0.3"
+    }
+  },
+  "runtimeTrace": {
+    "schemaVersion": 1,
+    "sourceRevision": "48e1659da9f57cf008e6b22f525cf106fd9aae29",
+    "sourceTree": "a7db33b0916a25b6a45af45a36ba2d81ac3484fe",
+    "mode": "Production Vite configuration; only manifest-writing plugin removed; build.write=false; no files emitted to candidate dist.",
+    "checkedPackageGroups": [
+      "pbkdf2",
+      "crypto-browserify",
+      "parse-asn1",
+      "source-map-js",
+      "zod",
+      "brace-expansion",
+      "happy-dom",
+      "sharp",
+      "vite",
+      "vitest",
+      "@vitest/mocker",
+      "@vitest/coverage-v8"
+    ],
+    "moduleCounts": {
+      "pbkdf2": 0,
+      "crypto-browserify": 0,
+      "parse-asn1": 0,
+      "source-map-js": 0,
+      "zod": 0,
+      "brace-expansion": 0,
+      "happy-dom": 0,
+      "sharp": 0,
+      "vite": 0,
+      "vitest": 0,
+      "@vitest/mocker": 0,
+      "@vitest/coverage-v8": 0
+    },
+    "chunks": [
+      {
+        "filename": "assets/logger-DARXN4Gy.js",
+        "id": "node_modules/@noble/hashes/pbkdf2.js",
+        "renderedLength": 2690,
+        "containingChunkSha256": "ce2a14c013b413474506b487795aa0ef3c73482fb460658b6337824e14b461f9"
+      }
+    ],
+    "graph": [
+      {
+        "id": "node_modules/@noble/hashes/pbkdf2.js",
+        "importers": [
+          "node_modules/bip39/src/index.js"
+        ],
+        "importedIds": [
+          "node_modules/@noble/hashes/hmac.js",
+          "node_modules/@noble/hashes/utils.js"
+        ]
+      }
+    ],
+    "completedAt": "2026-10-26T22:28:38.276Z"
+  },
+  "runtimeTraceReportSha256": "fc111f8b6c7acc8c5479213d0af8800f2d583f7ab165e6bc3adc7235fad69273",
+  "artifactBoundary": "Runtime graph was built in memory from an isolated worktree using exact candidate installed dependency versions. Its chunk hash is trace evidence, not a deployed artifact or release manifest. The manifest-writing build plugin was removed and build.write=false; no candidate dist was written.",
+  "preservedTestEnvironment": "happy-dom21.0.4 and Motion12.40.0 retained. Existing src/test/setup.ts deletion of Element.prototype.animate retains Motion JavaScript-path unit coverage. No unhandled rejection suppression was added. Physical/Chromium WAAPI checks are separate.",
+  "fullSuiteCoordination": "The security candidate owner runs authoritative full unit/build/type/lint/service verification on this same source. Those suites were deliberately not duplicated; this evidence does not substitute for that receipt.",
+  "releaseDecision": "No real-funds security approval. Exact-SDK independent review, recovery, reconciliation and exit gates remain.",
+  "gitWorktreeClean": true
+}

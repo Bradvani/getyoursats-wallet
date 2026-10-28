@@ -7,9 +7,11 @@ import type {WalletSetupController} from './hooks/useWalletSetup';
 
 const harness = vi.hoisted(() => ({
   native: false,
+  browserLocked: false,
   snapshot: {} as Record<string, unknown>,
   listeners: new Set<() => void>(),
   connect: vi.fn<(...args: unknown[]) => Promise<object | null>>(),
+  encrypt: vi.fn<(...args: unknown[]) => Promise<void>>(),
   retrieveSeed: vi.fn<() => Promise<Seed>>(),
   storeSeed: vi.fn<(...args: unknown[]) => Promise<void>>(),
   generateMnemonic: vi.fn(() => 'synthetic native seed fixture'),
@@ -28,7 +30,7 @@ vi.mock('./hooks/useBreezSdk', async () => {
   };
   return {useBreezSdk: () => useSyncExternalStore(subscribe, () => harness.snapshot)};
 });
-vi.mock('@capacitor/core', () => ({Capacitor: {isNativePlatform: () => harness.native}}));
+vi.mock('@capacitor/core', () => ({Capacitor: {isNativePlatform: () => harness.native, getPlatform: () => harness.native ? 'ios' : 'web'}}));
 vi.mock('bip39', async importOriginal => ({
   ...await importOriginal<typeof import('bip39')>(), generateMnemonic: harness.generateMnemonic,
 }));
@@ -63,6 +65,10 @@ vi.mock('./contexts/StableBalanceContext', () => ({
 vi.mock('./contexts/ContactsContext', () => ({ContactsProvider: harness.PassThrough}));
 vi.mock('./components/StagingGate', () => ({default: harness.PassThrough}));
 vi.mock('./components/layout/AppShell', () => ({default: harness.PassThrough}));
+vi.mock('./security/useBrowserSessionLock', () => ({useBrowserSessionLock: () => ({locked:harness.browserLocked,unlock:vi.fn()})}));
+vi.mock('./security/webWalletVault', () => ({hasWebWalletVault:()=>false,legacyWebMnemonic:()=>null,enrollWebWallet:(...args:unknown[])=>harness.encrypt(...args),unlockWebWallet:vi.fn(),removeMatchingLegacyMnemonic:vi.fn(),resetWebWalletPasswordWithWords:vi.fn()}));
+vi.mock('./security/WebWalletVaultPage', () => ({default: ({onSubmit}: {onSubmit:(password:string)=>Promise<void>}) => <button onClick={()=>{void onSubmit('disposable-wallet-password').catch(()=>{});}}>Encrypt wallet</button>}));
+vi.mock('./security/SpendingApprovalDialog',()=>({default:()=>null}));
 vi.mock('./hooks/useAppLock', () => ({useAppLock: () => ({locked: false})}));
 vi.mock('./features/unilateral-exit/hooks/useUnilateralExitEngineLifecycle', () => ({useUnilateralExitEngineLifecycle: vi.fn()}));
 vi.mock('./hooks/useIOSViewportFix', () => ({useIOSViewportFix: vi.fn()}));
@@ -73,7 +79,7 @@ vi.mock('./components/LoadingSpinner', () => ({default: () => null}));
 vi.mock('./components/BrandIntro', () => ({default: () => null}));
 vi.mock('./components/PaymentCelebration', () => ({default: () => null}));
 // Incoming-event ownership is exercised in IncomingPaymentNotice.test.tsx.
-vi.mock('./components/IncomingPaymentNotice', () => ({default: () => null}));
+vi.mock('./components/IncomingPaymentNotice', () => ({default: ({visible}:{visible:boolean}) => visible?<div data-testid="incoming-notice-visible"/>:null}));
 vi.mock('./components/OfflineBanner', () => ({default: () => null}));
 vi.mock('./components/LockScreen', () => ({default: () => null}));
 vi.mock('./getyoursats/DcaPage', () => ({default: () => null}));
@@ -117,7 +123,7 @@ vi.mock('./pages/PasskeyPage', () => ({default: (props: {
   <button disabled={!props.sdkConnected} onClick={props.onFlowComplete}>Finish Passkey</button>
   <button onClick={props.onUseRecoveryPhrase}>Use Recovery Phrase</button>
 </>}));
-vi.mock('./pages/WalletPage', () => ({default: ({walletSetup, recoveryMethod}: {
+vi.mock('./pages/WalletPage.tsx', () => ({default: ({walletSetup, recoveryMethod}: {
   walletSetup: WalletSetupController; recoveryMethod: string;
 }) => <>
   <output aria-label="Recovery method">{recoveryMethod}</output>
@@ -167,6 +173,8 @@ beforeEach(async () => {
   localStorage.clear();
   clearWalletSetupMemory();
   harness.native = false;
+  harness.browserLocked = false;
+  harness.encrypt.mockReset().mockResolvedValue();
   harness.retrieveSeed.mockReset();
   harness.storeSeed.mockReset().mockResolvedValue();
   harness.connect.mockReset().mockImplementation(async () => { publishWallet(); return client; });
@@ -187,6 +195,17 @@ afterEach(() => {
 });
 
 describe('App wallet setup enrollment and recovery mode', () => {
+  it('suppresses incoming payment presentation during a browser session lock', async () => {
+    publishWallet();
+    const {rerender}=render(<App />);
+    await waitFor(()=>expect(screen.getByTestId('incoming-notice-visible')).toBeInTheDocument());
+    harness.browserLocked=true;rerender(<App />);
+    expect(screen.queryByTestId('incoming-notice-visible')).toBeNull();
+    harness.browserLocked=false;rerender(<App />);
+    expect(screen.getByTestId('incoming-notice-visible')).toBeInTheDocument();
+    act(()=>{harness.snapshot={...harness.snapshot,isConnected:false};harness.listeners.forEach(listener=>listener());});
+    expect(screen.queryByTestId('incoming-notice-visible')).toBeNull();
+  });
   it('enrolls a fresh passkey without claiming a verified backup or clearing its mode', async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -217,12 +236,16 @@ describe('App wallet setup enrollment and recovery mode', () => {
     render(<App />);
     await user.click(screen.getByText('Create Phrase Wallet'));
     await user.click(screen.getByText('Confirm Written Backup'));
+    expect(harness.connect).not.toHaveBeenCalled();
+    expect(harness.encrypt).not.toHaveBeenCalled();
+    await user.click(screen.getByText('Encrypt wallet'));
     expect(clearPasskeyMode).not.toHaveBeenCalled();
     expect(localStorage.getItem('passkeyLabel')).toBe('Earlier Wallet');
     expect(readWalletSetup(scope).tourStatus).toBe('not-started');
     await act(async () => { publishWallet(); finish(client); });
     await expectWallet('phrase', 'active', 'phrase-verified');
-    expect(harness.connect).toHaveBeenCalledWith({type: 'mnemonic', mnemonic: harness.phrase}, false);
+    expect(harness.encrypt).toHaveBeenCalledWith(harness.phrase,'disposable-wallet-password');
+    expect(harness.connect).toHaveBeenCalledWith({type: 'mnemonic', mnemonic: harness.phrase}, false, undefined, 'secureStorage');
     expect(clearPasskeyMode).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem('passkeyActiveCredentialId')).toBeNull();
     expect(localStorage.getItem('passkeyActiveCredentialRpId')).toBeNull();
@@ -234,8 +257,9 @@ describe('App wallet setup enrollment and recovery mode', () => {
     render(<App />);
     await user.click(screen.getByText('Restore Phrase Wallet'));
     await user.click(screen.getByText('Restore Phrase'));
+    await user.click(screen.getByText('Encrypt wallet'));
     await expectWallet('phrase', 'not-started', 'pending');
-    expect(harness.connect).toHaveBeenCalledWith({type: 'mnemonic', mnemonic: harness.phrase}, true);
+    expect(harness.connect).toHaveBeenCalledWith({type: 'mnemonic', mnemonic: harness.phrase}, true, undefined, 'secureStorage');
     expect(clearPasskeyMode).toHaveBeenCalledTimes(1);
     await expectRegistryPreserved();
   });
@@ -252,6 +276,7 @@ describe('App wallet setup enrollment and recovery mode', () => {
     expect(readWalletSetup(scope).tourStatus).toBe('not-started');
     await user.click(screen.getByText('Use Recovery Phrase'));
     await user.click(screen.getByText('Confirm Written Backup'));
+    await user.click(screen.getByText('Encrypt wallet'));
     await expectWallet('phrase', 'active', 'phrase-verified');
     expect(clearPasskeyMode).toHaveBeenCalledTimes(1);
     await expectRegistryPreserved();
@@ -263,9 +288,25 @@ describe('App wallet setup enrollment and recovery mode', () => {
     render(<App />);
     await user.click(screen.getByText('Restore Phrase Wallet'));
     await user.click(screen.getByText('Restore Phrase'));
+    await user.click(screen.getByText('Encrypt wallet'));
     expect(clearPasskeyMode).not.toHaveBeenCalled();
     expect(localStorage.getItem('passkeyLabel')).toBe('Earlier Wallet');
     expect(localStorage.getItem('passkeyActiveCredentialId')).toBe('BAUG');
+    expect(readWalletSetup(scope).tourStatus).toBe('not-started');
+    await expectRegistryPreserved();
+  });
+
+  it('does not connect or clear recovery metadata when browser encryption fails', async () => {
+    const user = userEvent.setup();
+    harness.encrypt.mockRejectedValueOnce(new Error('Synthetic storage failure'));
+    render(<App />);
+    await user.click(screen.getByText('Create Phrase Wallet'));
+    await user.click(screen.getByText('Confirm Written Backup'));
+    await user.click(screen.getByText('Encrypt wallet'));
+    expect(harness.encrypt).toHaveBeenCalledTimes(1);
+    expect(harness.connect).not.toHaveBeenCalled();
+    expect(clearPasskeyMode).not.toHaveBeenCalled();
+    expect(localStorage.getItem('passkeyLabel')).toBe('Earlier Wallet');
     expect(readWalletSetup(scope).tourStatus).toBe('not-started');
     await expectRegistryPreserved();
   });
@@ -276,7 +317,9 @@ describe('App wallet setup enrollment and recovery mode', () => {
     render(<App />);
     await user.click(screen.getByText('Create Phrase Wallet'));
     await user.click(screen.getByText('Confirm Written Backup'));
-    await expectWallet('passkey', 'not-started', 'pending');
+    await user.click(screen.getByText('Encrypt wallet'));
+    expect(screen.getByText('Encrypt wallet')).toBeInTheDocument();
+    expect(readWalletSetup(scope).tourStatus).toBe('not-started');
     expect(clearPasskeyMode).not.toHaveBeenCalled();
     await expectRegistryPreserved();
   });
