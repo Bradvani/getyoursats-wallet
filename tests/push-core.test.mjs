@@ -52,7 +52,7 @@ test('Spark webhook authenticates exact raw bytes and successful mainnet inbound
   const evt={id:'018677b5-e419-99d1-0000-a7030393c9af',
     created_at:new Date().toISOString(),timestamp:new Date().toISOString(),
     type:'SPARK_LIGHTNING_RECEIVE_FINISHED',network:'MAINNET',
-    request_status:'COMPLETED',status:'TRANSFER_COMPLETED',
+    request_status:'SUCCEEDED',status:'TRANSFER_COMPLETED',
     receiver_identity_public_key:pub,payment_preimage:'should-not-leak'};
   const raw=Buffer.from(JSON.stringify(evt));
   const hmac=(bytes)=>createHmac('sha256',secret).update(bytes).digest('hex');
@@ -65,6 +65,10 @@ test('Spark webhook authenticates exact raw bytes and successful mainnet inbound
   assert.equal(verifySparkWebhook(pending,pub,secret,hmac(pending)).notify,false);
   const outgoing=Buffer.from(JSON.stringify({...evt,type:'SPARK_LIGHTNING_SEND_FINISHED'}));
   assert.equal(verifySparkWebhook(outgoing,pub,secret,hmac(outgoing)).notify,false);
+  const noReceiver=Buffer.from(JSON.stringify({...evt,receiver_identity_public_key:null}));
+  assert.equal(verifySparkWebhook(noReceiver,pub,secret,hmac(noReceiver)).notify,true);
+  const failed=Buffer.from(JSON.stringify({...evt,request_status:'FAILED'}));
+  assert.equal(verifySparkWebhook(failed,pub,secret,hmac(failed)).notify,false);
   const other=Buffer.from(JSON.stringify({...evt,receiver_identity_public_key:'03'+'11'.repeat(32)}));
   assert.equal(verifySparkWebhook(other,pub,secret,hmac(other)).ok,false);
 });
