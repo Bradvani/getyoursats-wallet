@@ -165,7 +165,7 @@ self.addEventListener('push', (event) => {
     title: 'GetYourSats',
     body: 'Wallet activity. Open GetYourSats to review.',
   };
-  const id = type && typeof message.id === 'string'
+  const id = type && message && typeof message.id === 'string'
     && /^[a-zA-Z0-9_-]{1,80}$/.test(message.id) ? message.id : null;
   const options = {
     body: copy.body,
