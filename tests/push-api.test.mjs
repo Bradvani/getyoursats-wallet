@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {Buffer} from 'node:buffer';
-import {createHmac,generateKeyPairSync} from 'node:crypto';
+import {createHash,createHmac,generateKeyPairSync} from 'node:crypto';
 import {POST as sparkHandler} from '../api/notifications/spark.js';
 import {POST as lnurlHandler} from '../api/notifications/lnurl.js';
 
@@ -80,7 +80,7 @@ const sparkEvent=()=>({
   network:'MAINNET',request_status:'COMPLETED',status:'TRANSFER_COMPLETED',
   type:'SPARK_LIGHTNING_RECEIVE_FINISHED',
   receiver_identity_public_key:wallet,
-  invoice_amount:{value:5000,unit:'SATOSHI'},
+  invoice_amount:{value:5000,unit:'SATOSHI'}, payment_preimage:'11'.repeat(32),
 });
 test('signed, completed Spark receive sends once, replay stays idempotent',async()=>{
   const ctx=setup();
@@ -124,6 +124,27 @@ test('configured LNURL webhook confirms branded Lightning Address once',async()=
     });
     assert.equal((await lnurlHandler(req())).status,200);
     assert.equal((await lnurlHandler(req())).status,200);
+    assert.equal(ctx.pushes,1);
+  }finally{ctx.restore();}
+});
+
+test('the same payment delivered by Spark and Breez LNURL generates only one alert',async()=>{
+  const ctx=setup();
+  try{
+    const spark=signed(sparkEvent(),secret);
+    const sparkRequest=new Request('https://wallet.getyoursats.com/api/notifications/spark?wallet='+wallet,{
+      method:'POST',headers:{'x-spark-signature':spark.hmac},body:spark.text,
+    });
+    assert.equal((await sparkHandler(sparkRequest)).status,200);
+    const hash=createHash('sha256').update(Buffer.from('11'.repeat(32),'hex')).digest('hex');
+    const data=signed({template:'spark_payment_received',data:{
+      payment_hash:hash,user_pubkey:wallet,lightning_address:'alice@getyoursats.com',
+      timestamp:Date.now(),amount_sat:5000,
+    }},lnurlSecret);
+    const lnurlRequest=new Request('https://wallet.getyoursats.com/api/notifications/lnurl',{
+      method:'POST',headers:{'x-breez-signature':data.hmac},body:data.text,
+    });
+    assert.equal((await lnurlHandler(lnurlRequest)).status,200);
     assert.equal(ctx.pushes,1);
   }finally{ctx.restore();}
 });
