@@ -140,3 +140,27 @@ test('quote validates amount, route, mode and explicit fee breakdown', async () 
   } });
   assert.deepEqual(await client.getBitcoinQuote({ orderType: 'buy', fiatCurrency: 'INR', srcAmount: '1000', paymentMode: 'upi' }), quote);
 });
+test('quote preserves documented token fee currencies without loosening the fiat route', async () => {
+  const input = {orderType: 'buy', fiatCurrency: 'INR', srcAmount: '1000', paymentMode: 'upi'};
+  const request = bitcoinQuoteRequest(input);
+  const feeDetails = [
+    {type: 'partner', fee: '0.125', currency: 'USDT', isInclusive: true},
+    {type: 'network', fee: '0.000001', currency: 'USDC', isInclusive: false},
+  ];
+  const quote = {...request, dstAmount: '0.0001', feeDetails};
+  assert.deepEqual(validateBitcoinQuote(quote, request).feeDetails, feeDetails);
+  const client = createRampnowClient({...config, fetchImpl: async () => response(quote)});
+  assert.deepEqual((await client.getBitcoinQuote(input)).feeDetails, feeDetails);
+  for (const fiatCurrency of ['USDT', 'USDC', 'ABCDEF', 'inr', 'IN', 'INR1']) {
+    assert.throws(() => bitcoinQuoteRequest({...input, fiatCurrency}), /RAMPNOW_FIAT_INVALID/);
+    assert.throws(() => client.getBitcoinAsset(fiatCurrency), /RAMPNOW_FIAT_INVALID/);
+  }
+});
+test('quote rejects malformed, unbounded or non-string fee currency codes', () => {
+  const request = bitcoinQuoteRequest({orderType: 'buy', fiatCurrency: 'INR', srcAmount: '1000', paymentMode: 'upi'});
+  for (const currency of [undefined, null, 123, '', 'US', 'TOOLONG', 'usdt', 'UsdC', 'USD1', 'USDT:bitcoin', ' USDT', 'USDT\n']) {
+    const quote = {...request, dstAmount: '0.0001',
+      feeDetails: [{type: 'partner', fee: '0.1', currency, isInclusive: true}]};
+    assert.throws(() => validateBitcoinQuote(quote, request), /RAMPNOW_QUOTE_INVALID/);
+  }
+});

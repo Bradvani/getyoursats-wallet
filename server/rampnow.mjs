@@ -83,7 +83,8 @@ export function validateBitcoinQuote(quote, request) {
   if (request.paymentMode !== undefined) requireValue(quote.paymentMode === request.paymentMode, 'RAMPNOW_QUOTE_MISMATCH');
   requireValue(Array.isArray(quote.feeDetails), 'RAMPNOW_QUOTE_INVALID');
   for (const fee of quote.feeDetails) {
-    requireValue(object(fee) && decimalAmount(fee.fee, false) && currencyCode(fee.currency)
+    requireValue(object(fee) && decimalAmount(fee.fee, false)
+      && typeof fee.currency === 'string' && /^[A-Z]{3,6}$/.test(fee.currency)
       && typeof fee.type === 'string' && fee.type.length > 0 && fee.type.length <= 64
       && typeof fee.isInclusive === 'boolean', 'RAMPNOW_QUOTE_INVALID');
   }

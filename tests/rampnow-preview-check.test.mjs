@@ -39,16 +39,19 @@ test('reports capability candidates without claiming tested settlement or printi
   assert.equal(result.providerDeliveryVerified, false);
   assert.doesNotMatch(JSON.stringify(result), /private-key|private-secret/);
 });
-test('runs webhook self-test only after verified storage, without claiming provider delivery', async () => {
+test('runs webhook and callback checks only after verified storage, without claiming provider delivery', async () => {
   for (const status of ['sandbox_storage_verified', 'sandbox_storage_check_failed']) {
-    let called = false; let deliveryCalled = false;
+    let called = false; let deliveryCalled = false; let callbacksCalled = false;
     const result = await checkRampnowPreview(env, factory, {
       storageCheck: async () => ({configured: true, status}),
       webhookCheck: async () => {called = true; return {status: 'sandbox_webhook_selftest_verified'};},
       deliveryCheck: async () => {deliveryCalled = true; return {httpDeliveryVerified: true, providerDeliveryVerified: false};},
+      callbackCheck: async () => {callbacksCalled = true; return {checked: true, providerCallbackCandidateCount: 1};},
     });
     assert.equal(called, status === 'sandbox_storage_verified');
     assert.equal(deliveryCalled, status === 'sandbox_storage_verified');
+    assert.equal(callbacksCalled, status === 'sandbox_storage_verified');
+    assert.equal(result.callbacks?.providerCallbackCandidateCount, status === 'sandbox_storage_verified' ? 1 : undefined);
     assert.equal(result.webhookStorageConfigured, true);
     assert.equal(result.providerDeliveryVerified, false);
     assert.equal(result.productionReady, false);

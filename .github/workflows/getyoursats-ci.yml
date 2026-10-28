@@ -26,4 +26,6 @@ jobs:
         run: node --test tests/contact-budget.integration.mjs
       - name: Verify sandbox webhook persistence and concurrency
         run: node --test tests/rampnow-webhook.integration.mjs
+      - name: Verify sandbox checkout reservation and ownership
+        run: GYS_REQUIRE_REDIS=1 node --test tests/rampnow-intent-store.test.mjs
       - run: npm run lint

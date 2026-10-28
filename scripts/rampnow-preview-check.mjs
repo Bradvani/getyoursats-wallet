@@ -7,10 +7,11 @@ import { createRampnowClient, RampnowError } from '../server/rampnow.mjs';
 import { checkRampnowStorage } from '../server/rampnowStorageCheck.mjs';
 import { checkRampnowWebhook } from '../server/rampnowWebhookCheck.mjs';
 import { checkRampnowWebhookDelivery } from '../server/rampnowWebhookDeliveryCheck.mjs';
+import { checkRampnowCallbacks } from '../server/rampnowCallbackCheck.mjs';
 
 export async function checkRampnowPreview(env = process.env, clientFactory = createRampnowClient,
   {storageCheck = checkRampnowStorage, webhookCheck = checkRampnowWebhook,
-    deliveryCheck = checkRampnowWebhookDelivery} = {}) {
+    deliveryCheck = checkRampnowWebhookDelivery, callbackCheck = checkRampnowCallbacks} = {}) {
   const report = { check: 'rampnow_sandbox', authentication: false, btcBuyCandidate: false,
     btcSellCandidate: false, bitcoinNetwork: 'unverified', networkStatus: 'not_checked',
     webhookStorageConfigured: false, providerDeliveryVerified: false, productionReady: false };
@@ -27,6 +28,7 @@ export async function checkRampnowPreview(env = process.env, clientFactory = cre
   if (report.storage.status === 'sandbox_storage_verified') {
     report.webhookSelfTest = await webhookCheck(env);
     report.webhookDelivery = await deliveryCheck(env);
+    report.callbacks = await callbackCheck(env);
   }
   try {
     const client = clientFactory({ environment: 'sandbox', apiKey: env.RAMPNOW_API_KEY, apiSecret: env.RAMPNOW_API_SECRET });
