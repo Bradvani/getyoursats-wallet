@@ -237,3 +237,66 @@ test('the tested adapter is identified and closed storage rejects access', async
   expect(result.identity.source).toBe(process.env.GYS_SDK_STORAGE_ADAPTER ? 'explicit-source-override' : 'installed-sdk');
   await test.info().attach('adapter-identity', {body: JSON.stringify(result.identity), contentType: 'application/json'});
 });
+
+// Synthetic, valueless operational rows only. This proves installed adapter
+// persistence, not provider settlement, production migration or full recovery.
+test('reopening the installed adapter preserves cached balance, history, deposit and uncertain attempt records',async({page})=>{
+  const name=`gys-operational-fixture-${crypto.randomUUID()}`;
+  const before=await page.evaluate(async name=>{
+    const path='/adapter.js';const {IndexedDBStorage}=await import(path);
+    const store=await new IndexedDBStorage(name).initialize();
+    try{
+      await store.compareAndSwapCachedItem('fixture-cached-balance',null,'{"balanceSats":900,"source":"synthetic-fixture"}');
+      await store.compareAndSwapCachedItem('fixture-uncertain-operation',null,'{"operationId":"fixture-001","state":"unknown","amountSats":"100"}');
+      await store.applyPaymentUpdate({id:'public-payment-fixture',paymentType:'send',status:'pending',amount:100n,fees:0n,timestamp:100,method:'spark'});
+      await store.addDeposit('a'.repeat(64),0,1000,true);
+      const snapshot={balance:await store.getCachedItem('fixture-cached-balance'),attempt:await store.getCachedItem('fixture-uncertain-operation'),payment:await store.getPaymentById('public-payment-fixture'),deposits:await store.listDeposits()};
+      return JSON.stringify(snapshot,(_key,value)=>typeof value==='bigint'?value.toString():value);
+    }finally{store.close();}
+  },name);
+  await page.reload();
+  const after=await page.evaluate(async name=>{
+    const path='/adapter.js';const {IndexedDBStorage}=await import(path);
+    const store=await new IndexedDBStorage(name).initialize();
+    try{
+      const snapshot={balance:await store.getCachedItem('fixture-cached-balance'),attempt:await store.getCachedItem('fixture-uncertain-operation'),payment:await store.getPaymentById('public-payment-fixture'),deposits:await store.listDeposits()};
+      return JSON.stringify(snapshot,(_key,value)=>typeof value==='bigint'?value.toString():value);
+    }finally{store.close();}
+  },name);
+  expect(after).toBe(before);
+  const records=JSON.parse(after);
+  expect(JSON.parse(records.attempt).state).toBe('unknown');
+  expect(records.payment).toMatchObject({id:'public-payment-fixture',status:'pending'});
+  expect(records.deposits).toHaveLength(1);expect(records.deposits[0].amountSats).toBe(1000);
+});
+
+test('an aborted payment update cannot replace the preserved pending record or acknowledge completion',async({page})=>{
+  const result=await page.evaluate(async()=>{
+    const path='/adapter.js';const {IndexedDBStorage}=await import(path);
+    const name=`gys-operational-fixture-${crypto.randomUUID()}`,store=await new IndexedDBStorage(name).initialize();
+    const payment={id:'public-pending-fixture',paymentType:'send',status:'pending',amount:100n,fees:0n,timestamp:1,method:'spark'};
+    try{
+      await store.applyPaymentUpdate(payment);
+      const original=store.db.transaction.bind(store.db);
+      store.db.transaction=(...args:unknown[])=>{
+        const tx=original(...args);
+        if(args[1]==='readwrite'){
+          const getStore=tx.objectStore.bind(tx);
+          tx.objectStore=(name:string)=>{
+            const objectStore=getStore(name),put=objectStore.put.bind(objectStore);
+            objectStore.put=(value:unknown)=>{const req=put(value);req.addEventListener('success',()=>tx.abort(),{once:true});return req;};
+            return objectStore;
+          };
+        }
+        return tx;
+      };
+      let rejected=false;
+      try{await store.applyPaymentUpdate({...payment,status:'completed'});}catch{rejected=true;}
+      store.db.transaction=original;
+      store.close();
+      const reopened=await new IndexedDBStorage(name).initialize();
+      try{return {rejected,status:(await reopened.getPaymentById(payment.id)).status};}finally{reopened.close();}
+    }finally{store.close();}
+  });
+  expect(result).toEqual({rejected:true,status:'pending'});
+});

@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   software:
-    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && (github.base_ref == 'release/browser-pwa-security-localization-20261025' || github.head_ref == 'release/gate1-integrated-rc-20261028' || github.head_ref == 'feat/same-wallet-passkey-20261028')
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && (github.base_ref == 'release/browser-pwa-security-localization-20261025' || github.head_ref == 'release/gate1-integrated-rc-20261028' || github.head_ref == 'feat/same-wallet-passkey-20261028' || github.head_ref == 'fix/integrated-recovery-readiness-20261028')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -70,7 +70,7 @@ jobs:
           retention-days: 30
 
   browsers:
-    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && (github.base_ref == 'release/browser-pwa-security-localization-20261025' || github.head_ref == 'release/gate1-integrated-rc-20261028' || github.head_ref == 'feat/same-wallet-passkey-20261028')
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.event.pull_request.head.repo.full_name == github.repository && (github.base_ref == 'release/browser-pwa-security-localization-20261025' || github.head_ref == 'release/gate1-integrated-rc-20261028' || github.head_ref == 'feat/same-wallet-passkey-20261028' || github.head_ref == 'fix/integrated-recovery-readiness-20261028')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
@@ -125,6 +125,10 @@ jobs:
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Vault restoration, real WASM locks and uncertain journals
         run: PLAYWRIGHT_JSON_OUTPUT_FILE=/tmp/companion-evidence/security.json npx playwright test --config playwright.release-security.config.ts --project ${{ matrix.browser }} --reporter=line,json
+      - name: Installed adapter operational record preservation
+        env:
+          GYS_SDK_STORAGE_REPORT: /tmp/companion-evidence/sdk-storage.json
+        run: npx playwright test --config playwright.sdk-storage.config.ts --project ${{ matrix.browser }}
       - name: Same-origin rollback containment
         run: |
           set -euo pipefail

@@ -1,3 +1,4 @@
+import {readBrowserRecoveryReadiness} from '../security/browserRecoveryReadiness';
 import {passkeyUnlockErrorMessage} from '../utils/passkeyUnlockFeedback';
 import {notifyPaymentFeedback} from '../utils/transferHaptics';
 import { Capacitor } from '@capacitor/core';
@@ -490,12 +491,15 @@ export function useBreezSdk(
     }
   }, []);
 
+  const connectInFlightRef=useRef(false);
   const connectWallet = useCallback(async (
     seed: Seed,
     restore: boolean,
     passkeyLabel?: string,
     source: ConnectSeedSource = 'onboarding',
   ) => {
+    if(connectInFlightRef.current)throw new Error('Wallet connection is already in progress.');
+    connectInFlightRef.current=true;
     let connectedSdk: BreezSdk | undefined;
     const createStart = performance.now();
     try {
@@ -545,7 +549,12 @@ export function useBreezSdk(
         connectSdk({ config: cfg, seed, storageDir: 'spark-wallet-example' }));
       nativeSessionSdkRef.current = connectedSdk;
       if (Capacitor.isNativePlatform()) setActiveNativeSeedWallet(connectedSdk, cfg.network);
-      setSdk(connectedSdk);
+      if(Capacitor.isNativePlatform())setSdk(connectedSdk);
+      const browserEpoch=getSpendingSessionEpoch();
+      const assertConnectionCurrent=()=>{
+        if(nativeWalletEpochRef.current!==connectionEpoch||nativeSessionSdkRef.current!==connectedSdk)throw new Error('Wallet connection changed while loading recovery data');
+        if(!Capacitor.isNativePlatform())assertCurrentSession(browserEpoch);
+      };
 
       logger.sdkInitialized();
       logger.authSuccess(passkeyLabel != null ? 'passkey' : seed.type);
@@ -599,18 +608,26 @@ export function useBreezSdk(
         }
       }
 
-      // Load balance + history before the first wallet render. Both are
-      // local-database reads (connect() already ran the initial sync), so
-      // the cost is milliseconds, while rendering without them flashes
-      // the "No payments" empty state on every startup (#301). Failure
-      // falls through: the wallet is usable and the synced event refills.
+      // Load local balance, history, deposits and recovery records before
+      // publishing a browser connection. These are local-read readiness checks,
+      // not proof of authoritative provider settlement or complete history.
+      // Rendering without them flashes
+      // the "No payments" empty state on every startup (#301). Only the native
+      // path retains its previous non-fatal read behavior.
       // Matches adoptMigratedSdk / reconnectWithDerivedWallet ordering.
       try {
-        const [info, txns] = await logger.time('[onboarding] sdk.getInfoAndPayments', () =>
-          Promise.all([
-            connectedSdk!.getInfo({ensureSynced:false}),
-            connectedSdk!.listPayments({ offset: 0, limit: 100 }),
+        const browserState=Capacitor.isNativePlatform()?null:
+          await readBrowserRecoveryReadiness(connectedSdk!,cfg.network,assertConnectionCurrent);
+        const [info, txns] = browserState?[browserState.info,{payments:browserState.payments}]:
+          await logger.time('[onboarding] sdk.getInfoAndPayments', () => Promise.all([
+            connectedSdk!.getInfo({ensureSynced:false}),connectedSdk!.listPayments({offset:0,limit:100}),
           ]));
+        assertConnectionCurrent();
+        if(browserState){
+          const deposits=unsettledDeposits(browserState.deposits);
+          setUnclaimedDeposits(deposits);
+          setHasRejectedDeposits(deposits.some(d=>isDepositRejected(d.txid,d.vout)));
+        }
         setWalletInfo(info);
         const newReceipt = newlyCompletedReceive(
         txns.payments, shownPaymentIdsRef.current, hasCompletedPaymentSnapshotRef.current
@@ -626,9 +643,12 @@ export function useBreezSdk(
         });
       } catch (e) {
         logger.warn(LogCategory.SDK, 'Initial wallet data load failed', { error: formatError(e) });
+        if(!Capacitor.isNativePlatform())throw e;
       }
 
       await recoverNativeAddress(connectedSdk, seed, cfg, connectionEpoch);
+      assertConnectionCurrent();
+      if(!Capacitor.isNativePlatform())setSdk(connectedSdk);
       setIsConnected(true);
       setStartupState('connected');
       setIsLoading(false);
@@ -639,7 +659,7 @@ export function useBreezSdk(
         ms: Math.round(performance.now() - createStart),
       });
 
-      void (async () => {
+      if(Capacitor.isNativePlatform())void (async () => {
         try {
           const result = await connectedSdk!.listUnclaimedDeposits({});
           const deposits = unsettledDeposits(result.deposits);
@@ -663,12 +683,17 @@ export function useBreezSdk(
         setSdk(null);
       }
 
+      if(!Capacitor.isNativePlatform()){
+        setIsConnected(false);
+        setStartupState(hasWebWalletVault()?'web-vault-locked':isPasskeyMode()?'native-locked':'no-wallet');
+        clearUnlockedWebMnemonic();lockSpendingSession('Browser recovery connection did not complete');
+      }
       setError('Failed to connect wallet. Please try again.');
       setIsSyncing(false);
       setIsLoading(false);
       setConfig(null);
       throw e;
-    }
+    }finally{connectInFlightRef.current=false;}
   }, [sdk, showToast, recoverNativeAddress]);
 
   const claimNativeLightningAddress = useCallback(async (input: string): Promise<LightningAddressInfo> => {
@@ -752,9 +777,8 @@ export function useBreezSdk(
       const cfg=buildConnectConfig();
       next=await connectSdk({config:cfg,seed,storageDir:'spark-wallet-example'});
       const resumedEpoch=getSpendingSessionEpoch();
-      const [info,history]=await Promise.all([
-        next.getInfo({ensureSynced:false}),next.listPayments({offset:0,limit:100}),
-      ]);
+      const recovered=await readBrowserRecoveryReadiness(next,cfg.network,()=>assertCurrentSession(resumedEpoch));
+      const info=recovered.info,history={payments:recovered.payments};
       assertCurrentSession(resumedEpoch);
       // Verify the public identity too, before adopting the reconnected SDK.
       if(walletInfo&&info.identityPubkey!==walletInfo.identityPubkey)
@@ -766,6 +790,9 @@ export function useBreezSdk(
       setWalletInfo(info);
       setTransactions(filterOngoingConversionPayments(history.payments));
       setConfig(cfg);
+      const deposits=unsettledDeposits(recovered.deposits);
+      setUnclaimedDeposits(deposits);
+      setHasRejectedDeposits(deposits.some(d=>isDepositRejected(d.txid,d.vout)));
       await recoverNativeAddress(next, seed, cfg, connectionEpoch);
       assertCurrentSession(resumedEpoch);
       setError(null);

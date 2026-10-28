@@ -8,6 +8,8 @@ import type {WalletSetupController} from './hooks/useWalletSetup';
 const harness = vi.hoisted(() => ({
   native: false,
   browserLocked: false,
+  hasVault: false,
+  removeLegacy: vi.fn<(...args:unknown[])=>Promise<void>>(),
   snapshot: {} as Record<string, unknown>,
   listeners: new Set<() => void>(),
   connect: vi.fn<(...args: unknown[]) => Promise<object | null>>(),
@@ -66,8 +68,9 @@ vi.mock('./contexts/ContactsContext', () => ({ContactsProvider: harness.PassThro
 vi.mock('./components/StagingGate', () => ({default: harness.PassThrough}));
 vi.mock('./components/layout/AppShell', () => ({default: harness.PassThrough}));
 vi.mock('./security/useBrowserSessionLock', () => ({useBrowserSessionLock: () => ({locked:harness.browserLocked,unlock:vi.fn()})}));
-vi.mock('./security/webWalletVault', () => ({hasWebWalletVault:()=>false,legacyWebMnemonic:()=>null,enrollWebWallet:(...args:unknown[])=>harness.encrypt(...args),unlockWebWallet:vi.fn(),removeMatchingLegacyMnemonic:vi.fn(),resetWebWalletPasswordWithWords:vi.fn()}));
-vi.mock('./security/WebWalletVaultPage', () => ({default: ({onSubmit}: {onSubmit:(password:string)=>Promise<void>}) => <button onClick={()=>{void onSubmit('disposable-wallet-password').catch(()=>{});}}>Encrypt wallet</button>}));
+vi.mock('./security/webWalletVault', () => ({hasWebWalletVault:()=>harness.hasVault,hasLinkedWebPasskey:()=>false,legacyWebMnemonic:()=>null,enrollWebWallet:(...args:unknown[])=>harness.encrypt(...args),unlockWebWallet:vi.fn(async()=>harness.phrase),removeMatchingLegacyMnemonic:harness.removeLegacy,resetWebWalletPasswordWithWords:vi.fn()}));
+vi.mock('./security/WebWalletVaultPage', () => ({default: ({onSubmit,onRecover}: {onSubmit:(password:string)=>Promise<void>;onRecover?:()=>void}) => <><button onClick={()=>{void onSubmit('disposable-wallet-password').catch(()=>{});}}>Encrypt wallet</button>{onRecover&&<button onClick={onRecover}>Recover protected wallet</button>}</>}));
+vi.mock('./security/WebVaultRecoveryPage',()=>({default:({onSubmit}:{onSubmit:(words:string,password:string)=>Promise<void>})=><button onClick={()=>{void onSubmit(harness.phrase,'replacement-wallet-password').catch(()=>{});}}>Recover with original words</button>}));
 vi.mock('./security/SpendingApprovalDialog',()=>({default:()=>null}));
 vi.mock('./hooks/useAppLock', () => ({useAppLock: () => ({locked: false})}));
 vi.mock('./features/unilateral-exit/hooks/useUnilateralExitEngineLifecycle', () => ({useUnilateralExitEngineLifecycle: vi.fn()}));
@@ -174,6 +177,8 @@ beforeEach(async () => {
   clearWalletSetupMemory();
   harness.native = false;
   harness.browserLocked = false;
+  harness.hasVault = false;
+  harness.removeLegacy.mockReset().mockResolvedValue();
   harness.encrypt.mockReset().mockResolvedValue();
   harness.retrieveSeed.mockReset();
   harness.storeSeed.mockReset().mockResolvedValue();
@@ -372,4 +377,22 @@ describe('App wallet setup enrollment and recovery mode', () => {
     expect(harness.connect).toHaveBeenCalledTimes(stage === 'read-back' ? 0 : 1);
     await expectRegistryPreserved();
   });
+});
+
+
+describe('App restored-browser connection commit',()=>{
+ it.each(['password unlock','word recovery'])('preserves legacy data when %s obtains no connected client',async route=>{
+  harness.hasVault=true;harness.snapshot={...harness.snapshot,startupState:'web-vault-locked'};
+  localStorage.setItem('walletMnemonic',harness.phrase);
+  harness.connect.mockResolvedValueOnce(null);
+  const user=userEvent.setup();render(<App/>);
+  if(route==='word recovery'){
+   await user.click(screen.getByText('Recover protected wallet'));
+   await user.click(screen.getByText('Recover with original words'));
+  }else await user.click(screen.getByText('Encrypt wallet'));
+  await waitFor(()=>expect(harness.connect).toHaveBeenCalledTimes(1));
+  expect(harness.removeLegacy).not.toHaveBeenCalled();
+  expect(localStorage.getItem('walletMnemonic')).toBe(harness.phrase);
+  expect(clearPasskeyMode).not.toHaveBeenCalled();
+ });
 });

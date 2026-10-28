@@ -328,10 +328,14 @@ const AppContent: React.FC = () => {
     setUserScreen('wallet');
   };
   const unlockBrowserVault = async(password:string) => {
+    const attempt=++setupAttempt.current;
     const mnemonic=await unlockWebWallet(password);
-    await sdk.connectWallet({type:'mnemonic',mnemonic},false,undefined,'secureStorage');
+    const client=await sdk.connectWallet({type:'mnemonic',mnemonic},false,undefined,'secureStorage');
+    if(attempt!==setupAttempt.current)throw new Error('Wallet setup changed. Your recovery data is preserved.');
+    if(!client)throw new Error('Wallet connection could not be verified. Your recovery data is preserved.');
     await removeMatchingLegacyMnemonic(password);
-    setUserScreen('wallet');
+    if(attempt!==setupAttempt.current)return;
+    clearPasskeyMode();setUserScreen('wallet');
   };
   const unlockLinkedBrowserVault = async(signal:AbortSignal) => {
     const mnemonic=await unlockWebWalletWithPasskey(signal);
@@ -348,10 +352,14 @@ const AppContent: React.FC = () => {
     clearPasskeyMode();setUserScreen('wallet');
   };
   const recoverBrowserVault = async(mnemonic:string,password:string) => {
+    const attempt=++setupAttempt.current;
     await resetWebWalletPasswordWithWords(mnemonic,password);
-    await sdk.connectWallet({type:'mnemonic',mnemonic},true,undefined,'secureStorage');
+    const client=await sdk.connectWallet({type:'mnemonic',mnemonic},true,undefined,'secureStorage');
+    if(attempt!==setupAttempt.current)throw new Error('Wallet setup changed. Your recovery data is preserved.');
+    if(!client)throw new Error('Wallet connection could not be verified. Your recovery data is preserved.');
     await removeMatchingLegacyMnemonic(password);
-    setUserScreen('wallet');
+    if(attempt!==setupAttempt.current)return;
+    clearPasskeyMode();setUserScreen('wallet');
   };
   // Navigate to wallet after passkey connect. A freshly registered passkey
   // derives a never-used seed, so there is nothing to restore: gating on the
