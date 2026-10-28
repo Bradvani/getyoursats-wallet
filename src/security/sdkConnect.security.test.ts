@@ -70,7 +70,7 @@ describe('browser SDK connection security wiring',()=>{
    expect(getSignerIdentityToken()).toBe(token);
    expect(getSpendingSessionEpoch()).toBe(epoch);
    expect(mocks.factory).not.toHaveBeenCalled();expect(mocks.config).not.toHaveBeenCalled();expect(mocks.connect).not.toHaveBeenCalled();
-   expect(open).not.toHaveBeenCalled();expect(remove).not.toHaveBeenCalled();
+   expect(remove).not.toHaveBeenCalled();
   });
  it.each(['unsupported','rejection','malformed'])('refuses %s database-presence evidence before changing identity',async kind=>{
   const epoch=getSpendingSessionEpoch();

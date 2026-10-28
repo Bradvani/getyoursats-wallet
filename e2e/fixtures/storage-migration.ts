@@ -1,3 +1,4 @@
+import {assertNoUnfencedPopulatedLegacyStorage,EMPTY_LEGACY_FENCE} from '../../src/services/emptyLegacyFence';
 import {prepareOwnedWalletStorage,walletStorageNames,resolveWalletExportDatabase,type OwnerRecord} from '../../src/security/storageMigration/ownedStorage';
 import {OWNER_STORE,openDatabase,createSchema,transactionDone,snapshotDatabase,snapshotDigest,readRecord,databaseSchema} from '../../src/security/storageMigration/database';
 import pinned from '../../src/security/storageMigration/pinnedSchemas.json';
@@ -9,6 +10,48 @@ const identity='02698b27ac308b275671b3ca25436346469d04a5bba578ae39feba1d65897a6a
 let active=true;const check=()=>{if(!active)throw Error('Session revoked');};
 const held:IDBDatabase[]=[];
 const lab={
+ async setupLegacyShared(root:string,kind:'empty'|'sdk-populated'|'tree-populated'='empty'){
+  active=true;const base=root+'/regtest/2687e55a';
+  const sdk=await new IndexedDBStorage(base).initialize(),tree=await createWebTreeStore(base+'-tree');
+  try{
+   if(kind==='sdk-populated')await sdk.compareAndSwapCachedItem('original-wallet-recovery',null,'must-remain-quarantined');
+   if(kind==='tree-populated'){
+    const tx=tree.db.transaction('spent','readwrite'),done=transactionDone(tx);
+    tx.objectStore('spent').put({id:'legacy-live-leaf',data:{value:1234n}});await done;
+   }
+  }finally{sdk.close();tree.close();}
+ },
+ async fenceLegacyShared(root:string){await assertNoUnfencedPopulatedLegacyStorage(root,'regtest',check);},
+ async inspectLegacyShared(root:string){
+  const base=root+'/regtest/2687e55a',list=await indexedDB.databases(),result=[];
+  for(const name of [base,base+'-tree']){
+   if(!list.some(d=>d.name===name)){result.push({name,exists:false});continue;}
+   const db=await openDatabase(name,undefined,()=>{throw Error('Unexpected create');},()=>{});
+   try{
+    const names=[...db.objectStoreNames].filter(n=>n!==EMPTY_LEGACY_FENCE);
+    const tx=db.transaction([...db.objectStoreNames],'readonly'),done=transactionDone(tx);
+    const reqs=names.map(n=>({name:n,request:tx.objectStore(n).count()}));
+    const marker=db.objectStoreNames.contains(EMPTY_LEGACY_FENCE)?tx.objectStore(EMPTY_LEGACY_FENCE).get('fence'):null;
+    await done;
+    result.push({name,exists:true,version:db.version,rows:reqs.map(o=>({name:o.name,count:o.request.result})),fenced:marker?.result??null});
+   }finally{db.close();}
+  }
+  return result;
+ },
+ async explicitLegacyReopenRejected(root:string){
+  const base=root+'/regtest/2687e55a',versions=[23,6],names=[base,base+'-tree'],result=[];
+  for(let i=0;i<2;i++)result.push(await new Promise<boolean>(resolve=>{
+   const r=indexedDB.open(names[i],versions[i]);
+   r.onsuccess=()=>{r.result.close();resolve(false);};
+   r.onerror=()=>resolve(r.error?.name==='VersionError');
+  }));
+  return result;
+ },
+ async holdLegacyShared(root:string){
+  const base=root+'/regtest/2687e55a';
+  const db=await openDatabase(base,23,()=>{throw Error('Unexpected create');},()=>{});
+  db.onversionchange=()=>{};held.push(db);
+ },
  async exportName(root:string){return resolveWalletExportDatabase(root,'regtest',identity,check);},
  async setup(root:string,kind:'owned'|'unowned'|'wrong-owner'|'empty'='owned'){
   active=true;const names=await walletStorageNames(root,'regtest',identity);

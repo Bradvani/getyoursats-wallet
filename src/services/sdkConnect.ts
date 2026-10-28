@@ -21,7 +21,7 @@ import {Capacitor} from '@capacitor/core';
 import { logger, LogCategory } from './logger';
 import { formatError } from '../utils/formatError';
 import { USDB_TOKEN_IDENTIFIER, USDB_TICKER } from '../constants/stableBalance';
-import {assertNoLegacyExternalSignerStorage} from './browserSdkStorage';
+import {assertNoUnfencedPopulatedLegacyStorage} from './emptyLegacyFence';
 
 function localCluster(): SparkConfig | null {
   const raw = import.meta.env.VITE_SPARK_LOCAL_CONFIG;
@@ -142,7 +142,7 @@ export async function connectSdk(params: {
   const isNative = Capacitor.isNativePlatform();
   if (!isNative) {
     const epoch = getSpendingSessionEpoch();
-    await assertNoLegacyExternalSignerStorage(storageDir, config.network);
+    await assertNoUnfencedPopulatedLegacyStorage(storageDir, config.network,()=>assertCurrentSession(epoch));
     assertCurrentSession(epoch);
   }
   await rememberSignerIdentity(seed);

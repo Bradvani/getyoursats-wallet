@@ -68,3 +68,26 @@ test('revocation before handover creates no database and changes no local wallet
 test('support export selects the active target and never a retired stale source',async({page})=>{
  const r=await page.evaluate(async root=>{const lab=Reflect.get(window,'gysStorageMigrationLab');const {pairs}=await lab.setup(root);const legacy=await lab.exportName(root);await lab.prepare(root);const migrated=await lab.exportName(root);await lab.removeTargetFixture(root);let rejected=false;try{await lab.exportName(root);}catch{rejected=true;}return {legacy,migrated,pairs,rejected};},root());expect(r.legacy).toBe(r.pairs[0].source);expect(r.migrated).toBe(r.pairs[0].target);expect(r.rejected).toBe(true);
 });
+
+
+test('empty untagged shared stores are fenced atomically without being assigned to any wallet',async({page})=>{
+ const r=await page.evaluate(async root=>{const lab=Reflect.get(window,'gysStorageMigrationLab');await lab.setupLegacyShared(root);const before=await lab.inspectLegacyShared(root);await lab.fenceLegacyShared(root);const after=await lab.inspectLegacyShared(root);await lab.fenceLegacyShared(root);return {before,after,reopen:await lab.explicitLegacyReopenRejected(root)};},root());
+ expect(r.before.map(d=>d.version)).toEqual([23,6]);
+ expect(r.after.map(d=>d.version)).toEqual([24,7]);
+ expect(r.after.every(d=>d.fenced?.empty===true&&d.rows.every(s=>s.count===0))).toBeTruthy();
+ expect(r.reopen).toEqual([true,true]);
+});
+test('populated untagged SDK storage remains untouched and blocks admission',async({page})=>{
+ const r=await page.evaluate(async root=>{const lab=Reflect.get(window,'gysStorageMigrationLab');await lab.setupLegacyShared(root,'sdk-populated');const before=await lab.inspectLegacyShared(root);let error='';try{await lab.fenceLegacyShared(root);}catch(e){error=String(e);}return {before,after:await lab.inspectLegacyShared(root),error};},root());
+ expect(r.error).toMatch(/recovery review/i);expect(r.after).toEqual(r.before);
+});
+test('populated shared tree data is preserved and cannot be falsely marked empty',async({page})=>{
+ const r=await page.evaluate(async root=>{const lab=Reflect.get(window,'gysStorageMigrationLab');await lab.setupLegacyShared(root,'tree-populated');let error='';try{await lab.fenceLegacyShared(root);}catch(e){error=String(e);}return {after:await lab.inspectLegacyShared(root),error};},root());
+ expect(r.error).toMatch(/recovery review/i);
+ expect(r.after[1].version).toBe(6);
+ expect(r.after[1].rows.some(s=>s.count>0)).toBeTruthy();
+});
+test('a noncooperating old tab blocks version fencing until it closes',async({page})=>{
+ const r=await page.evaluate(async root=>{const lab=Reflect.get(window,'gysStorageMigrationLab');await lab.setupLegacyShared(root);await lab.holdLegacyShared(root);let error='';try{await lab.fenceLegacyShared(root);}catch(e){error=String(e);}lab.closeOld();await lab.fenceLegacyShared(root);return {error,after:await lab.inspectLegacyShared(root)};},root());
+ expect(r.error).toBeTruthy();expect(r.after.map(d=>d.version)).toEqual([24,7]);
+});
