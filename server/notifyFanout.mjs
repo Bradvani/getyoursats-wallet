@@ -1,6 +1,7 @@
 import {randomBytes} from 'node:crypto';
 import {sendEmptyWebPush} from './pushCore.mjs';
-import {listSubscriptions, receiptKey, redis, removeSubscription, subscriptionId, PREFIX} from './pushStore.mjs';
+import {listSubscriptions, receiptKey, redis, removeSubscription, subscriptionId} from './pushStore.mjs';
+import {PREFIX} from './pushCore.mjs';
 
 /** Never report or create a wallet receipt here. This only attempts a private
  * OS alert after the upstream provider has cryptographically signed a settled
