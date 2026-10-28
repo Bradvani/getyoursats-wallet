@@ -17,6 +17,7 @@ import { splitClaimedDeposits } from '../utils/depositClaimQuote';
 import { isDepositRejected, clearRejectedDeposits, clearClaimFees } from '../services/depositState';
 import { setCachedStableTicker, clearNetworkOverride, clearStableRestorePrompted, ensureSparkPrivateMode, type BuyBitcoinProvider } from '../services/settings';
 import { wipeAllLocalData } from '../services/accountDeletion';
+import {revokeBrowserPushOnLogout} from '../services/pushLifecycle';
 import { hideSplash } from '../main';
 import {
   prfAvailability,
@@ -708,6 +709,14 @@ export function useBreezSdk(
   }, [sdkRef, config, isConnected]);
 
   const handleLogout = useCallback(async () => {
+    // Stop receiving OS notifications tied to the old wallet before dropping
+    // its keys. Never let offline service-worker operations block logout.
+    try {
+      await Promise.race([
+        revokeBrowserPushOnLogout(),
+        new Promise<void>(resolve => setTimeout(resolve, 2000)),
+      ]);
+    } catch { /* invalidated endpoints are also purged on push 404/410 */ }
     nativeWalletEpochRef.current++;
     nativeSessionSdkRef.current = null;
     setIsLoading(true);
