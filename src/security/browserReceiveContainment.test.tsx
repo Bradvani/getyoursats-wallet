@@ -8,6 +8,7 @@ import {FiatDataProvider} from '../contexts/FiatDataContext';
 import {StableBalanceProvider} from '../contexts/StableBalanceContext';
 import {ContactsProvider} from '../contexts/ContactsContext';
 import PaymentDetailsDialog from '../components/PaymentDetailsDialog';
+import StableBalanceToggleFlow from '../components/StableBalanceToggleFlow';
 import {ArchivedExitDialog} from '../features/unilateral-exit/ArchivedExitDialog';
 import {createMockClient} from '../test/mocks/mockWalletApi';
 import {waitForSheetOpen} from '../test/utils/waitForSheetOpen';
@@ -35,6 +36,18 @@ const order=():PosOrder=>({id:'saved-order',invoice:'lnbc1'+'q'.repeat(50),amoun
  createdAt:Date.now(),feeSats:0,originalAmount:'100',expiresAt:Date.now()+3_600_000});
 
 describe('browser receive containment',()=>{
+ it.each(['toToken','toBitcoin'] as const)('keeps the new Settings conversion flow contained in the security candidate (%s)',async direction=>{
+  const sdk=client(),onComplete=vi.fn(),onCancel=vi.fn();
+  view(sdk,<StableBalanceToggleFlow isOpen direction={direction} onComplete={onComplete} onCancel={onCancel}/>);
+  expect(await screen.findByText('Balance conversion unavailable')).toBeInTheDocument();
+  expect(screen.queryByTestId('stable-mode-warning')).toBeNull();
+  expect(screen.queryByTestId('stable-mode-review')).toBeNull();
+  expect(sdk.receivePayment).not.toHaveBeenCalled();
+  expect(sdk.prepareSendPayment).not.toHaveBeenCalled();
+  expect(sdk.updateUserSettings).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button',{name:'Close'}));
+  expect(onCancel).toHaveBeenCalledOnce();expect(onComplete).not.toHaveBeenCalled();
+ });
  it('does not offer a saved Lightning name or prewarm an unclaimable Bitcoin address, and keeps direct Spark usable',async()=>{
   const sdk=client();view(sdk,<ReceivePaymentDialog isOpen onClose={vi.fn()}/>);
   await waitForSheetOpen();

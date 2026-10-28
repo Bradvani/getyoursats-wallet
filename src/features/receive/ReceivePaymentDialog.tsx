@@ -407,9 +407,9 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                               onClick={() => handleTabChange('spark')}
                               className="w-full rounded-xl border border-[#F7931A]/50 bg-[#F7931A]/10 px-4 py-3 text-left text-sm font-semibold text-spark-text-primary hover:border-[#F7931A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F7931A]"
                             >
-                              Pay me directly on Spark · 0 sats transfer fee
+                              {t('Pay me directly on Spark · 0 sats transfer fee')}
                               <span className="mt-1 block text-xs font-normal text-spark-text-secondary">
-                                {restrictedBrowser?'Use disposable test wallets only.':'Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.'}
+                                {restrictedBrowser?t('Use disposable test wallets only.'):t('Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.')}
                               </span>
                             </button>
                           </div>
@@ -418,7 +418,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                         {receive.activeTab === 'spark' && (
                           <div className="flex w-full flex-col items-center gap-4" data-testid="direct-spark-receive-panel">
                             <p className="text-center text-sm font-semibold text-spark-text-primary">
-                              Receive directly on Spark
+                              {t('Receive directly on Spark')}
                             </p>
                             <SparkAddressDisplay
                               address={receive.sparkAddress}
@@ -431,7 +431,7 @@ const ReceivePaymentDialog: React.FC<ReceivePaymentDialogProps> = ({ isOpen, onC
                               onClick={() => { handleTabChange('lightning'); setShownMode('lightning'); }}
                               className="rounded-lg border border-spark-border px-4 py-2 text-sm text-spark-text-primary"
                             >
-                              {restrictedBrowser?'Back to receive options':'Back to Lightning'}
+                              {restrictedBrowser?t('Back to receive options'):t('Back to Lightning')}
                             </button>
                           </div>
                         )}

@@ -230,7 +230,18 @@
     "Unlock with linked passkey": "Unlock with linked passkey",
     "Approve with linked passkey": "Approve with linked passkey",
     "Use my wallet password instead": "Use my wallet password instead",
-    "Restore with file and password": "Restore with file and password"
+    "Restore with file and password": "Restore with file and password",
+    "Pay me directly on Spark · 0 sats transfer fee": "Pay me directly on Spark · 0 sats transfer fee",
+    "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.": "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.",
+    "Receive directly on Spark": "Receive directly on Spark",
+    "Back to Lightning": "Back to Lightning",
+    "Direct Spark Bitcoin receive": "Direct Spark Bitcoin receive",
+    "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.": "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.",
+    "Spark addresses can be reused and linked across payments. Share this address only with people you trust.": "Spark addresses can be reused and linked across payments. Share this address only with people you trust.",
+    "Balance conversion unavailable": "Balance conversion unavailable",
+    "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.": "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.",
+    "Use disposable test wallets only.": "Use disposable test wallets only.",
+    "Back to receive options": "Back to receive options"
   },
   "hi": {
     "Balance": "बैलेंस",
@@ -463,7 +474,18 @@
     "Unlock with linked passkey": "जुड़ी पासकी से अनलॉक करें",
     "Approve with linked passkey": "जुड़ी पासकी से मंज़ूरी दें",
     "Use my wallet password instead": "इसके बजाय वॉलेट पासवर्ड इस्तेमाल करें",
-    "Restore with file and password": "फ़ाइल और पासवर्ड से पुनर्स्थापित करें"
+    "Restore with file and password": "फ़ाइल और पासवर्ड से पुनर्स्थापित करें",
+    "Pay me directly on Spark · 0 sats transfer fee": "Spark पर सीधे भुगतान करें · ट्रांसफ़र शुल्क 0 sats",
+    "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.": "दूसरे GetYourSats वॉलेट के लिए उपयुक्त। Lightning पते पर भुगतान में शुल्क लग सकता है।",
+    "Receive directly on Spark": "Spark पर सीधे प्राप्त करें",
+    "Back to Lightning": "Lightning पर वापस जाएँ",
+    "Direct Spark Bitcoin receive": "Spark पर सीधे Bitcoin प्राप्त करें",
+    "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.": "दूसरा Spark-संगत वॉलेट यहाँ Spark ट्रांसफ़र शुल्क के बिना Bitcoin भेज सकता है। यह Lightning इनवॉइस नहीं है। Lightning पते पर भुगतान में रूटिंग शुल्क लग सकता है।",
+    "Spark addresses can be reused and linked across payments. Share this address only with people you trust.": "Spark पते दोबारा इस्तेमाल हो सकते हैं और अलग-अलग भुगतानों को आपस में जोड़ सकते हैं। यह पता केवल भरोसेमंद लोगों के साथ साझा करें।",
+    "Balance conversion unavailable": "बैलेंस का रूपांतरण उपलब्ध नहीं है",
+    "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.": "इस प्रीव्यू में बैलेंस का रूपांतरण अस्थायी रूप से उपलब्ध नहीं है। आपकी संपत्तियों का रूपांतरण नहीं हुआ है।",
+    "Use disposable test wallets only.": "केवल अस्थायी परीक्षण वॉलेट इस्तेमाल करें।",
+    "Back to receive options": "प्राप्ति विकल्पों पर वापस जाएँ"
   },
   "es": {
     "Balance": "Saldo",
@@ -696,7 +718,18 @@
     "Unlock with linked passkey": "Desbloquear con la clave vinculada",
     "Approve with linked passkey": "Aprobar con la clave vinculada",
     "Use my wallet password instead": "Usar la contraseña de mi cartera",
-    "Restore with file and password": "Restaurar con archivo y contraseña"
+    "Restore with file and password": "Restaurar con archivo y contraseña",
+    "Pay me directly on Spark · 0 sats transfer fee": "Págame directamente por Spark · Comisión de transferencia: 0 sats",
+    "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.": "Ideal para otra billetera GetYourSats. Los pagos a direcciones Lightning pueden tener comisiones.",
+    "Receive directly on Spark": "Recibir directamente por Spark",
+    "Back to Lightning": "Volver a Lightning",
+    "Direct Spark Bitcoin receive": "Recibir Bitcoin directamente por Spark",
+    "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.": "Otra billetera compatible con Spark puede enviar Bitcoin aquí sin comisión de transferencia de Spark. Esto no es una factura Lightning. Los pagos a direcciones Lightning pueden tener comisiones de enrutamiento.",
+    "Spark addresses can be reused and linked across payments. Share this address only with people you trust.": "Las direcciones Spark se pueden reutilizar y vincular entre pagos. Comparte esta dirección solo con personas de confianza.",
+    "Balance conversion unavailable": "Conversión de saldo no disponible",
+    "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.": "La conversión de saldo no está disponible temporalmente en esta vista previa. Tus activos no se han convertido.",
+    "Use disposable test wallets only.": "Usa únicamente billeteras de prueba desechables.",
+    "Back to receive options": "Volver a las opciones de recepción"
   },
   "pt": {
     "Balance": "Saldo",
@@ -929,7 +962,18 @@
     "Unlock with linked passkey": "Desbloquear com a chave associada",
     "Approve with linked passkey": "Aprovar com a chave associada",
     "Use my wallet password instead": "Usar a palavra-passe da minha carteira",
-    "Restore with file and password": "Restaurar com ficheiro e palavra-passe"
+    "Restore with file and password": "Restaurar com ficheiro e palavra-passe",
+    "Pay me directly on Spark · 0 sats transfer fee": "Pague diretamente pelo Spark · Taxa de transferência: 0 sats",
+    "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.": "Ideal para outra carteira GetYourSats. Pagamentos para endereços Lightning podem ter taxas.",
+    "Receive directly on Spark": "Receber diretamente pelo Spark",
+    "Back to Lightning": "Voltar ao Lightning",
+    "Direct Spark Bitcoin receive": "Receber Bitcoin diretamente pelo Spark",
+    "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.": "Outra carteira compatível com Spark pode enviar Bitcoin para cá sem taxa de transferência do Spark. Isto não é uma fatura Lightning. Pagamentos para endereços Lightning ainda podem ter taxas de roteamento.",
+    "Spark addresses can be reused and linked across payments. Share this address only with people you trust.": "Endereços Spark podem ser reutilizados e associados entre pagamentos. Compartilhe este endereço apenas com pessoas de confiança.",
+    "Balance conversion unavailable": "Conversão de saldo indisponível",
+    "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.": "A conversão de saldo está temporariamente indisponível nesta prévia. Seus ativos não foram convertidos.",
+    "Use disposable test wallets only.": "Use apenas carteiras de teste descartáveis.",
+    "Back to receive options": "Voltar às opções de recebimento"
   },
   "ja": {
     "Balance": "残高",
@@ -1162,7 +1206,18 @@
     "Unlock with linked passkey": "関連するパスキーでロック解除",
     "Approve with linked passkey": "関連するパスキーで承認",
     "Use my wallet password instead": "代わりにウォレットのパスワードを使用",
-    "Restore with file and password": "ファイルとパスワードで復元"
+    "Restore with file and password": "ファイルとパスワードで復元",
+    "Pay me directly on Spark · 0 sats transfer fee": "Sparkで直接支払う · 送金手数料0 sats",
+    "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.": "別のGetYourSatsウォレットからの支払いに適しています。Lightningアドレスへの支払いには手数料がかかる場合があります。",
+    "Receive directly on Spark": "Sparkで直接受け取る",
+    "Back to Lightning": "Lightningに戻る",
+    "Direct Spark Bitcoin receive": "SparkでBitcoinを直接受け取る",
+    "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.": "別のSpark対応ウォレットから、Spark送金手数料なしでここにBitcoinを送れます。これはLightningインボイスではありません。Lightningアドレスへの支払いにはルーティング手数料がかかる場合があります。",
+    "Spark addresses can be reused and linked across payments. Share this address only with people you trust.": "Sparkアドレスは再利用でき、複数の支払いが関連付けられることがあります。信頼できる人にのみ共有してください。",
+    "Balance conversion unavailable": "残高の換算は利用できません",
+    "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.": "このプレビューでは残高の換算を一時的に利用できません。資産は換算されていません。",
+    "Use disposable test wallets only.": "使い捨てのテスト用ウォレットのみを使用してください。",
+    "Back to receive options": "受取方法に戻る"
   },
   "th": {
     "Balance": "ยอดคงเหลือ",
@@ -1395,7 +1450,18 @@
     "Unlock with linked passkey": "ปลดล็อกด้วยพาสคีย์ที่เชื่อมโยง",
     "Approve with linked passkey": "อนุมัติด้วยพาสคีย์ที่เชื่อมโยง",
     "Use my wallet password instead": "ใช้รหัสผ่านกระเป๋าเงินแทน",
-    "Restore with file and password": "กู้คืนด้วยไฟล์และรหัสผ่าน"
+    "Restore with file and password": "กู้คืนด้วยไฟล์และรหัสผ่าน",
+    "Pay me directly on Spark · 0 sats transfer fee": "จ่ายให้ฉันโดยตรงผ่าน Spark · ค่าธรรมเนียมโอน 0 sats",
+    "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.": "เหมาะสำหรับกระเป๋า GetYourSats อีกใบ การจ่ายไปยังที่อยู่ Lightning อาจมีค่าธรรมเนียม",
+    "Receive directly on Spark": "รับโดยตรงผ่าน Spark",
+    "Back to Lightning": "กลับไปที่ Lightning",
+    "Direct Spark Bitcoin receive": "รับ Bitcoin โดยตรงผ่าน Spark",
+    "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.": "กระเป๋าที่รองรับ Spark อีกใบสามารถส่ง Bitcoin มาที่นี่โดยไม่มีค่าธรรมเนียมโอนของ Spark นี่ไม่ใช่ใบแจ้งหนี้ Lightning การจ่ายไปยังที่อยู่ Lightning ยังอาจมีค่าธรรมเนียมเส้นทาง",
+    "Spark addresses can be reused and linked across payments. Share this address only with people you trust.": "ที่อยู่ Spark ใช้ซ้ำได้และอาจเชื่อมโยงการชำระเงินหลายรายการเข้าด้วยกัน แชร์ที่อยู่นี้เฉพาะกับคนที่คุณไว้ใจ",
+    "Balance conversion unavailable": "ไม่สามารถแปลงยอดคงเหลือได้",
+    "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.": "การแปลงยอดคงเหลือไม่พร้อมใช้งานชั่วคราวในรุ่นตัวอย่างนี้ สินทรัพย์ของคุณยังไม่ได้ถูกแปลง",
+    "Use disposable test wallets only.": "ใช้เฉพาะกระเป๋าทดสอบที่ทิ้งได้เท่านั้น",
+    "Back to receive options": "กลับไปที่ตัวเลือกการรับ"
   },
   "vi": {
     "Balance": "Số dư",
@@ -1628,7 +1694,18 @@
     "Unlock with linked passkey": "Mở khóa bằng passkey đã liên kết",
     "Approve with linked passkey": "Phê duyệt bằng passkey đã liên kết",
     "Use my wallet password instead": "Dùng mật khẩu ví thay thế",
-    "Restore with file and password": "Khôi phục bằng tệp và mật khẩu"
+    "Restore with file and password": "Khôi phục bằng tệp và mật khẩu",
+    "Pay me directly on Spark · 0 sats transfer fee": "Thanh toán trực tiếp qua Spark · Phí chuyển 0 sats",
+    "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.": "Phù hợp với ví GetYourSats khác. Thanh toán đến địa chỉ Lightning có thể mất phí.",
+    "Receive directly on Spark": "Nhận trực tiếp qua Spark",
+    "Back to Lightning": "Quay lại Lightning",
+    "Direct Spark Bitcoin receive": "Nhận Bitcoin trực tiếp qua Spark",
+    "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.": "Ví tương thích Spark khác có thể gửi Bitcoin đến đây mà không mất phí chuyển của Spark. Đây không phải hóa đơn Lightning. Thanh toán đến địa chỉ Lightning vẫn có thể mất phí định tuyến.",
+    "Spark addresses can be reused and linked across payments. Share this address only with people you trust.": "Địa chỉ Spark có thể được dùng lại và liên kết các khoản thanh toán với nhau. Chỉ chia sẻ địa chỉ này với người bạn tin tưởng.",
+    "Balance conversion unavailable": "Không thể chuyển đổi số dư",
+    "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.": "Tính năng chuyển đổi số dư tạm thời không khả dụng trong bản xem trước này. Tài sản của bạn chưa được chuyển đổi.",
+    "Use disposable test wallets only.": "Chỉ dùng ví thử nghiệm có thể bỏ đi.",
+    "Back to receive options": "Quay lại các lựa chọn nhận"
   },
   "ta": {
     "Balance": "இருப்பு",
@@ -1861,7 +1938,18 @@
     "Unlock with linked passkey": "இணைக்கப்பட்ட பாஸ்கீயால் திற",
     "Approve with linked passkey": "இணைக்கப்பட்ட பாஸ்கீயால் ஒப்புதல்",
     "Use my wallet password instead": "பதிலாக பணப்பைக் கடவுச்சொல்லைப் பயன்படுத்து",
-    "Restore with file and password": "கோப்பு மற்றும் கடவுச்சொல் மூலம் மீட்டமை"
+    "Restore with file and password": "கோப்பு மற்றும் கடவுச்சொல் மூலம் மீட்டமை",
+    "Pay me directly on Spark · 0 sats transfer fee": "Spark வழியாக நேரடியாகச் செலுத்துங்கள் · பரிமாற்றக் கட்டணம் 0 sats",
+    "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.": "மற்றொரு GetYourSats பணப்பைக்கு ஏற்றது. Lightning முகவரிக்குச் செலுத்தும்போது கட்டணம் இருக்கலாம்.",
+    "Receive directly on Spark": "Spark வழியாக நேரடியாகப் பெறுங்கள்",
+    "Back to Lightning": "Lightning-க்குத் திரும்பு",
+    "Direct Spark Bitcoin receive": "Spark வழியாக Bitcoin-ஐ நேரடியாகப் பெறுங்கள்",
+    "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.": "Spark-ஐ ஆதரிக்கும் மற்றொரு பணப்பை, Spark பரிமாற்றக் கட்டணமின்றி இங்கு Bitcoin அனுப்பலாம். இது Lightning விலைப்பட்டியல் அல்ல. Lightning முகவரிக்குச் செலுத்தும்போது வழித்தடக் கட்டணம் இருக்கலாம்.",
+    "Spark addresses can be reused and linked across payments. Share this address only with people you trust.": "Spark முகவரிகளை மீண்டும் பயன்படுத்தலாம்; பல கட்டணங்களை ஒன்றுடன் ஒன்று தொடர்புபடுத்த முடியும். நீங்கள் நம்பும் நபர்களுடன் மட்டும் இந்த முகவரியைப் பகிருங்கள்.",
+    "Balance conversion unavailable": "இருப்பு மாற்றம் கிடைக்கவில்லை",
+    "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.": "இந்த முன்னோட்டத்தில் இருப்பு மாற்றம் தற்காலிகமாகக் கிடைக்கவில்லை. உங்கள் சொத்துகள் மாற்றப்படவில்லை.",
+    "Use disposable test wallets only.": "தற்காலிகச் சோதனைப் பணப்பைகளை மட்டும் பயன்படுத்துங்கள்.",
+    "Back to receive options": "பெறும் விருப்பங்களுக்குத் திரும்பு"
   },
   "ar": {
     "Balance": "الرصيد",
@@ -2094,7 +2182,18 @@
     "Unlock with linked passkey": "فتح القفل بمفتاح المرور المرتبط",
     "Approve with linked passkey": "الموافقة بمفتاح المرور المرتبط",
     "Use my wallet password instead": "استخدام كلمة مرور المحفظة بدلًا من ذلك",
-    "Restore with file and password": "الاسترداد بالملف وكلمة المرور"
+    "Restore with file and password": "الاسترداد بالملف وكلمة المرور",
+    "Pay me directly on Spark · 0 sats transfer fee": "ادفع لي مباشرة عبر Spark · رسوم التحويل 0 sats",
+    "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.": "مناسب لمحفظة GetYourSats أخرى. قد تترتب رسوم على الدفع إلى عناوين Lightning.",
+    "Receive directly on Spark": "استلام مباشر عبر Spark",
+    "Back to Lightning": "العودة إلى Lightning",
+    "Direct Spark Bitcoin receive": "استلام Bitcoin مباشرة عبر Spark",
+    "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.": "يمكن لمحفظة أخرى متوافقة مع Spark إرسال Bitcoin إلى هنا دون رسوم تحويل Spark. هذه ليست فاتورة Lightning. قد تترتب رسوم توجيه على الدفع إلى عناوين Lightning.",
+    "Spark addresses can be reused and linked across payments. Share this address only with people you trust.": "يمكن إعادة استخدام عناوين Spark وربط المدفوعات ببعضها. شارك هذا العنوان مع الأشخاص الذين تثق بهم فقط.",
+    "Balance conversion unavailable": "تحويل الرصيد غير متاح",
+    "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.": "تحويل الرصيد غير متاح مؤقتًا في هذه النسخة التجريبية. لم يتم تحويل أصولك.",
+    "Use disposable test wallets only.": "استخدم محافظ اختبار مؤقتة فقط.",
+    "Back to receive options": "العودة إلى خيارات الاستلام"
   },
   "zh-CN": {
     "Balance": "余额",
@@ -2327,6 +2426,17 @@
     "Unlock with linked passkey": "使用关联通行密钥解锁",
     "Approve with linked passkey": "使用关联通行密钥授权",
     "Use my wallet password instead": "改用钱包密码",
-    "Restore with file and password": "使用文件和密码恢复"
+    "Restore with file and password": "使用文件和密码恢复",
+    "Pay me directly on Spark · 0 sats transfer fee": "通过 Spark 直接付款 · 转账手续费 0 sats",
+    "Ideal for another GetYourSats wallet. Lightning Address payments may incur fees.": "适合另一个 GetYourSats 钱包。向 Lightning 地址付款可能产生手续费。",
+    "Receive directly on Spark": "通过 Spark 直接收款",
+    "Back to Lightning": "返回 Lightning",
+    "Direct Spark Bitcoin receive": "通过 Spark 直接接收 Bitcoin",
+    "Another Spark-compatible wallet can send Bitcoin here with no Spark transfer fee. This is not a Lightning invoice. Lightning Address payments can still incur routing fees.": "其他兼容 Spark 的钱包可以向此地址发送 Bitcoin，无需支付 Spark 转账手续费。这不是 Lightning 发票。向 Lightning 地址付款仍可能产生路由手续费。",
+    "Spark addresses can be reused and linked across payments. Share this address only with people you trust.": "Spark 地址可以重复使用，不同付款之间可能因此被关联。请仅与您信任的人分享此地址。",
+    "Balance conversion unavailable": "余额兑换暂不可用",
+    "Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.": "此预览中暂时无法兑换余额。您的资产尚未兑换。",
+    "Use disposable test wallets only.": "仅使用可弃用的测试钱包。",
+    "Back to receive options": "返回收款选项"
   }
 }
