@@ -31,7 +31,14 @@ export async function checkRampnowPreview(env = process.env, clientFactory = cre
       const network = await client.getBitcoinNetwork();
       report.bitcoinNetwork = network.networkClassification;
       report.networkStatus = 'provider_metadata_read';
-    } catch { report.networkStatus = 'bitcoin_network_confirmation_required'; }
+    } catch (error) {
+      report.networkStatus = 'bitcoin_network_confirmation_required';
+      report.networkFailure = error instanceof RampnowError
+        && ['RAMPNOW_BITCOIN_NETWORK_INVALID', 'RAMPNOW_UPSTREAM_UNAVAILABLE', 'RAMPNOW_RESPONSE_INVALID',
+          'RAMPNOW_RESPONSE_TOO_LARGE'].includes(error.code) ? error.code : 'unavailable';
+      report.networkHttpStatus = error instanceof RampnowError && Number.isInteger(error.httpStatus)
+        && error.httpStatus >= 400 && error.httpStatus <= 599 ? error.httpStatus : null;
+    }
     const [asset, countries] = await Promise.all([client.getBitcoinAsset('INR'), client.getBlockedCurrencies('IN')]);
     const rule = Array.isArray(countries.countries) ? countries.countries.find(item => item?.country === 'IN') : null;
     const route = asset.currency === 'BTC' && asset.chain === 'bitcoin' && asset.orderCurrency === 'INR'

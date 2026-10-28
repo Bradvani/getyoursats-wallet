@@ -51,6 +51,21 @@ test('webhook accepts exact signed stream only after durable storage without exp
   assert.equal(result.headers['Cache-Control'], 'no-store');
 });
 
+test('public sandbox intake requires the exact isolated project and explicit role', async () => {
+  const isolated = {...env, VERCEL_ENV: 'production', RAMPNOW_DEPLOYMENT_ROLE: 'sandbox_webhook_receiver',
+    VERCEL_PROJECT_ID: 'prj_A4rcsAjtYNd6RgdyJoo8zrTLFa1P'};
+  const accepted = await call(request(), {env: isolated});
+  assert.equal(accepted.statusCode, 200);
+  assert.equal(accepted.stored, 1);
+  for (const patch of [{RAMPNOW_DEPLOYMENT_ROLE: undefined}, {VERCEL_PROJECT_ID: undefined},
+    {VERCEL_PROJECT_ID: 'prj_kVMt4cd9k0WsufaoRCVCH2bpPtWa'}, {RAMPNOW_ENVIRONMENT: 'production'},
+    {VERCEL_ENV: 'development'}]) {
+    const rejected = await call(request(), {env: {...isolated, ...patch}});
+    assert.equal(rejected.statusCode, 503);
+    assert.equal(rejected.stored, 0);
+  }
+});
+
 test('webhook rejects production, missing environment and missing dedicated store without ingest', async () => {
   for (const patch of [{VERCEL_ENV: 'production'}, {RAMPNOW_ENVIRONMENT: 'production'}, {RAMPNOW_ENVIRONMENT: undefined},
     {RAMPNOW_REDIS_REST_TOKEN: undefined, KV_REST_API_TOKEN: 'do-not-use'}, {RAMPNOW_API_SECRET: ''}]) {

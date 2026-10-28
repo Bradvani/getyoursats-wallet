@@ -16,7 +16,14 @@ const identifier = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$
 function need(value, code = 'RAMPNOW_STORE_UNAVAILABLE') { if (!value) throw new RampnowError(code); }
 
 export function sandboxRampnowConfig(env = process.env) {
-  need(env.VERCEL_ENV === 'preview' && env.RAMPNOW_ENVIRONMENT === 'sandbox', 'RAMPNOW_SANDBOX_ONLY');
+  // This isolated project exposes only the authenticated sandbox intake route.
+  // Its stable public hostname is a Vercel production deployment, but it can
+  // never process RampNow production data or enable the wallet's production API.
+  const isolatedReceiver = env.VERCEL_ENV === 'production'
+    && env.RAMPNOW_DEPLOYMENT_ROLE === 'sandbox_webhook_receiver'
+    && env.VERCEL_PROJECT_ID === 'prj_A4rcsAjtYNd6RgdyJoo8zrTLFa1P';
+  need((env.VERCEL_ENV === 'preview' || isolatedReceiver)
+    && env.RAMPNOW_ENVIRONMENT === 'sandbox', 'RAMPNOW_SANDBOX_ONLY');
   const source = env.RAMPNOW_STORAGE_SOURCE ?? 'rampnow';
   need(source === 'rampnow' || source === 'upstash_sandbox');
   // Explicit operator selection only. Never fall back to shared KV credentials.
