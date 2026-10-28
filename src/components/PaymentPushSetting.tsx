@@ -86,7 +86,7 @@ export default function PaymentPushSetting(){
   const enable=async()=>{
     if(busy||!supported||!canInstall||!config?.available||!config.vapidPublicKey||!pub)return;
     setBusy(true);setMessage('');
-    let subscription:PushSubscription|null=null;
+    let subscription:PushSubscription|null;
     try{
       // Request permission directly from this tap, before other awaits.
       const permission=await Notification.requestPermission();
