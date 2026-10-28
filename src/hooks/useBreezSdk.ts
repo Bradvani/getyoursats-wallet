@@ -183,7 +183,8 @@ export interface BreezSdkActions {
     source?: ConnectSeedSource,
   ) => Promise<BreezSdk | null>;
   /** Resolve false when the SDK read failed; both log internally and keep last-known state. */
-  refreshWalletData: (showLoading?: boolean) => Promise<boolean>;
+  /** Observe provider state without submitting operations when observeLive is true. */
+  refreshWalletData: (showLoading?: boolean, observeLive?: boolean) => Promise<boolean>;
   fetchUnclaimedDeposits: () => Promise<boolean>;
   /**
    * Logs out and erases all on-device data: SDK databases, Preferences,
@@ -284,6 +285,9 @@ export function useBreezSdk(
   const retryUnlockInFlightRef = useRef(false);
   const nativeClaimInFlightRef = useRef<number | null>(null);
   const nativeWalletEpochRef = useRef(0);
+  // A response for an old wallet, unlock or read must never overwrite the active UI.
+  const walletReadRevisionRef = useRef(0);
+  const depositsReadRevisionRef = useRef(0);
   const nativeReadRevisionRef = useRef(0);
   const nativeSessionSdkRef = useRef<BreezSdk | null>(null);
 
@@ -308,46 +312,66 @@ export function useBreezSdk(
   // Data fetching (uses sdkRef for latest SDK)
   // ----------------------------------------
 
-  const refreshWalletData = useCallback(async (showLoading = true) => {
+  const refreshWalletData = useCallback(async (showLoading = true, observeLive = false) => {
     const s = sdkRef.current;
     if (!s) return false;
+    const walletEpoch=nativeWalletEpochRef.current;
+    const sessionEpoch=getSpendingSessionEpoch();
+    const revision=++walletReadRevisionRef.current;
+    const current=()=>sdkRef.current===s&&nativeWalletEpochRef.current===walletEpoch&&
+      getSpendingSessionEpoch()===sessionEpoch&&walletReadRevisionRef.current===revision;
     try {
       if (showLoading) setIsLoading(true);
+      if (observeLive && !Capacitor.isNativePlatform()) {
+        // Explicit observation can refresh provider balances and history without
+        // active SDK sync, claims, sends or unilateral exit construction.
+        const reconciliation=getOperationReconciliation(s);
+        if(!reconciliation)throw new Error('Read-only wallet observation is unavailable');
+        await reconciliation.observe();
+        if(!current())return false;
+      }
       const [info, txns] = await Promise.all([
         s.getInfo({ensureSynced:false}),
         s.listPayments({ offset: 0, limit: 100 }),
       ]);
+      if(!current())return false;
+      // Commit both values only for the same live wallet and latest read.
       setWalletInfo(info);
       const newReceipt = newlyCompletedReceive(
         txns.payments, shownPaymentIdsRef.current, hasCompletedPaymentSnapshotRef.current
       );
       hasCompletedPaymentSnapshotRef.current = true;
       setTransactions(filterOngoingConversionPayments(txns.payments));
-      // Newly settled receives sometimes arrive via sync after a PWA resumes,
-      // without a foreground paymentSucceeded event. Initial history is silent.
       if (newReceipt && !isMigrationInProgress()) setCelebrationPayment(newReceipt);
       return true;
     } catch (e) {
+      if(!current())return false;
       logger.error(LogCategory.SDK, 'Error refreshing wallet data', { error: formatError(e) });
-      setError('Failed to refresh wallet data.');
+      setError('Could not refresh wallet data. Your previous wallet records are preserved.');
       return false;
     } finally {
-      if (showLoading) setIsLoading(false);
+      if (showLoading&&current()) setIsLoading(false);
     }
   }, [sdkRef]);
 
   const fetchUnclaimedDeposits = useCallback(async () => {
     const s = sdkRef.current;
     if (!s) return false;
+    const walletEpoch=nativeWalletEpochRef.current;
+    const sessionEpoch=getSpendingSessionEpoch();
+    const revision=++depositsReadRevisionRef.current;
+    const current=()=>sdkRef.current===s&&nativeWalletEpochRef.current===walletEpoch&&
+      getSpendingSessionEpoch()===sessionEpoch&&depositsReadRevisionRef.current===revision;
     try {
       const result = await s.listUnclaimedDeposits({});
+      if(!current())return false;
       const deposits = unsettledDeposits(result.deposits);
       setUnclaimedDeposits(deposits);
       setHasRejectedDeposits(deposits.some(d => isDepositRejected(d.txid, d.vout)));
       return true;
     } catch (e) {
-      // Keep the last known list: clearing on a transient failure (common
-      // on iOS PWA resume) hides a real pending deposit from the UI.
+      if(!current())return false;
+      // Keep pending deposit records visible when a read fails.
       logger.warn(LogCategory.SDK, 'Failed to fetch unclaimed deposits', { error: formatError(e) });
       return false;
     }
@@ -415,7 +439,11 @@ export function useBreezSdk(
         method: event.payment.method,
       });
     } else if (event.type === 'paymentFailed') {
-      if(event.payment.status==='failed'&&!isConversionPayment(event.payment)&&!isMigrationInProgress())notifyPaymentFeedback('error',event.payment.id);
+      const protectedBrowser=!!sdkRef.current&&!Capacitor.isNativePlatform()&&
+        getOperationReconciliation(sdkRef.current)!=null;
+      // A generic SDK failure is not proof that funds were returned.
+      if(!protectedBrowser&&event.payment.status==='failed'&&!isConversionPayment(event.payment)&&!isMigrationInProgress())
+        notifyPaymentFeedback('error',event.payment.id);
       logger.info(LogCategory.PAYMENT, 'Payment failed event received', {
         paymentId: event.payment.id,
         paymentType: event.payment.paymentType,
@@ -424,7 +452,12 @@ export function useBreezSdk(
       // Same reasoning as the send celebration above: with the sheet gone
       // there is nothing else to tell the user the payment did not go out.
       if (event.payment.paymentType === 'send' && !isSendSheetOpen()) {
-        showToastRef.current('error', 'Payment Failed', 'The payment did not go through. Your funds were not sent.');
+        if(protectedBrowser){
+          showToastRef.current('info', 'Check payment status',
+            'The outcome is not yet verified. Do not repeat this payment until its status is reconciled.');
+        }else{
+          showToastRef.current('error', 'Payment Failed', 'Please verify the payment status before sending again.');
+        }
       }
     } else if (event.type === 'paymentMetadataUpdated') {
       // A cross-chain receive lands as a plain Spark transfer and is marked as
@@ -1631,29 +1664,46 @@ export function useBreezSdk(
     };
   }, [isConnected, foregroundResync]);
 
-  // Event listener lifecycle
+  // Late SDK events and asynchronous registration must not publish data after
+  // a wallet switch, lock or component teardown.
   useEffect(() => {
     if (isConnected && sdk) {
-      sdk.addEventListener({ onEvent: handleSdkEvent })
+      const observedSdk=sdk;
+      const walletEpoch=nativeWalletEpochRef.current;
+      const sessionEpoch=getSpendingSessionEpoch();
+      let disposed=false;
+      let registeredId:string|null=null;
+      sdk.addEventListener({ onEvent:event=>{
+        if(disposed||sdkRef.current!==observedSdk||nativeWalletEpochRef.current!==walletEpoch||
+          (!Capacitor.isNativePlatform()&&(isSpendingSessionLocked()||getSpendingSessionEpoch()!==sessionEpoch)))
+          return;
+        handleSdkEvent(event);
+      }})
         .then(id => {
-          eventListenerIdRef.current = id;
+          if(disposed){
+            void observedSdk.removeEventListener(id).catch(()=>{});
+            return;
+          }
+          registeredId=id;
+          eventListenerIdRef.current=id;
           logger.debug(LogCategory.SDK, 'Registered wallet event listener', { listenerId: id });
         })
         .catch(e => {
+          if(disposed)return;
           logger.error(LogCategory.SDK, 'Failed to add wallet event listener', { error: formatError(e) });
           setError('Failed to set up event listeners.');
         });
-
       return () => {
-        if (eventListenerIdRef.current) {
-          sdk.removeEventListener(eventListenerIdRef.current).catch(e => {
+        disposed=true;
+        if (registeredId) {
+          observedSdk.removeEventListener(registeredId).catch(e => {
             logger.error(LogCategory.SDK, 'Error removing wallet event listener', { error: formatError(e) });
           });
-          eventListenerIdRef.current = null;
+          if(eventListenerIdRef.current===registeredId)eventListenerIdRef.current=null;
         }
       };
     }
-  }, [isConnected, sdk, handleSdkEvent]);
+  }, [isConnected, sdk, handleSdkEvent, sdkRef]);
 
   return {
     // State

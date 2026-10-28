@@ -6,6 +6,7 @@ import { SecureStorageError } from '../services/secureStorage';
 import { resetNativeSeedSelection } from '../services/nativeSeedSelection';
 import { confirmNativePinPolicy, getNativePinPolicyRevision, invalidateNativePinPolicy } from '../services/nativeReadLease';
 import { clearSignerIdentity, rememberSignerIdentity, lockSpendingSession } from '../security/spendApproval';
+import {getOperationReconciliation} from '../security/operationGateway';
 
 const fixtures = vi.hoisted(() => ({
   boundRecord: null as string | null,
@@ -77,6 +78,7 @@ beforeEach(() => {
   confirmNativePinPolicy(false, getNativePinPolicyRevision());
   resetNativeSeedSelection();
   clearSignerIdentity();
+  vi.mocked(getOperationReconciliation).mockReset().mockReturnValue(null);
   fixtures.boundRecord = null;
   fixtures.deviceRecord = null;
   localStorage.clear();
@@ -110,11 +112,11 @@ afterEach(() => { cleanup(); resetNativeSeedSelection(); clearSignerIdentity(); 
 function fakeWallet(){
  return {getInfo:vi.fn(async()=>({identityPubkey:IDENTITY,balanceSats:1000,recoverableFundsSats:0,tokenBalances:new Map()})),
  listPayments:vi.fn(async()=>({payments:[]})),listUnclaimedDeposits:vi.fn(async()=>({deposits:[]})),
- addEventListener:vi.fn(async()=> 'listener'),removeEventListener:vi.fn(async()=>true),disconnect:vi.fn(async()=>{}),free:vi.fn()};
+ addEventListener:vi.fn(async (_listener:{onEvent:(event:unknown)=>void})=> 'listener'),removeEventListener:vi.fn(async()=>true),disconnect:vi.fn(async()=>{}),free:vi.fn()};
 }
-async function hookWith(wallet:ReturnType<typeof fakeWallet>){
+async function hookWith(wallet:ReturnType<typeof fakeWallet>,showToast=vi.fn()){
  fixtures.connect.mockImplementation(async()=>{await rememberSignerIdentity(SEED);return wallet as unknown as BreezSdk;});
- const hook=renderHook(()=>useBreezSdk(vi.fn()));
+ const hook=renderHook(()=>useBreezSdk(showToast));
  await waitFor(()=>expect(hook.result.current.startupState).toBe('web-vault-locked'));
  return hook;
 }
@@ -177,5 +179,84 @@ describe('integrated browser recovery data readiness',()=>{
   expect(result.current.isConnected).toBe(true);expect(result.current.walletInfo?.balanceSats).toBe(1000);
   expect(wallet.getInfo).toHaveBeenCalledWith({ensureSynced:false});
   expect(localStorage.getItem('gys:wallet-vault:v1')).toBe('original encrypted fixture');
+ });
+});
+
+
+describe('source-bound browser wallet refresh leases',()=>{
+ it('performs observation-only provider refresh before publishing new balances',async()=>{
+  const wallet=fakeWallet(),h=await hookWith(wallet);
+  await act(async()=>{await h.result.current.connectWallet(SEED,true,undefined,'secureStorage');});
+  const observe=vi.fn(async()=>{wallet.getInfo.mockResolvedValue({
+    identityPubkey:IDENTITY,balanceSats:2500,recoverableFundsSats:0,tokenBalances:new Map()});});
+  vi.mocked(getOperationReconciliation).mockReturnValue({observe} as never);
+  await act(async()=>{expect(await h.result.current.refreshWalletData(false,true)).toBe(true);});
+  expect(observe).toHaveBeenCalledOnce();
+  expect(h.result.current.walletInfo?.balanceSats).toBe(2500);
+  expect(wallet.getInfo).toHaveBeenLastCalledWith({ensureSynced:false});
+ });
+ it('fails live refresh without reading an old cached balance when the observer fails',async()=>{
+  const wallet=fakeWallet(),h=await hookWith(wallet);
+  await act(async()=>{await h.result.current.connectWallet(SEED,true,undefined,'secureStorage');});
+  const count=wallet.getInfo.mock.calls.length;
+  vi.mocked(getOperationReconciliation).mockReturnValue({observe:vi.fn(async()=>{throw Error('Provider not available');})} as never);
+  await act(async()=>{expect(await h.result.current.refreshWalletData(false,true)).toBe(false);});
+  expect(wallet.getInfo).toHaveBeenCalledTimes(count);
+  expect(h.result.current.walletInfo?.balanceSats).toBe(1000);
+  expect(h.result.current.error).toMatch(/preserved/);
+ });
+ it('rejects late reads even if a newer refresh already rendered successfully',async()=>{
+  const wallet=fakeWallet(),h=await hookWith(wallet);
+  await act(async()=>{await h.result.current.connectWallet(SEED,true,undefined,'secureStorage');});
+  let release!:()=>void;
+  wallet.getInfo.mockResolvedValueOnce({identityPubkey:IDENTITY,balanceSats:1111,recoverableFundsSats:0,tokenBalances:new Map()})
+    .mockResolvedValueOnce({identityPubkey:IDENTITY,balanceSats:2222,recoverableFundsSats:0,tokenBalances:new Map()});
+  wallet.listPayments.mockImplementationOnce(()=>new Promise(resolve=>{release=()=>resolve({payments:[]});}));
+  let first!:Promise<boolean>;
+  await act(async()=>{first=h.result.current.refreshWalletData(false);await vi.waitFor(()=>expect(release).toBeTypeOf('function'));});
+  await act(async()=>{expect(await h.result.current.refreshWalletData(false)).toBe(true);});
+  expect(h.result.current.walletInfo?.balanceSats).toBe(2222);
+  await act(async()=>{release();expect(await first).toBe(false);});
+  expect(h.result.current.walletInfo?.balanceSats).toBe(2222);
+ });
+ it('cannot publish a balance read completed after the browser wallet was locked',async()=>{
+  const wallet=fakeWallet(),h=await hookWith(wallet);
+  await act(async()=>{await h.result.current.connectWallet(SEED,true,undefined,'secureStorage');});
+  let release!:()=>void;
+  wallet.listPayments.mockImplementationOnce(()=>new Promise(resolve=>{release=()=>resolve({payments:[]});}));
+  let pending!:Promise<boolean>;
+  await act(async()=>{pending=h.result.current.refreshWalletData(false);await vi.waitFor(()=>expect(release).toBeTypeOf('function'));});
+  lockSpendingSession('Test wallet lock');
+  await act(async()=>{release();expect(await pending).toBe(false);});
+  expect(h.result.current.walletInfo?.balanceSats).toBe(1000);
+ });
+ it('cannot publish a deposit result completed after the browser wallet was locked',async()=>{
+  const wallet=fakeWallet(),h=await hookWith(wallet);
+  await act(async()=>{await h.result.current.connectWallet(SEED,true,undefined,'secureStorage');});
+  let release!:()=>void;
+  wallet.listUnclaimedDeposits.mockImplementationOnce(()=>new Promise(resolve=>{
+    release=()=>resolve({deposits:[{txid:'a'.repeat(64),vout:0,amountSats:1000,isMature:true}]});
+  }));
+  let pending!:Promise<boolean>;
+  await act(async()=>{pending=h.result.current.fetchUnclaimedDeposits();await vi.waitFor(()=>expect(release).toBeTypeOf('function'));});
+  lockSpendingSession('Lock during deposit read');
+  await act(async()=>{release();expect(await pending).toBe(false);});
+  expect(h.result.current.unclaimedDeposits).toEqual([]);
+ });
+ it('never treats a restricted failed-payment event as proof that funds were not sent',async()=>{
+  const wallet=fakeWallet(),toast=vi.fn(),h=await hookWith(wallet,toast);
+  await act(async()=>{await h.result.current.connectWallet(SEED,true,undefined,'secureStorage');});
+  await vi.waitFor(()=>expect(wallet.addEventListener).toHaveBeenCalled());
+  vi.mocked(getOperationReconciliation).mockReturnValue({status:vi.fn()} as never);
+  const onEvent=wallet.addEventListener.mock.calls.at(-1)![0].onEvent;
+  await act(async()=>{onEvent({type:'paymentFailed',payment:{
+    id:'synthetic-first',paymentType:'send',method:'lightning',status:'failed',amount:100n,fees:0n,timestamp:1}});});
+  expect(toast).toHaveBeenCalledWith('info','Check payment status',expect.stringMatching(/Do not repeat/));
+  expect(JSON.stringify(toast.mock.calls)).not.toMatch(/funds were not sent/i);
+  const before=toast.mock.calls.length;
+  lockSpendingSession('Locked before late event');
+  await act(async()=>{onEvent({type:'paymentFailed',payment:{
+    id:'synthetic-late',paymentType:'send',method:'lightning',status:'failed',amount:100n,fees:0n,timestamp:2}});});
+  expect(toast).toHaveBeenCalledTimes(before);
  });
 });

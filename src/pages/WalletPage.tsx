@@ -51,7 +51,7 @@ interface WalletPageProps {
   walletInfo: GetInfoResponse | null;
   transactions: Payment[];
   unclaimedDeposits: DepositInfo[];
-  refreshWalletData: (showLoading?: boolean) => Promise<boolean>;
+  refreshWalletData: (showLoading?: boolean, observeLive?: boolean) => Promise<boolean>;
   isSyncing: boolean;
   error: string | null;
   onClearError: () => void;
@@ -189,8 +189,11 @@ const WalletPage: React.FC<WalletPageProps> = ({
   // device shows at once. The synced event it fires refreshes the list.
   const syncNow = useCallback(async () => {
     if (restrictedBrowser) {
-      await refreshWalletData(false);
-      showToast('info', 'This security preview shows cached wallet data. Live synchronization is unavailable until payment recovery is verified.');
+      // Restricted browser invokes observation only, never bulk sync/claims.
+      const fresh=await refreshWalletData(false,true);
+      showToast(fresh?'success':'error',fresh?'Wallet status checked':'Live status unavailable',
+        fresh?'Provider balances and payment history were refreshed without claiming funds. Pending payments may still require reconciliation.':
+          'Saved records are preserved. Displayed balances may be out of date.');
       return;
     }
     try {
@@ -362,15 +365,15 @@ const WalletPage: React.FC<WalletPageProps> = ({
           }}
           isBuyLoading={isBuyLoading}
           isSyncing={isSyncing}
-          refreshWalletData={() => refreshWalletData(false)}
+          refreshWalletData={() => refreshWalletData(false,restrictedBrowser)}
           hasRejectedDeposits={hasRejectedDeposits}
           onOpenGetRefund={() => onOpenGetRefund('icon')}
         />
       </div>
 
       {restrictedBrowser && <aside role="status" className="mx-4 my-3 rounded-xl border border-spark-warning p-3 text-sm text-spark-text-primary">
-        <strong>Security preview — live synchronization unavailable.</strong>{' '}
-        Balance and history may be out of date. Use disposable test wallets only.
+        <strong>Security preview: payment claims and some recovery routes remain restricted.</strong>{' '}
+        Refresh checks provider balances and payment history without starting a claim. A missing or failed payment status is not proof that funds have returned. Use disposable test wallets only.
       </aside>}
 
       {/* Lightning address: ready on first wallet screen, not a hidden signup step. */}
