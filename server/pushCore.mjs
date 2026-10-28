@@ -14,7 +14,7 @@ const TRUSTED_PUSH_HOSTS = new Set([
  */
 export async function readBoundedRawBody(request,maxBytes=16_384) {
   const declared=request.headers.get('content-length');
-  if(declared!=null&&(!/^\\d+$/.test(declared)||Number(declared)>maxBytes))
+  if(declared!=null&&(!/^\d+$/.test(declared)||Number(declared)>maxBytes))
     throw Object.assign(new Error('Invalid event size'),{status:413});
   if(!request.body)return Buffer.alloc(0);
   const reader=request.body.getReader();
