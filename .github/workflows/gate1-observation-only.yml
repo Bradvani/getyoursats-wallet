@@ -1,0 +1,48 @@
+name: Gate 1 public Spark observation only
+on:
+  push:
+    branches: [build/gate1-public-observation-20261028]
+    paths: [.github/workflows/gate1-observation-only.yml]
+permissions:
+  contents: read
+jobs:
+  observe:
+    if: github.repository == 'Bradvani/getyoursats-wallet'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 65a56bd9b8642d165334fbe36b70fe241fb8ada4
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Observe two fresh valueless wallets, without claims, sends or faucet submissions
+        env:
+          VITE_BREEZ_API_KEY: ''
+          VITE_SPARK_LOCAL_CONFIG: ''
+          VITE_STAGING_PASSWORD: ''
+          VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
+          GYS_NETWORK_EVIDENCE_DIR: /tmp/gate1-public-observe
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gate1-public-observe
+          npm run dev -- --host 127.0.0.1 --port 5173 --strictPort >/tmp/gate1-public-observe/server.log 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          for n in $(seq 1 100); do
+            if curl -fsS http://127.0.0.1:5173/e2e/fixtures/public-spark-regtest.html >/dev/null; then break; fi
+            sleep 0.2
+          done
+          node scripts/security/probe-public-spark-regtest.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: gate1-public-observation-65a56bd
+          path: /tmp/gate1-public-observe/
+          if-no-files-found: error
+          retention-days: 14
