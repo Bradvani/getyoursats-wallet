@@ -80,7 +80,7 @@ const sparkEvent=()=>({
   id:'018677b5-e419-99d1-0000-a7030393c9af',
   created_at:new Date().toISOString(),updated_at:new Date().toISOString(),
   timestamp:new Date().toISOString(),
-  network:'MAINNET',request_status:'COMPLETED',status:'TRANSFER_COMPLETED',
+  network:'MAINNET',request_status:'SUCCEEDED',status:'TRANSFER_COMPLETED',
   type:'SPARK_LIGHTNING_RECEIVE_FINISHED',
   receiver_identity_public_key:wallet,
   invoice_amount:{value:5000,unit:'SATOSHI'}, payment_preimage:'11'.repeat(32),
