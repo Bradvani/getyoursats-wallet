@@ -1,0 +1,37 @@
+name: Retain full history local evidence
+on:
+  push:
+    branches: [build/full-history-source-20261028]
+    paths: [.github/workflows/retain-full-history-evidence.yml]
+permissions:
+  contents: read
+jobs:
+  retain:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/build/full-history-source-20261028'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Retain the bounded integrity-checked archive without executing its contents
+        run: |
+          set -euo pipefail
+          python3 -I -B - <<'PY'
+          import hashlib,os,pathlib,urllib.request
+          url='https://sb-18ihmnigwxgx.vercel.run/evidence-5f4a97bddf9d6c818a58fe0ab7770cc1f7fa6c6fcc1170fdb11ca6849bf3cc00.zip'
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,*args):raise RuntimeError('Redirect not allowed')
+          with urllib.request.build_opener(NoRedirect()).open(url,timeout=30) as response:
+              if response.status!=200 or response.geturl()!=url:raise RuntimeError('Unexpected evidence response')
+              data=response.read(138010)
+          expected='5f4a97bddf9d6c818a58fe0ab7770cc1f7fa6c6fcc1170fdb11ca6849bf3cc00'
+          if len(data)!=138009 or hashlib.sha256(data).hexdigest()!=expected:raise RuntimeError('Evidence integrity mismatch')
+          out=pathlib.Path(os.environ['RUNNER_TEMP'])/'local-history-evidence';out.mkdir()
+          (out/'local-evidence.zip').write_bytes(data)
+          (out/'SHA256SUMS').write_text(expected+'  local-evidence.zip\n')
+          print('Retained original local reports. This retention job is not a new test pass.')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: full-history-local-evidence-5f4a97b
+          path: ${{ runner.temp }}/local-history-evidence/
+          if-no-files-found: error
+          retention-days: 30
