@@ -6,7 +6,7 @@ import {
   sign, verify
 } from 'node:crypto';
 import {
-  walletPubkey, verifyOwnership, pushEndpoint, checkedSubscription,
+  walletPubkey, verifyOwnership, pushEndpoint, checkedSubscription, readBoundedRawBody,
   verifySparkWebhook, vapidConfig, createVapidToken, sendEmptyWebPush
 } from '../server/pushCore.mjs';
 
@@ -93,4 +93,19 @@ test('VAPID signing uses restricted push-service audience and correct P-256 JWT'
     assert.equal(options.body,undefined);return {ok:true,status:201};
   });
   assert.equal(result.delivered,true);assert.equal(calls,1);
+});
+
+test('raw signed webhook reader accepts numeric Content-Length and rejects oversized streams',async()=>{
+  const ok=new Request('https://wallet.getyoursats.com/api/notifications/spark',{
+    method:'POST',headers:{'content-length':'3'},body:'abc',
+  });
+  assert.equal((await readBoundedRawBody(ok,64)).toString(),'abc');
+  const oversize=new Request('https://wallet.getyoursats.com/api/notifications/spark',{
+    method:'POST',headers:{'content-length':'100'},body:'abc',
+  });
+  await assert.rejects(readBoundedRawBody(oversize,64),{status:413});
+  const stream=new Request('https://wallet.getyoursats.com/api/notifications/spark',{
+    method:'POST',body:'x'.repeat(67),
+  });
+  await assert.rejects(readBoundedRawBody(stream,64),{status:413});
 });
