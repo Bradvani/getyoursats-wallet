@@ -52,7 +52,7 @@ test('Spark webhook authenticates exact raw bytes and successful mainnet inbound
   const evt={id:'018677b5-e419-99d1-0000-a7030393c9af',
     created_at:new Date().toISOString(),timestamp:new Date().toISOString(),
     type:'SPARK_LIGHTNING_RECEIVE_FINISHED',network:'MAINNET',
-    request_status:'SUCCEEDED',status:'TRANSFER_COMPLETED',
+    request_status:'COMPLETED',status:'TRANSFER_COMPLETED',
     receiver_identity_public_key:pub,payment_preimage:'should-not-leak'};
   const raw=Buffer.from(JSON.stringify(evt));
   const hmac=(bytes)=>createHmac('sha256',secret).update(bytes).digest('hex');
