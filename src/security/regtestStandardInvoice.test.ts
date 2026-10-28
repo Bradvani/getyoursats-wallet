@@ -51,7 +51,7 @@ describe('non-HODL public regtest invoice acceptance',()=>{
   expect(h.parse).not.toHaveBeenCalled();
  });
  it('does not publish an invoice whose SDK parse fails or amount differs',async()=>{
-  const h=harness();h.parse.mockResolvedValueOnce({...await h.parse(),amountMsat:90000} as InputType);
+  const h=harness();h.parse.mockResolvedValueOnce(Object.assign({},await h.parse(),{amountMsat:90000}) as InputType);
   await expect(h.issuer.issue({amountSats:100,description:'test'})).rejects.toThrow(/decoded invoice/);
  });
  it('does not publish an invoice after identity drift during an asynchronous operation',async()=>{
