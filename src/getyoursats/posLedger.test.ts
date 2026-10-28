@@ -61,11 +61,11 @@ describe('merchant invoice and durable order closure',()=>{
    minFinalCltvExpiryDelta:18,paymentSecret:'b'.repeat(64),routingHints:[]} as unknown as InputType;
   const expected={invoice,amountSats:1000,network:'mainnet' as const};
   expect(verifyPosInvoiceIntent(base,expected)).toBeGreaterThan(Date.now());
-  expect(()=>verifyPosInvoiceIntent({...base,amountMsat:999000} as InputType,expected)).toThrow(/does not match/);
-  expect(()=>verifyPosInvoiceIntent({...base,network:'regtest'} as InputType,expected)).toThrow(/does not match/);
-  expect(()=>verifyPosInvoiceIntent({...base,expiry:1} as InputType,expected)).toThrow(/does not match/);
-  expect(()=>verifyPosInvoiceIntent({...base,paymentHash:'invalid'} as InputType,expected)).toThrow(/does not match/);
-  expect(()=>verifyPosInvoiceIntent({...base,invoice:{bolt11:'lnbc1notreal',source:{type:'bolt11'}}} as InputType,expected)).toThrow(/does not match/);
+  expect(()=>verifyPosInvoiceIntent(Object.assign({},base,{amountMsat:999000}) as InputType,expected)).toThrow(/does not match/);
+  expect(()=>verifyPosInvoiceIntent(Object.assign({},base,{network:'regtest'}) as InputType,expected)).toThrow(/does not match/);
+  expect(()=>verifyPosInvoiceIntent(Object.assign({},base,{expiry:1}) as InputType,expected)).toThrow(/does not match/);
+  expect(()=>verifyPosInvoiceIntent(Object.assign({},base,{paymentHash:'invalid'}) as InputType,expected)).toThrow(/does not match/);
+  expect(()=>verifyPosInvoiceIntent(Object.assign({},base,{invoice:{bolt11:'lnbc1notreal',source:{type:'bolt11'}}}) as InputType,expected)).toThrow(/does not match/);
   expect(()=>verifyPosInvoiceIntent(base,{...expected,amountSats:1001})).toThrow(/does not match/);
  });
  it('does not silently omit invalid or duplicate orders',()=>{
