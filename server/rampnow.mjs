@@ -100,17 +100,31 @@ function equalDecimal(left, right) {
  * Never expose provider names, address regexes or arbitrary response fields.
  */
 function bitcoinNetworkMetadata(data) {
-  const code = 'RAMPNOW_BITCOIN_NETWORK_INVALID';
-  requireValue(object(data) && Array.isArray(data.chains) && data.chains.length <= 512
-    && data.chains.every(object), code);
+  let bitcoinMatchCount;
+  const check = (condition, reason) => {
+    if (condition) return;
+    const error = new RampnowError('RAMPNOW_BITCOIN_NETWORK_INVALID');
+    // Call sites supply fixed reason labels, never provider values. Count is
+    // assigned only after the bounded chain array passes structural checks.
+    error.reason = reason;
+    if (Number.isInteger(bitcoinMatchCount)) error.bitcoinMatchCount = bitcoinMatchCount;
+    throw error;
+  };
+  check(object(data) && Array.isArray(data.chains), 'chains_missing');
+  check(data.chains.length <= 512, 'chains_count');
+  check(data.chains.every(object), 'chains_entries');
   const matches = data.chains.filter(chain => chain.code === 'bitcoin');
-  requireValue(matches.length === 1, code);
+  bitcoinMatchCount = matches.length;
+  check(matches.length > 0, 'bitcoin_absent');
+  check(matches.length === 1, 'bitcoin_ambiguous');
   const chain = matches[0];
-  requireValue(chain.type === 'utxo' && chain.nodeType === 'btc' && chain.nativeToken === 'BTC'
-    && typeof chain.isTestnet === 'boolean'
-    && typeof chain.addressType === 'string' && /^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(chain.addressType)
-    && Array.isArray(chain.supportedAssets)
-    && chain.supportedAssets.some(asset => asset === 'BTC' || asset === 'BTC:bitcoin'), code);
+  check(chain.type === 'utxo', 'ledger_model');
+  check(chain.nodeType === 'btc', 'node_protocol');
+  check(chain.nativeToken === 'BTC', 'native_token');
+  check(typeof chain.isTestnet === 'boolean', 'testnet_flag');
+  check(typeof chain.addressType === 'string' && /^[A-Za-z][A-Za-z0-9_-]{0,39}$/.test(chain.addressType), 'address_type');
+  check(Array.isArray(chain.supportedAssets)
+    && chain.supportedAssets.some(asset => asset === 'BTC' || asset === 'BTC:bitcoin'), 'supported_assets');
   return {
     chain: 'bitcoin', networkClassification: chain.isTestnet ? 'testnet_unspecified' : 'mainnet',
     isTestnet: chain.isTestnet, addressType: chain.addressType, nativeToken: 'BTC',

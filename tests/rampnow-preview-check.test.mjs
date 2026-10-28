@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { checkRampnowPreview } from '../scripts/rampnow-preview-check.mjs';
-import { createRampnowClient } from '../server/rampnow.mjs';
+import { createRampnowClient, RampnowError } from '../server/rampnow.mjs';
 
 const env = { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'feat/rampnow-integration-20261028',
   RAMPNOW_ENVIRONMENT: 'sandbox', RAMPNOW_API_KEY: 'private-key', RAMPNOW_API_SECRET: 'private-secret' };
@@ -41,15 +41,29 @@ test('reports capability candidates without claiming tested settlement or printi
 });
 test('runs webhook self-test only after verified storage, without claiming provider delivery', async () => {
   for (const status of ['sandbox_storage_verified', 'sandbox_storage_check_failed']) {
-    let called = false;
+    let called = false; let deliveryCalled = false;
     const result = await checkRampnowPreview(env, factory, {
       storageCheck: async () => ({configured: true, status}),
       webhookCheck: async () => {called = true; return {status: 'sandbox_webhook_selftest_verified'};},
+      deliveryCheck: async () => {deliveryCalled = true; return {httpDeliveryVerified: true, providerDeliveryVerified: false};},
     });
     assert.equal(called, status === 'sandbox_storage_verified');
+    assert.equal(deliveryCalled, status === 'sandbox_storage_verified');
     assert.equal(result.webhookStorageConfigured, true);
     assert.equal(result.providerDeliveryVerified, false);
     assert.equal(result.productionReady, false);
+  }
+});
+test('network diagnostics expose only fixed reasons and bounded counts', async () => {
+  for (const valid of [true, false]) {
+    const error = new RampnowError('RAMPNOW_BITCOIN_NETWORK_INVALID');
+    error.reason = valid ? 'bitcoin_absent' : 'private-secret';
+    error.bitcoinMatchCount = valid ? 0 : 'private-secret';
+    const result = await checkRampnowPreview(env, () => ({...factory(), getBitcoinNetwork: async () => {throw error;}}));
+    assert.equal(result.networkReason, valid ? 'bitcoin_absent' : 'unavailable');
+    assert.equal(result.bitcoinMatchCount, valid ? 0 : undefined);
+    assert.equal(result.bitcoinNetwork, 'unverified');
+    assert.doesNotMatch(JSON.stringify(result), /private-secret/);
   }
 });
 test('unavailable network metadata stays unverified even when BTC capability is active', async () => {

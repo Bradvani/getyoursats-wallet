@@ -6,9 +6,11 @@ import { pathToFileURL } from 'node:url';
 import { createRampnowClient, RampnowError } from '../server/rampnow.mjs';
 import { checkRampnowStorage } from '../server/rampnowStorageCheck.mjs';
 import { checkRampnowWebhook } from '../server/rampnowWebhookCheck.mjs';
+import { checkRampnowWebhookDelivery } from '../server/rampnowWebhookDeliveryCheck.mjs';
 
 export async function checkRampnowPreview(env = process.env, clientFactory = createRampnowClient,
-  {storageCheck = checkRampnowStorage, webhookCheck = checkRampnowWebhook} = {}) {
+  {storageCheck = checkRampnowStorage, webhookCheck = checkRampnowWebhook,
+    deliveryCheck = checkRampnowWebhookDelivery} = {}) {
   const report = { check: 'rampnow_sandbox', authentication: false, btcBuyCandidate: false,
     btcSellCandidate: false, bitcoinNetwork: 'unverified', networkStatus: 'not_checked',
     webhookStorageConfigured: false, providerDeliveryVerified: false, productionReady: false };
@@ -22,7 +24,10 @@ export async function checkRampnowPreview(env = process.env, clientFactory = cre
   // Storage and capability failures are independent and remain separately visible.
   report.storage = await storageCheck(env);
   report.webhookStorageConfigured = report.storage.configured === true;
-  if (report.storage.status === 'sandbox_storage_verified') report.webhookSelfTest = await webhookCheck(env);
+  if (report.storage.status === 'sandbox_storage_verified') {
+    report.webhookSelfTest = await webhookCheck(env);
+    report.webhookDelivery = await deliveryCheck(env);
+  }
   try {
     const client = clientFactory({ environment: 'sandbox', apiKey: env.RAMPNOW_API_KEY, apiSecret: env.RAMPNOW_API_SECRET });
     await client.getConfig();
@@ -38,6 +43,14 @@ export async function checkRampnowPreview(env = process.env, clientFactory = cre
           'RAMPNOW_RESPONSE_TOO_LARGE'].includes(error.code) ? error.code : 'unavailable';
       report.networkHttpStatus = error instanceof RampnowError && Number.isInteger(error.httpStatus)
         && error.httpStatus >= 400 && error.httpStatus <= 599 ? error.httpStatus : null;
+      if (error instanceof RampnowError && error.code === 'RAMPNOW_BITCOIN_NETWORK_INVALID') {
+        report.networkReason = ['chains_missing', 'chains_count', 'chains_entries', 'bitcoin_absent',
+          'bitcoin_ambiguous', 'ledger_model', 'node_protocol', 'native_token', 'testnet_flag',
+          'address_type', 'supported_assets'].includes(error.reason) ? error.reason : 'unavailable';
+        if (Number.isInteger(error.bitcoinMatchCount) && error.bitcoinMatchCount >= 0 && error.bitcoinMatchCount <= 512) {
+          report.bitcoinMatchCount = error.bitcoinMatchCount;
+        }
+      }
     }
     const [asset, countries] = await Promise.all([client.getBitcoinAsset('INR'), client.getBlockedCurrencies('IN')]);
     const rule = Array.isArray(countries.countries) ? countries.countries.find(item => item?.country === 'IN') : null;

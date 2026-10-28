@@ -37,28 +37,46 @@ test('non-testnet declaration is reported without inferring sandbox settlement r
     isTestnet: false, addressType: 'bitcoin', nativeToken: 'BTC'});
 });
 
-for (const [label, data] of [
-  ['missing chains', {}], ['non-array chains', {chains: {bitcoin}}], ['no chains', {chains: []}],
-  ['missing Bitcoin', {chains: [{code: 'ethereum'}]}],
-  ['duplicate Bitcoin', {chains: [bitcoin, {...bitcoin}]}],
-  ['conflicting Bitcoin networks', {chains: [bitcoin, {...bitcoin, isTestnet: false}]}],
-  ['malformed entry', {chains: [bitcoin, null]}],
-  ['too many chains', {chains: [bitcoin, ...Array.from({length: 512}, () => ({code: 'other'}))]}],
+for (const [label, data, reason, count] of [
+  ['missing chains', {}, 'chains_missing'],
+  ['non-array chains', {chains: {bitcoin}}, 'chains_missing'],
+  ['no chains', {chains: []}, 'bitcoin_absent', 0],
+  ['missing Bitcoin', {chains: [{code: 'ethereum'}]}, 'bitcoin_absent', 0],
+  ['duplicate Bitcoin', {chains: [bitcoin, {...bitcoin}]}, 'bitcoin_ambiguous', 2],
+  ['conflicting Bitcoin networks', {chains: [bitcoin, {...bitcoin, isTestnet: false}]}, 'bitcoin_ambiguous', 2],
+  ['malformed entry', {chains: [bitcoin, null]}, 'chains_entries'],
+  ['too many chains', {chains: [bitcoin, ...Array.from({length: 512}, () => ({code: 'other'}))]}, 'chains_count'],
 ]) test('network metadata fails closed for ' + label, async () => {
-  await assert.rejects(clientFor(data).getBitcoinNetwork(), error =>
-    error.code === 'RAMPNOW_BITCOIN_NETWORK_INVALID' && error.message === error.code && !error.cause);
+  await assert.rejects(clientFor(data).getBitcoinNetwork(), error => {
+    assert.equal(error.code, 'RAMPNOW_BITCOIN_NETWORK_INVALID');
+    assert.equal(error.message, error.code);
+    assert.equal(error.reason, reason);
+    assert.equal(error.bitcoinMatchCount, count);
+    assert.equal(error.cause, undefined);
+    return true;
+  });
 });
 
-for (const [label, changes] of [
-  ['missing testnet declaration', {isTestnet: undefined}], ['string testnet declaration', {isTestnet: 'false'}],
-  ['wrong ledger model', {type: 'account'}], ['wrong node protocol', {nodeType: 'evm'}],
-  ['wrong native asset', {nativeToken: 'ETH'}], ['missing BTC support', {supportedAssets: ['WBTC:ethereum']}],
-  ['missing supported assets', {supportedAssets: undefined}],
-  ['missing address type', {addressType: undefined}], ['empty address type', {addressType: ''}],
-  ['unbounded address type', {addressType: 'x'.repeat(41)}],
-  ['control characters in address type', {addressType: 'bitcoin\nprivate-data'}],
-  ['URL in address type', {addressType: 'https://private.test'}],
+for (const [label, changes, reason] of [
+  ['missing testnet declaration', {isTestnet: undefined}, 'testnet_flag'],
+  ['string testnet declaration', {isTestnet: 'false'}, 'testnet_flag'],
+  ['wrong ledger model', {type: 'account'}, 'ledger_model'],
+  ['wrong node protocol', {nodeType: 'evm'}, 'node_protocol'],
+  ['wrong native asset', {nativeToken: 'ETH'}, 'native_token'],
+  ['missing BTC support', {supportedAssets: ['WBTC:ethereum']}, 'supported_assets'],
+  ['missing supported assets', {supportedAssets: undefined}, 'supported_assets'],
+  ['missing address type', {addressType: undefined}, 'address_type'],
+  ['empty address type', {addressType: ''}, 'address_type'],
+  ['unbounded address type', {addressType: 'x'.repeat(41)}, 'address_type'],
+  ['control characters in address type', {addressType: 'bitcoin\nprivate-data'}, 'address_type'],
+  ['URL in address type', {addressType: 'https://private.test'}, 'address_type'],
 ]) test('network metadata rejects ' + label, async () => {
-  await assert.rejects(clientFor({chains: [{...bitcoin, ...changes}]}).getBitcoinNetwork(), error =>
-    error.code === 'RAMPNOW_BITCOIN_NETWORK_INVALID' && !error.message.includes('private'));
+  await assert.rejects(clientFor({chains: [{...bitcoin, ...changes}]}).getBitcoinNetwork(), error => {
+    assert.equal(error.code, 'RAMPNOW_BITCOIN_NETWORK_INVALID');
+    assert.equal(error.reason, reason);
+    assert.equal(error.bitcoinMatchCount, 1);
+    assert.doesNotMatch(JSON.stringify(error), /private/);
+    assert.deepEqual(Object.keys(error).sort(), ['bitcoinMatchCount', 'code', 'name', 'reason']);
+    return true;
+  });
 });
