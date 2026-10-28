@@ -109,7 +109,8 @@ export default function PaymentPushSetting(){
         // Spark invoices created by this wallet are notified through this
         // registered hook. Lightning Address payments need Breez LNURL setup.
         const registered=await sdk.registerWebhook({
-          url:enrolled.webhookUrl,secret:enrolled.webhookSecret,eventTypes:enrolled.eventTypes
+          url:enrolled.webhookUrl,secret:enrolled.webhookSecret,
+          eventTypes:[{type:'lightningReceiveFinished'}]
         });
         webhookId=registered.webhookId;
         if(!webhookId)throw new Error('Lightning notification registration was not confirmed.');
