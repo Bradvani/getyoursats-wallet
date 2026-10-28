@@ -93,9 +93,14 @@ export function verifySparkWebhook(raw, pub, secret, signatureHeader, now = Date
   try {data = JSON.parse(raw.toString('utf8'));} catch {return {ok:false, reason:'invalid_payload'};}
   if (!data || data.type !== 'SPARK_LIGHTNING_RECEIVE_FINISHED' ||
       data.status !== 'TRANSFER_COMPLETED' ||
-      data.request_status !== 'COMPLETED')
+      data.request_status !== 'SUCCEEDED')
     return {ok:true, notify:false, reason:'not_settled_receive'};
-  if (data.network !== 'MAINNET' || data.receiver_identity_public_key?.toLowerCase() !== pub)
+  // The provider documents this field as nullable when the wallet itself
+  // issued the invoice. The per-wallet HMAC secret authenticates the receiver
+  // in that case. When a receiver key is present, it must match exactly.
+  const receiver = data.receiver_identity_public_key;
+  if (data.network !== 'MAINNET' ||
+      (receiver != null && (typeof receiver !== 'string' || receiver.toLowerCase() !== pub)))
     return {ok:false, reason:'wallet_or_network_mismatch'};
   if (typeof data.id !== 'string' || !/^[A-Za-z0-9_-]{8,100}$/.test(data.id))
     return {ok:false, reason:'invalid_event'};
