@@ -1,0 +1,33 @@
+name: Export Gate 1 core wallet baseline for isolated engineering
+on:
+  push:
+    branches: [build/gate1-core-source-20261029]
+    paths: [.github/workflows/export-gate1-core-source.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    if: github.repository == 'Bradvani/getyoursats-wallet'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 261a5ffd6da5ec40e1e6ed2788a37d1ac469082d
+          persist-credentials: false
+      - name: Attest and archive exact source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 261a5ffd6da5ec40e1e6ed2788a37d1ac469082d
+          test "$(git rev-parse HEAD^{tree})" = 921c46d81392efa2b11f95d600dd3036e816fc92
+          test -z "$(git status --porcelain)"
+          mkdir -p /tmp/gys-source
+          git archive --format=tar HEAD | gzip -n -9 > /tmp/gys-source/source.tar.gz
+          sha256sum /tmp/gys-source/source.tar.gz > /tmp/gys-source/source.sha256
+          printf '%s\n' '261a5ffd6da5ec40e1e6ed2788a37d1ac469082d' '921c46d81392efa2b11f95d600dd3036e816fc92' > /tmp/gys-source/revision.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: getyoursats-core-source-261a5ffd
+          path: /tmp/gys-source
+          if-no-files-found: error
+          retention-days: 5
