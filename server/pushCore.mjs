@@ -66,7 +66,7 @@ export function verifySparkWebhook(raw, pub, secret, signatureHeader, now = Date
   try {data = JSON.parse(raw.toString('utf8'));} catch {return {ok:false, reason:'invalid_payload'};}
   if (!data || data.type !== 'SPARK_LIGHTNING_RECEIVE_FINISHED' ||
       data.status !== 'TRANSFER_COMPLETED' ||
-      !['SUCCEEDED','COMPLETED'].includes(data.request_status))
+      data.request_status !== 'COMPLETED')
     return {ok:true, notify:false, reason:'not_settled_receive'};
   if (data.network !== 'MAINNET' || data.receiver_identity_public_key?.toLowerCase() !== pub)
     return {ok:false, reason:'wallet_or_network_mismatch'};
