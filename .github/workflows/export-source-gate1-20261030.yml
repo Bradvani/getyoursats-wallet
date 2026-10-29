@@ -1,0 +1,32 @@
+name: Exact Gate 1 baseline source export
+on:
+  push:
+    branches: [build/gate1-source-export-20261030]
+    paths: [.github/workflows/export-source-gate1-20261030.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 9ce1021dbfef8a1fdb65e074c2ece4a9eb4a9230
+          persist-credentials: false
+      - name: Export exact clean source without secrets
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 9ce1021dbfef8a1fdb65e074c2ece4a9eb4a9230
+          test "$(git rev-parse HEAD^{tree})" = 797ca743e76ac76383f9ef8c7333cb63a6940a47
+          test -z "$(git status --porcelain)"
+          mkdir -p /tmp/gys-gate1-src
+          git archive --format=tar HEAD | gzip -n -9 > /tmp/gys-gate1-src/source.tar.gz
+          sha256sum /tmp/gys-gate1-src/source.tar.gz > /tmp/gys-gate1-src/source.sha256
+          printf '%s\n' '9ce1021dbfef8a1fdb65e074c2ece4a9eb4a9230' '797ca743e76ac76383f9ef8c7333cb63a6940a47' > /tmp/gys-gate1-src/source-id.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gate1-source-9ce1021
+          path: /tmp/gys-gate1-src
+          if-no-files-found: error
+          retention-days: 3
