@@ -52,7 +52,7 @@ export class RampnowClientError extends Error {
 export interface RampnowBuyInput {
   srcAmount: string;
   destination: string;
-  network: 'testnet' | 'signet';
+  network: 'signet';
   user: {
     firstName: string;
     lastName: string;
@@ -128,7 +128,7 @@ const need: (condition: unknown, code?: RampnowErrorCode) => asserts condition =
 const uuid = (value: unknown): value is string => typeof value === 'string'
   && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
 const hash = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
-const network = (value: unknown): value is RampnowBuyInput['network'] => value === 'testnet' || value === 'signet';
+const network = (value: unknown): value is RampnowBuyInput['network'] => value === 'signet';
 const decimal = (value: unknown, positive = false, precision = 18): value is string =>
   typeof value === 'string' && value.length <= 60 && /^(0|[1-9]\d*)(\.\d+)?$/.test(value)
   && (value.split('.')[1]?.length ?? 0) <= precision && (!positive || /[1-9]/.test(value));
@@ -369,7 +369,8 @@ export function createRampnowBrowserClient({walletPubkey, signMessage, fetchImpl
     },
     async submit(input: RampnowSubmitInput): Promise<RampnowCheckoutStatus> {
       const copy: RampnowSubmitInput = JSON.parse(canonicalJson(input));
-      need(object(copy) && uuid(copy.externalOrderUid) && hash(copy.quoteHash), 'RAMPNOW_CHECKOUT_INPUT_INVALID');
+      need(object(copy) && uuid(copy.externalOrderUid) && hash(copy.quoteHash)
+        && object(copy.input) && network(copy.input.network), 'RAMPNOW_CHECKOUT_INPUT_INVALID');
       return parseStatus(await authenticated('submit', copy), copy.externalOrderUid);
     },
     async status(externalOrderUid: string): Promise<RampnowCheckoutStatus> {

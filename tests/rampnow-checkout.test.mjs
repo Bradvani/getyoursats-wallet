@@ -13,7 +13,7 @@ const user = {email: 'sandbox-tester@example.com', firstName: 'Sandbox', lastNam
   phone: '+919876543210', dateOfBirth: '1990-02-28', gender: 'unknown', country: 'IN'};
 const input = {srcAmount: '1000.00', destination: witness(), network: 'signet', user};
 const externalOrderUid = 'e4973df9-bfe8-49c6-821d-2ee5fed9fb93';
-const returnUrl = 'https://getyoursats-wallet-git-feat-rampnow-integr-d20510-bradvani-8798.vercel.app/rampnow/return?intent=' + externalOrderUid;
+const returnUrl = 'https://getyoursats-wallet-git-feat-rampnow-integr-d20510-bradvani-8798.vercel.app/rampnow/return?intent=' + externalOrderUid + '&network=signet';
 const redirectUrl = 'https://app.sandbox.rampnow.io/checkout?orderUid=provider-order-1&token=fixture';
 const result = {orderUid: 'provider-order-1', userUid: 'provider-user-1', redirectUrl};
 const response = data => new Response(JSON.stringify({code: 0, data}), {status: 200});
@@ -31,11 +31,9 @@ test('normalizes only the explicit customer input, retaining exact money without
   assert.equal(normalizeRampnowBuyInput({...input, srcAmount: '999999999999.99'}).srcAmount, '999999999999.99');
 });
 
-test('accepts checksummed testnet witness and legacy addresses for explicitly chosen test networks', () => {
+test('accepts checksummed witness and legacy addresses with explicit signet selection', () => {
   for (const destination of [witness(), witness('tb', 0, 32), witness('tb', 1, 32), legacy(), legacy(0xc4)]) {
-    for (const network of ['testnet', 'signet']) {
-      assert.equal(normalizeRampnowBuyInput({...input, destination, network}).destination, destination);
-    }
+    assert.equal(normalizeRampnowBuyInput({...input, destination, network: 'signet'}).destination, destination);
   }
   assert.equal(normalizeRampnowBuyInput({...input, destination: witness().toUpperCase()}).destination, witness());
 });
@@ -53,8 +51,8 @@ for (const [label, destination] of [
   assert.throws(() => normalizeRampnowBuyInput({...input, destination}), /RAMPNOW_CHECKOUT_ADDRESS_INVALID/);
 });
 
-test('rejects mainnet, regtest, missing and unknown wallet network independently of address encoding', () => {
-  for (const network of ['mainnet', 'regtest', undefined, 'testnet4', 'private-network']) {
+test('rejects every unsupported checkout network independently of address encoding', () => {
+  for (const network of ['mainnet', 'regtest', undefined, 'testnet', 'testnet3', 'testnet4', 'private-network']) {
     assert.throws(() => normalizeRampnowBuyInput({...input, network}), /RAMPNOW_CHECKOUT_NETWORK_INVALID/);
   }
 });
@@ -113,6 +111,11 @@ test('invalid local input or return URL never dispatches checkout', async () => 
     {returnUrl: returnUrl.replace('.vercel.app', '.vercel.app.private.invalid')},
     {returnUrl: returnUrl.replace('/rampnow/return', '/different')}, {returnUrl: returnUrl + '&extra=1'},
     {returnUrl: returnUrl + '&intent=' + externalOrderUid}, {returnUrl: returnUrl + '#fragment'},
+    {returnUrl: returnUrl.replace('&network=signet', '')},
+    {returnUrl: returnUrl.replace('network=signet', 'network=mainnet')},
+    {returnUrl: returnUrl.replace('network=signet', 'network=testnet')},
+    {returnUrl: returnUrl + '&network=signet'},
+    {returnUrl: returnUrl + '&network=mainnet'},
     {returnUrl: returnUrl.replace(externalOrderUid, '10fe88a7-5287-4e70-a62b-9c9a177147af')},
     {returnUrl: returnUrl.replace('https://', 'https://private-user@')},
     {returnUrl: returnUrl.replace('.vercel.app/', '.vercel.app:8443/')}]) {

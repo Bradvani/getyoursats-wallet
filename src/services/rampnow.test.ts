@@ -9,12 +9,12 @@ const CHALLENGE_ID = '12'.repeat(18);
 const ORDER_ID = '12345678-1234-4234-9234-123456789abc';
 const QUOTE_HASH = 'cd'.repeat(32);
 const INPUT: RampnowBuyInput = {
-  srcAmount: '1000', destination: 'tb1qtestdestination', network: 'testnet',
+  srcAmount: '1000', destination: 'tb1qtestdestination', network: 'signet',
   user: {firstName: 'Test', lastName: 'Buyer', email: 'test@example.invalid', phone: '+919876543210',
     dateOfBirth: '1990-01-02', gender: 'unknown', country: 'IN'},
 };
 const PREPARED = {
-  externalOrderUid: ORDER_ID, quoteHash: QUOTE_HASH, destination: INPUT.destination, network: 'testnet',
+  externalOrderUid: ORDER_ID, quoteHash: QUOTE_HASH, destination: INPUT.destination, network: 'signet',
   expiresAt: 1_900_000_000_000,
   quote: {orderType: 'buy', srcCurrency: 'INR', srcChain: 'fiat', dstCurrency: 'BTC', dstChain: 'bitcoin',
     srcAmount: '1000.00', dstAmount: '0.0001', paymentMode: 'bank_transfer',
@@ -56,7 +56,7 @@ function harness(options: {
 } = {}) {
   const fetchImpl = vi.fn<typeof fetch>(async (_url, init) => {
     if (init?.method === 'GET') {
-      return json({available: true, reason: 'ready', network: 'testnet', environment: 'sandbox', buyOnly: true});
+      return json({available: true, reason: 'ready', network: 'signet', environment: 'sandbox', buyOnly: true});
     }
     const posted: Posted = JSON.parse(String(init?.body));
     if (posted.action === 'challenge') {
@@ -84,7 +84,7 @@ describe('RampNow sandbox browser client', () => {
   it('uses only the pinned same-origin endpoint with bounded, non-cacheable requests', async () => {
     const {client, fetchImpl, signMessage} = harness();
     await expect(client.availability()).resolves.toEqual({
-      available: true, reason: 'ready', network: 'testnet', environment: 'sandbox', buyOnly: true,
+      available: true, reason: 'ready', network: 'signet', environment: 'sandbox', buyOnly: true,
     });
     expect(signMessage).not.toHaveBeenCalled();
     const [url, init] = fetchImpl.mock.calls[0];
@@ -107,11 +107,12 @@ describe('RampNow sandbox browser client', () => {
   });
 
   it.each([
-    {environment: 'production'}, {buyOnly: false}, {network: 'mainnet'}, {reason: 'arbitrary provider text'},
+    {environment: 'production'}, {buyOnly: false}, {network: 'mainnet'}, {network: 'testnet'},
+    {network: 'regtest'}, {reason: 'arbitrary provider text'},
     {available: true, reason: 'checkout_disabled'},
   ])('rejects availability that changes the sandbox contract: %j', altered => {
     const fetchImpl = vi.fn<typeof fetch>(async () => json({
-      available: true, reason: 'ready', network: 'testnet', environment: 'sandbox', buyOnly: true, ...altered,
+      available: true, reason: 'ready', network: 'signet', environment: 'sandbox', buyOnly: true, ...altered,
     }));
     const client = createRampnowBrowserClient({walletPubkey: PUBKEY, signMessage: vi.fn(), fetchImpl});
     return expect(client.availability()).rejects.toMatchObject({code: 'RAMPNOW_RESPONSE_INVALID'});
@@ -127,6 +128,17 @@ describe('RampNow sandbox browser client', () => {
       action: 'prepare', payload: {input: INPUT}, challengeId: CHALLENGE_ID, signature: SIGNATURE,
     });
   });
+
+  it.each(['testnet', 'testnet3', 'testnet4', 'regtest', 'mainnet'])(
+    'rejects unsupported checkout network %s before requesting a proof or signing', async network => {
+      const {client, fetchImpl, signMessage} = harness();
+      const input = {...INPUT, network} as RampnowBuyInput;
+      await expect(client.prepare(input)).rejects.toMatchObject({code: 'RAMPNOW_CHECKOUT_INPUT_INVALID'});
+      await expect(client.submit({externalOrderUid: ORDER_ID, input, quoteHash: QUOTE_HASH}))
+        .rejects.toMatchObject({code: 'RAMPNOW_CHECKOUT_INPUT_INVALID'});
+      expect(fetchImpl).not.toHaveBeenCalled();
+      expect(signMessage).not.toHaveBeenCalled();
+    });
 
   it.each([
     [0, 'production'], [1, 'https://evil.invalid'], [2, 'submit'], [3, 'ff'.repeat(32)],
@@ -244,7 +256,7 @@ describe('RampNow sandbox browser client', () => {
   });
 
   it.each([
-    {network: 'signet'}, {destination: 'tb1qother'}, {quoteHash: 'bad'},
+    {network: 'testnet'}, {destination: 'tb1qother'}, {quoteHash: 'bad'},
     {quote: {...PREPARED.quote, dstCurrency: 'USDT'}}, {quote: {...PREPARED.quote, srcAmount: '999'}},
   ])('rejects mismatched quote, destination or network: %j', async changes => {
     const {client} = harness({response: {...PREPARED, ...changes}});

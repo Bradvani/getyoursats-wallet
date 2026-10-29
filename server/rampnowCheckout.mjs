@@ -68,11 +68,13 @@ function profile(value) {
 
 /** Testnet and signet share address encoding; the caller must separately bind
  * the confirmed provider network to the authenticated wallet's network.
+ * This wallet supports signet, not Bitcoin testnet3/4. Address syntax alone
+ * must never make those incompatible sandbox networks eligible.
  * No customer profile is fetched or inferred, and extra input fields are dropped.
  */
 export function normalizeRampnowBuyInput(input) {
   need(object(input), 'RAMPNOW_CHECKOUT_INPUT_INVALID');
-  need(input.network === 'testnet' || input.network === 'signet', 'RAMPNOW_CHECKOUT_NETWORK_INVALID');
+  need(input.network === 'signet', 'RAMPNOW_CHECKOUT_NETWORK_INVALID');
   need(typeof input.srcAmount === 'string' && /^(0|[1-9]\d{0,11})(\.\d{1,2})?$/.test(input.srcAmount)
     && /[1-9]/.test(input.srcAmount), 'RAMPNOW_AMOUNT_INVALID');
   const srcAmount = input.srcAmount.includes('.')
@@ -80,16 +82,18 @@ export function normalizeRampnowBuyInput(input) {
   return {srcAmount, destination: testAddress(input.destination), network: input.network, user: profile(input.user)};
 }
 
-function checkoutReturnUrl(value, externalOrderUid) {
+function checkoutReturnUrl(value, externalOrderUid, network) {
   const code = 'RAMPNOW_CHECKOUT_RETURN_INVALID';
   need(typeof value === 'string' && value.length <= 512 && value.startsWith(RETURN_ORIGIN + '/rampnow/return?')
     && !/[\s\\#]/.test(value), code);
   let url;
   try { url = new URL(value); } catch { throw new RampnowError(code); }
   need(url.origin === RETURN_ORIGIN && !url.username && !url.password && !url.port
-    && url.pathname === '/rampnow/return' && [...url.searchParams].length === 1
-    && url.searchParams.get('intent') === externalOrderUid, code);
-  return RETURN_ORIGIN + '/rampnow/return?intent=' + externalOrderUid;
+    && url.pathname === '/rampnow/return' && [...url.searchParams].length === 2
+    && url.searchParams.getAll('intent').length === 1 && url.searchParams.get('intent') === externalOrderUid
+    && url.searchParams.getAll('network').length === 1 && network === 'signet'
+    && url.searchParams.get('network') === network, code);
+  return RETURN_ORIGIN + '/rampnow/return?intent=' + externalOrderUid + '&network=' + network;
 }
 
 function hostedCheckoutUrl(value) {
@@ -141,7 +145,7 @@ export function createRampnowCheckoutClient({apiKey, apiSecret, fetchImpl = fetc
       const body = JSON.stringify({orderType: 'buy', externalOrderUid, srcCurrency: 'INR', srcChain: 'fiat',
         srcAmount: normalized.srcAmount, dstCurrency: 'BTC', dstChain: 'bitcoin', user: normalized.user,
         wallet: {crytpoAccountDetail: {custodyType: 'unhosted', address: normalized.destination}},
-        returnUrl: checkoutReturnUrl(returnUrl, externalOrderUid),
+        returnUrl: checkoutReturnUrl(returnUrl, externalOrderUid, normalized.network),
         ...(paymentMode === undefined ? {} : {paymentMode})});
       const timestamp = String(Math.floor(now() / 1000));
       const signature = rampnowSignature(apiSecret, timestamp, 'POST', CHECKOUT_PATH, body);

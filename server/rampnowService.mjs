@@ -45,7 +45,9 @@ export function createRampnowService({env = process.env, store, now = Date.now,
   need(store && typeof store.redis === 'function', 'RAMPNOW_STORE_UNAVAILABLE');
   function configuredNetwork() {
     need(env.RAMPNOW_CHECKOUT_ENABLED === 'true', 'RAMPNOW_CHECKOUT_DISABLED');
-    need(['testnet', 'signet'].includes(env.RAMPNOW_BITCOIN_TEST_NETWORK), 'RAMPNOW_NETWORK_CONFIRMATION_REQUIRED');
+    // Do not enable a provider's Bitcoin testnet route merely because its
+    // address encoding matches signet. The installed wallet cannot use it.
+    need(env.RAMPNOW_BITCOIN_TEST_NETWORK === 'signet', 'RAMPNOW_NETWORK_CONFIRMATION_REQUIRED');
     return env.RAMPNOW_BITCOIN_TEST_NETWORK;
   }
   async function eligible(input) {
@@ -138,7 +140,8 @@ export function createRampnowService({env = process.env, store, now = Date.now,
         // A delayed worker consumes its reservation but never submits an expired review.
         need(now() < intent.expiresAt, 'RAMPNOW_INTENT_EXPIRED');
         const result = await checkout.createBuyOrder({externalOrderUid: intent.externalOrderUid, input,
-          paymentMode: quote.paymentMode, returnUrl: RETURN + '?intent=' + intent.externalOrderUid});
+          paymentMode: quote.paymentMode,
+          returnUrl: RETURN + '?intent=' + intent.externalOrderUid + '&network=' + intent.network});
         const bound = await store.bind(intent.externalOrderUid, pub, intent.requestHash,
           {orderUid: result.orderUid, checkoutUrl: result.redirectUrl});
         return statusView(bound);

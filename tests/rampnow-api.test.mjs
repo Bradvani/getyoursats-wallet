@@ -41,7 +41,7 @@ function setup(overrides = {}) {
   const serviceFactory = options => {
     factoryCalls.push(['service', options]);
     const method = name => async (...args) => {serviceCalls.push([name, ...args]); return {action: name, accepted: true};};
-    return {availability: async () => ({available: true, reason: 'ready', network: 'testnet', environment: 'sandbox', buyOnly: true}),
+    return {availability: async () => ({available: true, reason: 'ready', network: 'signet', environment: 'sandbox', buyOnly: true}),
       prepare: method('prepare'), submit: method('submit'), status: method('status'), reconcile: method('reconcile')};
   };
   return {settings, records, serviceCalls, factoryCalls, redisCalls,
@@ -61,7 +61,7 @@ function authorized(owner, proof, action, payload) {
 test('GET availability is coarse and outside-scope requests instantiate no clients', async () => {
   const s = setup();
   assert.deepEqual((await call(s.handler, {}, {method: 'GET'})).body,
-    {available: true, reason: 'ready', network: 'testnet', environment: 'sandbox', buyOnly: true});
+    {available: true, reason: 'ready', network: 'signet', environment: 'sandbox', buyOnly: true});
   for (const patch of [{VERCEL_ENV: 'production'}, {VERCEL_PROJECT_ID: 'other'}, {VERCEL_GIT_COMMIT_REF: 'main'},
     {RAMPNOW_ENVIRONMENT: 'production'}, {RAMPNOW_API_KEY: ''}, {RAMPNOW_API_SECRET: ''}]) {
     const scoped = setup({env: patch});

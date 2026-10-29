@@ -134,10 +134,20 @@ test('disabled or unconfirmed network prevents preparation and checkout dispatch
     [{RAMPNOW_CHECKOUT_ENABLED: undefined}, 'RAMPNOW_CHECKOUT_DISABLED'],
     [{RAMPNOW_BITCOIN_TEST_NETWORK: undefined}, 'RAMPNOW_NETWORK_CONFIRMATION_REQUIRED'],
     [{RAMPNOW_BITCOIN_TEST_NETWORK: 'mainnet'}, 'RAMPNOW_NETWORK_CONFIRMATION_REQUIRED'],
-    [{RAMPNOW_BITCOIN_TEST_NETWORK: 'testnet'}, 'RAMPNOW_NETWORK_MISMATCH']]) {
+    [{RAMPNOW_BITCOIN_TEST_NETWORK: 'testnet'}, 'RAMPNOW_NETWORK_CONFIRMATION_REQUIRED']]) {
     const h = fixture(changes);
     await assert.rejects(h.prepare(), errorCode(code));
     assert.equal(h.calls.post.length, 0); assert.equal(h.calls.prepare.length, 0);
+  }
+});
+
+test('unsupported sandbox networks never advertise availability or prepare even with matching input', async () => {
+  for (const network of ['testnet', 'testnet3', 'testnet4', 'regtest', 'mainnet']) {
+    const h = fixture({RAMPNOW_BITCOIN_TEST_NETWORK: network});
+    assert.deepEqual(await h.service.availability(), {available: false, reason: 'network_or_route_unavailable',
+      network: null, environment: 'sandbox', buyOnly: true});
+    await assert.rejects(h.service.prepare(owner, {...input, network}), errorCode('RAMPNOW_CHECKOUT_NETWORK_INVALID'));
+    assert.equal(h.calls.prepare.length, 0); assert.equal(h.calls.quote.length, 0); assert.equal(h.calls.post.length, 0);
   }
 });
 
@@ -193,10 +203,12 @@ test('preparation persists hashes and route only while preserving the reviewed d
 
 test('changing reviewed address, amount, profile, network or quote hash cannot submit', async () => {
   const h = fixture(); const review = await h.prepare();
-  for (const change of [{destination: address(2)}, {srcAmount: '1001'}, {network: 'testnet'},
+  for (const change of [{destination: address(2)}, {srcAmount: '1001'},
     {user: {...input.user, email: 'different@example.com'}}, {user: {...input.user, firstName: 'ChangedName'}}]) {
     await assert.rejects(h.service.submit(owner, {...h.payload(review), input: {...clone(input), ...change}}), errorCode('RAMPNOW_INTENT_CONFLICT'));
   }
+  await assert.rejects(h.service.submit(owner, {...h.payload(review), input: {...input, network: 'testnet'}}),
+    errorCode('RAMPNOW_CHECKOUT_NETWORK_INVALID'));
   await assert.rejects(h.service.submit(owner, {...h.payload(review), quoteHash: 'a'.repeat(64)}), errorCode('RAMPNOW_INTENT_CONFLICT'));
   assert.equal(h.calls.reserve.length, 0); assert.equal(h.calls.post.length, 0);
 });
@@ -213,7 +225,7 @@ test('fresh quote changes require a new review before reservation', async () => 
 test('flag or wallet network changes after review still block submit before reservation', async () => {
   for (const [changes, code] of [[{RAMPNOW_CHECKOUT_ENABLED: 'false'}, 'RAMPNOW_CHECKOUT_DISABLED'],
     [{RAMPNOW_BITCOIN_TEST_NETWORK: undefined}, 'RAMPNOW_NETWORK_CONFIRMATION_REQUIRED'],
-    [{RAMPNOW_BITCOIN_TEST_NETWORK: 'testnet'}, 'RAMPNOW_NETWORK_MISMATCH']]) {
+    [{RAMPNOW_BITCOIN_TEST_NETWORK: 'testnet'}, 'RAMPNOW_NETWORK_CONFIRMATION_REQUIRED']]) {
     const h = fixture(); const review = await h.prepare(); Object.assign(h.env, changes);
     await assert.rejects(h.service.submit(owner, h.payload(review)), errorCode(code));
     assert.equal(h.calls.reserve.length, 0); assert.equal(h.calls.post.length, 0);
@@ -231,6 +243,8 @@ test('concurrent submissions reserve once and issue exactly one provider POST', 
   assert.equal(submitted.paymentMode, 'upi');
   assert.deepEqual(submitted.input, normalizeRampnowBuyInput(input));
   assert.equal(new URL(submitted.returnUrl).searchParams.get('intent'), review.externalOrderUid);
+  assert.equal(new URL(submitted.returnUrl).searchParams.get('network'), review.network);
+  assert.equal([...new URL(submitted.returnUrl).searchParams].length, 2);
   const again = await h.service.submit(owner, h.payload(review));
   assert.equal(again.phase, 'bound'); assert.equal(again.walletReceiptVerified, false);
   assert.equal(h.calls.post.length, 1);
