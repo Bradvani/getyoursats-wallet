@@ -15,7 +15,7 @@ function fixture(){
  const sync=vi.fn(),claim=vi.fn();
  const sdk=createOperationGateway('regtest').protect({
   getInfo:next,listPayments:payments,listUnclaimedDeposits:deposits,
-  observeWalletState:observe,syncWallet:sync,claimIncomingTransfer:claim
+  observeWalletState:observe,observePayment:vi.fn(),syncWallet:sync,claimIncomingTransfer:claim
  } as unknown as BreezSdk);
  return {sdk,next,payments,deposits,observe,sync,claim};
 }
