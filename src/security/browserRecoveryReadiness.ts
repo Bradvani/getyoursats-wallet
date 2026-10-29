@@ -1,4 +1,6 @@
 import {readRecoveryHistory} from './recoveryHistory';
+import {isRestrictedBrowserWallet} from './browserReleasePolicy';
+import {getOperationReconciliation} from './operationGateway';
 import type {BreezSdk,Network,GetInfoResponse,Payment,DepositInfo} from '@breeztech/breez-sdk-spark';
 import {operationWalletKey,readOperations,isUnresolved} from './operationJournal';
 import {readRecoveries,recoveryUnresolved} from './signedRecoveryJournal';
@@ -47,6 +49,19 @@ export async function readBrowserRecoveryReadiness(
 ):Promise<BrowserRecoveryReadiness>{
   assertCurrent();
   const original=journalBytes();
+  // An authenticated restored browser wallet may contain only local cached
+  // balances/history. Read provider state before declaring it ready, without
+  // invoking SDK syncWallet (which can claim or move funds).
+  const wallet=sdk as BreezSdk;
+  if(isRestrictedBrowserWallet(wallet)){
+    const reconciliation=getOperationReconciliation(wallet);
+    if(!reconciliation||typeof reconciliation.observe!=='function')
+      throw new Error('Read-only provider recovery is unavailable. Wallet data was preserved.');
+    await reconciliation.observe();
+    assertCurrent();
+    if(journalBytes()!==original)
+      throw new Error('Wallet recovery records changed during provider observation. Data was preserved.');
+  }
   const info=await sdk.getInfo({ensureSynced:false});
   assertCurrent();validateInfo(info);
   const walletKey=await operationWalletKey(network,info.identityPubkey);
