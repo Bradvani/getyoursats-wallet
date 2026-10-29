@@ -91,3 +91,45 @@ test('a noncooperating old tab blocks version fencing until it closes',async({pa
  const r=await page.evaluate(async root=>{const lab=Reflect.get(window,'gysStorageMigrationLab');await lab.setupLegacyShared(root);await lab.holdLegacyShared(root);let error='';try{await lab.fenceLegacyShared(root);}catch(e){error=String(e);}lab.closeOld();await lab.fenceLegacyShared(root);return {error,after:await lab.inspectLegacyShared(root)};},root());
  expect(r.error).toBeTruthy();expect(r.after.map((d:{version?:number})=>d.version)).toEqual([24,7]);
 });
+
+
+test('populated original SDK rows are inventoried without ever admitting or modifying them',async({page})=>{
+ const result=await page.evaluate(async root=>{
+  const lab=Reflect.get(window,'gysStorageMigrationLab');
+  await lab.setupLegacyShared(root,'sdk-populated');
+  const before=await lab.inspectLegacyShared(root),report=await lab.inventoryUntagged(root);
+  const after=await lab.inspectLegacyShared(root);
+  return {before,after,report};
+ },root());
+ expect(result.after).toEqual(result.before);
+ expect(result.report.mode).toBe('read-only-quarantine');
+ expect(result.report.canAdmit).toBe(false);
+ expect(result.report.sources.every((s:{ownerVerified:boolean})=>s.ownerVerified===false)).toBe(true);
+ expect(result.report.sources[0].rows).toBeGreaterThan(0);
+ expect(result.report.sources[1].rows).toBe(0);
+ expect(result.report.sources[0].digest).toMatch(/^[0-9a-f]{64}$/);
+});
+test('populated tree leaf state remains quarantined with a typed snapshot digest',async({page})=>{
+ const report=await page.evaluate(async root=>{
+  const lab=Reflect.get(window,'gysStorageMigrationLab');
+  await lab.setupLegacyShared(root,'tree-populated');
+  const a=await lab.inventoryUntagged(root),b=await lab.inventoryUntagged(root);
+  return {a,b,after:await lab.inspectLegacyShared(root)};
+ },root());
+ expect(report.a).toEqual(report.b);
+ expect(report.a.canAdmit).toBe(false);
+ expect(report.a.sources[1].rows).toBeGreaterThan(0);
+ expect(report.after[1].version).toBe(6);
+ expect(report.after[1].rows.some((s:{count:number})=>s.count>0)).toBe(true);
+});
+test('an absent historical profile stays absent and cannot be treated as ownership proof',async({page})=>{
+ const report=await page.evaluate(async root=>{
+  const lab=Reflect.get(window,'gysStorageMigrationLab');
+  const a=await lab.inventoryUntagged(root),b=await lab.inspectLegacyShared(root);
+  return {a,b};
+ },root());
+ expect(report.a.totalRows).toBe(0);
+ expect(report.a.canAdmit).toBe(false);
+ expect(report.a.sources.every((s:{present:boolean})=>!s.present)).toBe(true);
+ expect(report.b.every((s:{exists:boolean})=>!s.exists)).toBe(true);
+});

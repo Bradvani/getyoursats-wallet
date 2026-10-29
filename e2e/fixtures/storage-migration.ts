@@ -1,4 +1,5 @@
 import {assertNoUnfencedPopulatedLegacyStorage,EMPTY_LEGACY_FENCE} from '../../src/services/emptyLegacyFence';
+import {inventoryUntaggedLegacyWallet} from '../../src/security/storageMigration/legacyInventory';
 import {prepareOwnedWalletStorage,walletStorageNames,resolveWalletExportDatabase,type OwnerRecord} from '../../src/security/storageMigration/ownedStorage';
 import {OWNER_STORE,openDatabase,createSchema,transactionDone,snapshotDatabase,snapshotDigest,readRecord,databaseSchema} from '../../src/security/storageMigration/database';
 import pinned from '../../src/security/storageMigration/pinnedSchemas.json';
@@ -10,6 +11,7 @@ const identity='02698b27ac308b275671b3ca25436346469d04a5bba578ae39feba1d65897a6a
 let active=true;const check=()=>{if(!active)throw Error('Session revoked');};
 const held:IDBDatabase[]=[];
 const lab={
+ async inventoryUntagged(root:string){return inventoryUntaggedLegacyWallet(root,'regtest',check);},
  async setupLegacyShared(root:string,kind:'empty'|'sdk-populated'|'tree-populated'='empty'){
   active=true;const base=root+'/regtest/2687e55a';
   for(const [i,name] of [base,base+'-tree'].entries()){
