@@ -107,7 +107,7 @@ describe('backward-compatible exit-state recovery',()=>{
  });
  it('refuses malformed plain JSON before modifying SDK state',async()=>{
   const sdk={importUnilateralExitState:vi.fn()};
-  await expect(importUnilateralExitBackup(sdk,asFile(new Blob(['{\"a\":']), 'exit-state.json'))).rejects.toThrow(UnreadableBackupError);
+  await expect(importUnilateralExitBackup(sdk,asFile(new Blob(['{"a":']), 'exit-state.json'))).rejects.toThrow(UnreadableBackupError);
   expect(sdk.importUnilateralExitState).not.toHaveBeenCalled();
  });
  it('refuses excessively large untrusted files without importing any leaves',async()=>{
