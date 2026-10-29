@@ -32,7 +32,7 @@ export function inspectCpfpPsbt(bytes:Uint8Array):SignedPsbtReview{
  let totalIn=0n;for(let i=0;i<inputs.length;i++){
   const fields=map(c);const witness=fields.get('01');
   if(!witness)deny('missing witness UTXO');
-  const w=new Cursor(witness);const value=w.u64();w.varBytes(10000);w.end();totalIn+=value;
+  const w=new Cursor(witness!);const value=w.u64();w.varBytes(10000);w.end();totalIn+=value;
   const sighash=fields.get('03');
   if(sighash){const x=new Cursor(sighash);if(x.u32()!==1)deny('only SIGHASH_ALL permitted');x.end();}
  }
