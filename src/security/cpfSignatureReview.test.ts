@@ -12,7 +12,7 @@ function make({value=10000,output=9600,outScript=script,wrong=false,badHash=fals
  const inMap=[...field([1],witness),...(badHash?field([3],le32(0x81)):[]),0];
  return Uint8Array.from([112,115,98,116,255, ...[1,0,tx.length,...tx],0,...inMap,0]);
 }
-function h(custom:{}={}){
+function h(custom:Partial<Parameters<typeof guardedCpfpSigner>[0]>={}){
  const signer={signPsbt:vi.fn(async(v:Uint8Array)=>v)};
  const authorize=vi.fn(async()=>{}),persist=vi.fn(async()=>{});
  const guard=guardedCpfpSigner({signer,funded:[{txid,vout:1,valueSats:10000,scriptPubkeyHex:script}],allowedOutputs:[script],maxFeeSats:700n,expiresAt:Date.now()+60000,
