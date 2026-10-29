@@ -34,9 +34,13 @@ describe('exportUnilateralExitBackup', () => {
 
     const calls = vi.mocked(shareOrDownloadZip).mock.calls;
     const [blob, filename] = calls[calls.length - 1];
-    expect(filename).toMatch(/glow_unilateral_exit_backup\.zip$/);
+    expect(filename).toMatch(/getyoursats_exit_state_backup\.zip$/);
     const zip = await JSZip.loadAsync(blob);
     await expect(zip.file('exit-state.json')?.async('string')).resolves.toBe(STATE);
+    const instructions = await zip.file('README.txt')!.async('string');
+    expect(instructions).toContain('running exit');
+    expect(instructions).toContain('operation');
+    expect(instructions).not.toContain('complete rescue');
   });
 
   it('saves the copy a running exit was built against, not a fresh one', async () => {
@@ -91,4 +95,26 @@ describe('importUnilateralExitBackup', () => {
     const restored = await importUnilateralExitBackup(sdk, asFile(await savedZip(), 'backup.zip'));
     expect(restored).toMatchObject({ importedLeaves: 0, skippedForeignLeaves: 4 });
   });
+});
+
+
+describe('backward-compatible exit-state recovery',()=>{
+ it('continues reading legacy Glow ZIPs by their contained exit-state.json',async()=>{
+  const sdk={importUnilateralExitState:vi.fn(async()=>imported({importedLeaves:1}))};
+  const file=asFile(await savedZip(),'old_glow_unilateral_exit_backup.zip');
+  await importUnilateralExitBackup(sdk,file);
+  expect(sdk.importUnilateralExitState).toHaveBeenCalledWith({exitState:STATE});
+ });
+ it('refuses malformed plain JSON before modifying SDK state',async()=>{
+  const sdk={importUnilateralExitState:vi.fn()};
+  await expect(importUnilateralExitBackup(sdk,asFile(new Blob(['{\"a\":']), 'exit-state.json'))).rejects.toThrow(UnreadableBackupError);
+  expect(sdk.importUnilateralExitState).not.toHaveBeenCalled();
+ });
+ it('refuses excessively large untrusted files without importing any leaves',async()=>{
+  const sdk={importUnilateralExitState:vi.fn()};
+  const file=asFile(new Blob([STATE]),'oversized.zip');
+  Object.defineProperty(file,'size',{value:32*1024*1024+1});
+  await expect(importUnilateralExitBackup(sdk,file)).rejects.toThrow(UnreadableBackupError);
+  expect(sdk.importUnilateralExitState).not.toHaveBeenCalled();
+ });
 });

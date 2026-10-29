@@ -58,7 +58,7 @@ describe('BackupActions', () => {
   it('reports a file that is not a backup', async () => {
     await restore(new File(['not a backup'], 'notes.txt'));
     await waitFor(() =>
-      expect(screen.getByTestId('unilateral-exit-backup-error')).toHaveTextContent('not a Glow'),
+      expect(screen.getByTestId('unilateral-exit-backup-error')).toHaveTextContent('not a readable GetYourSats'),
     );
   });
 
