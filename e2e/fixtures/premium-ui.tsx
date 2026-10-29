@@ -22,12 +22,13 @@ import BrandIntro from '../../src/components/BrandIntro';
 import StartupLogo from '../../src/components/StartupLogo';
 import PaymentCelebration from '../../src/components/PaymentCelebration';
 
-const info: GetInfoResponse = { identityPubkey: 'a'.repeat(66), balanceSats: 125000, recoverableFundsSats: 0, tokenBalances: new Map() };
+const info: GetInfoResponse = { identityPubkey: '02'+'a'.repeat(64), balanceSats: 125000, recoverableFundsSats: 0, tokenBalances: new Map() };
 const received = { id: 'fixture-receive', paymentType: 'receive', status: 'completed', amount: 5000n, fees: 0n, timestamp: Math.floor(Date.now()/1000), method: 'lightning' } as Payment;
 
-// Explicit, dev-only settlement trigger. A Charge creates a REAL-looking
-// fixture invoice but never simulates paid until the test requests it.
+// Explicit, dev-only settlement trigger. This synthetic invoice is not payable.
+// Charge never adds a completed receipt until the test requests it.
 const merchantInvoice='lnbc1'+'a'.repeat(90);
+let merchantAmountSats=1000;
 const posReceived = {
   id:'fixture-pos-settled',paymentType:'receive',status:'completed',
   amount:1000n,fees:0n,timestamp:Math.floor(Date.now()/1000),method:'lightning',
@@ -44,12 +45,13 @@ const subscribeToSdkEvents=(listener:(event:SdkEvent)=>void)=>{
 (window as Window & {__gysFixtureSettlePos?:()=>void}).__gysFixtureSettlePos=()=>{
   if(merchantPaid)return;
   merchantPaid=true;
+  posReceived.amount=BigInt(merchantAmountSats);
   for(const listener of mockEventSubscribers){
     listener({type:'paymentSucceeded',payment:posReceived} as SdkEvent);
   }
 };
 const sdk = new Proxy({
- parse: async()=>({type:'bolt11Invoice',timestamp:Math.floor(Date.now()/1000),expiry:3600,network:'bitcoin',invoice:{bolt11:merchantInvoice,source:{type:'bolt11'}},amountMsat:1000000}) as unknown as Awaited<ReturnType<BreezSdk['parse']>>,
+ parse: async()=>({type:'bolt11Invoice',timestamp:Math.floor(Date.now()/1000),expiry:3600,network:'bitcoin',invoice:{bolt11:merchantInvoice,source:{type:'bolt11'}},paymentHash:'b'.repeat(64),amountMsat:merchantAmountSats*1000}) as unknown as Awaited<ReturnType<BreezSdk['parse']>>,
  getInfo: async () => info,
  listContacts: async () => [],
  addEventListener: async () => 'fixture-listener',
@@ -61,6 +63,10 @@ const sdk = new Proxy({
  getTokensMetadata: async () => ({tokensMetadata: []}),
  receivePayment: async (request:ReceivePaymentRequest) => {
   receiveRequests.push(request.paymentMethod.type);
+  if(request.paymentMethod.type==='bolt11Invoice'){
+   merchantAmountSats=request.paymentMethod.amountSats??0;
+   merchantPaid=false;
+  }
   return {paymentRequest:request.paymentMethod.type==='sparkAddress'?'spark1syntheticfixture':merchantInvoice,fee:0n};
  },
  listPayments: async () => ({ payments: merchantPaid ? [posReceived,received] : [received] }),

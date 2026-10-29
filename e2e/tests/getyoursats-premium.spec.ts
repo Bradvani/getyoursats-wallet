@@ -78,8 +78,8 @@ test('@public-smoke merchant shows lightning flash only after an SDK confirmed r
  await expect(page.getByTestId('pos-invoice-qr').locator('svg')).toBeVisible();
  await expect(page.getByTestId('pos-received-motion')).toHaveCount(0);
  await expect(terminal).toContainText('Waiting for payment confirmation');
- // A click on Charge must NOT simulate a payment. Only the dev-only fixture
- // dispatch of the SDK's paymentSucceeded event is allowed to settle it.
+ // Charge does not simulate payment. The dev-only trigger adds the matching
+ // completed receipt, then emits the event that requests reconciliation.
  await page.evaluate(()=>{
   (window as Window & {__gysFixtureSettlePos?:()=>void}).__gysFixtureSettlePos?.();
  });

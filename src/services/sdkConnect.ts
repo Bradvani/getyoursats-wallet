@@ -192,7 +192,16 @@ export async function connectSdk(params: {
       if (chainApiUrl && config.apiKey == null && config.sparkConfig)
         builder = builder.withRestChainService(chainApiUrl, 'esplora');
       const raw=await (await builder.withDefaultStorage(ownedDirectory)).build();
-      const wallet=gateway.protect(await lifetime.attach(raw));
+      const attached=await lifetime.attach(raw);
+      // Readiness must establish that storage, signer and the built SDK all
+      // refer to the same wallet. Consistency between two cached SDK reads
+      // alone cannot establish this binding. This read never requests sync.
+      const builtInfo=await attached.getInfo({ensureSynced:false});
+      assertCurrentSession(epoch);
+      if(typeof builtInfo?.identityPubkey!=='string'
+        ||builtInfo.identityPubkey.toLowerCase()!==identity)
+        throw new Error('Restored wallet identity does not match its signing and storage identity. Your saved records have been preserved.');
+      const wallet=gateway.protect(attached);
       registerBrowserSdkLifetime(wallet,lifetime);
       return wallet;
     }catch(error){

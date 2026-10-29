@@ -19,6 +19,7 @@ import {clearSignerIdentity,getSignerIdentityToken,getSpendingSessionEpoch,lockS
 beforeEach(()=>{
  mocks.native.mockReturnValue(false);
  mocks.identity.mockReset().mockResolvedValue({bytes:[2,...Array(32).fill(17)]});
+ mocks.raw.getInfo.mockReset().mockResolvedValue({identityPubkey:'02'+'11'.repeat(32),balanceSats:1,recoverableFundsSats:0,tokenBalances:new Map()} as never);
  mocks.storage.mockReset().mockResolvedValue('test-identity-owned-directory');
  vi.stubGlobal('indexedDB',{databases:vi.fn(async()=>[])});
 });
@@ -31,7 +32,7 @@ describe('browser SDK connection security wiring',()=>{
   // A valid-shaped request must still be denied when it bypasses the controller.
   expect(()=>wallet.signRefundDeposit({txid:'00'.repeat(32),vout:0,destinationAddress:'bc1qdisposable',fee:{type:'fixed',amount:100}})).toThrow(/unavailable pending/);
   expect(mocks.raw.refundDeposit).not.toHaveBeenCalled();
-  expect(await wallet.getInfo({})).toEqual({balanceSats:1n});
+  expect(await wallet.getInfo({})).toMatchObject({identityPubkey:'02'+'11'.repeat(32),balanceSats:1});
   expect(mocks.config).toHaveBeenCalledWith(expect.objectContaining({stableBalanceConfig:undefined,preferSparkOverLightning:false,backgroundTasksEnabled:false,realTimeSyncServerUrl:undefined,crossChainConfig:undefined,leafOptimizationConfig:expect.objectContaining({autoEnabled:false}),tokenOptimizationConfig:expect.objectContaining({autoEnabled:false})}));
   expect(config.preferSparkOverLightning).toBe(true);
   expect(mocks.factory).toHaveBeenCalledWith({type:'mnemonic',mnemonic:'disposable test seed'},'mainnet',undefined);
@@ -155,6 +156,31 @@ describe('browser SDK connection security wiring',()=>{
 
 
 describe('owned browser storage integration',()=>{
+ it.each([undefined,'03'+'22'.repeat(32),'not-an-identity'])('does not publish a built wallet whose reported identity differs from its storage signer (%s)',async identityPubkey=>{
+  mocks.raw.getInfo.mockResolvedValueOnce({identityPubkey,balanceSats:1,recoverableFundsSats:0,tokenBalances:new Map()} as never);
+  await expect(connectSdk({config:{network:'regtest'} as Config,seed:{type:'mnemonic',mnemonic:'public fixture'},storageDir:'test-root'}))
+   .rejects.toThrow(/identity does not match/);
+  expect(mocks.raw.getInfo).toHaveBeenCalledWith({ensureSynced:false});
+  expect(mocks.raw.disconnect).toHaveBeenCalledOnce();expect(mocks.raw.free).toHaveBeenCalledOnce();
+  expect(mocks.internalBuilder).not.toHaveBeenCalled();expect(mocks.connect).not.toHaveBeenCalled();
+ });
+ it('closes a built wallet when its read-only identity check fails',async()=>{
+  mocks.raw.getInfo.mockRejectedValueOnce(new Error('Read unavailable'));
+  await expect(connectSdk({config:{network:'regtest'} as Config,seed:{type:'mnemonic',mnemonic:'public fixture'},storageDir:'test-root'}))
+   .rejects.toThrow('Read unavailable');
+  expect(mocks.raw.disconnect).toHaveBeenCalledOnce();expect(mocks.raw.free).toHaveBeenCalledOnce();
+ });
+ it('never publishes a restored wallet when the identity read completes after locking',async()=>{
+  let release!:(value:never)=>void;
+  mocks.raw.getInfo.mockImplementationOnce(()=>new Promise(resolve=>{release=resolve}));
+  const pending=connectSdk({config:{network:'regtest'} as Config,seed:{type:'mnemonic',mnemonic:'public fixture'},storageDir:'test-root'});
+  const rejected=expect(pending).rejects.toThrow(/session changed|session is closed/);void rejected.catch(()=>{});
+  await vi.waitFor(()=>expect(release).toBeTypeOf('function'));
+  lockSpendingSession();
+  release({identityPubkey:'02'+'11'.repeat(32),balanceSats:1} as never);
+  await rejected;
+  expect(mocks.raw.disconnect).toHaveBeenCalledOnce();expect(mocks.raw.free).toHaveBeenCalledOnce();
+ });
  it('selects storage from the actual public signer identity before building the wallet',async()=>{
   await connectSdk({config:{network:'regtest'} as Config,seed:{type:'mnemonic',mnemonic:'public fixture'},storageDir:'test-root'});
   expect(mocks.storage).toHaveBeenCalledWith({root:'test-root',network:'regtest',identity:'02'+'11'.repeat(32),assertCurrent:expect.any(Function)});
