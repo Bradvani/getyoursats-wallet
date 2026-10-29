@@ -25,6 +25,39 @@ async function approve(){await vi.waitFor(()=>expect(getSpendingRequest()).not.t
 beforeEach(async()=>{localStorage.clear();installOperationTestLock();await rememberSignerIdentity({type:'mnemonic',mnemonic:'disposable-test-identity'});key=await operationWalletKey('regtest',identity);});
 afterEach(()=>{cancelSpendingApproval();clearSignerIdentity();vi.restoreAllMocks();vi.unstubAllGlobals();});
 describe('explicit incoming claim',()=>{
+ it.each(['completed','amount','wallet','network','failed','notFound'] as const)(
+  'refuses %s transfer state drift after approval and before durable submission',async kind=>{
+    const h=harness();
+    const changed=observed(kind==='completed');
+    if(kind==='amount')changed.payment!.amount=501n;
+    if(kind==='wallet')changed.identityPubkey='03'+'22'.repeat(32);
+    if(kind==='network')changed.network='mainnet';
+    if(kind==='failed')changed.payment!.status='failed';
+    if(kind==='notFound')delete changed.payment;
+    h.raw.observeIncomingTransfer.mockResolvedValueOnce(observed()).mockResolvedValueOnce(changed);
+    const run=h.controller.claim(id),rejected=expect(run).rejects.toThrow(/changed|does not match/);
+    await approve();await rejected;
+    expect(h.raw.observeIncomingTransfer).toHaveBeenCalledTimes(2);
+    expect(h.raw.claimIncomingTransfer).not.toHaveBeenCalled();
+    expect(readIncomingClaims(key)).toEqual([]);
+  });
+ it('does not claim if provider observation fails after approval',async()=>{
+    const h=harness();
+    h.raw.observeIncomingTransfer.mockResolvedValueOnce(observed()).mockRejectedValueOnce(Error('provider unavailable'));
+    const run=h.controller.claim(id),rejected=expect(run).rejects.toThrow(/provider unavailable/);
+    await approve();await rejected;
+    expect(h.raw.claimIncomingTransfer).not.toHaveBeenCalled();
+    expect(readIncomingClaims(key)).toEqual([]);
+ });
+ it('does not claim if a session lock arrives during the second provider observation',async()=>{
+    const h=harness();
+    h.raw.observeIncomingTransfer.mockResolvedValueOnce(observed())
+     .mockImplementationOnce(async()=>{lockSpendingSession();return observed();});
+    const run=h.controller.claim(id),rejected=expect(run).rejects.toThrow(/session|locked/);
+    await approve();await rejected;
+    expect(h.raw.claimIncomingTransfer).not.toHaveBeenCalled();
+    expect(readIncomingClaims(key)).toEqual([]);
+ });
  it('persists before claiming and binds the wallet, amount, network and id',async()=>{
   const h=harness();h.raw.claimIncomingTransfer.mockImplementation(async()=>{expect(readIncomingClaims(key)[0].state).toBe('submitting');return observed(true);});
   const run=h.controller.claim(id);expect(h.raw.claimIncomingTransfer).not.toHaveBeenCalled();await approve();

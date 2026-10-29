@@ -80,6 +80,15 @@ export function createIncomingClaimController(options:{network:Network;raw:()=>B
     'Amount received':amountSats+' sats',Fee:'0 sats',Policy:'Claim this direct Spark transfer once. Check status after any interruption.',
    });live(epoch);
    if(Date.now()>=expiresAt*1000)throw Error('Incoming claim approval expired');
+   // Approval is not a lease on the provider's earlier transfer state. Obtain
+   // fresh authoritative evidence before persisting the single execution.
+   const refreshedAt=Date.now();
+   const refreshed=await s.observeIncomingTransfer(paymentId);live(epoch);
+   const current=await verify(refreshed,paymentId,key,refreshedAt,epoch,amountSats);
+   live(epoch);
+   if(refreshed.completed||current.status!=='pending')
+    throw Error('Incoming transfer changed during approval. No claim was submitted.');
+   if(Date.now()>=expiresAt*1000)throw Error('Incoming claim approval expired');
    assertNoUnresolvedRecovery(key);
    let record=saveIncomingClaim({version:1,walletKey:key,paymentId,network,amountSats,expiresAt,state:'submitting',revision:0});
    try{
