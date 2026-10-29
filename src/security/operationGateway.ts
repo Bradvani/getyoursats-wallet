@@ -131,7 +131,24 @@ export function createOperationGateway(network:Network) {
       const walletKey=await getWalletKey();
       await withOperationLock(walletKey,async()=>{
         assertConnection();assertUnlocked(epoch);
-        await observationSdk(client!).observeWalletState();
+        const sdk=client!;
+        const before=await sdk.getInfo({ensureSynced:false});
+        assertConnection();assertUnlocked(epoch);
+        if(typeof before?.identityPubkey!=='string'||!before.identityPubkey||
+            await operationWalletKey(network,before.identityPubkey)!==walletKey)
+          throw new Error('Wallet identity changed before provider observation');
+        assertConnection();assertUnlocked(epoch);
+        // The SDK may update its local cache while observing the network. Never
+        // report a live refresh for a different wallet or replacement session.
+        const observed=await observationSdk(sdk).observeWalletState();
+        assertConnection();assertUnlocked(epoch);
+        if(!observed||observed.identityPubkey!==before.identityPubkey)
+          throw new Error('Provider observation belongs to a different wallet');
+        const after=await sdk.getInfo({ensureSynced:false});
+        assertConnection();assertUnlocked(epoch);
+        if(!after||after.identityPubkey!==before.identityPubkey||
+           await operationWalletKey(network,after.identityPubkey)!==walletKey)
+          throw new Error('Wallet identity changed during provider observation');
         assertConnection();assertUnlocked(epoch);
       });
     },

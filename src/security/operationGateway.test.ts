@@ -298,6 +298,32 @@ describe('connection operation gateway',()=>{
   await wallet.getInfo({ensureSynced:false});await wallet.getInfo({});
   expect(getInfo.mock.calls.every(([request])=>request.ensureSynced===false)).toBe(true);
  });
+ it('refuses a provider observation for another wallet instead of reporting refreshed state',async()=>{
+   const h=harness();
+   vi.mocked(h.raw.observeWalletState).mockResolvedValueOnce({identityPubkey:'another-identity',balanceSats:200n} as never);
+   await expect(getOperationReconciliation(h.wallet)!.observe()).rejects.toThrow(/different wallet/);
+   expect(h.send).not.toHaveBeenCalled();
+  });
+ it('rejects a wallet identity change after the provider updates its cache',async()=>{
+   const h=harness();
+   const info=await h.raw.getInfo({ensureSynced:false});
+   vi.mocked(h.raw.getInfo).mockResolvedValueOnce(info).mockResolvedValueOnce(info)
+    .mockResolvedValueOnce({...info,identityPubkey:'replacement-identity'} as never);
+   await expect(getOperationReconciliation(h.wallet)!.observe()).rejects.toThrow(/identity changed/);
+   expect(h.send).not.toHaveBeenCalled();
+  });
+ it('never falls back to effectful sync after provider observation fails',async()=>{
+   const h=harness();
+   vi.mocked(h.raw.observeWalletState).mockRejectedValueOnce(Error('provider offline'));
+   await expect(getOperationReconciliation(h.wallet)!.observe()).rejects.toThrow(/provider offline/);
+   expect(h.raw.observePayment).not.toHaveBeenCalled();
+  });
+ it('checks the SDK identity across a successful fresh provider observation',async()=>{
+   const h=harness();
+   await expect(getOperationReconciliation(h.wallet)!.observe()).resolves.toBeUndefined();
+   expect(h.raw.observeWalletState).toHaveBeenCalledOnce();
+   expect(h.raw.getInfo).toHaveBeenCalledTimes(3);
+  });
  it('refuses observation after lock before invoking any SDK query',async()=>{
   const h=harness();lockSpendingSession();
   await expect(h.wallet.syncWallet({})).rejects.toThrow(/locked/);
