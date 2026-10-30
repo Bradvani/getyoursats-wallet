@@ -3,7 +3,7 @@ import {
   ORIGIN, walletPubkey, verifyOwnership, vapidConfig, checkedSubscription, pushEndpoint,
   digest, breezLnurlSecret
 } from '../../server/pushCore.mjs';
-import {pushOperationPayload} from '../../shared/pushAuthorization.mjs';
+import {pushOperationPayload,isProviderWebhookId} from '../../shared/pushAuthorization.mjs';
 import {
   storeReady, issueChallenge, consumeChallenge, ensureWallet, getWallet,
   saveSubscription, activateSubscription, removeSubscription, getSubscription,
@@ -78,8 +78,8 @@ export default async function handler(req,res) {
     if(purpose==='subscribe')checkedSubscription(body.subscription);
     else pushEndpoint(body.endpoint);
     if(purpose==='activate' && body.webhookId!=null && body.webhookId!=='' &&
-      (typeof body.webhookId!=='string'||!/^[A-Za-z0-9_-]{5,180}$/.test(body.webhookId)))
-      throw Object.assign(new Error('Invalid provider webhook identifier'),{status:400});
+      !isProviderWebhookId(body.webhookId))
+      throw Object.assign(new Error('Could not finish enabling alerts. Please try again.'),{status:400});
     const payloadHash=digest(pushOperationPayload(purpose,body));
     if(action==='challenge') {
       if(!PURPOSES.has(body.purpose))
@@ -115,7 +115,7 @@ export default async function handler(req,res) {
       const webhookId=body.webhookId;
       const wallet=await getWallet(pub);
       if(!wallet || (!breezLnurlSecret() && wallet.registered!==true &&
-        (typeof webhookId!=='string'|| !/^[A-Za-z0-9_-]{5,180}$/.test(webhookId))))
+        !isProviderWebhookId(webhookId)))
         throw Object.assign(new Error('Provider webhook not registered'),{status:409});
       await activateSubscription(pub,endpoint,webhookId||wallet.webhookId);
       respond(res,200,{enabled:true,webhookRegistered:!!wallet.registered||!!webhookId});return;
