@@ -1060,17 +1060,18 @@ video::-webkit-media-controls-panel {
   background: var(--spark-border-light);
 }
 
-/* Web keyboard: lift the sheet above the soft keyboard.
-   --sheet-kb-offset is driven by the webViewportManager rAF poll.
-   !important overrides any inline transform from Framer Motion.
-   overflow:visible lets the container background extend past the root
-   clip boundary, covering the gap between the sheet and the keyboard
-   (iOS dvh/vh mismatch when the URL bar is visible). */
-.react-modal-sheet-root {
-  transform: translateY(var(--sheet-kb-offset, 0px)) !important;
+/* Keyboard geometry belongs to the web sheet viewport, never a transform on
+   the whole page. The library writes directional pan values inline: override
+   them so content can scroll both ways and pinch zoom remains available. */
+.web-sheet-scrollport {
+  touch-action: pan-y pinch-zoom !important;
+  scroll-padding-block: 16px;
 }
-html.keyboard-visible .react-modal-sheet-root {
-  overflow: visible !important;
+
+/* iOS focus zoom must not be triggered by small recipient/search fields.
+   rem preserves enlarged text preferences; the px floor protects small roots. */
+.gys-send-flow :is(input, textarea, select) {
+  font-size: max(1rem, 16px);
 }
 
 .show-amount-panel-button {

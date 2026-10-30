@@ -1,19 +1,8 @@
 import { Capacitor } from '@capacitor/core';
 
 /**
- * Web counterpart of the native adjustResize keyboard model (#219).
- *
- * Mobile browsers overlay the soft keyboard and pan the visual
- * viewport to reveal the caret, which visibly slides the whole page.
- * iOS Safari also restores that pan without firing any resize or
- * scroll event, so event-driven tracking always ends up stale.
- *
- * This manager pins the page instead: while an input is focused or
- * the keyboard is up, an animation-frame poll counter-translates
- * #root by visualViewport.pageTop, so content stays visually static
- * no matter how the browser pans. It also mirrors the native
- * keyboard signals from main.tsx on web: the `keyboard-visible`
- * class and `--keyboard-height` var on <html>.
+ * Publishes keyboard visibility and iOS safe-area signals. Sheet geometry is
+ * owned by useWebSheetViewport; this manager never moves the page or sheets.
  */
 
 /** Viewport shrink (px) below which we do not call it a keyboard. */
@@ -200,7 +189,6 @@ function refreshIosBottomGap(): void {
 
 let rafId: number | null = null;
 let idleFrames = 0;
-let appliedPageTop = 0;
 let keyboardVisible = false;
 let appliedKeyboardPx = 0;
 let keyboardOffFrames = 0;
@@ -215,20 +203,12 @@ export function pollWebViewport(): boolean {
   const height = window.visualViewport?.height ?? window.innerHeight;
   const pageTop = window.visualViewport?.pageTop ?? 0;
 
-  if (pageTop !== appliedPageTop) {
-    appliedPageTop = pageTop;
-    const root = document.getElementById('root');
-    if (root) {
-      root.style.transform =
-        pageTop !== 0 ? `translateY(${pageTop}px)` : '';
-    }
-  }
-
   if (iosBottomGapEnabled) {
     applyIosBottomInset();
   }
 
-  const keyboardPx = Math.round(html.clientHeight - height);
+  const scale = window.visualViewport?.scale || 1;
+  const keyboardPx = Math.round(html.clientHeight - height * scale);
   if (keyboardPx > KEYBOARD_MIN_PX) {
     keyboardOffFrames = 0;
     if (!keyboardVisible || keyboardPx !== appliedKeyboardPx) {
@@ -236,7 +216,6 @@ export function pollWebViewport(): boolean {
       appliedKeyboardPx = keyboardPx;
       html.classList.add('keyboard-visible');
       html.style.setProperty('--keyboard-height', `${keyboardPx}px`);
-      html.style.setProperty('--sheet-kb-offset', `-${keyboardPx}px`);
     }
   } else if (keyboardVisible) {
     keyboardOffFrames += 1;
@@ -245,7 +224,6 @@ export function pollWebViewport(): boolean {
       appliedKeyboardPx = 0;
       html.classList.remove('keyboard-visible');
       html.style.setProperty('--keyboard-height', '0px');
-      html.style.setProperty('--sheet-kb-offset', '0px');
     }
   }
 

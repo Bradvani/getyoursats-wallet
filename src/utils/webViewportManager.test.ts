@@ -4,6 +4,7 @@ import { pollWebViewport } from './webViewportManager';
 class FakeVisualViewport extends EventTarget {
   height = 0;
   pageTop = 0;
+  scale = 1;
 }
 
 let vv: FakeVisualViewport;
@@ -31,6 +32,7 @@ beforeEach(() => {
 afterEach(() => {
   // Drain module state back to baseline so tests stay independent.
   vv.height = layoutHeight;
+  vv.scale = 1;
   vv.pageTop = 0;
   pollUntilSettled();
   root.remove();
@@ -41,10 +43,11 @@ afterEach(() => {
 });
 
 describe('pollWebViewport', () => {
-  it('counter-translates #root by the visual viewport pan', () => {
+  it('leaves page and sheet geometry alone when Safari pans', () => {
     vv.pageTop = 280;
     pollWebViewport();
-    expect(root.style.transform).toBe('translateY(280px)');
+    expect(root.style.transform).toBe('');
+    expect(document.documentElement.style.getPropertyValue('--sheet-kb-offset')).toBe('');
 
     vv.pageTop = 0;
     pollWebViewport();
@@ -63,6 +66,15 @@ describe('pollWebViewport', () => {
     pollUntilSettled();
     expect(html.classList.contains('keyboard-visible')).toBe(false);
     expect(html.style.getPropertyValue('--keyboard-height')).toBe('0px');
+  });
+
+
+  it('does not mistake pinch magnification for a keyboard', () => {
+    vv.scale = 2;
+    vv.height = layoutHeight / 2;
+    pollUntilSettled();
+    expect(document.documentElement.classList.contains('keyboard-visible')).toBe(false);
+    expect(root.style.transform).toBe('');
   });
 
   it('holds the keyboard-visible class through a transient hide', () => {
