@@ -1,4 +1,5 @@
 import React from 'react';
+import {webcrypto} from 'node:crypto';
 import {afterEach,describe,expect,it,vi} from 'vitest';
 import {act,renderHook,waitFor} from '@testing-library/react';
 import type {PrepareSendPaymentResponse} from '@breeztech/breez-sdk-spark';
@@ -8,6 +9,13 @@ import {StableBalanceProvider} from '@/contexts/StableBalanceContext';
 import {createMockClient,createMockPayment} from '@/test/mocks/mockWalletApi';
 import {useSendPayment} from './useSendPayment';
 import {getSendLightningAddress,getLnurlPayRequestDetails,getPaymentMethodName} from '../utils';
+import {withPasskeySendAuthorization} from '@/services/sendAuthorization';
+
+const authorization=vi.hoisted(()=>({signIn:vi.fn(),free:vi.fn()}));
+vi.mock('@capacitor/core',()=>({Capacitor:{isNativePlatform:()=>false}}));
+vi.mock('@/services/passkeyService',()=>({buildBrowserPasskeyClient:()=>authorization}));
+const seed={type:'mnemonic' as const,mnemonic:'disposable authorization fixture'};
+const approval=()=>({wallet:{seed,label:'Primary'},labels:[]});
 
 const key='0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798';
 const spark='spark1synthetic';
@@ -22,7 +30,10 @@ function deferred<T>(){
   const promise=new Promise<T>(done=>{resolve=done;});
   return {resolve,promise};
 }
-function setup(){
+async function setup(passkey=false){
+  vi.stubGlobal('crypto',webcrypto);
+  vi.spyOn(document,'visibilityState','get').mockReturnValue('visible');
+  authorization.signIn.mockReset().mockImplementation(async()=>approval());
   Object.defineProperty(navigator,'locks',{configurable:true,value:{request:async(_key:string,_options:unknown,run:()=>Promise<unknown>)=>run()}});
   const fetch=vi.fn<typeof globalThis.fetch>().mockImplementation(async()=>Response.json(payload()));
   vi.stubGlobal('fetch',fetch);
@@ -34,16 +45,17 @@ function setup(){
     prepareSendPayment:vi.fn(async()=>quote),
     sendPayment:vi.fn(async request=>({payment:createMockPayment('send',{id:request.idempotencyKey,amount:100n,fees:0n})})),
   });
-  const wrapper=({children}:{children:React.ReactNode})=><WalletProvider client={client} isConnected>
+  const protectedClient=passkey?await withPasskeySendAuthorization(client,{seed,label:'Primary',rpId:'wallet.getyoursats.com'}):client;
+  const wrapper=({children}:{children:React.ReactNode})=><WalletProvider client={protectedClient} isConnected>
     <FiatDataProvider><StableBalanceProvider>{children}</StableBalanceProvider></FiatDataProvider>
   </WalletProvider>;
   return {client,fetch,...renderHook(()=>useSendPayment(),{wrapper})};
 }
-afterEach(()=>vi.unstubAllGlobals());
+afterEach(()=>{vi.unstubAllGlobals();vi.restoreAllMocks();});
 
 describe('automatic GYS payments',()=>{
   it.each([address,'lnurl1synthetic-native-qr'])('routes %s through the verified zero-fee prepare/send path',async raw=>{
-    const {client,result,fetch}=setup();
+    const {client,result,fetch}=await setup();
     await act(()=>result.current.processInput(raw));
     expect(result.current.currentStep).toBe('amount');
     expect(getSendLightningAddress(result.current.paymentInput)).toBe(address);
@@ -61,7 +73,7 @@ describe('automatic GYS payments',()=>{
     expect(result.current.completedPayment?.fees).toBe(0n);
   });
   it('retains the ordinary LNURL quote when no verified direct route exists',async()=>{
-    const {client,result,fetch}=setup();
+    const {client,result,fetch}=await setup();
     fetch.mockImplementation(async()=>Response.json({available:false}));
     await act(()=>result.current.processInput(address));
     expect(result.current.currentStep).toBe('workflow');
@@ -70,7 +82,7 @@ describe('automatic GYS payments',()=>{
     expect(result.current.paymentInput?.directRecipient).toBeUndefined();
   });
   it.each(['prepare','send'])('blocks a revoked binding before %s without a paid fallback',async stage=>{
-    const {client,result,fetch}=setup();
+    const {client,result,fetch}=await setup();
     await act(()=>result.current.processInput(address));
     if(stage==='send')await act(()=>result.current.onAmountNext(100n));
     fetch.mockImplementation(async()=>Response.json({available:false}));
@@ -83,7 +95,7 @@ describe('automatic GYS payments',()=>{
     expect(result.current.paymentResult).toBeNull();
   });
   it('rejects an SDK destination substitution before review',async()=>{
-    const {client,result}=setup();
+    const {client,result}=await setup();
     vi.mocked(client.prepareSendPayment).mockResolvedValue({...quote,paymentMethod:{type:'sparkAddress',address:'spark1other',fee:0n}});
     await act(()=>result.current.processInput(address));
     await act(()=>result.current.onAmountNext(100n));
@@ -91,7 +103,7 @@ describe('automatic GYS payments',()=>{
     expect(client.sendPayment).not.toHaveBeenCalled();
   });
   it('ignores a cancelled directory response and never prepares the old recipient',async()=>{
-    const {client,result,fetch}=setup();
+    const {client,result,fetch}=await setup();
     const response=deferred<Response>();fetch.mockReturnValueOnce(response.promise);
     let operation!:Promise<void>;
     act(()=>{operation=result.current.processInput(address);});
@@ -102,7 +114,7 @@ describe('automatic GYS payments',()=>{
     expect(client.prepareSendPayment).not.toHaveBeenCalled();
   });
   it('does not send if the wallet view unmounts during final verification',async()=>{
-    const {client,result,fetch,unmount}=setup();
+    const {client,result,fetch,unmount}=await setup();
     await act(()=>result.current.processInput(address));await act(()=>result.current.onAmountNext(100n));
     const response=deferred<Response>();fetch.mockReturnValueOnce(response.promise);
     let operation!:Promise<void>;act(()=>{operation=result.current.handleSend();});
@@ -111,7 +123,7 @@ describe('automatic GYS payments',()=>{
     expect(client.sendPayment).not.toHaveBeenCalled();
   });
   it('suppresses duplicate confirmations and keeps interrupted settlement unknown',async()=>{
-    const {client,result}=setup();
+    const {client,result}=await setup();
     const payment=deferred<never>();vi.mocked(client.sendPayment).mockReturnValueOnce(payment.promise);
     await act(()=>result.current.processInput(address));await act(()=>result.current.onAmountNext(100n));
     let operation!:Promise<void>;act(()=>{operation=result.current.handleSend();});
@@ -123,4 +135,39 @@ describe('automatic GYS payments',()=>{
     await act(()=>result.current.handleSend());
     expect(client.sendPayment).toHaveBeenCalledOnce();
   });
+  it('clears an unsent reservation after passkey cancellation and permits a newly authorized retry',async()=>{
+    const {client,result}=await setup(true);
+    const ceremony=deferred<ReturnType<typeof approval>>();
+    authorization.signIn.mockReturnValueOnce(ceremony.promise);
+    await act(()=>result.current.processInput(address));await act(()=>result.current.onAmountNext(100n));
+    let operation!:Promise<void>;act(()=>{operation=result.current.handleSend();});
+    await waitFor(()=>expect(authorization.signIn).toHaveBeenCalledOnce());
+    expect(client.sendPayment).not.toHaveBeenCalled();
+    expect(localStorage.getItem('gys:payment-intent:v1:'+key)).not.toBeNull();
+    await act(async()=>{result.current.cancelAuthorization();await operation;});
+    expect(result.current.currentStep).toBe('workflow');
+    expect(localStorage.getItem('gys:payment-intent:v1:'+key)).toBeNull();
+    await act(async()=>{ceremony.resolve(approval());await ceremony.promise;});
+    expect(client.sendPayment).not.toHaveBeenCalled();
+    await act(()=>result.current.handleSend());
+    expect(authorization.signIn).toHaveBeenCalledTimes(2);
+    expect(client.sendPayment).toHaveBeenCalledOnce();
+    expect(result.current.paymentResult).toBe('success');
+  });
+  it('rechecks the native owner after passkey approval and never sends a revoked destination',async()=>{
+    const {client,result,fetch}=await setup(true);
+    const ceremony=deferred<ReturnType<typeof approval>>();
+    authorization.signIn.mockReturnValueOnce(ceremony.promise);
+    await act(()=>result.current.processInput(address));await act(()=>result.current.onAmountNext(100n));
+    let operation!:Promise<void>;act(()=>{operation=result.current.handleSend();});
+    await waitFor(()=>expect(authorization.signIn).toHaveBeenCalledOnce());
+    fetch.mockImplementation(async()=>Response.json({available:false}));
+    await act(async()=>{ceremony.resolve(approval());await operation;});
+    expect(client.sendPayment).not.toHaveBeenCalled();
+    expect(client.lnurlPay).not.toHaveBeenCalled();
+    expect(result.current.currentStep).toBe('workflow');
+    expect(result.current.authorizationError).not.toBeNull();
+    expect(localStorage.getItem('gys:payment-intent:v1:'+key)).toBeNull();
+  });
+
 });

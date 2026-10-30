@@ -16,6 +16,8 @@ A UUID is bound to each prepared direct payment. Before execution, the app reser
 
 An exception, missing receipt, pending receipt or wrong receipt ID remains uncertain. A new native-address attempt, including a Lightning fallback, checks the previous intent after reload. Only a terminal SDK receipt with the matching identifier clears it. Reconciliation pauses for review before another payment can be attempted. Missing payment history is never treated as proof of failure. Wallet removal checks the local intent before and after its history lookup, including when the SDK has no receipt. A cancelled view before SDK execution clears only its own unsent reservation.
 
+The release preserves the passkey send authorization introduced in PR #79. For passkey wallets, a request-bound recipient check runs again after the OS ceremony and before the underlying SDK executes. A typed authorization refusal releases the matching unsent reservation; an ambiguous SDK failure keeps it. Cancellation during final verification cannot resume into a send.
+
 No seeds, wallet storage paths, SDK package, account authentication or migration behavior change. This does not approve the separate wallet security/migration draft.
 
 ## Scope and limitations

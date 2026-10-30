@@ -10,6 +10,7 @@ import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { useLatest } from './useLatest';
 import { buildConnectConfig, connectSdk } from '../services/sdkConnect';
+import { cancelSendAuthorization, withPasskeySendAuthorization } from '../services/sendAuthorization';
 import { logger, LogCategory, logSdkMessage } from '../services/logger';
 import { formatError } from '../utils/formatError';
 import { isStandalonePwa, openExternalUrl } from '../utils/externalLink';
@@ -33,6 +34,9 @@ import {
   signInPinnedToActiveCredential,
   setPendingSwitchFromCredentialId,
   getPasskeyRpId,
+  getPasskeyLabel,
+  getActivePasskeyCredentialIdBytes,
+  getMigrationSharedCredentialIdBytes,
   setPasskeyRpId,
   isMigrationInProgress,
   isPasskeyMigrated,
@@ -182,7 +186,7 @@ export interface BreezSdkActions {
    * migration as the active wallet, keeping mnemonic / stable-ticker / network
    * state since it is the same wallet from the user's view.
    */
-  adoptMigratedSdk: (newSdk: BreezSdk, label: string) => Promise<void>;
+  adoptMigratedSdk: (newSdk: BreezSdk, label: string, seed: Seed) => Promise<void>;
   handleBuyBitcoin: (provider: BuyBitcoinProvider) => Promise<void>;
   clearError: () => void;
   dismissCelebration: () => void;
@@ -484,6 +488,7 @@ export function useBreezSdk(
     source: ConnectSeedSource = 'onboarding',
   ) => {
     let connectedSdk: BreezSdk | undefined;
+    let connectionEpoch: number | undefined;
     const createStart = performance.now();
     try {
       logger.info(LogCategory.SDK, 'Initiating wallet connection', { restore });
@@ -491,7 +496,7 @@ export function useBreezSdk(
         logger.debug(LogCategory.SDK, 'Wallet already connected; skipping');
         return null;
       }
-      const connectionEpoch = ++nativeWalletEpochRef.current;
+      connectionEpoch = ++nativeWalletEpochRef.current;
 
       setIsLoading(true);
       setIsSyncing(restore);
@@ -521,6 +526,17 @@ export function useBreezSdk(
       // publish was already kicked off, fire-and-forget, inside register()).
       connectedSdk = await logger.time('[onboarding] sdk.connect', () =>
         connectSdk({ config: cfg, seed, storageDir: 'spark-wallet-example' }));
+      const sendPasskeyLabel = passkeyLabel ??
+        (source === 'secureStorage' && isPasskeyMode() ? getPasskeyLabel() ?? 'Default' : undefined);
+      if (sendPasskeyLabel != null) {
+        const sendRpId = getPasskeyRpId() ?? defaultRpId;
+        connectedSdk = await withPasskeySendAuthorization(connectedSdk, {
+          seed, label: sendPasskeyLabel, rpId: sendRpId,
+          credentialId: getActivePasskeyCredentialIdBytes(sendRpId),
+          isActive: () => nativeSessionSdkRef.current === connectedSdk,
+        });
+      }
+      if (nativeWalletEpochRef.current !== connectionEpoch) throw new Error('Wallet session changed during connection');
       nativeSessionSdkRef.current = connectedSdk;
       setSdk(connectedSdk);
 
@@ -632,6 +648,7 @@ export function useBreezSdk(
       // If SDK connected but a subsequent step failed, disconnect to avoid leaked instance
       if (connectedSdk) {
         try { await connectedSdk.disconnect(); } catch { /* best-effort cleanup */ }
+        if (nativeWalletEpochRef.current !== connectionEpoch) throw e;
         nativeSessionSdkRef.current = null;
         setSdk(null);
       }
@@ -709,6 +726,9 @@ export function useBreezSdk(
   }, [sdkRef, config, isConnected]);
 
   const handleLogout = useCallback(async () => {
+    nativeWalletEpochRef.current++;
+    if (sdk) cancelSendAuthorization(sdk);
+    nativeSessionSdkRef.current = null;
     // Stop receiving OS notifications tied to the old wallet before dropping
     // its keys. Never let offline service-worker operations block logout.
     try {
@@ -717,8 +737,6 @@ export function useBreezSdk(
         new Promise<void>(resolve => setTimeout(resolve, 2000)),
       ]);
     } catch { /* invalidated endpoints are also purged on push 404/410 */ }
-    nativeWalletEpochRef.current++;
-    nativeSessionSdkRef.current = null;
     setIsLoading(true);
 
     // Wipe reconnect signals first so a hung sdk.disconnect() can't
@@ -794,10 +812,20 @@ export function useBreezSdk(
     showToast('success', 'Successfully logged out');
   }, [sdk, showToast]);
 
-  const adoptMigratedSdk = useCallback(async (newSdk: BreezSdk, label: string): Promise<void> => {
-    nativeWalletEpochRef.current++;
-    nativeSessionSdkRef.current = null;
+  const adoptMigratedSdk = useCallback(async (newSdk: BreezSdk, label: string, seed: Seed): Promise<void> => {
     logger.info(LogCategory.AUTH, 'Adopting migrated SDK', { label });
+
+    const previousEpoch = nativeWalletEpochRef.current;
+    const sendRpId = SHARED_RP_ID ?? defaultRpId;
+    const guardedSdk = await withPasskeySendAuthorization(newSdk, {
+      seed, label, rpId: sendRpId,
+      credentialId: getMigrationSharedCredentialIdBytes() ?? getActivePasskeyCredentialIdBytes(sendRpId),
+      isActive: () => nativeSessionSdkRef.current === guardedSdk,
+    });
+    if (nativeWalletEpochRef.current !== previousEpoch) throw new Error('Wallet session changed during migration');
+    const connectionEpoch = ++nativeWalletEpochRef.current;
+    if (sdk) cancelSendAuthorization(sdk);
+    nativeSessionSdkRef.current = null;
 
     // Disconnect the legacy SDK we were running. Unlike handleLogout this keeps
     // mnemonic / stable-ticker / network state: from the user's view it is the
@@ -814,8 +842,9 @@ export function useBreezSdk(
     // Take ownership of the already connected + synced new SDK. Here we set mode
     // + RP ID so resume targets the new wallet; the migration flow pins the shared
     // credential as active right after this hand-off returns.
-    nativeSessionSdkRef.current = newSdk;
-    setSdk(newSdk);
+    if (nativeWalletEpochRef.current !== connectionEpoch) throw new Error('Wallet session changed during migration');
+    nativeSessionSdkRef.current = guardedSdk;
+    setSdk(guardedSdk);
     // Login-entry migration never ran connectWallet on this hook, so `config`
     // is still null; set it (as connectWallet does) or `config.network` stays
     // undefined and the Buy list drops Cash App until reload.
@@ -875,6 +904,7 @@ export function useBreezSdk(
     rpId?: string,
   ): Promise<void> => {
     const connectionEpoch = ++nativeWalletEpochRef.current;
+    if (sdk) cancelSendAuthorization(sdk);
     nativeSessionSdkRef.current = null;
     setIsLoading(true);
     setError(null);
@@ -889,6 +919,8 @@ export function useBreezSdk(
       setIsLoading(false);
       throw e;
     }
+
+    if (nativeWalletEpochRef.current !== connectionEpoch) throw new Error('Wallet session changed during switch');
 
     if (sdk) {
       try {
@@ -934,6 +966,13 @@ export function useBreezSdk(
         seed: wallet.seed,
         storageDir: 'spark-wallet-example',
       });
+      const sendRpId = rpId ?? getPasskeyRpId() ?? defaultRpId;
+      connectedSdk = await withPasskeySendAuthorization(connectedSdk, {
+        seed: wallet.seed, label: wallet.label, rpId: sendRpId,
+        credentialId: getActivePasskeyCredentialIdBytes(sendRpId),
+        isActive: () => nativeSessionSdkRef.current === connectedSdk,
+      });
+      if (nativeWalletEpochRef.current !== connectionEpoch) throw new Error('Wallet session changed during switch');
       nativeSessionSdkRef.current = connectedSdk;
       setSdk(connectedSdk);
       setPasskeyMode(wallet.label, rpId);
@@ -979,14 +1018,17 @@ export function useBreezSdk(
       logger.error(LogCategory.SDK, `Failed to connect after ${what} switch`, { error: errorMsg });
       if (connectedSdk) {
         try { await connectedSdk.disconnect(); } catch { /* best-effort */ }
+        if (nativeWalletEpochRef.current !== connectionEpoch) throw e;
         nativeSessionSdkRef.current = null;
         setSdk(null);
       }
       setError(`Failed to switch ${what}. Please try again.`);
       throw e;
     } finally {
-      setIsSyncing(false);
-      setIsLoading(false);
+      if (nativeWalletEpochRef.current === connectionEpoch) {
+        setIsSyncing(false);
+        setIsLoading(false);
+      }
     }
   }, [sdk, recoverNativeAddress]);
 
