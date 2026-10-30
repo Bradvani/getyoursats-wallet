@@ -195,13 +195,12 @@ let keyboardOffFrames = 0;
 
 /**
  * One measure-and-apply step. Returns true while there is keyboard or
- * pan activity that should keep the poll loop awake. Exported for
+ * focus activity that should keep the poll loop awake. Exported for
  * tests; production calls it once per animation frame via the loop.
  */
 export function pollWebViewport(): boolean {
   const html = document.documentElement;
   const height = window.visualViewport?.height ?? window.innerHeight;
-  const pageTop = window.visualViewport?.pageTop ?? 0;
 
   if (iosBottomGapEnabled) {
     applyIosBottomInset();
@@ -229,7 +228,6 @@ export function pollWebViewport(): boolean {
 
   return (
     keyboardVisible ||
-    pageTop !== 0 ||
     (document.activeElement?.matches(EDITABLE_SELECTOR) ?? false)
   );
 }

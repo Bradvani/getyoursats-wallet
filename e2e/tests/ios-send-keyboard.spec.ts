@@ -97,7 +97,7 @@ for (const [width, height] of [[320, 667], [375, 667], [390, 844], [430, 932]]) 
     await page.screenshot({path: testInfo.outputPath(`comment-${width}.png`)});
     await comment.evaluate(element => (element as HTMLElement).blur());
     await keyboard(page, {height, offsetTop: 28});
-    await expect(page.locator('.react-modal-sheet-root').last()).toHaveCSS('top', '0px');
+    await expect(page.locator('.react-modal-sheet-root:has([data-testid="send-flow"])')).toHaveCSS('top', '0px');
     await expect(page.locator('#root')).toHaveCSS('transform', 'none');
     await expect(amount).toHaveValue('100');
     await expect(comment).toHaveValue('Thank you');
@@ -134,7 +134,7 @@ test('pinch zoom is preserved and is not treated as an open keyboard', async ({p
   await keyboard(page, {height: 422, offsetTop: 100, scale: 2});
   await expect(page.locator('html')).not.toHaveClass(/keyboard-visible/);
   await expect(page.locator('#root')).toHaveCSS('transform', 'none');
-  const sheet = page.locator('.react-modal-sheet-root').last();
+  const sheet = page.locator('.react-modal-sheet-root:has([data-testid="send-flow"])');
   await expect(sheet).toHaveCSS('height', '844px');
   await expect(sheet).toHaveCSS('top', '0px');
   const content = await page.locator('meta[name="viewport"]').getAttribute('content');
