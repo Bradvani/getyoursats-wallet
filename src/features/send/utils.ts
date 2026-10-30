@@ -21,6 +21,7 @@ export function getSendDestination(method: SendPaymentMethod): { label: string; 
 
 export function getPaymentMethodName(input: SendInput | null): string {
   if (!input) return '';
+  if(input.directRecipient)return 'Pay';
   switch (input.parsedInput.type) {
     case 'bolt11Invoice':
       return 'Lightning Invoice';
@@ -86,6 +87,7 @@ export function getLnurlPayAddress(details: LnurlPayRequestDetails): string | un
  *  every caller, so the address the confirm step shows is the one offered as a
  *  contact. `undefined` for destinations that are not lightning addresses. */
 export function getSendLightningAddress(input: SendInput | null): string | undefined {
+  if(input?.directRecipient)return input.directRecipient.lightningAddress;
   const parsed = input?.parsedInput;
   if (parsed?.type === 'lightningAddress') return parsed.address;
   if (parsed?.type === 'lnurlPay') return getLnurlPayAddress(parsed);

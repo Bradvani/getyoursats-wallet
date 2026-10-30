@@ -2,6 +2,7 @@ import {createHash,createPublicKey,ECDH,verify} from 'node:crypto';
 import {request as httpsRequest} from 'node:https';
 import {isIP} from 'node:net';
 import {brotliDecompressSync,gunzipSync,inflateSync} from 'node:zlib';
+import {createDirectRecipientDirectory} from './gysDirectRecipients.mjs';
 
 const DOMAIN='getyoursats.com';
 const WALLET_ORIGIN='https://wallet.getyoursats.com';
@@ -27,6 +28,8 @@ function routeFor(target){
   if(typeof target!=='string'||target.length>16_384||!target.startsWith('/')||
       /[\u0000-\u0020\u007f-\uffff#\\]/.test(target))throw new ProxyError(400,'Invalid request target');
   const path=target.split('?',1)[0];
+  const direct=path.match(/^\/\.well-known\/gys\/([a-z][a-z0-9]{2,23})$/);
+  if(direct&&target===path)return {public:true,directName:direct[1]};
   const publicName=path.match(LOOKUP_PATH)||path.match(PAYMENT_PATH);
   if(publicName&&!['.','..'].includes(publicName[1]))return {public:true};
   if(/^\/lnurlp\/verify\/[0-9a-fA-F]{64}$/.test(path))return {public:true};
@@ -195,12 +198,12 @@ function forwardedHeaders(req,secret,ip,body){
   return headers;
 }
 
-function forward(req,body,headers,requestImpl){
+function forward(req,body,headers,requestImpl,timeout=15000){
   return new Promise((resolve,reject)=>{
     const request=requestImpl({
       protocol:'https:',hostname:'breez.tips',port:443,servername:'breez.tips',
       method:req.method,path:req.url,headers,rejectUnauthorized:true,
-      signal:AbortSignal.timeout(15000)
+      signal:AbortSignal.timeout(timeout)
     },response=>{
       const chunks=[];
       let size=0;
@@ -251,6 +254,22 @@ export function createBreezLnurlProxy({env=process.env,requestImpl=httpsRequest,
       if(typeof secret!=='string'||!secret.length||secret.length>4096||!/^[\x21-\x7e]+$/.test(secret))
         throw new ProxyError(503,'LNURL service is not configured');
       const ip=clientIp(req);
+      const directory=createDirectRecipientDirectory({env,fetchImpl,now,lookup:async name=>{
+        const request={method:'GET',url:'/.well-known/lnurlp/'+name,headers:{accept:'application/json'}};
+        const result=await forward(request,Buffer.alloc(0),forwardedHeaders(request,secret,ip,Buffer.alloc(0)),requestImpl,2500);
+        if(result.status!==200||responseContainsSecret(result,secret)||
+            !['identity',''].includes(String(result.headers['content-encoding']||'')))throw new Error('Recipient unavailable');
+        return JSON.parse(result.body.toString('utf8'));
+      }});
+      if(route.directName){
+        if(req.method!=='GET')throw new ProxyError(405,'Method not allowed');
+        let result;
+        try{result=await directory.resolve(route.directName);}
+        catch{throw new ProxyError(503,'Recipient unavailable');}
+        res.setHeader('Content-Type','application/json; charset=utf-8');
+        res.end(JSON.stringify(result));
+        return;
+      }
       const registration=route.operation==='registration'&&req.method==='POST';
       if(registration){
         registrationEnabled(env);
@@ -268,6 +287,14 @@ export function createBreezLnurlProxy({env=process.env,requestImpl=httpsRequest,
       if(!Number.isInteger(upstream.status)||upstream.status<200||upstream.status>599||
           (upstream.status>=300&&upstream.status<400)||responseContainsSecret(upstream,secret))
         throw new ProxyError(502,'Unexpected LNURL response');
+      // Only Breez's successful authenticated register/recover response establishes ownership.
+      // Public LNURL metadata or a client-supplied username never establishes a destination.
+      if(upstream.status===200&&req.method==='POST'&&
+          ['registration','recover'].includes(route.operation)&&
+          ['identity',''].includes(String(upstream.headers['content-encoding']||''))){
+        try{await directory.capture(route.pubkey,JSON.parse(upstream.body.toString('utf8')));}
+        catch{/* Optional routing must not turn a successful address recovery into a failure. */}
+      }
       for(const name of ['content-type','content-encoding','content-language','retry-after','allow']){
         const value=upstream.headers[name];
         if(value!==undefined&&!String(value).includes(secret))res.setHeader(name,value);
