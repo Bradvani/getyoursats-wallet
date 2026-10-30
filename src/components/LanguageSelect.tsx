@@ -90,9 +90,6 @@ export default function LanguageSelect() {
           ))}
         </ComboboxOptions>
       </Combobox>
-      <p className="text-xs leading-relaxed text-spark-text-muted">
-        {text.partial}
-      </p>
     </div>
   );
 }

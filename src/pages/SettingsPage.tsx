@@ -6,6 +6,9 @@ import LanguageSelect from '@/components/LanguageSelect';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import { usePresentation } from '@/hooks/usePresentation';
 import { walletSetupCopy } from '@/locales/walletSetup';
+import {CUSTOMER_SETTINGS} from '@/locales/customerSettings';
+import {PRIVACY_POLICY_URL, SUPPORT_URL} from '@/constants/publicPages';
+import {useToast} from '@/contexts/ToastContext';
 import { setAppearancePreference, type AppearancePreference } from '@/services/presentationPreferences';
 import React, { useEffect, useRef, useState } from 'react';
 import {featureAvailability} from '../getyoursats/featureAvailability';
@@ -14,7 +17,7 @@ import { PinGate } from '../components/PinEntry';
 import { getSettings, saveSettings, UserSettings, hasBuyProviderSettings, isDevMode as isDevModeEnabled, setDevMode, buildDepositMaxFee, depositMaxFeeDrafts, depositMaxFeeValue, DepositMaxFeeType } from '../services/settings';
 import type { Config, Network } from '@breeztech/breez-sdk-spark';
 import { useWallet } from '@/contexts/WalletContext';
-import { CurrencyIcon, ChevronRightIcon, DownloadIcon, KeyIcon, LockIcon, LogoutIcon, ShieldCheckIcon, TrashIcon, ExternalLinkIcon } from '../components/Icons';
+import { CurrencyIcon, ChevronDownIcon, ChevronRightIcon, DownloadIcon, KeyIcon, LockIcon, LogoutIcon, ShieldCheckIcon, TrashIcon, ExternalLinkIcon } from '../components/Icons';
 import { ACCOUNT_DELETION_GUIDE_URL } from '@/services/accountDeletion';
 import { openExternalUrl } from '@/utils/externalLink';
 import { isAppLockSupported, isPinEnabled } from '@/services/appLock';
@@ -55,6 +58,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   const appVersion = useAppVersion();
   const { language, appearance, copy } = usePresentation();
   const setupCopy = walletSetupCopy(language);
+  const detailCopy = CUSTOMER_SETTINGS[language];
+  const {showToast} = useToast();
   const {
     handleTap: devTap,
     activated: isDevMode,
@@ -96,6 +101,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
     if (typeof cfg.preferSparkOverLightning === 'boolean') return cfg.preferSparkOverLightning;
     return false;
   });
+  const [initialPaymentSettings] = useState(()=>JSON.stringify([feeType,feeDrafts,syncIntervalSecs,preferSparkOverLightning]));
+  const paymentSettingsChanged = initialPaymentSettings !== JSON.stringify([feeType,feeDrafts,syncIntervalSecs,preferSparkOverLightning]);
   const [isDownloadingLogs, setIsDownloadingLogs] = useState<boolean>(false);
   const [isExportingDb, setIsExportingDb] = useState<boolean>(false);
 
@@ -180,6 +187,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
     try {
       await shareOrDownloadLogs();
     } catch (e) {
+      showToast('error', detailCopy.reportError);
       logger.warn(LogCategory.SDK, 'Failed to share or download logs', {
         error: e instanceof Error ? e.message : String(e),
       });
@@ -188,11 +196,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   };
 
-  const footer = (
+  const footer = paymentSettingsChanged ? (
     <PrimaryButton className="w-full" onClick={handleSave} disabled={!enteredFee}>
       {trustCopy(language).savePayment}
     </PrimaryButton>
-  );
+  ) : undefined;
 
   // Same shape as BackupPage: the gate replaces the page body, and the
   // header's close button is the way out.
@@ -206,13 +214,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
 
   return (
     <SlideInPage title={copy.settings} onClose={onBack} slideFrom="left" footer={footer}>
-      <div className="p-4">
-        <div className="max-w-xl mx-auto w-full space-y-4">
-<p className="text-xs text-spark-text-muted" role="status">{trustCopy(language).autosave}</p>
-          {/* Order: page nav, exports, settings, diagnostics, developer
-              options, account deletion last. The "Save Changes" footer
-              applies the toggles + inputs; the rest commits on tap. */}
-
+      <div className="p-4" style={{padding:16}}>
+        <div className="gys-settings max-w-xl mx-auto w-full space-y-4">
           {/* Lock Screen (native only: app lock needs the Capacitor
               shell). Backup is its own entry below; BackupPage runs its
               own PIN gate when one is set. */}
@@ -233,25 +236,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             </div>
           )}
 
-          {/* Web/PWA imports do not have a secure, wallet-bound app lock.
-              Keep the limitation visible, but put implementation details
-              behind a disclosure rather than a frightening warning panel. */}
-          {!isAppLockSupported() && !isPasskeyMode() && (
-            <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-3" aria-label={t("Wallet security availability")}>
-              <div className="flex items-start gap-3">
-                <LockIcon size="md" />
-                <div className="min-w-0">
-                  <h3 className="font-display font-semibold text-spark-text-primary">{t("Wallet protection")}</h3>
-                  <p className="text-sm text-spark-text-muted leading-relaxed mt-1">{t("Wallet PIN and biometric approval are not available for imported recovery-word wallets in the browser yet. Keep your recovery words offline and secure your device.")}</p>
-                </div>
-              </div>
-              <details className="border-t border-spark-border pt-3">
-                <summary className="cursor-pointer text-xs font-medium text-spark-text-secondary hover:text-spark-text-primary">{t("Why is this unavailable?")}</summary>
-                <p className="mt-2 text-xs text-spark-text-muted leading-relaxed">{t("Passkeys are available when creating a new wallet. They cannot be added to an existing wallet restored from recovery words.")}</p>
-              </details>
-            </section>
-          )}
-
           {/* Backup */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
             <h3 className="font-display font-semibold text-spark-text-primary mb-3">{t("Privacy & recovery")}</h3>
@@ -266,6 +250,13 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
               <ChevronRightIcon size="md" />
             </button>
+            {!isAppLockSupported() && !isPasskeyMode() && <div className="mt-4 border-t border-spark-border pt-4">
+              <p className="text-sm leading-relaxed text-spark-text-secondary">{detailCopy.protection}</p>
+              <details className="gys-settings-details mt-2">
+                <summary>{detailCopy.protectionDetails}</summary>
+                <p className="pb-2 text-sm leading-relaxed text-spark-text-muted">{t("Passkeys are available when creating a new wallet. They cannot be added to an existing wallet restored from recovery words.")}</p>
+              </details>
+            </div>}
           </div>
 
           {/* This is not email-based wallet recovery. Identity must be
@@ -284,7 +275,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               : t('Email verification is coming soon. Keep your recovery words or passkey safe.')}</p>
           </div>
 
-          {selectedNetwork==='mainnet'&&<StableBalanceSettings/>}
 
           {/* Display */}
           <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
@@ -303,7 +293,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               </button>
               <div className="pt-4 border-t border-spark-border mt-3">
                 <h4 className="text-sm font-semibold text-spark-text-primary mb-2">{copy.appearance}</h4>
-                <div className="grid grid-cols-3 gap-2" role="group" aria-label={copy.appearance}>
+                <div className="gys-settings-appearance" role="group" aria-label={copy.appearance}>
                   {(['dark','orange','system'] as const satisfies ReadonlyArray<AppearancePreference>).map(value => (
                     <button key={value} type="button" aria-pressed={appearance===value}
                       data-testid={`settings-appearance-${value}`} onClick={() => setAppearancePreference(value)}
@@ -314,14 +304,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   ))}
                 </div>
                 <p className="mt-2 text-xs text-spark-text-muted leading-relaxed">
-                  {t('Orange is a warm, light experience. System follows your device appearance.')}
+                  {t('System follows your device appearance.')}
                 </p>
               </div>
               <div className="pt-4 border-t border-spark-border mt-3">
                 <LanguageSelect />
               </div>
-              <PaymentFeedbackSetting/>
-              <PaymentPushSetting/>
               {import.meta.env.VITE_GETYOURSATS_ENABLE_LEGACY_BUY === 'true' && hasBuyProviderSettings() && (
                 <button
                   className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors"
@@ -339,18 +327,24 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             </div>
           </div>
 
-          {/* Automatic claims. The network-recommended form needs a
-              paragraph to explain, so it stays in developer mode unless it
-              is already what the user picked. */}
-          <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-            <h3 className="font-display font-semibold text-spark-text-primary mb-1">{t("Automatic Claims")}</h3>
+          <section className="bg-spark-dark border border-spark-border rounded-2xl p-4" aria-label={detailCopy.notifications}>
+            <h3 className="font-display font-semibold text-spark-text-primary mb-4">{detailCopy.notifications}</h3>
+            <PaymentPushSetting/>
+            <PaymentFeedbackSetting/>
+          </section>
+
+          <details className="gys-settings-disclosure bg-spark-dark border border-spark-border rounded-2xl">
+            <summary><span>{detailCopy.paymentSettings}</span><ChevronDownIcon size="md"/></summary>
+            <div className="border-t border-spark-border p-4 space-y-4">
+            <h3 className="font-display font-semibold text-spark-text-primary">{detailCopy.fees}</h3>
             <p className="text-sm text-spark-text-muted mb-3">{t("On-chain deposits are claimed automatically while the network fee stays under this limit.")}</p>
             <FormGroup>
-              <div className="flex gap-2 items-center">
-                <select
+              <div className="gys-settings-fee-fields">
+                <div className="min-w-0"><label htmlFor="deposit-fee-type" className="block text-sm text-spark-text-secondary mb-2">{t("Max fee type")}</label>
+                <select id="deposit-fee-type"
                   value={feeType}
                   onChange={(e) => setFeeType(e.currentTarget.value as DepositMaxFeeType)}
-                  className="min-w-[160px] bg-spark-surface border border-spark-border rounded-xl px-3 py-3 text-spark-text-primary text-sm focus:border-spark-primary focus:ring-2 focus:ring-spark-primary/20"
+                  className="w-full min-w-0 bg-spark-surface border border-spark-border rounded-xl px-3 py-3 text-spark-text-primary text-sm focus:border-spark-primary focus:ring-2 focus:ring-spark-primary/20"
                   aria-label={t("Max fee type")}
                 >
                   <option className="bg-spark-surface" value="fixed">{t("Fixed")}</option>
@@ -358,8 +352,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                   {(isDevMode || feeType === 'networkRecommended') && (
                     <option className="bg-spark-surface" value="networkRecommended">{t("Network + leeway")}</option>
                   )}
-                </select>
-                <div className="flex-1">
+                </select></div>
+                <div className="min-w-0">
+                  <label htmlFor="deposit-fee-default" className="block text-sm text-spark-text-secondary mb-2">{detailCopy.feeAmount} <span dir="ltr">({feeUnit})</span></label>
                   <FormInput
                     id="deposit-fee-default"
                     type="number"
@@ -369,15 +364,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                     onChange={(e) => setFeeDrafts({ ...feeDrafts, [feeType]: e.target.value })}
                   />
                 </div>
-                {/* Pinned next to the field: a placeholder would carry the
-                    unit only while the field is empty. */}
-                <span className="text-sm text-spark-text-muted shrink-0">{feeUnit}</span>
               </div>
               {!enteredFee && (
                 <p className="text-xs text-spark-warning">{t(feeError)}</p>
               )}
             </FormGroup>
-          </div>
+            {selectedNetwork==='mainnet'&&<StableBalanceSettings/>}
+            </div>
+          </details>
 
           {/* Passkey & Labels. Every page in the hub acts on the active
               passkey, so a mnemonic-only wallet has nothing to open. */}
@@ -397,24 +391,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               </button>
             </div>
           )}
-
-          {/* Diagnostics */}
-          <div className="bg-spark-dark border border-spark-border rounded-2xl p-4">
-            <h3 className="font-display font-semibold text-spark-text-primary mb-3">{t("Diagnostics")}</h3>
-            <button
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors disabled:opacity-50"
-              type="button"
-              onClick={handleShareLogs}
-              disabled={isDownloadingLogs}
-            >
-              {isDownloadingLogs ? (
-                <LoadingSpinner size="small" />
-              ) : (
-                <DownloadIcon size="md" />
-              )}
-              {isDownloadingLogs ? t('Preparing...') : t('Download Logs')}
-            </button>
-          </div>
 
           {/* Database */}
           {isDevMode && (
@@ -529,17 +505,27 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
           )}
 
-          {onOpenWalletTour && (
-            <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-3"
-              aria-label={copy.help} data-testid="settings-wallet-guide">
-              <h3 className="font-display font-semibold text-spark-text-primary">{copy.help}</h3>
-              <button type="button" onClick={onOpenWalletTour}
-                className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-spark-border px-4 py-3 text-sm font-medium text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5">
-                <span>{setupCopy.replay}</span><ChevronRightIcon size="md"/>
+          <section className="bg-spark-dark border border-spark-border rounded-2xl p-4 space-y-3"
+            aria-label={copy.help} data-testid="settings-wallet-guide">
+            <h3 className="font-display font-semibold text-spark-text-primary">{copy.help}</h3>
+            <a className="gys-setting-link" href={SUPPORT_URL+'?lang='+language} target="_blank" rel="noopener noreferrer" data-testid="settings-support-link">
+              <span>{copy.support}</span><ExternalLinkIcon size="sm"/>
+            </a>
+            {onOpenWalletTour&&<button type="button" onClick={onOpenWalletTour} className="gys-setting-link">
+              <span>{setupCopy.replay}</span><ChevronRightIcon size="md"/>
+            </button>}
+            <a className="gys-setting-link" href={PRIVACY_POLICY_URL+'?lang='+language} target="_blank" rel="noopener noreferrer" data-testid="settings-privacy-link">
+              <span>{copy.privacy}</span><ExternalLinkIcon size="sm"/>
+            </a>
+            <details className="gys-settings-details border-t border-spark-border pt-2">
+              <summary>{detailCopy.troubleshooting}</summary>
+              <p className="text-xs leading-relaxed text-spark-text-muted mb-3">{detailCopy.reportHint}</p>
+              <button type="button" className="gys-setting-link" disabled={isDownloadingLogs} onClick={handleShareLogs}>
+                <span>{isDownloadingLogs?t('Preparing...'):detailCopy.supportReport}</span>
+                {isDownloadingLogs?<LoadingSpinner size="small"/>:<DownloadIcon size="md"/>}
               </button>
-              <p className="text-xs leading-relaxed text-spark-text-muted">{setupCopy.replayDescription}</p>
-            </section>
-          )}
+            </details>
+          </section>
 
           {/* Account deletion (App Store 5.1.1(v)): opens the guide
               explaining how to delete the account (logout wipes the
@@ -564,7 +550,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           <div className="text-center pt-4">
             <button
               onClick={devTap}
-              className="text-spark-text-muted text-xs hover:text-spark-text-secondary transition-colors select-none"
+              className="min-h-11 px-3 text-spark-text-muted text-xs hover:text-spark-text-secondary transition-colors select-none"
             >
               GetYourSats v{appVersion}
               {isDevMode && <span className="ml-1 text-spark-primary">(dev)</span>}

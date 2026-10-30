@@ -1,3 +1,4 @@
+import {useFlowText} from '@/hooks/useFlowText';
 import React, { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Seed, Wallet } from '@breeztech/breez-sdk-spark';
@@ -114,6 +115,7 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
 }) => {
   // Post-AASA transition branches on `skipDetection`: straight to
   // 'creating' for the Create CTA, 'detecting' for Use Passkey.
+  const t=useFlowText();
   const [phase, setPhase] = useState<Phase>('aasa-checking');
   const [isNewUser, setIsNewUser] = useState(skipDetection);
   const [labels, setLabels] = useState<string[]>([]);
@@ -1104,58 +1106,28 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
     </div>
   );
 
-  // Surfaces NotAssociated source + reason verbatim so users can
-  // report the diagnostic and maintainers can fix the right side
-  // (CDN propagation, assetlinks.json, bundle-ID entry).
+  // Keep provider diagnostics available for support without making them the error message.
   const renderAasaError = () => (
-    // w-full + min-w-0 keep long unbroken diagnostic tokens (URLs,
-    // delegate_permission/common.get_login_creds) from widening the
-    // flex parent and making the page horizontally scrollable on mobile.
     <div className="w-full min-w-0 max-w-xl mx-auto space-y-4 py-8">
       <div className="flex justify-center mb-6">
         <div className="p-4 rounded-full bg-spark-primary/10">
           <PasskeyIcon size="lg" className="text-spark-primary-light" />
         </div>
       </div>
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold text-spark-text-primary">
-          Passkey verification failed
-        </h2>
-        <p className="text-spark-text-secondary">
-          This device can't complete a passkey ceremony until the app's
-          domain configuration is recognized.
-        </p>
+      <div className="text-center space-y-2" role="alert">
+        <h2 className="text-2xl font-semibold text-spark-text-primary">{t('Passkey unavailable')}</h2>
+        <p className="text-spark-text-secondary">{t("We couldn't verify this app for passkey access. Try again. If this continues, contact support and share a support report.")}</p>
       </div>
-      {aasaFailure && (
-        <AlertCard variant="warning" title="Diagnostic details">
-          {/* break-all is required here: wrap-break-word only splits at
-              word boundaries and can't break tokens like
-              `delegate_permission/common.get_login_creds`. */}
-          <div className="space-y-2 text-sm break-all min-w-0">
-            <p>
-              <span className="font-semibold">Source:</span>{' '}
-              {aasaFailure.source}
-            </p>
-            <p>
-              <span className="font-semibold">Reason:</span>{' '}
-              {aasaFailure.reason}
-            </p>
-          </div>
-        </AlertCard>
-      )}
-      <p className="text-xs text-spark-text-secondary text-center px-2">
-        This typically happens when the app's domain configuration was
-        recently deployed and the platform's verification cache hasn't
-        refreshed, or when the configuration is missing entirely. There's
-        no guaranteed refresh time. Retry periodically, or share logs so
-        the team can check server-side state.
-      </p>
+      {aasaFailure && <details className="gys-settings-details rounded-xl border border-spark-border px-4">
+        <summary>{t('Technical details')}</summary>
+        <p className="pb-4 text-sm break-all text-spark-text-secondary">{aasaFailure.source}: {aasaFailure.reason}</p>
+      </details>}
     </div>
   );
 
   const content = (() => {
     switch (phase) {
-      case 'aasa-checking': return renderSpinner('Verifying app domain...');
+      case 'aasa-checking': return renderSpinner(t('Checking passkey access…'));
       case 'aasa-error': return renderAasaError();
       case 'detecting': return error
         ? null
@@ -1187,7 +1159,7 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
               setPhase('aasa-checking');
             }}
           >
-            Retry Check
+            {t('Try again')}
           </PrimaryButton>
           <SecondaryButton
             className="w-full"
@@ -1199,10 +1171,10 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
               });
             }}
           >
-            Share Diagnostic Logs
+            {t('Download support report')}
           </SecondaryButton>
           <SecondaryButton className="w-full" onClick={onBack}>
-            Go Back
+            {t('Go back')}
           </SecondaryButton>
         </div>
       );
@@ -1364,7 +1336,7 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
             Use Passkey
           </PrimaryButton>
           <SecondaryButton className="w-full" onClick={handleErrorBack}>
-            Go Back
+            {t('Go back')}
           </SecondaryButton>
         </div>
       );
@@ -1386,7 +1358,7 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
               The header back arrow still leaves the flow. */}
           {!isDeterministicFailureCopy(error) && (
             <SecondaryButton className="w-full" onClick={handleErrorBack}>
-              Go Back
+              {t('Go back')}
             </SecondaryButton>
           )}
         </div>
@@ -1406,7 +1378,7 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
             Create Passkey
           </PrimaryButton>
           <SecondaryButton className="w-full" onClick={onBack}>
-            Go Back
+            {t('Go back')}
           </SecondaryButton>
         </div>
       );
@@ -1457,7 +1429,7 @@ const PasskeyPage: React.FC<PasskeyPageProps> = ({
             Continue
           </PrimaryButton>
           <SecondaryButton className="w-full" onClick={onBack}>
-            Go Back
+            {t('Go back')}
           </SecondaryButton>
         </div>
       );

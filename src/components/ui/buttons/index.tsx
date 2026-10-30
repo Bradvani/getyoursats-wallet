@@ -76,8 +76,9 @@ export const TextButton: React.FC<Omit<ButtonProps, 'disabled'>> = ({
   ...props
 }) => (
   <button
+    type="button"
     onClick={onClick}
-    className={`text-spark-text-muted text-xs hover:text-spark-text-secondary transition-colors ${className}`}
+    className={`min-h-11 px-2 text-spark-text-muted text-sm hover:text-spark-text-secondary transition-colors ${className}`}
     {...props}
   >
     {children}

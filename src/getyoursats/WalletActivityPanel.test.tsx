@@ -27,7 +27,7 @@ describe('WalletActivityPanel', () => {
     expect(screen.getByText('Outgoing payment')).toBeTruthy();
     fireEvent.click(screen.getByRole('button',{name:/Received payment, 1 000 sats, Lightning, view payment details/i}));
     expect(onPaymentSelected).toHaveBeenCalledWith(transactions[0]);
-    fireEvent.click(screen.getByRole('tab',{name:/Transaction history/}));
+    fireEvent.click(screen.getByRole('tab',{name:/History/}));
     expect(screen.getByTestId('full-history').textContent).toContain('SDK history: 2');
   });
   it('shows a clear Back to Wallet button on full history and returns to activity', () => {
@@ -57,7 +57,7 @@ describe('WalletActivityPanel', () => {
     const transactions = [payment('wallet-in','completed','receive'), payment('wallet-out','pending','send')];
     render(<WalletActivityPanel transactions={transactions} isSyncing={false}
       onPaymentSelected={vi.fn()} exitEntries={[]} onExitSelected={vi.fn()} onRefresh={vi.fn()}/>);
-    fireEvent.click(screen.getByRole('tab',{name:/Transaction history/}));
+    fireEvent.click(screen.getByRole('tab',{name:/History/}));
     fireEvent.change(screen.getByRole('searchbox',{name:'Search transactions'}), {target:{value:'wallet-in'}});
     expect(screen.getByText('1 of 2 wallet records')).toBeTruthy();
     expect(screen.getByTestId('full-history').textContent).toContain('SDK history: 1');
@@ -81,7 +81,7 @@ describe('WalletActivityPanel', () => {
       onPaymentSelected={vi.fn()} exitEntries={[]} onExitSelected={vi.fn()} onRefresh={vi.fn()}/>);
     expect(screen.getByRole('button', {name: /Export CSV/})).toBeDisabled();
     await waitFor(() => expect(screen.getByText('275 of 275 wallet records')).toBeTruthy());
-    expect(screen.getByText(/Loaded 275 payment records through/)).toBeTruthy();
+    expect(screen.getByText(/Records: 275 · Updated/)).toBeTruthy();
     fireEvent.change(screen.getByRole('searchbox', {name: 'Search transactions'}), {target: {value: 'ledger-0'}});
     expect(screen.getByText('1 of 275 wallet records')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', {name: /Export CSV/}));
@@ -98,6 +98,6 @@ describe('WalletActivityPanel', () => {
       onPaymentSelected={vi.fn()} exitEntries={[]} onExitSelected={vi.fn()} onRefresh={vi.fn()}/>);
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Complete history could not be loaded'));
     expect(screen.getByRole('button', {name: /Export CSV/})).toBeDisabled();
-    expect(screen.getByRole('button', {name: 'Retry history'})).toBeTruthy();
+    expect(screen.getByRole('button', {name: 'Try again'})).toBeTruthy();
   });
 });

@@ -19,6 +19,12 @@ const sizeClasses = {
   xl: 'w-8 h-8',
 };
 
+export const SatoshiIcon: React.FC<IconProps> = ({className = '', size = 'md'}) => (
+  <svg aria-hidden="true" className={`${sizeClasses[size]} ${className}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round">
+    <path d="M5 7h14M5 12h14M5 17h14M12 3v18"/>
+  </svg>
+);
+
 // ============================================
 // NAVIGATION ICONS
 // ============================================

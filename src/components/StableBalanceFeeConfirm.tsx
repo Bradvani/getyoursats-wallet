@@ -1,3 +1,5 @@
+import {FocusTrap} from '@headlessui/react';
+import {useId,useRef} from 'react';
 import {DialogContainer,DialogCard} from './ui';
 import {SpinnerIcon} from './Icons';
 import {SatAmount} from './SatAmount';
@@ -11,10 +13,12 @@ interface Props{
 }
 export default function StableBalanceFeeConfirm({isOpen,direction,conversionEstimate,displayConfig,isEstimating,isExecuting,error,info,canConfirm,onConfirm,onCancel,onRefresh}:Props){
  const {language}=usePresentation();const copy=STABLE_BALANCE_COPY[language];
+ const titleId=useId();const titleRef=useRef<HTMLHeadingElement|null>(null);
  if(!isOpen)return null;
  const fee=conversionEstimate&&displayConfig?formatTokenAmount(conversionEstimate.fee,displayConfig,{fullPrecision:true}):null;
- return <DialogContainer><DialogCard maxWidth="sm"><div className="space-y-4 max-h-[calc(100dvh-160px)] overflow-y-auto overscroll-contain" data-testid="stable-mode-review">
-  <h3 className="font-display text-lg font-bold text-spark-text-primary">{direction==='toToken'?copy.toStable:copy.toBitcoin}</h3>
+ return <DialogContainer><FocusTrap initialFocus={titleRef} className="w-full max-w-sm" role="dialog" aria-modal="true" aria-labelledby={titleId}
+  onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();if(!isExecuting)onCancel();}}}><DialogCard maxWidth="sm"><div className="space-y-4 max-h-[calc(100dvh-160px)] overflow-y-auto overscroll-contain" data-testid="stable-mode-review">
+  <h3 id={titleId} ref={titleRef} tabIndex={-1} style={{outline:'none'}} className="font-display text-lg font-bold text-spark-text-primary">{direction==='toToken'?copy.toStable:copy.toBitcoin}</h3>
   <p className="text-sm leading-relaxed text-spark-text-secondary">{copy.cost}</p>
   {isEstimating&&<div className="flex justify-center py-5" role="status"><SpinnerIcon size="lg"/></div>}
   {!isEstimating&&fee&&conversionEstimate&&displayConfig&&<div className="rounded-xl border border-spark-border p-4 space-y-2"><div className="flex flex-wrap items-center gap-2 text-sm text-spark-text-primary" data-testid="stable-estimate-amounts" dir="ltr">
@@ -27,5 +31,5 @@ export default function StableBalanceFeeConfirm({isOpen,direction,conversionEsti
   {!isEstimating&&!canConfirm&&!isExecuting&&<button type="button" onClick={onRefresh} className="min-h-11 text-sm text-spark-primary underline">{copy.review}</button>}
   <div className="flex gap-3"><button type="button" onClick={onCancel} disabled={isExecuting} className="flex-1 min-h-11 rounded-xl border border-spark-border text-sm text-spark-text-secondary disabled:opacity-40">{copy.cancel}</button>
    <button type="button" onClick={onConfirm} disabled={isEstimating||isExecuting||!!error||!canConfirm} className="button flex-1 min-h-11 text-sm disabled:opacity-40">{isExecuting?<SpinnerIcon size="md"/>:copy.confirm}</button></div>
- </div></DialogCard></DialogContainer>;
+ </div></DialogCard></FocusTrap></DialogContainer>;
 }
