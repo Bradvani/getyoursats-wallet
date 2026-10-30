@@ -1,6 +1,7 @@
 import {useFlowText} from '@/hooks/useFlowText';
 import StableBalanceSettings from '../components/StableBalanceSettings';
 import PaymentFeedbackSetting from '../components/PaymentFeedbackSetting';
+import PaymentPushSetting from '../components/PaymentPushSetting';
 import LanguageSelect from '@/components/LanguageSelect';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import { usePresentation } from '@/hooks/usePresentation';
@@ -320,6 +321,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 <LanguageSelect />
               </div>
               <PaymentFeedbackSetting/>
+              <PaymentPushSetting/>
               {import.meta.env.VITE_GETYOURSATS_ENABLE_LEGACY_BUY === 'true' && hasBuyProviderSettings() && (
                 <button
                   className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium border border-spark-border rounded-xl text-spark-text-secondary hover:text-spark-text-primary hover:bg-white/5 transition-colors"

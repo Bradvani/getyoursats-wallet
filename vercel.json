@@ -1,6 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "npm ci",
+  "functions": {
+    "api/notifications/*.js": {"maxDuration": 60}
+  },
   "headers": [
     {
       "source": "/(.*)",
