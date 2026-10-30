@@ -1,19 +1,30 @@
 /**
- * Regression guard for the fresh-install marker invariant.
- *
- * The markers gate a vault wipe: a missing marker means "reinstall", and
- * the init pass then clears both tiers. Logout wipes localStorage AND
- * Preferences, which takes the markers with it, so anything that stores a
- * seed afterwards must leave a marker beside it. Otherwise the NEXT cold
- * start reads a funded vault as a fresh install and deletes it.
+ * Native initialization must preserve existing vault records. Bookkeeping
+ * may be missing or unavailable independently of the Keychain / Keystore;
+ * it cannot authorize deletion or prove a cryptographic migration.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Preferences } from '@capacitor/preferences';
 import { wipeAllLocalData } from './accountDeletion';
 
 const INSTALL_MARKER_KEY = 'glow.secureStorageInitialized';
 const F3_MIGRATION_MARKER_KEY = 'glow.secureStorageF3Migrated';
+
+// Keep Preferences independent of localStorage so either backend can fail
+// without accidentally simulating a failure of both copies at once.
+const preferenceFixture = vi.hoisted(() => {
+  const values = new Map<string, string>();
+  return {
+    values,
+    plugin: {
+      get: async ({ key }: { key: string }) => ({ value: values.get(key) ?? null }),
+      set: async ({ key, value }: { key: string; value: string }) => { values.set(key, value); },
+      clear: async () => { values.clear(); },
+    },
+  };
+});
+vi.mock('@capacitor/preferences', () => ({ Preferences: preferenceFixture.plugin }));
 
 vi.mock('@capacitor/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@capacitor/core')>();
@@ -96,16 +107,19 @@ describe('secure storage install marker', () => {
     expect(vault.deviceOnly).not.toBeNull();
   });
 
-  it('wipes a vault whose marker is missing (the fresh-install path still works)', async () => {
+  it('keeps the original seed when bookkeeping disappears between cold starts', async () => {
     const first = await coldStart();
     await first.deviceOnlyStorage.storeSeed(SEED);
 
-    // Exactly what a logout wipe leaves behind: seed in the vault, no marker.
+    const original = vault.deviceOnly;
+    // Bookkeeping loss does not prove that the surviving vault is stale.
     localStorage.clear();
     await Preferences.clear();
 
     const second = await coldStart();
-    expect(await second.deviceOnlyStorage.hasStoredSeed()).toBe(false);
+    expect(await second.deviceOnlyStorage.hasStoredSeed()).toBe(true);
+    expect(await second.deviceOnlyStorage.retrieveSeed()).toEqual(SEED);
+    expect(vault.deviceOnly).toBe(original);
   });
 
   it('re-marks a seed stored after a logout wipe, so the next cold start keeps it', async () => {
@@ -128,9 +142,163 @@ describe('secure storage install marker', () => {
 });
 
 /**
- * The bound tier is read-only, and moving its entry into device-only
- * storage is the only way a pre-app-lock install reaches its seed.
+ * Neither an old install nor a missing marker proves a surviving vault can
+ * be deleted. Use distinct seeds in both slots to detect cross-tier damage.
  */
+describe('non-destructive native initialization', () => {
+  const localGet = vi.mocked(localStorage.getItem).getMockImplementation()!;
+  const localSet = vi.mocked(localStorage.setItem).getMockImplementation()!;
+  const timestamp = '2026-10-27T00:00:00.000Z';
+  const boundSeed = { ...SEED, passphrase: '  \u212b caf\u00e9  ' };
+  const bytes = Array.from({ length: 32 }, (_, index) => index);
+  const deviceSeed = Object.assign(bytes.slice(), { type: 'entropy' as const });
+  const original = {
+    bound: JSON.stringify({ version: 1, seed: boundSeed, createdAt: timestamp }),
+    deviceOnly: JSON.stringify({ version: 1, seed: { type: 'entropy', bytes }, createdAt: timestamp }),
+  };
+  const nativeVault = (globalThis as unknown as { Capacitor: { Plugins: { NativeVault: {
+    clearSeed: () => Promise<void>;
+    clearSeedDeviceOnly: () => Promise<void>;
+    retrieveSeed: () => Promise<{ seed: string }>;
+    retrieveSeedDeviceOnly: () => Promise<{ seed: string }>;
+    storeSeedDeviceOnly: (options: { seed: string }) => Promise<void>;
+  } } } }).Capacitor.Plugins.NativeVault;
+
+  beforeEach(async () => {
+    vi.mocked(localStorage.getItem).mockImplementation(localGet);
+    vi.mocked(localStorage.setItem).mockImplementation(localSet);
+    vault.bound = original.bound;
+    vault.deviceOnly = original.deviceOnly;
+    localStorage.clear();
+    await Preferences.clear();
+  });
+  afterEach(() => {
+    // These methods are already vi.fn() fixtures; restoreAllMocks alone does
+    // not restore an implementation replaced on a pre-existing mock.
+    vi.mocked(localStorage.getItem).mockImplementation(localGet);
+    vi.mocked(localStorage.setItem).mockImplementation(localSet);
+  });
+
+  const markerStates = [
+    { name: 'both markers absent', prepare: async () => {} },
+    { name: 'old F2 install marker without F3', prepare: async () => {
+      await Preferences.set({ key: INSTALL_MARKER_KEY, value: timestamp });
+    } },
+    { name: 'legacy localStorage install marker only', prepare: async () => {
+      localStorage.setItem(INSTALL_MARKER_KEY, timestamp);
+    } },
+    { name: 'historical F3 marker without install marker', prepare: async () => {
+      await Preferences.set({ key: F3_MIGRATION_MARKER_KEY, value: timestamp });
+      localStorage.setItem(F3_MIGRATION_MARKER_KEY, timestamp);
+    } },
+    { name: 'malformed bookkeeping', prepare: async () => {
+      await Preferences.set({ key: INSTALL_MARKER_KEY, value: '' });
+      await Preferences.set({ key: F3_MIGRATION_MARKER_KEY, value: 'not-a-migration-proof' });
+      localStorage.setItem(F3_MIGRATION_MARKER_KEY, 'not-a-migration-proof');
+    } },
+    { name: 'Preferences read failure', prepare: async () => {
+      vi.spyOn(Preferences, 'get').mockRejectedValue(new Error('Preferences unavailable'));
+    } },
+    { name: 'localStorage read failure', prepare: async () => {
+      vi.spyOn(localStorage, 'getItem').mockImplementation(() => { throw new Error('WebView storage unavailable'); });
+    } },
+    { name: 'both marker reads fail', prepare: async () => {
+      vi.spyOn(Preferences, 'get').mockRejectedValue(new Error('Preferences unavailable'));
+      vi.spyOn(localStorage, 'getItem').mockImplementation(() => { throw new Error('WebView storage unavailable'); });
+    } },
+    { name: 'Preferences write failure', prepare: async () => {
+      vi.spyOn(Preferences, 'set').mockRejectedValue(new Error('Preferences write failed'));
+    } },
+    { name: 'localStorage write failure', prepare: async () => {
+      vi.spyOn(localStorage, 'setItem').mockImplementation(() => { throw new Error('WebView quota exceeded'); });
+    } },
+    { name: 'both marker writes fail', prepare: async () => {
+      vi.spyOn(Preferences, 'set').mockRejectedValue(new Error('Preferences write failed'));
+      vi.spyOn(localStorage, 'setItem').mockImplementation(() => { throw new Error('WebView quota exceeded'); });
+    } },
+  ];
+
+  describe.each(['bound', 'deviceOnly'] as const)('%s is read first', first => {
+    it.each(markerStates)('preserves both exact seeds with $name, including after restart', async ({ prepare }) => {
+      await prepare();
+      const oldF3 = preferenceFixture.values.get(F3_MIGRATION_MARKER_KEY);
+      const clearBound = vi.spyOn(nativeVault, 'clearSeed');
+      const clearDevice = vi.spyOn(nativeVault, 'clearSeedDeviceOnly');
+      const writeSeed = vi.spyOn(nativeVault, 'storeSeedDeviceOnly');
+      const markerWrites = vi.spyOn(Preferences, 'set');
+      const mirrorWrites = vi.spyOn(localStorage, 'setItem');
+      markerWrites.mockClear();
+      mirrorWrites.mockClear();
+
+      for (let start = 0; start < 2; start++) {
+        const session = await coldStart();
+        const { logger } = await import('./logger');
+        const info = vi.spyOn(logger, 'info');
+        if (first === 'bound') {
+          expect(await session.secureStorage.hasStoredSeed()).toBe(true);
+          expect(await session.secureStorage.retrieveSeed()).toEqual(boundSeed);
+          expect(await session.deviceOnlyStorage.retrieveSeed()).toEqual(deviceSeed);
+        } else {
+          expect(await session.deviceOnlyStorage.hasStoredSeed()).toBe(true);
+          expect(await session.deviceOnlyStorage.retrieveSeed()).toEqual(deviceSeed);
+          expect(await session.secureStorage.retrieveSeed()).toEqual(boundSeed);
+        }
+        expect(vault).toEqual(original);
+        expect(info.mock.calls.some(([, message]) => /Migrated.*F3/i.test(message))).toBe(false);
+      }
+      expect(clearBound).not.toHaveBeenCalled();
+      expect(clearDevice).not.toHaveBeenCalled();
+      expect(writeSeed).not.toHaveBeenCalled();
+      expect(markerWrites.mock.calls.some(([{ key }]) => key === F3_MIGRATION_MARKER_KEY)).toBe(false);
+      expect(mirrorWrites.mock.calls.some(([key]) => key === F3_MIGRATION_MARKER_KEY)).toBe(false);
+      expect(preferenceFixture.values.get(F3_MIGRATION_MARKER_KEY)).toBe(oldF3);
+    });
+  });
+
+  it.each([
+    { storage: 'secureStorage', method: 'retrieveSeed' },
+    { storage: 'deviceOnlyStorage', method: 'retrieveSeedDeviceOnly' },
+  ] as const)('preserves records when $storage reports KEY_INVALIDATED with no markers', async ({ storage, method }) => {
+    const clearBound = vi.spyOn(nativeVault, 'clearSeed');
+    const clearDevice = vi.spyOn(nativeVault, 'clearSeedDeviceOnly');
+    vi.spyOn(nativeVault, method).mockRejectedValue({ code: 'KEY_INVALIDATED' });
+    const session = await coldStart();
+
+    await expect(session[storage].retrieveSeed()).rejects.toMatchObject({ code: 'KEY_INVALIDATED' });
+    expect(vault).toEqual(original);
+    expect(clearBound).not.toHaveBeenCalled();
+    expect(clearDevice).not.toHaveBeenCalled();
+  });
+
+  it('does not claim F3 conversion when an explicit device-only write leaves the bound record intact', async () => {
+    vault.deviceOnly = null;
+    const session = await coldStart();
+    await session.deviceOnlyStorage.storeSeed(SEED);
+
+    expect(vault.bound).toBe(original.bound);
+    expect(await session.deviceOnlyStorage.retrieveSeed()).toEqual(SEED);
+    expect(preferenceFixture.values.has(F3_MIGRATION_MARKER_KEY)).toBe(false);
+    expect(localStorage.getItem(F3_MIGRATION_MARKER_KEY)).toBeNull();
+  });
+
+  it('only clears the requested slot after an explicit clear, even when all bookkeeping is absent', async () => {
+    const clearBound = vi.spyOn(nativeVault, 'clearSeed');
+    const clearDevice = vi.spyOn(nativeVault, 'clearSeedDeviceOnly');
+    const session = await coldStart();
+    await session.secureStorage.clearSeed();
+
+    expect(clearBound).toHaveBeenCalledTimes(1);
+    expect(clearDevice).not.toHaveBeenCalled();
+    expect(vault.bound).toBeNull();
+    expect(vault.deviceOnly).toBe(original.deviceOnly);
+    expect(await session.deviceOnlyStorage.retrieveSeed()).toEqual(deviceSeed);
+
+    await session.deviceOnlyStorage.clearSeed();
+    expect(clearDevice).toHaveBeenCalledTimes(1);
+    expect(vault).toEqual({ bound: null, deviceOnly: null });
+  });
+});
+
 describe('retired biometric-bound tier', () => {
   beforeEach(async () => {
     vault.deviceOnly = null;
@@ -141,8 +309,8 @@ describe('retired biometric-bound tier', () => {
 
   /**
    * What an old build left behind: a blob in the bound slot plus both
-   * markers. With only one, the F3 migration pass clears the slot on
-   * the next launch, which is correct but not the case under test.
+   * markers. These values are compatibility bookkeeping, not permission
+   * to delete or convert a surviving seed.
    */
   async function plantLegacyInstall() {
     vault.bound = JSON.stringify({
