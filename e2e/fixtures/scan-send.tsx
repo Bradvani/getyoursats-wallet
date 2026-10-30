@@ -11,6 +11,7 @@ import {FiatDataProvider} from '../../src/contexts/FiatDataContext';
 import {StableBalanceProvider} from '../../src/contexts/StableBalanceContext';
 import {ContactsProvider} from '../../src/contexts/ContactsContext';
 import WalletPage from '../../src/pages/WalletPage';
+import {initWebViewportManager} from '../../src/utils/webViewportManager';
 import {initPresentation} from '../../src/services/presentationPreferences';
 
 // Production never imports this fixture. All destinations and balances are synthetic.
@@ -23,7 +24,7 @@ const parsed = fixed ? {
 } : {
   type: 'lightningAddress', address: rawInput,
   payRequest: {callback: 'https://example.invalid/pay', minSendable: 1000, maxSendable: 100000000,
-    metadataStr: '[["text/plain","Synthetic recipient"]]', commentAllowed: 0,
+    metadataStr: '[["text/plain","Synthetic recipient"]]', commentAllowed: new URLSearchParams(location.search).has('comments') ? 100 : 0,
     domain: 'example.invalid', url: 'https://example.invalid/pay', address: rawInput},
 };
 let parseCalls = 0;
@@ -64,6 +65,7 @@ const sdk = new Proxy(reads, {
 };
 
 initPresentation();
+initWebViewportManager();
 createRoot(document.getElementById('root')!).render(
   <AppShell><ToastProvider><WalletProvider client={sdk} isConnected><WalletInfoProvider walletInfo={info}>
     <WalletStatusProvider hasPendingConversion={false}><FiatDataProvider><StableBalanceProvider><ContactsProvider>

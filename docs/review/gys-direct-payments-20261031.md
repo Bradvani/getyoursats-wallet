@@ -18,6 +18,8 @@ An exception, missing receipt, pending receipt or wrong receipt ID remains uncer
 
 The release preserves the passkey send authorization introduced in PR #79. For passkey wallets, a request-bound recipient check runs again after the OS ceremony and before the underlying SDK executes. A typed authorization refusal releases the matching unsent reservation; an ambiguous SDK failure keeps it. Cancellation during final verification cannot resume into a send.
 
+It also includes the Send sheet viewport fix from PR #81. CI retains both the keyboard geometry and payment suites. These isolated browser fixtures run on two workers, with a job timeout that permits the combined coverage to finish without dropping checks; real wallet E2E defaults remain serial. Physical iOS acceptance remains distinct from simulated browser geometry.
+
 No seeds, wallet storage paths, SDK package, account authentication or migration behavior change. This does not approve the separate wallet security/migration draft.
 
 ## Scope and limitations
