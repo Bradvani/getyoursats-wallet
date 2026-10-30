@@ -227,7 +227,7 @@
     "Payment ID, network or status": "Payment ID, network or status",
     "No transactions match these filters.": "No transactions match these filters.",
     "{shown} of {total} wallet records": "{shown} of {total} wallet records",
-    "{count} records · Updated {date}": "{count} records · Updated {date}",
+    "{count} records · Updated {date}": "Records: {count} · Updated {date}",
     "System follows your device appearance.": "System follows your device appearance.",
     "Passkey unavailable": "Passkey unavailable",
     "We couldn't verify this app for passkey access. Try again. If this continues, contact support and share a support report.": "We couldn't verify this app for passkey access. Try again. If this continues, contact support and share a support report.",

@@ -81,7 +81,7 @@ describe('WalletActivityPanel', () => {
       onPaymentSelected={vi.fn()} exitEntries={[]} onExitSelected={vi.fn()} onRefresh={vi.fn()}/>);
     expect(screen.getByRole('button', {name: /Export CSV/})).toBeDisabled();
     await waitFor(() => expect(screen.getByText('275 of 275 wallet records')).toBeTruthy());
-    expect(screen.getByText(/275 records · Updated/)).toBeTruthy();
+    expect(screen.getByText(/Records: 275 · Updated/)).toBeTruthy();
     fireEvent.change(screen.getByRole('searchbox', {name: 'Search transactions'}), {target: {value: 'ledger-0'}});
     expect(screen.getByText('1 of 275 wallet records')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', {name: /Export CSV/}));

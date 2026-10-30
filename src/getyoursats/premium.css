@@ -373,3 +373,13 @@ html[data-ui-hidden] .gys-moment *{animation-play-state:paused!important}
  .gys-wallet__address .gys-address-banner__label{max-width:40%;text-align:start}
  .gys-wallet__address .gys-address-banner__value{min-width:0;text-align:end}
 }
+
+/* Full history uses the available height for records and their controls. */
+.gys-wallet--history-open .gys-wallet__address,
+.gys-wallet--history-open .gys-home-quick-actions,
+.gys-wallet--history-open .gys-wallet-balance-surface__content>.text-center,
+.gys-wallet--history-open .gys-wallet-balance-surface__content>.flex.justify-center{display:none}
+.gys-wallet--history-open .gys-wallet__header{flex:0 0 auto;min-height:0}
+.gys-history-note{padding:0 18px 12px;color:var(--color-spark-text-muted);font-size:.75rem;line-height:1.6;overflow-wrap:anywhere}
+.gys-history-note button{min-height:44px;padding:8px;text-decoration:underline}
+@media(min-width:1024px){.gys-wallet--history-open .gys-wallet__header{display:none}}

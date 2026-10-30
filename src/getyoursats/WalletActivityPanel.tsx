@@ -173,14 +173,14 @@ export default function WalletActivityPanel({
         </button>
       </div>
       : <div id="gys-panel-history" role="tabpanel" aria-label={text.history}>
-        {sdk && <p role="status" aria-live="polite">
+        {sdk && <p className="gys-history-note" role="status" aria-live="polite">
           {historyLoading || (!snapshot && !historyError)
             ? t('Loading wallet history…')
-            : snapshot && t('{count} records · Updated {date}',{count:snapshot.payments.length,date:new Date(snapshot.throughTimestamp * 1_000).toLocaleString(language)})}
+            : snapshot && t('{count} records · Updated {date}',{count:snapshot.payments.length,date:new Date(snapshot.throughTimestamp * 1_000).toLocaleString(language,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})})}
         </p>}
-        {!sdk && <p role="note">{t('Showing loaded records only. The export includes these loaded payment records.')}</p>}
-        {!!historyError && <p role="alert">{t(historyError)} <button type="button" onClick={() => setHistoryRevision(value => value + 1)}>{t('Try again')}</button></p>}
-        {historyRecords.some(isUnclaimedDepositPayment) && <p role="note">{t('Unclaimed deposits appear below. CSV exports contain wallet payment records.')}</p>}
+        {!sdk && <p className="gys-history-note" role="note">{t('Showing loaded records only. The export includes these loaded payment records.')}</p>}
+        {!!historyError && <p className="gys-history-note" role="alert">{t(historyError)} <button type="button" onClick={() => setHistoryRevision(value => value + 1)}>{t('Try again')}</button></p>}
+        {historyRecords.some(isUnclaimedDepositPayment) && <p className="gys-history-note" role="note">{t('Unclaimed deposits appear below. CSV exports contain wallet payment records.')}</p>}
         <div className="gys-history-controls">
           <label className="gys-history-controls__search">
             <span>{t('Search transactions')}</span>

@@ -95,6 +95,7 @@ for(const width of [390,1366])test(`history opens at its heading after scrolling
  await expect(page.getByRole('heading',{name:'History',exact:true})).toBeInViewport({ratio:1});
  await expect(page.getByRole('searchbox',{name:'Search transactions'})).toBeInViewport({ratio:1});
  await expect.poll(()=>page.locator('#gys-wallet-history').evaluate(el=>el.scrollTop)).toBe(0);
+ await expect(page.getByTestId('transaction-item').first()).toBeInViewport({ratio:1});
  await page.getByRole('button',{name:'Back to Wallet'}).click();
  await expect(page.getByTestId('bitcoin-market')).toBeInViewport();
 });
