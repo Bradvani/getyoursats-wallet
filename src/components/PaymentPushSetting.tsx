@@ -3,6 +3,7 @@ import {Capacitor} from '@capacitor/core';
 import {useWallet} from '../contexts/WalletContext';
 import {selectedNetwork} from '../services/sdkConnect';
 import {signedPushOperation,validateInvoiceWebhook,type PushStatus} from '../services/paymentPush';
+import {isProviderWebhookId} from '../../shared/pushAuthorization.mjs';
 
 type Config={available:boolean;vapidPublicKey:string|null;lightningInvoicePushAvailable:boolean;lightningAddressPushAvailable:boolean};
 type Enroll={webhookRegistered:boolean;webhookUrl:string;webhookSecret:string};
@@ -23,11 +24,9 @@ function decodePublicKey(value:string):Uint8Array<ArrayBuffer>{
   return key;
 }
 function readableError(value:unknown):string{
-  if(value instanceof Error){
-    if(value.name==='NotAllowedError')return 'Notifications were blocked by your device. Enable them in system settings.';
-    return value.message;
-  }
-  return 'Could not enable payment notifications.';
+  if(value instanceof Error&&value.name==='NotAllowedError')
+    return 'Allow notifications in your device settings, then try again.';
+  return 'Could not update alerts. Please try again.';
 }
 export default function PaymentPushSetting(){
   const sdk=useWallet();
@@ -68,7 +67,7 @@ export default function PaymentPushSetting(){
         const status=await signedPushOperation<PushStatus>(sdk,wallet,'status',
           {endpoint:subscription.endpoint},checkCurrent);
         checkCurrent();setEnabled(status.enabled);setInvoiceEnabled(status.webhookRegistered);
-      }catch{if(generation.current===current)setMessage('Could not verify notification settings. You can try enabling them again.');}
+      }catch{if(generation.current===current)setMessage('Could not load alerts. Reopen Settings to retry.');}
       finally{if(generation.current===current)setBusy(false);}
     })();
     return()=>{generation.current=current+1;};
@@ -84,7 +83,7 @@ export default function PaymentPushSetting(){
       // Request permission directly from this tap, before other awaits.
       const permission=await Notification.requestPermission();
       checkCurrent();
-      if(permission!=='granted')throw new Error('Allow GetYourSats notifications in your device settings.');
+      if(permission!=='granted')throw new DOMException('Notification permission not granted','NotAllowedError');
       const registration=await navigator.serviceWorker.register('/sw.js');
       subscription=await registration.pushManager.getSubscription();
       if(subscription){
@@ -107,8 +106,9 @@ export default function PaymentPushSetting(){
             url:enrolled.webhookUrl,secret:enrolled.webhookSecret,
             eventTypes:[{type:'lightningReceiveFinished'}]
           });
+          if(!isProviderWebhookId(registered.webhookId))
+            throw new Error('Lightning notification registration was not confirmed.');
           webhookId=registered.webhookId;
-          if(!webhookId)throw new Error('Lightning notification registration was not confirmed.');
         }catch(error){
           // The domain-level Breez hook works independently of Spark invoice
           // registration. Report the exact enabled coverage after activation.
@@ -118,10 +118,6 @@ export default function PaymentPushSetting(){
       const status=await signedPushOperation<PushStatus>(sdk,pub,'activate',
         {endpoint:subscription.endpoint,webhookId},checkCurrent);
       checkCurrent();setEnabled(status.enabled);setInvoiceEnabled(status.webhookRegistered);
-      setMessage(config.lightningAddressPushAvailable
-        ?status.webhookRegistered?'Lightning invoice and @getyoursats.com alerts enabled for this device.'
-          :'@getyoursats.com alerts enabled. Lightning invoice alerts could not be enabled.'
-        :'Lightning invoice alerts enabled for this device.');
     }catch(error){
       // Revoke the actual endpoint if setup fails or the wallet changes.
       await subscription?.unsubscribe().catch(()=>{});
@@ -141,7 +137,7 @@ export default function PaymentPushSetting(){
         await signedPushOperation(sdk,pub,'unsubscribe',{endpoint:subscription.endpoint});
       }
       setEnabled(false);
-      setMessage('Payment alerts disabled on this device.');
+      setMessage('Alerts turned off.');
     }catch(error){
       setMessage(readableError(error));
     }finally{setBusy(false);}
@@ -150,29 +146,30 @@ export default function PaymentPushSetting(){
     try{
       const registration=await navigator.serviceWorker.ready;
       await registration.showNotification('GetYourSats',{
-        body:'This is only a notification preview, not a real payment.',
+        body:'This is a preview. No payment was received.',
         icon:'/brand/app-icon-192.png',
       });
-      setMessage('Preview displayed. Live delivery requires a real settled payment.');
+      setMessage('Preview sent to this device.');
     }catch(error){setMessage(readableError(error));}
   };
   return <section className="mt-4 border-t border-spark-border pt-4 space-y-3" aria-label="Payment notifications">
     <div>
-      <h4 className="text-sm font-semibold text-spark-text-primary">Lightning payment notifications</h4>
+      <h4 className="text-sm font-semibold text-spark-text-primary">Notifications</h4>
       <p className="mt-1 text-xs text-spark-text-muted leading-relaxed">
-        Receive a private alert for supported Lightning payments, even when your installed wallet is closed.
-        Your keys stay on your device.
+        Get Lightning alerts while the app is closed. Amounts stay hidden.
       </p>
     </div>
-    {!mainnet?<p role="status" className="text-xs text-spark-text-muted">Payment notifications are available on mainnet only.</p>
+    {!mainnet?<p role="status" className="text-xs text-spark-text-muted">Payment alerts are available on mainnet.</p>
       :!supported||!canInstall?
       <p role="status" className="text-xs text-spark-text-muted">
-        {native()?'Background push notifications are currently available in the installed web app only.'
-          :!canInstall?'On iPhone, add GetYourSats to your Home Screen before enabling notifications.'
-          :'This browser does not support background payment notifications.'}
+        {native()?'Payment alerts are available in the installed web app.'
+          :!canInstall?'Add GetYourSats to your Home Screen to enable alerts.'
+          :'This browser does not support payment alerts.'}
       </p>
       :!config?.available?
-      <p role="status" className="text-xs text-spark-text-muted">Payment notifications are not enabled on this server yet.</p>
+      <p role="status" className="text-xs text-spark-text-muted">
+        {busy?'Checking alerts…':'Payment alerts are temporarily unavailable.'}
+      </p>
       :<>
         <button type="button" role="switch" aria-checked={enabled} disabled={busy||!pub}
           onClick={()=>{void (enabled?disable():enable());}}
@@ -182,15 +179,14 @@ export default function PaymentPushSetting(){
         </button>
         {enabled&&<button type="button" onClick={()=>{void preview();}}
           className="min-h-11 rounded-xl border border-spark-border px-4 text-sm text-spark-text-secondary">
-          Preview notification
+          Preview alert
         </button>}
-        <p className="text-xs text-spark-text-muted">
+        {enabled&&<p role="status" className="text-xs text-spark-text-muted">
           {config.lightningAddressPushAvailable
-            ?'Covers registered @getyoursats.com addresses. Payments to @breez.tips are outside this address webhook.'
-            :'Lightning Address alerts are not enabled on this server.'}
-          {enabled&&!invoiceEnabled?' Invoice alerts are not enabled for this wallet.':''}
-          {' Amounts are hidden from the lock screen. Delivery depends on your device and network.'}
-        </p>
+            ?invoiceEnabled?'Lightning invoices and @getyoursats.com payments.'
+              :'@getyoursats.com payments only.'
+            :'Lightning invoices only.'}
+        </p>}
       </>}
     {message&&<p role="status" className="text-xs text-spark-text-secondary">{message}</p>}
   </section>;

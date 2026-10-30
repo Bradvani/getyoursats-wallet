@@ -1,5 +1,11 @@
 // Fixed field order binds wallet authorization to the actual device operation.
 // Shared by the browser and server. No private wallet material is included.
+export function isProviderWebhookId(value) {
+  // The SDK returns an opaque GraphQL ID, not a UUID or a base64url token.
+  // Keep padding and punctuation unchanged. It is only signed and JSON-stored.
+  return typeof value === 'string' && /^[!-~]{1,1024}$/.test(value);
+}
+
 export function pushOperationPayload(action, extra) {
   if (action === 'subscribe') return JSON.stringify({
     endpoint: extra.subscription?.endpoint,

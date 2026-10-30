@@ -90,6 +90,33 @@ test('notification enrollment and retry isolation against real disposable Redis'
     assert((await redis('TTL',subKey(a.pub)))>0);assert((await redis('TTL',walletKey(a.pub)))>0);
     const status=await authorized(a,'status',{endpoint:first.endpoint});assert.equal(status.res.body.enabled,true);
   });
+  await t.test('opaque SDK webhook IDs activate invoice alerts and remain bound to the signed proof',async()=>{
+    process.env.GYS_BREEZ_LNURL_PUSH_ENABLED='false';
+    try{
+      const ids=['U3BhcmtXYWxsZXRXZWJob29rOjEyMzQ=', 'SparkWalletWebhook:ab/cd+ef==', '42', 'opaque:'+ 'x'.repeat(190)];
+      for(const [index,webhookId] of ids.entries()){
+        const who=identity(),target=subscription('opaque-'+index);
+        assert.equal((await authorized(who,'subscribe',{subscription:target})).res.statusCode,200);
+        const changed=await authorized(who,'activate',{endpoint:target.endpoint,webhookId},{webhookId:webhookId+'different'});
+        assert.equal(changed.res.statusCode,401);
+        assert.equal((await getSubscription(who.pub,target.endpoint)).active,false);
+        const result=await authorized(who,'activate',{endpoint:target.endpoint,webhookId});
+        assert.equal(result.res.statusCode,200);assert.equal(result.res.body.webhookRegistered,true);
+        const wallet=await getWallet(who.pub);
+        assert.equal(wallet.webhookId,webhookId);assert.equal(wallet.registered,true);
+        assert.equal((await getSubscription(who.pub,target.endpoint)).active,true);
+        assert.equal((await invoke(result.body)).statusCode,409);
+      }
+    }finally{process.env.GYS_BREEZ_LNURL_PUSH_ENABLED='true';}
+  });
+  await t.test('malformed and oversized identifiers never receive activation challenges',async()=>{
+    for(const webhookId of [123,{},true,'bad id','bad\nidentifier','\u0000','x'.repeat(1025)]){
+      const result=await invoke({action:'challenge',purpose:'activate',walletPubkey:a.pub,
+        endpoint:subscription('first').endpoint,webhookId});
+      assert.equal(result.statusCode,400);assert.equal(result.body.challengeId,undefined);
+    }
+    assert.equal((await getWallet(a.pub)).registered,false);
+  });
   await t.test('partial fanout retries do not alert a successful device again',async()=>{
     const second=subscription('second');await saveSubscription(a.pub,second);await activateSubscription(a.pub,second.endpoint,'');
     sent.length=0;failEndpoint=second.endpoint;
