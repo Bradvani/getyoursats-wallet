@@ -1,3 +1,4 @@
+import {normalizeDecimalInput} from '../../utils/decimalInput';
 import {useFlowText} from '@/hooks/useFlowText';
 import {useFiatData} from '../../contexts/FiatDataContext';
 import DenominationTabs from '../../getyoursats/DenominationTabs';
@@ -147,8 +148,9 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
 
   const handleAmountChange = (value: string) => {
     if(customUnit){
-      setUnitRaw(value);
-      const converted=amountToSats(value,denomination,currentRate);
+      const normalized=normalizeDecimalInput(value);
+      setUnitRaw(normalized);
+      const converted=amountToSats(normalized,denomination,currentRate);
       setAmount(converted?String(converted):'');
     }else setAmount(value);
   };

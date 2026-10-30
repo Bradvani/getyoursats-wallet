@@ -6,12 +6,11 @@ import {
   MIN_SATS_QUICK_AMOUNT,
   buildFiatDisplayConfig,
   parseAmountToSats,
-  sanitizeTokenInput,
   tokenAmountDisplaysAsZero,
   type QuickAmountScale,
   type TokenDisplayConfig,
 } from '../utils/tokenFormatting';
-import { normalizeDecimalInput } from '../utils/decimalInput';
+import { normalizeDecimalInput, normalizeIntegerInput, validAmountInput } from '../utils/decimalInput';
 import type { Sats } from '../types/sats';
 
 export interface FiatOverride {
@@ -169,10 +168,9 @@ export function useAmountInput(options: UseAmountInputOptions = {}): UseAmountIn
   const setAmount = useCallback(
     (value: string) => {
       if (isTokenMode && config) {
-        const sanitized = sanitizeTokenInput(normalizeDecimalInput(value), config.fractionSize);
-        if (sanitized !== null) setAmountInput(sanitized);
+        setAmountInput(normalizeDecimalInput(value));
       } else {
-        setAmountInput(value.replace(/[^0-9]/g, ''));
+        setAmountInput(normalizeIntegerInput(value));
       }
     },
     [isTokenMode, config],
@@ -200,8 +198,9 @@ export function useAmountInput(options: UseAmountInputOptions = {}): UseAmountIn
 
   const parseToSats = useCallback(
     (input?: string): Sats | null =>
-      parseAmountToSats(input ?? amountInput, isTokenMode, btcFiatRate),
-    [amountInput, isTokenMode, btcFiatRate],
+      validAmountInput(input ?? amountInput, isTokenMode ? (config?.fractionSize ?? 2) : 0)
+        ? parseAmountToSats(input ?? amountInput, isTokenMode, btcFiatRate) : null,
+    [amountInput, isTokenMode, btcFiatRate, config],
   );
 
   const amountSats = useMemo(() => parseToSats(), [parseToSats]);
