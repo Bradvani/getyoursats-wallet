@@ -1,3 +1,4 @@
+import {isRestrictedBrowserWallet,UNAVAILABLE_PAYMENT_MESSAGE,UNAVAILABLE_MAX_MESSAGE} from '../../security/browserReleasePolicy';
 import {flowText} from '@/locales/flowText';
 import {usePresentation} from '@/hooks/usePresentation';
 import {sendDestinationCopy} from '@/locales/sendDestination';
@@ -333,6 +334,8 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
                     onBack={() => send.setCurrentStep('input')}
                     onRun={send.handleRun}
                     onPrepare={async (prepareRequest: PrepareLnurlPayRequest) => {
+                      if(isRestrictedBrowserWallet(wallet)&&(prepareRequest.tokenIdentifier||prepareRequest.conversionOptions||prepareRequest.feePolicy==='feesIncluded'))
+                        throw new Error(prepareRequest.feePolicy==='feesIncluded'?UNAVAILABLE_MAX_MESSAGE:UNAVAILABLE_PAYMENT_MESSAGE);
                       return await wallet.prepareLnurlPay(prepareRequest);
                     }}
                     onPay={async (prepareResponse) => {

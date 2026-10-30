@@ -1,9 +1,12 @@
 import type {ReactNode} from 'react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import BackupPage from './BackupPage';
 import {backupSetupCopy} from '@/locales/backupSetup';
 import {setAppLanguage} from '@/services/presentationPreferences';
+import {resetNativeSeedSelection, setActiveNativeSeedWallet, setNativeSeedTier} from '@/services/nativeSeedSelection';
+import {clearSignerIdentity, rememberSignerIdentity} from '@/security/spendApproval';
+import {confirmNativePinPolicy, getNativePinPolicyRevision, invalidateNativePinPolicy, invalidateNativeReadBinding, lockNativeReadAccess} from '@/services/nativeReadLease';
 
 const fixtures = vi.hoisted(() => ({
   phrase: Array(11).fill('abandon').concat('about').join(' '),
@@ -20,6 +23,8 @@ const fixtures = vi.hoisted(() => ({
   biometricSupported: vi.fn(),
   biometricHasSeed: vi.fn(),
   biometricRetrieve: vi.fn(),
+  factory: vi.fn(),
+  pinCallbacks: [] as Array<() => void>,
 }));
 
 vi.mock('../components/layout/SlideInPage', () => ({
@@ -28,7 +33,10 @@ vi.mock('../components/layout/SlideInPage', () => ({
   ),
 }));
 vi.mock('../components/PinEntry', () => ({
-  PinGate: ({onUnlocked}: {onUnlocked: () => void}) => <button onClick={onUnlocked}>Unlock Backup</button>,
+  PinGate: ({onUnlocked}: {onUnlocked: () => void}) => {
+    fixtures.pinCallbacks.push(onUnlocked);
+    return <button onClick={onUnlocked}>Unlock Backup</button>;
+  },
 }));
 vi.mock('../components/ui', () => ({LoadingSpinner: () => <span>Loading</span>}));
 vi.mock('../components/AlertCard', () => ({
@@ -54,9 +62,23 @@ vi.mock('@/services/secureStorage', () => ({
 vi.mock('@/services/logger', () => ({logger: {warn: vi.fn(), error: vi.fn()}, LogCategory: {AUTH: 'auth'}}));
 vi.mock('@/utils/screenSecurity', () => ({useScreenCaptureProtection: fixtures.captureProtection}));
 vi.mock('../getyoursats/recoveryChallenge', () => ({createRecoveryChallenge: fixtures.challenge}));
+vi.mock('@breeztech/breez-sdk-spark', () => ({defaultExternalSignersFromSeed: fixtures.factory}));
+vi.mock('@/services/sdkReady', () => ({sdkReady: vi.fn(async () => {})}));
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks();
+  fixtures.pinCallbacks.length = 0;
+  invalidateNativePinPolicy();
+  confirmNativePinPolicy(false, getNativePinPolicyRevision());
+  resetNativeSeedSelection();
+  clearSignerIdentity();
+  await rememberSignerIdentity({type: 'mnemonic', mnemonic: fixtures.phrase});
+  setActiveNativeSeedWallet({getInfo: vi.fn(async () => ({identityPubkey: `02${'11'.repeat(32)}`}))} as never, 'regtest');
+  fixtures.factory.mockReset().mockReturnValue({
+    breezSigner: {free: vi.fn()},
+    sparkSigner: {getIdentityPublicKey: vi.fn(async () => ({bytes: [2, ...Array(32).fill(17)]})), free: vi.fn()},
+    free: vi.fn(),
+  });
   localStorage.clear();
   setAppLanguage('en');
   localStorage.setItem('walletMnemonic', fixtures.phrase);
@@ -259,6 +281,8 @@ describe('native backup authentication paths', () => {
     fixtures.pinEnabled.mockResolvedValue(true);
     fixtures.deviceSupported.mockReturnValue(true);
     fixtures.deviceHasSeed.mockResolvedValue(true);
+    // Native connection establishes this tier before Backup can mount.
+    setNativeSeedTier('device');
     render(<BackupPage onBack={vi.fn()}/>);
     const unlock = await screen.findByRole('button', {name: 'Unlock Backup'});
     expect(fixtures.deviceRetrieve).not.toHaveBeenCalled();
@@ -288,18 +312,80 @@ describe('native backup authentication paths', () => {
     fixtures.biometricSupported.mockReturnValue(true);
     fixtures.biometricHasSeed.mockResolvedValue(true);
     fixtures.signIn.mockRejectedValueOnce(new Error('Synthetic passkey cancellation'));
+    // This connected legacy wallet already selected its retained bound tier.
+    setNativeSeedTier('biometric');
     render(<BackupPage onBack={vi.fn()}/>);
     fireEvent.click(screen.getByRole('checkbox', {name: /I am in a private space/}));
     fireEvent.click(screen.getByRole('checkbox', {name: /I understand these words control my wallet/}));
     fireEvent.click(screen.getByRole('button', {name: 'Reveal Words Privately'}));
-    await waitFor(() => expect(fixtures.biometricHasSeed).toHaveBeenCalledOnce());
+    await screen.findByText(backupSetupCopy('en').deviceAuth);
     const fallback = await screen.findByRole('button', {name: 'Reveal Words Privately'});
+    await waitFor(() => expect(fallback).toBeEnabled());
     expect(fixtures.signIn).toHaveBeenCalledOnce();
     expect(fixtures.biometricRetrieve).not.toHaveBeenCalled();
     expect(screen.queryByText('Recovery Phrase')).toBeNull();
     fireEvent.click(fallback);
     await screen.findByText('Recovery Phrase');
     expect(fixtures.biometricRetrieve).toHaveBeenCalledOnce();
+  });
+});
+
+describe('backup preserves the selected native identity', () => {
+  beforeEach(() => {
+    fixtures.native.mockReturnValue(true);
+    fixtures.deviceSupported.mockReturnValue(true);
+    fixtures.biometricSupported.mockReturnValue(true);
+    fixtures.deviceHasSeed.mockResolvedValue(true);
+    fixtures.biometricHasSeed.mockResolvedValue(true);
+  });
+
+  it('stops after the selected device record fails instead of exposing another stored phrase', async () => {
+    fixtures.deviceRetrieve.mockRejectedValue(new Error('Selected record is unavailable'));
+    render(<BackupPage onBack={vi.fn()}/>);
+    await screen.findByText('Selected record is unavailable');
+    expect(fixtures.biometricRetrieve).not.toHaveBeenCalled();
+    expect(fixtures.signIn).not.toHaveBeenCalled();
+    expect(screen.queryByText('Recovery Phrase')).toBeNull();
+    expect(screen.queryByRole('button', {name: 'Reveal Words Privately'})).toBeNull();
+  });
+
+  it('retains a selected bound tier when a device-only record also exists', async () => {
+    setNativeSeedTier('biometric');
+    render(<BackupPage onBack={vi.fn()}/>);
+    await revealWords();
+    expect(fixtures.biometricRetrieve).toHaveBeenCalledOnce();
+    expect(fixtures.deviceRetrieve).not.toHaveBeenCalled();
+  });
+
+  it('rejects a selected stored seed whose public identity differs from the active wallet', async () => {
+    fixtures.factory.mockReturnValue({
+      breezSigner: {free: vi.fn()},
+      sparkSigner: {getIdentityPublicKey: vi.fn(async () => ({bytes: [3, ...Array(32).fill(34)]})), free: vi.fn()},
+      free: vi.fn(),
+    });
+    render(<BackupPage onBack={vi.fn()}/>);
+    await screen.findByText('Stored seed does not match the connected wallet');
+    expect(fixtures.biometricRetrieve).not.toHaveBeenCalled();
+    expect(screen.queryByText('Recovery Phrase')).toBeNull();
+  });
+
+  it('does not accept words-only verification for a passphrase-dependent wallet', async () => {
+    const confirmed = vi.fn();
+    fixtures.deviceRetrieve.mockResolvedValue({type: 'mnemonic', mnemonic: fixtures.phrase, passphrase: 'original passphrase'});
+    render(<BackupPage onBack={vi.fn()} onRecoveryConfirmed={confirmed}/>);
+    await screen.findByText('Words alone cannot recover this wallet. Its original mnemonic passphrase is also required.');
+    expect(screen.queryByText('Recovery Phrase')).toBeNull();
+    expect(confirmed).not.toHaveBeenCalled();
+    expect(fixtures.biometricRetrieve).not.toHaveBeenCalled();
+  });
+
+  it('keeps presence errors visible without falling back to legacy or another tier', async () => {
+    fixtures.deviceHasSeed.mockRejectedValue(new Error('Presence is unknown'));
+    render(<BackupPage onBack={vi.fn()}/>);
+    await screen.findByText('Presence is unknown');
+    expect(fixtures.deviceRetrieve).not.toHaveBeenCalled();
+    expect(fixtures.biometricRetrieve).not.toHaveBeenCalled();
+    expect(screen.queryByText('Recovery Phrase')).toBeNull();
   });
 });
 
@@ -335,5 +421,76 @@ describe('backup language and recovery-word order', () => {
     expect(screen.queryByTestId('recovery-word-grid')).toBeNull();
     expect(screen.getByLabelText('الكلمة 1')).toHaveAttribute('dir', 'ltr');
     expect(screen.getByLabelText('الكلمة 12')).toHaveAttribute('dir', 'ltr');
+  });
+});
+
+describe('backup PIN-policy and native read readiness', () => {
+  it('keeps unreadable PIN policy locked with recovery guidance and a fresh retry', async () => {
+    fixtures.appLockSupported.mockReturnValue(true);
+    fixtures.pinEnabled.mockRejectedValueOnce(new Error('PIN settings could not be verified. Your wallet is preserved.'));
+    render(<BackupPage onBack={vi.fn()}/>);
+    await screen.findByText('Backup is locked');
+    expect(screen.getByRole('alert')).toHaveTextContent('Your wallet is preserved');
+    expect(fixtures.deviceRetrieve).not.toHaveBeenCalled();
+    expect(fixtures.biometricRetrieve).not.toHaveBeenCalled();
+    expect(fixtures.signIn).not.toHaveBeenCalled();
+    expect(screen.queryByText('Recovery Phrase')).toBeNull();
+    fixtures.pinEnabled.mockResolvedValue(true);
+    fireEvent.click(screen.getByRole('button', {name: 'Retry'}));
+    await screen.findByRole('button', {name: 'Unlock Backup'});
+    expect(fixtures.deviceRetrieve).not.toHaveBeenCalled();
+  });
+
+  it('does not read PIN policy or seeds while native authorization is locked', async () => {
+    fixtures.native.mockReturnValue(true);
+    fixtures.appLockSupported.mockReturnValue(true);
+    lockNativeReadAccess();
+    render(<BackupPage onBack={vi.fn()}/>);
+    await screen.findByText('Backup is locked');
+    expect(fixtures.pinEnabled).not.toHaveBeenCalled();
+    expect(fixtures.deviceRetrieve).not.toHaveBeenCalled();
+    expect(fixtures.biometricRetrieve).not.toHaveBeenCalled();
+    expect(fixtures.signIn).not.toHaveBeenCalled();
+  });
+
+  it('clears revealed words and privacy acknowledgements when native access locks', async () => {
+    fixtures.native.mockReturnValue(true);
+    fixtures.deviceSupported.mockReturnValue(true);
+    fixtures.deviceHasSeed.mockResolvedValue(true);
+    render(<BackupPage onBack={vi.fn()}/>);
+    await waitFor(() => expect(fixtures.deviceRetrieve).toHaveBeenCalledOnce());
+    await revealWords();
+    expect(screen.getAllByText('abandon')).toHaveLength(11);
+    act(() => { lockNativeReadAccess(); });
+    await screen.findByText('Backup is locked');
+    expect(screen.queryByText('Recovery Phrase')).toBeNull();
+    expect(screen.queryAllByText('abandon')).toHaveLength(0);
+    expect(screen.queryByRole('checkbox', {name: /I am in a private space/})).toBeNull();
+  });
+
+  it('ignores a delayed seed and an old PIN callback after native binding changes', async () => {
+    fixtures.native.mockReturnValue(true);
+    fixtures.appLockSupported.mockReturnValue(true);
+    fixtures.pinEnabled.mockResolvedValue(true);
+    fixtures.deviceSupported.mockReturnValue(true);
+    fixtures.deviceHasSeed.mockResolvedValue(true);
+    let finish!: (seed: {type: 'mnemonic'; mnemonic: string}) => void;
+    const pending = new Promise<{type: 'mnemonic'; mnemonic: string}>(resolve => { finish = resolve; });
+    fixtures.deviceRetrieve.mockReturnValueOnce(pending);
+    render(<BackupPage onBack={vi.fn()}/>);
+    const unlock = await screen.findByRole('button', {name: 'Unlock Backup'});
+    const oldCallback = fixtures.pinCallbacks[fixtures.pinCallbacks.length - 1];
+    fireEvent.click(unlock);
+    await waitFor(() => expect(fixtures.deviceRetrieve).toHaveBeenCalledOnce());
+    act(() => { invalidateNativeReadBinding(); });
+    await screen.findByRole('button', {name: 'Unlock Backup'});
+    await act(async () => { finish({type: 'mnemonic', mnemonic: fixtures.phrase}); });
+    expect(screen.queryByText('Recovery Phrase')).toBeNull();
+    expect(screen.queryAllByText('abandon')).toHaveLength(0);
+    act(() => { oldCallback(); });
+    await screen.findByText('Backup is locked');
+    expect(fixtures.deviceRetrieve).toHaveBeenCalledOnce();
+    expect(fixtures.biometricRetrieve).not.toHaveBeenCalled();
+    expect(fixtures.signIn).not.toHaveBeenCalled();
   });
 });

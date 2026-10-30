@@ -1,4 +1,3 @@
-import {invoiceExpiresAt} from './invoiceExpiry';
 import {useInvoiceExpiry} from '../hooks/useInvoiceExpiry';
 import {trustCopy} from './trustCopy';
 import {usePresentation} from '../hooks/usePresentation';
@@ -17,13 +16,17 @@ import {amountToSats,getDenomination,saveDenomination,satsToAmount,type Denomina
 import DenominationTabs from './DenominationTabs';
 import PosQrBoundary from '../components/PosQrBoundary';
 import {readPosOrders,savePosOrders,reconcilePosOrders,type PosOrder} from './posLedger';
-import {validatePosInvoiceResponse} from './posInvoice';
+import {validatePosInvoiceResponse,verifyPosInvoiceIntent} from './posInvoice';
+import {selectedNetwork} from '../services/sdkConnect';
+import {getOperationReconciliation} from '../security/operationGateway';
+import {browserReceivingRestriction,isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
 
 const isFiat=(unit:Denomination)=>unit!=='sats'&&unit!=='BTC';
 /** OS number-keyboards have obscured Charge in iOS Safari/standalone mode.
  * The amount is entered exclusively by an accessible in-app keypad. */
 export default function PosPage({onClose}:{onClose:()=>void}){
   const sdk=useWallet();
+  const receivingRestriction=browserReceivingRestriction(sdk,'bolt11Invoice');
   const {language}=usePresentation();const text=trustCopy(language);
   const {fiatRates,fetchedAt,refreshFiatData}=useFiatData();
   const root=useRef<HTMLDivElement|null>(null);
@@ -76,7 +79,8 @@ export default function PosPage({onClose}:{onClose:()=>void}){
   const validRate=typeof fiatRate==='number'&&Number.isFinite(fiatRate)&&fiatRate>0?fiatRate:undefined;
   const priceSats=amountToSats(amount,unit,validRate);
   const activeOrder=orders.find(order=>order.invoice.toLowerCase()===invoice.toLowerCase());
-  const settled=paid || (!!activeOrder && confirmedIds.has(activeOrder.id));
+  // Only correlated completed SDK history can establish a paid order.
+  const settled=!!activeOrder && confirmedIds.has(activeOrder.id);
   useEffect(()=>{
     const viewport=window.visualViewport;
     const update=()=>{
@@ -87,8 +91,15 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     update();viewport?.addEventListener('resize',update);viewport?.addEventListener('scroll',update);
     return()=>{viewport?.removeEventListener('resize',update);viewport?.removeEventListener('scroll',update)};
   },[]);
-  const loadAllReceipts=useCallback((signal?:AbortSignal)=>
-    readPaymentHistory(sdk,{typeFilter:['receive'],signal}),[sdk]);
+  const loadAllReceipts=useCallback(async(signal?:AbortSignal)=>{
+    if (isRestrictedBrowserWallet(sdk)) {
+      const reader=getOperationReconciliation(sdk);
+      if(!reader)throw new Error('Read-only provider receipt verification is unavailable.');
+      await reader.observe();
+      if(signal?.aborted)throw new DOMException('Receipt verification cancelled','AbortError');
+    }
+    return readPaymentHistory(sdk,{typeFilter:['receive'],signal});
+  },[sdk]);
   const applyReceipts=useCallback((payments:Payment[])=>{
     const currentInvoice=invoiceRef.current.toLowerCase();
     const matches=reconcilePosOrders(ordersRef.current,payments);
@@ -98,11 +109,8 @@ export default function PosPage({onClose}:{onClose:()=>void}){
       order.invoice.toLowerCase()===currentInvoice && matches.has(order.id));
     if(matchingCurrent){
       if(checkedExistingReceiptsRef.current && !paidRef.current)setFreshlyConfirmed(true);
-      setPaid(true);
-    }else if(currentInvoice && payments.some(payment=>payment.details?.type==='lightning' &&
-      payment.details.invoice?.toLowerCase()===currentInvoice)){
-      setPaid(false);setFreshlyConfirmed(false);
-    }
+    }else setFreshlyConfirmed(false);
+    setPaid(matchingCurrent);
     checkedExistingReceiptsRef.current=true;
   },[ordersRef,invoiceRef,paidRef]);
   const loadHistory=useCallback(async()=>{
@@ -118,9 +126,8 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     finally{if(!controller.signal.aborted)setHistoryBusy(false)}
   },[walletIdentity,loadAllReceipts,applyReceipts]);
   useInvoicePaid(walletIdentity?invoice:'',()=>{
-    setFreshlyConfirmed(true);
-    setPaid(true);
-    // A successful SDK event, never an editable local flag, confirms paid.
+    // SDK events are notifications, not settlement receipts. Reconcile the
+    // exact invoice against completed provider-observed history before Paid.
     void loadHistory();
   });
   const selectUnit=(next:Denomination)=>{
@@ -146,6 +153,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     });
   };
   const create=async()=>{
+    if(receivingRestriction){setError(receivingRestriction);return;}
     if(busy||!priceSats)return;
     setBusy(true);setError('');setPaid(false);setFreshlyConfirmed(false);
     try {
@@ -159,12 +167,17 @@ export default function PosPage({onClose}:{onClose:()=>void}){
       const sats=amountToSats(amount,unit,rate);
       if(!sats)throw new Error('The amount must equal at least one satoshi.');
       if(!walletIdentity)throw new Error('Wallet identity is still loading. Retry the charge.');
+      const snapshot=await sdk.getInfo({ensureSynced:false});
+      if(snapshot.identityPubkey!==walletIdentity)throw Error('Merchant wallet identity changed.');
+      const network=selectedNetwork();
       const response=await sdk.receivePayment({paymentMethod:{
         type:'bolt11Invoice',description:(note.trim()||'Payment').slice(0,200),amountSats:sats
       }});
       const validated=validatePosInvoiceResponse(response);
       const parsed=await sdk.parse(validated.invoice);
-      const expiresAt=invoiceExpiresAt(parsed);
+      const after=await sdk.getInfo({ensureSynced:false});
+      if(after.identityPubkey!==walletIdentity)throw Error('Merchant wallet identity changed.');
+      const expiresAt=verifyPosInvoiceIntent(parsed,{invoice:validated.invoice,amountSats:sats,network});
       if(!expiresAt||expiresAt<=Date.now())throw Error(text.invoiceExpiryUnknown);
       const order:PosOrder={
         id:crypto.randomUUID(),invoice:validated.invoice,amountSats:sats,unit,
@@ -174,7 +187,9 @@ export default function PosPage({onClose}:{onClose:()=>void}){
       };
       const updated=[order,...orders];
       if(!savePosOrders(walletIdentity,updated)){
-        setJournalWarning('This invoice was created, but its local order history could not be saved. Copy the invoice before closing.');
+        // The invoice may exist at the provider, but cannot be safely
+        // reconciled on this device. Do not expose its payable QR.
+        throw Error('Invoice created but merchant history could not be saved. Do not share this charge. Review wallet payments before trying again.');
       }
       setOrders(updated);
       setInvoice(validated.invoice);
@@ -189,7 +204,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
     void loadHistory();
   };
   const copy=async()=>{
-    if(!expiry.usable)return;
+    if(receivingRestriction||!expiry.usable)return;
     try{await navigator.clipboard.writeText(invoice)}catch{setError('Could not copy invoice')}
   };
   const reset=()=>{
@@ -232,6 +247,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
         </div>
       </header>
       <p className="gys-pos-terminal__muted" role="note">{text.betaMerchant}</p>
+      {receivingRestriction&&<p role="status" className="gys-pos-terminal__error">{receivingRestriction}</p>}
       {showHistory?<section className="gys-pos-terminal__history">
         <div className="gys-pos-terminal__row"><h2>Merchant sales</h2>
           <button type="button" onClick={()=>setShowHistory(false)}>Back</button></div>
@@ -243,11 +259,11 @@ export default function PosPage({onClose}:{onClose:()=>void}){
             <strong>{formatWithSpaces(payment.amount)} 丰</strong>
           </li>)}</ol>}
       </section>:invoice?<section className="gys-pos-terminal__invoice" aria-live="polite">
-        <h2 className="gys-pos-terminal__invoice-title">{settled?'Charge complete':expiry.checking?text.checking:expiry.usable?'Scan to pay':text.invoiceExpired}</h2>
+        <h2 className="gys-pos-terminal__invoice-title">{settled?'Charge complete':receivingRestriction?'Saved charge':expiry.checking?text.checking:expiry.usable?'Scan to pay':text.invoiceExpired}</h2>
         {settled ? <div className="gys-pos-terminal__success" data-testid="pos-received-motion" role="status">
           <PaymentMotion state="received" animate={freshlyConfirmed} />
           <span className="gys-pos-terminal__success-title">Payment received</span>
-        </div> : !expiry.usable?<p role="status">{expiry.checking?text.checking:expiry.expiresAt?text.invoiceExpired:text.invoiceExpiryUnknown}</p>:<div className="gys-pos-terminal__qr" data-testid="pos-invoice-qr"
+        </div> : receivingRestriction?<p role="status">This charge is kept for receipt reconciliation. Its invoice cannot be shared in this preview.</p>:!expiry.usable?<p role="status">{expiry.checking?text.checking:expiry.expiresAt?text.invoiceExpired:text.invoiceExpiryUnknown}</p>:<div className="gys-pos-terminal__qr" data-testid="pos-invoice-qr"
           aria-label="Scan this Lightning invoice to pay">
           <PosQrBoundary key={invoice}>
             <BrandedQrCode value={invoice.toUpperCase()} size={288} label="Lightning invoice QR code" />
@@ -255,12 +271,12 @@ export default function PosPage({onClose}:{onClose:()=>void}){
         </div>}
         <h2>{formatWithSpaces(invoiceSats)} <span>丰 sats</span></h2>
         <p>{text.requestedAmount}: {orders.find(order=>order.invoice===invoice)?.originalAmount??'Not recorded'} {invoiceUnit}</p>
-        <p>Receives Lightning sats</p>
+        <p>{receivingRestriction?'Saved Lightning payment record':'Receives Lightning sats'}</p>
         {expiry.expiresAt&&<p>{text.expires}: {new Date(expiry.expiresAt).toLocaleString(language)}</p>}
         <strong className={settled?'gys-pos-paid':'gys-pos-pending'}>
-          {settled?'Payment confirmed by the wallet':expiry.usable?'Waiting for payment confirmation':text.invoiceExpired}
+          {settled?'Payment confirmed by the wallet':receivingRestriction?'Payment has not been verified':expiry.usable?'Waiting for payment confirmation':text.invoiceExpired}
         </strong>
-        {!settled && expiry.usable && <>
+        {!receivingRestriction && !settled && expiry.usable && <>
           <small>Estimated receiver fee: {fee} sats</small>
           <button type="button" className="gys-pos-terminal__secondary" onClick={()=>void copy()}>Copy invoice</button>
         </>}
@@ -300,7 +316,7 @@ export default function PosPage({onClose}:{onClose:()=>void}){
         </div>
         <footer className="gys-pos-terminal__footer">
           <button type="button" className="gys-pos-terminal__charge"
-            onClick={()=>void create()} disabled={busy||!priceSats}>
+            onClick={()=>void create()} disabled={!!receivingRestriction||busy||!priceSats}>
             {busy?'Creating Lightning invoice…':'Charge'}
           </button>
         </footer>

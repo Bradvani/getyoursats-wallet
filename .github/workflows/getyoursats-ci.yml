@@ -16,7 +16,27 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: npm ci
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Verify complete source and generated artifact proof controls
+        run: python3 -B tests/sdk-build-guards.test.py
+      - name: Verify canonical installed package controls
+        run: python3 -B tests/canonical-installed-sdk.test.py
+      - name: Verify the canonical package and installed SDK boundaries
+        run: npm run test:security:wasm
+      - name: Verify production deployment remains blocked by the security interlock
+        run: |
+          set -euo pipefail
+          interlock_log="$RUNNER_TEMP/security-production-interlock.log"
+          expected_error='Error: Browser wallet security release is not approved. Resolve the blockers in docs/security-review/browser-continuation-release.md before production deployment.'
+          if VERCEL_ENV=production NO_COLOR=1 npx vite build > "$interlock_log" 2>&1; then
+            cat "$interlock_log"
+            exit 1
+          fi
+          cat "$interlock_log"
+          if ! grep -Fqx -- "$expected_error" "$interlock_log"; then
+            exit 1
+          fi
       - run: npm run build
       - run: npm test
       - run: node --test tests/*.test.mjs

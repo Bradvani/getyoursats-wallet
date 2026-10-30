@@ -1,3 +1,6 @@
+import {isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
+import {DialogContainer,DialogCard} from './ui';
+import {useFlowText} from '../hooks/useFlowText';
 import {useEffect,useRef,useState} from 'react';
 import type {ConversionEstimate,GetInfoResponse} from '@breeztech/breez-sdk-spark';
 import {useWallet} from '../contexts/WalletContext';
@@ -15,7 +18,19 @@ const foreground=()=>document.visibilityState!=='hidden';
 /** Existing SDK mode change, now entered deliberately and fail-closed on a missing estimate.
  * A prepare response is indicative: updateUserSettings does NOT execute that signed quote.
  * This does not claim to resolve the separate operation-gateway/security release gates. */
-export default function StableBalanceToggleFlow({isOpen,direction,onComplete,onCancel}:Props){
+export default function StableBalanceToggleFlow(props:Props){
+ const wallet=useWallet();
+ const t=useFlowText();
+ if(!props.isOpen)return null;
+ // Preserve the candidate's conversion containment before mounting any review flow.
+ if(isRestrictedBrowserWallet(wallet))return <DialogContainer><DialogCard maxWidth="sm">
+  <h3 className="text-lg font-bold text-spark-text-primary">{t('Balance conversion unavailable')}</h3>
+  <p role="status" className="my-4 text-sm text-spark-text-secondary">{t('Balance conversion is temporarily unavailable in this preview. Your assets have not been converted.')}</p>
+  <button type="button" onClick={props.onCancel} className="min-h-11 w-full rounded-xl border border-spark-border text-spark-text-primary">{t('Close')}</button>
+ </DialogCard></DialogContainer>;
+ return <StableBalanceReview {...props}/>;
+}
+function StableBalanceReview({isOpen,direction,onComplete,onCancel}:Props){
  const wallet=useWallet(),stable=useStableBalance();const {refreshFiatData}=useFiatData();
  const {language}=usePresentation();const copy=STABLE_BALANCE_COPY[language];
  const [step,setStep]=useState<'intro'|'estimating'|'review'|'executing'>('intro');

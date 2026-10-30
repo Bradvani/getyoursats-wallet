@@ -1,0 +1,97 @@
+name: Integrate pinned direct Spark route
+# This historical integration's reviewed output is already in the candidate.
+# Run manually so routine workflow edits cannot reapply and push older source.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pr43-spark46-integration
+  cancel-in-progress: false
+jobs:
+  verify:
+    name: verify-pinned-spark-integration
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 100
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Apply only the six reviewed PR46 files
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 13108c01f84132ccba5290ac72142948ded2b1e1 HEAD
+          git fetch origin 775f50bbdca20114bff0ebaf239a06685909fee5 8c893b7cd29d14ab398445f9182b7646ab10a201
+          python3 - <<'PY'
+          import subprocess
+          base='8c893b7cd29d14ab398445f9182b7646ab10a201'
+          head='775f50bbdca20114bff0ebaf239a06685909fee5'
+          allowed={
+            'docs/review/fee-free-internal-spark-transfer-20261026.md',
+            'src/features/receive/ReceivePaymentDialog.tsx',
+            'src/features/receive/SparkAddressDisplay.tsx',
+            'src/features/receive/directSparkReceive.test.tsx',
+            'src/features/receive/hooks/useReceivePayment.ts',
+            'src/features/send/directSparkSend.test.tsx',
+          }
+          actual=set(subprocess.check_output(['git','diff','--name-only',base,head],text=True).splitlines())
+          if actual != allowed: raise SystemExit('PR46 file set changed; integration stopped')
+          patch=subprocess.check_output(['git','diff','--full-index','--binary',base,head])
+          subprocess.run(['git','apply','--3way','--index'],input=patch,check=True)
+          PY
+          git diff --cached --check
+      - run: npm ci --ignore-scripts
+      - name: Validate combined sources without production credentials
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/spark46-evidence
+          npx tsc --noEmit
+          npm run lint
+          npx vitest run --reporter=json --outputFile=/tmp/spark46-evidence/tests.json
+          npm run test:security:wasm
+          npm run build
+          if VERCEL_ENV=production npx vite build >/tmp/spark46-evidence/interlock.log 2>&1; then exit 1; fi
+          grep -q 'Browser wallet security release is not approved' /tmp/spark46-evidence/interlock.log
+      - name: Record exact patch and tree
+        run: |
+          set -euo pipefail
+          git diff --cached --full-index --binary > /tmp/spark46-evidence/source.patch
+          git write-tree > /tmp/spark46-evidence/tree.txt
+          git rev-parse HEAD > /tmp/spark46-evidence/base.txt
+          node -e "let r=require('/tmp/spark46-evidence/tests.json'); console.log(JSON.stringify({tests:r.numTotalTests,passed:r.numPassedTests,failed:r.numFailedTests}))"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: spark46-verified-source-${{ github.sha }}
+          path: /tmp/spark46-evidence/
+          retention-days: 14
+  preserve:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: true
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: spark46-verified-source-${{ github.sha }}
+          path: /tmp/spark46-evidence
+      - name: Preserve verified integration; never force or merge main
+        run: |
+          set -euo pipefail
+          test "$(cat /tmp/spark46-evidence/base.txt)" = "$GITHUB_SHA"
+          git apply --check --index /tmp/spark46-evidence/source.patch
+          git apply --index /tmp/spark46-evidence/source.patch
+          test "$(git write-tree)" = "$(cat /tmp/spark46-evidence/tree.txt)"
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat(security): integrate pinned PR46 direct Spark route without changing payment guards'
+          git push origin HEAD:refs/heads/release/browser-pwa-security-localization-20261025
+          git rev-parse HEAD

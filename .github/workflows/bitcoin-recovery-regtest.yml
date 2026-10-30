@@ -1,0 +1,73 @@
+name: Bitcoin recovery regtest
+on:
+  push:
+    branches: [release/browser-pwa-security-localization-20261025]
+    paths:
+      - scripts/security/bitcoin-regtest-server.py
+      - scripts/security/wire-signed-recovery.py
+      - src/security/bitcoinRegtest.integration.test.ts
+      - src/security/signedRecoveryController.ts
+      - src/security/signedRecoveryJournal.ts
+      - src/services/chain.ts
+      - src/services/esplora.ts
+      - src/security/recoveryTransport.ts
+      - docs/security-review/release-acceptance-packet-20261026.md
+      - .github/workflows/bitcoin-recovery-regtest.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pr43-bitcoin-recovery-regtest
+  cancel-in-progress: true
+jobs:
+  settle-disposable-regtest:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Install pinned Bitcoin Core into disposable runner
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gys-bitcoin-regtest /tmp/bitcoin-evidence
+          curl -fsSL --retry 3 https://bitcoincore.org/bin/bitcoin-core-31.1/bitcoin-31.1-x86_64-linux-gnu.tar.gz -o /tmp/bitcoin.tar.gz
+          echo 'b80d9c3e04da78fb6f0569685673418cf686fadba9042d926d13fb87ff503f9e  /tmp/bitcoin.tar.gz' | sha256sum --check
+          tar -xzf /tmp/bitcoin.tar.gz -C /tmp
+          /tmp/bitcoin-31.1/bin/bitcoind -regtest -datadir=/tmp/gys-bitcoin-regtest -daemonwait -server -txindex=1 -listen=0 -connect=0 -dnsseed=0 -discover=0 -rpcbind=127.0.0.1 -rpcallowip=127.0.0.1
+          /tmp/bitcoin-31.1/bin/bitcoin-cli -regtest -datadir=/tmp/gys-bitcoin-regtest getblockchaininfo > /tmp/bitcoin-evidence/chain.json
+          python3 -c "import json;assert json.load(open('/tmp/bitcoin-evidence/chain.json'))['chain']=='regtest'"
+      - name: Validate actual mempool, interrupted acknowledgement, restart and chain reorganization
+        env:
+          BITCOIN_CLI: /tmp/bitcoin-31.1/bin/bitcoin-cli
+          BITCOIN_REGTEST_DATADIR: /tmp/gys-bitcoin-regtest
+          GYS_DISPOSABLE_BITCOIN_REGTEST: '1'
+          VITE_ESPLORA_BASE_URL: http://127.0.0.1:3002
+          VITE_MEMPOOL_BASE_URL: http://127.0.0.1:3002
+        run: |
+          set -euo pipefail
+          git diff --exit-code
+          python3 scripts/security/bitcoin-regtest-server.py > /tmp/bitcoin-regtest-server.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          for n in $(seq 1 100); do if curl -fsS http://127.0.0.1:3002/test/state >/dev/null; then break; fi; sleep .2; done
+          npx vitest run src/security/bitcoinRegtest.integration.test.ts --reporter=default --reporter=json --outputFile=/tmp/bitcoin-evidence/tests.json
+          git rev-parse HEAD > /tmp/bitcoin-evidence/source.txt
+          git diff --exit-code
+          curl -fsS http://127.0.0.1:3002/test/state > /tmp/bitcoin-evidence/disposable-settlement.json
+      - name: Stop disposable node
+        if: always()
+        run: /tmp/bitcoin-31.1/bin/bitcoin-cli -regtest -datadir=/tmp/gys-bitcoin-regtest stop || true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: bitcoin-regtest-evidence-${{ github.sha }}
+          path: /tmp/bitcoin-evidence/
+          retention-days: 30

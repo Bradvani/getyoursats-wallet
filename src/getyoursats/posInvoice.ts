@@ -25,3 +25,23 @@ export function validatePosInvoiceResponse(value: unknown): PosInvoice {
   }
   return {invoice, feeSats};
 }
+
+/** Validation of an SDK-decoded invoice, not an invoice signature check.
+ * A new merchant QR must match the intended amount and connected network. */
+export function verifyPosInvoiceIntent(parsed: import('@breeztech/breez-sdk-spark').InputType,
+  expected:{invoice:string;amountSats:number;network:import('@breeztech/breez-sdk-spark').Network},
+  nowSecs=Math.floor(Date.now()/1000)):number {
+  const network=expected.network==='mainnet'?'bitcoin':expected.network;
+  if(!Number.isSafeInteger(expected.amountSats)||expected.amountSats<=0||
+     !Number.isSafeInteger(expected.amountSats*1000) ||
+     parsed.type!=='bolt11Invoice'||parsed.network!==network||
+     parsed.invoice.bolt11.toLowerCase()!==expected.invoice.toLowerCase()||
+     parsed.amountMsat!==expected.amountSats*1000||
+     !/^[a-f0-9]{64}$/i.test(parsed.paymentHash)||
+     !Number.isSafeInteger(parsed.timestamp)||!Number.isSafeInteger(parsed.expiry)||
+     parsed.expiry<30||parsed.expiry>86400||
+     parsed.timestamp>nowSecs+30||parsed.timestamp<nowSecs-300||
+     parsed.timestamp+parsed.expiry<=nowSecs)
+    throw new Error('The Lightning invoice does not match the approved amount, network or expiry. No QR was displayed.');
+  return (parsed.timestamp+parsed.expiry)*1000;
+}

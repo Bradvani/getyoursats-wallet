@@ -3,7 +3,6 @@ import {usePresentation} from '@/hooks/usePresentation';
 import {homeCopy,APP_LANGUAGES,setAppLanguage,type AppLanguage} from '@/services/presentationPreferences';
 import {useId,useRef} from 'react';
 import InstallPrompt from '../components/InstallPrompt';
-import BrandIntro from '../components/BrandIntro';
 import {ChevronRightIcon} from '../components/Icons';
 
 type Props = {
@@ -44,7 +43,6 @@ export default function HomePage({onCreateNewWallet,onRestoreWallet,setupIssue}:
     onCreateNewWallet();
   };
   return <main className="gys-welcome">
-    <BrandIntro />
     <div className="gys-welcome__atmosphere" aria-hidden="true"/>
     <header className="gys-welcome__header">
       <span className="gys-welcome__scarcity-pill">{tr.scarcity}</span>

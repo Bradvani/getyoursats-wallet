@@ -91,7 +91,7 @@ test('@public-smoke Orange POS starts at a blank charge even with a previous com
    const invoice='lnbc1'+'a'.repeat(90);
    const order={id:'saved-old-pos',invoice,amountSats:100,unit:'sats',description:'Previously issued order',
      createdAt:Date.now()-60000,feeSats:0};
-   localStorage.setItem('gys:merchant:orders:v1:'+'a'.repeat(66),JSON.stringify([order]));
+   localStorage.setItem('gys:merchant:orders:v1:'+'02'+'a'.repeat(64),JSON.stringify([order]));
  });
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);

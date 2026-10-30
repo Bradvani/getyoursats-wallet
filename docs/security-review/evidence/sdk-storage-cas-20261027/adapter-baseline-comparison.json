@@ -1,0 +1,18 @@
+{
+  "upstreamSha256": "1c4562a4b62898422d4ed11324e9622a337429cc322e030ed502eccd2fc6fc0d",
+  "upstreamBytes": 99284,
+  "targets": [
+    {
+      "target": "web",
+      "baselineAdapterSha256": "1c4562a4b62898422d4ed11324e9622a337429cc322e030ed502eccd2fc6fc0d",
+      "bytes": 99284,
+      "byteIdenticalToPinnedUpstream": true
+    },
+    {
+      "target": "bundler",
+      "baselineAdapterSha256": "1c4562a4b62898422d4ed11324e9622a337429cc322e030ed502eccd2fc6fc0d",
+      "bytes": 99284,
+      "byteIdenticalToPinnedUpstream": true
+    }
+  ]
+}

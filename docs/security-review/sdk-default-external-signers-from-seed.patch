@@ -1,0 +1,310 @@
+From 3597b9e2df2a450df36270e9938ea85042c2b850 Mon Sep 17 00:00:00 2001
+From: Codex Review <codex-review@example.invalid>
+Date: Sun, 25 Oct 2026 20:49:31 +0200
+Subject: [PATCH] Add seed-compatible default external signer factory
+
+---
+ crates/breez-sdk/core/src/lib.rs              |   5 +-
+ crates/breez-sdk/core/src/sdk/mod.rs          | 157 +++++++++++++++++-
+ .../core/src/signer/default_external.rs       |  14 +-
+ .../core/src/signer/default_external_spark.rs |  23 ++-
+ crates/breez-sdk/wasm/src/sdk.rs              |  24 +++
+ 5 files changed, 207 insertions(+), 16 deletions(-)
+
+diff --git a/crates/breez-sdk/core/src/lib.rs b/crates/breez-sdk/core/src/lib.rs
+index c6647728..83e5f772 100644
+--- a/crates/breez-sdk/core/src/lib.rs
++++ b/crates/breez-sdk/core/src/lib.rs
+@@ -91,7 +91,10 @@ pub use {
+     sdk::{connect, connect_with_signer, connect_with_signing_only_signer},
+ };
+ 
+-pub use sdk::{ExternalSigners, SigningOnlyExternalSigners, default_external_signers};
++pub use sdk::{
++    ExternalSigners, SigningOnlyExternalSigners, default_external_signers,
++    default_external_signers_from_seed,
++};
+ 
+ #[cfg(feature = "test-utils")]
+ pub use persist::tests as storage_tests;
+diff --git a/crates/breez-sdk/core/src/sdk/mod.rs b/crates/breez-sdk/core/src/sdk/mod.rs
+index ca49aaaf..ee42bd63 100644
+--- a/crates/breez-sdk/core/src/sdk/mod.rs
++++ b/crates/breez-sdk/core/src/sdk/mod.rs
+@@ -434,16 +434,35 @@ pub fn default_external_signers(
+     network: Network,
+     account_number: Option<u32>,
+ ) -> Result<ExternalSigners, SdkError> {
+-    use crate::signer::{DefaultExternalSigner, DefaultExternalSparkSigner};
+-
+-    let breez_signer = DefaultExternalSigner::new(
+-        mnemonic.clone(),
+-        passphrase.clone(),
++    default_external_signers_from_seed(
++        Seed::Mnemonic {
++            mnemonic,
++            passphrase,
++        },
+         network,
+         account_number,
+-    )?;
+-    let spark_signer =
+-        DefaultExternalSparkSigner::new(mnemonic, passphrase, network, account_number)?;
++    )
++}
++
++/// Creates the default external signers from either supported seed representation.
++///
++/// Uses the same seed bytes and account derivation as `SdkBuilder::new`. In
++/// particular, `Seed::Entropy` is raw BIP32 seed material, not BIP39 entropy to
++/// convert to words. Converting it to a mnemonic would derive a different wallet.
++/// An unset account number preserves the network default: 1 on Mainnet, otherwise 0.
++///
++/// These signers retain keys in process. Wrapping them adds application policy;
++/// it does not turn them into hardware-backed or isolated signing devices.
++#[cfg_attr(feature = "uniffi", uniffi::export)]
++pub fn default_external_signers_from_seed(
++    seed: Seed,
++    network: Network,
++    account_number: Option<u32>,
++) -> Result<ExternalSigners, SdkError> {
++    use crate::signer::{DefaultExternalSigner, DefaultExternalSparkSigner};
++
++    let breez_signer = DefaultExternalSigner::from_seed(&seed, network, account_number)?;
++    let spark_signer = DefaultExternalSparkSigner::from_seed(&seed, network, account_number)?;
+ 
+     Ok(ExternalSigners {
+         breez_signer: Arc::new(breez_signer),
+@@ -531,6 +550,128 @@ pub async fn get_spark_status(
+ mod tests {
+     use super::*;
+ 
++    // Disposable BIP39 test vector only. No network, storage or wallet build.
++    const SIGNER_TEST_MNEMONIC: &str = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
++
++    async fn assert_seed_factory_preserves_identity(
++        seed: Seed,
++        network: Network,
++        account_number: Option<u32>,
++    ) {
++        use bitcoin::bip32::DerivationPath;
++        use bitcoin::secp256k1::Message;
++        use crate::signer::{BreezSigner, breez::BreezSignerImpl};
++        use crate::signer::external_types::MessageBytes;
++        use spark_wallet::SparkSigner;
++
++        let seed_bytes = seed.to_bytes().unwrap();
++        let external = default_external_signers_from_seed(seed, network, account_number).unwrap();
++        // These are the exact roots selected by sdk_builder::prepare_signers.
++        let original_breez = BreezSignerImpl::new(
++            spark_wallet::identity_master_key(&seed_bytes, network.into(), account_number)
++                .unwrap(),
++        );
++        let original_spark = spark_wallet::SparkSignerAdapter::new(Arc::new(
++            spark_wallet::DefaultSigner::from_master(
++                spark_wallet::account_master_key(&seed_bytes, network.into(), account_number)
++                    .unwrap(),
++            ),
++        ));
++        let external_identity = external.spark_signer.get_identity_public_key().await.unwrap();
++        assert_eq!(
++            external_identity.to_public_key().unwrap(),
++            original_spark.get_identity_public_key().await.unwrap(),
++        );
++        assert_eq!(
++            external.breez_signer.derive_public_key("m".to_string()).await.unwrap().bytes,
++            external_identity.bytes,
++        );
++        let path: DerivationPath = "m/2'/7".parse().unwrap();
++        assert_eq!(
++            external.breez_signer.derive_public_key(path.to_string()).await.unwrap()
++                .to_public_key().unwrap(),
++            original_breez.derive_public_key(&path).await.unwrap(),
++        );
++        assert_eq!(
++            external.breez_signer.sign_ecdsa(
++                MessageBytes::new(vec![42; 32]), path.to_string(),
++            ).await.unwrap().to_signature().unwrap(),
++            original_breez.sign_ecdsa(Message::from_digest([42; 32]), &path).await.unwrap(),
++        );
++        assert_eq!(
++            external.spark_signer.get_static_deposit_public_key(3).await.unwrap()
++                .to_public_key().unwrap(),
++            original_spark.get_static_deposit_public_key(3).await.unwrap(),
++        );
++    }
++
++    #[macros::async_test_all]
++    async fn seed_factory_preserves_mnemonic_and_raw_entropy_wallets() {
++        for network in [Network::Mainnet, Network::Signet, Network::Regtest] {
++            for account_number in [None, Some(0), Some(7)] {
++                for seed in [
++                    Seed::Mnemonic {
++                        mnemonic: SIGNER_TEST_MNEMONIC.to_string(),
++                        passphrase: Some("disposable test passphrase".to_string()),
++                    },
++                    Seed::Entropy(vec![17; 32]),
++                    Seed::Entropy((0..64).collect()),
++                ] {
++                    assert_seed_factory_preserves_identity(seed, network, account_number).await;
++                }
++            }
++        }
++    }
++
++    #[macros::async_test_all]
++    async fn seed_factory_keeps_mnemonic_api_and_network_defaults_compatible() {
++        for network in [Network::Mainnet, Network::Signet, Network::Regtest] {
++            let legacy = default_external_signers(
++                SIGNER_TEST_MNEMONIC.to_string(), None, network, None,
++            ).unwrap();
++            let from_seed = default_external_signers_from_seed(
++                Seed::Mnemonic {
++                    mnemonic: SIGNER_TEST_MNEMONIC.to_string(), passphrase: None,
++                }, network, None,
++            ).unwrap();
++            assert_eq!(
++                legacy.spark_signer.get_identity_public_key().await.unwrap().bytes,
++                from_seed.spark_signer.get_identity_public_key().await.unwrap().bytes,
++            );
++            let default_account = match network {
++                Network::Mainnet => 1,
++                _ => 0,
++            };
++            let explicit = default_external_signers_from_seed(
++                Seed::Mnemonic {
++                    mnemonic: SIGNER_TEST_MNEMONIC.to_string(), passphrase: None,
++                }, network, Some(default_account),
++            ).unwrap();
++            assert_eq!(
++                from_seed.spark_signer.get_identity_public_key().await.unwrap().bytes,
++                explicit.spark_signer.get_identity_public_key().await.unwrap().bytes,
++            );
++        }
++    }
++
++    #[macros::async_test_all]
++    async fn seed_factory_does_not_reinterpret_raw_entropy_as_mnemonic_entropy() {
++        let raw_entropy = vec![17; 32];
++        let converted_mnemonic = bip39::Mnemonic::from_entropy(&raw_entropy).unwrap();
++        let raw = default_external_signers_from_seed(
++            Seed::Entropy(raw_entropy), Network::Mainnet, None,
++        ).unwrap();
++        let converted = default_external_signers_from_seed(
++            Seed::Mnemonic {
++                mnemonic: converted_mnemonic.to_string(), passphrase: None,
++            }, Network::Mainnet, None,
++        ).unwrap();
++        assert_ne!(
++            raw.spark_signer.get_identity_public_key().await.unwrap().bytes,
++            converted.spark_signer.get_identity_public_key().await.unwrap().bytes,
++        );
++    }
++
+     #[test]
+     fn default_server_config_disables_background_tasks() {
+         for network in [Network::Mainnet, Network::Regtest, Network::Signet] {
+diff --git a/crates/breez-sdk/core/src/signer/default_external.rs b/crates/breez-sdk/core/src/signer/default_external.rs
+index 4fe53139..1eb860bd 100644
+--- a/crates/breez-sdk/core/src/signer/default_external.rs
++++ b/crates/breez-sdk/core/src/signer/default_external.rs
+@@ -11,7 +11,7 @@ use crate::signer::{
+ use crate::{Network, SdkError, Seed};
+ 
+ /// Derives the identity master Xpriv (the `BreezSigner` derivation root) from a
+-/// mnemonic seed. Key derivation lives in the Spark layer; the SDK-layer
++/// wallet seed. Key derivation lives in the Spark layer; the SDK-layer
+ /// `BreezSigner` just consumes the resulting master.
+ fn identity_master_key(
+     seed: &Seed,
+@@ -50,7 +50,17 @@ impl DefaultExternalSigner {
+             mnemonic,
+             passphrase,
+         };
+-        let master = identity_master_key(&seed, network, account_number)?;
++        Self::from_seed(&seed, network, account_number)
++    }
++
++    /// Creates the signer without changing the seed representation or derivation.
++    /// `Seed::Entropy` is used directly, exactly as in the seed-based SDK path.
++    pub fn from_seed(
++        seed: &Seed,
++        network: Network,
++        account_number: Option<u32>,
++    ) -> Result<Self, SdkError> {
++        let master = identity_master_key(seed, network, account_number)?;
+         let inner = BreezSignerImpl::new(master);
+         Ok(Self { inner })
+     }
+diff --git a/crates/breez-sdk/core/src/signer/default_external_spark.rs b/crates/breez-sdk/core/src/signer/default_external_spark.rs
+index 9ffe386a..e9aefa80 100644
+--- a/crates/breez-sdk/core/src/signer/default_external_spark.rs
++++ b/crates/breez-sdk/core/src/signer/default_external_spark.rs
+@@ -55,11 +55,24 @@ impl DefaultExternalSparkSigner {
+         network: Network,
+         account_number: Option<u32>,
+     ) -> Result<Self, SdkError> {
+-        let seed_bytes = Seed::Mnemonic {
+-            mnemonic,
+-            passphrase,
+-        }
+-        .to_bytes()?;
++        Self::from_seed(
++            &Seed::Mnemonic {
++                mnemonic,
++                passphrase,
++            },
++            network,
++            account_number,
++        )
++    }
++
++    /// Creates the signer from the same seed bytes used by the seed-based SDK.
++    /// Raw entropy is not converted to a mnemonic or passed through BIP39 again.
++    pub fn from_seed(
++        seed: &Seed,
++        network: Network,
++        account_number: Option<u32>,
++    ) -> Result<Self, SdkError> {
++        let seed_bytes = seed.to_bytes()?;
+         let master = spark_wallet::account_master_key(&seed_bytes, network.into(), account_number)
+             .map_err(|e| SdkError::Generic(e.to_string()))?;
+         Ok(Self {
+diff --git a/crates/breez-sdk/wasm/src/sdk.rs b/crates/breez-sdk/wasm/src/sdk.rs
+index 0390978f..ce7ec361 100644
+--- a/crates/breez-sdk/wasm/src/sdk.rs
++++ b/crates/breez-sdk/wasm/src/sdk.rs
+@@ -195,6 +195,30 @@ pub fn default_external_signers(
+     })
+ }
+ 
++/// Creates the default external signers from a mnemonic or raw seed bytes.
++///
++/// Preserves the identity of `SdkBuilder.new(config, seed)` when the network and
++/// account number are unchanged. Raw entropy is never reinterpreted as BIP39
++/// mnemonic entropy. Omit `accountNumber` to preserve the network default.
++/// The keys remain in process; this factory does not provide hardware isolation.
++#[wasm_bindgen(js_name = "defaultExternalSignersFromSeed")]
++pub fn default_external_signers_from_seed(
++    seed: Seed,
++    network: Network,
++    account_number: Option<u32>,
++) -> WasmResult<ExternalSigners> {
++    let signers = breez_sdk_spark::default_external_signers_from_seed(
++        seed.into(),
++        network.into(),
++        account_number,
++    )?;
++
++    Ok(ExternalSigners {
++        breez_signer: crate::signer::ExternalBreezSignerHandle::new(signers.breez_signer),
++        spark_signer: crate::signer::ExternalSparkSignerHandle::new(signers.spark_signer),
++    })
++}
++
+ /// Creates a default CPFP signer backed by a single private key.
+ #[wasm_bindgen(js_name = "singleKeyCpfpSigner")]
+ pub fn single_key_cpfp_signer(
+-- 
+2.51.1
+

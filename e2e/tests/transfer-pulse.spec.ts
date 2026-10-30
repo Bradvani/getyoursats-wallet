@@ -72,4 +72,3 @@ test('high pixel density keeps a stationary vector-only logo and orange isolated
  expect(await logo.locator('[fill="#F7931A"]').count()).toBe(1);
  await page.waitForTimeout(1400);await page.screenshot({path:`test-artifacts/sequence-${browserName}-density3.png`});await context.close();
 });
-

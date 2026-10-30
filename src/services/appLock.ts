@@ -8,16 +8,16 @@
  *
  * Storage: Preferences is the durable truth (survives WebView storage
  * eviction); localStorage mirrors the non-secret lock settings so the
- * lock decision can be made synchronously at first render and on
- * foreground-return, with no unlocked frame while a bridge read is in
- * flight. A lost mirror degrades to the async lock path, never to a
- * wrongly-accepted PIN.
+ * timeout and UI hints can be read synchronously. Native read access stays
+ * closed until the lock hook confirms durable PIN policy; a missing mirror
+ * never grants access while a bridge read is in flight.
  */
 
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
 import { bytesToHex, hexToBytes } from '../utils/hex';
 import { logger, LogCategory } from './logger';
+import { confirmNativePinPolicy, getNativePinPolicyRevision, getNativeReadLeaseRevision, invalidateNativePinPolicy, invalidateNativeReadBinding } from './nativeReadLease';
 
 /** Salt + hash in ONE record: a two-key layout could be torn by a
  *  process kill between writes, leaving a PIN no input could match. */
@@ -118,67 +118,152 @@ interface PinRecord {
   iterations?: number;
 }
 
-/**
- * The cost a stored record was derived at. Absent means the pre-raise
- * default. A nonsensical one is treated the same way rather than passed
- * through: the record is editable by anyone who can reach the store,
- * and an out-of-range count makes deriveBits throw instead of simply
- * not matching.
- */
-function recordIterations(record: PinRecord): number {
-  const n = record.iterations;
-  return typeof n === 'number' && Number.isInteger(n) && n >= 1 ? n : LEGACY_PBKDF2_ITERATIONS;
+export const PIN_RECORD_UNAVAILABLE_MESSAGE =
+  'PIN settings could not be verified. Your wallet is preserved. Retry or recover this wallet before resetting local data.';
+
+export class PinRecordUnavailableError extends Error {
+  constructor() {
+    super(PIN_RECORD_UNAVAILABLE_MESSAGE);
+    this.name = 'PinRecordUnavailableError';
+  }
 }
 
-async function readPinRecord(): Promise<PinRecord | null> {
-  const { value } = await Preferences.get({ key: PIN_RECORD_KEY });
-  if (value == null) return null;
+class PinPolicyTransitionError extends PinRecordUnavailableError {}
+
+let pinRecordRevision = 0;
+let pendingPinMutations = 0;
+
+function capturePinReadRevision(): number {
+  if (pendingPinMutations !== 0) throw new PinPolicyTransitionError();
+  return pinRecordRevision;
+}
+
+function requirePinReadRevision(revision: number): void {
+  if (pendingPinMutations !== 0 || revision !== pinRecordRevision) throw new PinPolicyTransitionError();
+}
+
+interface LoadedPinRecord { record: PinRecord; raw: string }
+
+/** Only the two derivation costs actually written by this app are supported. */
+function recordIterations(record: PinRecord): number {
+  return record.iterations ?? LEGACY_PBKDF2_ITERATIONS;
+}
+
+async function readPinRecord(): Promise<LoadedPinRecord | null> {
+  const revision = capturePinReadRevision();
   try {
-    const parsed = JSON.parse(value) as PinRecord;
-    return parsed.salt && parsed.hash ? parsed : null;
-  } catch {
-    return null;
+    const { value } = await Preferences.get({ key: PIN_RECORD_KEY });
+    requirePinReadRevision(revision);
+    if (value === null) return null;
+    if (typeof value !== 'string' || value.length > 1024) throw new PinRecordUnavailableError();
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new PinRecordUnavailableError();
+    const record = parsed as Record<string, unknown>;
+    if (Object.keys(record).some(key => !['v', 'salt', 'hash', 'iterations'].includes(key)) ||
+      record.v !== 1 || typeof record.salt !== 'string' || !/^[0-9a-f]{32}$/.test(record.salt) ||
+      typeof record.hash !== 'string' || !/^[0-9a-f]{64}$/.test(record.hash) ||
+      ('iterations' in record && record.iterations !== LEGACY_PBKDF2_ITERATIONS && record.iterations !== PBKDF2_ITERATIONS)) {
+      throw new PinRecordUnavailableError();
+    }
+    return { record: record as unknown as PinRecord, raw: value };
+  } catch (error) {
+    // A read from before/during a mutation has no authority over its result.
+    // Do not invalidate a newer policy because an older read became stale.
+    if (error instanceof PinPolicyTransitionError || pendingPinMutations !== 0 || revision !== pinRecordRevision) {
+      throw new PinPolicyTransitionError();
+    }
+    // Corruption/unavailability is not proof of absence. Preserve the raw
+    // record, retain a conservative mirror, and revoke pending authorization.
+    mirrorSet(PIN_MIRROR_KEY, 'true');
+    invalidateNativePinPolicy();
+    throw new PinRecordUnavailableError();
   }
 }
 
 export async function isPinEnabled(): Promise<boolean> {
   if (!isAppLockSupported()) return false;
-  return (await readPinRecord()) != null;
+  const revision = getNativePinPolicyRevision();
+  const enabled = (await readPinRecord()) !== null;
+  if (revision !== getNativePinPolicyRevision()) throw new PinPolicyTransitionError();
+  mirrorSet(PIN_MIRROR_KEY, enabled ? 'true' : null);
+  return enabled;
 }
 
-/** Mirror-backed synchronous check for first-render lock gating. A lost
- *  mirror only delays the lock until the async read lands. */
+/** Non-secret UI hint. This mirror does not authorize native seed reads. */
 export function isPinEnabledSync(): boolean {
   return isAppLockSupported() && mirrorGet(PIN_MIRROR_KEY) === 'true';
 }
 
-async function writePinRecord(pin: string, salt: Uint8Array): Promise<void> {
+function requirePinPolicyRevision(revision: number): void {
+  if (revision !== getNativePinPolicyRevision()) throw new PinPolicyTransitionError();
+}
+
+// Serialize this app's PIN mutations so a delayed old upgrade cannot overwrite
+// a later change. This is local ordering, not cross-device storage authority.
+let pinMutation: Promise<void> = Promise.resolve();
+function mutatePin(revision: number, operation: () => Promise<void>): Promise<void> {
+  pendingPinMutations += 1;
+  pinRecordRevision += 1;
+  const pending = pinMutation.then(async () => {
+    requirePinPolicyRevision(revision);
+    await operation();
+    requirePinPolicyRevision(revision);
+  }).finally(() => {
+    pendingPinMutations -= 1;
+    pinRecordRevision += 1;
+  });
+  pinMutation = pending.catch(() => {});
+  return pending;
+}
+
+async function writePinRecord(pin: string, salt: Uint8Array, revision: number): Promise<void> {
   const record: PinRecord = {
     v: 1,
     salt: bytesToHex(salt),
     hash: await derivePinHash(pin, salt, PBKDF2_ITERATIONS),
     iterations: PBKDF2_ITERATIONS,
   };
+  requirePinPolicyRevision(revision);
   await Preferences.set({ key: PIN_RECORD_KEY, value: JSON.stringify(record) });
 }
 
 /** Create or replace the PIN. Caller is responsible for the verify step. */
 export async function setPin(pin: string): Promise<void> {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  await writePinRecord(pin, salt);
-  await Preferences.remove({ key: PIN_ATTEMPTS_KEY });
+  if (typeof pin !== 'string' || !/^\d{6}$/.test(pin)) throw new Error('PIN must contain exactly six digits');
+  const revision = invalidateNativePinPolicy();
+  await mutatePin(revision, async () => {
+    await writePinRecord(pin, crypto.getRandomValues(new Uint8Array(16)), revision);
+    requirePinPolicyRevision(revision);
+    await Preferences.remove({ key: PIN_ATTEMPTS_KEY });
+  });
   mirrorSet(PIN_MIRROR_KEY, 'true');
+  confirmNativePinPolicy(true, revision);
   logger.info(LogCategory.AUTH, 'appLock: PIN set');
 }
 
 /** Deactivate PIN protection. Also disables the biometric gate: it is
  *  only offered on top of a PIN, matching Misty. */
-export async function clearPin(): Promise<void> {
-  await Preferences.remove({ key: PIN_RECORD_KEY });
-  await Preferences.remove({ key: BIOMETRIC_KEY });
-  await Preferences.remove({ key: PIN_ATTEMPTS_KEY });
+export async function clearPin(expected?: { policyRevision: number; readRevision: number }): Promise<void> {
+  if (expected) {
+    capturePinReadRevision();
+    requirePinPolicyRevision(expected.policyRevision);
+    if (expected.readRevision !== getNativeReadLeaseRevision()) throw new PinPolicyTransitionError();
+  }
+  const revision = invalidateNativePinPolicy();
+  const mutationReadRevision = getNativeReadLeaseRevision();
+  await mutatePin(revision, async () => {
+    if (expected && mutationReadRevision !== getNativeReadLeaseRevision()) throw new PinPolicyTransitionError();
+    await Preferences.remove({ key: PIN_RECORD_KEY });
+    requirePinPolicyRevision(revision);
+    // Drain earlier biometric writes before disabling the flag. A delayed
+    // enable must not resurrect it after clearPin reports completion.
+    await setBiometricGateEnabled(false);
+    requirePinPolicyRevision(revision);
+    await Preferences.remove({ key: PIN_ATTEMPTS_KEY });
+  });
   mirrorSet(PIN_MIRROR_KEY, null);
   mirrorSet(BIOMETRIC_MIRROR_KEY, null);
+  confirmNativePinPolicy(false, revision);
   logger.info(LogCategory.AUTH, 'appLock: PIN cleared');
 }
 
@@ -216,6 +301,8 @@ export interface PinVerifyResult {
   ok: boolean;
   /** ms until the next attempt is accepted; 0 when one is allowed now. */
   lockedForMs: number;
+  /** A storage/policy failure is different from an incorrect PIN. */
+  error?: string;
 }
 
 /**
@@ -224,40 +311,64 @@ export interface PinVerifyResult {
  * entries neither shorten nor extend it.
  */
 export async function verifyPin(pin: string): Promise<PinVerifyResult> {
-  const attempts = await readAttempts();
-  const waiting = lockoutMs(attempts);
-  if (waiting > 0) return { ok: false, lockedForMs: waiting };
+  try {
+    const recordRevision = capturePinReadRevision();
+    const revision = getNativePinPolicyRevision();
+    const attempts = await readAttempts();
+    requirePinReadRevision(recordRevision);
+    const waiting = lockoutMs(attempts);
+    if (waiting > 0) return { ok: false, lockedForMs: waiting };
 
-  const record = await readPinRecord();
-  const iterations = record == null ? PBKDF2_ITERATIONS : recordIterations(record);
-  const ok =
-    record != null &&
-    (await derivePinHash(pin, hexToBytes(record.salt), iterations)) === record.hash;
-  if (ok) {
-    await Preferences.remove({ key: PIN_ATTEMPTS_KEY });
-    // Re-derive a record left at the old cost, with a fresh salt. Done
-    // after clearing attempts so a failure here cannot lock the user
-    // out: the old record still verifies on the next entry.
-    if (iterations !== PBKDF2_ITERATIONS) {
-      await writePinRecord(pin, crypto.getRandomValues(new Uint8Array(16)));
-      logger.info(LogCategory.AUTH, 'appLock: PIN record re-derived');
+    const loaded = await readPinRecord();
+    const record = loaded?.record ?? null;
+    requirePinReadRevision(recordRevision);
+    requirePinPolicyRevision(revision);
+    const iterations = record == null ? PBKDF2_ITERATIONS : recordIterations(record);
+    const ok =
+      record != null &&
+      (await derivePinHash(pin, hexToBytes(record.salt), iterations)) === record.hash;
+    requirePinReadRevision(recordRevision);
+    requirePinPolicyRevision(revision);
+    if (ok) {
+      await Preferences.remove({ key: PIN_ATTEMPTS_KEY });
+      requirePinReadRevision(recordRevision);
+      requirePinPolicyRevision(revision);
+      // Re-derive a record left at the old cost, with a fresh salt. Done
+      // after clearing attempts so a failure here cannot lock the user
+      // out: the old record still verifies on the next entry.
+      if (iterations !== PBKDF2_ITERATIONS) {
+        await mutatePin(revision, async () => {
+          const current = await Preferences.get({ key: PIN_RECORD_KEY });
+          requirePinPolicyRevision(revision);
+          if (!loaded || current.value !== loaded.raw) throw new PinPolicyTransitionError();
+          await writePinRecord(pin, crypto.getRandomValues(new Uint8Array(16)), revision);
+        });
+        logger.info(LogCategory.AUTH, 'appLock: PIN record re-derived');
+      }
+      requirePinPolicyRevision(revision);
+      return { ok: true, lockedForMs: 0 };
     }
-    return { ok: true, lockedForMs: 0 };
-  }
 
-  const failed = attempts.failed + 1;
-  const backoffMs =
-    PIN_BACKOFF_SECONDS[Math.min(failed, PIN_BACKOFF_SECONDS.length - 1)] * 1000;
-  await Preferences.set({
-    key: PIN_ATTEMPTS_KEY,
-    value: JSON.stringify({ failed, until: Date.now() + backoffMs } satisfies AttemptRecord),
-  });
-  logger.warn(LogCategory.AUTH, 'appLock: PIN attempt failed', { failed, backoffMs });
-  return { ok: false, lockedForMs: backoffMs };
+    const failed = attempts.failed + 1;
+    const backoffMs =
+      PIN_BACKOFF_SECONDS[Math.min(failed, PIN_BACKOFF_SECONDS.length - 1)] * 1000;
+    await Preferences.set({
+      key: PIN_ATTEMPTS_KEY,
+      value: JSON.stringify({ failed, until: Date.now() + backoffMs } satisfies AttemptRecord),
+    });
+    requirePinReadRevision(recordRevision);
+    requirePinPolicyRevision(revision);
+    logger.warn(LogCategory.AUTH, 'appLock: PIN attempt failed', { failed, backoffMs });
+    return { ok: false, lockedForMs: backoffMs };
+  } catch (error) {
+    if (!(error instanceof PinPolicyTransitionError)) invalidateNativePinPolicy();
+    return { ok: false, lockedForMs: 0, error: PIN_RECORD_UNAVAILABLE_MESSAGE };
+  }
 }
 
 /** Lock-screen copy for a rejected attempt. */
 export function pinAttemptMessage(result: PinVerifyResult): string {
+  if (result.error) return result.error;
   if (result.lockedForMs <= 0) return 'Incorrect PIN';
   const seconds = Math.ceil(result.lockedForMs / 1000);
   if (seconds < 60) return `Too many attempts. Try again in ${seconds} seconds.`;
@@ -340,9 +451,17 @@ export function isIdleLockSuppressed(): boolean {
 // Biometric gate flag
 // ============================================
 
+let biometricPolicyRevision = 0;
+let pendingBiometricMutations = 0;
+let biometricMutation: Promise<void> = Promise.resolve();
+
 export async function isBiometricGateEnabled(): Promise<boolean> {
   if (!isAppLockSupported()) return false;
+  if (pendingBiometricMutations !== 0) throw new PinPolicyTransitionError();
+  const revision = biometricPolicyRevision;
   const { value } = await Preferences.get({ key: BIOMETRIC_KEY });
+  if (pendingBiometricMutations !== 0 || revision !== biometricPolicyRevision) throw new PinPolicyTransitionError();
+  if (value !== null && value !== 'true' && value !== 'false') throw new PinRecordUnavailableError();
   const enabled = value === 'true';
   // Backfill the mirror for installs that enabled the gate before the
   // mirror existed (and self-heal an evicted one).
@@ -359,11 +478,20 @@ export function isBiometricGateEnabledSync(): boolean {
 }
 
 export async function setBiometricGateEnabled(enabled: boolean): Promise<void> {
-  if (enabled) {
-    await Preferences.set({ key: BIOMETRIC_KEY, value: 'true' });
-  } else {
-    await Preferences.remove({ key: BIOMETRIC_KEY });
-  }
-  mirrorSet(BIOMETRIC_MIRROR_KEY, enabled ? 'true' : null);
+  if (typeof enabled !== 'boolean') throw new Error('Biometric policy must be boolean');
+  pendingBiometricMutations += 1;
+  biometricPolicyRevision += 1;
+  invalidateNativeReadBinding();
+  const pending = biometricMutation.then(async () => {
+    if (enabled) await Preferences.set({ key: BIOMETRIC_KEY, value: 'true' });
+    else await Preferences.remove({ key: BIOMETRIC_KEY });
+    mirrorSet(BIOMETRIC_MIRROR_KEY, enabled ? 'true' : null);
+  }).finally(() => {
+    pendingBiometricMutations -= 1;
+    biometricPolicyRevision += 1;
+    invalidateNativeReadBinding();
+  });
+  biometricMutation = pending.catch(() => {});
+  await pending;
   logger.info(LogCategory.AUTH, `appLock: biometric gate ${enabled ? 'enabled' : 'disabled'}`);
 }

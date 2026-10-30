@@ -1,0 +1,555 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> wasm-example-app@1.1.0 build
+> tsc && vite build
+
+10:50:32 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{ banner: undefined }`
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 1099 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/assets/plus-jakarta-sans-vietnamese-400-normal-Cg2kxhWu.woff2          4.09 kB
+dist/assets/plus-jakarta-sans-vietnamese-600-normal-Y4VTTRme.woff2          4.19 kB
+dist/assets/plus-jakarta-sans-vietnamese-700-normal-CV6qDkkj.woff2          4.26 kB
+dist/assets/noto-sans-jp-latin-ext-400-normal-BPvhYctW.woff2                4.46 kB
+dist/assets/noto-sans-sc-latin-ext-400-normal-KRK7eeLK.woff2                4.48 kB
+dist/assets/noto-sans-jp-vietnamese-400-normal-BhCN5Nzn.woff2               4.68 kB
+dist/assets/noto-sans-sc-91-400-normal-BdbNZCTz.woff2                       4.70 kB
+dist/assets/noto-sans-sc-vietnamese-400-normal-Bi2eM1Po.woff2               4.70 kB
+dist/assets/noto-sans-arabic-symbols-400-normal-BbP0vlM-.woff2              4.71 kB
+dist/assets/noto-sans-sc-99-400-normal-BTAaudar.woff2                       5.20 kB
+dist/assets/noto-sans-sc-87-400-normal-BGelIZWt.woff2                       5.21 kB
+dist/assets/noto-sans-jp-cyrillic-400-normal-DolMZjtA.woff2                 5.30 kB
+dist/assets/noto-sans-sc-cyrillic-400-normal-CgZvxLpU.woff2                 5.30 kB
+dist/assets/noto-sans-sc-90-400-normal-DRuAc-VY.woff2                       5.32 kB
+dist/assets/plus-jakarta-sans-vietnamese-400-normal-B8TCSmUq.woff           5.59 kB
+dist/assets/plus-jakarta-sans-vietnamese-600-normal-5YsyKbU1.woff           5.74 kB
+dist/assets/plus-jakarta-sans-vietnamese-700-normal-BCh_uG_5.woff           5.77 kB
+dist/assets/noto-sans-thai-latin-ext-400-normal-nBP59pVw.woff2              6.08 kB
+dist/assets/noto-sans-sc-89-400-normal-acup1U1Z.woff2                       6.11 kB
+dist/assets/noto-sans-sc-latin-ext-400-normal-npFpPBUL.woff                 6.15 kB
+dist/assets/noto-sans-jp-latin-ext-400-normal-DA3o7Qcc.woff                 6.16 kB
+dist/assets/noto-sans-arabic-symbols-400-normal-BJzmBRSy.woff               6.18 kB
+dist/assets/noto-sans-sc-21-400-normal-Bfz3Xm1a.woff2                       6.19 kB
+dist/assets/noto-sans-sc-88-400-normal-D3GwXLyo.woff2                       6.24 kB
+dist/index.html                                                             6.34 kB │ gzip:     2.43 kB
+dist/assets/noto-sans-devanagari-latin-ext-400-normal-BnQrAETZ.woff2        6.39 kB
+dist/assets/noto-sans-sc-91-400-normal-chCAWjzR.woff                        6.40 kB
+dist/assets/noto-sans-sc-6-400-normal-D73klzWF.woff2                        6.46 kB
+dist/assets/noto-sans-jp-57-400-normal-C0OskAC1.woff2                       6.50 kB
+dist/assets/noto-sans-arabic-latin-ext-400-normal-CW3XQ4Yj.woff2            6.52 kB
+dist/assets/noto-sans-tamil-latin-ext-400-normal-DcqX8bzT.woff2             6.58 kB
+dist/assets/noto-sans-sc-87-400-normal-DeZ_z0_V.woff                        6.59 kB
+dist/assets/noto-sans-sc-vietnamese-400-normal-CtXxSNIx.woff                6.63 kB
+dist/assets/noto-sans-jp-vietnamese-400-normal-CpdBLHrE.woff                6.64 kB
+dist/assets/noto-sans-sc-cyrillic-400-normal-6v9-Ru6c.woff                  6.85 kB
+dist/assets/noto-sans-jp-cyrillic-400-normal-D3Vn6VPS.woff                  6.86 kB
+dist/assets/noto-sans-sc-90-400-normal-ToGVgOhM.woff                        7.08 kB
+dist/assets/noto-sans-sc-99-400-normal-BiJRGGRm.woff                        7.08 kB
+dist/assets/jetbrains-mono-latin-ext-400-normal-Bc8Ftmh3.woff2              7.33 kB
+dist/assets/noto-sans-jp-117-400-normal-D7G1AaIC.woff2                      7.45 kB
+dist/assets/jetbrains-mono-latin-ext-600-normal-BfB_LPfz.woff2              7.51 kB
+dist/assets/jetbrains-mono-latin-ext-500-normal-Cut-4mMH.woff2              7.52 kB
+dist/assets/noto-sans-sc-21-400-normal-BWSKkENd.woff                        7.56 kB
+dist/assets/noto-sans-sc-88-400-normal-svYgw96M.woff                        7.61 kB
+dist/assets/noto-sans-arabic-math-400-normal-BxrVu-ji.woff2                 7.76 kB
+dist/assets/noto-sans-sc-89-400-normal-C2ReJj7i.woff                        7.90 kB
+dist/assets/noto-sans-thai-latin-ext-400-normal-B-1H0YkH.woff               7.92 kB
+dist/assets/noto-sans-devanagari-latin-ext-400-normal-Bs32KOJx.woff         8.31 kB
+dist/assets/noto-sans-arabic-latin-ext-400-normal-D4Wl3hq7.woff             8.43 kB
+dist/assets/noto-sans-jp-117-400-normal-CMZ7nlTI.woff                       8.58 kB
+dist/assets/noto-sans-sc-6-400-normal-CXZtsxyd.woff                         8.62 kB
+dist/assets/noto-sans-tamil-latin-ext-400-normal-9ZDdQipz.woff              8.64 kB
+dist/assets/noto-sans-thai-thai-400-normal-BEOmKAI1.woff2                   9.11 kB
+dist/assets/noto-sans-jp-57-400-normal-DDVwZLYF.woff                        9.14 kB
+dist/assets/noto-sans-jp-113-400-normal-D8IgnicE.woff2                      9.15 kB
+dist/assets/noto-sans-jp-109-400-normal-CzvVngrC.woff2                      9.23 kB
+dist/assets/noto-sans-jp-114-400-normal-C7eokaTD.woff2                      9.24 kB
+dist/assets/noto-sans-jp-112-400-normal-BIERyQ8E.woff2                      9.65 kB
+dist/assets/noto-sans-jp-116-400-normal-BlaEWFYv.woff2                      9.76 kB
+dist/assets/noto-sans-jp-118-400-normal-Bt9GQb0v.woff2                      9.86 kB
+dist/assets/noto-sans-jp-110-400-normal-BTMIMSGn.woff2                      9.92 kB
+dist/assets/noto-sans-arabic-math-400-normal-BiWGKoY7.woff                  9.93 kB
+dist/assets/noto-sans-jp-114-400-normal-Bhfbd-i4.woff                      10.14 kB
+dist/assets/noto-sans-jp-101-400-normal-DCnmfjJr.woff2                     10.18 kB
+dist/assets/noto-sans-jp-59-400-normal-PlQWnVzM.woff2                      10.26 kB
+dist/assets/noto-sans-thai-latin-400-normal-BaWBrqFP.woff2                 10.26 kB
+dist/assets/noto-sans-jp-107-400-normal-c4plQ4KB.woff2                     10.33 kB
+dist/assets/noto-sans-jp-103-400-normal-DCB0R3s1.woff2                     10.36 kB
+dist/assets/noto-sans-jp-113-400-normal-CFpIvlom.woff                      10.39 kB
+dist/assets/noto-sans-jp-105-400-normal-BaYm1XrC.woff2                     10.48 kB
+dist/assets/noto-sans-devanagari-latin-400-normal-BuiDGFlU.woff2           10.51 kB
+dist/assets/noto-sans-jp-111-400-normal-B-7hJreE.woff2                     10.57 kB
+dist/assets/plus-jakarta-sans-latin-ext-400-normal-D127hM_v.woff2          10.59 kB
+dist/assets/noto-sans-jp-85-400-normal-PRh6m5Wr.woff2                      10.65 kB
+dist/assets/noto-sans-tamil-latin-400-normal-Dkj4wjWb.woff2                10.69 kB
+dist/assets/noto-sans-jp-86-400-normal-DUEbHvQg.woff2                      10.71 kB
+dist/assets/noto-sans-arabic-latin-400-normal-CjsIS08k.woff2               10.74 kB
+dist/assets/plus-jakarta-sans-latin-ext-800-normal-B6BjB2Ju.woff2          10.80 kB
+dist/assets/plus-jakarta-sans-latin-ext-300-normal-PkbsTXxT.woff2          10.83 kB
+dist/assets/noto-sans-jp-115-400-normal--eoQXn0U.woff2                     10.84 kB
+dist/assets/noto-sans-jp-93-400-normal-BsqLOPne.woff2                      10.85 kB
+dist/assets/plus-jakarta-sans-latin-ext-500-normal-9VZagAe1.woff2          10.86 kB
+dist/assets/plus-jakarta-sans-latin-ext-600-normal-DQgPU_Cg.woff2          10.89 kB
+dist/assets/noto-sans-sc-5-400-normal-3RzBeGhg.woff2                       10.90 kB
+dist/assets/noto-sans-jp-110-400-normal-BKlaHzps.woff                      10.92 kB
+dist/assets/noto-sans-jp-77-400-normal-Vz0Rd-hi.woff2                      10.93 kB
+dist/assets/noto-sans-jp-104-400-normal-NJB6bHCP.woff2                     11.00 kB
+dist/assets/plus-jakarta-sans-latin-ext-700-normal-BajbvANd.woff2          11.00 kB
+dist/assets/noto-sans-jp-67-400-normal-CmHeIlib.woff2                      11.01 kB
+dist/assets/noto-sans-jp-109-400-normal-Bn-DnDlr.woff                      11.04 kB
+dist/assets/noto-sans-jp-88-400-normal-BtS_nsYz.woff2                      11.04 kB
+dist/assets/noto-sans-jp-101-400-normal-DnlDXmDf.woff                      11.06 kB
+dist/assets/noto-sans-jp-81-400-normal-CWepPKE3.woff2                      11.06 kB
+dist/assets/noto-sans-jp-97-400-normal-B2_-hMS7.woff2                      11.08 kB
+dist/assets/noto-sans-jp-112-400-normal-D6LbbYcR.woff                      11.14 kB
+dist/assets/noto-sans-jp-89-400-normal-Gdw9A0B8.woff2                      11.17 kB
+dist/assets/noto-sans-jp-115-400-normal-BiZtp38i.woff                      11.27 kB
+dist/assets/noto-sans-jp-95-400-normal-OE6TKRDq.woff2                      11.31 kB
+dist/assets/noto-sans-thai-thai-400-normal-Dxb_unuU.woff                   11.31 kB
+dist/assets/noto-sans-jp-80-400-normal-D84axjSK.woff2                      11.32 kB
+dist/assets/noto-sans-jp-116-400-normal-Cg2NhE-C.woff                      11.36 kB
+dist/assets/noto-sans-jp-76-400-normal-DNNpgASK.woff2                      11.36 kB
+dist/assets/noto-sans-jp-74-400-normal-CeOhDY8H.woff2                      11.43 kB
+dist/assets/noto-sans-jp-107-400-normal-Dp9E1f2G.woff                      11.44 kB
+dist/assets/noto-sans-jp-102-400-normal-BdGiY49g.woff2                     11.48 kB
+dist/assets/noto-sans-jp-69-400-normal-BkxZ8g7p.woff2                      11.49 kB
+dist/assets/noto-sans-jp-85-400-normal-DLFqK13Z.woff                       11.50 kB
+dist/assets/noto-sans-jp-98-400-normal-Bim0zPoh.woff2                      11.53 kB
+dist/assets/noto-sans-jp-92-400-normal-CFXbIbOw.woff2                      11.54 kB
+dist/assets/noto-sans-jp-86-400-normal-C8vSP73X.woff                       11.56 kB
+dist/assets/noto-sans-jp-66-400-normal-CQC9a3Wn.woff2                      11.62 kB
+dist/assets/noto-sans-jp-84-400-normal-vr59NZAt.woff2                      11.68 kB
+dist/assets/noto-sans-jp-83-400-normal-DnZvb0Bx.woff2                      11.74 kB
+dist/assets/noto-sans-jp-95-400-normal-ClHPPIOU.woff                       11.80 kB
+dist/assets/plus-jakarta-sans-latin-400-normal-Dhut76fR.woff2              11.81 kB
+dist/assets/noto-sans-jp-96-400-normal-Bp_bfmR5.woff                       11.82 kB
+dist/assets/noto-sans-jp-99-400-normal-D69LempC.woff2                      11.82 kB
+dist/assets/noto-sans-jp-63-400-normal-quHutv5H.woff2                      11.85 kB
+dist/assets/noto-sans-jp-97-400-normal-BR1BitQH.woff                       11.86 kB
+dist/assets/noto-sans-jp-108-400-normal-BTPn2FzF.woff2                     11.87 kB
+dist/assets/plus-jakarta-sans-latin-800-normal-CusIZhrK.woff2              11.89 kB
+dist/assets/noto-sans-jp-62-400-normal-g-puO_Vu.woff2                      11.90 kB
+dist/assets/noto-sans-jp-102-400-normal-ChcX4YEm.woff                      11.93 kB
+dist/assets/noto-sans-jp-70-400-normal-DCCnU2lL.woff2                      11.93 kB
+dist/assets/noto-sans-jp-104-400-normal-DdpKjPiv.woff                      11.94 kB
+dist/assets/noto-sans-jp-82-400-normal-2ZOJD9al.woff2                      11.94 kB
+dist/assets/noto-sans-jp-88-400-normal-Cb1VX2f5.woff                       11.94 kB
+dist/assets/noto-sans-jp-111-400-normal-CgZaWs6n.woff                      11.98 kB
+dist/assets/noto-sans-jp-73-400-normal-DxaZhf4D.woff2                      12.00 kB
+dist/assets/noto-sans-jp-74-400-normal-B6tUJWAS.woff                       12.04 kB
+dist/assets/noto-sans-jp-75-400-normal-BUJdqMDR.woff2                      12.04 kB
+dist/assets/noto-sans-jp-81-400-normal-uaTYe5Uc.woff                       12.04 kB
+dist/assets/noto-sans-jp-105-400-normal-Az5QmzMk.woff                      12.08 kB
+dist/assets/noto-sans-jp-92-400-normal-DhK0X0J3.woff                       12.08 kB
+dist/assets/noto-sans-jp-103-400-normal-CJv04q0k.woff                      12.09 kB
+dist/assets/noto-sans-jp-61-400-normal-0JKmlYYt.woff2                      12.10 kB
+dist/assets/noto-sans-jp-71-400-normal-CzmFS4C4.woff                       12.11 kB
+dist/assets/noto-sans-jp-96-400-normal-Bxin6GHB.woff2                      12.11 kB
+dist/assets/noto-sans-jp-87-400-normal-Cr_a57cN.woff2                      12.15 kB
+dist/assets/noto-sans-jp-91-400-normal-CeuMSE0x.woff2                      12.17 kB
+dist/assets/noto-sans-jp-76-400-normal-CtjIXBjE.woff                       12.17 kB
+dist/assets/noto-sans-jp-90-400-normal--P0pOc0Z.woff2                      12.17 kB
+dist/assets/noto-sans-jp-93-400-normal-BAbjw5P1.woff                       12.18 kB
+dist/assets/plus-jakarta-sans-latin-600-normal-DLTa1BUW.woff2              12.18 kB
+dist/assets/plus-jakarta-sans-latin-300-normal-ubitlNZx.woff2              12.20 kB
+dist/assets/noto-sans-jp-79-400-normal-D2UrZmfu.woff2                      12.20 kB
+dist/assets/noto-sans-jp-65-400-normal-BtCb3rNG.woff2                      12.22 kB
+dist/assets/noto-sans-jp-94-400-normal-T529iOjP.woff2                      12.22 kB
+dist/assets/plus-jakarta-sans-latin-700-normal-CfpNZvy6.woff2              12.24 kB
+dist/assets/noto-sans-jp-89-400-normal-BBgpD9vX.woff                       12.26 kB
+dist/assets/noto-sans-jp-66-400-normal-C-yBgt84.woff                       12.26 kB
+dist/assets/noto-sans-jp-84-400-normal-DB7DJ7Wc.woff                       12.26 kB
+dist/assets/noto-sans-jp-71-400-normal-MAsqfIVS.woff2                      12.28 kB
+dist/assets/plus-jakarta-sans-latin-500-normal-Bf-nb4oT.woff2              12.31 kB
+dist/assets/noto-sans-jp-80-400-normal-BQj_0WAL.woff                       12.40 kB
+dist/assets/noto-sans-jp-63-400-normal-Cvspx87s.woff                       12.41 kB
+dist/assets/noto-sans-jp-75-400-normal-B9PY0eZx.woff                       12.42 kB
+dist/assets/noto-sans-jp-67-400-normal-Dx3v9kCi.woff                       12.48 kB
+dist/assets/noto-sans-jp-118-400-normal-CQOvkF0B.woff                      12.53 kB
+dist/assets/noto-sans-jp-91-400-normal-CA7HbS3A.woff                       12.54 kB
+dist/assets/noto-sans-jp-98-400-normal-Djve3m37.woff                       12.56 kB
+dist/assets/noto-sans-jp-100-400-normal-Cyrf16_5.woff2                     12.57 kB
+dist/assets/noto-sans-jp-72-400-normal-VzoYucXm.woff2                      12.58 kB
+dist/assets/noto-sans-jp-83-400-normal-D8ySJIpi.woff                       12.61 kB
+dist/assets/noto-sans-jp-78-400-normal-D-wZWMxP.woff2                      12.74 kB
+dist/assets/noto-sans-jp-108-400-normal-Z8a4pUbP.woff                      12.78 kB
+dist/assets/noto-sans-jp-87-400-normal-zqYllga9.woff                       12.79 kB
+dist/assets/noto-sans-jp-90-400-normal-CI2UYh7q.woff                       12.79 kB
+dist/assets/noto-sans-jp-100-400-normal-Vbi9YIqO.woff                      12.82 kB
+dist/assets/noto-sans-jp-68-400-normal-BgxxQA_P.woff2                      12.84 kB
+dist/assets/noto-sans-jp-94-400-normal-D0WIq2A7.woff                       12.85 kB
+dist/assets/noto-sans-jp-82-400-normal-Q-CUZ4Tj.woff                       12.86 kB
+dist/assets/noto-sans-jp-69-400-normal-BD2LMe2W.woff                       12.94 kB
+dist/assets/noto-sans-jp-106-400-normal-vtCpI_md.woff2                     12.96 kB
+dist/assets/noto-sans-jp-77-400-normal-D4_TLn0D.woff                       12.97 kB
+dist/assets/noto-sans-jp-70-400-normal-B-WpJDvj.woff                       13.01 kB
+dist/assets/noto-sans-jp-99-400-normal-hMKS7QJi.woff                       13.01 kB
+dist/assets/noto-sans-jp-73-400-normal-p2jxXpLv.woff                       13.02 kB
+dist/assets/noto-sans-jp-62-400-normal-BOGs-f_9.woff                       13.04 kB
+dist/assets/noto-sans-jp-latin-400-normal-CiI97xlr.woff2                   13.07 kB
+dist/assets/noto-sans-thai-latin-400-normal-Dh_FJjOB.woff                  13.14 kB
+dist/assets/noto-sans-jp-106-400-normal-BIsxXr_r.woff                      13.23 kB
+dist/assets/noto-sans-jp-79-400-normal-Bl7-Jf2x.woff                       13.26 kB
+dist/assets/noto-sans-sc-latin-400-normal-C8q2FS1w.woff2                   13.30 kB
+dist/assets/noto-sans-sc-5-400-normal-CqGeNka7.woff                        13.37 kB
+dist/assets/noto-sans-devanagari-latin-400-normal-Bl6wi1XD.woff            13.43 kB
+dist/assets/noto-sans-jp-78-400-normal-BWE0ymHd.woff                       13.51 kB
+dist/assets/noto-sans-jp-68-400-normal-QSPn3jUA.woff                       13.52 kB
+dist/assets/noto-sans-tamil-latin-400-normal-1qF9FKsw.woff                 13.53 kB
+dist/assets/noto-sans-jp-58-400-normal-FVufdjpz.woff2                      13.58 kB
+dist/assets/noto-sans-arabic-latin-400-normal-lr8cikIT.woff                13.62 kB
+dist/assets/noto-sans-jp-60-400-normal-b86VfqVK.woff2                      13.80 kB
+dist/assets/noto-sans-jp-59-400-normal-DGISF1PU.woff                       13.84 kB
+dist/assets/noto-sans-jp-65-400-normal-BnGR7lfQ.woff                       13.98 kB
+dist/assets/noto-sans-jp-72-400-normal-DYzJ42Mq.woff                       14.06 kB
+dist/assets/noto-sans-jp-61-400-normal-Dv1aQGI3.woff                       14.08 kB
+dist/assets/noto-sans-jp-60-400-normal-BYQ80e6U.woff                       14.37 kB
+dist/assets/noto-sans-jp-64-400-normal-BomXCxmK.woff                       14.54 kB
+dist/assets/noto-sans-tamil-tamil-400-normal-cIr4vgaa.woff2                14.55 kB
+dist/assets/noto-sans-sc-85-400-normal-CNc66YTY.woff2                      14.60 kB
+dist/assets/noto-sans-jp-64-400-normal-DgMzEm14.woff2                      14.94 kB
+dist/assets/noto-sans-jp-54-400-normal-Da3ezTN6.woff2                      16.77 kB
+dist/assets/noto-sans-jp-2-400-normal-2pr-wf2b.woff2                       16.99 kB
+dist/assets/noto-sans-jp-latin-400-normal-DhKEBJxB.woff                    17.07 kB
+dist/assets/noto-sans-sc-80-400-normal-psViYwkz.woff2                      17.30 kB
+dist/assets/noto-sans-jp-58-400-normal-DTAyjAjV.woff                       17.33 kB
+dist/assets/noto-sans-sc-latin-400-normal-C_7N1zz3.woff                    17.39 kB
+dist/assets/noto-sans-sc-84-400-normal-BtmNIfry.woff2                      17.54 kB
+dist/assets/noto-sans-sc-86-400-normal-Cs9yXoGU.woff2                      17.91 kB
+dist/assets/noto-sans-sc-85-400-normal-F0L9JJpN.woff                       18.57 kB
+dist/assets/noto-sans-tamil-tamil-400-normal-Bt0_HtAo.woff                 19.20 kB
+dist/assets/noto-sans-sc-41-400-normal-CwF0ysup.woff2                      19.41 kB
+dist/assets/noto-sans-sc-77-400-normal-CxYpJvkI.woff2                      19.70 kB
+dist/assets/noto-sans-jp-53-400-normal-BxuTYgVh.woff2                      20.05 kB
+dist/assets/noto-sans-jp-2-400-normal-Cjt2pQbI.woff                        20.63 kB
+dist/assets/noto-sans-sc-73-400-normal-tzRZHUkU.woff2                      20.84 kB
+dist/assets/jetbrains-mono-latin-400-normal-V6pRDFza.woff2                 21.16 kB
+dist/assets/noto-sans-jp-54-400-normal-LPbDC76G.woff                       21.50 kB
+dist/assets/jetbrains-mono-latin-500-normal-BWZEU5yA.woff2                 21.83 kB
+dist/assets/jetbrains-mono-latin-600-normal-C8RAYTDA.woff2                 21.86 kB
+dist/assets/noto-sans-sc-64-400-normal-9n4RwFjr.woff2                      21.88 kB
+dist/assets/noto-sans-sc-79-400-normal-Bs84SZW2.woff2                      21.93 kB
+dist/assets/noto-sans-sc-60-400-normal-BkgLo8ii.woff2                      22.24 kB
+dist/assets/noto-sans-sc-68-400-normal-DhhAKUnY.woff2                      22.24 kB
+dist/assets/noto-sans-sc-86-400-normal-CS8-1yH9.woff                       22.29 kB
+dist/assets/noto-sans-sc-65-400-normal-Co4l6Z_j.woff2                      22.37 kB
+dist/assets/noto-sans-sc-80-400-normal-CAD0vQqF.woff                       22.42 kB
+dist/assets/noto-sans-sc-70-400-normal-BlWmkfgH.woff2                      22.44 kB
+dist/assets/noto-sans-sc-84-400-normal-CvsacytZ.woff                       22.48 kB
+dist/assets/noto-sans-sc-51-400-normal-BXmprHGd.woff2                      22.49 kB
+dist/assets/noto-sans-sc-36-400-normal-BxBT42kb.woff2                      22.65 kB
+dist/assets/noto-sans-jp-56-400-normal-aqSvJ6Nk.woff2                      22.65 kB
+dist/assets/noto-sans-jp-55-400-normal-8jMTW2Uv.woff2                      22.98 kB
+dist/assets/noto-sans-sc-53-400-normal-DpzojyPN.woff2                      23.07 kB
+dist/assets/noto-sans-sc-83-400-normal-cx8M2qMo.woff2                      23.07 kB
+dist/assets/noto-sans-jp-3-400-normal-BolWnAtT.woff2                       23.37 kB
+dist/assets/noto-sans-sc-75-400-normal-CUYSz9vA.woff2                      23.66 kB
+dist/assets/noto-sans-sc-61-400-normal-ggoUFMmb.woff2                      24.17 kB
+dist/assets/noto-sans-sc-82-400-normal-BZZDzro0.woff2                      24.40 kB
+dist/assets/noto-sans-sc-42-400-normal-ZKOUmsTa.woff2                      24.46 kB
+dist/assets/noto-sans-sc-40-400-normal-DcIMWQiP.woff2                      24.70 kB
+dist/assets/noto-sans-sc-118-400-normal-CqQ_A8sl.woff2                     24.72 kB
+dist/assets/noto-sans-sc-50-400-normal-BeYaGcbF.woff2                      24.78 kB
+dist/assets/noto-sans-sc-43-400-normal-WDsqqjmk.woff2                      24.95 kB
+dist/assets/noto-sans-sc-72-400-normal-BLx1zxYv.woff2                      25.01 kB
+dist/assets/noto-sans-sc-41-400-normal-DciHGJUW.woff                       25.02 kB
+dist/assets/noto-sans-sc-81-400-normal-BImDXGMr.woff2                      25.12 kB
+dist/assets/noto-sans-sc-59-400-normal-D7wWmpIm.woff2                      25.12 kB
+dist/assets/noto-sans-sc-34-400-normal-Djw1IAuw.woff2                      25.28 kB
+dist/assets/noto-sans-sc-31-400-normal-Cngcbauu.woff2                      25.40 kB
+dist/assets/noto-sans-jp-53-400-normal-DiLRgy-U.woff                       25.43 kB
+dist/assets/noto-sans-sc-33-400-normal-CUXtFK-t.woff2                      25.44 kB
+dist/assets/noto-sans-sc-27-400-normal-LzZF_NqI.woff2                      25.45 kB
+dist/assets/noto-sans-sc-71-400-normal-HYJki_zr.woff2                      25.54 kB
+dist/assets/noto-sans-sc-77-400-normal-CqkE2zzv.woff                       25.63 kB
+dist/assets/noto-sans-sc-76-400-normal-JtvMmeCp.woff2                      25.78 kB
+dist/assets/noto-sans-sc-55-400-normal-CYV3hjnq.woff2                      25.82 kB
+dist/assets/noto-sans-sc-63-400-normal-BYQsjKYd.woff2                      25.95 kB
+dist/assets/noto-sans-sc-78-400-normal-AGz1p3mV.woff2                      26.12 kB
+dist/assets/noto-sans-sc-28-400-normal-CEc-bbYn.woff2                      26.45 kB
+dist/assets/noto-sans-sc-73-400-normal-D0RqmG5Z.woff                       26.55 kB
+dist/assets/noto-sans-sc-35-400-normal-Chgyqx1E.woff2                      26.69 kB
+dist/assets/noto-sans-sc-48-400-normal-JHdMabvg.woff2                      26.89 kB
+dist/assets/noto-sans-sc-26-400-normal-B306_DcA.woff2                      27.22 kB
+dist/assets/noto-sans-sc-52-400-normal-D6TC2b36.woff2                      27.40 kB
+dist/assets/noto-sans-sc-32-400-normal-BqAPF1tT.woff2                      27.60 kB
+dist/assets/noto-sans-sc-39-400-normal-CNreqa8s.woff2                      27.70 kB
+dist/assets/noto-sans-sc-54-400-normal-B9QLYnEh.woff2                      27.74 kB
+dist/assets/noto-sans-jp-56-400-normal-CrteJVxh.woff                       27.75 kB
+dist/assets/noto-sans-sc-64-400-normal-CGUP102c.woff                       27.76 kB
+dist/assets/noto-sans-sc-117-400-normal-QPrBdlQO.woff2                     27.86 kB
+dist/assets/noto-sans-sc-66-400-normal-BELuybXz.woff2                      27.95 kB
+dist/assets/noto-sans-sc-67-400-normal-BS_2ddPd.woff2                      28.04 kB
+dist/assets/noto-sans-sc-49-400-normal-B43LfYL1.woff2                      28.08 kB
+dist/assets/noto-sans-sc-116-400-normal-B9rv4EzF.woff2                     28.12 kB
+dist/assets/noto-sans-sc-37-400-normal-CjshmOwp.woff2                      28.15 kB
+dist/assets/noto-sans-sc-60-400-normal-GU4GKg2E.woff                       28.44 kB
+dist/assets/noto-sans-sc-79-400-normal-EktYxXvd.woff                       28.52 kB
+dist/assets/noto-sans-sc-70-400-normal-Cv6BJgqS.woff                       28.53 kB
+dist/assets/noto-sans-sc-56-400-normal-B57fiM3p.woff2                      28.54 kB
+dist/assets/noto-sans-sc-51-400-normal-CxEddk2i.woff                       28.55 kB
+dist/assets/noto-sans-sc-65-400-normal-BnhE90fv.woff                       28.56 kB
+dist/assets/noto-sans-sc-29-400-normal-CTMIENlc.woff2                      28.68 kB
+dist/assets/noto-sans-sc-44-400-normal-wq9JI-iJ.woff2                      28.74 kB
+dist/assets/noto-sans-sc-38-400-normal-D0ErwWLV.woff2                      28.94 kB
+dist/assets/noto-sans-sc-30-400-normal-Dzb6Zn8O.woff2                      29.16 kB
+dist/assets/noto-sans-sc-68-400-normal-BBVkJV-Y.woff                       29.19 kB
+dist/assets/noto-sans-sc-69-400-normal-o5cK7hs4.woff2                      29.55 kB
+dist/assets/noto-sans-sc-57-400-normal-0KJcqtwa.woff2                      29.63 kB
+dist/assets/noto-sans-sc-36-400-normal-gXBiuGwd.woff                       29.77 kB
+dist/assets/noto-sans-sc-47-400-normal-CZbI_HNG.woff2                      29.77 kB
+dist/assets/noto-sans-sc-115-400-normal-BQfWDt6M.woff2                     29.96 kB
+dist/assets/noto-sans-sc-74-400-normal-C40Ur-xi.woff2                      30.03 kB
+dist/assets/noto-sans-sc-53-400-normal-mWVfdeO5.woff                       30.10 kB
+dist/assets/noto-sans-jp-3-400-normal-CnBYanGa.woff                        30.12 kB
+dist/assets/noto-sans-sc-83-400-normal-DYXgq8kH.woff                       30.16 kB
+dist/assets/noto-sans-sc-58-400-normal-DHIustpc.woff2                      30.38 kB
+dist/assets/noto-sans-sc-112-400-normal-F9zvXQVU.woff2                     30.47 kB
+dist/assets/noto-sans-sc-23-400-normal-D0XQUkMM.woff2                      30.52 kB
+dist/assets/noto-sans-jp-51-400-normal-DQFzvREE.woff2                      30.55 kB
+dist/assets/noto-sans-jp-55-400-normal-BeXxcHth.woff                       30.58 kB
+dist/assets/noto-sans-sc-61-400-normal-DO6eFcUD.woff                       30.63 kB
+dist/assets/noto-sans-sc-42-400-normal-GDRkeAhh.woff                       30.69 kB
+dist/assets/noto-sans-sc-114-400-normal-CZUMxNv_.woff2                     30.71 kB
+dist/assets/noto-sans-sc-82-400-normal-D0Ku2zIg.woff                       30.77 kB
+dist/assets/noto-sans-sc-113-400-normal-DZoqVzDv.woff2                     30.99 kB
+dist/assets/noto-sans-sc-101-400-normal-DYFU5ahq.woff2                     31.02 kB
+dist/assets/noto-sans-sc-72-400-normal-DPchTtEp.woff                       31.08 kB
+dist/assets/noto-sans-sc-62-400-normal-ytbDME29.woff2                      31.14 kB
+dist/assets/noto-sans-sc-25-400-normal-CD3JKveN.woff2                      31.21 kB
+dist/assets/noto-sans-sc-40-400-normal-BpE33_aL.woff                       31.87 kB
+dist/assets/noto-sans-jp-46-400-normal-BJQCdy9d.woff2                      31.90 kB
+dist/assets/noto-sans-sc-118-400-normal-Bv9FY4YJ.woff                      31.93 kB
+dist/assets/noto-sans-sc-81-400-normal-CMDP0b8q.woff                       31.96 kB
+dist/assets/noto-sans-sc-109-400-normal-ZEHPyOzB.woff2                     32.05 kB
+dist/assets/noto-sans-sc-102-400-normal-lPQNp5DG.woff2                     32.10 kB
+dist/assets/noto-sans-sc-43-400-normal-ptNFri_o.woff                       32.12 kB
+dist/assets/noto-sans-sc-46-400-normal-DxQ4Lw-z.woff2                      32.19 kB
+dist/assets/noto-sans-sc-50-400-normal-DmEmT5Xc.woff                       32.22 kB
+dist/assets/noto-sans-sc-107-400-normal-DUS2YNa3.woff2                     32.38 kB
+dist/assets/noto-sans-jp-50-400-normal-BbKwp1ay.woff2                      32.45 kB
+dist/assets/noto-sans-sc-71-400-normal-BcC9a3s7.woff                       32.50 kB
+dist/assets/noto-sans-sc-59-400-normal-CTbjnxze.woff                       32.54 kB
+dist/assets/noto-sans-sc-27-400-normal-CAcePaVb.woff                       32.54 kB
+dist/assets/noto-sans-sc-104-400-normal-DbzfdvQ5.woff2                     32.55 kB
+dist/assets/noto-sans-sc-110-400-normal-D1IYcvpb.woff2                     32.67 kB
+dist/assets/noto-sans-jp-49-400-normal-BOzeIh7N.woff2                      32.73 kB
+dist/assets/noto-sans-sc-105-400-normal-BiKizsW3.woff2                     32.76 kB
+dist/assets/noto-sans-sc-34-400-normal-DVjrmKwp.woff                       32.80 kB
+dist/assets/noto-sans-sc-33-400-normal-71T9_H2W.woff                       32.96 kB
+dist/assets/noto-sans-sc-28-400-normal-mlzUy5GG.woff                       33.13 kB
+dist/assets/noto-sans-sc-111-400-normal-C5Xi9UGz.woff2                     33.16 kB
+dist/assets/noto-sans-sc-106-400-normal-DDMMORp2.woff2                     33.20 kB
+dist/assets/noto-sans-sc-24-400-normal-mI4tDgE1.woff2                      33.32 kB
+dist/assets/noto-sans-sc-31-400-normal-Cyw6s5hq.woff                       33.37 kB
+dist/assets/noto-sans-sc-35-400-normal-Dmi4TVAU.woff                       33.38 kB
+dist/assets/noto-sans-sc-78-400-normal-B6-7Eoul.woff                       33.40 kB
+dist/assets/noto-sans-sc-63-400-normal-Ce5ND-aB.woff                       33.41 kB
+dist/assets/noto-sans-sc-76-400-normal-D8lD1-P8.woff                       33.60 kB
+dist/assets/noto-sans-sc-75-400-normal-CRQovkGE.woff                       33.62 kB
+dist/assets/noto-sans-sc-55-400-normal-DKj4nXau.woff                       33.70 kB
+dist/assets/noto-sans-sc-103-400-normal-DrxRoDmn.woff2                     33.84 kB
+dist/assets/noto-sans-sc-108-400-normal-D80tGT87.woff2                     34.14 kB
+dist/assets/noto-sans-sc-32-400-normal-C2vok0E0.woff                       34.22 kB
+dist/assets/noto-sans-sc-100-400-normal-CX-7pUk_.woff2                     34.27 kB
+dist/assets/noto-sans-jp-20-400-normal-DYaXXeUY.woff2                      34.40 kB
+dist/assets/noto-sans-sc-22-400-normal-yOvQSDF6.woff2                      34.54 kB
+dist/assets/noto-sans-jp-40-400-normal-fJKR13nE.woff2                      34.62 kB
+dist/assets/noto-sans-jp-36-400-normal-DIvIb79D.woff2                      34.80 kB
+dist/assets/noto-sans-jp-42-400-normal-FJJl_YCw.woff2                      34.83 kB
+dist/assets/noto-sans-sc-54-400-normal-0ORVgrbC.woff                       34.95 kB
+dist/assets/noto-sans-sc-48-400-normal-GhZ7XIdg.woff                       35.00 kB
+dist/assets/noto-sans-sc-39-400-normal-C0_-XaYb.woff                       35.06 kB
+dist/assets/noto-sans-sc-26-400-normal-BcJtXd5l.woff                       35.12 kB
+dist/assets/noto-sans-jp-27-400-normal-DnUy7eX4.woff2                      35.16 kB
+dist/assets/noto-sans-sc-52-400-normal-8kWwSH0T.woff                       35.20 kB
+dist/assets/noto-sans-jp-33-400-normal-DnEXjFAA.woff2                      35.43 kB
+dist/assets/noto-sans-sc-117-400-normal-B90NeRlJ.woff                      35.72 kB
+dist/assets/noto-sans-sc-49-400-normal-EZegvN0r.woff                       35.76 kB
+dist/assets/noto-sans-sc-66-400-normal-BjhdbVrp.woff                       35.90 kB
+dist/assets/noto-sans-sc-116-400-normal-CR11uof5.woff                      35.92 kB
+dist/assets/noto-sans-sc-37-400-normal-Cmdsu9MW.woff                       35.94 kB
+dist/assets/noto-sans-sc-29-400-normal-CHgMHmhc.woff                       36.00 kB
+dist/assets/noto-sans-sc-67-400-normal-DSvKAqIC.woff                       36.24 kB
+dist/assets/noto-sans-sc-44-400-normal-W3R_kary.woff                       36.28 kB
+dist/assets/noto-sans-jp-45-400-normal-Ct936r1H.woff2                      36.78 kB
+dist/assets/noto-sans-sc-45-400-normal-DdOuPp0S.woff2                      36.84 kB
+dist/assets/noto-sans-jp-26-400-normal-CHNhil3U.woff2                      37.04 kB
+dist/assets/noto-sans-jp-38-400-normal-C3qShzfB.woff2                      37.26 kB
+dist/assets/noto-sans-jp-12-400-normal-BxV8IU4g.woff2                      37.28 kB
+dist/assets/noto-sans-jp-47-400-normal-DMa-cmOM.woff2                      37.41 kB
+dist/assets/noto-sans-sc-56-400-normal-Br4UG_Q9.woff                       37.48 kB
+dist/assets/noto-sans-jp-1-400-normal-CTQke5mF.woff2                       37.70 kB
+dist/assets/noto-sans-sc-115-400-normal-B23RwfZh.woff                      37.77 kB
+dist/assets/noto-sans-sc-38-400-normal-8qeTo2XT.woff                       37.82 kB
+dist/assets/noto-sans-jp-51-400-normal-DiyXZnvZ.woff                       37.88 kB
+dist/assets/noto-sans-sc-57-400-normal-7bULzP29.woff                       37.89 kB
+dist/assets/noto-sans-jp-52-400-normal-BEH5jjBy.woff2                      38.01 kB
+dist/assets/noto-sans-sc-23-400-normal-VP8RQJAO.woff                       38.19 kB
+dist/assets/noto-sans-jp-16-400-normal-BP2X63kn.woff2                      38.20 kB
+dist/assets/noto-sans-jp-28-400-normal-C8AUCKzJ.woff2                      38.44 kB
+dist/assets/noto-sans-jp-35-400-normal-CbNUY123.woff2                      38.46 kB
+dist/assets/noto-sans-jp-43-400-normal-CVGguJaW.woff2                      38.46 kB
+dist/assets/noto-sans-sc-69-400-normal-h09eyRfk.woff                       38.46 kB
+dist/assets/noto-sans-sc-30-400-normal-DueQZSV4.woff                       38.71 kB
+dist/assets/noto-sans-sc-112-400-normal-atE7g4tE.woff                      39.00 kB
+dist/assets/noto-sans-jp-48-400-normal-r4Nd3gGX.woff2                      39.00 kB
+dist/assets/noto-sans-sc-58-400-normal-BGyguXZA.woff                       39.07 kB
+dist/assets/noto-sans-sc-47-400-normal-DuXmX2I2.woff                       39.10 kB
+dist/assets/noto-sans-sc-114-400-normal-ftueBgxn.woff                      39.17 kB
+dist/assets/noto-sans-sc-62-400-normal-CyweeFJB.woff                       39.39 kB
+dist/assets/noto-sans-sc-113-400-normal-CsjjXlxl.woff                      39.59 kB
+dist/assets/noto-sans-sc-25-400-normal-Dr2sN31U.woff                       39.59 kB
+dist/assets/noto-sans-jp-21-400-normal-DLH6fPwx.woff2                      39.60 kB
+dist/assets/noto-sans-jp-44-400-normal-dCWb2s8Q.woff2                      39.63 kB
+dist/assets/noto-sans-sc-74-400-normal-BuGY1CEw.woff                       39.71 kB
+dist/assets/noto-sans-sc-101-400-normal-CURPjalT.woff                      39.82 kB
+dist/assets/noto-sans-jp-14-400-normal-DH1vvZ_9.woff2                      39.84 kB
+dist/assets/noto-sans-jp-39-400-normal-Dqt7T9oP.woff2                      39.84 kB
+dist/assets/noto-sans-sc-46-400-normal-BcJVrPW7.woff                       39.99 kB
+dist/assets/noto-sans-jp-37-400-normal-C80TIxeb.woff2                      40.16 kB
+dist/assets/noto-sans-jp-46-400-normal-DJIm0DNk.woff                       40.24 kB
+dist/assets/noto-sans-jp-13-400-normal-CRze5J8q.woff2                      40.35 kB
+dist/assets/noto-sans-jp-4-400-normal-DA3EQL1p.woff2                       40.43 kB
+dist/assets/noto-sans-jp-32-400-normal-Cx0Spw0f.woff2                      40.46 kB
+dist/assets/noto-sans-jp-11-400-normal-C6rNNAqY.woff2                      40.59 kB
+dist/assets/noto-sans-sc-109-400-normal-BMfp9ISa.woff                      40.82 kB
+dist/assets/noto-sans-sc-102-400-normal-CO48T6mp.woff                      40.99 kB
+dist/assets/noto-sans-sc-110-400-normal-BOYCnhF2.woff                      41.15 kB
+dist/assets/noto-sans-sc-107-400-normal-hiOgvem8.woff                      41.18 kB
+dist/assets/noto-sans-sc-119-400-normal-flOVnW3A.woff2                     41.28 kB
+dist/assets/noto-sans-sc-104-400-normal-TqOAdUro.woff                      41.34 kB
+dist/assets/noto-sans-jp-50-400-normal-DzejPIw4.woff                       41.66 kB
+dist/assets/noto-sans-jp-10-400-normal-BTBU98wu.woff2                      41.68 kB
+dist/assets/noto-sans-jp-41-400-normal-CMHQPYKZ.woff2                      41.88 kB
+dist/assets/noto-sans-sc-105-400-normal-Cnb4WXCA.woff                      41.89 kB
+dist/assets/noto-sans-sc-24-400-normal-BNcLancd.woff                       42.04 kB
+dist/assets/noto-sans-jp-9-400-normal-DfR1Q7sN.woff2                       42.11 kB
+dist/assets/noto-sans-jp-22-400-normal-B730I7VN.woff2                      42.20 kB
+dist/assets/noto-sans-jp-23-400-normal-C_2_98dI.woff2                      42.24 kB
+dist/assets/noto-sans-sc-111-400-normal-hISf6pse.woff                      42.40 kB
+dist/assets/noto-sans-jp-49-400-normal-CumHC6k2.woff                       42.47 kB
+dist/assets/noto-sans-jp-29-400-normal-bWFFFEwg.woff2                      42.48 kB
+dist/assets/noto-sans-sc-106-400-normal-Cl0nnNTx.woff                      42.48 kB
+dist/assets/noto-sans-jp-119-400-normal-BMFExh-2.woff2                     42.68 kB
+dist/assets/noto-sans-jp-36-400-normal-C3pRA_dy.woff                       42.68 kB
+dist/assets/noto-sans-jp-18-400-normal-BDnnh6Mi.woff2                      42.80 kB
+dist/assets/noto-sans-jp-8-400-normal-BGZ9-nwb.woff2                       43.04 kB
+dist/assets/noto-sans-jp-20-400-normal-ygh-_HTD.woff                       43.11 kB
+dist/assets/noto-sans-sc-108-400-normal-BASrmXAw.woff                      43.14 kB
+dist/assets/noto-sans-sc-103-400-normal-DjYszr9r.woff                      43.14 kB
+dist/assets/noto-sans-sc-22-400-normal-BKfopAEH.woff                       43.27 kB
+dist/assets/noto-sans-jp-25-400-normal-AqztV-OT.woff2                      43.40 kB
+dist/assets/noto-sans-jp-40-400-normal-D0ccLkOd.woff                       43.60 kB
+dist/assets/noto-sans-jp-30-400-normal-CkeOcnc-.woff2                      43.79 kB
+dist/assets/noto-sans-jp-42-400-normal-EYY3g-MF.woff                       43.84 kB
+dist/assets/noto-sans-sc-100-400-normal-BT1M_hxC.woff                      43.88 kB
+dist/assets/noto-sans-jp-15-400-normal-BoKBeeB6.woff2                      44.03 kB
+dist/assets/noto-sans-jp-0-400-normal-DBpdCeh6.woff2                       44.31 kB
+dist/assets/noto-sans-jp-27-400-normal-BMkXFs5Q.woff                       44.83 kB
+dist/assets/noto-sans-jp-47-400-normal--50sLei-.woff                       45.09 kB
+dist/assets/noto-sans-jp-17-400-normal-C6qlkRkC.woff2                      45.10 kB
+dist/assets/noto-sans-jp-33-400-normal-CzIm8ceb.woff                       45.20 kB
+dist/assets/noto-sans-sc-45-400-normal-odgwNltt.woff                       45.75 kB
+dist/assets/noto-sans-jp-24-400-normal-D8Aa-P1p.woff2                      45.91 kB
+dist/assets/noto-sans-jp-45-400-normal-DR3EfSI8.woff                       45.92 kB
+dist/assets/noto-sans-jp-34-400-normal-n_uv4dOB.woff2                      46.31 kB
+dist/assets/noto-sans-jp-7-400-normal-kovhdl-p.woff2                       46.67 kB
+dist/assets/noto-sans-jp-35-400-normal-ofcTkpVh.woff                       47.04 kB
+dist/assets/noto-sans-jp-26-400-normal-JU3Bub4c.woff                       47.08 kB
+dist/assets/noto-sans-jp-48-400-normal-URqU37zG.woff                       47.24 kB
+dist/assets/noto-sans-jp-31-400-normal-C59hY_Uy.woff2                      47.37 kB
+dist/assets/noto-sans-jp-16-400-normal-BZQKV1zp.woff                       47.56 kB
+dist/assets/noto-sans-jp-19-400-normal-B8R-meWR.woff2                      47.64 kB
+dist/assets/noto-sans-jp-38-400-normal-u1NuqZI6.woff                       47.89 kB
+dist/assets/noto-sans-jp-1-400-normal-2ES0-aW1.woff                        47.96 kB
+dist/assets/noto-sans-jp-5-400-normal-Cbk3VzWu.woff2                       48.04 kB
+dist/assets/noto-sans-jp-28-400-normal-Dg97APE_.woff                       48.24 kB
+dist/assets/noto-sans-jp-13-400-normal-b74qMlB8.woff                       48.66 kB
+dist/assets/noto-sans-arabic-arabic-400-normal-AAMxebZb.woff2              48.84 kB
+dist/assets/noto-sans-jp-12-400-normal-DfBArSt4.woff                       48.93 kB
+dist/assets/noto-sans-jp-6-400-normal-BcXMkQMH.woff2                       49.04 kB
+dist/assets/noto-sans-jp-21-400-normal-DWeBBUiT.woff                       49.68 kB
+dist/assets/noto-sans-jp-44-400-normal-Bd0GXjvL.woff                       49.85 kB
+dist/assets/noto-sans-jp-41-400-normal-Cy7hXHNV.woff                       50.06 kB
+dist/assets/noto-sans-devanagari-devanagari-400-normal-BlDd6KY1.woff2      50.41 kB
+dist/assets/noto-sans-jp-14-400-normal-BJDFX69d.woff                       50.56 kB
+dist/assets/noto-sans-jp-37-400-normal-CPpSUdRk.woff                       50.61 kB
+dist/assets/noto-sans-jp-32-400-normal-iFYn1a0P.woff                       51.00 kB
+dist/assets/noto-sans-jp-22-400-normal-BDvNA4ZW.woff                       51.38 kB
+dist/assets/noto-sans-jp-10-400-normal-BGkpQgBO.woff                       51.44 kB
+dist/assets/noto-sans-jp-52-400-normal-BN1BbC7J.woff                       51.72 kB
+dist/assets/noto-sans-jp-29-400-normal-DU9HiSW2.woff                       52.08 kB
+dist/assets/noto-sans-jp-43-400-normal-BfLY_rjI.woff                       52.52 kB
+dist/assets/noto-sans-sc-119-400-normal-DJUwOonj.woff                      52.71 kB
+dist/assets/noto-sans-jp-4-400-normal-CZHMzUFf.woff                        52.79 kB
+dist/assets/noto-sans-jp-39-400-normal-6LMY5Bm5.woff                       52.91 kB
+dist/assets/noto-sans-jp-18-400-normal-9QDK6PI1.woff                       52.95 kB
+dist/assets/noto-sans-jp-9-400-normal-C0WvebZ6.woff                        53.79 kB
+dist/assets/noto-sans-jp-25-400-normal-CXJYGfCL.woff                       54.65 kB
+dist/assets/noto-sans-jp-23-400-normal-wpGmynn5.woff                       55.28 kB
+dist/assets/noto-sans-jp-30-400-normal-9FGWRYTU.woff                       55.64 kB
+dist/assets/noto-sans-jp-11-400-normal-BbvFvfcs.woff                       55.66 kB
+dist/assets/noto-sans-jp-17-400-normal-DowFPyv4.woff                       56.00 kB
+dist/assets/noto-sans-jp-15-400-normal-Bnw_J3fE.woff                       56.57 kB
+dist/assets/noto-sans-jp-8-400-normal-D2ugjC7g.woff                        56.57 kB
+dist/assets/noto-sans-jp-0-400-normal-1S-7LNBz.woff                        56.81 kB
+dist/assets/noto-sans-jp-34-400-normal-BVIEFCoC.woff                       57.57 kB
+dist/assets/noto-sans-jp-119-400-normal-CPPqrP0k.woff                      58.48 kB
+dist/assets/noto-sans-jp-24-400-normal-BwijtXeH.woff                       59.01 kB
+dist/assets/noto-sans-jp-19-400-normal-n3pyCsIm.woff                       59.14 kB
+dist/assets/noto-sans-jp-31-400-normal-CJO2CzdE.woff                       59.41 kB
+dist/assets/noto-sans-jp-7-400-normal-Gn7G4Etz.woff                        59.62 kB
+dist/assets/noto-sans-jp-5-400-normal-BAlm0kiA.woff                        60.70 kB
+dist/assets/noto-sans-jp-6-400-normal-M00kzlt2.woff                        62.67 kB
+dist/assets/noto-sans-devanagari-devanagari-400-normal-CdOJmQ4E.woff       68.46 kB
+dist/assets/noto-sans-arabic-arabic-400-normal-hsqIUL9Q.woff               79.08 kB
+dist/assets/zxing_reader-Bb9Mx2Pu.wasm                                    953.52 kB │ gzip:   416.26 kB
+dist/assets/breez_sdk_spark_wasm_bg-4gX78Mib.wasm                      12,402.38 kB │ gzip: 5,172.65 kB
+dist/assets/WalletPage-eOsj-mQB.css                                        18.72 kB │ gzip:     3.65 kB
+dist/assets/index-DEk6GlvR.css                                            170.89 kB │ gzip:    31.59 kB
+dist/assets/fonts-ZustAqes.css                                            230.44 kB │ gzip:    88.86 kB
+dist/assets/definitions-BdWVgBTV.js                                         0.18 kB │ gzip:     0.16 kB
+dist/assets/web-XLkGca2l.js                                                 0.19 kB │ gzip:     0.17 kB
+dist/assets/blockTime-BLpwe2P8.js                                           0.21 kB │ gzip:     0.16 kB
+dist/assets/web-B35M0eNY.js                                                 0.34 kB │ gzip:     0.21 kB
+dist/assets/web-B-cBd2RF.js                                                 0.36 kB │ gzip:     0.24 kB
+dist/assets/web-BmipywBK.js                                                 0.36 kB │ gzip:     0.24 kB
+dist/assets/web-CuWXBIfc-ks6dR4aD.js                                        0.44 kB │ gzip:     0.25 kB
+dist/assets/web-BmWvu_uO.js                                                 0.84 kB │ gzip:     0.40 kB
+dist/assets/web-BVENovRD.js                                                 0.93 kB │ gzip:     0.47 kB
+dist/assets/web-BSdcgfpI.js                                                 1.10 kB │ gzip:     0.53 kB
+dist/assets/web-Si4lDIi4.js                                                 1.19 kB │ gzip:     0.54 kB
+dist/assets/rolldown-runtime-BCiCTKAo.js                                    1.30 kB │ gzip:     0.71 kB
+dist/assets/PasskeySettingsPage-ChMMYng3.js                                 1.82 kB │ gzip:     0.83 kB
+dist/assets/web-EJF_OO7c.js                                                 2.31 kB │ gzip:     1.06 kB
+dist/assets/WalletContext-BKiA5cc9.js                                       2.39 kB │ gzip:     1.06 kB
+dist/assets/react-dom-B1UT_RM9.js                                           3.59 kB │ gzip:     1.36 kB
+dist/assets/PasskeyLocalStatePage-C8c9LUUJ.js                               4.45 kB │ gzip:     1.79 kB
+dist/assets/LabelsPage-BjsPoJH6.js                                          5.81 kB │ gzip:     2.31 kB
+dist/assets/dist-BMBgxOkr.js                                                7.84 kB │ gzip:     3.16 kB
+dist/assets/web-BKzHI5_f.js                                                 8.47 kB │ gzip:     2.82 kB
+dist/assets/jsx-runtime-C42LHrNX.js                                         9.69 kB │ gzip:     3.65 kB
+dist/assets/UnclaimedDepositDetailsPage-gbzooTdV.js                        10.96 kB │ gzip:     3.89 kB
+dist/assets/tree-store-picGlnYB.js                                         17.17 kB │ gzip:     4.92 kB
+dist/assets/PasskeyMigrationModal-BCqwch-i.js                              20.70 kB │ gzip:     6.93 kB
+dist/assets/Icons-DNDwqqAp.js                                              21.91 kB │ gzip:     5.22 kB
+dist/assets/UnilateralExitPage-DJUcx3HV.js                                 25.86 kB │ gzip:     8.29 kB
+dist/assets/useStatusBarColor-C0aHMJ5G.js                                  36.80 kB │ gzip:    13.76 kB
+dist/assets/storage-Cxv8D4z6.js                                            38.50 kB │ gzip:     8.49 kB
+dist/assets/qr-scanner-worker.min-CJaXo3yu.js                              43.95 kB │ gzip:    10.37 kB
+dist/assets/sdkConnect-DWvYog5J.js                                        157.23 kB │ gzip:    51.91 kB
+dist/assets/ui-B5mwZEtC.js                                                207.02 kB │ gzip:    66.79 kB
+dist/assets/WalletPage-DTln4Nn4.js                                        229.95 kB │ gzip:    64.81 kB
+dist/assets/PasskeyManagementPage-Bfj2hi7w.js                             249.35 kB │ gzip:    60.65 kB
+dist/assets/logger-0aauLzly.js                                            343.46 kB │ gzip:   111.96 kB
+dist/assets/index-e1QZV1Pf.js                                             880.45 kB │ gzip:   273.12 kB
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0msrc/services/passkeyService.ts is dynamically imported by src/features/unilateral-exit/funding.ts, src/main.tsx but also statically imported by src/App.tsx, src/components/LockScreen.tsx, src/components/SideMenu.tsx, src/features/passkey-migration/hooks/useMigrationFlow.ts, src/hooks/useAppLock.ts, ..., dynamic import will not move module into another chunk.
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0msrc/contexts/ToastContext.tsx is dynamically imported by src/main.tsx but also statically imported by src/App.tsx, src/features/buy/BuyBitcoinDialog.tsx, src/features/receive/BitcoinAddressDisplay.tsx, src/features/receive/LightningAddressDisplay.tsx, src/features/receive/ReceivePaymentDialog.tsx, ..., dynamic import will not move module into another chunk.
+
+✓ built in 1.76s

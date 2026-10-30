@@ -13,10 +13,14 @@ export function esploraBaseUrl(network: string): string {
   switch (network) {
     case 'testnet':
       return 'https://mempool.space/testnet/api';
+    case 'signet':
+      return 'https://mempool.space/signet/api';
     case 'regtest':
       return 'http://localhost:3002';
-    default:
+    case 'mainnet':
       return 'https://mempool.space/api';
+    default:
+      throw new Error('Unsupported Bitcoin chain network');
   }
 }
 

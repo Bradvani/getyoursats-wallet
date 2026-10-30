@@ -61,6 +61,50 @@ describe('dev mode', () => {
     plain.setDevMode(true);
     expect((await load()).isDevMode()).toBe(true);
   });
+
+  it.each([true, false])('persists primitive %s as its exact boolean literal', async enabled => {
+    const settings = await load();
+
+    settings.setDevMode(enabled);
+
+    expect(localStorage.setItem).toHaveBeenCalledExactlyOnceWith(
+      'spark-dev-mode', enabled ? 'true' : 'false',
+    );
+    expect((await load()).isDevMode()).toBe(enabled);
+  });
+
+  it.each(['true', 'arbitrary-runtime-content'])('never persists the runtime string %s', async value => {
+    const settings = await load();
+
+    settings.setDevMode(value as unknown as boolean);
+
+    expect(localStorage.setItem).toHaveBeenCalledExactlyOnceWith('spark-dev-mode', 'false');
+    expect((await load()).isDevMode()).toBe(false);
+  });
+
+  it('writes only false for other unexpected runtime values', async () => {
+    const settings = await load();
+    for (const value of [1, undefined, null, 1n, Symbol('runtime-value'), [true], Object(true)]) {
+      vi.mocked(localStorage.setItem).mockClear();
+
+      settings.setDevMode(value as unknown as boolean);
+
+      expect(localStorage.setItem).toHaveBeenCalledExactlyOnceWith('spark-dev-mode', 'false');
+      expect(settings.isDevMode()).toBe(false);
+    }
+  });
+
+  it.each(['toString', 'Symbol.toPrimitive'])('never invokes an unexpected object\'s %s', async hook => {
+    const settings = await load();
+    const coerce = vi.fn(() => { throw new Error('coercion must not run'); });
+    const value: unknown = hook === 'toString' ? { toString: coerce } : { [Symbol.toPrimitive]: coerce };
+
+    expect(() => settings.setDevMode(value as unknown as boolean)).not.toThrow();
+
+    expect(coerce).not.toHaveBeenCalled();
+    expect(localStorage.setItem).toHaveBeenCalledExactlyOnceWith('spark-dev-mode', 'false');
+    expect(settings.isDevMode()).toBe(false);
+  });
 });
 
 describe('buildConnectConfig', () => {
