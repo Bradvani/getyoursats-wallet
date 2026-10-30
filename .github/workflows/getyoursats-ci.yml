@@ -26,4 +26,6 @@ jobs:
         run: node --test tests/contact-budget.integration.mjs
       - name: Verify notification authorization and retries with isolated Redis
         run: node --test tests/push-service.integration.mjs
+      - name: Verify native GYS identity and atomic recipient bindings without funds
+        run: node --test tests/native-lnurl-session.integration.mjs tests/gys-direct-directory.integration.mjs
       - run: npm run lint

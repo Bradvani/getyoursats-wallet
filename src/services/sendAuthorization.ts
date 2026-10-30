@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core';
-import type { BreezSdk, Seed, SignInResponse } from '@breeztech/breez-sdk-spark';
+import type { BreezSdk, Seed, SendPaymentRequest, SignInResponse } from '@breeztech/breez-sdk-spark';
 import { buildBrowserPasskeyClient, getPasskey } from './passkeyService';
 
 export type SendAuthorizationReason =
@@ -25,6 +25,18 @@ interface AuthorizationState {
 
 const authorizationState = Symbol('getyoursats.sendAuthorization');
 const authorizationStates = new WeakSet<AuthorizationState>();
+const sendValidations = new WeakMap<object, () => Promise<void>>();
+
+/** Bind a final recipient check to this exact request, after any OS ceremony. */
+export async function sendPaymentWithValidation(client: BreezSdk, request: SendPaymentRequest, validate: () => Promise<void>) {
+  if (!requiresSendAuthorization(client)) {
+    await validate();
+    return client.sendPayment(request);
+  }
+  sendValidations.set(request, validate);
+  try { return await client.sendPayment(request); }
+  finally { sendValidations.delete(request); }
+}
 
 function stateOf(client: BreezSdk): AuthorizationState | undefined {
   const state: unknown = Reflect.get(client, authorizationState);
@@ -173,6 +185,8 @@ function guardedClient(client: BreezSdk, fingerprint: string, policy: Omit<Passk
         || (policy.credentialId && !sameCredential(policy.credentialId, response.credential?.credentialId))) {
         throw new SendAuthorizationError('different-wallet');
       }
+      const validate = sendValidations.get(request as object);
+      if (validate) await Promise.race([validate(), cancelled]);
       assertActive();
       if (invalidated) throw new SendAuthorizationError('inactive');
       if (reviewedRequest !== requestValue(request)) throw new SendAuthorizationError('changed');

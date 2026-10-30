@@ -1,5 +1,6 @@
 {
   "en": {
+    "Recipient unavailable. Review the payment again.": "Recipient unavailable. Review the payment again.",
     "Balance": "Balance",
     "Syncing": "Syncing",
     "change": "change",
@@ -237,6 +238,7 @@
     "Your first transaction starts here.": "Your first transaction starts here."
   },
   "hi": {
+    "Recipient unavailable. Review the payment again.": "प्राप्तकर्ता उपलब्ध नहीं है। भुगतान की जानकारी फिर जाँचें।",
     "Balance": "बैलेंस",
     "Syncing": "सिंक हो रहा है",
     "change": "बाकी sats",
@@ -474,6 +476,7 @@
     "Your first transaction starts here.": "आपका पहला लेनदेन यहाँ दिखेगा।"
   },
   "es": {
+    "Recipient unavailable. Review the payment again.": "Destinatario no disponible. Revisa el pago de nuevo.",
     "Balance": "Saldo",
     "Syncing": "Sincronizando",
     "change": "sats restantes",
@@ -711,6 +714,7 @@
     "Your first transaction starts here.": "Tu primera transacción aparecerá aquí."
   },
   "pt": {
+    "Recipient unavailable. Review the payment again.": "Destinatário indisponível. Reveja o pagamento.",
     "Balance": "Saldo",
     "Syncing": "Sincronizando",
     "change": "sats restantes",
@@ -948,6 +952,7 @@
     "Your first transaction starts here.": "Sua primeira transação aparecerá aqui."
   },
   "ja": {
+    "Recipient unavailable. Review the payment again.": "受取人を確認できません。支払い内容をもう一度確認してください。",
     "Balance": "残高",
     "Syncing": "同期中",
     "change": "残りのsats",
@@ -1185,6 +1190,7 @@
     "Your first transaction starts here.": "最初の取引はここに表示されます。"
   },
   "th": {
+    "Recipient unavailable. Review the payment again.": "ไม่สามารถตรวจสอบผู้รับได้ โปรดตรวจสอบการชำระเงินอีกครั้ง",
     "Balance": "ยอดคงเหลือ",
     "Syncing": "กำลังซิงค์",
     "change": "sats ที่เหลือ",
@@ -1422,6 +1428,7 @@
     "Your first transaction starts here.": "ธุรกรรมแรกของคุณจะแสดงที่นี่"
   },
   "vi": {
+    "Recipient unavailable. Review the payment again.": "Không thể xác minh người nhận. Hãy kiểm tra lại khoản thanh toán.",
     "Balance": "Số dư",
     "Syncing": "Đang đồng bộ",
     "change": "sats còn lại",
@@ -1659,6 +1666,7 @@
     "Your first transaction starts here.": "Giao dịch đầu tiên của bạn sẽ xuất hiện ở đây."
   },
   "ta": {
+    "Recipient unavailable. Review the payment again.": "பெறுநரைச் சரிபார்க்க முடியவில்லை. பணப்பரிமாற்ற விவரங்களை மீண்டும் சரிபார்க்கவும்.",
     "Balance": "இருப்பு",
     "Syncing": "ஒத்திசைக்கிறது",
     "change": "மீதமுள்ள sats",
@@ -1896,6 +1904,7 @@
     "Your first transaction starts here.": "உங்கள் முதல் பரிவர்த்தனை இங்கே தோன்றும்."
   },
   "ar": {
+    "Recipient unavailable. Review the payment again.": "تعذر التحقق من المستلم. راجع تفاصيل الدفع مرة أخرى.",
     "Balance": "الرصيد",
     "Syncing": "جارٍ المزامنة",
     "change": "sats المتبقية",
@@ -2133,6 +2142,7 @@
     "Your first transaction starts here.": "ستظهر معاملتك الأولى هنا."
   },
   "zh-CN": {
+    "Recipient unavailable. Review the payment again.": "无法验证收款人。请重新核对付款信息。",
     "Balance": "余额",
     "Syncing": "正在同步",
     "change": "剩余 sats",

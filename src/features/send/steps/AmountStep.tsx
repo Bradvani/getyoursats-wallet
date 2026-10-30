@@ -3,7 +3,7 @@ import {useFlowText} from '@/hooks/useFlowText';
 import {useFiatData} from '../../../contexts/FiatDataContext';
 import DenominationTabs from '../../../getyoursats/DenominationTabs';
 import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useId } from 'react';
 import type { ConversionOptions } from '@breeztech/breez-sdk-spark';
 import { FormError, PrimaryButton, AMOUNT_FIELD_CLASS } from '../../../components/ui';
 import { useSheetBack } from '../../../components/ui/sheets/BottomSheetCardContext';
@@ -44,6 +44,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   amountFirst = false,
   destinationReviewed = false,
 }) => {
+  const amountInputId=useId();
   const t=useFlowText();
   // USD entry without a stable-balance token, funded from BTC. Cross-chain
   // ("Send USD", amountFirst) starts in USD; plain BTC sends start in sats
@@ -215,11 +216,12 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const unitUnavailable=isFiatDenomination(denomination)&&!currentRate&&!amountFirst;
   const amountSection = (
     <div>
-        <label className="block text-sm font-medium text-spark-text-primary mb-2">
+        <label htmlFor={amountInputId} className="block text-sm font-medium text-spark-text-primary mb-2">
           {t("Amount")}
         </label>
         <div className="relative">
           <input
+            id={amountInputId}
             type={isDenominated?'text':isTokenMode?'text':'number'}
             inputMode={isDenominated?'decimal':isTokenMode?'decimal':'numeric'}
             enterKeyHint="done"

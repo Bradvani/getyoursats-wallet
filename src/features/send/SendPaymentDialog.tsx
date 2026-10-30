@@ -282,7 +282,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
 
             {send.currentStep === 'amount' && (
               <AmountStep
-                paymentInput={send.paymentInput?.rawInput || ''}
+                paymentInput={send.paymentInput?.directRecipient?.lightningAddress ?? send.paymentInput?.rawInput ?? ''}
                 amount={send.amount}
                 balanceSats={send.balanceSats}
                 tokenBalance={send.tokenBalance}
@@ -330,6 +330,8 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
                     conversionEstimate={send.prepareResponse.conversionEstimate}
                     balanceSats={send.balanceSats}
                     tokenBalance={send.tokenBalance}
+                    recipient={send.paymentInput?.directRecipient?{label:ux.recipient,value:send.paymentInput.directRecipient.lightningAddress}:undefined}
+                    isLoading={send.isLoading}
                     onBack={() => send.setCurrentStep('input')}
                     onSend={send.handleSend}
                   />

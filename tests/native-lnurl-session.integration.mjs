@@ -6,6 +6,7 @@ import {mkdtemp, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {connect, defaultServerConfig} from '@breeztech/breez-sdk-spark';
+import {sparkAddressForIdentity} from '../site/server/gysDirectRecipients.mjs';
 
 const SEED = {type: 'mnemonic', mnemonic: 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'};
 
@@ -84,6 +85,10 @@ test('actual pinned SDK recovers, registers and restores a second-domain name wi
     const oldAddress = await main.registerLightningAddress({username: 'anonymous'});
     assert.equal(oldAddress.lnurl.url, `lnurlp://${new URL(original.url).host}/lnurlp/anonymous`);
     const identity = (await main.signMessage({message: 'gys-native-lnurl-session-v1', compact: true})).pubkey;
+    const direct=await main.parse(sparkAddressForIdentity(identity));
+    assert.equal(direct.type,'sparkAddress');
+    assert.equal(direct.identityPublicKey,identity);
+    assert.equal(direct.network,'bitcoin');
 
     const first = await session(native.url);
     assert.equal((await first.signMessage({message: 'gys-native-lnurl-session-v1', compact: true})).pubkey, identity);

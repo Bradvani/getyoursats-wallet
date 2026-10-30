@@ -8,6 +8,7 @@ import {
   cancelSendAuthorization,
   isSendAuthorizationError,
   requiresSendAuthorization,
+  sendPaymentWithValidation,
   subscribeSendAuthorization,
   withPasskeySendAuthorization,
 } from './sendAuthorization';
@@ -68,6 +69,34 @@ function request() {
 }
 
 describe('passkey send authorization', () => {
+  it('runs a request-bound recipient check after approval and before SDK execution', async () => {
+    const {client,raw}=await fixture();
+    const ceremony=deferred<SignInResponse>();
+    signIn.mockReturnValueOnce(ceremony.promise);
+    const validate=vi.fn(async()=>{expect(raw.sendPayment).not.toHaveBeenCalled();});
+    const reviewed={...request(),idempotencyKey:'00000000-0000-4000-8000-000000000001'};
+    const operation=sendPaymentWithValidation(client,reviewed as never,validate);
+    expect(validate).not.toHaveBeenCalled();
+    ceremony.resolve(response());
+    await operation;
+    expect(validate).toHaveBeenCalledOnce();
+    expect(raw.sendPayment).toHaveBeenCalledWith(reviewed);
+  });
+
+  it('cannot send when cancelled during the final recipient check', async () => {
+    const {client,raw}=await fixture();
+    const checked=deferred<void>();
+    const entered=deferred<void>();
+    const operation=sendPaymentWithValidation(client,request() as never,async()=>{
+      entered.resolve();await checked.promise;
+    }).catch(error=>error);
+    await entered.promise;
+    cancelSendAuthorization(client);
+    expect(await operation).toMatchObject({reason:'cancelled'});
+    checked.resolve();await checked.promise;
+    expect(raw.sendPayment).not.toHaveBeenCalled();
+  });
+
   it('ignores generic SDK proxy fallbacks for unknown symbol properties', () => {
     const fallback = vi.fn(async () => undefined);
     const client = new Proxy({} as BreezSdk, {

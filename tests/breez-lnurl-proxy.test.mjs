@@ -478,8 +478,42 @@ test('Breez owns replay rejection and its status and body pass back unchanged',a
 test('Vercel rewrites use a fixed function destination with no target query or named captures',async()=>{
   const config=JSON.parse(await readFile(new URL('../site/vercel.json',import.meta.url),'utf8'));
   assert.deepEqual(config.rewrites,[
+    {source:'/.well-known/gys/(.*)',destination:'/api/breez-lnurl'},
     {source:'/.well-known/lnurlp/(.*)',destination:'/api/breez-lnurl'},
     {source:'/lnurlp/(.*)',destination:'/api/breez-lnurl'},
     {source:'/lnurlpay/(.*)',destination:'/api/breez-lnurl'}
   ]);
+});
+
+test('only authenticated successful native recovery captures a direct recipient',async()=>{
+  const providerBody=JSON.stringify({username:'alice',lightning_address:'alice@getyoursats.com',lnurl:'lnurlp://getyoursats.com/lnurlp/alice'});
+  const metadata=JSON.stringify({tag:'payRequest',callback:'https://getyoursats.com/lnurlp/alice/invoice',
+    metadata:'[["text/identifier","alice@getyoursats.com"]]',allowsNostr:true,nostrPubkey:'a'.repeat(64)});
+  const app=harness({env:{GETYOURSATS_DIRECT_PAYMENTS_ENABLED:'true'},upstream:count=>({status:200,body:count===1?providerBody:metadata,headers:{}})});
+  const result=await app.invoke({url:BASE+'/recover',body:JSON.stringify(signedManagement('recover'))});
+  assert.equal(result.statusCode,200);
+  assert.equal(result.body.toString(),providerBody);
+  assert.equal(app.forwarded[1].options.path,'/.well-known/lnurlp/alice');
+  const args=JSON.parse(app.storage[0].options.body);
+  assert.equal(args[0],'EVAL');
+  assert.equal(JSON.parse(args[5]).identityPublicKey,pubkey);
+  const rejected=harness({env:{GETYOURSATS_DIRECT_PAYMENTS_ENABLED:'true'},upstreamStatus:401,upstreamBody:Buffer.from(providerBody)});
+  assert.equal((await rejected.invoke({url:BASE+'/recover'})).statusCode,401);
+  assert.equal(rejected.storage.length,0);
+});
+
+test('directory failure never breaks a successful address recovery',async()=>{
+  const app=harness({env:{GETYOURSATS_DIRECT_PAYMENTS_ENABLED:'true'},redisError:new Error('Unavailable'),upstreamBody:Buffer.from(JSON.stringify({
+    username:'alice',lightning_address:'alice@getyoursats.com',lnurl:'lnurlp://getyoursats.com/lnurlp/alice'}))});
+  assert.equal((await app.invoke({url:BASE+'/recover'})).statusCode,200);
+});
+
+test('public direct resolution is read only and cannot supply a proxy target',async()=>{
+  const app=harness();
+  const result=await app.invoke({url:'/.well-known/gys/alice',method:'GET',body:''});
+  assert.deepEqual(JSON.parse(result.body),{available:false});
+  assert.equal(result.headers['access-control-allow-origin'],'*');
+  assert.equal(app.forwarded.length,0);
+  assert.equal((await app.invoke({url:'/.well-known/gys/alice',method:'POST'})).statusCode,405);
+  assert.equal((await app.invoke({url:'/.well-known/gys/alice?target=elsewhere',method:'GET'})).statusCode,404);
 });
