@@ -11,6 +11,9 @@ import { getTokenBalance } from '../../../utils/tokenFormatting';
 import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
 import { destinationErrorMessage } from '@/utils/destinationAddress';
+import { cancelSendAuthorization, isSendAuthorizationError, requiresSendAuthorization, SendAuthorizationError, subscribeSendAuthorization } from '@/services/sendAuthorization';
+import { sendAuthorizationCopy } from '@/locales/sendAuthorization';
+import { getAppLanguage } from '@/services/presentationPreferences';
 
 /** The destination string inside a parsed input, or null for the types that
  *  are paid through their own workflow rather than a prepared destination. */
@@ -31,7 +34,7 @@ function bareDestination(parsed: InputType): string | null {
 const BAD_LOGIN_CODE = /lnurl (missing|contains invalid) k1|lnurl contains unsupported action/;
 
 export type SendStep ='destination' | 'input' | 'amount' | 'workflow' | 'processing' | 'result';
-export type ProcessingPhase = 'sending' | 'converting';
+export type ProcessingPhase = 'authorizing' | 'sending' | 'converting';
 
 export interface ProcessInputOptions {
   /** Set by callers that submit an input the user did not type: a scan or a
@@ -46,6 +49,7 @@ export interface UseSendPaymentReturn {
   paymentInput: SendInput | null;
   amount: string;
   error: string | null;
+  authorizationError: string | null;
   isLoading: boolean;
   prepareResponse: PrepareSendPaymentResponse | null;
   paymentResult: 'success' | 'failure' | 'unknown' | null;
@@ -67,6 +71,7 @@ export interface UseSendPaymentReturn {
   clearError: () => void;
   reset: () => void;
   cancelPendingInput: () => void;
+  cancelAuthorization: () => void;
   processInput: (input?: string | null, opts?: ProcessInputOptions) => Promise<void>;
   onAmountNext: (amount: bigint, includeFees?: boolean, tokenIdentifier?: string, conversionOptions?: ConversionOptions) => Promise<void>;
   handleSend: (options?: SendPaymentOptions) => Promise<void>;
@@ -79,6 +84,9 @@ export function useSendPayment(): UseSendPaymentReturn {
   const wallet = useWallet();
   const executionStarted = useRef(false);
   const inputGeneration = useRef(0);
+  const executionPhase = useRef<'sending' | 'converting'>('sending');
+  const authorizationPending = useRef(false);
+  const authorizationCancelled = useRef(false);
   const walletInfo = useWalletInfo();
   const stableBalance = useStableBalance();
 
@@ -86,6 +94,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   const [paymentInput, setPaymentInput] = useState<SendInput | null>(null);
   const [amount, setAmount] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [authorizationError, setAuthorizationError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [prepareResponse, setPrepareResponse] = useState<PrepareSendPaymentResponse | null>(null);
   const [paymentResult, setPaymentResult] = useState<'success' | 'failure' | 'unknown' | null>(null);
@@ -97,7 +106,20 @@ export function useSendPayment(): UseSendPaymentReturn {
   const [tokenIdentifier, setTokenIdentifier] = useState<string | null>(null);
 
   // An unmounted sheet or changed wallet cannot resume previous input work.
-  useLayoutEffect(() => () => {inputGeneration.current += 1;}, [wallet]);
+  useLayoutEffect(() => {
+    const unsubscribe = subscribeSendAuthorization(wallet, authorizing => {
+      if (executionStarted.current) {
+        authorizationPending.current = authorizing;
+        setProcessingPhase(authorizing ? 'authorizing' : executionPhase.current);
+      }
+    });
+    return () => {
+      inputGeneration.current += 1;
+      authorizationCancelled.current = true;
+      unsubscribe();
+      cancelSendAuthorization(wallet);
+    };
+  }, [wallet]);
 
   const isCurrentInput = useCallback((generation: number) =>
     generation === inputGeneration.current && !executionStarted.current, []);
@@ -133,6 +155,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     }
     setIsLoading(true);
     setError(null);
+    setAuthorizationError(null);
     try {
       const response = await wallet.prepareSendPayment({
         paymentRequest: { type: 'input', input: paymentRequest },
@@ -173,6 +196,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     // prepare response from any previous attempt so a re-submitted input (e.g. the
     // same URI with its amount removed) doesn't carry the old values forward.
     setAmount('');
+    setAuthorizationError(null);
     setFeesIncluded(false);
     setAmountFixed(false);
     setPrepareResponse(null);
@@ -311,16 +335,19 @@ export function useSendPayment(): UseSendPaymentReturn {
   const handleSend = useCallback(async (options?: SendPaymentOptions) => {
     if (!prepareResponse || executionStarted.current) return;
     executionStarted.current = true;
+    authorizationCancelled.current = false;
+    authorizationPending.current = requiresSendAuthorization(wallet);
     setTransferStage('preparing');
     const hasConversion = !!prepareResponse.conversionEstimate;
     logger.info(LogCategory.PAYMENT, 'handleSend called', {
       hasConversion,
-      conversionEstimate: prepareResponse.conversionEstimate ? JSON.parse(JSON.stringify(prepareResponse.conversionEstimate)) : null,
     });
-    setProcessingPhase(hasConversion ? 'converting' : 'sending');
+    executionPhase.current = hasConversion ? 'converting' : 'sending';
+    setProcessingPhase(requiresSendAuthorization(wallet) ? 'authorizing' : executionPhase.current);
     setCurrentStep('processing');
     setIsLoading(true);
     setError(null);
+    setAuthorizationError(null);
 
     let listenerId: string | undefined;
     if (hasConversion) {
@@ -336,7 +363,7 @@ export function useSendPayment(): UseSendPaymentReturn {
                     initialBalance,
                     currentBalance,
                   });
-                  setProcessingPhase('sending');
+                  setProcessingPhase(current => current === 'authorizing' ? current : 'sending');
                 }
               } catch { /* best-effort balance check */ }
             }
@@ -347,7 +374,9 @@ export function useSendPayment(): UseSendPaymentReturn {
       }
     }
 
+    let authorizationFailed = false;
     try {
+      if (authorizationCancelled.current) throw new SendAuthorizationError('cancelled');
       setTransferStage('processing');
       const outcome = await wallet.sendPayment({ prepareResponse, options });
       setPaymentResult(paymentOutcome(outcome));
@@ -355,6 +384,15 @@ export function useSendPayment(): UseSendPaymentReturn {
       else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
       setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
+      if (isSendAuthorizationError(err)) {
+        authorizationFailed = true;
+        executionStarted.current = false;
+        const copy = sendAuthorizationCopy(getAppLanguage());
+        setAuthorizationError(err.reason === 'unavailable' ? copy.unavailable : err.reason === 'changed' ? copy.changed : copy.notSent);
+        setPaymentResult(null);
+        setCompletedPayment(null);
+        return;
+      }
       logger.error(LogCategory.PAYMENT, 'Payment failed', { error: formatError(err) });
       setError(`Payment failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
       // An exception is not proof that a payment failed to settle.
@@ -364,19 +402,24 @@ export function useSendPayment(): UseSendPaymentReturn {
         wallet.removeEventListener(listenerId).catch(() => {});
       }
       setProcessingPhase('sending');
+      authorizationPending.current = false;
       setIsLoading(false);
-      setCurrentStep('result');
+      setCurrentStep(authorizationFailed ? 'workflow' : 'result');
     }
   }, [wallet, prepareResponse]);
 
   const handleRun = useCallback(async (runner: () => Promise<PaymentExecutionResult>, hasConversion?: boolean) => {
     if (executionStarted.current) return;
     executionStarted.current = true;
+    authorizationCancelled.current = false;
+    authorizationPending.current = requiresSendAuthorization(wallet);
     setTransferStage('preparing');
-    setProcessingPhase(hasConversion ? 'converting' : 'sending');
+    executionPhase.current = hasConversion ? 'converting' : 'sending';
+    setProcessingPhase(requiresSendAuthorization(wallet) ? 'authorizing' : executionPhase.current);
     setCurrentStep('processing');
     setIsLoading(true);
     setError(null);
+    setAuthorizationError(null);
 
     let listenerId: string | undefined;
     if (hasConversion) {
@@ -392,7 +435,7 @@ export function useSendPayment(): UseSendPaymentReturn {
                     initialBalance,
                     currentBalance,
                   });
-                  setProcessingPhase('sending');
+                  setProcessingPhase(current => current === 'authorizing' ? current : 'sending');
                 }
               } catch { /* best-effort balance check */ }
             }
@@ -403,7 +446,9 @@ export function useSendPayment(): UseSendPaymentReturn {
       }
     }
 
+    let authorizationFailed = false;
     try {
+      if (authorizationCancelled.current) throw new SendAuthorizationError('cancelled');
       setTransferStage('processing');
       const outcome = await runner();
       setPaymentResult(paymentOutcome(outcome));
@@ -411,6 +456,15 @@ export function useSendPayment(): UseSendPaymentReturn {
       else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
       setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
+      if (isSendAuthorizationError(err)) {
+        authorizationFailed = true;
+        executionStarted.current = false;
+        const copy = sendAuthorizationCopy(getAppLanguage());
+        setAuthorizationError(err.reason === 'unavailable' ? copy.unavailable : err.reason === 'changed' ? copy.changed : copy.notSent);
+        setPaymentResult(null);
+        setCompletedPayment(null);
+        return;
+      }
       logger.error(LogCategory.PAYMENT, 'Operation failed during payment flow', { error: formatError(err) });
       setError(`Operation failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
       // An exception is not proof that a payment failed to settle.
@@ -420,8 +474,9 @@ export function useSendPayment(): UseSendPaymentReturn {
         wallet.removeEventListener(listenerId).catch(() => {});
       }
       setProcessingPhase('sending');
+      authorizationPending.current = false;
       setIsLoading(false);
-      setCurrentStep('result');
+      setCurrentStep(authorizationFailed ? 'workflow' : 'result');
     }
   }, [wallet]);
 
@@ -433,6 +488,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     setAmount('');
     setPrepareResponse(null);
     setError(null);
+    setAuthorizationError(null);
     setIsLoading(false);
     setFeesIncluded(false);
     setPaymentInput(null);
@@ -456,6 +512,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   const backToAmount = useCallback(() => {
     setAmount('');
     setError(null);
+    setAuthorizationError(null);
     setCurrentStep('amount');
   }, []);
 
@@ -464,6 +521,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     paymentInput,
     amount,
     error,
+    authorizationError,
     isLoading,
     prepareResponse,
     paymentResult,
@@ -482,14 +540,20 @@ export function useSendPayment(): UseSendPaymentReturn {
       setAmount('');
       setPrepareResponse(null);
       setError(null);
+      setAuthorizationError(null);
       setIsLoading(false);
       setTokenIdentifier(null);
       setFeesIncluded(false);
       setCurrentStep('amount');
     }, []),
-    clearError: useCallback(() => setError(null), []),
+    clearError: useCallback(() => {setError(null); setAuthorizationError(null);}, []),
     reset,
     cancelPendingInput,
+    cancelAuthorization: useCallback(() => {
+      if (!authorizationPending.current) return;
+      authorizationCancelled.current = true;
+      cancelSendAuthorization(wallet);
+    }, [wallet]),
     processInput,
     onAmountNext,
     handleSend,
