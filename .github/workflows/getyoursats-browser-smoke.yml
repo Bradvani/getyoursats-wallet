@@ -41,6 +41,12 @@ jobs:
               raise SystemExit('Expected runner Ubuntu mirror was not found; inspect the runner sources')
           PY
       - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Verify send keyboard geometry across browser engines
+        run: npx playwright test e2e/tests/ios-send-keyboard.spec.ts --project chromium --project firefox --project webkit
+        env:
+          VITE_BREEZ_API_KEY: ''
+          VITE_SPARK_LOCAL_CONFIG: ''
+          VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
       - name: Build and verify the shipped wallet artifact
         run: npm run build && npx playwright test -c playwright.production.config.ts
         env:

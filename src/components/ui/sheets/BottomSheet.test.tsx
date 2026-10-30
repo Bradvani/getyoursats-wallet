@@ -70,7 +70,9 @@ describe('useSheetOwnsScroll', () => {
     expect(scrollerTouchAction()).toBe('pan-y');
 
     fireEvent.click(screen.getByRole('button', { name: 'leave' }));
-    await waitFor(() => expect(scrollerTouchAction()).toBe('pan-down'));
+    await waitFor(() => expect(screen.queryByText('list')).toBeNull());
+    // On web, the content stays a scroll surface after leaving the nested list.
+    expect(document.querySelector('.web-sheet-scrollport')).not.toBeNull();
   });
 });
 
