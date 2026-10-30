@@ -20,6 +20,8 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: node --test tests/*.test.mjs
+      - name: Verify RampNow wallet proof with the pinned SDK without funds
+        run: node --test tests/rampnow-sdk-proof.integration.mjs
       - name: Install isolated Redis acceptance dependency
         run: sudo apt-get update && sudo apt-get install -y redis-server
       - name: Verify cross-instance support quotas without external delivery

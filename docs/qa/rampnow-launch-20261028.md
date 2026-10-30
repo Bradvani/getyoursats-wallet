@@ -1,6 +1,18 @@
 # RampNow integration and launch evidence
 
-28 October 2026. Scope: GetYourSats BTC on/off ramps. **Sandbox integration in progress; public Buy/Sell and checkout submission remain disabled.** No provider order, customer registration or real payment has been submitted.
+Updated 30 October 2026. Scope: GetYourSats BTC on/off ramps. **Public Buy/Sell and checkout submission remain disabled.** No provider order, customer registration or real payment has been submitted.
+
+## Current activation decision
+
+The provider does not offer a Bitcoin sandbox or Lightning settlement. The existing signet-only checkout therefore cannot become a working BTC route by enabling its flags. The next possible release is a provider-approved, limited **mainnet on-chain BTC Buy pilot**, after production access and the complete wallet journey are ready. Sell needs separate funding/exit work and acceptance. Sandbox credentials must never be reused as production credentials, and Bitcoin testnet must never be treated as signet.
+
+Production RampNow credentials are not provisioned. The available key and secret remain Preview-only; the sandbox database is scoped to the integration branch. Production account activation, approved BTC settlement instructions, minimums and a provider-originated signed event remain outstanding. Commercial quotes belong in the partner discussion, not this public repository; the checkout review must disclose the full current price, all fee currencies, inclusive/exclusive treatment and the BTC amount before confirmation. A platform fee alone must not be presented as the total cost.
+
+Fresh preview `dpl_C4n6d7ZMxkx7PpY6eRVEViLHScZB`, source `69b42db8ba53a2aba4b30aaf75e7e79d2e3d06b6`, reran the deployment checks on 30 October. API authentication, isolated storage, signed synthetic HTTP delivery, tamper rejection, duplicate handling and exact probe cleanup passed. Callback inspection scanned zero records and found zero provider candidates. Bitcoin metadata still failed strict validation (`node_protocol`); no network override was introduced. Checkout GET returned `available:false`, `reason:checkout_disabled`, `environment:sandbox`.
+
+`tests/rampnow-sdk-proof.integration.mjs` now verifies the actual pinned SDK's compact signature against the server verifier using an isolated, unfunded regtest session. It rejects changed origin, purpose, payload, nonce and environment, and rejects the noncompact encoding. This closes signature-format compatibility only; it does not establish mainnet deposit, settlement, browser session binding or device acceptance. CI runs it separately from mock-based tests.
+
+The remaining app work is explicit: wallet-generated deposit address and claim-fee review; checkout/profile and full-price review; production environment and ownership isolation; durable return/activity recovery; independently matched wallet receipt and spendable credit; and operations for late events. A hosted provider completion page or webhook cannot establish spendable Spark funds. The current browser client is still not wired into those screens.
 
 ## Current implementation
 
@@ -54,12 +66,12 @@ For the return-network correction, 23 negative regression cases failed against t
 
 ## Work still required before activation
 
-1. Obtain RampNow's exact BTC sandbox network, compatible chain metadata, KYC test procedure and any required console activation. Verify a provider-originated signed event against its console/order evidence.
+1. Obtain explicit approval for a small BTC mainnet/on-chain pilot in place of the unavailable Bitcoin sandbox, production account access and dashboard-provisioned credentials. Confirm BTC minimums, supported address types, KYC/payment procedure and current full-price terms. Verify a provider-originated signed event against its console/order evidence. Keep Buy and Sell approvals separate.
 2. Connect Buy to the unlocked wallet's generated BTC deposit address and confirmed matching network; never accept a provider mainnet address in sandbox. Verify the proof with the actual installed SDK signing wrapper, then show source amount, BTC estimate, all fees, legal provider disclosure and the required profile collection before a fresh signed submission. The SDK returns receive-address fee information, while claim quotes require an existing deposit outpoint; establish deposit minimum/claim-fee treatment before acceptance.
 3. Implement the `/rampnow/return` and activity/reload UI without inferring payment from a redirect. Network selection is now explicitly checked before wallet configuration; the owning wallet and saved intent still need to be verified by the return flow. Persist pending IDs safely and reconcile them with the owning wallet. Provider `completed` must be independently matched to actual wallet receipt and spendable credit.
 4. Finish background reconciliation and operations for quarantined/delayed events, support recovery and production retention. Current sandbox intent/state retention is thirty days and is not an accounting ledger.
 5. Implement Sell separately using verified BTC funding instructions, expiry, exact amount and fee treatment. Current Create Order response supplies only order/user IDs and a hosted URL, not validated BTC funding instructions. INR beneficiaries require tax ID and IFSC in `bic`. Complete the protected wallet on-chain exit path before enabling Sell.
-6. Pass sandbox completed/failed/expired, duplicate/out-of-order/replay, interrupted submission, mobile return and wallet reload scenarios. Integrate the final wallet security artifact and prove deposit/withdrawal/recovery on it. Obtain provider production approval, then conduct explicitly controlled small live buy/sell acceptance with exact fiat/crypto reconciliation. Merge/deploy/enable each direction only after those checks.
+6. Pass completed/failed/expired, duplicate/out-of-order/replay, interrupted submission, mobile return and wallet reload scenarios using local tests and the provider-approved test procedure. Integrate the final wallet security artifact and prove deposit/withdrawal/recovery on it. After provider approval and application readiness, the wallet owner must personally authorize and fund the minimum live Buy acceptance test. Reconcile fiat paid, provider `dstFillAmount`, the on-chain transaction, wallet claim fees and spendable credit before widening the pilot. Sell requires its own controlled acceptance; a Buy pass does not enable Sell.
 
 ## Contract references inspected
 
