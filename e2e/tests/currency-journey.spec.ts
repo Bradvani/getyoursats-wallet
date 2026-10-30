@@ -71,3 +71,21 @@ test('INR receipt grouping is independent of interface language', async ({page})
   await page.goto('/e2e/fixtures/payment-fiat.html?currency=INR&sats=100000000&lang=es');
   await expect(page.getByTestId('payment-fiat-amount')).toContainText('₹90,00,000.');
 });
+
+test('native currency controls load the selected script font and preserve RTL', async ({page}) => {
+  await page.setViewportSize({width:360,height:900});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  for (const [language, font] of [['hi','Noto Sans Devanagari'],['ta','Noto Sans Tamil'],['ar','Noto Sans Arabic'],['zh-CN','Noto Sans SC']]) {
+    await page.goto(`/e2e/fixtures/wallet-setup.html?lang=${language}`);
+    const guide = page.getByTestId('wallet-setup-guide');
+    for (let step = 0; step < 6 && await guide.getAttribute('data-wallet-tour-step') !== 'balance'; step++) await page.getByTestId('wallet-setup-next').click();
+    const choice = page.getByTestId('setup-currency');
+    await choice.selectOption('INR');
+    await page.evaluate(() => document.fonts.ready);
+    expect(await choice.evaluate(node => getComputedStyle(node).fontFamily)).toContain(font);
+    expect(await page.evaluate(family => document.fonts.check(`16px "${family}"`), font)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+    await choice.scrollIntoViewIfNeeded();
+    await page.screenshot({path:`test-artifacts/currency-script-${language}.png`});
+  }
+});

@@ -767,7 +767,7 @@ h6 {
   textarea,
   input,
   select {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: var(--gys-locale-font, 'Plus Jakarta Sans'), system-ui, sans-serif;
     background: var(--spark-dark);
     color: var(--spark-text-primary);
     border: 1px solid var(--spark-border);
@@ -796,8 +796,10 @@ select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
-  padding-right: 40px;
+  padding-inline-end: 40px;
+  padding-inline-start: 16px;
 }
+select:dir(rtl) { background-position: left 12px center; }
 
 /* ============================================
    LIST ITEMS / TRANSACTIONS
