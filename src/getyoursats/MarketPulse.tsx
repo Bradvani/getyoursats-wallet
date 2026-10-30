@@ -78,7 +78,7 @@ export default function MarketPulse(){
     <div className="gys-market-pulse__bottom">
       <span>{fetchedAt
         ?(stale?'Last known rate · ':'Updated ')+new Date(fetchedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
-        :'Waiting for a wallet quote'} · Indicative only</span>
+        :'Fetching Bitcoin price'} · Indicative only</span>
       <button type="button" onClick={()=>void refreshFiatData()} aria-label="Refresh Bitcoin price">
         ↻ Refresh
       </button>

@@ -5,6 +5,9 @@ import { WalletProvider } from './WalletContext';
 import { FiatDataProvider, useFiatData } from './FiatDataContext';
 import { createMockClient } from '@/test/mocks/mockWalletApi';
 
+beforeEach(() => {vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));});
+afterEach(() => {vi.unstubAllGlobals();});
+
 const UsdRate = () => {
   const { fiatRates } = useFiatData();
   return <span data-testid="usd">{fiatRates.find(r => r.coin === 'USD')?.value ?? 'none'}</span>;
@@ -39,6 +42,25 @@ const RefreshButton = () => {
 };
 
 describe('refreshFiatData', () => {
+  it('publishes rates even when the independent currency-label request fails', async () => {
+    const client = createMockClient();
+    vi.mocked(client.listFiatCurrencies).mockImplementation(() => {throw new Error('labels unavailable');});
+    renderWithRates(client);
+    expect(await screen.findByText('100000')).toBeVisible();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('uses a public rate snapshot when the SDK feed is unavailable', async () => {
+    const client = createMockClient();
+    vi.mocked(client.listFiatRates).mockRejectedValue(new Error('SDK feed unavailable'));
+    vi.mocked(client.listFiatCurrencies).mockRejectedValue(new Error('labels unavailable'));
+    vi.mocked(fetch).mockResolvedValue(Response.json({base:'BTC',source:'coinbase',fetchedAt:Date.now(),
+      rates:[{coin:'USD',value:80000},{coin:'INR',value:7200000}]}));
+    renderWithRates(client);
+    expect(await screen.findByText('80000')).toBeVisible();
+    expect(fetch).toHaveBeenCalledWith('/api/market-rates',expect.objectContaining({credentials:'omit',redirect:'error'}));
+  });
+
   it('fetches a current rate instead of reusing the loaded one', async () => {
     const client = createMockClient();
     render(
