@@ -1,5 +1,8 @@
 import {randomBytes} from 'node:crypto';
 import {PREFIX, digest} from './pushCore.mjs';
+import {pushAuthorizationMessage} from '../shared/pushAuthorization.mjs';
+
+const RETENTION=180*86400;
 
 function storeConfig() {
   const endpoint = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
@@ -40,24 +43,24 @@ export async function fixedRateLimit(key,max,seconds) {
   if (!Number.isSafeInteger(count) || count<1) throw new Error('Notification storage unavailable');
   if (count>max) throw Object.assign(new Error('Too many requests'),{status:429});
 }
-export async function issueChallenge(action,pub,ip) {
+export async function issueChallenge(action,pub,ip,payloadHash) {
   await fixedRateLimit('challenge:'+ip,30,3600);
   await fixedRateLimit('wallet:'+pub,25,3600);
   const id=randomBytes(16).toString('hex');
-  const message='gys-push-v1:'+action+':'+pub+':'+id;
-  const stored=await redis('SET',challengeKey(id),JSON.stringify({action,pub,message}),'EX',300,'NX');
+  const message=pushAuthorizationMessage(action,pub,id,payloadHash);
+  const stored=await redis('SET',challengeKey(id),JSON.stringify({action,pub,message,payloadHash}),'EX',300,'NX');
   if (stored!=='OK') throw new Error('Notification storage unavailable');
   return {challengeId:id,message,expiresIn:300};
 }
-export async function consumeChallenge(action,pub,id,signature,verifyOwnership) {
+export async function consumeChallenge(action,pub,id,signature,verifyOwnership,payloadHash) {
   if(typeof id!=='string'||!/^[a-f0-9]{32}$/.test(id))
     throw Object.assign(new Error('Invalid challenge'),{status:400});
   const raw=await redis('GETDEL',challengeKey(id));
   if (!raw) throw Object.assign(new Error('Notification authorization expired'),{status:409});
   let saved;
   try {saved=JSON.parse(raw);}catch{throw new Error('Notification storage unavailable');}
-  if (saved.action!==action || saved.pub!==pub ||
-      saved.message!=='gys-push-v1:'+action+':'+pub+':'+id ||
+  if (saved.action!==action || saved.pub!==pub || saved.payloadHash!==payloadHash ||
+      saved.message!==pushAuthorizationMessage(action,pub,id,payloadHash) ||
       !verifyOwnership(saved.message,pub,signature))
     throw Object.assign(new Error('Wallet authorization failed'),{status:401});
 }
@@ -74,7 +77,7 @@ export async function ensureWallet(pub) {
   if(existing)return existing;
   const record={secret:randomBytes(32).toString('hex'),createdAt:Date.now(),
     registered:false,webhookId:null};
-  await redis('SET',walletKey(pub),JSON.stringify(record),'NX');
+  await redis('SET',walletKey(pub),JSON.stringify(record),'EX',RETENTION,'NX');
   return getWallet(pub);
 }
 export async function listSubscriptions(pub) {
@@ -99,9 +102,9 @@ export async function saveSubscription(pub,subscription) {
   const endpoint=subscription.endpoint;
   const ownerKey=endpointKey(endpoint);
   const id=subscriptionId(endpoint);
-  const record=JSON.stringify({...subscription,active:false,enabledAt:Date.now()});
-  const script="local old=redis.call('GET',KEYS[1]);if old and old~=ARGV[1] then redis.call('HDEL',KEYS[2]..old,ARGV[2]) end;local count=redis.call('HLEN',KEYS[2]..ARGV[1]);if count>=5 and redis.call('HEXISTS',KEYS[2]..ARGV[1],ARGV[2])==0 then return 'TOO_MANY' end;redis.call('HSET',KEYS[2]..ARGV[1],ARGV[2],ARGV[3]);redis.call('SET',KEYS[1],ARGV[1]);return 'OK'";
-  const result=await redis('EVAL',script,2,ownerKey,PREFIX+'subs:',pub,id,record);
+  const record=JSON.stringify({...subscription,active:false,enabledAt:Date.now(),revision:randomBytes(16).toString('hex')});
+  const script="local count=redis.call('HLEN',KEYS[2]..ARGV[1]);if count>=5 and redis.call('HEXISTS',KEYS[2]..ARGV[1],ARGV[2])==0 then return 'TOO_MANY' end;local old=redis.call('GET',KEYS[1]);if old and old~=ARGV[1] then redis.call('HDEL',KEYS[2]..old,ARGV[2]) end;redis.call('HSET',KEYS[2]..ARGV[1],ARGV[2],ARGV[3]);redis.call('EXPIRE',KEYS[2]..ARGV[1],ARGV[4]);redis.call('SET',KEYS[1],ARGV[1],'EX',ARGV[4]);return 'OK'";
+  const result=await redis('EVAL',script,2,ownerKey,PREFIX+'subs:',pub,id,record,RETENTION);
   if(result!=='OK')throw Object.assign(new Error('Device notification limit reached'),{status:409});
   return id;
 }
@@ -114,10 +117,9 @@ export async function activateSubscription(pub,endpoint,webhookId) {
   const active={...current,active:true,enabledAt:Date.now()};
   // Atomic update of activation and retained webhook ID. A second device
   // must not erase an existing valid provider registration.
-  const script="if redis.call('GET',KEYS[1])~=ARGV[1] then return 'CHANGED' end;redis.call('HSET',KEYS[2],ARGV[2],ARGV[3]);redis.call('SET',KEYS[3],ARGV[4]);return 'OK'";
-  const next={...wallet,registered:true,webhookId:wallet.webhookId || webhookId};
+  const script="if redis.call('GET',KEYS[1])~=ARGV[1] or redis.call('HGET',KEYS[2],ARGV[2])~=ARGV[4] then return 'CHANGED' end;local raw=redis.call('GET',KEYS[3]);if not raw then return 'CHANGED' end;local wallet=cjson.decode(raw);if ARGV[5]~='' then wallet.registered=true;wallet.webhookId=wallet.webhookId or ARGV[5];if wallet.webhookId==cjson.null then wallet.webhookId=ARGV[5] end end;redis.call('HSET',KEYS[2],ARGV[2],ARGV[3]);redis.call('EXPIRE',KEYS[2],ARGV[6]);redis.call('EXPIRE',KEYS[1],ARGV[6]);redis.call('SET',KEYS[3],cjson.encode(wallet),'EX',ARGV[6]);return 'OK'";
   const ok=await redis('EVAL',script,3,endpointKey(endpoint),subKey(pub),walletKey(pub),
-    pub,subscriptionId(endpoint),JSON.stringify(active),JSON.stringify(next));
+    pub,subscriptionId(endpoint),JSON.stringify(active),JSON.stringify(current),webhookId||'',RETENTION);
   if(ok!=='OK')throw Object.assign(new Error('Notification subscription changed'),{status:409});
 }
 export async function removeSubscription(pub,endpoint) {

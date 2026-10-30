@@ -47,7 +47,12 @@ function setup(endpointOwner=wallet){
         const [key,v,...rest]=args;
         if(rest.includes('NX')&&table.has(key))value=null;
         else {table.set(key,v);value='OK';}
-      }else if(command==='EVAL')value=1;
+      }else if(command==='EVAL'){
+        const [script,,key,nonce]=args;
+        if(table.get(key)!==nonce)value=0;
+        else if(script.includes("'delivered'")){table.set(key,'delivered');value=1;}
+        else {table.delete(key);value=1;}
+      }
       else if(command==='HDEL')value=1;
       else throw new Error('Unexpected Redis command: '+command);
       return Response.json({result:value});
@@ -161,5 +166,62 @@ test('moving a push endpoint to another wallet blocks the old wallet callback',a
     });
     assert.equal((await sparkHandler(request)).status,200);
     assert.equal(ctx.pushes,0);
+  }finally{ctx.restore();}
+});
+
+test('Breez nullable address is authenticated by its domain secret and receiver key',async()=>{
+  const ctx=setup();
+  try{
+    const event=signed({template:'spark_payment_received',data:{
+      payment_hash:'b'.repeat(64),user_pubkey:wallet,lightning_address:null,timestamp:Date.now(),
+    }},lnurlSecret);
+    const response=await lnurlHandler(new Request('https://wallet.getyoursats.com/api/notifications/lnurl',{
+      method:'POST',headers:{'x-breez-signature':event.hmac},body:event.text,
+    }));
+    assert.equal(response.status,200);assert.equal(ctx.pushes,1);
+  }finally{ctx.restore();}
+});
+
+test('Breez rejects invalid signatures, raw-byte changes and malformed signed events without pushing',async()=>{
+  const ctx=setup();
+  const data={payment_hash:'c'.repeat(64),user_pubkey:wallet,
+    lightning_address:'alice@getyoursats.com',timestamp:Date.now()};
+  const invoke=(body,signature,headers={})=>lnurlHandler(new Request('https://wallet.getyoursats.com/api/notifications/lnurl',{
+    method:'POST',headers:{...headers,...(signature?{'x-breez-signature':signature}:{})},body,
+  }));
+  try{
+    const original=signed({template:'spark_payment_received',data},lnurlSecret);
+    for(const signature of [undefined,'f'.repeat(64),'f'.repeat(63),'z'.repeat(64)])
+      assert.equal((await invoke(original.text,signature)).status,401);
+    assert.equal((await invoke(original.text+' ',original.hmac)).status,401);
+    for(const patch of [{lightning_address:'alice@breez.tips'}, {lightning_address:'a@getyoursats.com.evil.test'},
+      {lightning_address:undefined},{user_pubkey:'bad'},{payment_hash:'bad'},
+      {timestamp:Date.now()+301_000},{timestamp:Date.now()-8*86400_000}]){
+      const event=signed({template:'spark_payment_received',data:{...data,...patch}},lnurlSecret);
+      assert.equal((await invoke(event.text,event.hmac)).status,400);
+    }
+    for(const bytes of [Buffer.from('{'),Buffer.from([0xff,0xfe])]){
+      const hmac=createHmac('sha256',lnurlSecret).update(bytes).digest('hex');
+      assert.equal((await invoke(bytes,hmac)).status,400);
+    }
+    assert.equal((await invoke('x'.repeat(16385),'f'.repeat(64))).status,413);
+    assert.equal((await invoke(original.text,original.hmac,{'content-length':'999999'})).status,413);
+    assert.equal(ctx.pushes,0);
+  }finally{ctx.restore();}
+});
+
+test('Breez disabled or unprovisioned endpoints fail closed before delivery',async()=>{
+  const ctx=setup();
+  try{
+    const event=signed({template:'spark_payment_received',data:{
+      payment_hash:'d'.repeat(64),user_pubkey:wallet,lightning_address:null,timestamp:Date.now(),
+    }},lnurlSecret);
+    const invoke=()=>lnurlHandler(new Request('https://wallet.getyoursats.com/api/notifications/lnurl',{
+      method:'POST',headers:{'x-breez-signature':event.hmac},body:event.text,
+    }));
+    process.env.GYS_BREEZ_LNURL_PUSH_ENABLED='false';
+    assert.equal((await invoke()).status,503);
+    process.env.GYS_BREEZ_LNURL_PUSH_ENABLED='true';delete process.env.GYS_BREEZ_LNURL_WEBHOOK_SECRET;
+    assert.equal((await invoke()).status,503);assert.equal(ctx.pushes,0);
   }finally{ctx.restore();}
 });

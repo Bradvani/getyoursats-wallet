@@ -20,32 +20,33 @@ export async function notifyWallet(pub,id,eventAt,vapid) {
     return {status:marker==='delivered'?200:503,notified:marker==='delivered'};
   }
   let retry=false;
-  for(const sub of targets){
+  await Promise.all(targets.map(async sub=>{
     const deviceReceipt=PREFIX+'receipt-device:'+pub+':'+receiptKey(pub,id).split(':').at(-1)
       +':'+subscriptionId(sub.endpoint);
     try{
       // A push endpoint may be moved to a different wallet while an older
       // webhook callback is queued. Revalidate ownership and consent immediately
       // before delivery to prevent cross-wallet lock-screen notifications.
-      if(await redis('GET',endpointKey(sub.endpoint))!==pub)continue;
+      if(await redis('GET',endpointKey(sub.endpoint))!==pub)return;
       const current=await getSubscription(pub,sub.endpoint);
-      if(current?.active!==true)continue;
+      if(current?.active!==true || current.revision!==sub.revision || current.enabledAt!==sub.enabledAt)return;
       // A partial fanout can be retried by Breez. Preserve already successful
       // device delivery markers so one broken handset cannot double-alert
       // every other subscribed device.
-      if(await redis('GET',deviceReceipt)==='delivered')continue;
+      if(await redis('GET',deviceReceipt)==='delivered')return;
       const result=await sendEmptyWebPush(sub.endpoint,vapid);
       if(result.expired)await removeSubscription(pub,sub.endpoint);
       if(result.delivered||result.expired){
         await redis('SET',deviceReceipt,'delivered','EX',30*86400);
       }else retry=true;
     }catch{retry=true;}
-  }
+  }));
   if(retry){
     const release="if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) else return 0 end";
     await redis('EVAL',release,1,lock,nonce);
     return {status:503,notified:false};
   }
-  await redis('SET',lock,'delivered','EX',30*86400);
-  return {status:200,notified:true};
+  const complete="if redis.call('GET',KEYS[1])==ARGV[1] then redis.call('SET',KEYS[1],'delivered','EX',ARGV[2]);return 1 else return 0 end";
+  const completed=await redis('EVAL',complete,1,lock,nonce,30*86400);
+  return {status:completed===1?200:503,notified:completed===1};
 }

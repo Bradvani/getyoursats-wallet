@@ -3,6 +3,11 @@ import {createHash, createHmac, createPrivateKey, createPublicKey, ECDH, sign, t
 // No private wallet data ever belongs in a notification payload or server log.
 export const ORIGIN = 'https://wallet.getyoursats.com';
 export const PREFIX = 'gys:notify:v1:';
+export function breezLnurlSecret(env=process.env) {
+  const secret=env.GYS_BREEZ_LNURL_WEBHOOK_SECRET;
+  return env.GYS_PUSH_ENABLED==='true' && env.GYS_BREEZ_LNURL_PUSH_ENABLED==='true'
+    && typeof secret==='string' && secret.length>=32 ? secret : null;
+}
 const TRUSTED_PUSH_HOSTS = new Set([
   'web.push.apple.com', 'fcm.googleapis.com',
   'updates.push.services.mozilla.com', 'push.services.mozilla.com',
@@ -44,7 +49,7 @@ export const digest = (value) => createHash('sha256').update(value).digest('hex'
 export function verifyOwnership(message, pub, signature) {
   try {
     pub = walletPubkey(pub);
-    if (typeof message !== 'string' || !/^gys-push-v1:(subscribe|activate|status|unsubscribe):(?:02|03)[0-9a-f]{64}:[a-f0-9]{32}$/.test(message))
+    if (typeof message !== 'string' || !/^gys-push-v2:https:\/\/wallet\.getyoursats\.com:(subscribe|activate|status|unsubscribe):(?:02|03)[0-9a-f]{64}:[a-f0-9]{32}:[a-f0-9]{64}$/.test(message))
       return false;
     if (!message.includes(':' + pub + ':') || typeof signature !== 'string' || !/^[a-f0-9]{128}$/i.test(signature))
       return false;
@@ -105,7 +110,7 @@ export function verifySparkWebhook(raw, pub, secret, signatureHeader, now = Date
   if (typeof data.id !== 'string' || !/^[A-Za-z0-9_-]{8,100}$/.test(data.id))
     return {ok:false, reason:'invalid_event'};
   const ts = Date.parse(data.timestamp);
-  if (!Number.isFinite(ts) || Math.abs(now - ts) > 7*86400_000)
+  if (!Number.isFinite(ts) || now - ts > 7*86400_000 || ts - now > 300_000)
     return {ok:false, reason:'stale_event'};
   // Derive the invoice payment hash without storing or returning a preimage.
   // This unifies Spark's event ID with the Breez LNURL payment_hash, allowing

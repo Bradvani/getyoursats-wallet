@@ -1,11 +1,11 @@
-import {useCallback,useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {Capacitor} from '@capacitor/core';
 import {useWallet} from '../contexts/WalletContext';
+import {selectedNetwork} from '../services/sdkConnect';
+import {signedPushOperation,validateInvoiceWebhook,type PushStatus} from '../services/paymentPush';
 
 type Config={available:boolean;vapidPublicKey:string|null;lightningInvoicePushAvailable:boolean;lightningAddressPushAvailable:boolean};
-type Challenge={challengeId:string;message:string};
-type Enroll={webhookRegistered:boolean;webhookUrl:string;webhookSecret:string;eventTypes:Array<{type:string}>};
-const PREF='gys:push:active-wallet:v1:';
+type Enroll={webhookRegistered:boolean;webhookUrl:string;webhookSecret:string};
 const native=()=>Capacitor.isNativePlatform();
 const supportsPush=()=>typeof window!=='undefined'&&window.isSecureContext
   &&'Notification' in window&&'serviceWorker' in navigator&&'PushManager' in window&&!native();
@@ -22,15 +22,6 @@ function decodePublicKey(value:string):Uint8Array<ArrayBuffer>{
   if(key.length!==65||key[0]!==4)throw new Error('Push service configuration is invalid.');
   return key;
 }
-async function request<T>(body:Record<string,unknown>):Promise<T>{
-  const response=await fetch('/api/notifications/device',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(body),credentials:'omit',cache:'no-store',
-  });
-  const data=await response.json() as T&{error?:string};
-  if(!response.ok)throw new Error(data.error||'Could not update notification settings.');
-  return data;
-}
 function readableError(value:unknown):string{
   if(value instanceof Error){
     if(value.name==='NotAllowedError')return 'Notifications were blocked by your device. Enable them in system settings.';
@@ -45,51 +36,54 @@ export default function PaymentPushSetting(){
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
   const [pub,setPub]=useState<string|null>(null);
+  const [invoiceEnabled,setInvoiceEnabled]=useState(false);
+  const generation=useRef(0);
   const supported=supportsPush();
   const canInstall=isInstalledIos();
+  const mainnet=selectedNetwork()==='mainnet';
 
   useEffect(()=>{
-    let alive=true;
+    const current=++generation.current;
+    const checkCurrent=()=>{if(generation.current!==current)throw new Error('Wallet settings changed. Please try again.');};
+    // Reset immediately when the SDK identity changes so another wallet never
+    // inherits an enabled switch or a signing identity while status is loading.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setEnabled(false);setPub(null);setConfig(null);setBusy(supported&&canInstall&&mainnet);setMessage('');setInvoiceEnabled(false);
+    if(!supported||!canInstall||!mainnet)return;
     void (async()=>{
       try{
-        const [response,info]=await Promise.all([
-          fetch('/api/notifications/device',{cache:'no-store'}).then(res=>res.json() as Promise<Config>),
-          sdk.getInfo({ensureSynced:false}),
-        ]);
-        if(!alive)return;
+        const response=await fetch('/api/notifications/device',{
+          cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(15_000),
+        }).then(res=>{if(!res.ok)throw new Error('Notifications unavailable');return res.json() as Promise<Config>;});
+        checkCurrent();setConfig(response);
+        if(!response.available)return;
+        const info=await sdk.getInfo({ensureSynced:false});
+        checkCurrent();
         const wallet=info.identityPubkey?.toLowerCase()??null;
         setPub(wallet);
-        setConfig(response);
-        const subscribed=!!(wallet&&localStorage.getItem(PREF+wallet)==='true');
-        // Never report enabled without permission. A dismissed/expired browser
-        // subscription will fail on delivery and be repaired by opting in again.
-        setEnabled(subscribed&&supported&&Notification.permission==='granted');
-      }catch{if(alive)setConfig({available:false,vapidPublicKey:null,
-        lightningInvoicePushAvailable:false,lightningAddressPushAvailable:false});}
+        if(!wallet||Notification.permission!=='granted')return;
+        const registration=await navigator.serviceWorker.getRegistration('/sw.js');
+        const subscription=await registration?.pushManager.getSubscription();
+        if(!subscription)return;
+        const status=await signedPushOperation<PushStatus>(sdk,wallet,'status',
+          {endpoint:subscription.endpoint},checkCurrent);
+        checkCurrent();setEnabled(status.enabled);setInvoiceEnabled(status.webhookRegistered);
+      }catch{if(generation.current===current)setMessage('Could not verify notification settings. You can try enabling them again.');}
+      finally{if(generation.current===current)setBusy(false);}
     })();
-    return()=>{alive=false;};
-  },[sdk,supported]);
-
-  const signed=useCallback(async <T,>(action:'subscribe'|'activate'|'status'|'unsubscribe',extra:Record<string,unknown>)=>{
-    if(!pub)throw new Error('Wallet is not ready.');
-    const challenge=await request<Challenge>({action:'challenge',purpose:action,walletPubkey:pub});
-    const wanted='gys-push-v1:'+action+':'+pub+':'+challenge.challengeId;
-    if(challenge.message!==wanted||!/^[0-9a-f]{32}$/.test(challenge.challengeId))
-      throw new Error('Notification authorization did not match this wallet.');
-    const response=await sdk.signMessage({message:wanted,compact:true});
-    if(response.pubkey?.toLowerCase()!==pub)
-      throw new Error('Wallet identity changed. Please reopen Settings.');
-    return request<T>({action,walletPubkey:pub,challengeId:challenge.challengeId,
-      signature:response.signature,...extra});
-  },[pub,sdk]);
+    return()=>{generation.current=current+1;};
+  },[sdk,supported,canInstall,mainnet]);
 
   const enable=async()=>{
-    if(busy||!supported||!canInstall||!config?.available||!config.vapidPublicKey||!pub)return;
+    if(busy||!mainnet||!supported||!canInstall||!config?.available||!config.vapidPublicKey||!pub)return;
     setBusy(true);setMessage('');
-    let subscription:PushSubscription|null;
+    const current=generation.current;
+    const checkCurrent=()=>{if(current!==generation.current)throw new Error('Wallet settings changed. Please try again.');};
+    let subscription:PushSubscription|null=null;
     try{
       // Request permission directly from this tap, before other awaits.
       const permission=await Notification.requestPermission();
+      checkCurrent();
       if(permission!=='granted')throw new Error('Allow GetYourSats notifications in your device settings.');
       const registration=await navigator.serviceWorker.register('/sw.js');
       subscription=await registration.pushManager.getSubscription();
@@ -103,29 +97,36 @@ export default function PaymentPushSetting(){
       if(!subscription)subscription=await registration.pushManager.subscribe({
         userVisibleOnly:true,applicationServerKey:decodePublicKey(config.vapidPublicKey)
       });
-      const enrolled=await signed<Enroll>('subscribe',{subscription:subscription.toJSON()});
+      checkCurrent();
+      const enrolled=await signedPushOperation<Enroll>(sdk,pub,'subscribe',{subscription:subscription.toJSON()},checkCurrent);
       let webhookId='';
       if(!enrolled.webhookRegistered){
-        // Spark invoices created by this wallet are notified through this
-        // registered hook. Lightning Address payments need Breez LNURL setup.
-        const registered=await sdk.registerWebhook({
-          url:enrolled.webhookUrl,secret:enrolled.webhookSecret,
-          eventTypes:[{type:'lightningReceiveFinished'}]
-        });
-        webhookId=registered.webhookId;
-        if(!webhookId)throw new Error('Lightning notification registration was not confirmed.');
+        validateInvoiceWebhook(pub,enrolled);checkCurrent();
+        try{
+          const registered=await sdk.registerWebhook({
+            url:enrolled.webhookUrl,secret:enrolled.webhookSecret,
+            eventTypes:[{type:'lightningReceiveFinished'}]
+          });
+          webhookId=registered.webhookId;
+          if(!webhookId)throw new Error('Lightning notification registration was not confirmed.');
+        }catch(error){
+          // The domain-level Breez hook works independently of Spark invoice
+          // registration. Report the exact enabled coverage after activation.
+          if(!config.lightningAddressPushAvailable)throw error;
+        }
       }
-      await signed('activate',{endpoint:subscription.endpoint,webhookId});
-      localStorage.setItem(PREF+pub,'true');
-      setEnabled(true);
-      setMessage('Lightning invoice alerts enabled for this device.');
+      const status=await signedPushOperation<PushStatus>(sdk,pub,'activate',
+        {endpoint:subscription.endpoint,webhookId},checkCurrent);
+      checkCurrent();setEnabled(status.enabled);setInvoiceEnabled(status.webhookRegistered);
+      setMessage(config.lightningAddressPushAvailable
+        ?status.webhookRegistered?'Lightning invoice and @getyoursats.com alerts enabled for this device.'
+          :'@getyoursats.com alerts enabled. Lightning invoice alerts could not be enabled.'
+        :'Lightning invoice alerts enabled for this device.');
     }catch(error){
-      setMessage(readableError(error));
-      setEnabled(false);
-      localStorage.removeItem(PREF+pub);
-      // Do not leave a pending subscription capable of sending a false
-      // success. A failed registration is inactive on the server.
-    }finally{setBusy(false);}
+      // Revoke the actual endpoint if setup fails or the wallet changes.
+      await subscription?.unsubscribe().catch(()=>{});
+      if(current===generation.current){setMessage(readableError(error));setEnabled(false);}
+    }finally{if(current===generation.current)setBusy(false);}
   };
 
   const disable=async()=>{
@@ -135,10 +136,10 @@ export default function PaymentPushSetting(){
       const registration=await navigator.serviceWorker.getRegistration('/sw.js');
       const subscription=await registration?.pushManager.getSubscription();
       if(subscription){
-        await signed('unsubscribe',{endpoint:subscription.endpoint});
         await subscription.unsubscribe();
+        setEnabled(false);
+        await signedPushOperation(sdk,pub,'unsubscribe',{endpoint:subscription.endpoint});
       }
-      localStorage.removeItem(PREF+pub);
       setEnabled(false);
       setMessage('Payment alerts disabled on this device.');
     }catch(error){
@@ -159,11 +160,12 @@ export default function PaymentPushSetting(){
     <div>
       <h4 className="text-sm font-semibold text-spark-text-primary">Lightning payment notifications</h4>
       <p className="mt-1 text-xs text-spark-text-muted leading-relaxed">
-        Receive a private alert when a supported Lightning invoice is paid, even when your installed wallet is closed.
+        Receive a private alert for supported Lightning payments, even when your installed wallet is closed.
         Your keys stay on your device.
       </p>
     </div>
-    {!supported||!canInstall?
+    {!mainnet?<p role="status" className="text-xs text-spark-text-muted">Payment notifications are available on mainnet only.</p>
+      :!supported||!canInstall?
       <p role="status" className="text-xs text-spark-text-muted">
         {native()?'Background push notifications are currently available in the installed web app only.'
           :!canInstall?'On iPhone, add GetYourSats to your Home Screen before enabling notifications.'
@@ -182,7 +184,13 @@ export default function PaymentPushSetting(){
           className="min-h-11 rounded-xl border border-spark-border px-4 text-sm text-spark-text-secondary">
           Preview notification
         </button>}
-        <p className="text-xs text-spark-text-muted">Lightning Address notifications need separate provider activation. Amounts are hidden from the lock screen.</p>
+        <p className="text-xs text-spark-text-muted">
+          {config.lightningAddressPushAvailable
+            ?'Covers registered @getyoursats.com addresses. Payments to @breez.tips are outside this address webhook.'
+            :'Lightning Address alerts are not enabled on this server.'}
+          {enabled&&!invoiceEnabled?' Invoice alerts are not enabled for this wallet.':''}
+          {' Amounts are hidden from the lock screen. Delivery depends on your device and network.'}
+        </p>
       </>}
     {message&&<p role="status" className="text-xs text-spark-text-secondary">{message}</p>}
   </section>;

@@ -21,11 +21,13 @@ test('wallet signature is bound to one notification purpose and signer',()=>{
     d:ecdh.getPrivateKey().toString('base64url'),
   },format:'jwk'});
   const nonce='ab'.repeat(16);
-  const message='gys-push-v1:subscribe:'+pub+':'+nonce;
+  const message='gys-push-v2:https://wallet.getyoursats.com:subscribe:'+pub+':'+nonce+':'+'12'.repeat(32);
   const signature=sign('sha256',Buffer.from(message),{key,dsaEncoding:'ieee-p1363'}).toString('hex');
   assert.equal(walletPubkey(pub.toUpperCase()),pub);
   assert.equal(verifyOwnership(message,pub,signature),true);
   assert.equal(verifyOwnership(message.replace('subscribe','unsubscribe'),pub,signature),false);
+  assert.equal(verifyOwnership(message.replace('12'.repeat(32),'34'.repeat(32)),pub,signature),false);
+  assert.equal(verifyOwnership(message.replace('wallet.getyoursats.com','evil.example'),pub,signature),false);
   assert.equal(verifyOwnership(message,pub,'00'.repeat(64)),false);
   assert.equal(verifyOwnership('gys-email-v1:subscribe:'+pub+':'+nonce,pub,signature),false);
 });

@@ -61,6 +61,10 @@ test.beforeEach(async ({page, context}) => {
   await context.route('**/*', route => {
     const request = route.request();
     const url = new URL(request.url());
+    if(url.origin===origin && url.pathname==='/api/notifications/device' && request.method()==='GET')
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+        available:false,vapidPublicKey:null,lightningInvoicePushAvailable:false,lightningAddressPushAvailable:false,
+      })});
     if (url.origin === origin && ['GET', 'HEAD'].includes(request.method()) && !url.pathname.startsWith('/api/')) return route.continue();
     current.blocked.push(request.method() + ' ' + url.origin + url.pathname);
     return route.abort('blockedbyclient');

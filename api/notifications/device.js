@@ -1,7 +1,9 @@
 import {isIP} from 'node:net';
 import {
-  ORIGIN, walletPubkey, verifyOwnership, vapidConfig, checkedSubscription, pushEndpoint
+  ORIGIN, walletPubkey, verifyOwnership, vapidConfig, checkedSubscription, pushEndpoint,
+  digest, breezLnurlSecret
 } from '../../server/pushCore.mjs';
+import {pushOperationPayload} from '../../shared/pushAuthorization.mjs';
 import {
   storeReady, issueChallenge, consumeChallenge, ensureWallet, getWallet,
   saveSubscription, activateSubscription, removeSubscription, getSubscription,
@@ -53,7 +55,7 @@ export default async function handler(req,res) {
   if(req.method==='GET'){
     respond(res,200,{available:!!config,vapidPublicKey:config?.pub??null,
       lightningInvoicePushAvailable:!!config,
-      lightningAddressPushAvailable:false});return;
+      lightningAddressPushAvailable:!!config&&!!breezLnurlSecret()});return;
   }
   if(req.method!=='POST'){
     res.setHeader('Allow','GET, POST');
@@ -71,19 +73,29 @@ export default async function handler(req,res) {
       throw Object.assign(new Error('Invalid request'),{status:400});
     const action=body.action;
     const pub=walletPubkey(body.walletPubkey);
+    const purpose=action==='challenge'?body.purpose:action;
+    if(!PURPOSES.has(purpose))throw Object.assign(new Error('Invalid purpose'),{status:400});
+    if(purpose==='subscribe')checkedSubscription(body.subscription);
+    else pushEndpoint(body.endpoint);
+    if(purpose==='activate' && body.webhookId!=null && body.webhookId!=='' &&
+      (typeof body.webhookId!=='string'||!/^[A-Za-z0-9_-]{5,180}$/.test(body.webhookId)))
+      throw Object.assign(new Error('Invalid provider webhook identifier'),{status:400});
+    const payloadHash=digest(pushOperationPayload(purpose,body));
     if(action==='challenge') {
       if(!PURPOSES.has(body.purpose))
         throw Object.assign(new Error('Invalid purpose'),{status:400});
-      const challenge=await issueChallenge(body.purpose,pub,clientIp(req));
+      const challenge=await issueChallenge(body.purpose,pub,clientIp(req),payloadHash);
       respond(res,200,challenge);return;
     }
     if(!PURPOSES.has(action))throw Object.assign(new Error('Invalid action'),{status:400});
-    await consumeChallenge(action,pub,body.challengeId,body.signature,verifyOwnership);
+    await consumeChallenge(action,pub,body.challengeId,body.signature,verifyOwnership,payloadHash);
     if(action==='status') {
       const endpoint=pushEndpoint(body.endpoint);
       const subscribed=await getSubscription(pub,endpoint);
       const wallet=await getWallet(pub);
-      respond(res,200,{enabled:subscribed?.active===true,
+      respond(res,200,{enabled:subscribed?.active===true &&
+        Number.isSafeInteger(subscribed.enabledAt) && Date.now()-subscribed.enabledAt<180*86400_000 &&
+        (!!breezLnurlSecret()||!!wallet?.registered),
         webhookRegistered:!!wallet?.registered});return;
     }
     if(action==='subscribe'){
@@ -102,11 +114,11 @@ export default async function handler(req,res) {
     if(action==='activate'){
       const webhookId=body.webhookId;
       const wallet=await getWallet(pub);
-      if(!wallet || (wallet.registered!==true &&
+      if(!wallet || (!breezLnurlSecret() && wallet.registered!==true &&
         (typeof webhookId!=='string'|| !/^[A-Za-z0-9_-]{5,180}$/.test(webhookId))))
         throw Object.assign(new Error('Provider webhook not registered'),{status:409});
       await activateSubscription(pub,endpoint,webhookId||wallet.webhookId);
-      respond(res,200,{enabled:true});return;
+      respond(res,200,{enabled:true,webhookRegistered:!!wallet.registered||!!webhookId});return;
     }
     if(action==='unsubscribe'){
       await removeSubscription(pub,endpoint);
