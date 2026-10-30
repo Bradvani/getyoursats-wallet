@@ -88,3 +88,13 @@ test('history follows Arabic and keeps filters and export usable',async({page})=
  await expect(page.getByRole('button',{name:'تصدير CSV'})).toBeEnabled();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
+
+for(const width of [390,1366])test(`history opens at its heading after scrolling the feed at ${width}px`,async({page})=>{
+ await page.setViewportSize({width,height:844});await page.goto(fixture);
+ await page.getByRole('button',{name:'View full transaction history'}).click();
+ await expect(page.getByRole('heading',{name:'History',exact:true})).toBeInViewport({ratio:1});
+ await expect(page.getByRole('searchbox',{name:'Search transactions'})).toBeInViewport({ratio:1});
+ await expect.poll(()=>page.locator('#gys-wallet-history').evaluate(el=>el.scrollTop)).toBe(0);
+ await page.getByRole('button',{name:'Back to Wallet'}).click();
+ await expect(page.getByTestId('bitcoin-market')).toBeInViewport();
+});

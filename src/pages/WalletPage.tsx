@@ -9,7 +9,7 @@ import GetYourSatsPos from '../getyoursats/PosPage';
 import {featureAvailability} from '../getyoursats/featureAvailability';
 import PosErrorBoundary from '../components/PosErrorBoundary';
 import PartnerBuyDialog from '../getyoursats/PartnerBuyDialog';
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { useToast } from '../contexts/ToastContext';
 import { logger, LogCategory } from '@/services/logger';
@@ -175,6 +175,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   const transactionsContainerRef = useRef<HTMLDivElement>(null);
   const scrollFrame = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    // A different view starts at its heading, not the old feed's scroll position.
+    transactionsContainerRef.current?.scrollTo({top: 0, behavior: 'instant'});
+  }, [showHistory]);
   useEffect(() => () => {
     if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
   }, []);
