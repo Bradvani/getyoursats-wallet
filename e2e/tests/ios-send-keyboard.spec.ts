@@ -47,9 +47,14 @@ async function keyboard(page: Page, geometry: Geometry) {
   await page.evaluate(next => (window as ViewportWindow).__setKeyboardViewport!(next), geometry);
 }
 async function focusWithoutScrolling(field: Locator) {
+  // Hidden opening-animation content cannot accept focus. Wait only for
+  // visibility, without clicking or asking the browser to scroll the field.
+  await expect(field).toBeVisible();
   await field.evaluate(element => (element as HTMLElement).focus({preventScroll: true}));
+  await expect(field).toBeFocused();
 }
 async function expectFieldInVisibleArea(field: Locator, top: number, height: number) {
+  await expect(field).toBeFocused();
   // No Playwright click/fill/scrollIntoView before measuring: those would hide
   // a broken application reveal by scrolling the target on behalf of the app.
   await expect.poll(() => field.evaluate((element, area) => {
