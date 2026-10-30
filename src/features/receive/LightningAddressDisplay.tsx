@@ -1,5 +1,4 @@
 import {useFlowText} from '@/hooks/useFlowText';
-import {trustCopy} from '@/getyoursats/trustCopy';
 import {featureAvailability} from '@/getyoursats/featureAvailability';
 import React, { type ReactNode } from 'react';
 import type { LightningAddressInfo } from '@breeztech/breez-sdk-spark';
@@ -105,9 +104,8 @@ const LightningAddressDisplay: React.FC<LightningAddressDisplayProps> = ({
         data-testid="lightning-address-text"
       />
 
-      <p className="text-xs text-center text-spark-text-muted max-w-xs">
-        {featureAvailability.emailVerification?t('Personalize your address in Settings after email verification.'):trustCopy().personalSoon}
-      </p>
+      {featureAvailability.emailVerification&&!address.lightningAddress.toLowerCase().endsWith('@getyoursats.com')&&
+        <p className="text-xs text-center text-spark-text-muted max-w-xs">{t('Personalize your address in Settings after email verification.')}</p>}
       {amountLink('mt-2')}
     </div>
   );

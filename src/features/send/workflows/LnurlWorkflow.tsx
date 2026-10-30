@@ -349,7 +349,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
                 key={quickAmount}
                 disabled={isLoading || hasPendingConversion}
                 onClick={() => { setAmountInput(String(quickAmount)); setFeesIncluded(false); }}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                className={`flex-1 min-h-11 min-w-0 px-2 py-2 text-sm font-medium rounded-lg transition-all ${
                   isSelected
                     ? 'bg-spark-primary text-white'
                     : 'bg-transparent border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
@@ -381,7 +381,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
               }}
               disabled={isLoading || !balanceKnown || tokenSendAllBelowThreshold || hasPendingConversion}
               title={hasPendingConversion ? text.updating : text.feesHint}
-              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+              className={`flex-1 min-h-11 min-w-0 px-2 py-2 text-sm font-medium rounded-lg transition-all ${
                 tokenSendAllBelowThreshold || hasPendingConversion
                   ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
                   : isSendAll

@@ -6,6 +6,12 @@ import {flowText,hasFlowText} from './flowText';
 import {APP_LANGUAGES} from '../services/presentationPreferences';
 
 describe('payment language coverage',()=>{
+ it('applies reviewed English labels and safe retry wording',()=>{
+  expect(flowText('en','Payment Sent!')).toBe('Payment sent');
+  expect(flowText('en','Authenticated!')).toBe('Signed in');
+  expect(flowText('en','There was an error processing your payment. Please try again.'))
+   .toBe('The payment could not be completed. Check payment history before trying again.');
+ });
  it('covers every static useFlowText message without an English fallback',()=>{
   const missing:string[]=[];
   const visitFiles=(directory:string)=>{

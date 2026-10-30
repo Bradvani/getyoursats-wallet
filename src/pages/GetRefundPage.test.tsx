@@ -111,6 +111,6 @@ describe('GetRefundPage fee', () => {
         expect.objectContaining({ destinationAddress: 'bc1qdest', fee: { type: 'fixed', amount: 1700 } }),
       ),
     );
-    expect(await refundSheet().findByText('Refund Sent!')).toBeInTheDocument();
+    expect(await refundSheet().findByText('Refund sent')).toBeInTheDocument();
   });
 });

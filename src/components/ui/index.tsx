@@ -116,25 +116,25 @@ export const DialogHeader: React.FC<{
   const stepBack = useContext(SheetBackContext);
   const back = onBack ?? stepBack;
   return (
-    <div className="flex justify-center items-center mb-5 relative px-8">
+    <div className="flex min-h-11 justify-center items-center mb-5 relative px-12">
       {back && (
         <button
           onClick={back}
           aria-label={text.back}
-          className="absolute start-0 top-1/2 -translate-y-1/2 py-2 ps-6 pe-2 -ms-6 text-spark-text-muted hover:text-spark-text-primary transition-colors rounded-lg hover:bg-white/5"
+          className="absolute start-0 top-1/2 -translate-y-1/2 flex min-h-11 min-w-11 items-center justify-center text-spark-text-muted hover:text-spark-text-primary transition-colors rounded-lg hover:bg-white/5"
         >
           <BackIcon className="rtl:rotate-180" />
         </button>
       )}
       <div className="flex items-center gap-2 min-w-0 max-w-full">
         {icon && <span className="text-spark-primary shrink-0">{icon}</span>}
-        <h2 className="font-display text-lg font-bold text-spark-text-primary truncate">{title}</h2>
+        <h2 className="font-display text-lg font-bold text-spark-text-primary text-center break-words">{title}</h2>
         {icon && <span className="w-5 h-5 shrink-0" aria-hidden="true" />}
       </div>
       <button
         onClick={onClose}
         aria-label={text.close}
-        className="absolute end-0 top-1/2 -translate-y-1/2 py-2 ps-2 pe-6 -me-6 text-spark-text-muted hover:text-spark-primary-light transition-colors rounded-lg hover:bg-white/5"
+        className="absolute end-0 top-1/2 -translate-y-1/2 flex min-h-11 min-w-11 items-center justify-center text-spark-text-muted hover:text-spark-primary-light transition-colors rounded-lg hover:bg-white/5"
       >
         <CloseIcon />
       </button>
@@ -356,7 +356,7 @@ export const CopyableText: React.FC<{
       {!hideText && (
         <button
           onClick={handleCopy}
-          className={`text-center font-mono text-xs sm:text-sm break-all hover:opacity-80 transition-opacity ${textColor}`}
+          className={`min-h-11 max-w-full px-1 text-center font-mono text-xs sm:text-sm break-all hover:opacity-80 transition-opacity ${textColor}`}
           title={t('Tap to copy')}
           data-testid="copyable-text-content"
         >
@@ -365,11 +365,11 @@ export const CopyableText: React.FC<{
       )}
 
       {/* Action buttons */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap justify-center gap-2">
         <button
           onClick={handleCopy}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all
+            flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all
             ${copied
               ? 'bg-spark-success/20 text-spark-success'
               : 'bg-spark-primary text-white hover:bg-spark-primary-light'
@@ -385,7 +385,7 @@ export const CopyableText: React.FC<{
         {showShare && shareAvailable && (
           <button
             onClick={handleShare}
-            className="flex items-center gap-2 px-4 py-2 border border-spark-border text-spark-text-secondary rounded-xl font-medium text-sm hover:text-spark-text-primary hover:border-spark-border-light transition-colors"
+            className="flex min-h-11 items-center gap-2 px-4 py-2 border border-spark-border text-spark-text-secondary rounded-xl font-medium text-sm hover:text-spark-text-primary hover:border-spark-border-light transition-colors"
             title={t('Share {label}',{label:t(label)})}
           >
             <ShareIcon />
@@ -676,19 +676,21 @@ export const Switch: React.FC<{
   onChange: () => void;
   disabled?: boolean;
   className?: string;
-}> = ({ checked, onChange, disabled = false, className = "" }) => (
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
+  'aria-describedby'?: string;
+}> = ({ checked, onChange, disabled = false, className = "", ...labels }) => (
   <button
     type="button"
     role="switch"
     aria-checked={checked}
     disabled={disabled}
     onClick={onChange}
-    className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-hidden focus-visible:ring-2 focus-visible:ring-spark-primary focus-visible:ring-offset-2 focus-visible:ring-offset-spark-dark ${checked ? 'bg-spark-primary' : 'bg-spark-border'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
+    {...labels}
+    className={`inline-flex min-h-11 min-w-12 shrink-0 items-center justify-center rounded-lg focus-visible:ring-2 focus-visible:ring-spark-primary focus-visible:ring-offset-2 focus-visible:ring-offset-spark-dark ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
   >
-    <span
-      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${checked ? 'translate-x-6' : 'translate-x-1'
-        } mt-1`}
-    />
+    <span aria-hidden="true" className={`relative h-7 w-12 rounded-full transition-colors motion-reduce:transition-none ${checked ? 'bg-spark-primary' : 'bg-spark-border'}`}>
+      <span className={`absolute start-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-150 motion-reduce:transition-none ${checked?'translate-x-5 rtl:-translate-x-5':''}`}/>
+    </span>
   </button>
 );

@@ -2,7 +2,7 @@ import {formatFiat} from '../utils/formatFiat';
 import {useFlowText} from '@/hooks/useFlowText';
 import GetYourSatsWordmark from './GetYourSatsWordmark';
 import DenominationTabs from '../getyoursats/DenominationTabs';
-import {getDenomination,saveDenomination,satsToAmount,satoshiSymbol,type Denomination} from '../getyoursats/denomination';
+import {getDenomination,saveDenomination,satsToAmount,type Denomination} from '../getyoursats/denomination';
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import type { GetInfoResponse, FiatCurrency } from '@breeztech/breez-sdk-spark';
 import { safeAreaTop } from '../utils/safeAreaInsets';
@@ -10,7 +10,7 @@ import { getFiatSettings, getDisplayFiatCurrency, setDisplayFiatCurrency, buyCop
 import { formatWithSpaces } from '../utils/formatNumber';
 import { SatAmount } from './SatAmount';
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber';
-import { ChevronDownIcon, AlertTriangleIcon, CurrencyIcon, CashAppIcon, SpinnerIcon } from './Icons';
+import { ChevronDownIcon, AlertTriangleIcon, CurrencyIcon, CashAppIcon, SpinnerIcon, SatoshiIcon } from './Icons';
 import { useStableBalance } from '../contexts/StableBalanceContext';
 import { useFiatData } from '../contexts/FiatDataContext';
 import { getTokenBalance, formatTokenAmount } from '../utils/tokenFormatting';
@@ -233,7 +233,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
   // The Bitcoin glyph denotes BTC, never sats. Sats are labelled by their unit selector.
   const currencySymbol = stableBalance.isActive && stableBalance.displayConfig?.symbol
     ? stableBalance.displayConfig.symbol
-    : bitcoinUnit==='sats'?'丰':bitcoinUnit==='BTC'?'₿':primaryFiatRate?primaryFiatSymbol:'';
+    : bitcoinUnit==='sats'?<SatoshiIcon size="lg"/>:bitcoinUnit==='BTC'?'₿':primaryFiatRate?primaryFiatSymbol:'';
 
   if (!walletInfo) return null;
 
@@ -287,7 +287,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
             aria-label={t("Open menu")}
             data-testid="menu-button"
           >
-            <span className="font-semibold text-[25px] leading-none" aria-hidden="true">{satoshiSymbol}</span>
+            <SatoshiIcon size="lg"/>
             <ChevronDownIcon size="xs" className="opacity-65" />
           </button>
             <GetYourSatsWordmark compact />
@@ -369,7 +369,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
             <span className="balance-display">
               {formattedPrimaryBalance}
             </span>
-            {displayBalance >= 0 && currencySymbol && <span className="absolute right-full top-1/2 -translate-y-1/2 mr-0.5 text-3xl text-spark-text-secondary opacity-70 font-mono">{currencySymbol}</span>}
+            {displayBalance >= 0 && currencySymbol && <span aria-hidden="true" className="absolute right-full top-1/2 -translate-y-1/2 mr-1 text-3xl text-spark-text-secondary opacity-70 font-mono">{currencySymbol}</span>}
           </div>
 
           {/* Secondary line - fiat value or BTC as fiat equivalent */}

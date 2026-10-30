@@ -36,8 +36,6 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
     walletLogo:get('.gys-wallet-balance-surface__toolbar .gys-brand-wordmark--compact'),
     merchant:get('.gys-home-quick-actions__button:not(:disabled)'),
     merchantTitle:get('.gys-home-quick-actions__button:not(:disabled) strong'),
-    recurring:get('.gys-home-quick-actions__button:disabled'),
-    recurringTitle:get('.gys-home-quick-actions__button:disabled strong'),
     receive:get('.gys-action-dock__receive'),
     send:get('.gys-action-dock__send'),
     activity:get('.gys-activity'),
@@ -52,7 +50,7 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
   });
   expect(contrast(styles.balance.color,styles.hero.background)).toBeGreaterThan(7);
   expect(contrast(styles.merchantTitle.color,styles.merchant.background)).toBeGreaterThan(7);
-  expect(contrast(styles.recurringTitle.color,styles.recurring.background)).toBeGreaterThan(4.5);
+  await expect(page.locator('.gys-home-quick-actions__button:disabled')).toHaveCount(0);
   expect(contrast(styles.receive.color,styles.receive.background)).toBeGreaterThan(4.5);
   expect(contrast(styles.send.color,styles.send.background)).toBeGreaterThan(4.5);
   expect(contrast(styles.unit.color,styles.unit.background)).toBeGreaterThan(4.5);

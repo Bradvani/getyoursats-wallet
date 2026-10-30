@@ -70,10 +70,10 @@ describe('help and app identity', () => {
     renderSettings(replay);
     const help = screen.getByRole('region', {name: 'Help & information'});
     const display = screen.getByRole('heading', {name: 'Display'});
-    const diagnostics = screen.getByRole('heading', {name: 'Diagnostics'});
     const account = screen.getByRole('heading', {name: 'Account'});
     expect(display.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(diagnostics.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole('heading', {name: 'Diagnostics'})).toBeNull();
+    expect(screen.getByText('Troubleshooting').closest('details')).not.toHaveAttribute('open');
     expect(help.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const sectionHeadings = screen.getAllByRole('heading', {level: 3});
     expect(sectionHeadings[sectionHeadings.length - 1]).toBe(account);
@@ -84,10 +84,22 @@ describe('help and app identity', () => {
 
   it('shows direct Privacy and Support entries and the shared build version', () => {
     renderSettings();
-    expect(screen.queryByTestId('settings-privacy-link')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('settings-support-link')).not.toBeInTheDocument();
+    expect(screen.getByTestId('settings-privacy-link')).toHaveAttribute('href','https://getyoursats.com/privacy?lang=en');
+    expect(screen.getByTestId('settings-support-link')).toHaveAttribute('href','https://getyoursats.com/support?lang=en');
     expect(screen.getByTestId('settings-appearance-orange')).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByRole('combobox', {name:'Language'})).toBeInTheDocument();
     expect(screen.getByText('GetYourSats v0.0.0-test')).toBeInTheDocument();
+  });
+
+  it('shows a save action only when payment settings change', () => {
+    renderSettings();
+    expect(screen.queryByRole('button',{name:'Save payment settings'})).toBeNull();
+    fireEvent.click(screen.getByTestId('settings-appearance-orange'));
+    expect(screen.queryByRole('button',{name:'Save payment settings'})).toBeNull();
+    fireEvent.click(screen.getByText('Payment settings'));
+    fireEvent.change(screen.getByLabelText('Maximum fee (sats)'),{target:{value:'123'}});
+    expect(screen.getByRole('button',{name:'Save payment settings'})).toBeEnabled();
+    fireEvent.change(screen.getByLabelText('Maximum fee (sats)'),{target:{value:'-1'}});
+    expect(screen.getByRole('button',{name:'Save payment settings'})).toBeDisabled();
   });
 });

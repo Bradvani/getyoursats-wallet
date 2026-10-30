@@ -381,13 +381,13 @@ const WalletPage: React.FC<WalletPageProps> = ({
           <span className="gys-home-quick-actions__icon" aria-hidden="true"><QrCodeIcon size="lg"/></span>
           <span className="gys-home-quick-actions__text"><strong>{copy.pointOfSale}</strong><small>{wc.accept}</small></span>
         </button>
-        <button type="button" className="gys-home-quick-actions__button"
+        {featureAvailability.recurringBuy&&<button type="button" className="gys-home-quick-actions__button"
           onClick={featureAvailability.recurringBuy ? onOpenDca : undefined}
           disabled={!featureAvailability.recurringBuy}
           aria-label={featureAvailability.recurringBuy ? 'Open Recurring Buys' : 'Recurring Buys coming soon'}>
           <span className="gys-home-quick-actions__icon" aria-hidden="true"><ClockIcon size="lg"/></span>
           <span className="gys-home-quick-actions__text"><strong>{copy.recurring}</strong><small>{wc.soon}</small></span>
-        </button>
+        </button>}
       </nav>
       {/* Live SDK market quotes and wallet-verified activity. */}
       <div

@@ -66,6 +66,7 @@ describe('GetYourSats receive amount denomination',()=>{
     expect(amount.tagName).toBe('INPUT');
     expect(screen.getByRole('group',{name:'Amount denomination'})).toBeInTheDocument();
     expect(screen.getByRole('region',{name:'Suggested amounts'})).toBeInTheDocument();
+    expect(screen.queryByText('Stable balance')).toBeNull();
   });
   it('uses BTC-denominated presets, not sats-labelled suggestions',async()=>{
     const {setAmountSats}=await renderAmountPanel();

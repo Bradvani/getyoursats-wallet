@@ -15,7 +15,7 @@ const other = (mode: BtcMode): BtcMode => (mode === 'lightning' ? 'bitcoin' : 'l
 export const SideDock: React.FC<{ mode: BtcMode; onChange: (mode: BtcMode) => void }> = ({ mode, onChange }) => {
  const t=useFlowText();
  return (
-  <div className="relative h-[90px] w-11 rounded-[22px] border border-spark-border bg-spark-dark/50">
+  <div className="relative h-[90px] w-[46px] rounded-[22px] border border-spark-border bg-spark-dark/50">
     <div
       aria-hidden="true"
       className={`absolute left-[3px] top-1 size-9 rounded-full bg-spark-primary shadow-[0_0_16px_var(--glow-primary)] transition-transform duration-[320ms] ease-m3-emphasized motion-reduce:transition-none ${mode === 'bitcoin' ? 'translate-y-11' : ''}`}

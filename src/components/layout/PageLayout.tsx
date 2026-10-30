@@ -1,4 +1,4 @@
-import GetYourSatsWordmark from '../GetYourSatsWordmark';
+import {useFlowText} from '@/hooks/useFlowText';
 import React, { ReactNode } from 'react';
 import { BackIcon } from '../Icons';
 import { safeAreaTop, safeAreaBottom } from '../../utils/safeAreaInsets';
@@ -24,6 +24,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
   // Generic PageLayout screens (get refund, etc.) use a solid
   // spark-surface background; match the system bars to that tone.
   useStatusBarColor(STATUS_BAR_SURFACE);
+  const t=useFlowText();
 
   return (
     <div className="gys-page-surface min-h-dvh h-dvh w-full flex flex-col bg-spark-surface relative">
@@ -32,23 +33,12 @@ const PageLayout: React.FC<PageLayoutProps> = ({
           className="relative z-10 shrink-0 border-b border-spark-border bg-spark-surface/80 backdrop-blur-sm"
           style={{ paddingTop: safeAreaTop }}
         >
-          {/* Fixed h-14 (56dp) Material toolbar height, matching the
-              wallet page CollapsingWalletHeader top row so the back button
-              lands at the same screen y coordinate when navigating. */}
-          <div className="relative px-4 h-14 flex items-center justify-center">
-            <div className={`gys-page-header__brand ${onBack?'gys-page-header__brand--back':''}`}><GetYourSatsWordmark compact /></div>
-            <h1 className="text-center font-display text-xl font-bold text-spark-text-primary">
-              {title || "GetYourSats"}
-            </h1>
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
-                aria-label="Go back"
-              >
-                <BackIcon />
-              </button>
-            )}
+          {/* The title can wrap without overlapping the back control. */}
+          <div className={`gys-page-toolbar ${onBack?'gys-page-toolbar--back':''}`}>
+            {onBack&&<button type="button" onClick={onBack} className="gys-page-toolbar__action" aria-label={t('Back')}>
+              <BackIcon className="rtl:rotate-180"/>
+            </button>}
+            <h1>{title||'GetYourSats'}</h1>
           </div>
         </header>
       )}

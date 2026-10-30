@@ -244,7 +244,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
             data-testid="amount-input"
           />
           {/* Cross-chain ("Send USD", amountFirst) is USD-only: no sats toggle. */}
-          {!amountFirst && tokenSymbol && (
+          {!amountFirst && tokenIdentifier && tokenSymbol && (
             <CurrencySwitcher
               isTokenMode={isTokenMode}
               tokenSymbol={tokenSymbol}
@@ -265,7 +265,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
               <button
                 key={quickAmount}
                 onClick={() => { setLocalAmount(String(quickAmount)); syncUnitFromSats(quickAmount); setFeesIncluded(false); setLocalError(null); }}
-                className={`flex-1 py-2 rounded-lg text-sm font-mono font-medium transition-all ${
+                className={`flex-1 min-h-11 min-w-0 px-2 py-2 rounded-lg text-sm font-mono font-medium transition-all ${
                   isSelected
                     ? 'bg-spark-primary text-white'
                     : 'bg-transparent border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
@@ -302,7 +302,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
               }}
               disabled={tokenSendAllBelowThreshold || hasPendingConversion}
               title={hasPendingConversion ? t('Balance is updating. Try again in a moment.') : undefined}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 min-h-11 min-w-0 px-2 py-2 rounded-lg text-sm font-medium transition-all ${
                 tokenSendAllBelowThreshold || hasPendingConversion
                   ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
                   : isSendAll

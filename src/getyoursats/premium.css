@@ -1,5 +1,5 @@
 /* GetYourSats v3: one orange, outlined identity, consistent surfaces. */
-:root{--spark-primary:#F7931A;--spark-primary-light:#F7931A;--color-spark-primary:#F7931A;--color-spark-primary-light:#F7931A;--glow-primary:rgba(247,147,26,.16);--color-spark-text-muted:#9A9995;--color-spark-surface:#141414;--color-spark-dark:#0B0B0B;--color-spark-void:#0B0B0B}
+:root{--spark-primary:#F7931A;--spark-primary-light:#F7931A;--color-spark-primary:#F7931A;--color-spark-primary-light:#F7931A;--glow-primary:rgba(247,147,26,.16);--color-spark-text-muted:#9A9995;--spark-text-muted:#9A9995;--color-spark-surface:#141414;--color-spark-dark:#0B0B0B;--color-spark-void:#0B0B0B}
 .gys-brand-wordmark{display:block;width:106px;height:62px;object-fit:contain;flex:none}
 .gys-brand-wordmark--compact{width:69px;height:40px}
 .gys-brand-wordmark--landing{width:110px;height:65px}
@@ -330,3 +330,46 @@ html[data-ui-hidden] .gys-moment *{animation-play-state:paused!important}
 
 [dir="rtl"] .gys-page-header__brand { left:auto; right:16px; }
 [dir="rtl"] .gys-page-header__brand--back { right:53px; }
+
+/* Customer controls retain readable labels and reachable targets at enlarged text sizes. */
+.gys-page-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:center;gap:12px;min-height:64px;padding:10px 16px}
+.gys-page-toolbar--back{grid-template-columns:44px minmax(0,1fr)}
+.gys-page-toolbar h1{outline:none;min-width:0;font-size:1.125rem;font-weight:700;line-height:1.35;text-align:start;overflow-wrap:anywhere}
+.gys-page-toolbar__action{display:grid;place-items:center;min-width:44px;min-height:44px;border-radius:12px;color:var(--color-spark-text-secondary);transition:background .15s,color .15s}
+.gys-page-toolbar__action:hover{background:var(--color-spark-border);color:var(--color-spark-text-primary)}
+.gys-setting-toggle{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.gys-setting-link,.gys-setting-action{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--color-spark-border);border-radius:12px;color:var(--color-spark-text-secondary);font-size:.875rem;line-height:1.5;text-align:start;overflow-wrap:anywhere}
+.gys-setting-link>svg,.gys-setting-action>svg{flex-shrink:0}
+.gys-setting-link:hover,.gys-setting-action:hover{color:var(--color-spark-text-primary);background:var(--color-spark-surface)}
+.gys-settings{min-width:0}
+.gys-settings>section,.gys-settings>div:not(:last-child){padding:16px}
+.gys-settings p,.gys-settings button span{overflow-wrap:anywhere}
+.gys-settings-choice{min-width:0;text-align:start}
+.gys-settings .gys-settings-choice strong{font-size:.875rem;overflow-wrap:anywhere}
+.gys-settings-disclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;min-height:56px;font-weight:650;line-height:1.5;cursor:pointer;list-style:none}
+.gys-settings-disclosure>summary::-webkit-details-marker{display:none}
+.gys-settings-disclosure>summary svg{flex:none;transition:transform .15s}
+.gys-settings-disclosure[open]>summary svg{transform:rotate(180deg)}
+.gys-settings-disclosure>div{padding:16px}
+.gys-settings-details>summary{min-height:44px;padding:12px 0;cursor:pointer;font-size:.875rem;line-height:1.5;color:var(--color-spark-text-secondary)}
+.gys-settings-fee-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.gys-settings-fee-fields input,.gys-settings-fee-fields select{min-width:0;min-height:48px;padding:12px;font-size:1rem}
+.gys-settings-disclosure [data-testid="balance-mode-settings"]{border-width:1px 0 0;border-radius:0;padding:16px 0 0}
+.gys-unit-switch button{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:44px;min-width:44px}
+.gys-address-banner__value{min-height:44px;overflow-wrap:anywhere}
+.gys-activity__refresh{min-width:44px;min-height:44px}
+.gys-activity__filters button,.gys-activity__toolbar button{min-height:44px}
+.gys-home-quick-actions__button:only-child{grid-column:1/-1}
+.gys-welcome__restore{min-height:44px}
+@media(max-width:480px){.gys-settings-fee-fields{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){.gys-page-toolbar__action,.gys-settings-disclosure>summary svg{transition:none}}
+
+.gys-history-controls__footer button{min-height:44px}
+
+.gys-settings-appearance{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,5.5rem),1fr));gap:8px}
+
+@media(max-height:600px) and (min-width:600px) and (max-width:1023px){
+ .gys-wallet .gys-wallet__address{flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:4px 14px;min-height:54px}
+ .gys-wallet__address .gys-address-banner__label{max-width:40%;text-align:start}
+ .gys-wallet__address .gys-address-banner__value{min-width:0;text-align:end}
+}

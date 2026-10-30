@@ -54,15 +54,18 @@ test('reduced motion preserves the percentage and status without a screen sweep'
  await page.getByTestId('stage-confirmed').click();await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow','100');
  await expect(page.getByTestId('sequence-orange-fill')).toHaveAttribute('opacity','0');
 });
-test('explicit vibration and definite failure remain independent of the motion clock',async({page})=>{
+test('vibration preference emits no sample and definite failure remains independent of motion',async({page})=>{
  await page.addInitScript(()=>{
   Object.defineProperty(navigator,'vibrate',{configurable:true,value:(p:unknown)=>{(window as unknown as {patterns:unknown[]}).patterns.push(p);return true;}});
   Object.defineProperty(navigator,'userActivation',{configurable:true,value:{hasBeenActive:true}});
   (window as unknown as {patterns:unknown[]}).patterns=[];
  });
- await page.goto(fixture);await page.getByRole('button',{name:'Test vibration',exact:true}).click();
+ await page.goto(fixture);
+ const vibration=page.getByRole('switch',{name:'Payment vibration'});await vibration.click();await vibration.click();
+ await expect(page.getByRole('button',{name:'Test vibration',exact:true})).toHaveCount(0);
+ expect(await page.evaluate(()=>(window as unknown as {patterns:unknown[]}).patterns)).toEqual([]);
  await page.getByTestId('manual-send').click();await page.getByTestId('stage-failed').click();
- expect(await page.evaluate(()=>(window as unknown as {patterns:unknown[]}).patterns)).toEqual([120,[80,60,100]]);
+ expect(await page.evaluate(()=>(window as unknown as {patterns:unknown[]}).patterns)).toEqual([[80,60,100]]);
 });
 test('high pixel density keeps a stationary vector-only logo and orange isolated to B',async({browser,browserName})=>{
  const context=await browser.newContext({viewport:{width:412,height:915},deviceScaleFactor:3,hasTouch:true,...(browserName==='firefox'?{}:{isMobile:true})});
