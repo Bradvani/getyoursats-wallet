@@ -349,8 +349,8 @@ const AppContent: React.FC = () => {
   // Closing + navigation happen when the user clicks Done (handleMigrationClose):
   // a login-entry flow navigates via PasskeyPage's onBack on the resolved
   // outcome, and a banner flow is already on the wallet.
-  const handleMigrationSwitch = useCallback(async (newSdk: BreezSdk, label: string) => {
-    await sdk.adoptMigratedSdk(newSdk, label);
+  const handleMigrationSwitch = useCallback(async (newSdk: BreezSdk, label: string, seed: Seed) => {
+    await sdk.adoptMigratedSdk(newSdk, label, seed);
   }, [sdk]);
 
   const handleLogout = async () => {
