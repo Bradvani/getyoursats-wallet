@@ -15,6 +15,7 @@ import { StableBalanceProvider } from '../../src/contexts/StableBalanceContext';
 import { ContactsProvider } from '../../src/contexts/ContactsContext';
 import WalletPage from '../../src/pages/WalletPage';
 import SettingsPage from '../../src/pages/SettingsPage';
+import FiatCurrenciesPage from '../../src/pages/FiatCurrenciesPage';
 import ProcessingStep from '../../src/features/send/steps/ProcessingStep';
 import ResultStep from '../../src/features/send/steps/ResultStep';
 import BrandIntro from '../../src/components/BrandIntro';
@@ -52,8 +53,8 @@ const sdk = new Proxy({
  addEventListener: async () => 'fixture-listener',
  removeEventListener: async () => true,
  getLightningAddress: async () => ({ description: 'UI preview', username: 'preview', lightningAddress: 'preview@example.invalid', lnurl: { bech32: 'lnurl1demonstrationonly', url: 'https://example.invalid/lnurl' } }),
- listFiatCurrencies: async () => ({ currencies: [{ id: 'USD', name: 'US Dollar', info: {name:'US Dollar',localizedName:[],localeOverrides:[],fractionSize:2,spacing:0,symbol:{grapheme:'$',template:'$1',rtl:false,position:1}} }] }),
- listFiatRates: async () => ({ rates: [{ coin:'USD', value:90000 }] }),
+ listFiatCurrencies: async () => {if(new URLSearchParams(location.search).has('metadataOffline'))throw new Error('Fixture metadata unavailable');return { currencies: [{ id: 'USD', name: 'US Dollar', info: {name:'US Dollar',localizedName:[],localeOverrides:[],fractionSize:2,spacing:0,symbol:{grapheme:'$',template:'$1',rtl:false,position:1}} }] };},
+ listFiatRates: async () => ({ rates: [{ coin:'USD', value:90000 }, {coin:'INR',value:7500000},{coin:'EUR',value:83000},{coin:'JPY',value:14000000},{coin:'CHF',value:80000}] }),
  getUserSettings: async () => ({ sparkPrivateModeEnabled: false }),
  getTokensMetadata: async () => ({tokensMetadata: []}),
  receivePayment: async () => ({ paymentRequest: merchantInvoice, fee: 0n }),
@@ -65,10 +66,11 @@ function Fixture() {
  return <ToastProvider><WalletProvider client={sdk} isConnected subscribeToSdkEvents={subscribeToSdkEvents}><WalletInfoProvider walletInfo={info}><FiatDataProvider><StableBalanceProvider><ContactsProvider>
   {['wallet','settings'].includes(screen) && <WalletPage walletInfo={info} transactions={[received]} unclaimedDeposits={[]} refreshWalletData={async()=>true} isSyncing={false} error={null} onClearError={()=>{}} onLogout={close} hasRejectedDeposits={false} onOpenGetRefund={()=>{}} onReturnToWallet={close} settingsActive={screen!=='wallet'} onOpenSettings={()=>setScreen('settings')} onOpenDca={()=>setScreen('dca')} onOpenUnilateralExit={()=>{}} onBuyBitcoin={async()=>{}} />
   }
-  {screen==='settings' ? <SettingsPage onBack={close} config={null} onOpenFiatCurrencies={()=>{}} onOpenBuyProviders={()=>{}} onOpenPasskeySettings={()=>{}} onOpenSecurity={()=>{}} onOpenBackup={()=>setScreen('backup')} onOpenEmail={()=>{}} onOpenUnilateralExit={()=>{}} />
+  {screen==='settings' ? <SettingsPage onBack={close} config={null} onOpenFiatCurrencies={()=>setScreen('currencies')} onOpenBuyProviders={()=>{}} onOpenPasskeySettings={()=>{}} onOpenSecurity={()=>{}} onOpenBackup={()=>setScreen('backup')} onOpenEmail={()=>{}} onOpenUnilateralExit={()=>{}} />
   : screen==='wallet' ? null
   : screen==='dca' ? <h1>Recurring Buys entry reached</h1>
   : screen==='backup' ? <h1>Recovery entry reached</h1>
+  : screen==='currencies' ? <FiatCurrenciesPage onBack={()=>setScreen('settings')}/>
   : screen==='startup' ? <><BrandIntro inline /><StartupLogo className="w-36 h-36 object-contain" /></>
   : screen==='received' ? <PaymentCelebration payment={received} onClose={close}/>
   : screen==='sent' || screen==='failed' ? <ResultStep payment={screen==='sent'?{...received,id:'fixture-send',paymentType:'send'}:null} result={screen==='sent'?'success':'failure'} error={screen==='failed'?'Network unavailable':null} onClose={close}/>

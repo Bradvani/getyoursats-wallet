@@ -22,7 +22,7 @@ for (const width of [1024, 1366, 1920]) {
 test('market card is visible in Wallet and unmounted in History or Settings', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 936 });
   await page.goto('/e2e/fixtures/premium-ui.html');
-  const market = page.getByRole('region', { name: 'Bitcoin market price' });
+  const market = page.getByRole('region', { name: 'Bitcoin market', exact: true });
   const nav = page.getByRole('complementary', { name: 'Wallet navigation' });
   await expect(market).toBeVisible();
   await nav.getByRole('button', { name: 'History', exact: true }).click();

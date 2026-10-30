@@ -425,7 +425,7 @@
 .gys-market-pulse__denominations::-webkit-scrollbar{display:none}
 .gys-market-pulse__denominations button{
   flex:0 0 auto;scroll-snap-align:start;white-space:nowrap;
-  min-height:36px;padding:7px 12px;border-radius:11px;
+  min-height:44px;min-width:44px;padding:7px 12px;border-radius:11px;
   background:rgba(255,255,255,.055);color:#cfc7ba;
   border:1px solid rgba(255,255,255,.14);
   font-size:11px;font-weight:730;line-height:1.2;
@@ -453,9 +453,14 @@
  .gys-market-pulse--glance{margin:6px 12px 9px;padding:13px 14px 11px}
  .gys-market-pulse--glance .gys-market-pulse__quote{margin:8px 0 9px}
  .gys-market-pulse__denominations{margin-right:-2px}
- .gys-market-pulse__denominations button{min-height:35px}
+ .gys-market-pulse__denominations button{min-height:44px}
  .gys-market-pulse--glance .gys-market-pulse__bottom{gap:5px}
 }
 @media(prefers-reduced-motion:reduce){
  .gys-market-pulse__denominations button{transition:none!important}
 }
+
+.gys-market-pulse__switches button,.gys-market-pulse__bottom button{min-height:44px;min-width:44px}
+.gys-market-pulse__price{max-width:100%;overflow-wrap:anywhere}
+.gys-market-pulse__bottom button:disabled{opacity:.65;cursor:wait}
+.gys-market-pulse__bottom button:focus-visible,.gys-market-pulse__switches button:focus-visible{outline:2px solid #F7931A;outline-offset:2px}
