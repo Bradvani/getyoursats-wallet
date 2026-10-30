@@ -30,4 +30,6 @@ jobs:
         run: node --test tests/rampnow-webhook.integration.mjs
       - name: Verify sandbox checkout reservation and ownership
         run: GYS_REQUIRE_REDIS=1 node --test tests/rampnow-intent-store.test.mjs
+      - name: Verify notification authorization and retries with isolated Redis
+        run: node --test tests/push-service.integration.mjs
       - run: npm run lint
