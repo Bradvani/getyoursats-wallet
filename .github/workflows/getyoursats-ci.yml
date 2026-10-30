@@ -20,10 +20,16 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: node --test tests/*.test.mjs
+      - name: Verify RampNow wallet proof with the pinned SDK without funds
+        run: node --test tests/rampnow-sdk-proof.integration.mjs
       - name: Install isolated Redis acceptance dependency
         run: sudo apt-get update && sudo apt-get install -y redis-server
       - name: Verify cross-instance support quotas without external delivery
         run: node --test tests/contact-budget.integration.mjs
+      - name: Verify sandbox webhook persistence and concurrency
+        run: node --test tests/rampnow-webhook.integration.mjs
+      - name: Verify sandbox checkout reservation and ownership
+        run: GYS_REQUIRE_REDIS=1 node --test tests/rampnow-intent-store.test.mjs
       - name: Verify notification authorization and retries with isolated Redis
         run: node --test tests/push-service.integration.mjs
       - run: npm run lint
