@@ -152,3 +152,21 @@ describe('AmountStep USD entry (no stable balance)', () => {
     expect(screen.queryByRole('button', { name: '$' })).toBeNull();
   });
 });
+
+it('keeps fractional sats invalid instead of multiplying the amount', async () => {
+  const {onNext} = renderAmountStep();
+  fireEvent.change(screen.getByTestId('amount-input'), {target:{value:'1.5'}});
+  expect(screen.getByRole('button', {name:'Continue'})).toBeDisabled();
+  expect(onNext).not.toHaveBeenCalled();
+});
+
+it('clears payment eligibility after an ambiguous fiat paste, preserving it for correction', async () => {
+  const {onNext} = renderAmountStep();
+  fireEvent.click(await screen.findByRole('button', {name:'sats'}));
+  const input = screen.getByTestId('amount-input');
+  fireEvent.change(input, {target:{value:'5'}});
+  fireEvent.change(input, {target:{value:'1,234'}});
+  expect(input).toHaveValue('1,234');
+  expect(screen.getByRole('button', {name:'Continue'})).toBeDisabled();
+  expect(onNext).not.toHaveBeenCalled();
+});

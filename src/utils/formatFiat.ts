@@ -1,8 +1,31 @@
-const LOCALES: Record<string, string> = {
-  en: 'en-US', hi: 'hi-IN', es: 'es-ES', pt: 'pt-PT', ja: 'ja-JP',
-  th: 'th-TH', vi: 'vi-VN', ta: 'ta-IN', ar: 'ar', 'zh-CN': 'zh-CN',
-};
 const formatters = new Map<string, Intl.NumberFormat>();
+const locales = new Map<string, string>();
+
+/** Currency region controls grouping; shared currencies retain a suitable language variant. */
+export function fiatLocale(currency: string, language = 'en'): string {
+  const base = language.split('-')[0];
+  const key = `${currency}:${base}`;
+  const cached = locales.get(key);
+  if (cached) return cached;
+  const shared: Record<string, string> = {
+    INR: 'en-IN', USD: 'en-US',
+    EUR: ({en: 'en-IE', es: 'es-ES', pt: 'pt-PT', fr: 'fr-FR', it: 'it-IT', nl: 'nl-NL'} as Record<string, string>)[base] ?? 'de-DE',
+    CHF: base === 'fr' ? 'fr-CH' : base === 'it' ? 'it-CH' : 'de-CH',
+    CAD: base === 'fr' ? 'fr-CA' : 'en-CA',
+    XAF: 'fr-CM', XOF: 'fr-SN', XPF: 'fr-PF', XCD: 'en-AG', XCG: 'nl-CW', ANG: 'nl-CW',
+  };
+  let locale = shared[currency];
+  if (!locale) {
+    try {
+      const region = currency.slice(0, 2);
+      const knownRegion = new Intl.DisplayNames('en', {type: 'region', fallback: 'none'}).of(region);
+      locale = knownRegion ? new Intl.Locale(`und-${region}`).maximize().toString() : 'en-US';
+    } catch { locale = 'en-US'; }
+  }
+  if (locales.size >= 256) locales.clear();
+  locales.set(key, locale);
+  return locale;
+}
 
 /** INR uses lakh/crore grouping across device locales. These are display values only. */
 export function formatFiat(value: number, currency: string, language = 'en', options: {
@@ -10,7 +33,7 @@ export function formatFiat(value: number, currency: string, language = 'en', opt
   maximumFractionDigits?: number;
 } = {}): string {
   if (!Number.isFinite(value)) return '';
-  const locale = currency === 'INR' ? 'en-IN' : LOCALES[language] ?? language;
+  const locale = fiatLocale(currency, language);
   try {
     const key = JSON.stringify([locale, currency, !!options.numberOnly, options.maximumFractionDigits]);
     let formatter = formatters.get(key);

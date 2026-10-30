@@ -109,3 +109,90 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(result.then(({ response }) => response));
   event.waitUntil(result.then(({ copy }) => copy ? remember(cacheKey, copy) : undefined));
 });
+
+
+/**
+ * Web Push display layer only. The subscribing UI and authenticated delivery
+ * endpoint must be shipped separately before this feature can be activated.
+ * No balance, seed, invoice, contact information or payment proof belongs in
+ * the notification. The wallet rechecks actual settlement after opening.
+ */
+self.addEventListener('push', (event) => {
+  let message = null;
+  try {
+    message = event.data ? event.data.json() : null;
+  } catch {
+    // Always present a visible fallback: iOS Home Screen Web Push requires it.
+  }
+  // The backend must authorize the wallet, verify payment settlement and
+  // enforce the independent marketing opt-in before sending a Web Push event.
+  // This worker never trusts caller-supplied text, amount, destination or URL.
+  const copyByType = {
+    'gys.payment.received': {
+      title: 'Payment received ⚡',
+      body: 'Bitcoin received. Open GetYourSats for details.',
+    },
+    'gys.dca.purchase.settled': {
+      title: 'Your stack just grew',
+      body: 'Your scheduled Bitcoin purchase is complete. View your receipt.',
+    },
+    'gys.dca.purchase.failed': {
+      title: 'Scheduled purchase needs attention',
+      body: 'Your scheduled Bitcoin purchase did not complete. Review your plan.',
+    },
+    'gys.onramp.purchase.processing': {
+      title: 'Bitcoin purchase processing',
+      body: 'Your purchase is still processing. Check its current status.',
+    },
+    'gys.onramp.purchase.settled': {
+      title: 'Bitcoin purchase delivered',
+      body: 'Your Bitcoin has arrived. Open your wallet to verify the receipt.',
+    },
+    'gys.onramp.availability': {
+      title: 'More ways to stack sats',
+      body: 'Explore available Bitcoin purchase options and fees.',
+    },
+  };
+  // PWA Lightning notifications are delivered as *empty encrypted-data-free*
+  // pushes: the push service authenticates the VAPID sender while the server
+  // validates the settled Lightning webhook. The empty payload prevents
+  // sensitive wallet/payment identifiers entering any push relay.
+  const type = !event.data ? 'gys.payment.received'
+    : message && message.version === 1 && typeof message.type === 'string'
+    && Object.prototype.hasOwnProperty.call(copyByType, message.type)
+      ? message.type : null;
+  const copy = type ? copyByType[type] : {
+    title: 'GetYourSats',
+    body: 'Wallet activity. Open GetYourSats to review.',
+  };
+  const id = type && message && typeof message.id === 'string'
+    && /^[a-zA-Z0-9_-]{1,80}$/.test(message.id) ? message.id : null;
+  const options = {
+    body: copy.body,
+    icon: '/brand/app-icon-192.png',
+    badge: '/brand/app-icon-192.png',
+    data: { path: '/' },
+  };
+  if (id) options.tag = type + ':' + id;
+  event.waitUntil(self.registration.showNotification(copy.title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  // Ignore all payload URLs; only the canonical wallet origin can be opened.
+  event.waitUntil((async () => {
+    const home = new URL('/', self.location.origin).href;
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const existing = windows.find((client) => {
+      try {
+        return new URL(client.url).origin === self.location.origin
+          && typeof client.focus === 'function';
+      } catch {
+        return false;
+      }
+    });
+    if (existing) return existing.focus();
+    if (typeof self.clients.openWindow === 'function') return self.clients.openWindow(home);
+    return undefined;
+  })());
+});

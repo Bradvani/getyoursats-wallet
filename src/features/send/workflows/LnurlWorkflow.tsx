@@ -1,4 +1,5 @@
 import {isRestrictedBrowserWallet,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
+import {validAmountInput} from '../../../utils/decimalInput';
 import {usePresentation} from '@/hooks/usePresentation';
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
@@ -128,6 +129,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
   // setError is only called in onAmountNext, so step changes don't
   // need a clearing effect; the confirm-back handler clears inline.
   const onAmountNext = async () => {
+    if (!validAmountInput(amount, isTokenMode ? (config?.fractionSize ?? 2) : 0)) return;
     if (!balanceKnown || hasPendingConversion) {setError(text.updating);return;}
     if (feesIncluded && !isSendAllToken && balance.exceedsBalance(Number(amount))) {setError(text.exceeds);return;}
     if (commentAllowed && commentMaxLen && comment.length > commentMaxLen) {
@@ -261,9 +263,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
     );
   }
 
-  const validAmount = isTokenMode
-    ? amount !== '' && parseFloat(amount) > 0
-    : amount !== '' && parseInt(amount) > 0;
+  const validAmount = validAmountInput(amount, isTokenMode ? (config?.fractionSize ?? 2) : 0);
   const amountNum = isTokenMode ? parseFloat(amount) || 0 : parseInt(amount) || 0;
   const isSendAllSats = !isStableBalanceActive && sendAllAmount !== null && amountNum === sendAllAmount && feesIncluded;
   const isSendAll = isSendAllSats || isSendAllToken || isSendAllBtcInTokenMode;

@@ -203,3 +203,12 @@ describe('global fiat default',()=>{
   expect(getDisplayFiatCurrency()).toBe('INR');
  });
 });
+
+it('recovers malformed currency preferences without touching wallet storage', async () => {
+ localStorage.clear();vi.resetModules();
+ localStorage.setItem('fiat_settings_v1',JSON.stringify({selectedCurrencies:[null, 'INR', 'INR', 1, 'BTC', 'usd']}));
+ const {getFiatSettings, saveFiatSettings}=await import('./settings');
+ expect(getFiatSettings().selectedCurrencies).toEqual(['INR']);
+ saveFiatSettings({selectedCurrencies:[]});
+ expect(getFiatSettings().selectedCurrencies).toEqual(['USD']);
+});

@@ -1,290 +1,87 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { LoadingSpinner, Checkbox } from '../components/ui';
-import { useWallet } from '@/contexts/WalletContext';
-import { getFiatSettings, saveFiatSettings, getDisplayFiatCurrency, setDisplayFiatCurrency } from '../services/settings';
-import type { FiatCurrency } from '@breeztech/breez-sdk-spark';
+import {useMemo, useState} from 'react';
+import {useFiatData} from '../contexts/FiatDataContext';
+import {usePresentation} from '../hooks/usePresentation';
+import {getFiatSettings, saveFiatSettings, getDisplayFiatCurrency, setDisplayFiatCurrency} from '../services/settings';
 import SlideInPage from '../components/layout/SlideInPage';
-import { ChevronUpIcon, ChevronDownIcon, DragHandleIcon } from '../components/Icons';
-import { logger, LogCategory } from '@/services/logger';
+import {ChevronUpIcon, ChevronDownIcon, CheckIcon} from '../components/Icons';
+import {currencyCatalog} from '../utils/currencyCatalog';
+import {formatFiat} from '../utils/formatFiat';
+import {currencyCopy} from '../locales/currencies';
 
-interface FiatCurrenciesPageProps {
-  onBack: () => void;
-}
-
-const FiatCurrenciesPage: React.FC<FiatCurrenciesPageProps> = ({ onBack }) => {
-  const wallet = useWallet();
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [currencies, setCurrencies] = useState<FiatCurrency[]>([]);
-  const [selectedCurrencies, setSelectedCurrencies] = useState<string[]>([]);
-  const [primaryCurrency,setPrimaryCurrency]=useState(getDisplayFiatCurrency);
-  const [draggedItem, setDraggedItem] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-
-        // Load saved settings
-        const settings = getFiatSettings();
-        setSelectedCurrencies(settings.selectedCurrencies);
-        setPrimaryCurrency(getDisplayFiatCurrency());
-
-        // Load available currencies from SDK
-        const fiatCurrencies = (await wallet.listFiatCurrencies()).currencies;
-        setCurrencies(fiatCurrencies);
-      } catch (error) {
-        logger.error(LogCategory.SDK, 'Failed to load fiat currencies', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-        setLoadError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [wallet]);
-
-  const handleToggleCurrency = useCallback((currencyId: string) => {
-    setSelectedCurrencies(prev => {
-      let newSelection: string[];
-      if (prev.includes(currencyId)) {
-        // Remove currency
-        newSelection = prev.filter(id => id !== currencyId);
-      } else {
-        // Add currency at the end
-        newSelection = [...prev, currencyId];
-      }
-      // Save immediately
-      saveFiatSettings({ selectedCurrencies: newSelection });
-      if(!newSelection.includes(primaryCurrency)){
-        const next=newSelection[0]??'USD';
-        setPrimaryCurrency(next);setDisplayFiatCurrency(next);
-      }
-      return newSelection;
-    });
-  }, [primaryCurrency]);
-
-  const handleDragStart = useCallback((currencyId: string) => {
-    setDraggedItem(currencyId);
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    if (!draggedItem || draggedItem === targetId) return;
-
-    setSelectedCurrencies(prev => {
-      const draggedIndex = prev.indexOf(draggedItem);
-      const targetIndex = prev.indexOf(targetId);
-
-      if (draggedIndex === -1 || targetIndex === -1) return prev;
-
-      const newOrder = [...prev];
-      newOrder.splice(draggedIndex, 1);
-      newOrder.splice(targetIndex, 0, draggedItem);
-      return newOrder;
-    });
-  }, [draggedItem]);
-
-  const handleDragEnd = useCallback(() => {
-    setDraggedItem(null);
-    setSelectedCurrencies(prev => {
-      saveFiatSettings({ selectedCurrencies: prev });
-      return prev;
-    });
-  }, []);
-
-  const handleMoveUp = useCallback((currencyId: string) => {
-    setSelectedCurrencies(prev => {
-      const index = prev.indexOf(currencyId);
-      if (index <= 0) return prev;
-
-      const newOrder = [...prev];
-      [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
-
-      saveFiatSettings({ selectedCurrencies: newOrder });
-      return newOrder;
-    });
-  }, []);
-
-  const handleMoveDown = useCallback((currencyId: string) => {
-    setSelectedCurrencies(prev => {
-      const index = prev.indexOf(currencyId);
-      if (index === -1 || index >= prev.length - 1) return prev;
-
-      const newOrder = [...prev];
-      [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
-
-      saveFiatSettings({ selectedCurrencies: newOrder });
-      return newOrder;
-    });
-  }, []);
-
-  // Get currency info helper
-  const getCurrencyInfo = (currencyId: string): FiatCurrency | undefined => {
-    return currencies.find(c => c.id === currencyId);
+export default function FiatCurrenciesPage({onBack}: {onBack: () => void}) {
+  const {fiatCurrencies} = useFiatData();
+  const {language} = usePresentation();
+  const text = currencyCopy(language);
+  const [selected, setSelected] = useState(() => [...new Set([...getFiatSettings().selectedCurrencies, getDisplayFiatCurrency()])]);
+  const [primary, setPrimary] = useState(getDisplayFiatCurrency);
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState('');
+  const currencies = useMemo(() => currencyCatalog(fiatCurrencies, selected, language), [fiatCurrencies, selected, language]);
+  const normalized = query.trim().toLocaleLowerCase(language);
+  const matches = (currency: typeof currencies[number]) => !normalized || [currency.id, currency.name, currency.symbol]
+    .some(value => value.toLocaleLowerCase(language).includes(normalized));
+  const chosen = selected.map(id => currencies.find(currency => currency.id === id)).filter(currency => currency !== undefined);
+  const available = currencies.filter(currency => !selected.includes(currency.id));
+  const rows = [...chosen, ...available].filter(matches);
+  const save = (next: string[], active = primary) => {
+    if (!next.length) return;
+    setSelected(next);
+    saveFiatSettings({selectedCurrencies: next});
+    const nextPrimary = next.includes(active) ? active : next[0];
+    setPrimary(nextPrimary);
+    setDisplayFiatCurrency(nextPrimary);
+    setStatus(text.saved);
   };
-
-  // Separate selected and unselected currencies
-  const selectedCurrencyList = selectedCurrencies
-    .map(id => getCurrencyInfo(id))
-    .filter((c): c is FiatCurrency => c !== undefined);
-
-  const unselectedCurrencyList = currencies
-    .filter(c => !selectedCurrencies.includes(c.id))
-    .sort((a, b) => a.id.localeCompare(b.id));
-
-  // Search by ISO code, localized currency name or printed symbol. The full
-  // selection order is never rewritten by searching.
-  const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
-  const matches = useCallback((currency: FiatCurrency) => {
-    if (!normalizedQuery) return true;
-    return [currency.id, currency.info.name, currency.info.symbol?.grapheme ?? '']
-      .some(part => part.toLocaleLowerCase().includes(normalizedQuery));
-  }, [normalizedQuery]);
-  const filteredSelected = useMemo(() => selectedCurrencyList.filter(matches), [selectedCurrencies, currencies, matches]);
-  const filteredAvailable = useMemo(() => unselectedCurrencyList.filter(matches), [selectedCurrencies, currencies, matches]);
-  const hitCount = filteredSelected.length + filteredAvailable.length;
-
-  return (
-    <SlideInPage title="Currencies" closeStyle="back" onClose={onBack} slideFrom="right">
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner />
-        </div>
-      ) : loadError ? (
-        <div className="p-4 text-center text-spark-text-muted">
-          Failed to load currencies. Please try again.
-        </div>
-      ) : (
-        <div className="p-4 space-y-3">
-          <div className="relative">
-            <span aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 text-spark-text-muted text-xl">⌕</span>
-            <input type="search" inputMode="search" autoComplete="off" enterKeyHint="search"
-              aria-label="Search currencies" placeholder="Search code, name or symbol…"
-              data-testid="currency-search" className="gys-currency-search"
-              value={searchQuery} onChange={event => setSearchQuery(event.currentTarget.value)} />
-          </div>
-          <p role="status" className="text-xs text-spark-text-muted px-1">
-            {normalizedQuery ? `${hitCount} matching currencies` : `${currencies.length} available currencies · ${selectedCurrencies.length} selected`}
-          </p>
-          {hitCount===0 && <div className="rounded-2xl border border-spark-border p-8 text-center text-sm text-spark-text-secondary" data-testid="currency-no-results">
-            No matching currencies. Try a different name or code.
-          </div>}
-          {filteredSelected.length>0 && <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-spark-text-muted px-1 pt-2">Your currencies</p>}
-          {/* Selected currencies - with drag handles */}
-          {filteredSelected.map((currency, index) => (
-            <div
-              key={currency.id}
-              draggable={!normalizedQuery}
-              onDragStart={() => handleDragStart(currency.id)}
-              onDragOver={(e) => handleDragOver(e, currency.id)}
-              onDragEnd={handleDragEnd}
-              className={`flex items-center gap-3 p-3 bg-spark-dark border border-spark-border rounded-xl transition-all ${draggedItem === currency.id ? 'opacity-50' : ''
-                }`}
-            >
-              {/* Checkbox */}
-              <Checkbox
-                checked={selectedCurrencies.includes(currency.id)}
-                onChange={() => handleToggleCurrency(currency.id)}
-              />
-
-              {/* Currency info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-display font-semibold text-spark-text-primary">
-                    {currency.id}
-                  </span>
-                  {currency.info.symbol?.grapheme && (
-                    <span className="text-spark-text-muted">
-                      ({currency.info.symbol.grapheme})
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-spark-text-muted truncate">
-                  {currency.info.name}
-                </p>
-              </div>
-
-              <button type="button" onClick={()=>{setPrimaryCurrency(currency.id);setDisplayFiatCurrency(currency.id)}}
-                aria-pressed={primaryCurrency===currency.id}
-                aria-label={'Use '+currency.id+' as default currency'}
-                className={`px-3 py-2 rounded-xl text-xs font-semibold border ${primaryCurrency===currency.id?'text-spark-primary border-spark-primary':'text-spark-text-muted border-spark-border'}`}>
-                {primaryCurrency===currency.id?'Default':'Use'}
-              </button>
-              {/* Reorder buttons (mobile-friendly) */}
-              <div className="flex flex-col gap-0.5">
-                <button
-                  onClick={() => handleMoveUp(currency.id)}
-                  disabled={Boolean(normalizedQuery) || index === 0}
-                  className="p-1 text-spark-text-muted hover:text-spark-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
-                  aria-label="Move up"
-                >
-                  <ChevronUpIcon />
+  const toggle = (id: string) => save(selected.includes(id) ? selected.filter(code => code !== id) : [...selected, id]);
+  const move = (id: string, delta: number) => {
+    const index = selected.indexOf(id), target = index + delta;
+    if (target < 0 || target >= selected.length) return;
+    const next = [...selected];
+    [next[index], next[target]] = [next[target], next[index]];
+    save(next);
+  };
+  const button = 'min-h-11 min-w-11 rounded-xl border border-spark-border px-3 text-sm text-spark-text-secondary focus-visible:outline-2 focus-visible:outline-spark-primary disabled:opacity-40';
+  return <SlideInPage title={text.title} closeStyle="back" onClose={onBack} slideFrom="right">
+    <div className="p-4 space-y-4" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+      <p className="text-sm text-spark-text-secondary">{text.hint}</p>
+      <div className="rounded-2xl border border-spark-border bg-spark-dark p-4" data-testid="currency-format-preview">
+        <p className="text-xs text-spark-text-muted">{text.format} · <bdi>{primary}</bdi></p>
+        <bdi className="block mt-2 text-xl font-semibold break-words">{formatFiat(1234567.89, primary, language)}</bdi>
+      </div>
+      <input type="search" inputMode="search" autoComplete="off" enterKeyHint="search"
+        aria-label={text.search} placeholder={text.search} data-testid="currency-search"
+        className="gys-currency-search" value={query} onChange={event => setQuery(event.currentTarget.value)} />
+      <p className="sr-only" role="status" aria-live="polite">{normalized ? `${rows.length}` : status}</p>
+      {rows.length === 0 && <p className="p-6 text-sm text-spark-text-secondary" data-testid="currency-no-results">{text.empty}</p>}
+      {[{label: text.selected, items: chosen}, {label: text.more, items: available}].map(group => {
+        const items = group.items.filter(matches);
+        return items.length > 0 && <section key={group.label} aria-label={group.label} className="space-y-2">
+          <h2 className="text-xs font-semibold text-spark-text-muted py-1">{group.label}</h2>
+          {items.map(currency => {
+            const checked = selected.includes(currency.id), index = selected.indexOf(currency.id);
+            return <div key={currency.id} data-testid={`currency-${currency.id}`} className="rounded-2xl border border-spark-border bg-spark-dark p-3">
+              <label className="flex min-h-11 items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={checked} onChange={() => toggle(currency.id)}
+                  disabled={checked && selected.length === 1} aria-label={`${currency.id} ${currency.name}`}
+                  aria-describedby={checked && selected.length === 1 ? 'currency-keep-one' : undefined}
+                  className="w-6 h-6 shrink-0 accent-spark-primary" />
+                <span className="min-w-0 flex-1"><bdi className="font-semibold">{currency.id}</bdi>
+                  <span className="block text-sm text-spark-text-secondary break-words">{currency.name}</span></span>
+                <bdi className="text-spark-text-muted">{currency.symbol}</bdi>
+              </label>
+              {checked && <div className="mt-3 flex flex-wrap gap-2 items-center">
+                <button type="button" className={`${button} flex-1 flex gap-2 items-center justify-center ${primary === currency.id ? 'text-spark-primary border-spark-primary' : ''}`}
+                  aria-label={`${text.use}: ${currency.id}`} aria-pressed={primary === currency.id} onClick={() => save(selected, currency.id)}>
+                  {primary === currency.id && <CheckIcon size="sm"/>}{primary === currency.id ? text.active : text.use}
                 </button>
-                <button
-                  onClick={() => handleMoveDown(currency.id)}
-                  disabled={Boolean(normalizedQuery) || index === filteredSelected.length - 1}
-                  className="p-1 text-spark-text-muted hover:text-spark-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
-                  aria-label="Move down"
-                >
-                  <ChevronDownIcon />
-                </button>
-              </div>
-
-              {/* Drag handle */}
-              <div className="cursor-grab active:cursor-grabbing text-spark-text-muted hover:text-spark-text-secondary p-1">
-                <DragHandleIcon />
-              </div>
-            </div>
-          ))}
-
-          {/* Unselected currencies */}
-          {filteredAvailable.length>0 && <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-spark-text-muted px-1 pt-3">More currencies</p>}
-          {filteredAvailable.map((currency) => (
-            <div
-              key={currency.id}
-              className="flex items-center gap-3 p-3 bg-spark-dark/50 border border-spark-border/50 rounded-xl"
-            >
-              {/* Checkbox */}
-              <Checkbox
-                checked={false}
-                onChange={() => handleToggleCurrency(currency.id)}
-              />
-
-              {/* Currency info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-display font-medium text-spark-text-secondary">
-                    {currency.id}
-                  </span>
-                  {currency.info.symbol?.grapheme && (
-                    <span className="text-spark-text-muted">
-                      ({currency.info.symbol.grapheme})
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-spark-text-muted truncate">
-                  {currency.info.name}
-                </p>
-              </div>
-
-              {/* Invisible placeholders to match selected row height */}
-              <div className="flex flex-col gap-0.5 invisible">
-                <div className="p-1"><ChevronUpIcon /></div>
-                <div className="p-1"><ChevronDownIcon /></div>
-              </div>
-              <div className="p-1 invisible">
-                <DragHandleIcon />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </SlideInPage>
-  );
-};
-
-export default FiatCurrenciesPage;
+                <button type="button" className={button} disabled={index === 0 || !!normalized} onClick={() => move(currency.id, -1)} aria-label={`${text.up}: ${currency.id}`}><ChevronUpIcon/></button>
+                <button type="button" className={button} disabled={index === selected.length - 1 || !!normalized} onClick={() => move(currency.id, 1)} aria-label={`${text.down}: ${currency.id}`}><ChevronDownIcon/></button>
+              </div>}
+            </div>;
+          })}
+        </section>;
+      })}
+      <p id="currency-keep-one" className="text-xs text-spark-text-muted">{text.last}</p>
+    </div>
+  </SlideInPage>;
+}

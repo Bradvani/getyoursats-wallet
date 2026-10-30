@@ -1,4 +1,5 @@
 import {isRestrictedBrowserWallet,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
+import {normalizeDecimalInput, validAmountInput} from '../../../utils/decimalInput';
 import {useFlowText} from '@/hooks/useFlowText';
 import {useFiatData} from '../../../contexts/FiatDataContext';
 import DenominationTabs from '../../../getyoursats/DenominationTabs';
@@ -110,7 +111,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
     if(isDenominated)setUnitRaw(satsToAmount(sats,denomination,currentRate));
   };
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw=e.target.value;
+    const raw=isDenominated?normalizeDecimalInput(e.target.value):e.target.value;
     if(isDenominated){
       setUnitRaw(raw);
       const sats=amountToSats(raw,denomination,currentRate);
@@ -119,9 +120,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
     setFeesIncluded(false);
   };
 
-  const validAmount = isTokenMode
-    ? localAmount !== '' && parseFloat(localAmount) > 0
-    : localAmount !== '' && parseInt(localAmount) > 0;
+  const validAmount = validAmountInput(localAmount, isTokenMode ? (config?.fractionSize ?? 2) : 0);
 
   const quickAmounts = pickQuickAmounts(balance.spendableDisplay, quickAmountScale);
   const amountNum = isTokenMode ? parseFloat(localAmount) || 0 : parseInt(localAmount) || 0;
@@ -330,7 +329,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
     <div className="space-y-5">
       {destinationReviewed ? amountSection : amountFirst ? <>{amountSection}{destinationSection}</> : <>{destinationSection}{amountSection}</>}
 
-      <FormError error={inlineBalanceError || localError || error} />
+      <FormError error={(localAmount && !validAmount ? t('Invalid amount') : null) || inlineBalanceError || localError || error} />
 
       <PrimaryButton
         onClick={handleNext}

@@ -19,6 +19,7 @@ import { splitClaimedDeposits } from '../utils/depositClaimQuote';
 import { isDepositRejected, clearRejectedDeposits, clearClaimFees } from '../services/depositState';
 import { setCachedStableTicker, clearNetworkOverride, clearStableRestorePrompted, ensureSparkPrivateMode, type BuyBitcoinProvider } from '../services/settings';
 import { wipeAllLocalData } from '../services/accountDeletion';
+import {revokeBrowserPushOnLogout} from '../services/pushLifecycle';
 import { hideSplash } from '../main';
 import {
   prfAvailability,
@@ -842,6 +843,14 @@ export function useBreezSdk(
     // Runs inside the browser spend/removal lock before any destructive action.
     // The device wipe includes other wallets, so their exit records count too.
     assertNoExitRecordsForRemoval();
+    // Stop receiving OS notifications tied to the old wallet before dropping
+    // its keys. Never let offline service-worker operations block logout.
+    try {
+      await Promise.race([
+        revokeBrowserPushOnLogout(),
+        new Promise<void>(resolve => setTimeout(resolve, 2000)),
+      ]);
+    } catch { /* invalidated endpoints are also purged on push 404/410 */ }
     nativeWalletEpochRef.current++;
     nativeSessionSdkRef.current = null;
     if (Capacitor.isNativePlatform()) setActiveNativeSeedWallet(null);
