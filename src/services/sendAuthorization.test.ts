@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BreezSdk, Seed, SignInResponse } from '@breeztech/breez-sdk-spark';
 import { Capacitor } from '@capacitor/core';
 import { buildBrowserPasskeyClient, getPasskey } from './passkeyService';
+import { withNetworkCheckedParse } from '../utils/destinationAddress';
 import {
   cancelSendAuthorization,
   isSendAuthorizationError,
@@ -67,6 +68,19 @@ function request() {
 }
 
 describe('passkey send authorization', () => {
+  it('ignores generic SDK proxy fallbacks for unknown symbol properties', () => {
+    const fallback = vi.fn(async () => undefined);
+    const client = new Proxy({} as BreezSdk, {
+      get: (target, property) => Reflect.get(target, property) ?? fallback,
+    });
+    const listener = vi.fn();
+    expect(requiresSendAuthorization(client)).toBe(false);
+    expect(() => subscribeSendAuthorization(client, listener)()).not.toThrow();
+    expect(() => cancelSendAuthorization(client)).not.toThrow();
+    expect(listener).not.toHaveBeenCalled();
+    expect(fallback).not.toHaveBeenCalled();
+  });
+
   it.each(['sendPayment', 'lnurlPay'] as const)('requires a new pinned ceremony for each %s call', async method => {
     const { client, raw } = await fixture();
     const reviewed = request();
@@ -210,7 +224,7 @@ describe('passkey send authorization', () => {
 
   it('publishes authorization state through an outer SDK proxy', async () => {
     const { client, raw } = await fixture();
-    const outer = new Proxy(client, { get: (target, property) => Reflect.get(target, property) });
+    const outer = withNetworkCheckedParse(client, 'mainnet');
     const states: boolean[] = [];
     const unsubscribe = subscribeSendAuthorization(outer, value => states.push(value));
     expect(requiresSendAuthorization(outer)).toBe(true);

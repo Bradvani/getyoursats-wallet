@@ -24,9 +24,13 @@ interface AuthorizationState {
 }
 
 const authorizationState = Symbol('getyoursats.sendAuthorization');
+const authorizationStates = new WeakSet<AuthorizationState>();
 
 function stateOf(client: BreezSdk): AuthorizationState | undefined {
-  return Reflect.get(client, authorizationState) as AuthorizationState | undefined;
+  const state: unknown = Reflect.get(client, authorizationState);
+  return typeof state === 'object' && state !== null && authorizationStates.has(state as AuthorizationState)
+    ? state as AuthorizationState
+    : undefined;
 }
 
 export function requiresSendAuthorization(client: BreezSdk): boolean {
@@ -95,6 +99,7 @@ function guardedClient(client: BreezSdk, fingerprint: string, policy: Omit<Passk
     listeners: new Set(),
     cancel: () => cancelCurrent?.('cancelled'),
   };
+  authorizationStates.add(state);
   const publish = (authorizing: boolean) => {
     state.authorizing = authorizing;
     for (const listener of state.listeners) {
