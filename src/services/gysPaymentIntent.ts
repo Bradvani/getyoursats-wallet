@@ -9,6 +9,14 @@ export function canTrackGysPayments():boolean{
   return typeof navigator!=='undefined'&&typeof navigator.locks?.request==='function';
 }
 
+/** Account removal erases every local profile, so any unresolved intent blocks it. */
+export function hasPendingGysPaymentIntent():boolean{
+  for(let index=0;index<localStorage.length;index++){
+    if(localStorage.key(index)?.startsWith(ROOT))return true;
+  }
+  return false;
+}
+
 function keyFor(identity:string):string{
   if(!/^(02|03)[a-f0-9]{64}$/i.test(identity))throw new Error(CHECK_PREVIOUS_PAYMENT);
   return ROOT+identity.toLowerCase();

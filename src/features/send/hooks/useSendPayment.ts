@@ -11,6 +11,7 @@ import { getTokenBalance } from '../../../utils/tokenFormatting';
 import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
 import { destinationErrorMessage } from '@/utils/destinationAddress';
+import {selectedNetwork} from '@/services/sdkConnect';
 import {gysRecipient,resolveGysRecipient,revalidateGysRecipient,validateGysQuote,type GysDirectRecipient} from '@/services/gysDirectPayments';
 import {canTrackGysPayments,checkGysPaymentIntent,reserveGysPaymentIntent,finishGysPaymentIntent,CHECK_PREVIOUS_PAYMENT} from '@/services/gysPaymentIntent';
 
@@ -219,7 +220,7 @@ export function useSendPayment(): UseSendPaymentReturn {
       // decoder and fails there (breez/glow-app#168). `rawInput` keeps the original text so
       // the input field still shows it on back-navigation.
       let paymentRequest = bareDestination(effective) ?? currentInput;
-      const candidate=gysRecipient(effective);
+      const candidate=selectedNetwork()==='mainnet'?gysRecipient(effective):null;
       if(candidate){
         const info=await wallet.getInfo({});
         await checkGysPaymentIntent(info.identityPubkey,request=>wallet.getPayment(request));
@@ -349,6 +350,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     if(paymentInput?.directRecipient){
       setIsLoading(true);
       try{
+        if(selectedNetwork()!=='mainnet')throw new Error('Recipient unavailable. Review the payment again.');
         await revalidateGysRecipient(paymentInput.directRecipient,input=>wallet.parse(input));
         validateGysQuote(paymentInput.directRecipient,prepareResponse);
         if(generation!==inputGeneration.current){executionStarted.current=false;return;}

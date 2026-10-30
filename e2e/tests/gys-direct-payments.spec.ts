@@ -52,6 +52,13 @@ test('@public-smoke unavailable direct routing preserves the quoted Lightning fe
   await expect(page.getByTestId('send-confirm-button')).toBeEnabled();
   expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
 });
+test('@public-smoke test-network wallets never resolve a mainnet direct destination',async({page})=>{
+  let resolutions=0;
+  page.on('request',request=>{if(request.url().includes('/.well-known/gys/'))resolutions++;});
+  await enter(page,'?network=regtest');
+  await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('3');
+  expect(resolutions).toBe(0);
+});
 test('@public-smoke a revoked binding or changed fee cannot execute an approved free payment',async({page})=>{
   await enter(page);available=false;
   await page.getByTestId('send-confirm-button').click();
