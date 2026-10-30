@@ -57,7 +57,7 @@ function setup(endpointOwner=wallet){
       else throw new Error('Unexpected Redis command: '+command);
       return Response.json({result:value});
     }
-    if(String(url).startsWith('https://web.push.apple.com')){
+    if(String(url)===endpoint){
       assert.equal(options.method,'POST');
       assert.equal(options.body,undefined);
       assert.match(options.headers.Authorization,/^vapid /);
