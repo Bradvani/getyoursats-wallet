@@ -3,6 +3,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import BackupPage from './BackupPage';
 import {backupSetupCopy} from '@/locales/backupSetup';
+import {bitcoinLearningCopy} from '@/locales/bitcoinLearning';
 import {setAppLanguage} from '@/services/presentationPreferences';
 
 const fixtures = vi.hoisted(() => ({
@@ -312,11 +313,12 @@ describe('backup language and recovery-word order', () => {
     expect(screen.getByRole('heading', {name: 'पैसे जोड़ने से पहले बैकअप बनाएँ'})).toBeVisible();
     const reveal = await screen.findByRole('button', {name: text.reveal});
     expect(reveal).toBeDisabled();
-    fireEvent.click(screen.getByRole('checkbox', {name: text.privateCheck}));
-    fireEvent.click(screen.getByRole('checkbox', {name: text.paperCheck}));
+    fireEvent.click(screen.getByRole('button', {name: bitcoinLearningCopy('hi').quizOptions[0]}));
+    fireEvent.click(screen.getByRole('button', {name: text.privateCheck}));
+    fireEvent.click(screen.getByRole('button', {name: text.paperCheck}));
     fireEvent.click(reveal);
     expect(screen.getByText(text.phrase)).toBeVisible();
-    expect(screen.getByRole('button', {name: text.check})).toBeDisabled();
+    expect(screen.getByRole('button', {name: text.check})).toBeEnabled();
   });
 
   it('keeps recovery words in their original order in an Arabic interface', async () => {
@@ -324,14 +326,14 @@ describe('backup language and recovery-word order', () => {
     render(<BackupPage onBack={vi.fn()}/>);
     const text = backupSetupCopy('ar');
     const reveal = await screen.findByRole('button', {name: text.reveal});
-    fireEvent.click(screen.getByRole('checkbox', {name: text.privateCheck}));
-    fireEvent.click(screen.getByRole('checkbox', {name: text.paperCheck}));
+    fireEvent.click(screen.getByRole('button', {name: bitcoinLearningCopy('ar').quizOptions[0]}));
+    fireEvent.click(screen.getByRole('button', {name: text.privateCheck}));
+    fireEvent.click(screen.getByRole('button', {name: text.paperCheck}));
     fireEvent.click(reveal);
     const words = screen.getByTestId('recovery-word-grid');
     expect(words).toHaveAttribute('dir', 'ltr');
     expect(words.children[0]).toHaveTextContent(/^1\.\s*abandon$/);
     expect(words.children[11]).toHaveTextContent(/^12\.\s*about$/);
-    fireEvent.click(screen.getByRole('checkbox', {name: text.handwritten}));
     fireEvent.click(screen.getByRole('button', {name: text.check}));
     expect(screen.queryByTestId('recovery-word-grid')).toBeNull();
     expect(screen.getByLabelText('الكلمة 1')).toHaveAttribute('dir', 'ltr');
