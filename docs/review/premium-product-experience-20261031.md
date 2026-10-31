@@ -2,6 +2,8 @@
 
 Baseline: `4023ea1bf42ea0a9edbf9d88e0d5e6a9fa0f12dd` (includes passkey confirmation, fee-free GYS routing and the iOS keyboard fixes).
 
+Release integration: preserves the subsequently merged fee-activation correction from PR #83, main commit `a82adf49aab70f056b65397c5c4763343d075f00`. Its source changes merge without conflicts or overlapping UI edits. Required CI is rerun on the combined source before promotion.
+
 ## Customer changes
 
 - Bitcoin Market includes circulating supply, a 21 million supply indicator, estimated market capitalization in the selected currency and Alternative.me Fear & Greed. Currency grouping follows the existing regional formatter. The market amount buttons affect the reference price only, never total supply or market capitalization.

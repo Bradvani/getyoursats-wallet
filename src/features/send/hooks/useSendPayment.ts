@@ -12,7 +12,7 @@ import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
 import { destinationErrorMessage } from '@/utils/destinationAddress';
 import {selectedNetwork} from '@/services/sdkConnect';
-import {gysRecipient,resolveGysRecipient,revalidateGysRecipient,validateGysQuote,type GysDirectRecipient} from '@/services/gysDirectPayments';
+import {gysRecipient,isGysPaymentInput,resolveGysRecipient,revalidateGysRecipient,validateGysQuote,GYS_FEE_FREE_UNAVAILABLE,type GysDirectRecipient} from '@/services/gysDirectPayments';
 import {canTrackGysPayments,checkGysPaymentIntent,reserveGysPaymentIntent,finishGysPaymentIntent,CHECK_PREVIOUS_PAYMENT} from '@/services/gysPaymentIntent';
 import { cancelSendAuthorization, isSendAuthorizationError, requiresSendAuthorization, sendPaymentWithValidation, SendAuthorizationError, subscribeSendAuthorization } from '@/services/sendAuthorization';
 import { sendAuthorizationCopy } from '@/locales/sendAuthorization';
@@ -255,6 +255,11 @@ export function useSendPayment(): UseSendPaymentReturn {
       const directRecipient=candidate&&!stableBalance.activeLabel&&canTrackGysPayments()
         ?await resolveGysRecipient(candidate,value=>wallet.parse(value)):null;
       if(!isCurrentInput(generation))return;
+      if(selectedNetwork()==='mainnet'&&isGysPaymentInput(effective)&&!stableBalance.activeLabel&&!directRecipient){
+        setPaymentInput(null);
+        setCurrentStep('input');
+        throw new Error(GYS_FEE_FREE_UNAVAILABLE);
+      }
       if(directRecipient){
         effective=await wallet.parse(directRecipient.sparkAddress);
         if(!isCurrentInput(generation))return;
@@ -313,8 +318,8 @@ export function useSendPayment(): UseSendPaymentReturn {
     } catch (err) {
       if (!isCurrentInput(generation)) return;
       logger.warn(LogCategory.PAYMENT, 'Failed to parse payment input', { error: formatError(err) });
-      if(err instanceof Error&&err.message===CHECK_PREVIOUS_PAYMENT){
-        setError(CHECK_PREVIOUS_PAYMENT);
+      if(err instanceof Error&&[CHECK_PREVIOUS_PAYMENT,GYS_FEE_FREE_UNAVAILABLE].includes(err.message)){
+        setError(err.message);
       }else if(/^[^\s@]+@[^\s@]+$/.test(currentInput)){
         const kind=classifyLookupFailure(err),text=trustCopy();
         setError(kind==='syntax'?text.lookupSyntax:kind==='notFound'?text.lookupNotFound:kind==='timeout'?text.lookupTimeout:text.lookupUnavailable);

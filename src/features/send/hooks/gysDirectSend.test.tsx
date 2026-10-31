@@ -72,14 +72,35 @@ describe('automatic GYS payments',()=>{
     expect(result.current.paymentResult).toBe('success');
     expect(result.current.completedPayment?.fees).toBe(0n);
   });
-  it('retains the ordinary LNURL quote when no verified direct route exists',async()=>{
+  it.each([address,'lnurl1synthetic-native-qr'])('blocks a paid fallback for %s when no verified free route exists',async raw=>{
     const {client,result,fetch}=await setup();
     fetch.mockImplementation(async()=>Response.json({available:false}));
-    await act(()=>result.current.processInput(address));
-    expect(result.current.currentStep).toBe('workflow');
-    expect(getLnurlPayRequestDetails(result.current.paymentInput)).toEqual(details);
+    await act(()=>result.current.processInput(raw));
+    expect(result.current.currentStep).toBe('input');
+    expect(result.current.error).toBe('Fee-free payment is unavailable right now. Please try again.');
     expect(client.prepareSendPayment).not.toHaveBeenCalled();
-    expect(result.current.paymentInput?.directRecipient).toBeUndefined();
+    expect(client.prepareLnurlPay).not.toHaveBeenCalled();
+    expect(client.lnurlPay).not.toHaveBeenCalled();
+    expect(result.current.paymentInput).toBeNull();
+    fetch.mockImplementation(async()=>Response.json(payload()));
+    await act(()=>result.current.processInput(raw));
+    expect(result.current.currentStep).toBe('amount');
+  });
+  it('does not turn a missing cross-tab lock into a fee-bearing GYS payment',async()=>{
+    const {client,result}=await setup();
+    Object.defineProperty(navigator,'locks',{configurable:true,value:undefined});
+    await act(()=>result.current.processInput(address));
+    expect(result.current.error).toBe('Fee-free payment is unavailable right now. Please try again.');
+    expect(result.current.paymentInput).toBeNull();
+    expect(client.prepareLnurlPay).not.toHaveBeenCalled();
+  });
+  it('does not use paid Lightning when native metadata fails verification',async()=>{
+    const {client,result}=await setup();
+    vi.mocked(client.parse).mockResolvedValue({type:'lightningAddress',address,payRequest:{...details,callback:'https://attacker.example/invoice'}});
+    await act(()=>result.current.processInput(address));
+    expect(result.current.error).toBe('Fee-free payment is unavailable right now. Please try again.');
+    expect(result.current.paymentInput).toBeNull();
+    expect(client.prepareLnurlPay).not.toHaveBeenCalled();
   });
   it.each(['prepare','send'])('blocks a revoked binding before %s without a paid fallback',async stage=>{
     const {client,result,fetch}=await setup();

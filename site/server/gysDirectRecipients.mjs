@@ -1,5 +1,5 @@
 import {createHash,ECDH} from 'node:crypto';
-import {bech32m} from '@scure/base';
+import {bech32,bech32m} from '@scure/base';
 
 const DOMAIN='getyoursats.com';
 const ROOT='gys:direct:v1:';
@@ -52,8 +52,23 @@ function nativeName(result){
   if(typeof address!=='string')return null;
   const [name,domain,...extra]=address.split('@');
   if(extra.length||domain!==DOMAIN||!NAME.test(name)||
-      result.lnurl!==`lnurlp://${DOMAIN}/lnurlp/${name}`||
       (result.username!==undefined&&result.username!==name))return null;
+  // The SDK accepts both native endpoint paths and decodes bech32 LNURLs.
+  // Check the decoded destination, not one provider serialization of it.
+  let lnurl=result.lnurl;
+  if(typeof lnurl!=='string'||lnurl.length>2048)return null;
+  try{
+    if(/^lnurl1/i.test(lnurl)){
+      const decoded=bech32.decode(lnurl,2048);
+      if(decoded.prefix!=='lnurl')return null;
+      lnurl=new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(bech32.fromWords(decoded.words)));
+    }
+  }catch{return null;}
+  const allowed=['https','lnurlp'].flatMap(scheme=>[
+    `${scheme}://${DOMAIN}/lnurlp/${name}`,
+    `${scheme}://${DOMAIN}/.well-known/lnurlp/${name}`
+  ]);
+  if(!allowed.includes(lnurl))return null;
   return name;
 }
 
@@ -72,23 +87,24 @@ export function createDirectRecipientDirectory({env,fetchImpl,lookup,now=Date.no
   const enabled=()=>env.GETYOURSATS_DIRECT_PAYMENTS_ENABLED==='true';
   return {
     async capture(pubkey,result){
-      if(!enabled())return;
+      if(!enabled())return 'disabled';
       const name=nativeName(result);
-      if(!name)return;
+      if(!name)return 'invalid_address';
       sparkAddressForIdentity(pubkey);
       const ownerFingerprint=fingerprint(name,await lookup(name));
       const record={identityPublicKey:pubkey,ownerFingerprint};
-      await command(env,fetchImpl,['EVAL',SAVE,1,ROOT+name,pubkey,JSON.stringify(record),TTL]);
+      const saved=await command(env,fetchImpl,['EVAL',SAVE,1,ROOT+name,pubkey,JSON.stringify(record),TTL]);
+      return saved===1?'registered':'conflict';
     },
     async resolve(name){
       if(!enabled()||!NAME.test(name))return {available:false};
       const raw=await command(env,fetchImpl,['GET',ROOT+name]);
-      if(!raw)return {available:false};
+      if(!raw)return {available:false,reason:'not_activated'};
       const record=JSON.parse(raw);
-      if(record.blocked)return {available:false};
+      if(record.blocked)return {available:false,reason:'owner_conflict'};
       const sparkAddress=sparkAddressForIdentity(record.identityPublicKey);
       const ownerFingerprint=fingerprint(name,await lookup(name));
-      if(ownerFingerprint!==record.ownerFingerprint)return {available:false};
+      if(ownerFingerprint!==record.ownerFingerprint)return {available:false,reason:'owner_changed'};
       const bindingId=createHash('sha256').update([name,record.identityPublicKey,ownerFingerprint].join('\n')).digest('hex');
       return {available:true,lightningAddress:`${name}@${DOMAIN}`,identityPublicKey:record.identityPublicKey,
         sparkAddress,bindingId,expiresAt:now()+60_000};

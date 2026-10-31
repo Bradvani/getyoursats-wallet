@@ -235,7 +235,8 @@
     "Download support report": "Download support report",
     "Checking passkey access…": "Checking passkey access…",
     "Checking for payments…": "Checking for payments…",
-    "Your first transaction starts here.": "Your first transaction starts here."
+    "Your first transaction starts here.": "Your first transaction starts here.",
+    "Fee-free payment is unavailable right now. Please try again.": "Fee-free payment is unavailable right now. Please try again."
   },
   "hi": {
     "Recipient unavailable. Review the payment again.": "प्राप्तकर्ता उपलब्ध नहीं है। भुगतान की जानकारी फिर जाँचें।",
@@ -473,7 +474,8 @@
     "Download support report": "सहायता रिपोर्ट डाउनलोड करें",
     "Checking passkey access…": "पासकी एक्सेस जाँची जा रही है…",
     "Checking for payments…": "भुगतान जाँचे जा रहे हैं…",
-    "Your first transaction starts here.": "आपका पहला लेनदेन यहाँ दिखेगा।"
+    "Your first transaction starts here.": "आपका पहला लेनदेन यहाँ दिखेगा।",
+    "Fee-free payment is unavailable right now. Please try again.": "अभी बिना शुल्क भुगतान उपलब्ध नहीं है। कृपया फिर से कोशिश करें।"
   },
   "es": {
     "Recipient unavailable. Review the payment again.": "Destinatario no disponible. Revisa el pago de nuevo.",
@@ -711,7 +713,8 @@
     "Download support report": "Descargar informe de soporte",
     "Checking passkey access…": "Comprobando acceso con passkey…",
     "Checking for payments…": "Comprobando pagos…",
-    "Your first transaction starts here.": "Tu primera transacción aparecerá aquí."
+    "Your first transaction starts here.": "Tu primera transacción aparecerá aquí.",
+    "Fee-free payment is unavailable right now. Please try again.": "El pago sin comisiones no está disponible en este momento. Inténtalo de nuevo."
   },
   "pt": {
     "Recipient unavailable. Review the payment again.": "Destinatário indisponível. Reveja o pagamento.",
@@ -949,7 +952,8 @@
     "Download support report": "Baixar relatório de suporte",
     "Checking passkey access…": "Verificando acesso com passkey…",
     "Checking for payments…": "Verificando pagamentos…",
-    "Your first transaction starts here.": "Sua primeira transação aparecerá aqui."
+    "Your first transaction starts here.": "Sua primeira transação aparecerá aqui.",
+    "Fee-free payment is unavailable right now. Please try again.": "O pagamento sem taxas não está disponível no momento. Tente novamente."
   },
   "ja": {
     "Recipient unavailable. Review the payment again.": "受取人を確認できません。支払い内容をもう一度確認してください。",
@@ -1187,7 +1191,8 @@
     "Download support report": "サポートレポートをダウンロード",
     "Checking passkey access…": "パスキーの利用を確認中…",
     "Checking for payments…": "支払いを確認中…",
-    "Your first transaction starts here.": "最初の取引はここに表示されます。"
+    "Your first transaction starts here.": "最初の取引はここに表示されます。",
+    "Fee-free payment is unavailable right now. Please try again.": "現在、手数料無料の送金を利用できません。もう一度お試しください。"
   },
   "th": {
     "Recipient unavailable. Review the payment again.": "ไม่สามารถตรวจสอบผู้รับได้ โปรดตรวจสอบการชำระเงินอีกครั้ง",
@@ -1425,7 +1430,8 @@
     "Download support report": "ดาวน์โหลดรายงานสนับสนุน",
     "Checking passkey access…": "กำลังตรวจสอบการเข้าใช้พาสคีย์…",
     "Checking for payments…": "กำลังตรวจสอบการชำระเงิน…",
-    "Your first transaction starts here.": "ธุรกรรมแรกของคุณจะแสดงที่นี่"
+    "Your first transaction starts here.": "ธุรกรรมแรกของคุณจะแสดงที่นี่",
+    "Fee-free payment is unavailable right now. Please try again.": "ขณะนี้ยังไม่สามารถชำระเงินแบบไม่มีค่าธรรมเนียมได้ โปรดลองอีกครั้ง"
   },
   "vi": {
     "Recipient unavailable. Review the payment again.": "Không thể xác minh người nhận. Hãy kiểm tra lại khoản thanh toán.",
@@ -1663,7 +1669,8 @@
     "Download support report": "Tải báo cáo hỗ trợ",
     "Checking passkey access…": "Đang kiểm tra truy cập passkey…",
     "Checking for payments…": "Đang kiểm tra thanh toán…",
-    "Your first transaction starts here.": "Giao dịch đầu tiên của bạn sẽ xuất hiện ở đây."
+    "Your first transaction starts here.": "Giao dịch đầu tiên của bạn sẽ xuất hiện ở đây.",
+    "Fee-free payment is unavailable right now. Please try again.": "Hiện chưa thể thanh toán miễn phí. Vui lòng thử lại."
   },
   "ta": {
     "Recipient unavailable. Review the payment again.": "பெறுநரைச் சரிபார்க்க முடியவில்லை. பணப்பரிமாற்ற விவரங்களை மீண்டும் சரிபார்க்கவும்.",
@@ -1901,7 +1908,8 @@
     "Download support report": "உதவி அறிக்கையைப் பதிவிறக்கு",
     "Checking passkey access…": "பாஸ்கீ அணுகலைச் சரிபார்க்கிறது…",
     "Checking for payments…": "கட்டணங்களைச் சரிபார்க்கிறது…",
-    "Your first transaction starts here.": "உங்கள் முதல் பரிவர்த்தனை இங்கே தோன்றும்."
+    "Your first transaction starts here.": "உங்கள் முதல் பரிவர்த்தனை இங்கே தோன்றும்.",
+    "Fee-free payment is unavailable right now. Please try again.": "இப்போது கட்டணமில்லாப் பணப்பரிமாற்றம் கிடைக்கவில்லை. மீண்டும் முயற்சிக்கவும்."
   },
   "ar": {
     "Recipient unavailable. Review the payment again.": "تعذر التحقق من المستلم. راجع تفاصيل الدفع مرة أخرى.",
@@ -2139,7 +2147,8 @@
     "Download support report": "تنزيل تقرير الدعم",
     "Checking passkey access…": "جارٍ التحقق من الوصول بمفتاح المرور…",
     "Checking for payments…": "جارٍ التحقق من المدفوعات…",
-    "Your first transaction starts here.": "ستظهر معاملتك الأولى هنا."
+    "Your first transaction starts here.": "ستظهر معاملتك الأولى هنا.",
+    "Fee-free payment is unavailable right now. Please try again.": "الدفع دون رسوم غير متاح الآن. يرجى المحاولة مرة أخرى."
   },
   "zh-CN": {
     "Recipient unavailable. Review the payment again.": "无法验证收款人。请重新核对付款信息。",
@@ -2377,6 +2386,7 @@
     "Download support report": "下载支持报告",
     "Checking passkey access…": "正在检查通行密钥访问…",
     "Checking for payments…": "正在检查支付…",
-    "Your first transaction starts here.": "您的首笔交易将显示在这里。"
+    "Your first transaction starts here.": "您的首笔交易将显示在这里。",
+    "Fee-free payment is unavailable right now. Please try again.": "暂时无法进行免手续费付款。请重试。"
   }
 }

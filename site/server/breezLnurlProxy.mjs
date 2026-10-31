@@ -223,8 +223,8 @@ function forward(req,body,headers,requestImpl,timeout=15000){
   });
 }
 
-function responseContainsSecret(upstream,secret){
-  if(!upstream.body.length)return false;
+function decodedResponseBody(upstream){
+  if(!upstream.body.length)return upstream.body;
   let decoded=upstream.body;
   const encodings=String(upstream.headers['content-encoding']||'identity').toLowerCase().split(',').reverse();
   for(const encoding of encodings){
@@ -235,7 +235,11 @@ function responseContainsSecret(upstream,secret){
     try{decoded=decompress(decoded,{maxOutputLength:MAX_RESPONSE_BYTES});}
     catch{throw new ProxyError(502,'Invalid LNURL response encoding');}
   }
-  return decoded.includes(Buffer.from(secret));
+  return decoded;
+}
+
+function responseContainsSecret(upstream,secret){
+  return decodedResponseBody(upstream).includes(Buffer.from(secret));
 }
 
 export function createBreezLnurlProxy({env=process.env,requestImpl=httpsRequest,fetchImpl=globalThis.fetch,now=Date.now}={}){
@@ -257,9 +261,8 @@ export function createBreezLnurlProxy({env=process.env,requestImpl=httpsRequest,
       const directory=createDirectRecipientDirectory({env,fetchImpl,now,lookup:async name=>{
         const request={method:'GET',url:'/.well-known/lnurlp/'+name,headers:{accept:'application/json'}};
         const result=await forward(request,Buffer.alloc(0),forwardedHeaders(request,secret,ip,Buffer.alloc(0)),requestImpl,2500);
-        if(result.status!==200||responseContainsSecret(result,secret)||
-            !['identity',''].includes(String(result.headers['content-encoding']||'')))throw new Error('Recipient unavailable');
-        return JSON.parse(result.body.toString('utf8'));
+        if(result.status!==200||responseContainsSecret(result,secret))throw new Error('Recipient unavailable');
+        return JSON.parse(decodedResponseBody(result).toString('utf8'));
       }});
       if(route.directName){
         if(req.method!=='GET')throw new ProxyError(405,'Method not allowed');
@@ -290,10 +293,19 @@ export function createBreezLnurlProxy({env=process.env,requestImpl=httpsRequest,
       // Only Breez's successful authenticated register/recover response establishes ownership.
       // Public LNURL metadata or a client-supplied username never establishes a destination.
       if(upstream.status===200&&req.method==='POST'&&
-          ['registration','recover'].includes(route.operation)&&
-          ['identity',''].includes(String(upstream.headers['content-encoding']||''))){
-        try{await directory.capture(route.pubkey,JSON.parse(upstream.body.toString('utf8')));}
-        catch{/* Optional routing must not turn a successful address recovery into a failure. */}
+          ['registration','recover'].includes(route.operation)){
+        // Capture is idempotent for the same authenticated owner. Retry one
+        // transient lookup/storage failure without repeating registration.
+        // Diagnostics contain no names, keys, signatures or provider bodies.
+        for(let attempt=0;attempt<2;attempt++){
+          try{
+            const outcome=await directory.capture(route.pubkey,JSON.parse(decodedResponseBody(upstream).toString('utf8')));
+            if(outcome!=='registered'&&outcome!=='disabled')console.warn('GYS direct activation:',outcome);
+            break;
+          }catch{
+            if(attempt===1)console.warn('GYS direct activation: unavailable');
+          }
+        }
       }
       for(const name of ['content-type','content-encoding','content-language','retry-after','allow']){
         const value=upstream.headers[name];
