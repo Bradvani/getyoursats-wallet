@@ -549,7 +549,7 @@ const AppContent: React.FC = () => {
         onOpenBackup={() => { setWalletActionReturn('settings'); setUserScreen('backup'); }}
         onOpenEmail={() => { setWalletActionReturn('settings'); setUserScreen('email'); }}
         onOpenBitcoinIntro={bitcoinLearning.scope ? () => {
-          bitcoinLearning.start(true);
+          bitcoinLearning.start(bitcoinLearning.progress.status === 'completed');
           walletSetup.skip();
           setUserScreen('wallet');
         } : undefined}
