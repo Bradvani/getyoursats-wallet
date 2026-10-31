@@ -12,7 +12,7 @@ import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
 import { destinationErrorMessage } from '@/utils/destinationAddress';
 import {selectedNetwork} from '@/services/sdkConnect';
-import {gysRecipient,isGysPaymentInput,resolveGysRecipient,revalidateGysRecipient,validateGysQuote,GYS_FEE_FREE_UNAVAILABLE,type GysDirectRecipient} from '@/services/gysDirectPayments';
+import {gysRecipient,isGysPaymentInput,resolveGysRecipient,revalidateGysRecipient,validateGysQuote,DIRECT_UNAVAILABLE,type GysDirectRecipient} from '@/services/gysDirectPayments';
 import {canTrackGysPayments,checkGysPaymentIntent,reserveGysPaymentIntent,finishGysPaymentIntent,CHECK_PREVIOUS_PAYMENT} from '@/services/gysPaymentIntent';
 import { cancelSendAuthorization, isSendAuthorizationError, requiresSendAuthorization, sendPaymentWithValidation, SendAuthorizationError, subscribeSendAuthorization } from '@/services/sendAuthorization';
 import { sendAuthorizationCopy } from '@/locales/sendAuthorization';
@@ -140,6 +140,23 @@ export function useSendPayment(): UseSendPaymentReturn {
     return tb ? tb.balance : 0n;
   }, [walletInfo, stableBalance.isActive, stableBalance.tokenIdentifier]);
 
+  const reviewLightningFallback = useCallback(async (generation:number,recipient:string,amount:bigint,feePolicy?:FeePolicy) => {
+    if(!isCurrentInput(generation))return;
+    const parsed=await wallet.parse(recipient);
+    if(!isCurrentInput(generation))return;
+    if(gysRecipient(parsed)?.address!==recipient)throw new Error(DIRECT_UNAVAILABLE);
+    const info=await wallet.getInfo({});
+    await checkGysPaymentIntent(info.identityPubkey,request=>wallet.getPayment(request));
+    if(!isCurrentInput(generation))return;
+    preparedIdempotencyKey.current=undefined;
+    setPaymentInput({rawInput:paymentInput?.rawInput??recipient,paymentRequest:recipient,parsedInput:parsed});
+    setAmount(stableBalance.activeLabel?'':amount.toString());
+    setFeesIncluded(!stableBalance.activeLabel&&feePolicy==='feesIncluded');
+    setPrepareResponse(null);
+    setError(null);
+    setCurrentStep('workflow');
+  },[wallet,isCurrentInput,paymentInput?.rawInput,stableBalance.activeLabel]);
+
   const prepareSend = useCallback(async (
     generation: number,
     paymentRequest: string,
@@ -162,19 +179,32 @@ export function useSendPayment(): UseSendPaymentReturn {
     setError(null);
     setAuthorizationError(null);
     try {
-      if(directRecipient){
-        await revalidateGysRecipient(directRecipient,input=>wallet.parse(input));
-        if(!isCurrentInput(generation))return;
+      let response:PrepareSendPaymentResponse;
+      try{
+        if(directRecipient){
+          await revalidateGysRecipient(directRecipient,input=>wallet.parse(input));
+          if(!isCurrentInput(generation))return;
+        }
+        response = await wallet.prepareSendPayment({
+          paymentRequest: { type: 'input', input: paymentRequest },
+          amount,
+          feePolicy,
+          tokenIdentifier,
+          conversionOptions,
+        });
+      }catch(err){
+        if(!directRecipient)throw err;
+        await reviewLightningFallback(generation,directRecipient.lightningAddress,amount,feePolicy);
+        return;
       }
-      const response = await wallet.prepareSendPayment({
-        paymentRequest: { type: 'input', input: paymentRequest },
-        amount,
-        feePolicy,
-        tokenIdentifier,
-        conversionOptions,
-      });
       if (!isCurrentInput(generation)) return;
-      if(directRecipient)validateGysQuote(directRecipient,response);
+      if(directRecipient){
+        validateGysQuote(directRecipient,response,true);
+        if(response.paymentMethod.type==='sparkAddress'&&response.paymentMethod.fee>0n){
+          await reviewLightningFallback(generation,directRecipient.lightningAddress,amount,feePolicy);
+          return;
+        }
+      }
       preparedIdempotencyKey.current=directRecipient?crypto.randomUUID():undefined;
       setPrepareResponse(response);
       setCurrentStep('workflow');
@@ -189,7 +219,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     } finally {
       if (isCurrentInput(generation)) setIsLoading(false);
     }
-  }, [wallet, isCurrentInput]);
+  }, [wallet, isCurrentInput, reviewLightningFallback]);
 
   const processInput = useCallback(async (input: string | null = null, opts?: ProcessInputOptions) => {
     if (executionStarted.current) return;
@@ -245,6 +275,11 @@ export function useSendPayment(): UseSendPaymentReturn {
       // the input field still shows it on back-navigation.
       let paymentRequest = bareDestination(effective) ?? currentInput;
       const candidate=selectedNetwork()==='mainnet'?gysRecipient(effective):null;
+      if(selectedNetwork()==='mainnet'&&isGysPaymentInput(effective)&&!candidate){
+        setPaymentInput(null);
+        setCurrentStep('input');
+        throw new Error(DIRECT_UNAVAILABLE);
+      }
       if(candidate){
         const info=await wallet.getInfo({});
         await checkGysPaymentIntent(info.identityPubkey,request=>wallet.getPayment(request));
@@ -255,11 +290,6 @@ export function useSendPayment(): UseSendPaymentReturn {
       const directRecipient=candidate&&!stableBalance.activeLabel&&canTrackGysPayments()
         ?await resolveGysRecipient(candidate,value=>wallet.parse(value)):null;
       if(!isCurrentInput(generation))return;
-      if(selectedNetwork()==='mainnet'&&isGysPaymentInput(effective)&&!stableBalance.activeLabel&&!directRecipient){
-        setPaymentInput(null);
-        setCurrentStep('input');
-        throw new Error(GYS_FEE_FREE_UNAVAILABLE);
-      }
       if(directRecipient){
         effective=await wallet.parse(directRecipient.sparkAddress);
         if(!isCurrentInput(generation))return;
@@ -318,7 +348,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     } catch (err) {
       if (!isCurrentInput(generation)) return;
       logger.warn(LogCategory.PAYMENT, 'Failed to parse payment input', { error: formatError(err) });
-      if(err instanceof Error&&[CHECK_PREVIOUS_PAYMENT,GYS_FEE_FREE_UNAVAILABLE].includes(err.message)){
+      if(err instanceof Error&&[CHECK_PREVIOUS_PAYMENT,DIRECT_UNAVAILABLE].includes(err.message)){
         setError(err.message);
       }else if(/^[^\s@]+@[^\s@]+$/.test(currentInput)){
         const kind=classifyLookupFailure(err),text=trustCopy();

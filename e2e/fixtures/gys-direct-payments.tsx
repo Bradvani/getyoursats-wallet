@@ -43,7 +43,10 @@ const reads:Partial<BreezSdk>={
   },
   prepareLnurlPay:async request=>({amountSats:Number(request.amount),feeSats:3,feePolicy:'feesExcluded',
     payRequest:details,invoiceDetails:{invoice:{bolt11:'lnbc1fixture'}}} as never),
-  lnurlPay:async()=>{lnurlSends++;throw new Error('External settlement is forbidden in this fixture');},
+  lnurlPay:async request=>{
+    lnurlSends++;
+    return {payment:{...receipt('synthetic-lnurl-receipt',BigInt(request.prepareResponse.amountSats),BigInt(request.prepareResponse.feeSats)),method:'lightning'}};
+  },
 };
 const sdk=new Proxy(reads,{get(target,key){
   if(key==='then')return undefined;

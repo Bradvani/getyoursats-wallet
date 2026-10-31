@@ -15,7 +15,7 @@ const parsed = {
   domain: 'example.invalid',
   url: 'https://example.invalid',
 };
-function setup(initial: number | undefined = 2049, min = 1000) {
+function setup(initial: number | undefined = 2049, min = 1000, prefill: {initialAmount?:string;initialFeesIncluded?:boolean} = {}) {
   const onPrepare = vi.fn().mockResolvedValue({ amountSats: 1000, feeSats: 2 });
   const onPay = vi.fn();
   const onRun = vi.fn();
@@ -25,6 +25,7 @@ function setup(initial: number | undefined = 2049, min = 1000) {
       <FiatDataProvider>
         <StableBalanceProvider>
           <LnurlWorkflow
+            {...prefill}
             parsed={{ ...parsed, minSendable: min }}
             balanceSats={balanceSats}
             onPrepare={onPrepare}
@@ -45,6 +46,15 @@ function setup(initial: number | undefined = 2049, min = 1000) {
   };
 }
 describe('LNURL available balance', () => {
+  it('preserves a fallback amount and fee policy but waits for review before paying', async () => {
+    const {onPrepare,onPay,onRun}=setup(2049,1000,{initialAmount:'100',initialFeesIncluded:true});
+    expect(screen.getByLabelText('Amount')).toHaveValue(100);
+    expect(onPrepare).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button',{name:'Continue'}));
+    await waitFor(()=>expect(onPrepare).toHaveBeenCalledWith(expect.objectContaining({amount:100n,feePolicy:'feesIncluded'})));
+    expect(onPay).not.toHaveBeenCalled();
+    expect(onRun).not.toHaveBeenCalled();
+  });
   it('shows the live wallet balance separately from the recipient range', () => {
     const { update } = setup();
     expect(screen.getByTestId('lnurl-available-balance')).toHaveTextContent(

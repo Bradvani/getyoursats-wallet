@@ -40,7 +40,7 @@ async function setup(passkey=false){
   const client=createMockClient({
     getInfo:vi.fn(async()=>({identityPubkey:key,balanceSats:10000,recoverableFundsSats:0,tokenBalances:new Map()})),
     parse:vi.fn(async(input:string)=>input===spark?
-      {type:'sparkAddress',address:spark,identityPublicKey:key,network:'bitcoin',source:{type:'string'}}:
+      {type:'sparkAddress',address:spark,identityPublicKey:key,network:'bitcoin',source:{}}:
       input.startsWith('lnurl')?{type:'lnurlPay',...details}:{type:'lightningAddress',address:input,payRequest:details}) as never,
     prepareSendPayment:vi.fn(async()=>quote),
     sendPayment:vi.fn(async request=>({payment:createMockPayment('send',{id:request.idempotencyKey,amount:100n,fees:0n})})),
@@ -49,7 +49,7 @@ async function setup(passkey=false){
   const wrapper=({children}:{children:React.ReactNode})=><WalletProvider client={protectedClient} isConnected>
     <FiatDataProvider><StableBalanceProvider>{children}</StableBalanceProvider></FiatDataProvider>
   </WalletProvider>;
-  return {client,fetch,...renderHook(()=>useSendPayment(),{wrapper})};
+  return {client,protectedClient,fetch,...renderHook(()=>useSendPayment(),{wrapper})};
 }
 afterEach(()=>{vi.unstubAllGlobals();vi.restoreAllMocks();});
 
@@ -72,48 +72,124 @@ describe('automatic GYS payments',()=>{
     expect(result.current.paymentResult).toBe('success');
     expect(result.current.completedPayment?.fees).toBe(0n);
   });
-  it.each([address,'lnurl1synthetic-native-qr'])('blocks a paid fallback for %s when no verified free route exists',async raw=>{
+  it.each([address,'lnurl1synthetic-native-qr'])('opens Lightning review for %s when the free route is unavailable',async raw=>{
     const {client,result,fetch}=await setup();
     fetch.mockImplementation(async()=>Response.json({available:false}));
     await act(()=>result.current.processInput(raw));
-    expect(result.current.currentStep).toBe('input');
-    expect(result.current.error).toBe('Fee-free payment is unavailable right now. Please try again.');
+    expect(result.current.currentStep).toBe('workflow');
+    expect(result.current.error).toBeNull();
     expect(client.prepareSendPayment).not.toHaveBeenCalled();
     expect(client.prepareLnurlPay).not.toHaveBeenCalled();
     expect(client.lnurlPay).not.toHaveBeenCalled();
-    expect(result.current.paymentInput).toBeNull();
+    expect(getLnurlPayRequestDetails(result.current.paymentInput)).toMatchObject(details);
+    expect(getSendLightningAddress(result.current.paymentInput)).toBe(address);
+    expect(result.current.paymentInput?.directRecipient).toBeUndefined();
     fetch.mockImplementation(async()=>Response.json(payload()));
     await act(()=>result.current.processInput(raw));
     expect(result.current.currentStep).toBe('amount');
   });
-  it('does not turn a missing cross-tab lock into a fee-bearing GYS payment',async()=>{
+  it('uses normal Lightning review when direct transfers cannot be tracked',async()=>{
     const {client,result}=await setup();
     Object.defineProperty(navigator,'locks',{configurable:true,value:undefined});
     await act(()=>result.current.processInput(address));
-    expect(result.current.error).toBe('Fee-free payment is unavailable right now. Please try again.');
-    expect(result.current.paymentInput).toBeNull();
+    expect(result.current.error).toBeNull();
+    expect(result.current.currentStep).toBe('workflow');
+    expect(getLnurlPayRequestDetails(result.current.paymentInput)).toEqual(details);
     expect(client.prepareLnurlPay).not.toHaveBeenCalled();
   });
   it('does not use paid Lightning when native metadata fails verification',async()=>{
     const {client,result}=await setup();
     vi.mocked(client.parse).mockResolvedValue({type:'lightningAddress',address,payRequest:{...details,callback:'https://attacker.example/invoice'}});
     await act(()=>result.current.processInput(address));
-    expect(result.current.error).toBe('Fee-free payment is unavailable right now. Please try again.');
+    expect(result.current.error).toBe('Recipient unavailable. Review the payment again.');
     expect(result.current.paymentInput).toBeNull();
     expect(client.prepareLnurlPay).not.toHaveBeenCalled();
   });
-  it.each(['prepare','send'])('blocks a revoked binding before %s without a paid fallback',async stage=>{
+  it('returns to Lightning review with the amount when the direct route disappears before preparation',async()=>{
     const {client,result,fetch}=await setup();
     await act(()=>result.current.processInput(address));
-    if(stage==='send')await act(()=>result.current.onAmountNext(100n));
     fetch.mockImplementation(async()=>Response.json({available:false}));
-    await act(()=>stage==='prepare'?result.current.onAmountNext(100n):result.current.handleSend());
+    await act(()=>result.current.onAmountNext(100n,true));
+    expect(result.current.currentStep).toBe('workflow');
+    expect(result.current.error).toBeNull();
+    expect(result.current.amount).toBe('100');
+    expect(result.current.feesIncluded).toBe(true);
+    expect(getLnurlPayRequestDetails(result.current.paymentInput)).toEqual(details);
+    expect(client.sendPayment).not.toHaveBeenCalled();
+    expect(client.lnurlPay).not.toHaveBeenCalled();
+  });
+  it('requires a new review when a confirmed direct route disappears',async()=>{
+    const {client,result,fetch}=await setup();
+    await act(()=>result.current.processInput(address));
+    await act(()=>result.current.onAmountNext(100n));
+    fetch.mockImplementation(async()=>Response.json({available:false}));
+    await act(()=>result.current.handleSend());
     expect(result.current.currentStep).toBe('amount');
     expect(result.current.error).toBe('Recipient unavailable. Review the payment again.');
     expect(result.current.prepareResponse).toBeNull();
     expect(client.sendPayment).not.toHaveBeenCalled();
     expect(client.lnurlPay).not.toHaveBeenCalled();
     expect(result.current.paymentResult).toBeNull();
+    await act(()=>result.current.onAmountNext(100n));
+    expect(result.current.currentStep).toBe('workflow');
+    expect(getLnurlPayRequestDetails(result.current.paymentInput)).toEqual(details);
+    expect(client.lnurlPay).not.toHaveBeenCalled();
+  });
+  it.each(['offline','timeout'])('continues to Lightning review after a directory %s',async reason=>{
+    const {client,result,fetch}=await setup();
+    fetch.mockRejectedValue(reason==='timeout'?new DOMException('Timed out','TimeoutError'):new Error('offline'));
+    await act(()=>result.current.processInput(address));
+    expect(result.current.currentStep).toBe('workflow');
+    expect(result.current.error).toBeNull();
+    expect(getLnurlPayRequestDetails(result.current.paymentInput)).toEqual(details);
+    expect(client.sendPayment).not.toHaveBeenCalled();
+    expect(client.lnurlPay).not.toHaveBeenCalled();
+  });
+  it.each(['fee','unavailable'])('uses fresh Lightning review when direct preparation is %s',async reason=>{
+    const {client,result}=await setup();
+    if(reason==='fee')vi.mocked(client.prepareSendPayment).mockResolvedValue({...quote,paymentMethod:{type:'sparkAddress',address:spark,fee:1n}});
+    else vi.mocked(client.prepareSendPayment).mockRejectedValue(new Error('Route unavailable'));
+    await act(()=>result.current.processInput(address));
+    await act(()=>result.current.onAmountNext(100n));
+    expect(result.current.currentStep).toBe('workflow');
+    expect(result.current.amount).toBe('100');
+    expect(result.current.prepareResponse).toBeNull();
+    expect(getSendLightningAddress(result.current.paymentInput)).toBe(address);
+    expect(getLnurlPayRequestDetails(result.current.paymentInput)).toEqual(details);
+    expect(client.sendPayment).not.toHaveBeenCalled();
+    expect(client.lnurlPay).not.toHaveBeenCalled();
+  });
+  it('retains the unresolved-payment guard when the directory is unavailable',async()=>{
+    const {client,result,fetch}=await setup();
+    localStorage.setItem('gys:payment-intent:v1:'+key,JSON.stringify({id:'pending',recipient:address,amount:'100',createdAt:Date.now()}));
+    vi.mocked(client.getPayment).mockRejectedValue(new Error('Receipt unavailable'));
+    fetch.mockImplementation(async()=>Response.json({available:false}));
+    await act(()=>result.current.processInput(address));
+    expect(result.current.error).toBe('Check payment history before sending again.');
+    expect(result.current.paymentInput).toBeNull();
+    expect(client.lnurlPay).not.toHaveBeenCalled();
+  });
+  it('requires passkey approval for Lightning fallback and permits a cancelled approval to retry',async()=>{
+    const {client,protectedClient,result,fetch}=await setup(true);
+    fetch.mockImplementation(async()=>Response.json({available:false}));
+    await act(()=>result.current.processInput(address));
+    const response=await client.prepareLnurlPay({amount:100n,payRequest:details});
+    const ceremony=deferred<ReturnType<typeof approval>>();
+    authorization.signIn.mockReturnValueOnce(ceremony.promise);
+    let operation!:Promise<void>;
+    act(()=>{operation=result.current.handleRun(()=>protectedClient.lnurlPay({prepareResponse:response}));});
+    await waitFor(()=>expect(authorization.signIn).toHaveBeenCalledOnce());
+    expect(client.lnurlPay).not.toHaveBeenCalled();
+    await act(async()=>{result.current.cancelAuthorization();await operation;});
+    expect(result.current.currentStep).toBe('workflow');
+    expect(result.current.authorizationError).not.toBeNull();
+    await act(async()=>{ceremony.resolve(approval());await ceremony.promise;});
+    expect(client.lnurlPay).not.toHaveBeenCalled();
+    await act(()=>result.current.handleRun(()=>protectedClient.lnurlPay({prepareResponse:response})));
+    expect(authorization.signIn).toHaveBeenCalledTimes(2);
+    expect(client.lnurlPay).toHaveBeenCalledOnce();
+    expect(client.sendPayment).not.toHaveBeenCalled();
+    expect(result.current.paymentResult).toBe('success');
   });
   it('rejects an SDK destination substitution before review',async()=>{
     const {client,result}=await setup();
@@ -133,6 +209,23 @@ describe('automatic GYS payments',()=>{
     await act(async()=>{response.resolve(Response.json(payload()));await operation;});
     expect(result.current.paymentInput).toBeNull();
     expect(client.prepareSendPayment).not.toHaveBeenCalled();
+  });
+  it('does not reopen a cancelled payment when fallback lookup completes late',async()=>{
+    const {client,result}=await setup();
+    await act(()=>result.current.processInput(address));
+    const lookup=deferred<{type:'lightningAddress';address:string;payRequest:typeof details}>();
+    vi.mocked(client.prepareSendPayment).mockRejectedValue(new Error('Route unavailable'));
+    vi.mocked(client.parse).mockImplementation(async input=>input===address?lookup.promise:
+      {type:'sparkAddress',address:spark,identityPublicKey:key,network:'bitcoin',source:{}});
+    vi.mocked(client.parse).mockClear();
+    let operation!:Promise<void>;
+    act(()=>{operation=result.current.onAmountNext(100n);});
+    await waitFor(()=>expect(client.parse).toHaveBeenCalledWith(address));
+    act(()=>result.current.reset());
+    await act(async()=>{lookup.resolve({type:'lightningAddress',address,payRequest:details});await operation;});
+    expect(result.current.paymentInput).toBeNull();
+    expect(result.current.currentStep).toBe('input');
+    expect(client.lnurlPay).not.toHaveBeenCalled();
   });
   it('does not send if the wallet view unmounts during final verification',async()=>{
     const {client,result,fetch,unmount}=await setup();

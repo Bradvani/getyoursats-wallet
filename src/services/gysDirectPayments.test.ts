@@ -65,8 +65,12 @@ describe('verified native recipient routing',()=>{
     const recipient=(await resolveGysRecipient(candidate,parse,fetcher(payload())))!;
     const quote={amount:100n,paymentMethod:{type:'sparkAddress',address:spark,fee:0n},feePolicy:'feesExcluded'} as PrepareSendPaymentResponse;
     expect(()=>validateGysQuote(recipient,quote)).not.toThrow();
+    const paid={...quote,paymentMethod:{type:'sparkAddress' as const,address:spark,fee:1n}};
+    expect(()=>validateGysQuote(recipient,paid,true)).not.toThrow();
+    expect(()=>validateGysQuote(recipient,paid)).toThrow();
     for(const patch of [{address:'spark1other'},{tokenIdentifier:'token'},{fee:1n},{fee:-1n},{fee:BigInt(Number.MAX_SAFE_INTEGER)+1n}]){
       expect(()=>validateGysQuote(recipient,{...quote,paymentMethod:{...quote.paymentMethod,...patch}} as PrepareSendPaymentResponse)).toThrow();
+      if(patch.fee!==1n)expect(()=>validateGysQuote(recipient,{...quote,paymentMethod:{...quote.paymentMethod,...patch}} as PrepareSendPaymentResponse,true)).toThrow();
     }
     expect(()=>validateGysQuote(recipient,{...quote,amount:0n})).toThrow();
     expect(()=>validateGysQuote(recipient,{...quote,amount:100000001n})).toThrow();

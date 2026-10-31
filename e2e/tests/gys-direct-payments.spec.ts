@@ -62,18 +62,25 @@ test('@public-smoke a slow verified recipient lookup still reaches a zero-fee re
   await expect(page.getByTestId('send-confirm-button')).toBeEnabled();
   expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
 });
-test('@public-smoke unavailable GYS routing blocks paid fallback and a fresh retry uses zero fees',async({page})=>{
-  available=false;await page.goto(fixture);
-  await page.getByTestId('payment-input').fill('alice@getyoursats.com');
-  await page.getByRole('button',{name:'Continue',exact:true}).click();
-  await expect(page.getByText('Fee-free payment is unavailable right now. Please try again.')).toBeVisible();
-  await expect(page.getByTestId('send-confirm-button')).toHaveCount(0);
+for(const query of ['', '?qr']){
+  test(`@public-smoke unavailable GYS routing reaches a paid review and explicit confirmation ${query||'address'}`,async({page},testInfo)=>{
+    await page.setViewportSize({width:390,height:844});
+    available=false;
+    await enter(page,query);
+    await expect(page.getByTestId('send-destination')).toHaveAttribute('title','alice@getyoursats.com');
+    await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('3');
+    await expect(page.getByText('Fee-free payment is unavailable right now. Please try again.')).toHaveCount(0);
+    expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
+    await page.screenshot({path:testInfo.outputPath('gys-lightning-fallback-review.png'),animations:'disabled'});
+    await page.getByTestId('send-confirm-button').dblclick();
+    await expect.poll(()=>evidence(page)).toEqual({sent:[],lnurlSends:1});
+  });
+}
+test('@public-smoke a failed directory request still reaches Lightning fee review',async({page,context})=>{
+  await context.route('https://getyoursats.com/.well-known/gys/alice',route=>route.abort('timedout'));
+  await enter(page);
+  await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('3');
   expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
-  available=true;
-  await page.getByRole('button',{name:'Continue',exact:true}).click();
-  await page.getByLabel('Amount',{exact:true}).fill('100');
-  await page.getByRole('button',{name:'Continue',exact:true}).click();
-  await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('0');
 });
 test('@public-smoke test-network wallets never resolve a mainnet direct destination',async({page})=>{
   let resolutions=0;
@@ -82,18 +89,30 @@ test('@public-smoke test-network wallets never resolve a mainnet direct destinat
   await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('3');
   expect(resolutions).toBe(0);
 });
-test('@public-smoke a revoked binding or changed fee cannot execute an approved free payment',async({page})=>{
+test('@public-smoke a revoked binding requires a new fee review before payment',async({page})=>{
   await enter(page);available=false;
   await page.getByTestId('send-confirm-button').click();
   await expect(page.getByText('Recipient unavailable. Review the payment again.')).toBeVisible();
   expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
-  available=true;await enter(page,'?changedFee');
-  await expect(page.getByText('Recipient unavailable. Review the payment again.')).toBeVisible();
+  await page.getByLabel('Amount',{exact:true}).fill('100');
+  await page.getByRole('button',{name:'Continue',exact:true}).click();
+  await expect(page.getByLabel('Amount',{exact:true})).toHaveValue('100');
+  await page.getByRole('button',{name:'Continue',exact:true}).click();
+  await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('3');
+  expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
+});
+test('@public-smoke a fee-bearing direct quote returns to Lightning review with the selected amount',async({page})=>{
+  await enter(page,'?changedFee');
   await expect(page.getByTestId('send-confirm-button')).toHaveCount(0);
+  await expect(page.getByLabel('Amount',{exact:true})).toHaveValue('100');
+  await page.getByRole('button',{name:'Continue',exact:true}).click();
+  await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('3');
+  expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
 });
 test('@public-smoke interrupted transfer survives reload and requires receipt reconciliation',async({page})=>{
   await enter(page,'?interrupted');await page.getByTestId('send-confirm-button').click();
   await expect.poll(()=>evidence(page)).toMatchObject({sent:[{amount:'100'}]});
+  available=false;
   await page.reload();
   await page.getByTestId('payment-input').fill('alice@getyoursats.com');
   await page.getByRole('button',{name:'Continue',exact:true}).click();
