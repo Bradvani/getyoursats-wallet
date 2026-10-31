@@ -2,6 +2,9 @@ import type {InputType,PrepareSendPaymentResponse} from '@breeztech/breez-sdk-sp
 
 const ORIGIN='https://getyoursats.com';
 const ADDRESS=/^([a-z][a-z0-9]{2,23})@getyoursats\.com$/;
+// Allow transport/cold-start overhead in addition to the directory's two
+// sequential dependency deadlines. A timeout still blocks native paid fallback.
+const DIRECTORY_TIMEOUT_MS=15_000;
 export const DIRECT_UNAVAILABLE='Recipient unavailable. Review the payment again.';
 export const GYS_FEE_FREE_UNAVAILABLE='Fee-free payment is unavailable right now. Please try again.';
 
@@ -52,7 +55,7 @@ export async function resolveGysRecipient(candidate:{address:string;minSats:numb
   if(!name)return null;
   try{
     const response=await fetchImpl(`${ORIGIN}/.well-known/gys/${name}`,{
-      method:'GET',credentials:'omit',redirect:'error',cache:'no-store',signal:AbortSignal.timeout(5000)
+      method:'GET',credentials:'omit',redirect:'error',cache:'no-store',signal:AbortSignal.timeout(DIRECTORY_TIMEOUT_MS)
     });
     if(!response.ok)return null;
     const value=await response.json();

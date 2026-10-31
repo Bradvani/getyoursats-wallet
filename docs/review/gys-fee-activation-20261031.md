@@ -6,6 +6,8 @@ The owner reported a 10-sat payment to `bradvani@getyoursats.com` with a 2-sat n
 
 Existing server code could silently skip capture for native endpoint representations that differ from its single expected URI, discard compressed successful responses or lose activation on a transient dependency failure. Address recovery still succeeded. Without a stored signed response or a diagnostic outcome, the original failure cannot be attributed to one of these causes conclusively.
 
+During the investigation Bradvani acquired a verified binding while the original release was still live. This activation is not attributed to the correction. Both public recipients then resolved from the production wallet origin, but their responses took approximately 8–9 seconds in the test environment. The existing five-second client deadline aborted otherwise valid responses. This observation establishes the timeout failure in that environment, not the latency on every user's device.
+
 ## Correction
 
 - Native BTC address and QR input must resolve to a verified zero-fee route. Missing, failed or malformed discovery and missing cross-tab locking stop before an invoice or payment is prepared. A new explicit retry can proceed after activation. External Lightning, explicit BOLT11 invoices, regtest and stablecoin conversion retain their existing scope.
@@ -14,6 +16,7 @@ Existing server code could silently skip capture for native endpoint representat
 - Activation retries one transient lookup/storage failure with the same authenticated owner. It does not replay the signed provider operation. Conflicting owners remain permanently blocked; no operator guess or public metadata invents a recipient identity.
 - Unavailable directory responses distinguish missing activation, owner conflict and changed ownership. Activation warnings contain only fixed outcome codes, with no wallet keys, names, signatures or provider bodies.
 - The retry message is localized in all ten supported languages. No SDK, dependency lock, wallet storage, passkey policy or payment intent behavior changes.
+- Directory discovery and final recipient revalidation have a bounded 15-second deadline, allowing transport and cold-start overhead beyond the two sequential 2.5-second server dependency deadlines. Destination, owner, expiry and zero-fee checks remain unchanged. A real browser regression holds discovery for six seconds and requires the free review without any send.
 
 ## Acceptance boundary
 

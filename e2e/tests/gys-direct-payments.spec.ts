@@ -5,10 +5,14 @@ const identity='0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f817
 type Evidence={sent:Array<{amount:string;id:string}>;lnurlSends:number};
 const evidence=(page:Page)=>page.evaluate(()=>(window as unknown as {__gysDirectEvidence:()=>Evidence}).__gysDirectEvidence());
 let available=true;
+let lookupDelayMs=0;
 test.beforeEach(async({context})=>{
   available=true;
-  await context.route('**/*',route=>{
+  lookupDelayMs=0;
+  await context.route('**/*',async route=>{
     const url=new URL(route.request().url());
+    if(url.href==='https://getyoursats.com/.well-known/gys/alice'&&lookupDelayMs)
+      await new Promise(resolve=>setTimeout(resolve,lookupDelayMs));
     if(url.href==='https://getyoursats.com/.well-known/gys/alice')return route.fulfill({json:available?{
       available:true,lightningAddress:'alice@getyoursats.com',identityPublicKey:identity,sparkAddress:'spark1synthetic-browser-recipient',
       bindingId:'a'.repeat(64),expiresAt:Date.now()+60000,
@@ -28,7 +32,7 @@ async function enter(page:Page,query=''){
   await page.getByRole('button',{name:'Continue',exact:true}).click();
 }
 for(const width of [360,390,768,1366]){
-  test(`@public-smoke GYS address confirms a real zero quote at ${width}px`,async({page},testInfo)=>{
+  test(`@public-smoke GYS address confirms a prepared zero quote at ${width}px`,async({page},testInfo)=>{
     await page.setViewportSize({width,height:844});
     await enter(page);
     await expect(page.getByTestId('send-destination')).toHaveAttribute('title','alice@getyoursats.com');
@@ -45,6 +49,18 @@ test('@public-smoke native receive QR uses the same free route',async({page})=>{
   await enter(page,'?qr');
   await expect(page.getByTestId('send-destination')).toHaveAttribute('title','alice@getyoursats.com');
   await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('0');
+});
+test('@public-smoke a slow verified recipient lookup still reaches a zero-fee review',async({page})=>{
+  lookupDelayMs=6000;
+  await page.goto(fixture);
+  await page.getByTestId('payment-input').fill('alice@getyoursats.com');
+  await page.getByRole('button',{name:'Continue',exact:true}).click();
+  await expect(page.getByLabel('Amount',{exact:true})).toBeVisible({timeout:12000});
+  await page.getByLabel('Amount',{exact:true}).fill('10');
+  await page.getByRole('button',{name:'Continue',exact:true}).click();
+  await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('0',{timeout:12000});
+  await expect(page.getByTestId('send-confirm-button')).toBeEnabled();
+  expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
 });
 test('@public-smoke unavailable GYS routing blocks paid fallback and a fresh retry uses zero fees',async({page})=>{
   available=false;await page.goto(fixture);
