@@ -370,7 +370,7 @@ export function useBreezSdk(
         method: event.payment.method,
       });
       if (!alreadyShown) {
-        if(event.payment.status==='completed'&&!isConversionPayment(event.payment)&&!isMigrationInProgress())notifyPaymentFeedback('success',paymentId);
+        if(event.payment.status==='completed'&&!isConversionPayment(event.payment)&&!isMigrationInProgress())notifyPaymentFeedback('success',paymentId,event.payment.paymentType==='send'?'sent':'received');
         // Keep payment IDs for this active wallet session. A 30-second
         // expiration let a subsequent SDK sync replay the same success.
         rememberPaymentId(shownPaymentIdsRef.current, paymentId);

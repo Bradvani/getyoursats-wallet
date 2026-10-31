@@ -169,6 +169,7 @@ self.addEventListener('push', (event) => {
     && /^[a-zA-Z0-9_-]{1,80}$/.test(message.id) ? message.id : null;
   const options = {
     body: copy.body,
+    vibrate: [20],
     icon: '/brand/app-icon-192.png',
     badge: '/brand/app-icon-192.png',
     data: { path: '/' },

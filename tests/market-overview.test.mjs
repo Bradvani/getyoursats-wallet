@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createMarketOverviewHandler,parseSupply,parseSentiment} from '../server/marketOverview.mjs';
+import {createMarketOverviewHandler,parseSupply,parseSentiment,parseChange} from '../server/marketOverview.mjs';
 const now=1793400000000;
 const supply={totalbc:2010000012345678,timestamp:now-1000};
 const sentiment={data:[{value:'30',value_classification:'Fear',timestamp:String(now/1000-3600)}],metadata:{error:null}};
@@ -27,20 +27,27 @@ test('feeds fail independently, use fixed destinations and do not forward user i
   }});
   const res=response();await handler({method:'GET',query:{currency:'INR',wallet:'sensitive'}},res);
   assert.equal(res.statusCode,200);assert.equal(res.body.supply.btc,20100000.12345678);assert.equal(res.body.sentiment,null);
-  assert.equal(calls.length,2);assert.ok(calls.every(([url,options])=>!url.includes('sensitive')&&!options.body));
+  assert.equal(calls.length,3);assert.ok(calls.every(([url,options])=>!url.includes('sensitive')&&!options.body));
 });
 test('concurrent requests share cache; expiry retries without stamping old data as fresh',async()=>{
   let time=now,calls=0;
   const handler=createMarketOverviewHandler({now:()=>time,fetchImpl:async url=>{calls++;return Response.json(url.includes('alternative')?sentiment:supply);}});
   const responses=await Promise.all(Array.from({length:6},async()=>{const r=response();await handler({method:'GET'},r);return r;}));
-  assert.equal(calls,2);assert.ok(responses.every(r=>r.body.supply.updatedAt===now-1000));
-  time+=300001;await handler({method:'GET'},response());assert.equal(calls,4);
+  assert.equal(calls,3);assert.ok(responses.every(r=>r.body.supply.updatedAt===now-1000));
+  time+=300001;await handler({method:'GET'},response());assert.equal(calls,6);
   time+=172800001;const r=response();await handler({method:'GET'},r);
-  assert.equal(r.statusCode,503);assert.deepEqual(r.body,{supply:null,sentiment:null});
+  assert.equal(r.statusCode,503);assert.deepEqual(r.body,{supply:null,sentiment:null,change:null});
 });
 test('oversized upstream responses and unsupported methods fail closed',async()=>{
   let calls=0;
   const handler=createMarketOverviewHandler({now:()=>now,fetchImpl:async()=>{calls++;return new Response('x'.repeat(70000));}});
   const post=response();await handler({method:'POST'},post);assert.equal(post.statusCode,405);assert.equal(calls,0);
   const get=response();await handler({method:'GET'},get);assert.equal(get.statusCode,503);
+});
+
+test('price movement retains source time and rejects missing, stale or invalid values',()=>{
+ const point={usd_24h_change:-2.4,last_updated_at:now/1000-60};
+ assert.deepEqual(parseChange({bitcoin:point},now),{percent:-2.4,updatedAt:now-60000,source:'coingecko.com'});
+ for(const usd_24h_change of [null,'2.4',NaN,Infinity,-101])assert.throws(()=>parseChange({bitcoin:{...point,usd_24h_change}},now));
+ assert.throws(()=>parseChange({bitcoin:point},now+900001));
 });

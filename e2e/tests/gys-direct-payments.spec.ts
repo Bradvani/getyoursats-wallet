@@ -74,6 +74,9 @@ for(const query of ['', '?qr']){
     await page.screenshot({path:testInfo.outputPath('gys-lightning-fallback-review.png'),animations:'disabled'});
     await page.getByTestId('send-confirm-button').dblclick();
     await expect.poll(()=>evidence(page)).toEqual({sent:[],lnurlSends:1});
+    await expect(page.getByTestId('payment-receipt-summary')).toContainText('alice@getyoursats.com');
+    await expect(page.getByTestId('transfer-experience')).toHaveAttribute('data-full-orange','true');
+    await page.screenshot({path:testInfo.outputPath('gys-lightning-receipt.png'),animations:'disabled'});
   });
 }
 test('@public-smoke a failed directory request still reaches Lightning fee review',async({page,context})=>{
