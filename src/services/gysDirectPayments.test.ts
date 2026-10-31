@@ -51,7 +51,7 @@ describe('verified native recipient routing',()=>{
     'ignores unavailable, expired or malformed directory responses %j',async patch=>{
       expect(await resolveGysRecipient(candidate,parse,fetcher({...payload(),...patch}))).toBeNull();
     });
-  it('allows the original Lightning workflow when discovery is unavailable',async()=>{
+  it('returns no verified recipient when discovery is unavailable',async()=>{
     expect(await resolveGysRecipient(candidate,parse,vi.fn().mockRejectedValue(new Error('offline')))).toBeNull();
   });
   it('blocks an already-reviewed direct transfer on revocation or binding changes',async()=>{

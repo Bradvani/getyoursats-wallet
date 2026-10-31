@@ -42,9 +42,9 @@ test('independent directory instances reject conflicting owners atomically in di
   await first.capture(keys[0],response('alice'));
   assert.equal((await second.resolve('alice')).bindingId,before.bindingId);
   await Promise.all([first.capture(keys[0],response('alice')),second.capture(keys[1],response('alice'))]);
-  assert.deepEqual(await first.resolve('alice'),{available:false});
+  assert.deepEqual(await first.resolve('alice'),{available:false,reason:'owner_conflict'});
   await first.capture(keys[0],response('alice'));
-  assert.deepEqual(await second.resolve('alice'),{available:false});
+  assert.deepEqual(await second.resolve('alice'),{available:false,reason:'owner_conflict'});
   assert.equal(await redis('TTL','gys:direct:v1:alice'),-1);
   await first.capture(keys[0],response('bravo'));
   assert.ok(await redis('TTL','gys:direct:v1:bravo')>0);

@@ -4,7 +4,7 @@ import {createHash,ECDH,generateKeyPairSync,sign} from 'node:crypto';
 import {EventEmitter} from 'node:events';
 import {PassThrough,Readable} from 'node:stream';
 import {readFile} from 'node:fs/promises';
-import {gzipSync} from 'node:zlib';
+import {gzipSync,brotliCompressSync} from 'node:zlib';
 import {createBreezLnurlProxy} from '../site/server/breezLnurlProxy.mjs';
 import {validUsername} from '../server/handleCore.mjs';
 
@@ -63,11 +63,12 @@ function incoming({url=BASE,method='POST',body=JSON.stringify(signedRegistration
   return req;
 }
 
-function harness({env={},redisResult=JSON.stringify({email:'verified@example.com',verifiedAt:NOW*1000}),redisError,
+function harness({env={},redisResult=JSON.stringify({email:'verified@example.com',verifiedAt:NOW*1000}),redisError,redisFailures=0,
   upstreamStatus=200,upstreamBody=Buffer.from('{"ok":true}'),upstreamHeaders={},upstreamError,upstream}={}){
   const forwarded=[],storage=[];
   const fetchImpl=async(url,options)=>{
     storage.push({url,options});
+    if(storage.length<=redisFailures)throw new Error('Temporary storage failure');
     if(redisError)throw redisError;
     return new Response(JSON.stringify({result:redisResult}),{status:200,headers:{'Content-Type':'application/json'}});
   };
@@ -489,7 +490,7 @@ test('only authenticated successful native recovery captures a direct recipient'
   const providerBody=JSON.stringify({username:'alice',lightning_address:'alice@getyoursats.com',lnurl:'lnurlp://getyoursats.com/lnurlp/alice'});
   const metadata=JSON.stringify({tag:'payRequest',callback:'https://getyoursats.com/lnurlp/alice/invoice',
     metadata:'[["text/identifier","alice@getyoursats.com"]]',allowsNostr:true,nostrPubkey:'a'.repeat(64)});
-  const app=harness({env:{GETYOURSATS_DIRECT_PAYMENTS_ENABLED:'true'},upstream:count=>({status:200,body:count===1?providerBody:metadata,headers:{}})});
+  const app=harness({env:{GETYOURSATS_DIRECT_PAYMENTS_ENABLED:'true'},redisResult:1,upstream:count=>({status:200,body:count===1?providerBody:metadata,headers:{}})});
   const result=await app.invoke({url:BASE+'/recover',body:JSON.stringify(signedManagement('recover'))});
   assert.equal(result.statusCode,200);
   assert.equal(result.body.toString(),providerBody);
@@ -500,6 +501,34 @@ test('only authenticated successful native recovery captures a direct recipient'
   const rejected=harness({env:{GETYOURSATS_DIRECT_PAYMENTS_ENABLED:'true'},upstreamStatus:401,upstreamBody:Buffer.from(providerBody)});
   assert.equal((await rejected.invoke({url:BASE+'/recover'})).statusCode,401);
   assert.equal(rejected.storage.length,0);
+});
+
+test('compressed authenticated recovery and discovery capture without changing the provider response',async()=>{
+  const providerBody=Buffer.from(JSON.stringify({username:'alice',lightning_address:'alice@getyoursats.com',lnurl:'https://getyoursats.com/.well-known/lnurlp/alice'}));
+  const metadata=Buffer.from(JSON.stringify({tag:'payRequest',callback:'https://getyoursats.com/lnurlp/alice/invoice',
+    metadata:'[["text/identifier","alice@getyoursats.com"]]',allowsNostr:true,nostrPubkey:'a'.repeat(64)}));
+  for(const [encoding,compress] of [['gzip',gzipSync],['br',brotliCompressSync]]){
+    const body=compress(providerBody);
+    const app=harness({env:{GETYOURSATS_DIRECT_PAYMENTS_ENABLED:'true'},redisResult:1,
+      upstream:count=>({status:200,body:count===1?body:compress(metadata),headers:{'content-encoding':encoding}})});
+    const result=await app.invoke({url:BASE+'/recover',body:JSON.stringify(signedManagement('recover'))});
+    assert.equal(result.statusCode,200);assert.deepEqual(result.body,body);
+    assert.equal(result.headers['content-encoding'],encoding);
+    assert.equal(app.storage.length,1);
+    assert.equal(JSON.parse(JSON.parse(app.storage[0].options.body)[5]).identityPublicKey,pubkey);
+  }
+});
+
+test('transient activation storage failure retries the binding without replaying signed recovery',async()=>{
+  const providerBody=JSON.stringify({username:'alice',lightning_address:'alice@getyoursats.com',lnurl:'lnurlp://getyoursats.com/lnurlp/alice'});
+  const metadata=JSON.stringify({tag:'payRequest',callback:'https://getyoursats.com/lnurlp/alice/invoice',
+    metadata:'[["text/identifier","alice@getyoursats.com"]]',allowsNostr:true,nostrPubkey:'a'.repeat(64)});
+  const app=harness({env:{GETYOURSATS_DIRECT_PAYMENTS_ENABLED:'true'},redisResult:1,redisFailures:1,
+    upstream:count=>({status:200,body:count===1?providerBody:metadata,headers:{}})});
+  assert.equal((await app.invoke({url:BASE+'/recover',body:JSON.stringify(signedManagement('recover'))})).statusCode,200);
+  assert.equal(app.storage.length,2);
+  assert.equal(app.forwarded.filter(request=>request.options.method==='POST').length,1);
+  assert.equal(app.storage[0].options.body,app.storage[1].options.body);
 });
 
 test('directory failure never breaks a successful address recovery',async()=>{
