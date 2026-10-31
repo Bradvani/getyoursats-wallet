@@ -53,8 +53,9 @@ export default function BitcoinLearningJourney({
   const text = bitcoinLearningCopy(language);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
-  const [keyChoice, setKeyChoice] = useState<number | null>(null);
+  const [keyAnswer, setKeyAnswer] = useState<{chapter: BitcoinLearningChapter; choice: number} | null>(null);
   const {status, chapter} = learning.progress;
+  const keyChoice = keyAnswer?.chapter === chapter ? keyAnswer.choice : null;
   const index = BITCOIN_LEARNING_CHAPTERS.indexOf(chapter);
   const lesson = text.chapters[chapter];
   const last = index === BITCOIN_LEARNING_CHAPTERS.length - 1;
@@ -66,10 +67,8 @@ export default function BitcoinLearningJourney({
     learning.next();
   };
 
-  useEffect(() => { setKeyChoice(null); }, [chapter]);
-
   useEffect(() => {
-    if (paused) return;
+    if (paused || (status !== 'offered' && status !== 'active')) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     titleRef.current?.focus();
@@ -123,8 +122,8 @@ export default function BitcoinLearningJourney({
           </div>
           <span className="gys-learn__count" dir="ltr">{index + 1} / {BITCOIN_LEARNING_CHAPTERS.length}</span>
         </div>
-        <ChapterVisual chapter={chapter}/>
-        <div className="gys-learn__words">
+        <ChapterVisual key={chapter} chapter={chapter}/>
+        <div className="gys-learn__words" key={chapter}>
           <p className="gys-learn__eyebrow">{lesson.label}</p>
           <h1 id="gys-learn-title" tabIndex={-1} ref={titleRef} key={chapter}>{lesson.title}</h1>
           <p className="gys-learn__body">{lesson.body}</p>
@@ -133,7 +132,7 @@ export default function BitcoinLearningJourney({
             <legend>{text.quizQuestion}</legend>
             {text.quizOptions.map((option, choice) => <button key={choice} type="button"
               aria-pressed={keyChoice === choice} data-correct={keyChoice === choice && choice === 0}
-              className="gys-learn__quiz-option" onClick={() => setKeyChoice(choice)}>
+              className="gys-learn__quiz-option" onClick={() => setKeyAnswer({chapter, choice})}>
               <span>{option}</span><span aria-hidden="true">{keyChoice === choice ? (choice === 0 ? '✓' : '×') : '○'}</span>
             </button>)}
             <p className="gys-learn__quiz-feedback" aria-live="polite">
