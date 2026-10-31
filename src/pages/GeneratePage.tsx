@@ -11,6 +11,7 @@ import {logger,LogCategory} from '@/services/logger';
 import {useScreenCaptureProtection} from '@/utils/screenSecurity';
 import {RecoveryReadiness} from '../getyoursats/RecoveryReadiness';
 import {usePresentation} from '../hooks/usePresentation';
+import {backupSetupCopy} from '../locales/backupSetup';
 
 interface GeneratePageProps {
  onMnemonicConfirmed:(mnemonic:string)=>void;
@@ -36,6 +37,7 @@ export default function GeneratePage({
  const [everRevealed,setEverRevealed]=useState(false);
  const [keyChoice,setKeyChoice]=useState<number|null>(null);
  const {language}=usePresentation();
+ const backupText=backupSetupCopy(language);
  useScreenCaptureProtection(true);
  useEffect(()=>{
    try{
@@ -86,8 +88,8 @@ export default function GeneratePage({
       <RecoveryReadiness language={language} choice={keyChoice} onChoice={setKeyChoice}
         privateReady={privatePlace} onPrivateReady={setPrivatePlace}
         offlineReady={offlineReady} onOfflineReady={setOfflineReady}
-        privateLabel="I am somewhere private, away from cameras and other people."
-        offlineLabel="I will use paper and keep this backup offline. I will not screenshot, copy or share the words."
+        privateLabel={backupText.privateCheck}
+        offlineLabel={backupText.paperCheck}
       />
       <button type="button" aria-label={wordsRevealed?'Hide recovery words':'Reveal recovery words'}
         aria-pressed={wordsRevealed}
