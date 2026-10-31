@@ -38,6 +38,7 @@ import { useAppLock } from './hooks/useAppLock';
 import PasskeyPage from './pages/PasskeyPage';
 import type { MigrationEntry, MigrationOutcome } from './features/passkey-migration/types';
 import SettingsPage from './pages/SettingsPage';
+import PreferencesPage from './pages/PreferencesPage';
 import FiatCurrenciesPage from './pages/FiatCurrenciesPage';
 import BuyProvidersPage from './pages/BuyProvidersPage';
 import UnlockPage from './pages/UnlockPage';
@@ -67,7 +68,7 @@ import type { Seed, Payment, BreezSdk } from '@breeztech/breez-sdk-spark';
 
 const PASSKEY_MIGRATION_ENABLED = true;
 
-type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'email' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
+type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'email' | 'fiatCurrencies' | 'language' | 'appearance' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit';
 
 // Full-screen dim spinner shown while sdk.isLoading is true (logout in
 // progress, SDK reconnect, etc). Wrapped as its own component so the
@@ -396,6 +397,8 @@ const AppContent: React.FC = () => {
         setUserScreen(walletActionReturn);
         return true;
       case 'security':
+      case 'language':
+      case 'appearance':
       case 'fiatCurrencies':
       case 'buyProviders':
       case 'passkeySettings':
@@ -532,6 +535,9 @@ const AppContent: React.FC = () => {
       <SettingsPage
         onBack={() => setUserScreen('wallet')}
         config={sdk.config}
+        nativeAddress={sdk.nativeLightningAddress?.lightningAddress}
+        onOpenLanguage={()=>setUserScreen('language')}
+        onOpenAppearance={()=>setUserScreen('appearance')}
         onOpenFiatCurrencies={() => setUserScreen('fiatCurrencies')}
         onOpenBuyProviders={() => setUserScreen('buyProviders')}
         onOpenPasskeySettings={() => setUserScreen('passkeySettings')}
@@ -647,6 +653,10 @@ const AppContent: React.FC = () => {
             {renderSettingsPage()}
           </>
         );
+
+      case 'language':
+      case 'appearance':
+        return <>{renderWalletPage()}{renderSettingsPage()}<PreferencesPage kind={currentScreen} onBack={()=>setUserScreen('settings')}/></>;
 
       case 'fiatCurrencies':
         return (

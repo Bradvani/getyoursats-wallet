@@ -15,6 +15,7 @@ import { StableBalanceProvider } from '../../src/contexts/StableBalanceContext';
 import { ContactsProvider } from '../../src/contexts/ContactsContext';
 import WalletPage from '../../src/pages/WalletPage';
 import SettingsPage from '../../src/pages/SettingsPage';
+import PreferencesPage from '../../src/pages/PreferencesPage';
 import FiatCurrenciesPage from '../../src/pages/FiatCurrenciesPage';
 import ProcessingStep from '../../src/features/send/steps/ProcessingStep';
 import ResultStep from '../../src/features/send/steps/ResultStep';
@@ -64,9 +65,10 @@ function Fixture() {
  const [screen,setScreen]=useState(new URLSearchParams(location.search).get('screen') || 'wallet');
  const close=()=>setScreen('wallet');
  return <ToastProvider><WalletProvider client={sdk} isConnected subscribeToSdkEvents={subscribeToSdkEvents}><WalletInfoProvider walletInfo={info}><FiatDataProvider><StableBalanceProvider><ContactsProvider>
-  {['wallet','settings'].includes(screen) && <WalletPage walletInfo={info} transactions={[received]} unclaimedDeposits={[]} refreshWalletData={async()=>true} isSyncing={false} error={null} onClearError={()=>{}} onLogout={close} hasRejectedDeposits={false} onOpenGetRefund={()=>{}} onReturnToWallet={close} settingsActive={screen!=='wallet'} onOpenSettings={()=>setScreen('settings')} onOpenDca={()=>setScreen('dca')} onOpenUnilateralExit={()=>{}} onBuyBitcoin={async()=>{}} />
+  {['wallet','settings','language','appearance','currencies'].includes(screen) && <WalletPage walletInfo={info} transactions={[received]} unclaimedDeposits={[]} refreshWalletData={async()=>true} isSyncing={false} error={null} onClearError={()=>{}} onLogout={close} hasRejectedDeposits={false} onOpenGetRefund={()=>{}} onReturnToWallet={close} settingsActive={screen!=='wallet'} onOpenSettings={()=>setScreen('settings')} onOpenDca={()=>setScreen('dca')} onOpenUnilateralExit={()=>{}} onBuyBitcoin={async()=>{}} />
   }
-  {screen==='settings' ? <SettingsPage onBack={close} config={null} onOpenFiatCurrencies={()=>setScreen('currencies')} onOpenBuyProviders={()=>{}} onOpenPasskeySettings={()=>{}} onOpenSecurity={()=>{}} onOpenBackup={()=>setScreen('backup')} onOpenEmail={()=>{}} onOpenUnilateralExit={()=>{}} />
+  {screen==='settings' ? <SettingsPage onBack={close} config={null} onOpenLanguage={()=>setScreen('language')} onOpenAppearance={()=>setScreen('appearance')} nativeAddress="preview@getyoursats.com" onOpenFiatCurrencies={()=>setScreen('currencies')} onOpenBuyProviders={()=>{}} onOpenPasskeySettings={()=>{}} onOpenSecurity={()=>{}} onOpenBackup={()=>setScreen('backup')} onOpenEmail={()=>{}} onOpenUnilateralExit={()=>{}} />
+  : screen==='language'||screen==='appearance' ? <PreferencesPage kind={screen} onBack={()=>setScreen('settings')}/>
   : screen==='wallet' ? null
   : screen==='dca' ? <h1>Recurring Buys entry reached</h1>
   : screen==='backup' ? <h1>Recovery entry reached</h1>

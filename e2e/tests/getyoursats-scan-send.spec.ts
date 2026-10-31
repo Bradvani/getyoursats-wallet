@@ -63,6 +63,7 @@ test.beforeEach(async ({page, context}) => {
   page.on('pageerror', error => entry.errors.push(error.name));
   await context.route('**/*', route => {
     const request = route.request(), url = new URL(request.url());
+    if (url.origin === origin && url.pathname === '/api/market-overview') return route.fulfill({json:{supply:null,sentiment:null}});
     if (url.origin === origin && ['GET', 'HEAD'].includes(request.method()) && !url.pathname.startsWith('/api/')) return route.continue();
     entry.blocked.push(request.method() + ' ' + url.origin + url.pathname);
     return route.abort('blockedbyclient');

@@ -54,6 +54,7 @@ test('@public-smoke theme changes update home cards and History without reload',
  await page.goto('/e2e/fixtures/premium-ui.html');
  const nav = page.getByRole('complementary', {name:'Wallet navigation'});
  await nav.getByRole('button',{name:'Settings',exact:true}).click();
+ await page.getByTestId('settings-appearance').click();
  await page.getByTestId('settings-appearance-orange').click();
  await nav.getByRole('button',{name:'History',exact:true}).click();
  await expect(page.locator('.gys-activity')).toHaveCSS('background-color','rgb(255, 253, 248)');
@@ -61,11 +62,13 @@ test('@public-smoke theme changes update home cards and History without reload',
  await expect(page.getByTestId('transaction-amount')).toHaveCSS('color','rgb(23, 104, 63)');
  await page.screenshot({path:'test-artifacts/light-history.png',fullPage:true});
  await nav.getByRole('button',{name:'Settings',exact:true}).click();
+ await page.getByTestId('settings-appearance').click();
  await page.getByTestId('settings-appearance-dark').click();
  await nav.getByRole('button',{name:'Wallet',exact:true}).click();
  await expect(page.locator('html')).toHaveAttribute('data-gys-theme','dark');
  await expect(page.locator('.gys-market-pulse__price')).toHaveCSS('color','rgb(248, 242, 230)');
  await nav.getByRole('button',{name:'Settings',exact:true}).click();
+ await page.getByTestId('settings-appearance').click();
  await page.getByTestId('settings-appearance-system').click();
  await nav.getByRole('button',{name:'Wallet',exact:true}).click();
  await expect(page.locator('.gys-market-pulse')).toHaveCSS('background-color','rgb(255, 253, 248)');
