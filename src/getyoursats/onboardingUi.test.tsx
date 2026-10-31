@@ -35,9 +35,9 @@ describe('privacy-first recovery screens',()=>{
   fireEvent.click(screen.getByRole('button',{name:'Your private key'}));
   expect(reveal.disabled).toBe(true);
   fireEvent.click(screen.getByRole('button',{name:'Your receiving address'}));
-  fireEvent.click(screen.getByRole('button',{name:/I am somewhere private/}));
+  fireEvent.click(screen.getByRole('button',{name:/I am in a private space/}));
   expect(reveal.disabled).toBe(true);
-  fireEvent.click(screen.getByRole('button',{name:/I will use paper/}));
+  fireEvent.click(screen.getByRole('button',{name:/I understand these words control my wallet/}));
   expect(reveal.disabled).toBe(false);
   fireEvent.click(reveal);
   expect(screen.getAllByText('abandon')).toHaveLength(11);
