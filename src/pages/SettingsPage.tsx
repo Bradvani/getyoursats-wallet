@@ -6,6 +6,7 @@ import {PREMIUM_EXPERIENCE} from '@/locales/premiumExperience';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import { usePresentation } from '@/hooks/usePresentation';
 import { walletSetupCopy } from '@/locales/walletSetup';
+import {bitcoinLearningCopy} from '@/locales/bitcoinLearning';
 import {CUSTOMER_SETTINGS} from '@/locales/customerSettings';
 import {PRIVACY_POLICY_URL, SUPPORT_URL, INSTAGRAM_URL, TWITTER_URL} from '@/constants/publicPages';
 import {useToast} from '@/contexts/ToastContext';
@@ -41,6 +42,7 @@ interface SettingsPageProps {
   onOpenBackup: () => void;
   onOpenEmail: () => void;
   onOpenWalletTour?: () => void;
+  onOpenBitcoinIntro?: () => void;
   onOpenUnilateralExit: () => void;
 }
 
@@ -57,6 +59,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   onOpenBackup,
   onOpenEmail,
   onOpenWalletTour,
+  onOpenBitcoinIntro,
   onOpenUnilateralExit,
 }) => {
   const t=useFlowText();
@@ -64,6 +67,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   const appVersion = useAppVersion();
   const { language, appearance, copy } = usePresentation();
   const setupCopy = walletSetupCopy(language);
+  const learnCopy = bitcoinLearningCopy(language);
   const detailCopy = CUSTOMER_SETTINGS[language];
   const premium = PREMIUM_EXPERIENCE[language];
   const gysAddress = nativeAddress?.endsWith('@getyoursats.com') ? nativeAddress : null;
@@ -511,6 +515,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             <a className="gys-setting-link" href={SUPPORT_URL+'?lang='+language} target="_blank" rel="noopener noreferrer" data-testid="settings-support-link">
               <span>{copy.support}</span><ExternalLinkIcon size="sm"/>
             </a>
+            {onOpenBitcoinIntro&&<button type="button" onClick={onOpenBitcoinIntro} className="gys-setting-link" data-testid="settings-bitcoin-learning">
+              <span>{learnCopy.chaptersTitle}</span><ChevronRightIcon size="md"/>
+            </button>}
             {onOpenWalletTour&&<button type="button" onClick={onOpenWalletTour} className="gys-setting-link">
               <span>{setupCopy.replay}</span><ChevronRightIcon size="md"/>
             </button>}
