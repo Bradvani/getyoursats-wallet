@@ -1,6 +1,7 @@
 import {formatFiat} from '../utils/formatFiat';
 import {useFlowText} from '@/hooks/useFlowText';
 import GetYourSatsWordmark from './GetYourSatsWordmark';
+import GetYourSatsBalanceMark from './GetYourSatsBalanceMark';
 import DenominationTabs from '../getyoursats/DenominationTabs';
 import {getDenomination,saveDenomination,satsToAmount,type Denomination} from '../getyoursats/denomination';
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
@@ -233,7 +234,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
   // The Bitcoin glyph denotes BTC, never sats. Sats are labelled by their unit selector.
   const currencySymbol = stableBalance.isActive && stableBalance.displayConfig?.symbol
     ? stableBalance.displayConfig.symbol
-    : bitcoinUnit==='sats'?<SatoshiIcon size="lg"/>:bitcoinUnit==='BTC'?'₿':primaryFiatRate?primaryFiatSymbol:'';
+    : bitcoinUnit==='sats'?<GetYourSatsBalanceMark/>:bitcoinUnit==='BTC'?'₿':primaryFiatRate?primaryFiatSymbol:'';
 
   if (!walletInfo) return null;
 
@@ -363,13 +364,11 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
 
           {/* Main balance */}
           <div
-            className="relative inline-block text-center"
+            className="gys-primary-balance"
             data-testid="wallet-balance"
           >
-            <span className="balance-display">
-              {formattedPrimaryBalance}
-            </span>
-            {displayBalance >= 0 && currencySymbol && <span aria-hidden="true" className="absolute right-full top-1/2 -translate-y-1/2 mr-1 text-3xl text-spark-text-secondary opacity-70 font-mono">{currencySymbol}</span>}
+            {displayBalance >= 0 && currencySymbol && <span aria-hidden="true" className="gys-primary-balance__symbol text-spark-text-secondary">{currencySymbol}</span>}
+            <span className="balance-display">{formattedPrimaryBalance}</span>
           </div>
 
           {/* Secondary line - fiat value or BTC as fiat equivalent */}

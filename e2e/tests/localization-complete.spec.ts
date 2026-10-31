@@ -54,7 +54,7 @@ for(const language of languages){
   await expect(surface.locator('#subview-contact-name')).toHaveValue('Untranslated user name');
   for(const [screen,label]of [['receive','Create Lightning Address'],['settings','Privacy & recovery'],['details','Date & Time']]){
    await page.goto('/e2e/fixtures/localization-complete.html?lang='+language+'&case='+screen);
-   await expect(page.locator('body')).toContainText(t(label));
+   await expect(page.locator('body')).toContainText(screen==='settings'&&language==='en'?'Privacy & Recovery':t(label));
   }
   await page.goto('/e2e/fixtures/localization-complete.html?lang='+language+'&case=receiveamount');
   await expect(page.locator('body')).toContainText(t('Request amount'));

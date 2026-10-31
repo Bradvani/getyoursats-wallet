@@ -14,6 +14,7 @@ test.use({hasTouch: true});
 test.beforeEach(async ({page, context}) => {
   await context.route('**/*', route => {
     const request = route.request(), url = new URL(request.url());
+    if (url.origin === origin && url.pathname === '/api/market-overview') return route.fulfill({json:{supply:null,sentiment:null}});
     if (url.origin === origin && ['GET', 'HEAD'].includes(request.method()) && !url.pathname.startsWith('/api/')) return route.continue();
     return route.abort('blockedbyclient');
   });

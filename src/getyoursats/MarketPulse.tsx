@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import MarketOverview from './MarketOverview';
 import {usePresentation} from '../hooks/usePresentation';
 import {MARKET_COPY} from '../locales/market';
 import {PAYMENT_FIAT_COPY} from '../locales/paymentFiat';
@@ -27,6 +28,7 @@ export default function MarketPulse(){
   const {language}=usePresentation();
   const text=MARKET_COPY[language];
   const [refreshing,setRefreshing]=useState(false);
+  const [refreshKey,setRefreshKey]=useState(0);
   const [currency,setCurrency]=useState(getDisplayFiatCurrency);
   const [quoteUnit,setQuoteUnit]=useState<MarketQuoteUnitId>(selectedMarketUnit);
   const [clock,setClock]=useState(()=>Date.now());
@@ -48,7 +50,7 @@ export default function MarketPulse(){
   const refresh=async()=>{
     if(refreshing)return;
     setRefreshing(true);
-    try{await refreshFiatData();setClock(Date.now());}
+    try{await refreshFiatData();setClock(Date.now());setRefreshKey(key=>key+1);}
     finally{setRefreshing(false);}
   };
   const currencies=getFiatSettings().selectedCurrencies;
@@ -100,5 +102,6 @@ export default function MarketPulse(){
         ↻ {refreshing?text.refreshing:text.refresh}
       </button>
     </div>
+    <MarketOverview currency={currency} rate={stale?null:rate??null} refreshKey={refreshKey}/>
   </section>;
 }

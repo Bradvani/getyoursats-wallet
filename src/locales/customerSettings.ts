@@ -15,7 +15,7 @@ const en = {
   allPayments: 'Lightning invoices and @getyoursats.com payments.',
   addressPayments: '@getyoursats.com payments only.', invoicePayments: 'Lightning invoices only.',
   vibration: 'Payment vibration', vibrationDetail: 'Vibrate when a payment is confirmed.',
-  paymentSettings: 'Payment settings', fees: 'Deposit fee limit', feeAmount: 'Maximum fee',
+  paymentSettings: 'Payment Settings', fees: 'Deposit Fee Limit', feeAmount: 'Maximum fee',
   troubleshooting: 'Troubleshooting', supportReport: 'Download support report',
   reportHint: 'Share this report only with support.', reportError: 'Could not prepare the report. Try again.',
   protection: 'This wallet has no app lock. Lock your device and keep your recovery words offline.',

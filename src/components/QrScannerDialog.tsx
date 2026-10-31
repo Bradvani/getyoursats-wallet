@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
 import QrScanner from '@/utils/qrScanner';
+import {useScannerPortrait} from '../hooks/useScannerPortrait';
 import { BottomSheetContainer, FloatingIconButton } from './ui';
 import { useQrScanner } from '../hooks/useQrScanner';
 import { logger, LogCategory } from '@/services/logger';
@@ -23,6 +24,7 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
   // since this dialog is mounted with fullHeight — isFullScreen is true
   // for the whole open lifetime, so both bars get the spark-surface push.
 
+  const portraitStyle = useScannerPortrait(isOpen);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [galleryError, setGalleryError] = useState<string | null>(null);
   const [isReadingImage, setIsReadingImage] = useState(false);
@@ -134,10 +136,12 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
           the gallery / camera-flip buttons can land behind the
           system-bar or home indicator cutouts. */}
       <div
-        className="h-full w-full bg-spark-surface flex flex-col"
+        className="gys-scanner-portrait h-full w-full bg-spark-surface flex flex-col"
+        data-testid="scanner-portrait"
         style={{
           paddingTop: 'var(--safe-area-inset-top, env(safe-area-inset-top, 0px))',
           paddingBottom: 'var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))',
+          ...portraitStyle,
         }}
       >
         {/* Camera area: the video feed is constrained to a square
@@ -146,11 +150,11 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
             object-cover on a tall portrait <video> element heavily
             crops the camera feed on the sides and the preview looks
             vertically stretched. */}
-        <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+        <div className="gys-scanner-stage flex-1 relative flex items-center justify-center overflow-hidden">
           {/* Square video container — w-full on portrait phones gives a
               fullwidth square centered vertically; max-h-full guards
               against landscape overflow. */}
-          <div className="relative aspect-square w-full max-h-full">
+          <div className="gys-scanner-camera relative aspect-square w-full max-h-full">
             <video
               ref={videoRef}
               className="absolute inset-0 w-full h-full object-cover"

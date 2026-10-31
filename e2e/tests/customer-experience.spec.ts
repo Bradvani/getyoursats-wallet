@@ -14,16 +14,17 @@ test('settings keeps support tools and payment controls behind deliberate action
  await expect(settings.getByText(/Translations are being reviewed|provider webhook|Breez/i)).toHaveCount(0);
  await expect(settings.getByRole('button',{name:'Save payment settings'})).toHaveCount(0);
  await expect(settings.getByRole('button',{name:'Download support report'})).not.toBeVisible();
+ await settings.getByTestId('settings-wallet-guide').locator('summary').first().click();
  await settings.locator('summary').filter({hasText:'Troubleshooting'}).click();
  await expect(settings.getByRole('button',{name:'Download support report'})).toBeVisible();
  await expect(settings.getByRole('link',{name:'Support',exact:true})).toHaveAttribute('href','https://getyoursats.com/support?lang=en');
- await settings.locator('summary').filter({hasText:'Payment settings'}).click();
+ await settings.locator('summary').filter({hasText:'Payment Settings'}).click();
  const fee=settings.getByLabel('Maximum fee (sats)');await fee.fill('275');
  const save=settings.getByRole('button',{name:'Save payment settings'});await expect(save).toBeEnabled();
  await fee.fill('');await expect(save).toBeDisabled();
  await fee.fill('275');await save.click();
  await expect(page.getByRole('button',{name:'Save payment settings'})).toHaveCount(0);
- await page.locator('summary').filter({hasText:'Payment settings'}).click();
+ await page.locator('summary').filter({hasText:'Payment Settings'}).click();
  await expect(page.getByLabel('Maximum fee (sats)')).toHaveValue('275');
 });
 
@@ -36,7 +37,7 @@ test('mobile keyboard focus stays in settings and nested dialogs close independe
   await page.keyboard.press('Tab');
   expect(await settings.evaluate(el=>el.contains(document.activeElement))).toBe(true);
  }
- await settings.locator('summary').filter({hasText:'Payment settings'}).click();
+ await settings.locator('summary').filter({hasText:'Payment Settings'}).click();
  await page.getByTestId('review-balance-mode').click();
  const warning=page.getByTestId('stable-mode-warning');await expect(warning).toBeVisible();
  await page.keyboard.press('Tab');
@@ -59,17 +60,18 @@ test('desktop settings leaves the persistent wallet navigation reachable by keyb
 
 test('language options remain keyboard accessible inside settings',async({page})=>{
  await page.setViewportSize({width:390,height:844});await page.goto(fixture+'?screen=settings');
- const language=page.getByRole('combobox',{name:'Language',exact:true});await language.fill('Español');
- await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
+ await page.getByTestId('settings-language').click();
+ const spanish=page.getByRole('radio',{name:/Español/});await spanish.focus();
+ await page.keyboard.press('Space');
  await expect(page.locator('html')).toHaveAttribute('lang','es');
- await expect(page.getByRole('heading',{name:'Ajustes',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Idioma',exact:true})).toBeVisible();
 });
 
 for(const language of ['en','hi','ar'])test(`settings reflows at 320px and enlarged text in ${language}`,async({page})=>{
  await page.addInitScript(value=>localStorage.setItem('gys:language:v1',value),language);
  await page.setViewportSize({width:320,height:720});await page.goto(fixture+'?screen=settings');
  await page.addStyleTag({content:'html{font-size:32px!important}'});await page.evaluate(()=>document.fonts.ready);
- const choices=page.locator('.gys-settings-choice');await expect(choices).toHaveCount(3);
+ const choices=page.locator('.gys-settings-destination');await expect(choices).toHaveCount(3);
  const bounds=await choices.evaluateAll(elements=>elements.map(el=>{const r=el.getBoundingClientRect();return {width:r.width,x:r.x,right:r.right}}));
  expect(bounds.every(r=>r.width>=170&&r.x>=0&&r.right<=320)).toBe(true);
  const layout=await page.locator('.gys-page-surface').evaluate(el=>({width:el.clientWidth,content:el.scrollWidth}));

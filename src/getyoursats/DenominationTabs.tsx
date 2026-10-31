@@ -2,7 +2,6 @@ import {useFlowText} from '@/hooks/useFlowText';
 import {useEffect,useState} from 'react';
 import {getDisplayFiatCurrency} from '../services/settings';
 import {isFiatDenomination,type Denomination} from './denomination';
-import {SatoshiIcon} from '../components/Icons';
 interface Props {value:Denomination;onChange:(next:Denomination)=>void;disabled?:boolean;inrAvailable?:boolean;fiatAvailable?:boolean}
 export default function DenominationTabs({value,onChange,disabled=false,inrAvailable,fiatAvailable}:Props){
  const t=useFlowText();
@@ -18,6 +17,6 @@ export default function DenominationTabs({value,onChange,disabled=false,inrAvail
   {(['sats','BTC',fiat] as const).map(unit=><button key={unit} type="button"
    aria-label={unit} aria-pressed={unit===value} disabled={disabled||(!available&&unit===fiat)}
    title={!available&&unit===fiat?t('Current {currency}/BTC quote unavailable',{currency:fiat}):undefined}
-   onClick={()=>onChange(unit)}>{unit==='sats'?<><SatoshiIcon size="sm"/><span>sats</span></>:unit}</button>)}
+   onClick={()=>onChange(unit)}>{unit==='sats'?'SATS':unit}</button>)}
  </div>;
 }

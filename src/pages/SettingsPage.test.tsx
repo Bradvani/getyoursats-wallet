@@ -13,7 +13,7 @@ const renderSettings = (onOpenWalletTour?: () => void) => render(
   <ToastProvider>
   <WalletProvider client={createMockClient() as unknown as BreezSdk} isConnected>
   <FiatDataProvider><StableBalanceProvider>
-  <SettingsPage
+  <SettingsPage onOpenLanguage={()=>{}} onOpenAppearance={()=>{}}
     onBack={vi.fn()}
     config={null}
     onOpenFiatCurrencies={vi.fn()}
@@ -58,7 +58,7 @@ describe('unilateral exit on the settings page', () => {
 describe('wallet accessibility and honest platform protection', () => {
   it('restores Orange as the display option and describes imported passkey limits plainly', () => {
     renderSettings();
-    expect(screen.getByRole('button', { name: /Orange/ })).toBeInTheDocument();
+    expect(screen.getByTestId('settings-appearance')).toBeInTheDocument();
     expect(screen.getByText(/Passkeys are available when creating a new wallet/)).toBeInTheDocument();
     expect(screen.getByText(/They cannot be added to an existing wallet restored from recovery words/)).toBeInTheDocument();
   });
@@ -68,7 +68,9 @@ describe('help and app identity', () => {
   it('places guide replay with help near the bottom and keeps Account last', () => {
     const replay = vi.fn();
     renderSettings(replay);
-    const help = screen.getByRole('region', {name: 'Help & information'});
+    const help = screen.getByTestId('settings-wallet-guide');
+    fireEvent.click(within(help).getByText('Help & Information'));
+    expect(help).toHaveAttribute('open');
     const display = screen.getByRole('heading', {name: 'Display'});
     const account = screen.getByRole('heading', {name: 'Account'});
     expect(display.compareDocumentPosition(help) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -84,19 +86,20 @@ describe('help and app identity', () => {
 
   it('shows direct Privacy and Support entries and the shared build version', () => {
     renderSettings();
+    fireEvent.click(screen.getByText('Help & Information'));
     expect(screen.getByTestId('settings-privacy-link')).toHaveAttribute('href','https://getyoursats.com/privacy?lang=en');
     expect(screen.getByTestId('settings-support-link')).toHaveAttribute('href','https://getyoursats.com/support?lang=en');
-    expect(screen.getByTestId('settings-appearance-orange')).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByRole('combobox', {name:'Language'})).toBeInTheDocument();
+    expect(screen.getByTestId('settings-appearance')).toHaveTextContent('Dark');
+    expect(screen.getByTestId('settings-language')).toHaveTextContent('English');
     expect(screen.getByText('GetYourSats v0.0.0-test')).toBeInTheDocument();
   });
 
   it('shows a save action only when payment settings change', () => {
     renderSettings();
     expect(screen.queryByRole('button',{name:'Save payment settings'})).toBeNull();
-    fireEvent.click(screen.getByTestId('settings-appearance-orange'));
+    fireEvent.click(screen.getByTestId('settings-appearance'));
     expect(screen.queryByRole('button',{name:'Save payment settings'})).toBeNull();
-    fireEvent.click(screen.getByText('Payment settings'));
+    fireEvent.click(screen.getByText('Payment Settings'));
     fireEvent.change(screen.getByLabelText('Maximum fee (sats)'),{target:{value:'123'}});
     expect(screen.getByRole('button',{name:'Save payment settings'})).toBeEnabled();
     fireEvent.change(screen.getByLabelText('Maximum fee (sats)'),{target:{value:'-1'}});
