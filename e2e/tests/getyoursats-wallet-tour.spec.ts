@@ -61,6 +61,8 @@ test.beforeEach(async ({page, context}) => {
   await context.route('**/*', route => {
     const request = route.request();
     const url = new URL(request.url());
+    if(url.origin===origin && url.pathname==='/api/market-overview' && request.method()==='GET')
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({supply:null,sentiment:null})});
     if(url.origin===origin && url.pathname==='/api/notifications/device' && request.method()==='GET')
       return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
         available:false,vapidPublicKey:null,lightningInvoicePushAvailable:false,lightningAddressPushAvailable:false,
@@ -168,7 +170,7 @@ test('@public-smoke synthetic wallets retain independent setup progress', async 
   expect(await progress(page, 'a')).toMatchObject({tourStatus: 'skipped', step: 'balance', recoveryStatus: 'pending'});
   expect(await progress(page, 'b')).toMatchObject({tourStatus: 'completed', recoveryStatus: 'pending'});
 });
-test('@public-smoke History remains accessible and Settings replay is grouped near the end', async ({page}) => {
+test('@public-smoke History remains accessible and Settings replays from Help & Information', async ({page}) => {
   await page.setViewportSize({width: 1366, height: 900});
   await page.goto(fixture + '?entry=existing');
   await page.getByTestId('wallet-setup-start').click();
@@ -178,16 +180,11 @@ test('@public-smoke History remains accessible and Settings replay is grouped ne
   await expect(guide(page)).toHaveCount(0);
   expect(await progress(page)).toMatchObject({tourStatus: 'active'});
   await nav.getByRole('button', {name: 'Settings', exact: true}).click();
-  const replay = page.getByRole('button', {name: 'Replay Wallet Guide', exact: true});
+  const help = page.locator('details').filter({has: page.locator('summary').filter({hasText: 'Help & Information'})});
+  expect(await help.evaluate(element => (element as HTMLDetailsElement).open)).toBe(false);
+  await help.locator('summary').first().click();
+  const replay = help.getByRole('button', {name: 'Replay Wallet Guide', exact: true});
   await expect(replay).toBeVisible();
-  expect(await replay.evaluate(button => {
-    const headings = Array.from(document.querySelectorAll('h3'));
-    const display = headings.find(element => element.textContent === 'Display');
-    const account = headings.find(element => element.textContent === 'Account');
-    return Boolean(display && account &&
-      (display.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING) &&
-      (button.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING));
-  })).toBe(true);
   await replay.click();
   await expect(guide(page)).toHaveAttribute('data-wallet-tour-step', 'language');
   await expect(page.locator('.gys-wallet')).not.toHaveClass(/gys-wallet--history-open/);
