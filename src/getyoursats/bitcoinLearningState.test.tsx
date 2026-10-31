@@ -48,6 +48,9 @@ describe('optional Bitcoin education, isolated from Bitcoin ownership', () => {
     nextBitcoinLearning(scope);
     skipBitcoinLearning(scope);
     expect(readBitcoinLearning(scope)).toMatchObject({status:'skipped', chapter:'supply'});
+    startBitcoinLearning(scope);
+    expect(readBitcoinLearning(scope)).toMatchObject({status:'active', chapter:'supply'});
+    skipBitcoinLearning(scope);
     expect(readWalletSetup(walletA).recoveryStatus).toBe('pending');
     confirmWalletRecovery(walletA, 'phrase-verified');
     expect(readWalletSetup(walletA).recoveryStatus).toBe('phrase-verified');
