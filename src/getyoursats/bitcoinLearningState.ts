@@ -109,7 +109,7 @@ export function offerBitcoinLearning(scope: string | null) {
 export function startBitcoinLearning(scope: string | null, restart = false) {
   change(scope, current => ({
     ...current, status: 'active',
-    chapter: restart || current.status !== 'active' ? 'mission' : current.chapter,
+    chapter: restart || ['not-offered', 'offered', 'completed'].includes(current.status) ? 'mission' : current.chapter,
   }));
 }
 export function nextBitcoinLearning(scope: string | null) {
