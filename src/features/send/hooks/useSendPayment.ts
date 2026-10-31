@@ -497,7 +497,7 @@ export function useSendPayment(): UseSendPaymentReturn {
         await finishGysPaymentIntent(directIntent.identity,directIntent.id,outcome.payment);
       }
       setPaymentResult(paymentOutcome(outcome));
-      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id,'sent');
+      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id,outcome.payment.paymentType==='send'?'sent':'received');
       else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
       setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
@@ -571,7 +571,7 @@ export function useSendPayment(): UseSendPaymentReturn {
       setTransferStage('processing');
       const outcome = await runner();
       setPaymentResult(paymentOutcome(outcome));
-      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id,'sent');
+      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id,outcome.payment.paymentType==='send'?'sent':'received');
       else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
       setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
