@@ -385,7 +385,8 @@ html[data-ui-hidden] .gys-moment *{animation-play-state:paused!important}
 @media(min-width:1024px){.gys-wallet--history-open .gys-wallet__header{display:none}}
 
 /* Product information and preference destinations share the wallet's visual scale. */
-.gys-balance-mark{display:block;width:1.4em;height:.88em;background:currentColor;mask:url('/brand/wordmark-stacked-dark.svg') center/contain no-repeat;-webkit-mask:url('/brand/wordmark-stacked-dark.svg') center/contain no-repeat}
+.gys-balance-mark{display:block;width:1.25em;height:1.25em}
+.gys-balance-mark>.gys-contour-mark{display:block;width:100%;height:100%}
 .gys-settings-destination{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:72px;padding:14px 16px;text-align:start;border:1px solid var(--color-spark-border,#303030);border-radius:14px;color:var(--color-spark-text-primary,#faf9f6)}
 .gys-settings-destination>span{min-width:0}.gys-settings-destination strong{display:block;font-size:.9rem;font-weight:650}.gys-settings-destination small{display:block;margin-top:5px;font-size:.8rem;color:var(--color-spark-text-secondary,#aaa)}
 .gys-settings-destination svg{flex:none}.gys-settings-destination:hover{background:color-mix(in srgb,currentColor 4%,transparent)}
@@ -407,7 +408,7 @@ html[data-ui-hidden] .gys-moment *{animation-play-state:paused!important}
 @media(max-width:374px){.gys-market-overview__stats{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.gys-market-details>summary>span{transition:none}}
 
-.gys-primary-balance{display:flex;align-items:center;justify-content:center;gap:8px;max-width:100%;min-width:0;direction:ltr}.gys-primary-balance__symbol{flex:none;font-size:clamp(20px,6vw,32px)}.gys-primary-balance .balance-display{min-width:0;overflow-wrap:anywhere}.gys-primary-balance .gys-balance-mark{width:1.4em;height:.88em}
+.gys-primary-balance{display:flex;align-items:center;justify-content:center;gap:8px;max-width:100%;min-width:0;direction:ltr}.gys-primary-balance__symbol{flex:none;font-size:clamp(20px,6vw,32px)}.gys-primary-balance .balance-display{min-width:0;overflow-wrap:anywhere}
 .gys-market-overview dt{font-size:.75rem}.gys-market-sentiment p,.gys-market-scarcity>div,.gys-market-sentiment__source,.gys-market-method{font-size:.75rem}
 .gys-market-sentiment__heading>div,.gys-market-sentiment__heading>strong{min-width:0;overflow-wrap:anywhere}.gys-market-overview bdi{overflow-wrap:anywhere}.gys-market-sentiment__heading{flex-wrap:wrap}
 @media(max-width:600px){.gys-market-overview__stats{grid-template-columns:minmax(0,1fr)}.gys-market-overview dd{font-size:.95rem}}
