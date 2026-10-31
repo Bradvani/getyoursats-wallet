@@ -24,25 +24,28 @@ vi.mock('../components/WebSecurityNotice',()=>({WebSecurityNotice:()=>null}));
 vi.mock('../utils/screenSecurity',()=>({useScreenCaptureProtection:()=>undefined}));
 
 describe('privacy-first recovery screens',()=>{
- it('hides generated words until the two privacy checks and explicit eye toggle',async()=>{
+ it('hides generated words until the key-safety question, private preparation and explicit eye toggle',async()=>{
   render(<GeneratePage onMnemonicConfirmed={vi.fn()} onBack={vi.fn()}
    onClearError={vi.fn()} error={null}/>);
   await waitFor(()=>expect(screen.getByRole('status',{name:''}).textContent).toContain('Recovery words hidden'));
   expect(screen.queryByText('abandon')).toBeNull();
   const reveal=screen.getByRole('button',{name:'Reveal recovery words'}) as HTMLButtonElement;
   expect(reveal.disabled).toBe(true);
-  const checkboxes=screen.getAllByRole('checkbox') as HTMLInputElement[];
-  expect(checkboxes).toHaveLength(3);
-  fireEvent.click(checkboxes[0]);fireEvent.click(checkboxes[1]);
+  expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+  fireEvent.click(screen.getByRole('button',{name:'Your private key'}));
+  expect(reveal.disabled).toBe(true);
+  fireEvent.click(screen.getByRole('button',{name:'Your receiving address'}));
+  fireEvent.click(screen.getByRole('button',{name:/I am somewhere private/}));
+  expect(reveal.disabled).toBe(true);
+  fireEvent.click(screen.getByRole('button',{name:/I will use paper/}));
   expect(reveal.disabled).toBe(false);
   fireEvent.click(reveal);
   expect(screen.getAllByText('abandon')).toHaveLength(11);
   fireEvent.click(screen.getByRole('button',{name:'Hide recovery words'}));
   expect(screen.queryByText('abandon')).toBeNull();
   const next=screen.getByRole('button',{name:'Verify my handwritten backup'}) as HTMLButtonElement;
-  expect(next.disabled).toBe(true);
-  fireEvent.click(checkboxes[2]);
   expect(next.disabled).toBe(false);
+  expect(screen.getByText(/ask for two positions/)).toBeVisible();
  });
  it('restores with an existing passkey before exposing manual phrase input',()=>{
   const onUsePasskey=vi.fn();
