@@ -24,20 +24,22 @@ interface LnurlWorkflowProps {
   recipientLabel?: string;
   balanceSats?: number;
   tokenBalance?: bigint;
+  initialAmount?: string;
+  initialFeesIncluded?: boolean;
   onBack: () => void;
   onRun: (runner: () => Promise<PaymentExecutionResult>, hasConversion?: boolean) => Promise<void>;
   onPrepare: (args: PrepareLnurlPayRequest) => Promise<PrepareLnurlPayResponse>;
   onPay: (prepareResponse: PrepareLnurlPayResponse) => Promise<PaymentExecutionResult>;
 }
 
-const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, balanceSats, tokenBalance, onBack, onRun, onPrepare, onPay }) => {
+const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, balanceSats, tokenBalance, initialAmount='', initialFeesIncluded=false, onBack, onRun, onPrepare, onPay }) => {
   const {language}=usePresentation();
   const text=PAYMENT_UX[language];
   const balanceKnown=balanceSats!==undefined;
   // USD as a secondary entry option on BTC sends (#253): starts in sats,
   // toggleable to USD, converted to sats client-side.
   const fiatOverride = useFiatOverride();
-  const input = useAmountInput({ balanceSats, tokenBalance, fiatOverride });
+  const input = useAmountInput({ initialAmount, balanceSats, tokenBalance, fiatOverride });
   const {
     amountInput: amount,
     setAmount,
@@ -60,7 +62,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
   const hasPendingConversion = useHasPendingConversion();
 
   const [step, setStep] = useState<PaymentStep>('amount');
-  const [feesIncluded, setFeesIncluded] = useState(false);
+  const [feesIncluded, setFeesIncluded] = useState(initialFeesIncluded);
   const [comment, setComment] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);

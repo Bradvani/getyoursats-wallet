@@ -452,19 +452,23 @@ export const TransferStateIcon = ({ state }: { state: 'sending' | 'receiving' | 
 );
 
 /** Outlines copied exactly from the approved asset; never re-generated artwork. */
-export const TransferBrandMark = React.forwardRef<SVGSVGElement,{direction:'sent'|'received';settled?:boolean;animate?:boolean;fillFraction?:number}>(function TransferMark({direction,settled=false,fillFraction},ref){
+export const TransferBrandMark = React.forwardRef<SVGSVGElement,{direction:'sent'|'received';settled?:boolean;animate?:boolean;fillFraction?:number;framed?:boolean}>(function TransferMark({direction,settled=false,fillFraction,framed=true},ref){
  const clipId=React.useId().replace(/:/g,'');
+ const foreground=framed?'#FAF9F6':'currentColor';
  const fill=Math.max(0,Math.min(1,fillFraction??(direction==='received'?(settled?1:0):(settled?0:1))));
  const bitcoin='M34 18h7v8h6v-8h7v9c11 2 17 7 17 15 0 6-3 10-8 12 8 2 12 7 12 14 0 11-8 17-21 18v9h-7v-9h-6v9h-7v-9H22v-9h7V35h-7v-9h12zm7 17v15h8c7 0 11-2 11-7s-4-8-11-8zm0 24v18h9c9 0 14-3 14-9s-5-9-14-9z';
- return <svg ref={ref} viewBox="0 0 512 512" aria-hidden="true" shapeRendering="geometricPrecision" className="gys-contour-mark" data-bitcoin-fill={fill.toFixed(3)}>
-  <rect x="1" y="1" width="510" height="510" rx="109" fill="#242424" stroke="#5b5b5b" strokeWidth="2"/>
-  <g fill="#FAF9F6" transform="translate(75 75)"><path d="M315 12C265 5 122 34 67 72C22 103 5 145 17 176C32 212 98 202 148 202C178 202 178 217 145 232C101 251 51 260 23 267C13 270 10 281 7 296L1 330C-2 347 11 350 25 347C109 328 244 294 290 252C321 224 334 192 320 167C303 137 246 141 204 143L105 149C78 151 83 137 105 126C157 104 245 85 293 79C308 77 311 66 314 52L322 28C326 18 323 13 315 12Z"/></g>
-  <circle cx="373" cy="373" r="91" fill="#FAF9F6"/>
+ return <svg ref={ref} viewBox={framed?'0 0 512 512':'64 64 416 416'} aria-hidden="true" shapeRendering="geometricPrecision" className="gys-contour-mark" data-bitcoin-fill={fill.toFixed(3)}>
+  {framed&&<rect x="1" y="1" width="510" height="510" rx="109" fill="#242424" stroke="#5b5b5b" strokeWidth="2"/>}
+  {!framed&&<defs><mask id={`${clipId}-coin`} maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512"><rect width="512" height="512" fill="white"/><circle cx="373" cy="372.5" r="73.5" fill="black"/></mask></defs>}
+  <g fill={foreground} mask={framed?undefined:`url(#${clipId}-coin)`}>
+   <g transform="translate(75 75)"><path d="M315 12C265 5 122 34 67 72C22 103 5 145 17 176C32 212 98 202 148 202C178 202 178 217 145 232C101 251 51 260 23 267C13 270 10 281 7 296L1 330C-2 347 11 350 25 347C109 328 244 294 290 252C321 224 334 192 320 167C303 137 246 141 204 143L105 149C78 151 83 137 105 126C157 104 245 85 293 79C308 77 311 66 314 52L322 28C326 18 323 13 315 12Z"/></g>
+   <circle cx="373" cy="373" r="91"/>
+  </g>
   <g transform="translate(298 290) scale(1.5)">
-   <circle cx="50" cy="55" r="49" fill="#242424"/>
+   {framed&&<circle cx="50" cy="55" r="49" fill="#242424"/>}
    <g transform="rotate(14 50 55)">
     <defs><clipPath id={clipId}><rect x="0" y={95-77*fill} width="100" height={77*fill}/></clipPath></defs>
-    <path fill="#FAF9F6" fillRule="evenodd" d={bitcoin}/>
+    <path fill={foreground} fillRule="evenodd" d={bitcoin}/>
     <path data-testid="bitcoin-orange-fill" fill="#F7931A" fillRule="evenodd" clipPath={`url(#${clipId})`} d={bitcoin}/>
    </g>
   </g>

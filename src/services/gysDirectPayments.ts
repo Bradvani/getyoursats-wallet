@@ -3,10 +3,9 @@ import type {InputType,PrepareSendPaymentResponse} from '@breeztech/breez-sdk-sp
 const ORIGIN='https://getyoursats.com';
 const ADDRESS=/^([a-z][a-z0-9]{2,23})@getyoursats\.com$/;
 // Allow transport/cold-start overhead in addition to the directory's two
-// sequential dependency deadlines. A timeout still blocks native paid fallback.
+// sequential dependency deadlines before returning to the Lightning workflow.
 const DIRECTORY_TIMEOUT_MS=15_000;
 export const DIRECT_UNAVAILABLE='Recipient unavailable. Review the payment again.';
-export const GYS_FEE_FREE_UNAVAILABLE='Fee-free payment is unavailable right now. Please try again.';
 
 export interface GysDirectRecipient {
   lightningAddress:string;
@@ -79,9 +78,9 @@ export async function revalidateGysRecipient(recipient:GysDirectRecipient,parse:
       current.identityPublicKey!==recipient.identityPublicKey)throw new Error(DIRECT_UNAVAILABLE);
 }
 
-export function validateGysQuote(recipient:GysDirectRecipient,response:PrepareSendPaymentResponse):void{
+export function validateGysQuote(recipient:GysDirectRecipient,response:PrepareSendPaymentResponse,allowPaid=false):void{
   const method=response.paymentMethod;
   if(method.type!=='sparkAddress'||method.address!==recipient.sparkAddress||method.tokenIdentifier||
-      method.fee!==0n||response.tokenIdentifier||response.conversionEstimate||
+      method.fee<0n||method.fee>BigInt(Number.MAX_SAFE_INTEGER)||(!allowPaid&&method.fee!==0n)||response.tokenIdentifier||response.conversionEstimate||
       response.amount<BigInt(recipient.minSats)||response.amount>BigInt(recipient.maxSats))throw new Error(DIRECT_UNAVAILABLE);
 }

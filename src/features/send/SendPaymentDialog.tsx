@@ -339,6 +339,8 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
                 {lnurlPayDetails && (
                   <LnurlWorkflow
                     parsed={lnurlPayDetails}
+                    initialAmount={send.amount}
+                    initialFeesIncluded={send.feesIncluded}
                     recipientLabel={recipientLabel}
                     balanceSats={send.balanceSats}
                     tokenBalance={send.tokenBalance}
