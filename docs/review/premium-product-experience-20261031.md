@@ -20,6 +20,8 @@ Baseline: `4023ea1bf42ea0a9edbf9d88e0d5e6a9fa0f12dd` (includes passkey confirmat
 - Targeted browser coverage exercises actual production components using disposable fixtures: INR market-cap formatting, unchanged supply across denomination selection, stale feeds, account identity, social destinations, preference persistence, keyboard selection, 320px enlarged-text layouts in English/Hindi/Arabic/Tamil and both landscape rotation directions.
 - Existing customer, theme, QR handoff and keyboard regression checks remain in the release matrix. The new cases run on Chromium, Firefox and WebKit before the broader journey suite in CI.
 - Visual review corrected the narrow market-cap layout, the enlarged balance mark and a missing copy glyph. A reflow assertion was corrected to measure content rather than the price card's deliberately clipped decorative pseudo-element and horizontally scrollable price-unit rail.
+- Hosted localization checks exposed narrow help-page footer overflow after adding social links. Footer links now wrap within their container; Account Removal also uses the shared responsive navigation stylesheet. All 17 privacy/footer cases and nine website/contact scenarios pass locally without retries, including all ten privacy languages and four help-page footers at 320px. The release matrix retains these checks on all three browser engines.
+- CI setup accepts runners that already use the official Ubuntu archive as well as the previous Azure archive. Unrecognized archive hosts still fail setup.
 
 CI on the final commit and verification of the production deployment are required before calling the release shipped. Test data appears only in test fixtures. No real wallet or payment was created for acceptance.
 
