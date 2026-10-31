@@ -9,6 +9,8 @@ import {AlertCard} from '../components/AlertCard';
 import {WebSecurityNotice} from '../components/WebSecurityNotice';
 import {logger,LogCategory} from '@/services/logger';
 import {useScreenCaptureProtection} from '@/utils/screenSecurity';
+import {RecoveryReadiness} from '../getyoursats/RecoveryReadiness';
+import {usePresentation} from '../hooks/usePresentation';
 
 interface GeneratePageProps {
  onMnemonicConfirmed:(mnemonic:string)=>void;
@@ -32,7 +34,8 @@ export default function GeneratePage({
  const [offlineReady,setOfflineReady]=useState(false);
  const [wordsRevealed,setWordsRevealed]=useState(false);
  const [everRevealed,setEverRevealed]=useState(false);
- const [backedUp,setBackedUp]=useState(false);
+ const [keyChoice,setKeyChoice]=useState<number|null>(null);
+ const {language}=usePresentation();
  useScreenCaptureProtection(true);
  useEffect(()=>{
    try{
@@ -70,7 +73,7 @@ export default function GeneratePage({
    <AlertCard variant="error" title="Setup unavailable">{generationError}</AlertCard>
  </PageLayout>;
  const footer=<div className="max-w-xl mx-auto">
-  {stage==='show'?<PrimaryButton className="w-full" onClick={advanceToVerification} disabled={!everRevealed || !backedUp}>Verify my handwritten backup</PrimaryButton>:
+  {stage==='show'?<PrimaryButton className="w-full" onClick={advanceToVerification} disabled={!everRevealed}>Verify my handwritten backup</PrimaryButton>:
    <PrimaryButton className="w-full" onClick={verify} disabled={!answers[0].trim()||!answers[1].trim()}>Verify offline backup</PrimaryButton>}
  </div>;
  return <PageLayout onBack={stage==='verify'?()=>{setStage('show');setAnswers(['','']);setValidationError('')}:onBack}
@@ -80,21 +83,19 @@ export default function GeneratePage({
     <div className="space-y-3 rounded-2xl border border-spark-border bg-spark-dark p-5">
       <p className="text-spark-text-primary font-semibold">Private backup checklist</p>
       <p className="text-sm text-spark-text-secondary">Your recovery words are hidden. Reveal them only when you are ready to write them down privately.</p>
-      <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
-        <input type="checkbox" className="mt-1 accent-spark-primary" checked={privatePlace} onChange={e=>setPrivatePlace(e.target.checked)}/>
-        <span>I am somewhere private, away from cameras and other people.</span>
-      </label>
-      <label className="flex items-start gap-3 text-sm text-spark-text-secondary">
-        <input type="checkbox" className="mt-1 accent-spark-primary" checked={offlineReady} onChange={e=>setOfflineReady(e.target.checked)}/>
-        <span>I will use paper and keep this backup offline. I will not screenshot, copy or share the words.</span>
-      </label>
+      <RecoveryReadiness language={language} choice={keyChoice} onChoice={setKeyChoice}
+        privateReady={privatePlace} onPrivateReady={setPrivatePlace}
+        offlineReady={offlineReady} onOfflineReady={setOfflineReady}
+        privateLabel="I am somewhere private, away from cameras and other people."
+        offlineLabel="I will use paper and keep this backup offline. I will not screenshot, copy or share the words."
+      />
       <button type="button" aria-label={wordsRevealed?'Hide recovery words':'Reveal recovery words'}
         aria-pressed={wordsRevealed}
-        disabled={!wordsRevealed && (!privatePlace || !offlineReady)}
+        disabled={!wordsRevealed && (!privatePlace || !offlineReady || keyChoice !== 0)}
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-spark-primary/40 px-4 py-3 font-semibold text-spark-primary disabled:cursor-not-allowed disabled:opacity-40"
         onClick={()=>{
           if(wordsRevealed){setWordsRevealed(false);return;}
-          if(privatePlace && offlineReady){setWordsRevealed(true);setEverRevealed(true);}
+          if(privatePlace && offlineReady && keyChoice === 0){setWordsRevealed(true);setEverRevealed(true);}
         }}>
         {wordsRevealed?<EyeOffIcon size="sm"/>:<EyeIcon size="sm"/>}
         {wordsRevealed?'Hide words':'Reveal words privately'}
@@ -112,11 +113,10 @@ export default function GeneratePage({
         Recovery words hidden
       </div>
     )}
-    <label className="flex items-start gap-3 rounded-xl border border-spark-border p-4 text-sm text-spark-text-secondary">
-      <input type="checkbox" className="mt-1 accent-spark-primary" checked={backedUp} disabled={!everRevealed}
-        onChange={e=>setBackedUp(e.target.checked)}/>
-      <span>I have written down all the words in order and stored them in a secure, private place.</span>
-    </label>
+    <div className="rounded-xl border border-spark-border bg-spark-dark p-4 space-y-2">
+      <p className="text-sm font-medium text-spark-text-primary">Now check your handwritten backup.</p>
+      <p className="text-sm text-spark-text-secondary">We will hide these words and ask for two positions from your offline copy. Only the correct words can complete setup.</p>
+    </div>
     <AlertCard variant="warning" title="Offline only">
       Nobody at GetYourSats can recover your private keys for you. Store your handwritten backup securely and separately from your phone.
     </AlertCard>
