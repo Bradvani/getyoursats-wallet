@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createDirectRecipientDirectory,sparkAddressForIdentity} from '../site/server/gysDirectRecipients.mjs';
-import {bech32m} from '@scure/base';
+import {bech32,bech32m} from '@scure/base';
 
 const key='0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798';
 const response={lightning_address:'alice@getyoursats.com',lnurl:'lnurlp://getyoursats.com/lnurlp/alice'};
@@ -20,7 +20,7 @@ function harness({enabled=true}={}){
     return Response.json({result:stored});
   };
   const directory=createDirectRecipientDirectory({env,fetchImpl,lookup:async()=>current,now:()=>1000});
-  return {directory,commands,setLookup(value){current=value;},fail(){failed=true;}};
+  return {directory,commands,setLookup(value){current=value;},setRecord(value){stored=JSON.stringify(value);},fail(){failed=true;}};
 }
 
 test('simple Spark encoding binds the exact compressed identity with mainnet bech32m',()=>{
@@ -44,10 +44,32 @@ test('only a matching native provider response can populate the directory',async
   assert.equal(result.expiresAt,61000);
   assert.match(result.bindingId,/^[a-f0-9]{64}$/);
 });
+test('authenticated native HTTPS, LNURL scheme and bech32 responses bind the same owner',async()=>{
+  for(const url of ['https://getyoursats.com/lnurlp/alice','https://getyoursats.com/.well-known/lnurlp/alice',
+    'lnurlp://getyoursats.com/lnurlp/alice','lnurlp://getyoursats.com/.well-known/lnurlp/alice']){
+    for(const lnurl of [url,bech32.encode('lnurl',bech32.toWords(Buffer.from(url)),2048)]){
+      const app=harness();
+      assert.equal(await app.directory.capture(key,{...response,lnurl}),'registered');
+      assert.equal((await app.directory.resolve('alice')).identityPublicKey,key);
+    }
+  }
+});
+test('LNURL normalization never accepts a different name, authority or request target',async()=>{
+  for(const url of ['http://getyoursats.com/lnurlp/alice','https://getyoursats.com/lnurlp/bob',
+    'https://attacker.example/lnurlp/alice','https://getyoursats.com@attacker.example/lnurlp/alice',
+    'https://getyoursats.com/lnurlp/alice?name=bob','https://getyoursats.com/lnurlp/alice#bob',
+    'https://getyoursats.com/lnurlp/%61lice','https://getyoursats.com:444/lnurlp/alice']){
+    for(const lnurl of [url,bech32.encode('lnurl',bech32.toWords(Buffer.from(url)),2048)]){
+      const app=harness();
+      assert.equal(await app.directory.capture(key,{...response,lnurl}),'invalid_address');
+      assert.equal(app.commands.length,0);
+    }
+  }
+});
 test('revocation, ownership changes and malformed public metadata fail closed',async()=>{
   const app=harness();await app.directory.capture(key,response);
   app.setLookup({...metadata,nostrPubkey:'b'.repeat(64)});
-  assert.deepEqual(await app.directory.resolve('alice'),{available:false});
+  assert.deepEqual(await app.directory.resolve('alice'),{available:false,reason:'owner_changed'});
   for(const patch of [{tag:'ERROR'},{allowsNostr:false},{callback:'https://attacker.example'},
     {metadata:'[["text/identifier","bob@getyoursats.com"]]'}]){
     app.setLookup({...metadata,...patch});
@@ -59,7 +81,11 @@ test('disabled, missing and invalid names never invent a destination',async()=>{
   assert.deepEqual(await disabled.directory.resolve('alice'),{available:false});
   assert.equal(disabled.commands.length,0);
   const app=harness();
-  assert.deepEqual(await app.directory.resolve('alice'),{available:false});
+  assert.deepEqual(await app.directory.resolve('alice'),{available:false,reason:'not_activated'});
   assert.deepEqual(await app.directory.resolve('../alice'),{available:false});
   app.fail();await assert.rejects(()=>app.directory.capture(key,response));
+});
+test('an ownership conflict remains blocked and never exposes a guessed destination',async()=>{
+  const app=harness();app.setRecord({blocked:true});
+  assert.deepEqual(await app.directory.resolve('alice'),{available:false,reason:'owner_conflict'});
 });

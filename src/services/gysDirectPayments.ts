@@ -3,6 +3,7 @@ import type {InputType,PrepareSendPaymentResponse} from '@breeztech/breez-sdk-sp
 const ORIGIN='https://getyoursats.com';
 const ADDRESS=/^([a-z][a-z0-9]{2,23})@getyoursats\.com$/;
 export const DIRECT_UNAVAILABLE='Recipient unavailable. Review the payment again.';
+export const GYS_FEE_FREE_UNAVAILABLE='Fee-free payment is unavailable right now. Please try again.';
 
 export interface GysDirectRecipient {
   lightningAddress:string;
@@ -12,6 +13,14 @@ export interface GysDirectRecipient {
   expiresAt:number;
   minSats:number;
   maxSats:number;
+}
+
+/** Identify the user's GYS intent before validating its payment metadata. */
+export function isGysPaymentInput(input:InputType):boolean{
+  if(input.type==='lightningAddress')return /@getyoursats\.com$/i.test(input.address);
+  if(input.type!=='lnurlPay')return false;
+  try{return new URL(input.url).hostname.toLowerCase()==='getyoursats.com';}
+  catch{return input.domain==='getyoursats.com';}
 }
 
 /** Require the native endpoint as well as the identifier. Foreign LNURL metadata is untrusted. */

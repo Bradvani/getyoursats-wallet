@@ -46,11 +46,18 @@ test('@public-smoke native receive QR uses the same free route',async({page})=>{
   await expect(page.getByTestId('send-destination')).toHaveAttribute('title','alice@getyoursats.com');
   await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('0');
 });
-test('@public-smoke unavailable direct routing preserves the quoted Lightning fee',async({page})=>{
-  available=false;await enter(page);
-  await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('3');
-  await expect(page.getByTestId('send-confirm-button')).toBeEnabled();
+test('@public-smoke unavailable GYS routing blocks paid fallback and a fresh retry uses zero fees',async({page})=>{
+  available=false;await page.goto(fixture);
+  await page.getByTestId('payment-input').fill('alice@getyoursats.com');
+  await page.getByRole('button',{name:'Continue',exact:true}).click();
+  await expect(page.getByText('Fee-free payment is unavailable right now. Please try again.')).toBeVisible();
+  await expect(page.getByTestId('send-confirm-button')).toHaveCount(0);
   expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
+  available=true;
+  await page.getByRole('button',{name:'Continue',exact:true}).click();
+  await page.getByLabel('Amount',{exact:true}).fill('100');
+  await page.getByRole('button',{name:'Continue',exact:true}).click();
+  await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('0');
 });
 test('@public-smoke test-network wallets never resolve a mainnet direct destination',async({page})=>{
   let resolutions=0;
