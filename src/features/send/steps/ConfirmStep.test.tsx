@@ -68,6 +68,18 @@ describe('ConfirmStep prepare failure', () => {
 
 
 describe('recipient amount and added transfer fee',()=>{
+ it.each([null, -1, Number.NaN, Number.POSITIVE_INFINITY, 0.5])('blocks confirmation for an unavailable or invalid fee (%s)', (feesSat)=>{
+  renderConfirmStep(undefined,{amountSats:900n,feesSat,balanceSats:10000});
+  expect(screen.getByTestId('send-confirm-button')).toBeDisabled();
+ });
+ it('blocks a fee-inclusive quote that leaves nothing for the recipient',()=>{
+  renderConfirmStep(undefined,{amountSats:900n,feesSat:900,feesIncluded:true,balanceSats:10000});
+  expect(screen.getByTestId('send-confirm-button')).toBeDisabled();
+ });
+ it('requires enough balance for both the recipient amount and added fee',()=>{
+  renderConfirmStep(undefined,{amountSats:900n,feesSat:2,balanceSats:901});
+  expect(screen.getByTestId('send-confirm-button')).toBeDisabled();
+ });
  it('adds the quoted fee to the recipient amount rather than deducting from it',()=>{
   renderConfirmStep({label:'Recipient',value:'alice@example.invalid'},{amountSats:900n,feesSat:2,balanceSats:10000});
   expect(screen.getAllByText('902')).not.toHaveLength(0);
