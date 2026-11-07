@@ -27,7 +27,10 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
     const element=document.querySelector(selector);
     if(!element)throw new Error('Missing '+selector);
     const style=getComputedStyle(element);
-    return {color:style.color,background:style.backgroundColor,image:style.backgroundImage,opacity:style.opacity};
+    let surface:Element|null=element;
+    while(surface&&getComputedStyle(surface).backgroundColor==='rgba(0, 0, 0, 0)')surface=surface.parentElement;
+    const background=getComputedStyle(surface??document.body).backgroundColor;
+    return {color:style.color,background,image:style.backgroundImage,opacity:style.opacity};
    };
    return {
     balance:get('.gys-wallet-balance-surface__content .balance-display'),

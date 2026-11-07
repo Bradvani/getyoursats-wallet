@@ -4,6 +4,7 @@ import {useToast} from '../contexts/ToastContext';
 import type {UseLightningAddress} from '../features/receive/hooks/useLightningAddress';
 import {WALLET_HOME} from '../locales/walletHome';
 import {trustCopy} from './trustCopy';
+import {copyToClipboard} from '../utils/clipboard';
 
 import {isGetYourSatsAddress} from './walletIdentity';
 
@@ -26,7 +27,7 @@ export default function WalletIdentityCard({identity, onPersonalize}: {
   const copy = async () => {
     if (!named || !address) return;
     try {
-      await navigator.clipboard.writeText(address);
+      await copyToClipboard(address);
       showToast('success', trustCopy(language).copySuccess);
     } catch { showToast('error', trustCopy(language).copyFailure); }
   };

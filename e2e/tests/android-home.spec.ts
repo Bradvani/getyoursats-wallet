@@ -90,6 +90,12 @@ for (const text of [100,200]) test(`guide navigation resets scroll and focuses t
 
 test('username creation is the primary identity action and the real Receive fallback stays available', async ({page}) => {
   await page.setViewportSize({width:360,height:640});
+  await page.addInitScript(() => {
+    const clipboard = {writeText: async (value: string) => {
+      (window as Window & {__copiedAddress?: string}).__copiedAddress = value;
+    }};
+    Object.defineProperty(Object.getPrototypeOf(navigator), 'clipboard', {configurable:true, get:() => clipboard});
+  });
   await page.goto(fixture + '?entry=existing');
   await expect(page.getByTestId('home-identity')).toHaveText(/Choose your username.*@getyoursats.com/);
   await expect(page.getByText('auditexample1234@breez.tips',{exact:true})).toHaveCount(0);
@@ -97,7 +103,11 @@ test('username creation is the primary identity action and the real Receive fall
   await expect(page.getByRole('heading',{name:'Personalise Fixture'})).toBeVisible();
   await page.getByRole('button',{name:'Return to Wallet',exact:true}).click();
   await page.getByTestId('receive-button').click();
-  await expect(page.getByText('auditexample1234@breez.tips',{exact:true})).toBeVisible();
+  const fallback = page.getByTestId('lightning-address-text');
+  await expect(fallback).toContainText('auditexample...4@breez.tips');
+  await fallback.getByTestId('copy-button').click();
+  await expect.poll(() => page.evaluate(() => (window as Window & {__copiedAddress?: string}).__copiedAddress))
+    .toBe('auditexample1234@breez.tips');
 });
 
 test('market details preserve denominations and return to the same Home position', async ({page}) => {

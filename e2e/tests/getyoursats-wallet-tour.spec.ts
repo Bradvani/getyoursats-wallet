@@ -127,7 +127,8 @@ test('@public-smoke Skip saves the step and Home resumes it after reload', async
 test('@public-smoke finishing the guide leaves backup outstanding', async ({page}) => {
   await page.goto(fixture);
   await finishGuide(page);
-  await expect(card(page)).toContainText('1/2');
+  await expect(card(page)).toContainText('Back Up Your Wallet');
+  await expect(page.getByTestId('wallet-setup-start')).toHaveCount(0);
   await expect(page.getByTestId('wallet-setup-backup')).toBeVisible();
   expect(await progress(page)).toMatchObject({tourStatus: 'completed', recoveryStatus: 'pending'});
 });
