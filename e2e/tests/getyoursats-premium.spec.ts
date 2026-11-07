@@ -13,7 +13,8 @@ for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
   await expect(page.getByRole('button',{name:'Send Bitcoin',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Receive Bitcoin',exact:true})).toBeVisible();
   await expect(page.getByTestId('wallet-balance')).toHaveText(/125\s*000/);
-  const pos=page.getByRole('button',{name:width>=1024?'Merchant mode':'Open Point of Sale',exact:true});
+  if (width < 1024) await page.getByTestId('menu-button').click();
+  const pos=page.getByRole('button',{name:width>=1024?'Merchant mode':'Point of Sale',exact:true});
   const recurring=page.locator('button[aria-label="Recurring Buys coming soon"]');
   await expect(pos).toBeVisible();
   await expect(recurring).toHaveCount(0);
@@ -36,8 +37,9 @@ for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
 test('@public-smoke Bitcoin market is visible before transactions with scrollable sats prices',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);
- const market=page.getByTestId('bitcoin-market');
- await expect(market).toBeVisible();
+ const summary=page.getByTestId('bitcoin-market');
+ const market=page.locator('.gys-slide-layer').getByTestId('bitcoin-market');
+ await expect(summary).toBeVisible();
  // The market reference now appears before activity in DOM/visual order,
  // instead of a collapsed <details> after the transaction list.
  const beforeActivity=await page.evaluate(()=>{
@@ -46,6 +48,7 @@ test('@public-smoke Bitcoin market is visible before transactions with scrollabl
    return Boolean(market&&activity&&(market.compareDocumentPosition(activity)&Node.DOCUMENT_POSITION_FOLLOWING));
  });
  expect(beforeActivity).toBe(true);
+ await page.getByTestId('open-bitcoin-market').click();
  await expect(market.getByTestId('market-quote-price')).toHaveText('$90,000.00');
  const units=market.locator('.gys-market-pulse__denominations');
  await expect(units).toBeVisible();
@@ -62,14 +65,16 @@ test('@public-smoke Bitcoin market is visible before transactions with scrollabl
  await expect(market.getByTestId('market-unit-10m')).toHaveAttribute('aria-pressed','true');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  await page.reload();
+ await page.getByTestId('open-bitcoin-market').click();
  await expect(page.getByTestId('market-unit-10m')).toHaveAttribute('aria-pressed','true');
- await expect(page.getByTestId('market-quote-price')).toHaveText('$9,000.00');
+ await expect(market.getByTestId('market-quote-price')).toHaveText('$9,000.00');
 });
 
 test('@public-smoke merchant shows lightning flash only after an SDK confirmed receipt',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);
- await page.getByRole('button',{name:'Open Point of Sale'}).click();
+ await page.getByTestId('menu-button').click();
+ await page.getByRole('button',{name:'Point of Sale',exact:true}).click();
  const terminal=page.getByRole('dialog',{name:'Merchant point of sale'});
  await terminal.getByRole('button',{name:'1',exact:true}).click();
  await terminal.getByRole('button',{name:'Charge',exact:true}).click();
@@ -150,7 +155,7 @@ test('@public-smoke installed iOS header keeps the official wordmark clear',asyn
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);
  await page.evaluate(()=>document.documentElement.classList.add('ios-standalone-bottom-gap'));
- const logo=page.locator('.gys-wallet-balance-surface__toolbar img.gys-brand-wordmark--compact');
+ const logo=page.locator('.gys-wallet-toolbar img.gys-brand-wordmark--compact');
  await expect(logo).toBeVisible();
  await expect(logo).toHaveAttribute('src','/brand/wordmark-horizontal-dark.svg');
  await expect(logo).toHaveCSS('opacity','1');

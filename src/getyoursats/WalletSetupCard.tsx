@@ -8,9 +8,10 @@ interface Props {
   onReviewRecovery: () => void;
   onStartTour: () => void;
   paused?: boolean;
+  compact?: boolean;
 }
 
-export default function WalletSetupCard({setup, onReviewRecovery, onStartTour, paused = false}: Props) {
+export default function WalletSetupCard({setup, onReviewRecovery, onStartTour, paused = false, compact = false}: Props) {
   const {language} = usePresentation();
   const copy = walletSetupCopy(language);
   const {progress} = setup;
@@ -18,6 +19,18 @@ export default function WalletSetupCard({setup, onReviewRecovery, onStartTour, p
   const tourDone = progress.tourStatus === 'completed';
   if (!setup.scope || progress.cardDismissed || recoveryDone) return null;
   const completed = Number(recoveryDone) + Number(tourDone);
+  if (compact) return <section className="gys-setup-reminder" aria-label={copy.cardTitle}
+    data-testid="wallet-setup-card" inert={paused || undefined} aria-hidden={paused || undefined}>
+    <button type="button" className="gys-setup-reminder__primary" data-testid="wallet-setup-backup" onClick={onReviewRecovery}>
+      <span>{progress.recoveryStatus === 'passkey-reviewed' ? copy.backupReviewed : copy.backupPending}</span>
+      <ChevronRightIcon size="sm" className="rtl:rotate-180"/>
+    </button>
+    {!tourDone && <button type="button" className="gys-setup-reminder__guide" data-testid="wallet-setup-start" onClick={onStartTour}>
+      {progress.tourStatus === 'skipped' ? copy.resume : copy.start}
+    </button>}
+    <button type="button" className="gys-setup-reminder__dismiss" data-testid="wallet-setup-dismiss"
+      onClick={setup.dismissCard} aria-label={copy.dismiss}><CloseIcon size="sm"/></button>
+  </section>;
   return (
     <section aria-label={copy.cardTitle} data-testid="wallet-setup-card" inert={paused} aria-hidden={paused || undefined}
       className="gys-wallet-setup-card mx-5 mb-4 rounded-2xl border border-spark-border bg-spark-dark p-4">

@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useSyncExternalStore} from 'react';
 import {
-  EMPTY_WALLET_SETUP, advanceWalletTour, beginWalletTour, initializeNewWalletSetup,
+  EMPTY_WALLET_SETUP, advanceWalletTour, retreatWalletTour, beginWalletTour, initializeNewWalletSetup,
   dismissWalletSetupCard, readWalletSetup, skipWalletTour, subscribeWalletSetup, walletSetupScope,
   type WalletSetupProgress,
 } from '../getyoursats/walletSetupState';
@@ -10,6 +10,7 @@ export interface WalletSetupController {
   progress: WalletSetupProgress;
   beginTour: (restart?: boolean) => void;
   next: () => void;
+  previous: () => void;
   skip: () => void;
   dismissCard: () => void;
 }
@@ -21,9 +22,10 @@ export function useWalletSetup(identityPubkey?: string | null, network?: string 
   const progress = useSyncExternalStore(subscribe, snapshot, () => EMPTY_WALLET_SETUP);
   const beginTour = useCallback((restart = false) => beginWalletTour(scope, restart), [scope]);
   const next = useCallback(() => advanceWalletTour(scope), [scope]);
+  const previous = useCallback(() => retreatWalletTour(scope), [scope]);
   const skip = useCallback(() => skipWalletTour(scope), [scope]);
   const dismissCard = useCallback(() => dismissWalletSetupCard(scope), [scope]);
-  return {scope, progress, beginTour, next, skip, dismissCard};
+  return {scope, progress, beginTour, next, previous, skip, dismissCard};
 }
 
 export interface NewWalletSetup {

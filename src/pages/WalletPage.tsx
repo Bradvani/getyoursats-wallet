@@ -16,6 +16,14 @@ import { logger, LogCategory } from '@/services/logger';
 import CollapsingWalletHeader from '../components/CollapsingWalletHeader';
 import SideMenu from '../components/SideMenu';
 import MarketPulse from '../getyoursats/MarketPulse';
+import SlideInPage from '../components/layout/SlideInPage';
+import {MARKET_COPY} from '../locales/market';
+import WalletToolbar from '../components/WalletToolbar';
+import WalletIdentityCard from '../getyoursats/WalletIdentityCard';
+import {isGetYourSatsAddress} from '../getyoursats/walletIdentity';
+import {safeAreaBottom} from '../utils/safeAreaInsets';
+import {useBackButton} from '../hooks/useBackButton';
+import '../getyoursats/walletHome.css';
 import WalletActivityPanel from '../getyoursats/WalletActivityPanel';
 import WalletSetupCard from '../getyoursats/WalletSetupCard';
 import WalletSetupTour from '../getyoursats/WalletSetupTour';
@@ -24,7 +32,7 @@ import type {WalletRecoveryMethod} from '../getyoursats/walletSetupState';
 import PullToRefresh from '../components/PullToRefresh';
 import { GetInfoResponse, Payment, DepositInfo, Network } from '@breeztech/breez-sdk-spark';
 import type { BuyBitcoinProvider } from '../services/settings';
-import { ArrowUpIcon, QrCodeIcon, ArrowDownIcon, ClockIcon } from '../components/Icons';
+import { ArrowUpIcon, ArrowDownIcon } from '../components/Icons';
 import { mergeDepositsWithTransactions, ExtendedPayment, isUnclaimedDepositPayment } from '@/utils/depositHelpers';
 import SendPaymentDialog from '../features/send/SendPaymentDialog';
 import ReceivePaymentDialog from '../features/receive/ReceivePaymentDialog';
@@ -106,9 +114,9 @@ const WalletPage: React.FC<WalletPageProps> = ({
   // same manager, and their pop restores #13131d when they close.
   useStatusBarColor(STATUS_BAR_WALLET_GLASS);
 
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
   const { historyOpen, setHistoryOpen, gysPosOpen, setGysPosOpen, navigate } = useWalletNavigation(onReturnToWallet, onOpenSettings);
   const [partnerBuyOpen,setPartnerBuyOpen] = useState(false);
+  const [marketOpen, setMarketOpen] = useState(false);
   const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
@@ -154,11 +162,21 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const tourRequested = Boolean(walletSetup?.scope && walletSetup.progress.tourStatus === 'active');
   const showHistory = historyOpen;
   const setupPaused = !setupTourAllowed || settingsActive || isSendDialogOpen || isReceiveDialogOpen || isQrScannerOpen ||
-    isMenuOpen || isBuyBitcoinOpen || partnerBuyOpen || gysPosOpen || Boolean(selectedPayment) ||
+    isMenuOpen || marketOpen || isBuyBitcoinOpen || partnerBuyOpen || gysPosOpen || Boolean(selectedPayment) ||
     Boolean(selectedDeposit) || Boolean(selectedExitId) || Boolean(saveContactAddress);
   const startTour = () => { navigate('wallet'); walletSetup?.beginTour(); };
   const nextTourStep = () => { walletSetup?.next(); };
+  const previousTourStep = () => { walletSetup?.previous(); };
   const skipTour = () => { walletSetup?.skip(); };
+  const showGuide = Boolean(!showHistory && tourRequested && onReviewRecovery && onPersonalizeAddress);
+  useBackButton(() => {
+    if (showGuide) {
+      if (walletSetup?.progress.step === 'language') skipTour();
+      else previousTourStep();
+    } else if (showHistory) setHistoryOpen(false);
+  }, (showGuide || showHistory) && !setupPaused);
+
+  useBackButton(() => setMarketOpen(false), marketOpen && !settingsActive);
 
   const openSendDialog = useCallback(() => {
     setSendDialogSession(s => s + 1);
@@ -174,14 +192,19 @@ const WalletPage: React.FC<WalletPageProps> = ({
   }, []);
 
   const transactionsContainerRef = useRef<HTMLDivElement>(null);
-  const scrollFrame = useRef<number | null>(null);
+  const previousView = useRef('');
   useLayoutEffect(() => {
-    // A different view starts at its heading, not the old feed's scroll position.
-    transactionsContainerRef.current?.scrollTo({top: 0, behavior: 'instant'});
-  }, [showHistory]);
-  useEffect(() => () => {
-    if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
-  }, []);
+    // New views and guide chapters always start at their heading. Prevent focus
+    // from scrolling the small-screen container back to a previous chapter.
+    const scroller = transactionsContainerRef.current;
+    if (!scroller) return;
+    const view = showHistory ? 'history' : showGuide ? `guide:${walletSetup?.progress.step}` : 'home';
+    if (previousView.current !== view) scroller.scrollTop = 0;
+    previousView.current = view;
+    if (showGuide && !setupPaused) {
+      scroller.querySelector<HTMLElement>('[data-guide-heading]')?.focus({preventScroll: true});
+    }
+  }, [showHistory, showGuide, walletSetup?.progress.step, setupPaused]);
 
   // A forced sync rather than the 60s timer's, so a deposit sent from another
   // device shows at once. The synced event it fires refreshes the list.
@@ -203,17 +226,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   // Refs for dialog states to use in stable callbacks (advanced-event-handler-refs optimization)
   const dialogStateRef = useLatest({ isSendDialogOpen, isReceiveDialogOpen, selectedPayment, selectedDeposit });
-  const collapseThreshold = 100;
-
-  const handleScroll = useCallback(() => {
-    if (scrollFrame.current !== null) return;
-    scrollFrame.current = requestAnimationFrame(() => {
-      scrollFrame.current = null;
-      const scrollTop = transactionsContainerRef.current?.scrollTop ?? 0;
-      setScrollProgress(Math.max(0, Math.min(1, scrollTop / collapseThreshold)));
-    });
-  }, [collapseThreshold]);
-
   const handlePaymentSelected = useCallback((payment: Payment | ExtendedPayment) => {
     // Use ref to check dialog states without adding to dependencies
     const { isSendDialogOpen, isReceiveDialogOpen, selectedPayment, selectedDeposit } = dialogStateRef.current;
@@ -336,102 +348,49 @@ const WalletPage: React.FC<WalletPageProps> = ({
         <div className="absolute bottom-1/4 right-0 w-[300px] h-[300px] bg-gradient-radial from-spark-primary/10 to-transparent blur-3xl" />
       </div>
 
-      {/* Fixed header */}
-      <div className="gys-wallet__header sticky top-0 z-10" data-wallet-tour="balance">
-        <CollapsingWalletHeader
-          walletInfo={walletInfo}
-          scrollProgress={scrollProgress}
-          onOpenMenu={() => setIsMenuOpen(true)}
-          // Hidden when nothing is left to offer: no provider enabled in
-          // Settings, or (on iOS) Cash App not installed.
-          onOpenBuyBitcoin={!featureAvailability.buyBitcoin || enabledBuyProviders.length === 0 ? undefined : () => {
-            if (enabledBuyProviders.length === 1 && enabledBuyProviders[0] === 'moonpay') {
-              // MoonPay can redirect directly; Cash App needs amount entry via the dialog.
-              setIsBuyLoading(true);
-              onBuyBitcoin(enabledBuyProviders[0]).finally(() => setIsBuyLoading(false));
-            } else {
-              openBuyBitcoinDialog();
-            }
-          }}
-          isBuyLoading={isBuyLoading}
-          isSyncing={isSyncing}
-          refreshWalletData={() => refreshWalletData(false)}
-          hasRejectedDeposits={hasRejectedDeposits}
-          onOpenGetRefund={() => onOpenGetRefund('icon')}
-        />
-      </div>
-
-      {/* Lightning address: ready on first wallet screen, not a hidden signup step. */}
-      <div className="gys-address-banner gys-wallet__address" role="status" aria-live="polite" data-wallet-tour="identity">
-        <span className="gys-address-banner__label">⚡ {wc.lightning}</span>
-        {primaryLightningAddress.address ? (
-          <button type="button" className="gys-address-banner__value"
-            onClick={()=>void navigator.clipboard.writeText(primaryLightningAddress.address!.lightningAddress).then(()=>showToast('success',trustCopy(language).copySuccess)).catch(()=>showToast('error',trustCopy(language).copyFailure))}
-            aria-label="Copy your Lightning address"
-            title="Copy Lightning address">
-            {primaryLightningAddress.address.lightningAddress}
-          </button>
-        ):<span className="gys-address-banner__pending">
-          {primaryLightningAddress.isLoading?'Setting up your address…':
-           primaryLightningAddress.error?'Address temporarily unavailable':
-           primaryLightningAddress.isSupported?'Tap Receive to set up':'Not available on this network'}
-        </span>}
-      </div>
-      {/* Recovery words stay inside Settings; they must not be one tap
-          away from the everyday wallet without an authenticated web app lock. */}
-      <nav className="gys-home-quick-actions" aria-label="Merchant and planning actions">
-        <button type="button" className="gys-home-quick-actions__button"
-          onClick={()=>setGysPosOpen(true)} aria-label="Open Point of Sale">
-          <span className="gys-home-quick-actions__icon" aria-hidden="true"><QrCodeIcon size="lg"/></span>
-          <span className="gys-home-quick-actions__text"><strong>{copy.pointOfSale}</strong><small>{wc.accept}</small></span>
-        </button>
-        {featureAvailability.recurringBuy&&<button type="button" className="gys-home-quick-actions__button"
-          onClick={featureAvailability.recurringBuy ? onOpenDca : undefined}
-          disabled={!featureAvailability.recurringBuy}
-          aria-label={featureAvailability.recurringBuy ? 'Open Recurring Buys' : 'Recurring Buys coming soon'}>
-          <span className="gys-home-quick-actions__icon" aria-hidden="true"><ClockIcon size="lg"/></span>
-          <span className="gys-home-quick-actions__text"><strong>{copy.recurring}</strong><small>{wc.soon}</small></span>
-        </button>}
-      </nav>
-      {/* Live SDK market quotes and wallet-verified activity. */}
-      <div
-        ref={transactionsContainerRef}
-        id="gys-wallet-history" className={`gys-wallet__activity grow overflow-y-auto relative z-0 scrollbar-hidden ${showHistory ? "gys-wallet__activity--open" : ""}`}
-        onScroll={handleScroll}
-      >
-        <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow} />
-
-        {!showHistory && walletSetup?.scope && onReviewRecovery && (
-          tourRequested && onPersonalizeAddress ? (
-            <WalletSetupTour
-              step={walletSetup.progress.step}
-              recoveryMethod={recoveryMethod}
-              recoveryStatus={walletSetup.progress.recoveryStatus}
-              hasNativeAddress={primaryLightningAddress.address?.lightningAddress.endsWith('@getyoursats.com') ?? false}
-              paused={setupPaused}
-              onNext={nextTourStep}
-              onSkip={skipTour}
-              onReviewRecovery={onReviewRecovery}
-              onPersonalize={onPersonalizeAddress}
-              onOpenReceive={openReceiveDialog}
-              onOpenPos={() => setGysPosOpen(true)}
-            />
-          ) : <WalletSetupCard setup={walletSetup} paused={setupPaused} onReviewRecovery={onReviewRecovery} onStartTour={startTour}/>
-        )}
-
-        {/* One-glance market context belongs above transactions, never below
-            a long activity list or behind a collapsed disclosure. */}
-        {!showHistory && !settingsActive && <MarketPulse />}
-
-        <WalletActivityPanel
-          view={showHistory?'history':'activity'} onViewChange={view=>setHistoryOpen(view==='history')}
-          transactions={mergeDepositsWithTransactions(transactions, unclaimedDeposits)}
-          onPaymentSelected={handlePaymentSelected}
-          isSyncing={isSyncing}
-          exitEntries={exitEntries}
-          onExitSelected={handleExitSelected}
-          onRefresh={() => { void syncNow(); }}
-        />
+      <WalletToolbar
+        onOpenMenu={() => setIsMenuOpen(true)} onScan={handleScanFromWallet}
+        onOpenBuyBitcoin={!featureAvailability.buyBitcoin || enabledBuyProviders.length === 0 ? undefined : () => {
+          if (enabledBuyProviders.length === 1 && enabledBuyProviders[0] === 'moonpay') {
+            setIsBuyLoading(true);
+            onBuyBitcoin(enabledBuyProviders[0]).finally(() => setIsBuyLoading(false));
+          } else openBuyBitcoinDialog();
+        }}
+        isBuyLoading={isBuyLoading} hasRejectedDeposits={hasRejectedDeposits}
+        onOpenGetRefund={() => onOpenGetRefund('icon')}
+      />
+      <div ref={transactionsContainerRef} id="gys-wallet-history"
+        className={`gys-wallet__activity ${showGuide ? 'gys-wallet__activity--guide' : ''}`}
+        data-testid="wallet-scroll">
+        <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow}/>
+        {showGuide && walletSetup && onReviewRecovery && onPersonalizeAddress ? (
+          <WalletSetupTour
+            step={walletSetup.progress.step}
+            recoveryMethod={recoveryMethod} recoveryStatus={walletSetup.progress.recoveryStatus}
+            hasNativeAddress={isGetYourSatsAddress(primaryLightningAddress.address?.lightningAddress)}
+            paused={setupPaused} onNext={nextTourStep} onPrevious={previousTourStep} onSkip={skipTour}
+            onReviewRecovery={onReviewRecovery} onPersonalize={onPersonalizeAddress}
+            onOpenReceive={openReceiveDialog} onOpenPos={() => setGysPosOpen(true)}
+          />
+        ) : <>
+          {!showHistory && <div className="gys-home-content">
+            <div className="gys-home-balance" data-wallet-tour="balance">
+              <CollapsingWalletHeader walletInfo={walletInfo} scrollProgress={0} showToolbar={false}
+                onOpenMenu={() => setIsMenuOpen(true)} isSyncing={isSyncing}/>
+            </div>
+            <WalletIdentityCard identity={primaryLightningAddress} onPersonalize={onPersonalizeAddress}/>
+            {walletSetup?.scope && onReviewRecovery && <WalletSetupCard setup={walletSetup}
+              paused={setupPaused} onReviewRecovery={onReviewRecovery} onStartTour={startTour} compact/>}
+            {!settingsActive && <MarketPulse compact onOpenDetails={() => setMarketOpen(true)}/>}
+          </div>}
+          <WalletActivityPanel
+            view={showHistory ? 'history' : 'activity'} onViewChange={view => setHistoryOpen(view === 'history')}
+            transactions={mergeDepositsWithTransactions(transactions, unclaimedDeposits)}
+            onPaymentSelected={handlePaymentSelected} isSyncing={isSyncing}
+            exitEntries={exitEntries} onExitSelected={handleExitSelected}
+            onRefresh={() => { void syncNow(); }}
+          />
+        </>}
       </div>
 
       {/* Send Payment Dialog - always mounted for instant response */}
@@ -495,16 +454,16 @@ const WalletPage: React.FC<WalletPageProps> = ({
       )}
 
       {/* Receive and Send stay dominant; scanning and POS stay available in the menu. */}
-      <nav className="gys-action-dock" aria-label="Wallet actions">
+      <nav className="gys-action-dock" aria-label="Wallet actions" style={{paddingBottom: `max(10px, ${safeAreaBottom})`}}>
         <button type="button" onClick={openReceiveDialog} data-testid="receive-button" aria-label="Receive Bitcoin" data-wallet-tour="receive"
           className="gys-action-dock__receive"><ArrowDownIcon/><span>{wc.receive}</span></button>
         <button type="button" onClick={openSendDialog} data-testid="send-button" aria-label="Send Bitcoin"
           className="gys-action-dock__send"><ArrowUpIcon/><span>{wc.send}</span></button>
-        <button type="button" onClick={handleScanFromWallet} data-testid="scan-button" aria-label={wc.scanPayment}
-          className="gys-action-dock__utility"><QrCodeIcon/><span>{wc.scan}</span></button>
-        <button type="button" onClick={()=>setGysPosOpen(true)} data-testid="pos-button" aria-label={wc.posPayment}
-          className="gys-action-dock__accept gys-action-dock__utility"><span className="gys-action-dock__bitcoin" aria-hidden="true">₿</span><span>{wc.acceptShort}</span></button>
       </nav>
+
+      {marketOpen && <SlideInPage title={MARKET_COPY[language].title} closeStyle="back" onClose={() => setMarketOpen(false)}>
+        <MarketPulse/>
+      </SlideInPage>}
 
       {/* Save Contact Dialog */}
       <SaveContactDialog
