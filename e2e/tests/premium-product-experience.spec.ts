@@ -108,9 +108,9 @@ test('iOS camera denial has one request, localized guidance and an explicit retr
   Object.defineProperty(navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 (iPhone; CPU iPhone OS 27_0 like Mac OS X) AppleWebKit/605.1.15 Version/27.0 Mobile Safari/604.1'});
   Object.defineProperty(navigator,'permissions',{configurable:true,value:{query:async()=>{throw new Error('Unsupported');}}});
   (window as unknown as {cameraCalls:number}).cameraCalls=0;
-  Object.defineProperty(navigator.mediaDevices,'getUserMedia',{configurable:true,value:async()=>{
+  Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>{
    (window as unknown as {cameraCalls:number}).cameraCalls++;throw new DOMException('Denied','NotAllowedError');
-  }});
+  },enumerateDevices:async()=>[]}});
  });
  await page.setViewportSize({width:390,height:844});await page.goto('/e2e/fixtures/scan-send.html');
  await page.getByTestId('send-button').click();await page.getByRole('button',{name:'Scan QR',exact:true}).click();
@@ -130,11 +130,11 @@ test('a granted camera opens once, supports torch and releases its tracks on clo
   const stats={requests:0,stops:0,torch:false};(window as unknown as {cameraStats:typeof stats}).cameraStats=stats;
   Object.defineProperty(navigator,'permissions',{configurable:true,value:{query:async()=>({state:'granted'})}});
   HTMLMediaElement.prototype.play=async()=>{};
-  Object.defineProperty(navigator.mediaDevices,'getUserMedia',{configurable:true,value:async()=>{
+  Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>{
    stats.requests++;
    const track={stop:()=>stats.stops++,getSettings:()=>({facingMode:'environment'}),getCapabilities:()=>({torch:true}),applyConstraints:async(c:{advanced:{torch:boolean}[]})=>{stats.torch=c.advanced[0].torch;}};
    return Object.assign(new MediaStream(),{getTracks:()=>[track],getVideoTracks:()=>[track]});
-  }});
+  },enumerateDevices:async()=>[]}});
  });
  await page.goto('/e2e/fixtures/scan-send.html');await page.getByTestId('send-button').click();
  await page.getByRole('button',{name:'Scan QR',exact:true}).click();
