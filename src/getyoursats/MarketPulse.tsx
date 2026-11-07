@@ -1,5 +1,7 @@
 import {useEffect,useState} from 'react';
 import MarketOverview from './MarketOverview';
+import {ChevronRightIcon} from '../components/Icons';
+import {WALLET_HOME} from '../locales/walletHome';
 import {usePresentation} from '../hooks/usePresentation';
 import {MARKET_COPY} from '../locales/market';
 import {PAYMENT_FIAT_COPY} from '../locales/paymentFiat';
@@ -23,7 +25,7 @@ function selectedMarketUnit():MarketQuoteUnitId {
  * Never an executable trading quote. BTC amount changes affect this card
  * only; wallet custody, balances and payment denominations stay untouched.
  */
-export default function MarketPulse(){
+export default function MarketPulse({compact = false, onOpenDetails}: {compact?: boolean; onOpenDetails?: () => void}){
   const {fiatRates,fetchedAt,refreshFiatData}=useFiatData();
   const {language}=usePresentation();
   const text=MARKET_COPY[language];
@@ -37,8 +39,10 @@ export default function MarketPulse(){
     const first=window.setTimeout(()=>setClock(Date.now()),0);
     const timer=window.setInterval(()=>setClock(Date.now()),30000);
     const sync=()=>setCurrency(getDisplayFiatCurrency());
+    const syncUnit=()=>setQuoteUnit(selectedMarketUnit());
+    window.addEventListener('gys:market-unit-changed',syncUnit);
     window.addEventListener('gys:fiat-pref-changed',sync);
-    return()=>{window.clearInterval(timer);window.clearTimeout(first);window.removeEventListener('gys:fiat-pref-changed',sync)};
+    return()=>{window.clearInterval(timer);window.clearTimeout(first);window.removeEventListener('gys:fiat-pref-changed',sync);window.removeEventListener('gys:market-unit-changed',syncUnit)};
   },[fetchedAt]);
 
   const rate=fiatRates.find(x=>x.coin===currency)?.value;
@@ -64,7 +68,19 @@ export default function MarketPulse(){
   const chooseUnit=(id:MarketQuoteUnitId)=>{
     setQuoteUnit(id);
     try {localStorage.setItem(PREFERENCE_KEY,id)} catch {/* optional preference */}
+    window.dispatchEvent(new Event('gys:market-unit-changed'));
   };
+
+  if (compact) return <section className="gys-market-summary" aria-label={text.title} data-testid="bitcoin-market">
+    <button type="button" onClick={onOpenDetails} className="gys-market-summary__open"
+      aria-label={WALLET_HOME[language].openMarket} data-testid="open-bitcoin-market">
+      <span className="gys-market-summary__title">{text.title}<ChevronRightIcon size="sm" className="rtl:rotate-180"/></span>
+      <span className="gys-market-summary__quote"><strong data-testid="market-quote-price"><bdi>{price}</bdi></strong>
+        <span>{text.for} <bdi>{unit.label}</bdi></span></span>
+      <MarketOverview currency={currency} rate={stale ? null : rate ?? null} compact/>
+      {stale && <span className="gys-market-summary__stale" role="status">{hasRate ? text.last : PAYMENT_FIAT_COPY[language]}</span>}
+    </button>
+  </section>;
 
   return <section className="gys-market-pulse gys-market-pulse--glance"
     aria-label={text.title} data-testid="bitcoin-market">

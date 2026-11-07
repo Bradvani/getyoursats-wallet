@@ -23,7 +23,7 @@ export function checkedOverview(raw:Overview, now=Date.now()):Overview {
   };
 }
 
-export default function MarketOverview({currency,rate,refreshKey=0}:{currency:string;rate:number|null;refreshKey?:number}) {
+export default function MarketOverview({currency,rate,refreshKey=0,compact=false}:{currency:string;rate:number|null;refreshKey?:number;compact?:boolean}) {
   const {language}=usePresentation(); const text=PREMIUM_EXPERIENCE[language]; const copy=PRODUCT_POLISH[language];
   const [data,setData]=useState<Overview>({supply:null,sentiment:null});
   const [clock,setClock]=useState(Date.now);
@@ -49,6 +49,9 @@ export default function MarketOverview({currency,rate,refreshKey=0}:{currency:st
   const cap=supply&&rate&&Number.isFinite(rate)&&rate>0?supply.btc*rate:null;
   const number=new Intl.NumberFormat(fiatLocale(currency,language),{maximumFractionDigits:2,numberingSystem:'latn'});
   const updated=(time:number)=>new Date(time).toLocaleString(language,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  if (compact) return <span className="gys-market-summary__change" data-testid="market-change">
+    <span>{copy.change}</span><strong><bdi>{change ? `${change.percent > 0 ? '+' : ''}${number.format(change.percent)}%` : text.unavailable}</bdi></strong>
+  </span>;
   return <div className="gys-market-overview" data-testid="market-overview">
     <div className="gys-market-change" data-testid="market-change"><span>{copy.change}</span><strong><bdi>{change?`${change.percent>0?'+':''}${number.format(change.percent)}%`:text.unavailable}</bdi></strong></div>
     <dl className="gys-market-overview__stats">

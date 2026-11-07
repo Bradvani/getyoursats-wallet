@@ -173,6 +173,9 @@
  --color-spark-success:#17683F;--color-spark-electric:#9A4B00;
 }
 :root[data-gys-theme="orange"] .gys-activity,
+:root[data-gys-theme="orange"] .gys-home-identity,
+:root[data-gys-theme="orange"] .gys-setup-reminder,
+:root[data-gys-theme="orange"] .gys-market-summary,
 :root[data-gys-theme="orange"] .gys-market-pulse{
  color:var(--gys-dark-text);border:1px solid var(--gys-line);
  background:var(--gys-paper);box-shadow:0 7px 24px rgba(68,47,18,.055);
