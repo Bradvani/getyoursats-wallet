@@ -18,7 +18,9 @@ test('market information follows selected INR without changing Bitcoin amounts',
   await page.setViewportSize({width:390,height:844});await page.goto(fixture);
   // Choose using the actual shared preference function, as Settings does.
   await page.evaluate(async()=>{const path='/src/services/settings.ts';const settings=await import(path);settings.setDisplayFiatCurrency('INR');});
-  await expect(page.getByTestId('market-cap')).toContainText('₹15,07,50,00,09,37,500.00');
+  await expect(page.getByTestId('market-cap')).toContainText('₹150.75 lakh crore');
+  await page.getByTestId('market-cap').click();
+  await expect(page.getByTestId('market-cap-exact')).toContainText('₹15,07,50,00,09,37,500.00');
   await expect(page.getByTestId('market-supply')).toContainText('2,01,00,000.13 BTC');
   await expect(page.getByTestId('market-sentiment')).toContainText('30/100Fear');
   const cap=await page.getByTestId('market-cap').innerText();
@@ -99,4 +101,46 @@ for(const angle of [90,270])test(`scanner preserves its portrait surface when a 
   await expect(scanner.getByRole('button',{name:'Cancel',exact:true})).toBeInViewport();
   await scanner.getByRole('button',{name:'Cancel',exact:true}).click();
   await expect(scanner).toHaveCount(0);
+});
+
+test('iOS camera denial has one request, localized guidance and an explicit retry',async({page})=>{
+ await page.addInitScript(()=>{
+  Object.defineProperty(navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 (iPhone; CPU iPhone OS 27_0 like Mac OS X) AppleWebKit/605.1.15 Version/27.0 Mobile Safari/604.1'});
+  Object.defineProperty(navigator,'permissions',{configurable:true,value:{query:async()=>{throw new Error('Unsupported');}}});
+  (window as unknown as {cameraCalls:number}).cameraCalls=0;
+  Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>{
+   (window as unknown as {cameraCalls:number}).cameraCalls++;throw new DOMException('Denied','NotAllowedError');
+  },enumerateDevices:async()=>[]}});
+ });
+ await page.setViewportSize({width:390,height:844});await page.goto('/e2e/fixtures/scan-send.html');
+ await page.getByTestId('send-button').click();await page.getByRole('button',{name:'Scan QR',exact:true}).click();
+ await expect(page.getByText('Camera access is blocked.',{exact:false})).toBeVisible();
+ expect(await page.evaluate(()=>(window as unknown as {cameraCalls:number}).cameraCalls)).toBe(1);
+ await page.getByText('Camera access on iPhone',{exact:true}).click();
+ await expect(page.getByText(/In Safari, open this wallet/)).toBeVisible();
+ await page.getByRole('button',{name:'Try again',exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>(window as unknown as {cameraCalls:number}).cameraCalls)).toBe(2);
+ await page.screenshot({path:'test-artifacts/premium-ios-camera.png'});
+ await page.getByRole('button',{name:'Cancel',exact:true}).click();
+ await expect(page.getByTestId('payment-input')).toBeVisible();
+});
+
+test('a granted camera opens once, supports torch and releases its tracks on close',async({page})=>{
+ await page.addInitScript(()=>{
+  const stats={requests:0,stops:0,torch:false};(window as unknown as {cameraStats:typeof stats}).cameraStats=stats;
+  Object.defineProperty(navigator,'permissions',{configurable:true,value:{query:async()=>({state:'granted'})}});
+  HTMLMediaElement.prototype.play=async()=>{};
+  Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>{
+   stats.requests++;
+   const track={stop:()=>stats.stops++,getSettings:()=>({facingMode:'environment'}),getCapabilities:()=>({torch:true}),applyConstraints:async(c:{advanced:{torch:boolean}[]})=>{stats.torch=c.advanced[0].torch;}};
+   return Object.assign(new MediaStream(),{getTracks:()=>[track],getVideoTracks:()=>[track]});
+  },enumerateDevices:async()=>[]}});
+ });
+ await page.goto('/e2e/fixtures/scan-send.html');await page.getByTestId('send-button').click();
+ await page.getByRole('button',{name:'Scan QR',exact:true}).click();
+ await page.getByRole('button',{name:'Turn torch on',exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>(window as unknown as {cameraStats:{torch:boolean}}).cameraStats.torch)).toBe(true);
+ await page.getByRole('button',{name:'Cancel',exact:true}).click();
+ const stats=await page.evaluate(()=>(window as unknown as {cameraStats:{requests:number;stops:number}}).cameraStats);
+ expect(stats.requests).toBe(1);expect(stats.stops).toBeGreaterThan(0);
 });

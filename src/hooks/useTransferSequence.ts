@@ -28,7 +28,7 @@ export function useTransferSequence(direction:TransferDirection,operationId:stri
    // Visibility changes reset `last`, so background time is still excluded.
    const delta=Math.max(0,now-last);last=now;
    const target=sequenceTarget(phase);
-   const visual=Math.min(target,record.current.visual+delta/TRANSFER_SEQUENCE_DURATION_MS);
+   const visual=Math.min(target,record.current.visual+delta/(phase==='confirmed'?900:TRANSFER_SEQUENCE_DURATION_MS));
    record.current={...record.current,visual,finished:phase==='confirmed'&&visual===1};publish();
    if(visual<target)frame=requestAnimationFrame(tick);
   };

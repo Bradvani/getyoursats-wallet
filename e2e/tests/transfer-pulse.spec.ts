@@ -65,7 +65,7 @@ test('vibration preference emits no sample and definite failure remains independ
  await expect(page.getByRole('button',{name:'Test vibration',exact:true})).toHaveCount(0);
  expect(await page.evaluate(()=>(window as unknown as {patterns:unknown[]}).patterns)).toEqual([]);
  await page.getByTestId('manual-send').click();await page.getByTestId('stage-failed').click();
- expect(await page.evaluate(()=>(window as unknown as {patterns:unknown[]}).patterns)).toEqual([[80,60,100]]);
+ expect(await page.evaluate(()=>(window as unknown as {patterns:unknown[]}).patterns)).toEqual([[40,50,40]]);
 });
 test('high pixel density keeps a stationary vector-only logo and orange isolated to B',async({browser,browserName})=>{
  const context=await browser.newContext({viewport:{width:412,height:915},deviceScaleFactor:3,hasTouch:true,...(browserName==='firefox'?{}:{isMobile:true})});

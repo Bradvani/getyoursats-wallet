@@ -65,3 +65,16 @@ export function fiatEstimateValue(sats: number | bigint, rate: number | undefine
   const value = amount / 100_000_000 * rate;
   return {value: Number.isFinite(value) ? value : null, stale: false};
 }
+
+/** A readable magnitude for market context; payment amounts retain full precision. */
+export function formatMarketMagnitude(value:number,currency:string,language='en'):string {
+  if(!Number.isFinite(value)||value<0)return '';
+  const symbol=new Intl.NumberFormat(fiatLocale(currency,language),{style:'currency',currency}).formatToParts(0).find(part=>part.type==='currency')?.value??currency;
+  const format=(n:number)=>new Intl.NumberFormat(language,{maximumFractionDigits:2,numberingSystem:'latn'}).format(n);
+  if(currency==='INR'&&['en','hi','ta'].includes(language)&&value>=1e12){
+    const unit=language==='hi'?'लाख करोड़':language==='ta'?'லட்சம் கோடி':'lakh crore';
+    return `${symbol}${format(value/1e12)} ${unit}`;
+  }
+  const locale=currency==='INR'&&language==='en'?'en-IN':language;
+  return `${symbol} ${new Intl.NumberFormat(locale,{notation:'compact',compactDisplay:'long',maximumFractionDigits:2,numberingSystem:'latn'}).format(value)}`;
+}

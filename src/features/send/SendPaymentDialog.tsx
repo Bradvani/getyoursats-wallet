@@ -22,6 +22,7 @@ import LnurlWithdrawWorkflow, { LNURL_WITHDRAW_COMPLETION_TIMEOUT_SECS } from '.
 import CrossChainWorkflow from './workflows/CrossChainWorkflow';
 import AmountStep from './steps/AmountStep';
 import ConfirmStep from './steps/ConfirmStep';
+import PaymentReceiptSummary from '../../components/PaymentReceiptSummary';
 import TransferExperience from '../../components/TransferExperience';
 import {displayPaymentAmount} from '@/getyoursats/paymentDisplay';
 import PaymentFiatAmount from '../../components/PaymentFiatAmount';
@@ -417,6 +418,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
                 receiptId={send.completedPayment?.id}
                 amount={send.completedPayment?.status==='completed'?displayPaymentAmount(send.completedPayment):undefined}
                 fiatAmount={send.completedPayment?.status==='completed'?<PaymentFiatAmount payment={send.completedPayment}/>:undefined}
+                receipt={send.completedPayment?.status==='completed'?<PaymentReceiptSummary payment={send.completedPayment} destination={getSendLightningAddress(send.paymentInput)??destination?.details.address}/>:undefined}
                 error={send.error} onClose={handleClose}/>
             )}
             </>}

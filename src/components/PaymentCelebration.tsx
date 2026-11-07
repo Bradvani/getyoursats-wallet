@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Payment } from '@breeztech/breez-sdk-spark';
 import { useStableBalance } from '../contexts/StableBalanceContext';
 import { SatAmount } from './SatAmount';
@@ -6,6 +6,7 @@ import { useFiatData } from '../contexts/FiatDataContext';
 import { getTokenAmountFromPayment, formatTokenAmount, buildTokenDisplayConfig, withAssetDecimals } from '../utils/tokenFormatting';
 import {notifyPaymentFeedback} from '../utils/transferHaptics';
 import TransferExperience from './TransferExperience';
+import PaymentReceiptSummary from './PaymentReceiptSummary';
 import PaymentFiatAmount from './PaymentFiatAmount';
 
 interface PaymentCelebrationProps {
@@ -21,49 +22,20 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
   const { fiatCurrencies } = useFiatData();
   const [isVisible, setIsVisible] = useState(false);
 
-  // The SDK owns settlement. This timer only closes the presentation.
-  // Hold it while a PWA tab is hidden so a backgrounded receive isn't
-  // silently consumed before the user returns to their wallet.
-  const onCloseRef = useRef(onClose);
-  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => {
     if(payment.status!=='completed')return;
-    let revealFrame: number | undefined;
-    let closeTimer: ReturnType<typeof setTimeout> | undefined;
-    let exitTimer: ReturnType<typeof setTimeout> | undefined;
-
-    const clearPresentationTimers = () => {
-      if (revealFrame !== undefined) cancelAnimationFrame(revealFrame);
-      clearTimeout(closeTimer);
-      clearTimeout(exitTimer);
-    };
-    const showWhenVisible = () => {
-      clearPresentationTimers();
-      if (document.visibilityState === 'hidden') return;
-      setIsVisible(false);
-      revealFrame = requestAnimationFrame(() => {
+    let frame=0;
+    const show=()=>{
+      cancelAnimationFrame(frame);
+      if(document.visibilityState==='hidden')return;
+      frame=requestAnimationFrame(()=>{
         setIsVisible(true);
-        notifyPaymentFeedback('success',payment.id);
+        notifyPaymentFeedback('success',payment.id,payment.paymentType==='send'?'sent':'received');
       });
-      closeTimer = setTimeout(() => {
-        setIsVisible(false);
-        exitTimer = setTimeout(() => onCloseRef.current(), 350);
-      }, 8000);
     };
-    const onVisibility = () => {
-      if (document.visibilityState === 'hidden') {
-        clearPresentationTimers();
-      } else {
-        showWhenVisible();
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-    showWhenVisible();
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibility);
-      clearPresentationTimers();
-    };
-  }, [payment.id,payment.status]);
+    document.addEventListener('visibilitychange',show);show();
+    return()=>{cancelAnimationFrame(frame);document.removeEventListener('visibilitychange',show);};
+  },[payment.id,payment.status,payment.paymentType]);
 
   // Determine display: token amount or sats
   // Always show token denomination for token payments, even if stable balance is off
@@ -81,6 +53,7 @@ const PaymentCelebration: React.FC<PaymentCelebrationProps> = ({ payment, onClos
     <TransferExperience key={payment.id} operationId={payment.id} receiptId={payment.id}
       direction={isSent?'sent':'received'} phase="confirmed" onClose={onClose}
       amount={displayText ?? <SatAmount sats={payment.amount}/>}
+      receipt={<PaymentReceiptSummary payment={payment}/>}
       fiatAmount={<PaymentFiatAmount payment={payment}/>}/>
   </div>;
 };

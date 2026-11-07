@@ -1,5 +1,7 @@
 // No wallet or SDK connection. Controls dispatch explicitly synthetic lifecycle events.
 import {useEffect,useRef,useState} from 'react';
+import type {Payment} from '@breeztech/breez-sdk-spark';
+import PaymentReceiptSummary from '../../src/components/PaymentReceiptSummary';
 import {createRoot} from 'react-dom/client';
 import '../../src/index.css';
 import '../../src/getyoursats/appearance.css';
@@ -16,7 +18,7 @@ function Fixture(){
  useEffect(()=>()=>timers.current.forEach(clearTimeout),[]);
  const dispatch=(phase:TransferPhase)=>setAttempt(current=>{
   if(!current)return current;
-  if(phase==='confirmed')notifyPaymentFeedback('success',current.id);
+  if(phase==='confirmed')notifyPaymentFeedback('success',current.id,current.direction);
   if(phase==='failed')notifyPaymentFeedback('error',current.id);
   return {...current,phase};
  });
@@ -46,6 +48,7 @@ function Fixture(){
    <PaymentFeedbackSetting/>
   </div>
   {attempt&&<TransferExperience key={attempt.id} operationId={attempt.id} direction={attempt.direction} phase={attempt.phase}
+    receipt={<PaymentReceiptSummary destination="alice@example.invalid" payment={{id:attempt.id,status:'completed',paymentType:attempt.direction==='sent'?'send':'receive',amount:5000n,fees:3n,method:'lightning',timestamp:1700000000} as Payment}/>}
     receiptId={attempt.phase==='confirmed'?attempt.id:undefined} amount={attempt.phase==='confirmed'?'5 000 sats · Preview':undefined} onClose={leave}>
     <p className="mb-2 opacity-70">Simulated payment events · No funds moved</p>
     <nav aria-label="Preview event controls" className="grid grid-cols-3 gap-2">
