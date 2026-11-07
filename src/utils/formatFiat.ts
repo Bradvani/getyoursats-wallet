@@ -1,8 +1,31 @@
-const LOCALES: Record<string, string> = {
-  en: 'en-US', hi: 'hi-IN', es: 'es-ES', pt: 'pt-PT', ja: 'ja-JP',
-  th: 'th-TH', vi: 'vi-VN', ta: 'ta-IN', ar: 'ar', 'zh-CN': 'zh-CN',
-};
 const formatters = new Map<string, Intl.NumberFormat>();
+const locales = new Map<string, string>();
+
+/** Currency region controls grouping; shared currencies retain a suitable language variant. */
+export function fiatLocale(currency: string, language = 'en'): string {
+  const base = language.split('-')[0];
+  const key = `${currency}:${base}`;
+  const cached = locales.get(key);
+  if (cached) return cached;
+  const shared: Record<string, string> = {
+    INR: 'en-IN', USD: 'en-US',
+    EUR: ({en: 'en-IE', es: 'es-ES', pt: 'pt-PT', fr: 'fr-FR', it: 'it-IT', nl: 'nl-NL'} as Record<string, string>)[base] ?? 'de-DE',
+    CHF: base === 'fr' ? 'fr-CH' : base === 'it' ? 'it-CH' : 'de-CH',
+    CAD: base === 'fr' ? 'fr-CA' : 'en-CA',
+    XAF: 'fr-CM', XOF: 'fr-SN', XPF: 'fr-PF', XCD: 'en-AG', XCG: 'nl-CW', ANG: 'nl-CW',
+  };
+  let locale = shared[currency];
+  if (!locale) {
+    try {
+      const region = currency.slice(0, 2);
+      const knownRegion = new Intl.DisplayNames('en', {type: 'region', fallback: 'none'}).of(region);
+      locale = knownRegion ? new Intl.Locale(`und-${region}`).maximize().toString() : 'en-US';
+    } catch { locale = 'en-US'; }
+  }
+  if (locales.size >= 256) locales.clear();
+  locales.set(key, locale);
+  return locale;
+}
 
 /** INR uses lakh/crore grouping across device locales. These are display values only. */
 export function formatFiat(value: number, currency: string, language = 'en', options: {
@@ -10,7 +33,7 @@ export function formatFiat(value: number, currency: string, language = 'en', opt
   maximumFractionDigits?: number;
 } = {}): string {
   if (!Number.isFinite(value)) return '';
-  const locale = currency === 'INR' ? 'en-IN' : LOCALES[language] ?? language;
+  const locale = fiatLocale(currency, language);
   try {
     const key = JSON.stringify([locale, currency, !!options.numberOnly, options.maximumFractionDigits]);
     let formatter = formatters.get(key);
@@ -41,4 +64,17 @@ export function fiatEstimateValue(sats: number | bigint, rate: number | undefine
   if (now - fetchedAt > FIAT_ESTIMATE_MAX_AGE_MS || now < fetchedAt) return {value: null, stale: true};
   const value = amount / 100_000_000 * rate;
   return {value: Number.isFinite(value) ? value : null, stale: false};
+}
+
+/** A readable magnitude for market context; payment amounts retain full precision. */
+export function formatMarketMagnitude(value:number,currency:string,language='en'):string {
+  if(!Number.isFinite(value)||value<0)return '';
+  const symbol=new Intl.NumberFormat(fiatLocale(currency,language),{style:'currency',currency}).formatToParts(0).find(part=>part.type==='currency')?.value??currency;
+  const format=(n:number)=>new Intl.NumberFormat(language,{maximumFractionDigits:2,numberingSystem:'latn'}).format(n);
+  if(currency==='INR'&&['en','hi','ta'].includes(language)&&value>=1e12){
+    const unit=language==='hi'?'लाख करोड़':language==='ta'?'லட்சம் கோடி':'lakh crore';
+    return `${symbol}${format(value/1e12)} ${unit}`;
+  }
+  const locale=currency==='INR'&&language==='en'?'en-IN':language;
+  return `${symbol} ${new Intl.NumberFormat(locale,{notation:'compact',compactDisplay:'long',maximumFractionDigits:2,numberingSystem:'latn'}).format(value)}`;
 }

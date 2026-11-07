@@ -103,7 +103,7 @@ for (const view of [
   });
 }
 
-test('@public-smoke localized backup headers leave room for the brand and back button', async ({page}, testInfo) => {
+test('@public-smoke localized backup headers keep the title clear of the back button', async ({page}, testInfo) => {
   await page.setViewportSize({width: 390, height: 844});
   for (const language of ['en', 'hi', 'es', 'pt', 'ja', 'th', 'vi', 'ta', 'ar', 'zh-CN']) {
     await page.goto(fixture + '?language=' + language + '&theme=orange');
@@ -112,16 +112,16 @@ test('@public-smoke localized backup headers leave room for the brand and back b
     await expect(title).toBeVisible();
     const brand = page.locator('header .gys-page-header__brand');
     const back = page.locator('header button');
-    await expect(brand).toBeVisible();
+    await expect(brand).toHaveCount(0);
     await expect(back).toBeVisible();
     await expect.poll(async () => {
       const heading = await title.boundingBox();
-      const peers = await Promise.all([brand.boundingBox(), back.boundingBox()]);
+      const peers = await Promise.all([back.boundingBox()]);
       if (!heading || peers.some(peer => !peer)) return false;
       return peers.every(peer => peer && (
         heading.x + heading.width + 8 <= peer.x || peer.x + peer.width + 8 <= heading.x
       ));
-    }, {message: language + ' header title needs a visible gap from the brand and back control'}).toBe(true);
+    }, {message: language + ' header title needs a visible gap from the back control'}).toBe(true);
     await expect(page.getByTestId('backup-reveal')).toBeDisabled();
     await expect(page.getByTestId('recovery-word-grid')).toHaveCount(0);
     await page.screenshot({path: testInfo.outputPath('backup-header-' + language + '.png'), animations: 'disabled'});

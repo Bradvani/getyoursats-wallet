@@ -49,7 +49,8 @@ describe('AmountStep USD entry (no stable balance)', () => {
     const { onNext } = renderAmountStep();
 
     // The switcher appears once the USD rate loads.
-    const switcher = await screen.findByRole('button', { name: 'sats' });
+    const switcher = await screen.findByRole('button', { name: 'USD' });
+    await waitFor(() => expect(switcher).toBeEnabled());
     fireEvent.click(switcher);
 
     const input = screen.getByTestId('amount-input');
@@ -64,7 +65,8 @@ describe('AmountStep USD entry (no stable balance)', () => {
   it('rejects a USD amount that exceeds the BTC balance', async () => {
     const { onNext } = renderAmountStep();
 
-    fireEvent.click(await screen.findByRole('button', { name: 'sats' }));
+    await waitFor(() => expect(screen.getByRole('button', {name:'USD'})).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', {name:'USD'}));
     fireEvent.change(screen.getByTestId('amount-input'), { target: { value: '500' } });
 
     // $500 = 500,000 sats > 100,000 sats balance
@@ -80,7 +82,7 @@ describe('AmountStep USD entry (no stable balance)', () => {
     renderAmountStep({}, client);
 
     await waitFor(() => expect(client.listFiatRates).toHaveBeenCalled());
-    expect(screen.queryByRole('button', { name: 'sats' })).toBeNull();
+    expect(screen.getByRole('button', {name:'USD'})).toBeDisabled();
     expect(screen.getByTestId('amount-input')).toHaveAttribute(
       'placeholder',
       'Enter amount in sats'
@@ -93,7 +95,7 @@ describe('AmountStep USD entry (no stable balance)', () => {
   // against it cannot tell the two apart. Waiting for the switcher is what
   // proves the rate landed first.
   const ratedLabels = async () => {
-    await screen.findByRole('button', { name: 'sats' });
+    await waitFor(() => expect(screen.getByRole('button', {name:'USD'})).toBeEnabled());
     return buttonLabels();
   };
 
@@ -151,4 +153,23 @@ describe('AmountStep USD entry (no stable balance)', () => {
     expect(screen.queryByRole('button', { name: 'sats' })).toBeNull();
     expect(screen.queryByRole('button', { name: '$' })).toBeNull();
   });
+});
+
+it('keeps fractional sats invalid instead of multiplying the amount', async () => {
+  const {onNext} = renderAmountStep();
+  fireEvent.change(screen.getByTestId('amount-input'), {target:{value:'1.5'}});
+  expect(screen.getByRole('button', {name:'Continue'})).toBeDisabled();
+  expect(onNext).not.toHaveBeenCalled();
+});
+
+it('clears payment eligibility after an ambiguous fiat paste, preserving it for correction', async () => {
+  const {onNext} = renderAmountStep();
+  await waitFor(() => expect(screen.getByRole('button', {name:'USD'})).toBeEnabled());
+  fireEvent.click(screen.getByRole('button', {name:'USD'}));
+  const input = screen.getByTestId('amount-input');
+  fireEvent.change(input, {target:{value:'5'}});
+  fireEvent.change(input, {target:{value:'1,234'}});
+  expect(input).toHaveValue('1,234');
+  expect(screen.getByRole('button', {name:'Continue'})).toBeDisabled();
+  expect(onNext).not.toHaveBeenCalled();
 });

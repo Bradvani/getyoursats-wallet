@@ -7,7 +7,7 @@ test('confirmation shows selected INR for total including the network fee',async
  await page.screenshot({path:'test-artifacts/fiat-pay-inr.png'});
  await page.goto(fixture+'?feesIncluded');await expect(page.getByTestId('payment-fiat-amount')).toHaveText('≈ ₹81.00 INR');
 });
-for(const [currency,value] of [['USD','≈ $0.90 USD'],['EUR','≈ €0.81 EUR'],['JPY','≈ ¥135 JPY']])test(`payment fiat uses ${currency} rather than hard-coded dollars`,async({page})=>{
+for(const [currency,value] of [['USD','≈ $0.90 USD'],['EUR','≈ €0.81 EUR'],['JPY','≈ ￥135 JPY']])test(`payment fiat uses ${currency} rather than hard-coded dollars`,async({page})=>{
  await page.addInitScript(()=>localStorage.setItem('gys:language:v1','en'));
  await page.goto(`${fixture}?screen=sent&currency=${currency}`);
  await expect(page.getByTestId('payment-fiat-amount')).toHaveText(value);

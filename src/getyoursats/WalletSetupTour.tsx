@@ -1,4 +1,4 @@
-import {useId, useSyncExternalStore} from 'react';
+import {useId, useMemo, useState, useSyncExternalStore} from 'react';
 import {motion} from 'motion/react';
 import {
   ArrowDownIcon, CheckIcon, ChevronRightIcon, EditPencilIcon, KeyIcon,
@@ -9,7 +9,10 @@ import {PrimaryButton} from '../components/ui/buttons';
 import {usePresentation} from '../hooks/usePresentation';
 import {walletSetupCopy, type WalletSetupCopy} from '../locales/walletSetup';
 import {APP_LANGUAGES, type AppLanguage} from '../services/presentationPreferences';
-import {getDisplayFiatCurrency} from '../services/settings';
+import {getDisplayFiatCurrency, getFiatSettings, saveFiatSettings, setDisplayFiatCurrency} from '../services/settings';
+import {currencyCatalog} from '../utils/currencyCatalog';
+import {formatFiat} from '../utils/formatFiat';
+import {currencyCopy} from '../locales/currencies';
 import {WALLET_TOUR_STEPS, type WalletTourStep, type WalletRecoveryMethod, type WalletRecoveryStatus} from './walletSetupState';
 import './walletSetup.css';
 
@@ -123,6 +126,16 @@ export default function WalletSetupTour({
 }: WalletSetupTourProps) {
   const {language} = usePresentation();
   const text = walletSetupCopy(language);
+  const moneyText = currencyCopy(language);
+  const [currency, setCurrency] = useState(getDisplayFiatCurrency);
+  const currencies = useMemo(() => step === 'balance' ? currencyCatalog([], [currency], language) : [], [step, currency, language]);
+  const currencyId = useId();
+  const chooseCurrency = (value: string) => {
+    const selected = getFiatSettings().selectedCurrencies;
+    if (!selected.includes(value)) saveFiatSettings({selectedCurrencies: [...selected, value]});
+    setDisplayFiatCurrency(value);
+    setCurrency(value);
+  };
   // Motion's hook snapshots the preference at mount. Subscribe here so a device
   // preference change also stops previews and chapter movement already on screen.
   const reducedMotion = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, getServerReducedMotion);
@@ -169,6 +182,14 @@ export default function WalletSetupTour({
           </div>
           <p className="gys-wallet-guide__description">{content.body}</p>
           {step === 'language' && <div className="gys-wallet-guide__language-choice"><LanguageSelect/></div>}
+          {step === 'balance' && <div className="gys-wallet-guide__language-choice">
+            <label htmlFor={currencyId} className="block mb-2 text-sm text-spark-text-secondary">{moneyText.display}</label>
+            <select id={currencyId} data-testid="setup-currency" value={currency} onChange={event => chooseCurrency(event.currentTarget.value)}
+              className="w-full min-h-11 rounded-xl border border-spark-border bg-spark-dark px-3 text-spark-text-primary">
+              {currencies.map(item => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}
+            </select>
+            <p className="mt-2 text-xs text-spark-text-secondary">{moneyText.format}: <bdi>{formatFiat(1234567.89, currency, language)}</bdi></p>
+          </div>}
           {step !== 'language' && <p className="gys-wallet-guide__detail">
             {step === 'protect' && verified && <ShieldCheckIcon size="sm"/>}{detail}
           </p>}

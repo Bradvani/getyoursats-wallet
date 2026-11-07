@@ -31,6 +31,10 @@
   ],
   "rewrites": [
     {
+      "source": "/.well-known/gys/(.*)",
+      "destination": "/api/breez-lnurl"
+    },
+    {
       "source": "/.well-known/lnurlp/(.*)",
       "destination": "/api/breez-lnurl"
     },

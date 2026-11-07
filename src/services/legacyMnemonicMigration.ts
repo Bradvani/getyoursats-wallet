@@ -1,51 +1,48 @@
-/**
- * The legacy `walletMnemonic` localStorage key and its drain into the native
- * vault. It predates the vault, so on native it is a leftover the vault has
- * since replaced and startup should not leave behind. Web has no vault and
- * keeps using it as the only seed store.
- */
-import { deviceOnlyStorage } from './secureStorage';
+/** Legacy seed compatibility. Native cleanup requires exact vault readback. */
+import { deviceOnlyStorage, SecureStorageError } from './secureStorage';
 import { logger, LogCategory } from './logger';
 
 const MNEMONIC_KEY = 'walletMnemonic';
+let pendingMigration: Promise<void> | null = null;
 
 export const saveMnemonic = (m: string) => localStorage.setItem(MNEMONIC_KEY, m);
 export const getSavedMnemonic = () => localStorage.getItem(MNEMONIC_KEY);
 export const clearMnemonic = () => localStorage.removeItem(MNEMONIC_KEY);
 
-/**
- * On native, move any legacy mnemonic into the device-only tier (NOT the
- * biometric-bound tier: these are pre-0.0.3 non-passkey users who never opted
- * into biometrics). Idempotent and non-fatal: retried every startup until
- * done, legacy path keeps working in the meantime.
- *
- * A seed already in the vault wins, and the legacy copy is dropped only when
- * it is that same seed. One that differs is left in place: it can be the
- * device's only copy of another wallet, and deleting it burns those funds.
- */
-export async function migrateLegacyMnemonicIfNeeded(): Promise<void> {
+/** Deduplicate startup migration within this process. A failed read or write
+ * retains the legacy copy for retry. This is not a native cross-process lock. */
+export function migrateLegacyMnemonicIfNeeded(): Promise<void> {
+  if (!pendingMigration) {
+    pendingMigration = migrateLegacyMnemonic().finally(() => { pendingMigration = null; });
+  }
+  return pendingMigration;
+}
+
+async function migrateLegacyMnemonic(): Promise<void> {
   if (!deviceOnlyStorage.isSupported()) return;
-  const legacy = getSavedMnemonic();
-  if (!legacy) return;
   try {
-    if (await deviceOnlyStorage.hasStoredSeed()) {
-      const stored = await deviceOnlyStorage.retrieveSeed();
-      // A vault passphrase derives a different wallet, so it counts as a mismatch.
-      const sameSeed = stored.type === 'mnemonic'
-        && stored.mnemonic === legacy
-        && !stored.passphrase;
-      if (!sameSeed) {
-        logger.warn(LogCategory.AUTH, 'Plaintext mnemonic differs from the stored seed; leaving it in place');
+    const legacy = getSavedMnemonic();
+    if (!legacy) return;
+    if (!await deviceOnlyStorage.hasStoredSeed()) {
+      // Some legacy presence adapters map plugin failures to false. Only an
+      // explicit missing-record read permits writing into the destination.
+      try {
+        await deviceOnlyStorage.retrieveSeed();
         return;
+      } catch (error) {
+        if (!(error instanceof SecureStorageError) || error.code !== 'NO_STORED_SEED') return;
       }
-      clearMnemonic();
-      logger.info(LogCategory.AUTH, 'Removed plaintext mnemonic already held in device-only secure storage');
-      return;
+      if (getSavedMnemonic() !== legacy) return;
+      await deviceOnlyStorage.storeSeed({ type: 'mnemonic', mnemonic: legacy });
     }
-    await deviceOnlyStorage.storeSeed({ type: 'mnemonic', mnemonic: legacy });
+    const stored = await deviceOnlyStorage.retrieveSeed();
+    const sameSeed = stored.type === 'mnemonic'
+      && stored.mnemonic === legacy
+      && (stored.passphrase == null || stored.passphrase === '');
+    if (!sameSeed || getSavedMnemonic() !== legacy) return;
     clearMnemonic();
-    logger.info(LogCategory.AUTH, 'Migrated plaintext mnemonic into device-only secure storage');
+    logger.info(LogCategory.AUTH, 'Removed legacy mnemonic after matching secure storage readback');
   } catch {
-    // deviceOnlyStorage logged the typed error; we'll retry next startup.
+    // A failed acknowledgement may follow a committed write. Retain the source.
   }
 }

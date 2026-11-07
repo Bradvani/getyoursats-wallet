@@ -1,3 +1,4 @@
+import {validAmountInput} from '../../../utils/decimalInput';
 import {usePresentation} from '@/hooks/usePresentation';
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
@@ -23,20 +24,22 @@ interface LnurlWorkflowProps {
   recipientLabel?: string;
   balanceSats?: number;
   tokenBalance?: bigint;
+  initialAmount?: string;
+  initialFeesIncluded?: boolean;
   onBack: () => void;
   onRun: (runner: () => Promise<PaymentExecutionResult>, hasConversion?: boolean) => Promise<void>;
   onPrepare: (args: PrepareLnurlPayRequest) => Promise<PrepareLnurlPayResponse>;
   onPay: (prepareResponse: PrepareLnurlPayResponse) => Promise<PaymentExecutionResult>;
 }
 
-const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, balanceSats, tokenBalance, onBack, onRun, onPrepare, onPay }) => {
+const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, balanceSats, tokenBalance, initialAmount='', initialFeesIncluded=false, onBack, onRun, onPrepare, onPay }) => {
   const {language}=usePresentation();
   const text=PAYMENT_UX[language];
   const balanceKnown=balanceSats!==undefined;
   // USD as a secondary entry option on BTC sends (#253): starts in sats,
   // toggleable to USD, converted to sats client-side.
   const fiatOverride = useFiatOverride();
-  const input = useAmountInput({ balanceSats, tokenBalance, fiatOverride });
+  const input = useAmountInput({ initialAmount, balanceSats, tokenBalance, fiatOverride });
   const {
     amountInput: amount,
     setAmount,
@@ -59,7 +62,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
   const hasPendingConversion = useHasPendingConversion();
 
   const [step, setStep] = useState<PaymentStep>('amount');
-  const [feesIncluded, setFeesIncluded] = useState(false);
+  const [feesIncluded, setFeesIncluded] = useState(initialFeesIncluded);
   const [comment, setComment] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -125,6 +128,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
   // setError is only called in onAmountNext, so step changes don't
   // need a clearing effect; the confirm-back handler clears inline.
   const onAmountNext = async () => {
+    if (!validAmountInput(amount, isTokenMode ? (config?.fractionSize ?? 2) : 0)) return;
     if (!balanceKnown || hasPendingConversion) {setError(text.updating);return;}
     if (feesIncluded && !isSendAllToken && balance.exceedsBalance(Number(amount))) {setError(text.exceeds);return;}
     if (commentAllowed && commentMaxLen && comment.length > commentMaxLen) {
@@ -258,9 +262,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
     );
   }
 
-  const validAmount = isTokenMode
-    ? amount !== '' && parseFloat(amount) > 0
-    : amount !== '' && parseInt(amount) > 0;
+  const validAmount = validAmountInput(amount, isTokenMode ? (config?.fractionSize ?? 2) : 0);
   const amountNum = isTokenMode ? parseFloat(amount) || 0 : parseInt(amount) || 0;
   const isSendAllSats = !isStableBalanceActive && sendAllAmount !== null && amountNum === sendAllAmount && feesIncluded;
   const isSendAll = isSendAllSats || isSendAllToken || isSendAllBtcInTokenMode;
@@ -349,7 +351,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
                 key={quickAmount}
                 disabled={isLoading || hasPendingConversion}
                 onClick={() => { setAmountInput(String(quickAmount)); setFeesIncluded(false); }}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                className={`flex-1 min-h-11 min-w-0 px-2 py-2 text-sm font-medium rounded-lg transition-all ${
                   isSelected
                     ? 'bg-spark-primary text-white'
                     : 'bg-transparent border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
@@ -381,7 +383,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
               }}
               disabled={isLoading || !balanceKnown || tokenSendAllBelowThreshold || hasPendingConversion}
               title={hasPendingConversion ? text.updating : text.feesHint}
-              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+              className={`flex-1 min-h-11 min-w-0 px-2 py-2 text-sm font-medium rounded-lg transition-all ${
                 tokenSendAllBelowThreshold || hasPendingConversion
                   ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
                   : isSendAll

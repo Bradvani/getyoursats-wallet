@@ -21,7 +21,7 @@ describe('indicative fiat display',()=>{
  it('does not make a positive sub-cent payment look like zero',()=>{expect(formatPaymentFiat(1n,90000,'USD','en')).toBe('< $0.01');});
  it.each([undefined,0,-1,Infinity,NaN])('refuses missing or invalid rates %s',rate=>{expect(formatPaymentFiat(900n,rate,'INR','en')).toBeNull();});
  it('refuses unsafe or invalid atomic amounts',()=>{expect(formatPaymentFiat(1.5,90000,'USD','en')).toBeNull();expect(formatPaymentFiat(-1n,90000,'USD','en')).toBeNull();expect(formatPaymentFiat(9007199254740993n,90000,'USD','en')).toBeNull();});
- it('uses the selected currency and reacts to a preference change',()=>{render(<PaymentFiatAmount sats={900n}/>);expect(screen.getByTestId('payment-fiat-amount')).toHaveTextContent('≈ ₹81.00 INR');act(()=>{state.currency='JPY';window.dispatchEvent(new Event('gys:fiat-pref-changed'));});expect(screen.getByTestId('payment-fiat-amount')).toHaveTextContent('≈ ¥135 JPY');});
+ it('uses the selected currency and reacts to a preference change',()=>{render(<PaymentFiatAmount sats={900n}/>);expect(screen.getByTestId('payment-fiat-amount')).toHaveTextContent('≈ ₹81.00 INR');act(()=>{state.currency='JPY';window.dispatchEvent(new Event('gys:fiat-pref-changed'));});expect(screen.getByTestId('payment-fiat-amount')).toHaveTextContent('≈ ￥135 JPY');});
  it('never silently substitutes USD for a missing preferred rate',()=>{state.currency='CHF';render(<PaymentFiatAmount sats={900n}/>);expect(screen.getByTestId('payment-fiat-amount')).toHaveTextContent('CHF · Rate unavailable');expect(screen.queryByText(/USD|\$/)).toBeNull();});
  it('does not price a payment from stale cached rates',()=>{state.fetchedAt=Date.now()-180000;render(<PaymentFiatAmount sats={900n}/>);expect(screen.getByTestId('payment-fiat-amount')).toHaveAttribute('data-rate-available','false');});
  it('never interprets token base units as satoshis',()=>{const payment={...receipt('receive',1000000n),details:{type:'token',metadata:{ticker:'USDC',decimals:6}}} as Payment;render(<PaymentFiatAmount payment={payment}/>);expect(screen.queryByTestId('payment-fiat-amount')).toBeNull();});
@@ -36,4 +36,13 @@ describe('payment money hierarchy and values',()=>{
   expect(progress).toHaveAttribute('aria-valuenow','100');expect(screen.queryByText(/elapsed time|funds settled/)).toBeNull();expect(progress.getAttribute('aria-valuetext')).not.toMatch(/elapsed|funds settled/);
  });
  it('also prices the fallback completed send receipt',()=>{render(<ResultStep result="success" error={null} onClose={()=>{}} payment={receipt('send',900n)}/>);expect(screen.getByTestId('payment-fiat-amount')).toHaveTextContent('≈ ₹81.00 INR');});
+});
+
+it.each(['es','pt','ja','th','vi','ar','zh-CN'])('uses INR grouping on payment receipts in %s', language => {
+ expect(formatPaymentFiat(100000000n, 9000000, 'INR', language)).toBe('₹90,00,000.00');
+});
+it('rejects a future-dated indicative rate',()=>{
+ state.fetchedAt=Date.now()+60000;
+ render(<PaymentFiatAmount sats={900n}/>);
+ expect(screen.getByTestId('payment-fiat-amount')).toHaveAttribute('data-rate-available','false');
 });

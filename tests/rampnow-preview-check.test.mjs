@@ -6,6 +6,7 @@ import { createRampnowClient, RampnowError } from '../server/rampnow.mjs';
 const env = { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'feat/rampnow-integration-20261028',
   RAMPNOW_ENVIRONMENT: 'sandbox', RAMPNOW_API_KEY: 'private-key', RAMPNOW_API_SECRET: 'private-secret' };
 const factory = () => ({ getConfig: async () => ({}),
+  getSandboxSimulationRoutes: async () => [],
   getBitcoinNetwork: async () => ({networkClassification: 'testnet_unspecified'}),
   getBitcoinAsset: async () => ({ currency: 'BTC', chain: 'bitcoin', orderCurrency: 'INR', status: 'active',
     buyOrderRange: { status: 'active' }, sellOrderRange: { status: 'active' }, payinModes: ['upi'], payoutModes: ['upi'] }),
@@ -83,6 +84,31 @@ test('unavailable network metadata stays unverified even when BTC capability is 
   assert.equal(result.btcBuyCandidate, true);
   assert.equal(result.bitcoinNetwork, 'unverified');
   assert.equal(result.networkStatus, 'bitcoin_network_confirmation_required');
+  assert.equal(result.productionReady, false);
+  assert.doesNotMatch(JSON.stringify(result), /private-secret/);
+});
+test('sandbox simulation candidates are reported independently of Bitcoin settlement readiness', async () => {
+  for (const simulationRoutes of [[], [{chain: 'base-sepolia', asset: 'USDC'}]]) {
+    const result = await checkRampnowPreview(env, () => ({...factory(),
+      getSandboxSimulationRoutes: async () => simulationRoutes,
+      getBitcoinNetwork: async () => {throw Error('private-secret');},
+    }));
+    assert.deepEqual(result.simulationRoutes, simulationRoutes);
+    assert.equal(result.simulationRouteStatus, simulationRoutes.length
+      ? 'sandbox_testnet_routes_available' : 'sandbox_testnet_routes_not_advertised');
+    assert.equal(result.bitcoinNetwork, 'unverified');
+    assert.equal(result.providerDeliveryVerified, false);
+    assert.equal(result.productionReady, false);
+    assert.doesNotMatch(JSON.stringify(result), /private-secret/);
+  }
+});
+test('simulation discovery failure is sanitized without discarding other capability checks', async () => {
+  const result = await checkRampnowPreview(env, () => ({...factory(),
+    getSandboxSimulationRoutes: async () => {throw Error('private-secret');},
+  }));
+  assert.equal(result.simulationRouteStatus, 'sandbox_testnet_routes_unverified');
+  assert.equal(result.simulationRoutes, undefined);
+  assert.equal(result.btcBuyCandidate, true);
   assert.equal(result.productionReady, false);
   assert.doesNotMatch(JSON.stringify(result), /private-secret/);
 });

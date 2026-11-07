@@ -39,6 +39,6 @@ export function flowText(language:AppLanguage,text:string,values:Record<string,s
  // Preserve protocol/user/provider data. Only known application copy is translated.
  const key=aliases[text]||text;
  const translated=dictionaries[language]?.[key];
- const result=language==='en'||typeof translated!=='string'?text:translated;
+ const result=typeof translated==='string'?translated:typeof key==='string'?key:text;
  return result.replace(/\{([A-Za-z]+)\}/g,(match,name)=>Object.prototype.hasOwnProperty.call(values,name)?String(values[name]):match);
 }

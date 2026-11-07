@@ -35,6 +35,13 @@ export async function checkRampnowPreview(env = process.env, clientFactory = cre
     await client.getConfig();
     report.authentication = true;
     try {
+      report.simulationRoutes = await client.getSandboxSimulationRoutes();
+      report.simulationRouteStatus = report.simulationRoutes.length
+        ? 'sandbox_testnet_routes_available' : 'sandbox_testnet_routes_not_advertised';
+    } catch {
+      report.simulationRouteStatus = 'sandbox_testnet_routes_unverified';
+    }
+    try {
       const network = await client.getBitcoinNetwork();
       report.bitcoinNetwork = network.networkClassification;
       report.networkStatus = 'provider_metadata_read';

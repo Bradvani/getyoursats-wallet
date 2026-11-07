@@ -49,7 +49,7 @@ function Fixture(){
  <select aria-label="Fixture language" value={language} onChange={event=>setAppLanguage(event.target.value as AppLanguage)}>{APP_LANGUAGES.map(l=><option key={l.code} value={l.code}>{l.name}</option>)}</select>
  <output className="sr-only" data-testid="submitted">{JSON.stringify({destination,amount:String(amount)})}</output>
  <main data-testid="localized-surface">
- {step==='settings'&&<SettingsPage onBack={noop} config={null} onOpenFiatCurrencies={noop} onOpenBuyProviders={noop} onOpenPasskeySettings={noop} onOpenSecurity={noop} onOpenBackup={noop} onOpenEmail={noop} onOpenUnilateralExit={noop}/>}
+ {step==='settings'&&<SettingsPage onOpenLanguage={()=>{}} onOpenAppearance={()=>{}} onBack={noop} config={null} onOpenFiatCurrencies={noop} onOpenBuyProviders={noop} onOpenPasskeySettings={noop} onOpenSecurity={noop} onOpenBackup={noop} onOpenEmail={noop} onOpenUnilateralExit={noop}/>}
  {step==='receive'&&<LightningAddressDisplay address={null} isLoading={false} isSupported section="qr" onEdit={noop} onCustomizeAmount={()=>setStep('receiveamount')}/>}
  {step==='receiveamount'&&<AmountPanel isOpen amountSats={receiveAmount} setAmountSats={setReceiveAmount} setAmountDisplay={noop} description={description} setDescription={setDescription} isLoading={false} error={null} onCreateInvoice={noop} onClose={noop} resetCount={0}/>}
  {step==='details'&&<PaymentDetailsDialog optionalPayment={payment} onClose={noop}/>}

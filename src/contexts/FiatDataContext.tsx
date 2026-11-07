@@ -1,119 +1,90 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { Rate, FiatCurrency } from '@breeztech/breez-sdk-spark';
-import { useWalletConnection } from './WalletContext';
-import { logger, LogCategory } from '../services/logger';
+import React, {createContext, useContext, useState, useEffect, useCallback, useRef} from 'react';
+import type {Rate, FiatCurrency, BreezSdk} from '@breeztech/breez-sdk-spark';
+import {useWalletConnection} from './WalletContext';
+import {logger, LogCategory} from '../services/logger';
+import {boundedFiatRequest, currenciesForRates, loadFiatRates} from '../services/fiatRates';
 
 interface FiatData {
   fiatRates: Rate[];
   fiatCurrencies: FiatCurrency[];
-  /** Timestamp of most recent successful SDK rate fetch (milliseconds). */
+  /** Retrieval time of the successful rate snapshot; failures never refresh it. */
   fetchedAt?: number;
 }
-
 interface FiatDataContextValue extends FiatData {
-  /**
-   * Fetch the current rates and publish them, for a caller that prices
-   * something and can't ride the 60s refresh. Falls back to the last known
-   * values on failure, so a blip degrades the price instead of the flow.
-   */
   refreshFiatData: () => Promise<FiatData>;
 }
-
 const FiatDataContext = createContext<FiatDataContextValue | null>(null);
 
-export const FiatDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { sdk, isConnected } = useWalletConnection();
-  const [fiatRates, setFiatRates] = useState<Rate[]>([]);
-  const [fiatCurrencies, setFiatCurrencies] = useState<FiatCurrency[]>([]);
-  const [fetchedAt, setFetchedAt] = useState<number | undefined>(undefined);
+export const FiatDataProvider: React.FC<{children: React.ReactNode}> = ({children}) => {
+  const {sdk, isConnected} = useWalletConnection();
+  const [data, setData] = useState<FiatData>({fiatRates: [], fiatCurrencies: []});
+  const known = useRef<FiatData>({fiatRates: [], fiatCurrencies: []});
+  const generation = useRef(0);
+  const inFlight = useRef<{sdk: BreezSdk; promise: Promise<FiatData>} | null>(null);
 
-  const refreshFiatData = useCallback(async (): Promise<FiatData> => {
-    const known = { fiatRates, fiatCurrencies, fetchedAt };
-    if (!sdk) return known;
-    try {
-      const [ratesResult, currenciesResult] = await Promise.all([
-        sdk.listFiatRates(),
-        sdk.listFiatCurrencies(),
-      ]);
-      const now = Date.now();
-      setFiatRates(ratesResult.rates);
-      setFiatCurrencies(currenciesResult.currencies);
-      setFetchedAt(now);
-      return { fiatRates: ratesResult.rates, fiatCurrencies: currenciesResult.currencies, fetchedAt: now };
-    } catch (error) {
-      logger.warn(LogCategory.SDK, 'Failed to refresh fiat data', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return known;
-    }
-  }, [sdk, fiatRates, fiatCurrencies, fetchedAt]);
+  const refreshFiatData = useCallback((): Promise<FiatData> => {
+    if (!sdk || !isConnected) return Promise.resolve(known.current);
+    if (inFlight.current?.sdk === sdk) return inFlight.current.promise;
+    const current = generation.current;
+    const promise: Promise<FiatData> = (async () => {
+      try {
+        const result = await loadFiatRates(sdk);
+        if (generation.current !== current) return known.current;
+        const next = {fiatRates: result.rates, fetchedAt: result.fetchedAt,
+          fiatCurrencies: currenciesForRates(result.rates, known.current.fiatCurrencies)};
+        known.current = next; setData(next);
+        return next;
+      } catch {
+        logger.warn(LogCategory.SDK, 'Fiat rate refresh unavailable; retaining the previous timestamp');
+        return known.current;
+      }
+    })().finally(() => {
+      if (inFlight.current?.promise === promise) inFlight.current = null;
+    });
+    inFlight.current = {sdk, promise};
+    return promise;
+  }, [sdk, isConnected]);
 
   useEffect(() => {
+    const current = ++generation.current;
     if (!isConnected || !sdk) return;
-    let cancelled = false;
-    const fetchFiatData = async () => {
-      try {
-        const [ratesResult, currenciesResult] = await Promise.all([
-          sdk.listFiatRates(),
-          sdk.listFiatCurrencies(),
-        ]);
-        if (cancelled) return;
-        setFiatRates(ratesResult.rates);
-        setFiatCurrencies(currenciesResult.currencies);
-        setFetchedAt(Date.now());
-        logger.info(LogCategory.SDK, 'Fiat data fetched', {
-          ratesCount: ratesResult.rates.length,
-          currenciesCount: currenciesResult.currencies.length,
-        });
-      } catch (error) {
-        logger.warn(LogCategory.SDK, 'Failed to fetch fiat data', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    };
-    void fetchFiatData();
-    const interval = setInterval(() => { void fetchFiatData(); }, 60000);
-
-    // A backgrounded WebView freezes the interval, and an iOS standalone PWA
-    // resumes a days-old page instead of reloading, so rates would otherwise
-    // sit at whatever they were when the app last had the foreground until a
-    // relaunch. Mirrors the events `useBreezSdk` resyncs the wallet on.
+    void refreshFiatData();
+    // Currency labels must never discard or delay a successful rate response.
+    void boundedFiatRequest(Promise.resolve().then(() => sdk.listFiatCurrencies())).then(result => {
+      if (generation.current !== current || !Array.isArray(result.currencies)) return;
+      const currencies = result.currencies.filter(currency => currency && /^[A-Z]{3}$/.test(currency.id)
+        && typeof currency.info?.name === 'string');
+      const next = {...known.current, fiatCurrencies: currenciesForRates(known.current.fiatRates, currencies)};
+      known.current = next; setData(next);
+    }).catch(() => { /* Display metadata is derived locally from available rates. */ });
+    const interval = setInterval(() => {void refreshFiatData();}, 60000);
     let resumeTimer: ReturnType<typeof setTimeout> | undefined;
     const refetchOnResume = () => {
       if (document.visibilityState !== 'visible') return;
-      // Drop any pending one: a hide/show cycle leaves a timer per event
-      // otherwise, and they all fire together once the page is back.
       clearTimeout(resumeTimer);
-      // iOS 18+ WebKit fails a request started directly on visibilitychange
-      // ("TypeError: Load failed"), so wait the same 1.5s the resync does.
+      // WebKit may reject a fetch started directly from visibilitychange.
       resumeTimer = setTimeout(() => {
-        if (document.visibilityState === 'visible') void fetchFiatData();
+        if (document.visibilityState === 'visible') void refreshFiatData();
       }, 1500);
     };
     document.addEventListener('visibilitychange', refetchOnResume);
-    // pageshow catches bfcache restores, which skip visibilitychange.
     window.addEventListener('pageshow', refetchOnResume);
-
+    window.addEventListener('online', refetchOnResume);
     return () => {
-      cancelled = true;
-      clearInterval(interval);
-      clearTimeout(resumeTimer);
+      generation.current = current + 1;
+      inFlight.current = null;
+      clearInterval(interval); clearTimeout(resumeTimer);
       document.removeEventListener('visibilitychange', refetchOnResume);
       window.removeEventListener('pageshow', refetchOnResume);
+      window.removeEventListener('online', refetchOnResume);
     };
-  }, [isConnected, sdk]);
+  }, [isConnected, sdk, refreshFiatData]);
 
-  return (
-    <FiatDataContext.Provider value={{ fiatRates, fiatCurrencies, fetchedAt, refreshFiatData }}>
-      {children}
-    </FiatDataContext.Provider>
-  );
+  return <FiatDataContext.Provider value={{...data, refreshFiatData}}>{children}</FiatDataContext.Provider>;
 };
 
 export const useFiatData = (): FiatDataContextValue => {
   const ctx = useContext(FiatDataContext);
-  if (!ctx) {
-    throw new Error('useFiatData must be used within a FiatDataProvider');
-  }
+  if (!ctx) throw new Error('useFiatData must be used within a FiatDataProvider');
   return ctx;
 };

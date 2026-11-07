@@ -27,3 +27,9 @@ describe('GetYourSats market denomination carousel',()=>{
    expect(formatMarketFiat(90_000,'USD',100_000_000,'en-US')).toBe('$90,000.00');
  });
 });
+
+it('uses the same lakh/crore grouping for INR market quotes in every interface language',()=>{
+ for(const language of ['en','hi','ta','es','pt','ja','th','vi','ar','zh-CN']){
+  expect(formatMarketFiat(9000000,'INR',100000000,language)).toBe('₹90,00,000.00');
+ }
+});

@@ -41,7 +41,7 @@ export interface UseMigrationFlowArgs {
   /** Active legacy SDK, required when `entry === 'banner'` (auto-reconnect already connected it). */
   activeLegacySdk?: BreezSdk | null;
   onClose: (outcome: MigrationOutcome) => void;
-  onSwitchToNewWallet: (newSdk: BreezSdk, label: string) => Promise<void>;
+  onSwitchToNewWallet: (newSdk: BreezSdk, label: string, seed: Seed) => Promise<void>;
 }
 
 export interface MigrationFlow {
@@ -108,6 +108,7 @@ export function useMigrationFlow({
   const newSdkRef = useRef<BreezSdk | null>(null);
   // The primary new SDK stays alive after the last label so switch can hand it off.
   const primaryNewSdkRef = useRef<BreezSdk | null>(null);
+  const primaryNewSeedRef = useRef<Seed | null>(null);
   // Primary label (from localStorage `passkeyLabel` at open time).
   const primaryLabelRef = useRef<string>('Default');
   // Stable-balance ticker of the primary wallet, captured on the last sweep.
@@ -142,6 +143,7 @@ export function useMigrationFlow({
     oldSdkRef.current = null;
     newSdkRef.current = null;
     primaryNewSdkRef.current = null;
+    primaryNewSeedRef.current = null;
     activeStableLabelRef.current = undefined;
     sessionRef.current = createMigrationSession();
 
@@ -185,6 +187,7 @@ export function useMigrationFlow({
       // primaryNewSdkRef has been handed off to useBreezSdk by the time close runs;
       // do NOT disconnect it here. Just drop our reference.
       primaryNewSdkRef.current = null;
+      primaryNewSeedRef.current = null;
       seedCacheRef.current = new Map();
       newSeedCacheRef.current = new Map();
     }
@@ -516,6 +519,7 @@ export function useMigrationFlow({
           activeStableLabelRef.current = await captureStableTicker(oldSdk, label);
           // Move ownership off newSdkRef so the cleanup effect does not disconnect it.
           primaryNewSdkRef.current = newSdk;
+          primaryNewSeedRef.current = newSeed;
           newSdkRef.current = null;
         } else {
           try { await newSdk.disconnect(); } catch { /* best-effort */ }
@@ -574,6 +578,8 @@ export function useMigrationFlow({
       try {
         const primaryNew = primaryNewSdkRef.current;
         if (!primaryNew) throw new Error('No primary new SDK to switch to');
+        const primarySeed = primaryNewSeedRef.current;
+        if (!primarySeed) throw new Error('No primary wallet identity to authorize sends');
 
         if (activeStableLabelRef.current) {
           await applyStableTicker(primaryNew, activeStableLabelRef.current);
@@ -584,8 +590,9 @@ export function useMigrationFlow({
         });
 
         // Ownership transfers: do NOT disconnect from here.
-        await onSwitchRef.current(primaryNew, primaryLabelRef.current);
+        await onSwitchRef.current(primaryNew, primaryLabelRef.current, primarySeed);
         primaryNewSdkRef.current = null;
+        primaryNewSeedRef.current = null;
 
         // Commit the shared credential + mark migrated only after adopt succeeds.
         // commitSharedCredential pins the shared credential as active, so deferring it

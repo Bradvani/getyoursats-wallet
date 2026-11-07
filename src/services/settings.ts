@@ -225,15 +225,19 @@ export async function ensureSparkPrivateMode(sdk: {
   await sdk.updateUserSettings({ sparkPrivateModeEnabled: true });
 }
 
+function validFiatSelection(value: unknown): string[] {
+  const selected = Array.isArray(value) ? [...new Set(value.filter((code): code is string =>
+    typeof code === 'string' && /^[A-Z]{3}$/.test(code) && !['BTC','XTS','XXX'].includes(code)))] : [];
+  return selected.length ? selected : [...defaultFiatSettings.selectedCurrencies];
+}
+
 export function getFiatSettings(): FiatSettings {
   try {
     const raw = getCachedItem(FIAT_SETTINGS_KEY);
     if (!raw) return defaultFiatSettings;
     const parsed = JSON.parse(raw) as Partial<FiatSettings>;
     return {
-      selectedCurrencies: Array.isArray(parsed.selectedCurrencies)
-        ? parsed.selectedCurrencies
-        : defaultFiatSettings.selectedCurrencies,
+      selectedCurrencies: validFiatSelection(parsed.selectedCurrencies),
     };
   } catch {
     return defaultFiatSettings;
@@ -241,7 +245,7 @@ export function getFiatSettings(): FiatSettings {
 }
 
 export function saveFiatSettings(settings: FiatSettings): void {
-  setCachedItem(FIAT_SETTINGS_KEY, JSON.stringify(settings));
+  setCachedItem(FIAT_SETTINGS_KEY, JSON.stringify({selectedCurrencies: validFiatSelection(settings.selectedCurrencies)}));
   if(typeof window!=='undefined')window.dispatchEvent(new Event('gys:fiat-pref-changed'));
 }
 

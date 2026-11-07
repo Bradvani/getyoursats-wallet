@@ -199,6 +199,31 @@ export function createRampnowClient({ environment, apiKey, apiSecret, fetchImpl 
   }
   return Object.freeze({
     getConfig: () => request('GET', ROOT + '/config'),
+    async getSandboxSimulationRoutes() {
+      requireValue(environment === 'sandbox', 'RAMPNOW_SANDBOX_ONLY');
+      const data = await request('GET', ROOT + '/chain_config');
+      requireValue(object(data) && Array.isArray(data.chains) && data.chains.length <= 512
+        && data.chains.every(object), 'RAMPNOW_RESPONSE_INVALID');
+      const supported = {
+        sepolia: ['ETH', 'USDC', 'USDT'], 'base-sepolia': ['ETH', 'USDC'],
+        'solana-devnet': ['SOL', 'USDC'], 'arbitrum-sepolia': ['USDC'],
+        'optimism-sepolia': ['USDC'], 'polygon-amoy': ['POL', 'USDC'],
+      };
+      const routes = [];
+      for (const [chain, assets] of Object.entries(supported)) {
+        const matches = data.chains.filter(entry => entry.code === chain);
+        if (matches.length !== 1 || matches[0].isTestnet !== true) continue;
+        const advertised = matches[0].supportedAssets;
+        if (!Array.isArray(advertised) || advertised.length > 512) continue;
+        for (const asset of assets) {
+          if (advertised.includes(asset) || advertised.includes(`${asset}:${chain}`)) {
+            routes.push({chain, asset});
+          }
+        }
+      }
+      // These diagnostic routes never authorize BTC checkout or select a wallet network.
+      return routes;
+    },
     async getBitcoinNetwork() {
       return bitcoinNetworkMetadata(await request('GET', ROOT + '/chain_config'));
     },

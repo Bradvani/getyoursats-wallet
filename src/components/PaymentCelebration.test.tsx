@@ -1,4 +1,4 @@
-import {act,cleanup,render,screen} from '@testing-library/react';
+import {act,cleanup,render,screen,fireEvent} from '@testing-library/react';
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 import PaymentCelebration from './PaymentCelebration';
@@ -15,12 +15,13 @@ describe('receive success evidence',()=>{
   act(()=>{vi.advanceTimersByTime(6000)});
   expect(screen.queryByTestId('transfer-experience')).toBeNull();expect(screen.queryByText('Payment Received!')).toBeNull();expect(onClose).not.toHaveBeenCalled();
  });
- it('starts when the same payment is actually completed, then closes its receipt',()=>{
+ it('starts when the same payment is actually completed, retains its receipt until Done',()=>{
   const onClose=vi.fn();const {rerender}=render(<PaymentCelebration payment={payment('pending')} onClose={onClose}/>);
   rerender(<PaymentCelebration payment={payment('completed')} onClose={onClose}/>);
   act(()=>{vi.advanceTimersByTime(50)});act(()=>{vi.advanceTimersByTime(1)});
   expect(screen.getByTestId('transfer-experience')).toHaveAttribute('data-direction','received');
   act(()=>{vi.advanceTimersByTime(6000)});expect(onClose).not.toHaveBeenCalled();
-  act(()=>{vi.advanceTimersByTime(2400)});expect(onClose).toHaveBeenCalledTimes(1);
+  act(()=>{vi.advanceTimersByTime(24000)});expect(onClose).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button',{name:'Done'}));expect(onClose).toHaveBeenCalledTimes(1);
  });
 });

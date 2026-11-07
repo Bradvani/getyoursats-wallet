@@ -62,7 +62,7 @@
 .gys-settings-choice small{font-size:11px;color:var(--color-spark-text-muted);line-height:1.4}
 .gys-settings-choice:focus-visible{outline:2px solid #F7931A;outline-offset:3px}
 .gys-settings-lang{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.gys-currency-search{appearance:none;border:1px solid var(--color-spark-border);background:var(--color-spark-surface);color:var(--color-spark-text-primary);width:100%;border-radius:16px;padding:15px 44px 15px 45px;font:inherit;font-size:14px;outline:none}
+.gys-currency-search{appearance:none;border:1px solid var(--color-spark-border);background:var(--color-spark-surface);color:var(--color-spark-text-primary);width:100%;border-radius:16px;padding:15px 16px;font:inherit;font-size:14px;outline:none}
 .gys-currency-search:focus{border-color:#F7931A;box-shadow:0 0 0 3px rgba(247,147,26,.12)}
 .gys-currency-search::placeholder{color:var(--color-spark-text-muted)}
 @media(prefers-reduced-motion:reduce){.gys-settings-choice{transition:none}}

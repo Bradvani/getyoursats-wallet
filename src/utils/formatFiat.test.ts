@@ -37,3 +37,15 @@ describe('indicative fiat estimates', () => {
     expect(fiatEstimateValue(2n ** 60n, 8_000_000, now, now).value).toBeNull();
   });
 });
+
+describe('currency conventions are shared by every fiat surface', () => {
+  it.each(['en','hi','ta','es','pt','ja','th','vi','ar','zh-CN'])('keeps USD grouping in %s', language => {
+    expect(formatFiat(1234567.89, 'USD', language, {numberOnly:true})).toBe('1,234,567.89');
+  });
+  it.each([
+    ['EUR','es','1.234.567,89'],['BRL','en','1.234.567,89'],['CHF','en','1’234’567.89'],
+    ['JPY','en','1,234,568'],['KWD','en','1,234,567.890'],['BDT','en','12,34,567.89'],
+  ])('uses the currency region and minor units for %s', (currency, language, expected) => {
+    expect(formatFiat(1234567.89, currency, language, {numberOnly:true}).replace(/’/g, "'")).toBe(expected.replace(/’/g, "'"));
+  });
+});

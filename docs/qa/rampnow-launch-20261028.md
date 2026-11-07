@@ -1,6 +1,6 @@
 # RampNow integration and launch evidence
 
-Updated 30 October 2026. Scope: GetYourSats BTC on/off ramps. **Public Buy/Sell and checkout submission remain disabled.** No provider order, customer registration or real payment has been submitted.
+Updated 7 November 2026. Scope: GetYourSats BTC on/off ramps. **Public Buy/Sell and checkout submission remain disabled.** No provider order, customer registration or real payment has been submitted.
 
 ## Current activation decision
 
@@ -25,6 +25,20 @@ The remaining app work is explicit: wallet-generated deposit address and claim-f
 - `src/services/rampnow.ts`: browser API client independently hashes a frozen payload and verifies the entire challenge before invoking wallet signing. It validates response shapes and checkout URLs and never retries creation. It is **not yet connected to wallet UI, a deposit adapter or a return/activity flow**.
 - The checkout return URL now includes the reviewed intent's explicit `network=signet`. Before creating an SDK configuration, wallet startup rejects missing, duplicated, unsupported or conflicting network/intent return parameters and returns from an unapproved origin. The URL provides navigation context only; it cannot establish order ownership or payment completion. The return/activity UI is still unfinished.
 - `scripts/rampnow-preview-check.mjs`: branch-scoped build checks for provider authentication, BTC/INR account capability, dedicated storage, signed handler behavior and real HTTP delivery to the receiver. The new callback inspection reads only aggregate counts of recent non-probe quarantine records; a candidate is not proof of a particular provider order or production readiness.
+- Sandbox simulation discovery now checks the signed chain configuration for the documented EVM/Solana testnets. Only explicitly advertised assets on a unique chain with boolean `isTestnet: true` are reported. Missing or ambiguous metadata cannot become a test-route candidate. This read-only diagnostic neither creates orders nor changes Bitcoin network validation or checkout availability.
+
+## Sandbox card and webhook acceptance
+
+The current provider documentation supports sandbox card simulation and account-level webhook subscription. This permits testing hosted payment outcomes and signed callbacks independently of Bitcoin delivery. The published testnets are Sepolia, Base Sepolia, Solana Devnet, Arbitrum Sepolia, Optimism Sepolia and Polygon Amoy; the account may enable only a subset. No documented Bitcoin test route has been established.
+
+1. In the sandbox Partner Dashboard, inspect the existing webhook settings. Configure the account-level URL `https://gys-rampnow-sandbox-webhook.vercel.app/api/rampnow/webhook` and enable `ramp_order.status_change`. Preserve unrelated subscriptions. The per-order `webhookUrl` field is not the delivery configuration.
+2. Enable **Payment simulation** in the sandbox account settings. Verify that the order, checkout host and recipient network are all sandbox/testnet. Use a disposable testnet recipient on an explicitly supported route; never substitute a GYS Bitcoin address into an EVM/Solana order. Card simulation does not simulate KYC approval.
+3. In hosted checkout, choose the payment method and use the simulator's outcome dropdown. Cover Accepted, Rejected/Failed and Expired with separate uniquely identified test orders. Accepted should progress through `processing` to `completed` after testnet delivery; rejected/failed/canceled payment outcomes map to `payment_failed`. For pending push payments, the dashboard's **Ramp Orders → Settle Transfer** action provides the same outcomes. Prefer explicit outcomes over special amount values.
+4. Correlate each order's console or Get Order evidence with the receiver's verified event, event timestamp and final status. A successful synthetic webhook probe or a nonzero aggregate callback count alone is insufficient. The receiver acknowledges only after signature/replay validation and durable ingestion. Unbound simulator orders enter quarantine and never credit a GYS wallet.
+5. Confirm duplicate delivery leaves one durable event and older updates cannot regress state. Preserve observation after `payment_failed` or `expired`, because a late accepted payment can restart processing. A provider `failed` order remains delayed/reconcilable rather than being silently discarded.
+6. Record the actual provider acceptance results separately from automated tests. Passing a non-BTC simulation establishes payment/callback behavior only. It does not activate BTC Buy, prove spendable Spark receipt or approve Sell.
+
+Dashboard configuration and provider-originated scenario results are still pending verification. The merged integration source includes current wallet main `5562d83281d840e2914df3a6ec8f8e5972445cb2`; no SDK or dependency lockfile change is needed for this work.
 
 ## Verified infrastructure
 
@@ -40,7 +54,7 @@ Receiver deployment `dpl_2sWX3duQzZSZvQw3Jnx1SP8M5LmC` is READY. The stable host
 
 The user reports completing account-level webhook registration. Actual provider delivery still requires a provider test event or sandbox order linked to its console/lookup evidence. The new preview callback report will distinguish recent non-probe candidates from our synthetic probes.
 
-Existing wallet production remained at source `37abc88bd113d6c519911fd6773dc74ce603282a`, deployment `dpl_4RKC9Hq7uX55VBvbiQAGKK1ihrm2`. No production feature gate, credential or identity database was changed. The reported Gate 1 pass does not by itself establish on-chain receipt/exit acceptance for RampNow.
+At the earlier receiver check, wallet production remained at source `37abc88bd113d6c519911fd6773dc74ce603282a`, deployment `dpl_4RKC9Hq7uX55VBvbiQAGKK1ihrm2`. The independent wallet release on 7 November is source `5562d83281d840e2914df3a6ec8f8e5972445cb2`, deployment `dpl_oi2GpwGmeqNWpo8SXWa5oB5RrU5Y`. The RampNow work changes no production feature gate, credential or identity database. The reported Gate 1 pass does not by itself establish on-chain receipt/exit acceptance for RampNow.
 
 ## Configuration and remaining network blocker
 
@@ -57,6 +71,8 @@ The published sandbox network list describes EVM/Solana testnets but does not es
 The return-network correction restricts new checkout preparation/submission and browser availability to signet. Setting `RAMPNOW_BITCOIN_TEST_NETWORK=testnet` no longer makes that route eligible. The existing durable intent schema is retained so older records remain available for authenticated status and reconciliation; no records are deleted or resubmitted. Regtest remains unsupported by this checkout's address contract even though the wallet SDK supports it.
 
 ## Validation
+
+The 7 November refresh passes 1,530 application tests across 145 files, the full TypeScript/Vite build and lint with eight existing warnings. The server run passes 398 checks, including the required real Redis intent and webhook integration suites and the new simulation diagnostics. The separate SDK proof check initially encountered a missing local native SQLite binding; current-head CI must independently verify it with a clean install. No dependency or SDK version was changed. These automated results do not establish a simulated provider payment or webhook delivery from a real provider order.
 
 The previous checkout source `2d64eb12decbb7599536fb161a733561833e07e1` passed all 208 RampNow Node tests with no skips, including the service scenarios and real Redis intent tests. Its browser client passed all 59 tests. Tests cover concurrent one-time reservation, expiry at Redis commit, consumed uncertain submissions, cross-wallet isolation, challenge tampering/replay, fresh-quote changes, malformed destinations, lookup ambiguity and no wallet-credit inference. Real Redis tests exercise reservation, retention, capacity and provider-ID collisions. CI requires these Redis intent tests after installing Redis.
 
@@ -79,6 +95,7 @@ For the return-network correction, 23 negative regression cases failed against t
 - https://docs.rampnow.io/api-reference/partner_external.yaml
 - https://docs.rampnow.io/quickstart/ramp-intent/create-order
 - https://docs.rampnow.io/api-reference/sandbox-testing
+- https://docs.rampnow.io/api-reference/payment-simulator
 - https://docs.rampnow.io/api-reference/webhook
 - https://docs.rampnow.io/api-reference/order-status
 - https://docs.rampnow.io/api-reference/configuration/get-order-config

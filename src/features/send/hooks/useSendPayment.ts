@@ -11,6 +11,12 @@ import { getTokenBalance } from '../../../utils/tokenFormatting';
 import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
 import { destinationErrorMessage } from '@/utils/destinationAddress';
+import {selectedNetwork} from '@/services/sdkConnect';
+import {gysRecipient,isGysPaymentInput,resolveGysRecipient,revalidateGysRecipient,validateGysQuote,DIRECT_UNAVAILABLE,type GysDirectRecipient} from '@/services/gysDirectPayments';
+import {canTrackGysPayments,checkGysPaymentIntent,reserveGysPaymentIntent,finishGysPaymentIntent,CHECK_PREVIOUS_PAYMENT} from '@/services/gysPaymentIntent';
+import { cancelSendAuthorization, isSendAuthorizationError, requiresSendAuthorization, sendPaymentWithValidation, SendAuthorizationError, subscribeSendAuthorization } from '@/services/sendAuthorization';
+import { sendAuthorizationCopy } from '@/locales/sendAuthorization';
+import { getAppLanguage } from '@/services/presentationPreferences';
 
 /** The destination string inside a parsed input, or null for the types that
  *  are paid through their own workflow rather than a prepared destination. */
@@ -31,7 +37,7 @@ function bareDestination(parsed: InputType): string | null {
 const BAD_LOGIN_CODE = /lnurl (missing|contains invalid) k1|lnurl contains unsupported action/;
 
 export type SendStep ='destination' | 'input' | 'amount' | 'workflow' | 'processing' | 'result';
-export type ProcessingPhase = 'sending' | 'converting';
+export type ProcessingPhase = 'authorizing' | 'sending' | 'converting';
 
 export interface ProcessInputOptions {
   /** Set by callers that submit an input the user did not type: a scan or a
@@ -46,6 +52,7 @@ export interface UseSendPaymentReturn {
   paymentInput: SendInput | null;
   amount: string;
   error: string | null;
+  authorizationError: string | null;
   isLoading: boolean;
   prepareResponse: PrepareSendPaymentResponse | null;
   paymentResult: 'success' | 'failure' | 'unknown' | null;
@@ -67,6 +74,7 @@ export interface UseSendPaymentReturn {
   clearError: () => void;
   reset: () => void;
   cancelPendingInput: () => void;
+  cancelAuthorization: () => void;
   processInput: (input?: string | null, opts?: ProcessInputOptions) => Promise<void>;
   onAmountNext: (amount: bigint, includeFees?: boolean, tokenIdentifier?: string, conversionOptions?: ConversionOptions) => Promise<void>;
   handleSend: (options?: SendPaymentOptions) => Promise<void>;
@@ -79,6 +87,10 @@ export function useSendPayment(): UseSendPaymentReturn {
   const wallet = useWallet();
   const executionStarted = useRef(false);
   const inputGeneration = useRef(0);
+  const preparedIdempotencyKey = useRef<string|undefined>(undefined);
+  const executionPhase = useRef<'sending' | 'converting'>('sending');
+  const authorizationPending = useRef(false);
+  const authorizationCancelled = useRef(false);
   const walletInfo = useWalletInfo();
   const stableBalance = useStableBalance();
 
@@ -86,6 +98,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   const [paymentInput, setPaymentInput] = useState<SendInput | null>(null);
   const [amount, setAmount] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [authorizationError, setAuthorizationError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [prepareResponse, setPrepareResponse] = useState<PrepareSendPaymentResponse | null>(null);
   const [paymentResult, setPaymentResult] = useState<'success' | 'failure' | 'unknown' | null>(null);
@@ -97,7 +110,20 @@ export function useSendPayment(): UseSendPaymentReturn {
   const [tokenIdentifier, setTokenIdentifier] = useState<string | null>(null);
 
   // An unmounted sheet or changed wallet cannot resume previous input work.
-  useLayoutEffect(() => () => {inputGeneration.current += 1;}, [wallet]);
+  useLayoutEffect(() => {
+    const unsubscribe = subscribeSendAuthorization(wallet, authorizing => {
+      if (executionStarted.current) {
+        authorizationPending.current = authorizing;
+        setProcessingPhase(authorizing ? 'authorizing' : executionPhase.current);
+      }
+    });
+    return () => {
+      inputGeneration.current += 1;
+      authorizationCancelled.current = true;
+      unsubscribe();
+      cancelSendAuthorization(wallet);
+    };
+  }, [wallet]);
 
   const isCurrentInput = useCallback((generation: number) =>
     generation === inputGeneration.current && !executionStarted.current, []);
@@ -114,6 +140,23 @@ export function useSendPayment(): UseSendPaymentReturn {
     return tb ? tb.balance : 0n;
   }, [walletInfo, stableBalance.isActive, stableBalance.tokenIdentifier]);
 
+  const reviewLightningFallback = useCallback(async (generation:number,recipient:string,amount:bigint,feePolicy?:FeePolicy) => {
+    if(!isCurrentInput(generation))return;
+    const parsed=await wallet.parse(recipient);
+    if(!isCurrentInput(generation))return;
+    if(gysRecipient(parsed)?.address!==recipient)throw new Error(DIRECT_UNAVAILABLE);
+    const info=await wallet.getInfo({});
+    await checkGysPaymentIntent(info.identityPubkey,request=>wallet.getPayment(request));
+    if(!isCurrentInput(generation))return;
+    preparedIdempotencyKey.current=undefined;
+    setPaymentInput({rawInput:paymentInput?.rawInput??recipient,paymentRequest:recipient,parsedInput:parsed});
+    setAmount(stableBalance.activeLabel?'':amount.toString());
+    setFeesIncluded(!stableBalance.activeLabel&&feePolicy==='feesIncluded');
+    setPrepareResponse(null);
+    setError(null);
+    setCurrentStep('workflow');
+  },[wallet,isCurrentInput,paymentInput?.rawInput,stableBalance.activeLabel]);
+
   const prepareSend = useCallback(async (
     generation: number,
     paymentRequest: string,
@@ -125,6 +168,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     // fixed-amount path skips amount entry and passes 'workflow' so the error
     // surfaces on the confirm step (with the send action disabled) instead.
     errorStep: SendStep = 'amount',
+    directRecipient?: GysDirectRecipient,
   ) => {
     if (!isCurrentInput(generation)) return;
     if (amount <= 0n) {
@@ -133,21 +177,41 @@ export function useSendPayment(): UseSendPaymentReturn {
     }
     setIsLoading(true);
     setError(null);
+    setAuthorizationError(null);
     try {
-      const response = await wallet.prepareSendPayment({
-        paymentRequest: { type: 'input', input: paymentRequest },
-        amount,
-        feePolicy,
-        tokenIdentifier,
-        conversionOptions,
-      });
+      let response:PrepareSendPaymentResponse;
+      try{
+        if(directRecipient){
+          await revalidateGysRecipient(directRecipient,input=>wallet.parse(input));
+          if(!isCurrentInput(generation))return;
+        }
+        response = await wallet.prepareSendPayment({
+          paymentRequest: { type: 'input', input: paymentRequest },
+          amount,
+          feePolicy,
+          tokenIdentifier,
+          conversionOptions,
+        });
+      }catch(err){
+        if(!directRecipient)throw err;
+        await reviewLightningFallback(generation,directRecipient.lightningAddress,amount,feePolicy);
+        return;
+      }
       if (!isCurrentInput(generation)) return;
+      if(directRecipient){
+        validateGysQuote(directRecipient,response,true);
+        if(response.paymentMethod.type==='sparkAddress'&&response.paymentMethod.fee>0n){
+          await reviewLightningFallback(generation,directRecipient.lightningAddress,amount,feePolicy);
+          return;
+        }
+      }
+      preparedIdempotencyKey.current=directRecipient?crypto.randomUUID():undefined;
       setPrepareResponse(response);
       setCurrentStep('workflow');
     } catch (err) {
       if (!isCurrentInput(generation)) return;
       logger.error(LogCategory.PAYMENT, 'Failed to prepare payment', { error: formatError(err) });
-      setError(`Failed to prepare payment: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(directRecipient&&err instanceof Error?err.message:`Failed to prepare payment: ${err instanceof Error ? err.message : 'Unknown error'}`);
       // Clear any stale response so the confirm step renders its prepare-failed
       // fallback (error + disabled send) instead of an old success render.
       setPrepareResponse(null);
@@ -155,7 +219,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     } finally {
       if (isCurrentInput(generation)) setIsLoading(false);
     }
-  }, [wallet, isCurrentInput]);
+  }, [wallet, isCurrentInput, reviewLightningFallback]);
 
   const processInput = useCallback(async (input: string | null = null, opts?: ProcessInputOptions) => {
     if (executionStarted.current) return;
@@ -173,6 +237,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     // prepare response from any previous attempt so a re-submitted input (e.g. the
     // same URI with its amount removed) doesn't carry the old values forward.
     setAmount('');
+    setAuthorizationError(null);
     setFeesIncluded(false);
     setAmountFixed(false);
     setPrepareResponse(null);
@@ -208,9 +273,31 @@ export function useSendPayment(): UseSendPaymentReturn {
       // BIP21 URI, or the `lightning:` prefix a QR code carries) reaches the
       // decoder and fails there (breez/glow-app#168). `rawInput` keeps the original text so
       // the input field still shows it on back-navigation.
-      const paymentRequest = bareDestination(effective) ?? currentInput;
+      let paymentRequest = bareDestination(effective) ?? currentInput;
+      const candidate=selectedNetwork()==='mainnet'?gysRecipient(effective):null;
+      if(selectedNetwork()==='mainnet'&&isGysPaymentInput(effective)&&!candidate){
+        setPaymentInput(null);
+        setCurrentStep('input');
+        throw new Error(DIRECT_UNAVAILABLE);
+      }
+      if(candidate){
+        const info=await wallet.getInfo({});
+        await checkGysPaymentIntent(info.identityPubkey,request=>wallet.getPayment(request));
+        if(!isCurrentInput(generation))return;
+      }
+      // Token conversions retain the invoice workflow. The pinned SDK cannot
+      // bind an idempotency key to a conversion, so direct transfers use BTC only.
+      const directRecipient=candidate&&!stableBalance.activeLabel&&canTrackGysPayments()
+        ?await resolveGysRecipient(candidate,value=>wallet.parse(value)):null;
+      if(!isCurrentInput(generation))return;
+      if(directRecipient){
+        effective=await wallet.parse(directRecipient.sparkAddress);
+        if(!isCurrentInput(generation))return;
+        paymentRequest=directRecipient.sparkAddress;
+      }
 
-      const parsed: SendInput = { rawInput: currentInput, paymentRequest, parsedInput: effective };
+      const parsed: SendInput = { rawInput: currentInput, paymentRequest, parsedInput: effective,
+        ...(directRecipient?{directRecipient}:{}) };
       setPaymentInput(parsed);
 
       // A fixed amount is always denominated in sats and must be paid exactly: a
@@ -261,7 +348,9 @@ export function useSendPayment(): UseSendPaymentReturn {
     } catch (err) {
       if (!isCurrentInput(generation)) return;
       logger.warn(LogCategory.PAYMENT, 'Failed to parse payment input', { error: formatError(err) });
-      if(/^[^\s@]+@[^\s@]+$/.test(currentInput)){
+      if(err instanceof Error&&[CHECK_PREVIOUS_PAYMENT,DIRECT_UNAVAILABLE].includes(err.message)){
+        setError(err.message);
+      }else if(/^[^\s@]+@[^\s@]+$/.test(currentInput)){
         const kind=classifyLookupFailure(err),text=trustCopy();
         setError(kind==='syntax'?text.lookupSyntax:kind==='notFound'?text.lookupNotFound:kind==='timeout'?text.lookupTimeout:text.lookupUnavailable);
       }else{
@@ -272,7 +361,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     } finally {
       if (isCurrentInput(generation)) setIsLoading(false);
     }
-  }, [wallet, paymentInput?.rawInput, prepareSend, isCurrentInput]);
+  }, [wallet, paymentInput?.rawInput, prepareSend, isCurrentInput, stableBalance.activeLabel]);
 
   const parsedInputType = paymentInput?.parsedInput.type;
   const onAmountNext = useCallback(async (
@@ -305,22 +394,59 @@ export function useSendPayment(): UseSendPaymentReturn {
       includeFees ? 'feesIncluded' : undefined,
       tokenIdentifier,
       conversionOptions,
+      'amount',
+      paymentInput?.directRecipient,
     );
-  }, [paymentInput?.paymentRequest, parsedInputType, prepareSend]);
+  }, [paymentInput?.paymentRequest, paymentInput?.directRecipient, parsedInputType, prepareSend]);
 
   const handleSend = useCallback(async (options?: SendPaymentOptions) => {
     if (!prepareResponse || executionStarted.current) return;
     executionStarted.current = true;
+    authorizationCancelled.current = false;
+    authorizationPending.current = requiresSendAuthorization(wallet);
+    const generation=inputGeneration.current;
+    let directIntent:{identity:string;id:string}|undefined;
+    // Recheck the exact destination before invoking any value-moving SDK operation.
+    // A revoked or unavailable binding returns to review, never to a paid fallback.
+    if(paymentInput?.directRecipient){
+      setIsLoading(true);
+      try{
+        if(selectedNetwork()!=='mainnet')throw new Error('Recipient unavailable. Review the payment again.');
+        await revalidateGysRecipient(paymentInput.directRecipient,input=>wallet.parse(input));
+        validateGysQuote(paymentInput.directRecipient,prepareResponse);
+        if(generation!==inputGeneration.current){executionStarted.current=false;return;}
+        const info=await wallet.getInfo({});
+        if(generation!==inputGeneration.current){executionStarted.current=false;return;}
+        const id=preparedIdempotencyKey.current;
+        if(!id)throw new Error('Recipient unavailable. Review the payment again.');
+        await reserveGysPaymentIntent(info.identityPubkey,{id,recipient:paymentInput.directRecipient.lightningAddress,
+          amount:prepareResponse.amount.toString(),createdAt:Date.now()},request=>wallet.getPayment(request));
+        directIntent={identity:info.identityPubkey,id};
+        if(generation!==inputGeneration.current){
+          await finishGysPaymentIntent(directIntent.identity,id);
+          executionStarted.current=false;return;
+        }
+      }catch(err){
+        executionStarted.current=false;
+        if(generation===inputGeneration.current){
+          setError(err instanceof Error?err.message:'Recipient unavailable. Review the payment again.');
+          setPrepareResponse(null);
+          setCurrentStep('amount');
+        }
+        return;
+      }finally{setIsLoading(false);}
+    }
     setTransferStage('preparing');
     const hasConversion = !!prepareResponse.conversionEstimate;
     logger.info(LogCategory.PAYMENT, 'handleSend called', {
       hasConversion,
-      conversionEstimate: prepareResponse.conversionEstimate ? JSON.parse(JSON.stringify(prepareResponse.conversionEstimate)) : null,
     });
-    setProcessingPhase(hasConversion ? 'converting' : 'sending');
+    executionPhase.current = hasConversion ? 'converting' : 'sending';
+    setProcessingPhase(requiresSendAuthorization(wallet) ? 'authorizing' : executionPhase.current);
     setCurrentStep('processing');
     setIsLoading(true);
     setError(null);
+    setAuthorizationError(null);
 
     let listenerId: string | undefined;
     if (hasConversion) {
@@ -336,7 +462,7 @@ export function useSendPayment(): UseSendPaymentReturn {
                     initialBalance,
                     currentBalance,
                   });
-                  setProcessingPhase('sending');
+                  setProcessingPhase(current => current === 'authorizing' ? current : 'sending');
                 }
               } catch { /* best-effort balance check */ }
             }
@@ -347,14 +473,45 @@ export function useSendPayment(): UseSendPaymentReturn {
       }
     }
 
+    let authorizationFailed = false;
     try {
+      if (authorizationCancelled.current) throw new SendAuthorizationError('cancelled');
       setTransferStage('processing');
-      const outcome = await wallet.sendPayment({ prepareResponse, options });
+      const request = { prepareResponse, options,
+        ...(directIntent?{idempotencyKey:directIntent.id}:{}) };
+      const directRecipient = paymentInput?.directRecipient;
+      const outcome = directRecipient && requiresSendAuthorization(wallet)
+        ? await sendPaymentWithValidation(wallet, request, async () => {
+          // The OS prompt can outlive the original lookup. Check again after
+          // authorization, immediately before the underlying SDK can send.
+          try {
+            if (generation !== inputGeneration.current || selectedNetwork() !== 'mainnet') throw new Error();
+            await revalidateGysRecipient(directRecipient, input => wallet.parse(input));
+            validateGysQuote(directRecipient, prepareResponse);
+            if (generation !== inputGeneration.current) throw new Error();
+          } catch { throw new SendAuthorizationError('changed'); }
+        })
+        : await wallet.sendPayment(request);
+      if(directIntent){
+        if(outcome?.payment?.id!==directIntent.id)throw new Error('Check payment history before sending again.');
+        await finishGysPaymentIntent(directIntent.identity,directIntent.id,outcome.payment);
+      }
       setPaymentResult(paymentOutcome(outcome));
-      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id);
+      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id,outcome.payment.paymentType==='send'?'sent':'received');
       else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
       setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
+      if (isSendAuthorizationError(err)) {
+        // This typed refusal guarantees the underlying SDK was never called.
+        if (directIntent) await finishGysPaymentIntent(directIntent.identity, directIntent.id);
+        authorizationFailed = true;
+        executionStarted.current = false;
+        const copy = sendAuthorizationCopy(getAppLanguage());
+        setAuthorizationError(err.reason === 'unavailable' ? copy.unavailable : err.reason === 'changed' ? copy.changed : copy.notSent);
+        setPaymentResult(null);
+        setCompletedPayment(null);
+        return;
+      }
       logger.error(LogCategory.PAYMENT, 'Payment failed', { error: formatError(err) });
       setError(`Payment failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
       // An exception is not proof that a payment failed to settle.
@@ -364,19 +521,24 @@ export function useSendPayment(): UseSendPaymentReturn {
         wallet.removeEventListener(listenerId).catch(() => {});
       }
       setProcessingPhase('sending');
+      authorizationPending.current = false;
       setIsLoading(false);
-      setCurrentStep('result');
+      setCurrentStep(authorizationFailed ? 'workflow' : 'result');
     }
-  }, [wallet, prepareResponse]);
+  }, [wallet, prepareResponse, paymentInput]);
 
   const handleRun = useCallback(async (runner: () => Promise<PaymentExecutionResult>, hasConversion?: boolean) => {
     if (executionStarted.current) return;
     executionStarted.current = true;
+    authorizationCancelled.current = false;
+    authorizationPending.current = requiresSendAuthorization(wallet);
     setTransferStage('preparing');
-    setProcessingPhase(hasConversion ? 'converting' : 'sending');
+    executionPhase.current = hasConversion ? 'converting' : 'sending';
+    setProcessingPhase(requiresSendAuthorization(wallet) ? 'authorizing' : executionPhase.current);
     setCurrentStep('processing');
     setIsLoading(true);
     setError(null);
+    setAuthorizationError(null);
 
     let listenerId: string | undefined;
     if (hasConversion) {
@@ -392,7 +554,7 @@ export function useSendPayment(): UseSendPaymentReturn {
                     initialBalance,
                     currentBalance,
                   });
-                  setProcessingPhase('sending');
+                  setProcessingPhase(current => current === 'authorizing' ? current : 'sending');
                 }
               } catch { /* best-effort balance check */ }
             }
@@ -403,14 +565,25 @@ export function useSendPayment(): UseSendPaymentReturn {
       }
     }
 
+    let authorizationFailed = false;
     try {
+      if (authorizationCancelled.current) throw new SendAuthorizationError('cancelled');
       setTransferStage('processing');
       const outcome = await runner();
       setPaymentResult(paymentOutcome(outcome));
-      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id);
+      if(outcome?.payment?.status==='completed')notifyPaymentFeedback('success',outcome.payment.id,outcome.payment.paymentType==='send'?'sent':'received');
       else if(outcome?.payment?.status==='failed')notifyPaymentFeedback('error',outcome.payment.id);
       setCompletedPayment(outcome?.payment?.status==='completed'?outcome.payment:null);
     } catch (err) {
+      if (isSendAuthorizationError(err)) {
+        authorizationFailed = true;
+        executionStarted.current = false;
+        const copy = sendAuthorizationCopy(getAppLanguage());
+        setAuthorizationError(err.reason === 'unavailable' ? copy.unavailable : err.reason === 'changed' ? copy.changed : copy.notSent);
+        setPaymentResult(null);
+        setCompletedPayment(null);
+        return;
+      }
       logger.error(LogCategory.PAYMENT, 'Operation failed during payment flow', { error: formatError(err) });
       setError(`Operation failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
       // An exception is not proof that a payment failed to settle.
@@ -420,8 +593,9 @@ export function useSendPayment(): UseSendPaymentReturn {
         wallet.removeEventListener(listenerId).catch(() => {});
       }
       setProcessingPhase('sending');
+      authorizationPending.current = false;
       setIsLoading(false);
-      setCurrentStep('result');
+      setCurrentStep(authorizationFailed ? 'workflow' : 'result');
     }
   }, [wallet]);
 
@@ -433,6 +607,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     setAmount('');
     setPrepareResponse(null);
     setError(null);
+    setAuthorizationError(null);
     setIsLoading(false);
     setFeesIncluded(false);
     setPaymentInput(null);
@@ -456,6 +631,7 @@ export function useSendPayment(): UseSendPaymentReturn {
   const backToAmount = useCallback(() => {
     setAmount('');
     setError(null);
+    setAuthorizationError(null);
     setCurrentStep('amount');
   }, []);
 
@@ -464,6 +640,7 @@ export function useSendPayment(): UseSendPaymentReturn {
     paymentInput,
     amount,
     error,
+    authorizationError,
     isLoading,
     prepareResponse,
     paymentResult,
@@ -482,14 +659,20 @@ export function useSendPayment(): UseSendPaymentReturn {
       setAmount('');
       setPrepareResponse(null);
       setError(null);
+      setAuthorizationError(null);
       setIsLoading(false);
       setTokenIdentifier(null);
       setFeesIncluded(false);
       setCurrentStep('amount');
     }, []),
-    clearError: useCallback(() => setError(null), []),
+    clearError: useCallback(() => {setError(null); setAuthorizationError(null);}, []),
     reset,
     cancelPendingInput,
+    cancelAuthorization: useCallback(() => {
+      if (!authorizationPending.current) return;
+      authorizationCancelled.current = true;
+      cancelSendAuthorization(wallet);
+    }, [wallet]),
     processInput,
     onAmountNext,
     handleSend,

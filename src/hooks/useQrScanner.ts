@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import QrScanner from '@/utils/qrScanner';
 import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
@@ -21,6 +21,9 @@ export interface UseQrScannerReturn {
   startScanning: () => Promise<void>;
   stopScanning: () => void;
   toggleCamera: () => void;
+  hasTorch:boolean;
+  torchOn:boolean;
+  toggleTorch:()=>Promise<void>;
   clearError: () => void;
 }
 
@@ -39,165 +42,85 @@ export function fullResolutionScanRegion(video: HTMLVideoElement): QrScanner.Sca
   };
 }
 
-/**
- * Hook to manage QR code scanning with camera controls
- * Encapsulates all scanner state and logic for reusability
- */
-export const useQrScanner = ({ onScan, onError }: UseQrScannerOptions): UseQrScannerReturn => {
-  const videoRef = useRef<HTMLVideoElement>(null!);
-  const qrScannerRef = useRef<QrScanner | null>(null);
-  const scanSession = useRef(0);
+const CAMERA_CHOICE='gys:scanner-facing:v1';
+function savedCamera():FacingMode{try{return localStorage.getItem(CAMERA_CHOICE)==='user'?'user':'environment';}catch{return 'environment';}}
 
-  const [error, setError] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(false);
-  const [facingMode, setFacingMode] = useState<FacingMode>('environment');
-  const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
-
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
-  const stopScanning = useCallback(() => {
-    scanSession.current += 1;
-    if (qrScannerRef.current) {
-      qrScannerRef.current.stop();
-      qrScannerRef.current.destroy();
-      qrScannerRef.current = null;
-    }
-    setIsScanning(false);
-    setIsInitializing(false);
-  }, []);
-
-  const startScanning = useCallback(async () => {
-    const session = ++scanSession.current;
-    try {
-      setError(null);
-      setIsInitializing(true);
-      setIsScanning(false);
-
-      if (!videoRef.current) {
-        const errorMsg = 'Video element not available';
-        setError(errorMsg);
-        onError?.(errorMsg);
-        setIsInitializing(false);
-        return;
-      }
-
-      // Check if camera is available
-      const hasCamera = await QrScanner.hasCamera();
-      if (session !== scanSession.current) return;
-      if (!hasCamera) {
-        const errorMsg = 'No camera found on this device';
-        setError(errorMsg);
-        onError?.(errorMsg);
-        setIsInitializing(false);
-        return;
-      }
-
-      const scanner = new QrScanner(
-        videoRef.current,
-        (result) => {
-          if (session !== scanSession.current) return;
-          logger.debug(LogCategory.UI, 'QR code detected', {
-            length: result.data.length,
-          });
-          void hapticLight();
-          stopScanning();
-          onScan(result.data);
-        },
-        {
-          onDecodeError: (decodeError) => {
-            // Ignore decode errors - they happen frequently while scanning
-            logger.debug(LogCategory.UI, 'QR decode error', {
-              error: formatError(decodeError),
-            });
-          },
-          // Disable qr-scanner's built-in scan-region overlay: we draw our
-          // own corner brackets in QrScannerDialog and having both visible
-          // at once looks like a rendering bug (two overlapping squares).
-          highlightScanRegion: false,
-          highlightCodeOutline: false,
-          calculateScanRegion: fullResolutionScanRegion,
-          preferredCamera: facingMode,
-          maxScansPerSecond: 5,
-        }
-      );
-
-      qrScannerRef.current = scanner;
+export const useQrScanner = ({onScan,onError}:UseQrScannerOptions):UseQrScannerReturn => {
+  const videoRef=useRef<HTMLVideoElement>(null!);
+  const qrScannerRef=useRef<QrScanner|null>(null);
+  const streamRef=useRef<MediaStream|null>(null);
+  const scanSession=useRef(0),starting=useRef(false);
+  const [error,setError]=useState<string|null>(null);
+  const [isScanning,setIsScanning]=useState(false);
+  const [isInitializing,setIsInitializing]=useState(false);
+  const [facingMode,setFacingMode]=useState<FacingMode>(savedCamera);
+  const [hasMultipleCameras,setHasMultipleCameras]=useState(false);
+  const [hasTorch,setHasTorch]=useState(false),[torchOn,setTorchOn]=useState(false);
+  const clearError=useCallback(()=>setError(null),[]);
+  const stopScanning=useCallback(()=>{
+    scanSession.current++;
+    starting.current=false;
+    qrScannerRef.current?.stop();
+    qrScannerRef.current?.destroy();
+    qrScannerRef.current=null;
+    streamRef.current?.getTracks().forEach(track=>track.stop());
+    streamRef.current=null;
+    if(videoRef.current)videoRef.current.srcObject=null;
+    setIsScanning(false);setIsInitializing(false);setTorchOn(false);setHasTorch(false);
+  },[]);
+  useEffect(()=>{
+    const hidden=()=>{if(document.visibilityState==='hidden')stopScanning();};
+    document.addEventListener('visibilitychange',hidden);
+    return()=>{document.removeEventListener('visibilitychange',hidden);stopScanning();};
+  },[stopScanning]);
+  const startScanning=useCallback(async(mode:FacingMode=facingMode)=>{
+    if(starting.current||qrScannerRef.current||document.visibilityState==='hidden')return;
+    const session=++scanSession.current;
+    starting.current=true;setError(null);setIsInitializing(true);
+    let stream:MediaStream|undefined;
+    try{
+      const video=videoRef.current;
+      if(!video||!navigator.mediaDevices?.getUserMedia)throw new DOMException('Unavailable','NotFoundError');
+      let permission:PermissionState|undefined;
+      try{permission=(await navigator.permissions?.query({name:'camera' as PermissionName}))?.state;}catch{/* Not exposed by every browser. */}
+      if(session!==scanSession.current)return;
+      if(permission==='denied')throw new DOMException('Denied','NotAllowedError');
+      // One permissive request avoids the scanner library retrying denied access with six constraint sets.
+      stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:mode},width:{ideal:1280}}});
+      if(session!==scanSession.current){stream.getTracks().forEach(track=>track.stop());return;}
+      streamRef.current=stream;video.srcObject=stream;
+      const track=stream.getVideoTracks()[0];
+      const actual=track?.getSettings?.().facingMode;
+      const selected=actual==='user'||actual==='environment'?actual:mode;
+      setFacingMode(selected);
+      try{localStorage.setItem(CAMERA_CHOICE,selected);}catch{/* Optional camera preference. */}
+      setHasTorch(!!(track?.getCapabilities?.() as MediaTrackCapabilities&{torch?:boolean})?.torch);
+      const scanner=new QrScanner(video,result=>{
+        if(session!==scanSession.current)return;
+        void hapticLight();stopScanning();onScan(result.data);
+      },{onDecodeError:()=>{},highlightScanRegion:false,highlightCodeOutline:false,
+        calculateScanRegion:fullResolutionScanRegion,preferredCamera:selected,maxScansPerSecond:5});
+      qrScannerRef.current=scanner;
       await scanner.start();
-      if (session !== scanSession.current) {
-        scanner.stop();
-        scanner.destroy();
-        return;
-      }
-      logger.info(LogCategory.UI, 'QR scanner started successfully');
-      setIsInitializing(false);
-      setIsScanning(true);
-
-      // Re-check cameras after permission is granted, since the initial
-      // check may have returned stale results before the user allowed access
-      try {
-        const cameras = await QrScanner.listCameras(false);
-        if (session !== scanSession.current) return;
-        logger.debug(LogCategory.UI, 'Cameras after permission', {
-          count: cameras.length,
-        });
-        const uniqueIds = new Set(cameras.map(c => c.id));
-        setHasMultipleCameras(uniqueIds.size > 1);
-      } catch (e) {
-        logger.warn(LogCategory.UI, 'Failed to re-list cameras', {
-          error: formatError(e),
-        });
-      }
-    } catch (err) {
-      if (session !== scanSession.current) return;
-      logger.error(LogCategory.UI, 'Failed to start QR scanner', {
-        error: formatError(err),
-      });
-      let errorMessage = 'Camera access denied or not available';
-
-      if (err instanceof Error) {
-        if (err.name === 'NotAllowedError') {
-          errorMessage = 'Camera access denied. Please allow camera access and try again.';
-        } else if (err.name === 'NotFoundError') {
-          errorMessage = 'No camera found on this device';
-        } else if (err.name === 'NotReadableError') {
-          errorMessage = 'Camera is already in use by another application';
-        } else if (err.name === 'OverconstrainedError') {
-          errorMessage = 'Camera constraints not supported';
-        }
-      }
-
-      setError(errorMessage);
-      onError?.(errorMessage);
-      setIsInitializing(false);
-      setIsScanning(false);
-    }
-  }, [facingMode, onScan, onError, stopScanning]);
-
-  const toggleCamera = useCallback(() => {
-    const newMode = facingMode === 'environment' ? 'user' : 'environment';
-    setFacingMode(newMode);
-    if (qrScannerRef.current) {
-      qrScannerRef.current.setCamera(newMode).catch((err) => {
-        logger.warn(LogCategory.UI, 'Failed to switch camera', {
-          error: formatError(err),
-        });
-      });
-    }
-  }, [facingMode]);
-
-  return {
-    videoRef,
-    error,
-    isScanning,
-    isInitializing,
-    facingMode,
-    hasMultipleCameras,
-    startScanning,
-    stopScanning,
-    toggleCamera,
-    clearError,
-  };
+      if(session!==scanSession.current){scanner.stop();scanner.destroy();return;}
+      setIsScanning(true);setIsInitializing(false);
+      const cameras=await QrScanner.listCameras(false).catch(()=>[]);
+      if(session===scanSession.current)setHasMultipleCameras(new Set(cameras.map(camera=>camera.id)).size>1);
+    }catch(err){
+      stream?.getTracks().forEach(track=>track.stop());
+      if(session!==scanSession.current)return;
+      qrScannerRef.current?.destroy();qrScannerRef.current=null;streamRef.current=null;
+      if(videoRef.current)videoRef.current.srcObject=null;
+      const message=err instanceof Error&&err.name==='NotAllowedError'?'denied':err instanceof Error&&err.name==='NotReadableError'?'busy':'unavailable';
+      setError(message);onError?.(message);setIsScanning(false);setIsInitializing(false);
+      logger.warn(LogCategory.UI,'Camera could not start',{error:formatError(err)});
+    }finally{if(session===scanSession.current)starting.current=false;}
+  },[facingMode,onScan,onError,stopScanning]);
+  const toggleCamera=useCallback(()=>{const next=facingMode==='environment'?'user':'environment';stopScanning();void startScanning(next);},[facingMode,startScanning,stopScanning]);
+  const toggleTorch=useCallback(async()=>{
+    const track=streamRef.current?.getVideoTracks()[0],session=scanSession.current;
+    if(!track)return;
+    try{await track.applyConstraints({advanced:[{torch:!torchOn} as MediaTrackConstraintSet]});if(session===scanSession.current)setTorchOn(!torchOn);}catch{if(session===scanSession.current)setHasTorch(false);}
+  },[torchOn]);
+  return {videoRef,error,isScanning,isInitializing,facingMode,hasMultipleCameras,startScanning,stopScanning,toggleCamera,clearError,hasTorch,torchOn,toggleTorch};
 };

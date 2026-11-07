@@ -104,48 +104,16 @@ function getNativeVault(): NativeVaultPlugin {
 // ============================================
 
 /**
- * Fresh-install marker. Set the first time the native impl successfully
- * runs its init pass; never cleared by the app. Read + written through
- * `readDurableMarker` / `writeDurableMarker` (Preferences, with a
- * localStorage mirror), NOT the secure store.
- *
- * Why not the secure store: the marker MUST clear on app reinstall so a
- * fresh install is detected and stale Keychain entries (which survive
- * reinstall on iOS) get wiped before any read. Preferences clears on
- * uninstall like localStorage did, but unlike localStorage it is not
- * evicted by WebView storage pressure — a dropped marker would otherwise
- * masquerade as a reinstall and wipe a live wallet's vault. See
- * `readDurableMarker`.
+ * Non-secret initialization timestamp in Preferences with a localStorage
+ * mirror. Retain its existing name for compatibility, but never use its
+ * presence, absence or availability to authorize a vault wipe. Bookkeeping
+ * can disappear independently of a saved wallet, including across reinstall.
+ * This marker proves neither an empty vault nor a cryptographic migration.
  */
 const INSTALL_MARKER_KEY = 'glow.secureStorageInitialized';
 
-/**
- * Marks "this install has already run the F3 migration" (durable, via
- * `readDurableMarker` / `writeDurableMarker`). F3 changed the on-disk
- * format for biometric-bound crypto:
- *
- *   - iOS: Keychain items are now protected by a `SecAccessControl`
- *     with `.biometryCurrentSet`, not just a plain accessibility flag.
- *     Reading an F2 item still works (its access policy is the old
- *     one), but we want to force every user into the biometric-bound
- *     flow so the security boundary is consistent.
- *   - Android: the Keystore key is now marked
- *     `setUserAuthenticationRequired(true)` with
- *     `setInvalidatedByBiometricEnrollment(true)`. F2 keys don't have
- *     those flags, so decrypting an F2 ciphertext with the F2 key
- *     would silently succeed without any biometric prompt.
- *
- * On first launch with an F3 build, we detect the missing marker and
- * call `clearSeed()` before any other operation. That wipes the F2
- * seed from the secure store and forces the user to re-onboard — the
- * passkey flow still works as a fallback so re-onboarding is a single
- * extra tap, not a full recovery.
- *
- * Intentionally separate from `INSTALL_MARKER_KEY` so that
- * post-migration fresh installs only run the cheap cleanup path, not
- * an extra `clearSeed` call.
- */
-const F3_MIGRATION_MARKER_KEY = 'glow.secureStorageF3Migrated';
+// Preserve historical F3 markers without treating them as migration evidence.
+// The plugin has no verified legacy-record conversion contract.
 
 // ============================================
 // Stored payload — versioned for migrations
@@ -406,75 +374,46 @@ function logSecureStorageFailure(operation: string, code: SecureStorageErrorCode
  * only when `Capacitor.isNativePlatform()` is true; the factory below
  * picks `NoopSecureStorage` on web.
  */
-// Module-level init pipeline shared by the biometric + device-only
-// singletons. Both storage tiers share the same fresh-install marker
-// (iOS Keychain entries survive reinstall on both tiers; a clean init
-// must wipe BOTH slots or a user who switches tiers between installs
-// could inherit stale state). Ensures the cleanup runs at most once
-// per process regardless of which singleton's method is called first.
+// Bookkeeping only, shared by both singletons. This initialization never
+// reads, converts or clears either seed slot. A missing or unavailable
+// marker must leave the same typed vault operations available to callers.
 let sharedInitPromise: Promise<void> | null = null;
 
 function ensureSharedInitialized(): Promise<void> {
   if (!sharedInitPromise) {
-    sharedInitPromise = runSharedInitialization();
+    sharedInitPromise = recordStorageInitialization();
   }
   return sharedInitPromise;
 }
 
 /**
- * Drop the once-per-process memo so the next vault call re-runs the init
- * pipeline. Logout wipes localStorage AND Preferences, which takes the
- * install markers with it; without this reset the memo keeps reporting
- * "already initialized", a seed stored by a same-session re-onboard gets
- * no marker written beside it, and the NEXT cold start reads the missing
- * marker as a reinstall and wipes a live vault. Call after any wipe that
- * can clear the markers.
+ * Retry non-secret initialization bookkeeping after an explicit local-data
+ * reset. Dropping this memo does not clear a vault or change seed selection.
  */
 export function resetSecureStorageInit(): void {
   sharedInitPromise = null;
 }
 
 /**
- * Record that this install owns a populated vault. Called after every
- * successful store so a seed can never coexist with an absent marker:
- * the markers gate a wipe, and a WebView storage eviction can drop them
- * while the Keychain / Keystore entry survives (see `readDurableMarker`).
+ * Best-effort timestamp only. Also retry after a successful store. A marker
+ * failure must not hide, delete or rewrite a saved seed, fail a successful
+ * write, or claim that a legacy record was converted to another policy.
  */
-async function markVaultInitialized(): Promise<void> {
+async function recordStorageInitialization(): Promise<void> {
   try {
     if (await readDurableMarker(INSTALL_MARKER_KEY)) return;
     const now = new Date().toISOString();
     await writeDurableMarker(INSTALL_MARKER_KEY, now);
-    await writeDurableMarker(F3_MIGRATION_MARKER_KEY, now);
   } catch {
-    // Best-effort: a failed marker write must not fail the store itself.
+    // Bookkeeping is not part of the vault's read/write success contract.
   }
 }
 
 /**
- * Sequential init pipeline. Order matters: the F3 migration must run
- * AFTER the fresh-install cleanup, so that on a fresh install we
- * only wipe once (via the install-marker path) and skip the F3 wipe
- * (it would be redundant and would fire the "Migrated to F3" log
- * line incorrectly on a device that has never seen F2).
- */
-async function runSharedInitialization(): Promise<void> {
-  await cleanupStaleEntriesOnFreshInstall();
-  await migrateToF3IfNeeded();
-}
-
-/**
- * Durable read of a persistence marker.
- *
- * These markers gate a seed-vault wipe on the "fresh install" path, so
- * their durability is load-bearing: they lived in localStorage, but a
- * native WebView can evict localStorage under storage pressure while the
- * Keychain vault survives. A dropped marker then masquerades as a
- * reinstall and wipes a live wallet. Preferences is native UserDefaults
- * / SharedPreferences, which a WebView storage eviction does NOT clear
- * (and which still clears on app uninstall, preserving the intended
- * reinstall-reset). Reads fall back to a legacy localStorage value
- * written by pre-Preferences builds and migrate it forward.
+ * Read the non-secret timestamp from Preferences, falling back to its
+ * legacy localStorage mirror. Copying an existing timestamp forward does
+ * not migrate seed data, establish the platform's key policy or select a
+ * wallet. Neither backend is authoritative evidence about vault presence.
  */
 async function readDurableMarker(key: string): Promise<string | null> {
   try {
@@ -492,9 +431,9 @@ async function readDurableMarker(key: string): Promise<string | null> {
 }
 
 /**
- * Writes the marker to Preferences (durable) and mirrors it to
- * localStorage so a downgrade to a pre-Preferences build still sees it
- * and skips a redundant re-wipe.
+ * Write the timestamp and its existing compatibility mirror. Do not write
+ * the retired F3 completion marker or infer success of a cryptographic
+ * migration from a successful bookkeeping write.
  */
 async function writeDurableMarker(key: string, value: string): Promise<void> {
   try {
@@ -506,96 +445,6 @@ async function writeDurableMarker(key: string, value: string): Promise<void> {
     if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
   } catch {
     /* best-effort */
-  }
-}
-
-/**
- * iOS does NOT wipe Keychain entries when an app is reinstalled — they
- * survive across installs of the same bundle ID. Android Keystore keys
- * + the plugin's SharedPreferences-backed ciphertext both DO wipe on
- * uninstall, so this is mostly an iOS concern, but we run the same
- * logic on both platforms for consistency.
- *
- * The fresh-install signal is the absence of an `INSTALL_MARKER_KEY`
- * entry in `localStorage`. localStorage IS wiped on reinstall on both
- * platforms, so a missing marker reliably indicates either:
- *   (1) first ever launch on this device, or
- *   (2) first launch after an uninstall/reinstall cycle
- *
- * In either case we wipe BOTH storage tiers (biometric-bound + device-
- * only) before any other operation, then write both markers so
- * subsequent launches skip the cleanup and the F3 migration. A fresh
- * install starts in the F3 world directly — there's no F2 state to
- * migrate from.
- */
-async function cleanupStaleEntriesOnFreshInstall(): Promise<void> {
-  try {
-    if (await readDurableMarker(INSTALL_MARKER_KEY)) return;
-
-    // Clear both tiers. A user who previously installed in non-passkey
-    // mode could have a device-only entry surviving the reinstall on
-    // iOS — wiping it ensures a fresh install always starts from an
-    // empty slate regardless of the prior install's mode.
-    try {
-      await getNativeVault().clearSeed();
-    } catch {
-      // Best-effort — never block downstream operations on the cleanup.
-    }
-    try {
-      await getNativeVault().clearSeedDeviceOnly();
-    } catch {
-      // Best-effort.
-    }
-    logger.info(LogCategory.AUTH, 'Initialized secure storage on fresh install');
-
-    const now = new Date().toISOString();
-    await writeDurableMarker(INSTALL_MARKER_KEY, now);
-    // A fresh install has no F2 state to migrate from, so mark the
-    // F3 migration as already-done. This keeps the migration path
-    // strictly for "user upgraded from an F2 build" and makes the
-    // `migrateToF3IfNeeded` log line meaningful.
-    await writeDurableMarker(F3_MIGRATION_MARKER_KEY, now);
-  } catch {
-    // Best-effort — swallow any storage / plugin errors so the wallet
-    // still attempts to start up.
-  }
-}
-
-/**
- * One-shot migration from F2 (no biometric-bound crypto) to F3
- * (biometric-bound crypto). See `F3_MIGRATION_MARKER_KEY` for the
- * reasoning.
- *
- * The migration is a forced re-onboarding: we wipe the secure store
- * entirely, which causes the next `hasStoredSeed` to return `false`,
- * which causes the wallet startup code in `useBreezSdk` to fall
- * through to the passkey onboarding flow. After the user completes
- * the passkey ceremony (a single extra tap), the seed is re-persisted
- * into the device-only tier.
- *
- * We considered a read-then-rewrite approach (decrypt with F2,
- * re-encrypt with F3) but rejected it because:
- *   - It requires a biometric prompt before the user has any visual
- *     context, which is jarring.
- *   - It couples the init code to platform-specific crypto details
- *     that would be invisible everywhere else.
- *   - Re-onboarding costs a single passkey tap and exercises the
- *     fallback path we want to keep working anyway.
- */
-async function migrateToF3IfNeeded(): Promise<void> {
-  try {
-    if (await readDurableMarker(F3_MIGRATION_MARKER_KEY)) return;
-
-    try {
-      await getNativeVault().clearSeed();
-      logger.info(LogCategory.AUTH, 'Migrated secure storage to F3 (biometric-bound crypto)');
-    } catch {
-      // Best-effort — never block downstream operations on the migration.
-    }
-    await writeDurableMarker(F3_MIGRATION_MARKER_KEY, new Date().toISOString());
-  } catch {
-    // Best-effort — swallow any storage / plugin errors so the wallet
-    // still attempts to start up.
   }
 }
 
@@ -733,7 +582,7 @@ class NativeDeviceOnlyStorage implements SecureStorage {
     };
     try {
       await getNativeVault().storeSeedDeviceOnly({ seed: JSON.stringify(blob) });
-      await markVaultInitialized();
+      await recordStorageInitialization();
       logSecureStorageSuccess('storeSeedDeviceOnly');
     } catch (err) {
       const code = mapNativeVaultErrorCode(err);

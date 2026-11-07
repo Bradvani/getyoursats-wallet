@@ -5,10 +5,12 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
-import { Sheet, useVirtualKeyboard, type SheetRef } from 'react-modal-sheet';
+import { Sheet, type SheetRef } from 'react-modal-sheet';
+import { useWebSheetViewport, type WebSheetViewport } from '../../../hooks/useWebSheetViewport';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { animate } from 'motion/react';
 import { usePreventScroll } from '@react-aria/overlays';
@@ -29,13 +31,10 @@ import {
 /**
  * Bottom sheet adapter over react-modal-sheet.
  *
- * Keeps the BottomSheetContainer / BottomSheetCard API the app always
- * had while delegating gestures, snap physics, and soft-keyboard
- * avoidance to the library (visualViewport / VirtualKeyboard handling,
- * input scroll-into-view, drag lockout while the keyboard is up).
- * Platform glue stays ours: Android back-button dismiss, system bar
- * tinting, the web viewport manager's page pinning, and the native
- * adjustResize path.
+ * Delegates gestures and snap physics to the library. Web sheets fit the
+ * visual viewport and reveal focused inputs inside their scrollport; native
+ * sheets keep the platform keyboard resize path. Neither path lifts the root
+ * and pads for the same keyboard at once.
  */
 
 export type BottomSheetMaxWidth = 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -54,14 +53,6 @@ const maxWidthMap: Record<BottomSheetMaxWidth, string> = {
  * to [closed, full].
  */
 const MIN_CONTENT_SNAP_PX = 50;
-/**
- * Extra clearance (px) above the reported keyboard inset. iOS counts
- * the keyboard accessory bar (autofill / dismiss pills, ~44 to 55px)
- * as visible viewport, so a field revealed to the reported keyboard
- * edge sits behind it. Overshoot is harmless: the field just rests a
- * little higher.
- */
-const KEYBOARD_ACCESSORY_MARGIN_PX = 64;
 /**
  * Content taller than this fraction of the viewport collapses the snap
  * ladder to [closed, full]: an intermediate snap a few px under full
@@ -85,24 +76,10 @@ const ContentMeasureContext = createContext<(px: number | null) => void>(
   () => {},
 );
 
-/**
- * Effective keyboard clearance in px (inset + accessory margin, 0
- * while the keyboard is closed). BottomSheetCard uses it to actively
- * reveal the focused field: Safari's native caret reveal treats the
- * area behind the keyboard accessory bar as visible and ignores
- * scroll-padding, so passive CSS alone left low fields under the
- * autofill pills.
- */
-const KeyboardClearanceContext = createContext(0);
+// Web sheets fit the visible viewport. Native sheets retain the platform
+// keyboard resize path below. There is no second keyboard-height padding.
+const WebSheetViewportContext = createContext<WebSheetViewport | null>(null);
 
-// On native the WebView itself resizes with the keyboard (Android
-// adjustResize, iOS resize: 'native'), so the library's keyboard
-// machinery must stay off: its VirtualKeyboard API path flips
-// navigator.virtualKeyboard.overlaysContent inside the already
-// resizing Android WebView (double-compensation: env-inset padding
-// stacked on the native resize), and transient keyboard-state flips
-// added phantom clearance gaps on iOS, which has no accessory bar in
-// the native keyboard.
 const IS_NATIVE = Capacitor.isNativePlatform();
 
 const EDITABLE_SELECTOR = 'input, textarea, [contenteditable="true"]';
@@ -155,24 +132,8 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
     setContentPx(px);
   }, []);
 
-  // Manual keyboard mode (avoidKeyboard is off below): the hook keeps
-  // --keyboard-inset-height up to date and we pad the content scroller
-  // with it, so the sheet KEEPS its current snap while the keyboard is
-  // up. The library's built-in avoidance instead snaps to the last
-  // (fullscreen) snap on focus, which expanded the sheet on every
-  // input tap and raced its scroll-into-view against the snap
-  // animation, leaving the focused field off-screen.
-  const { isKeyboardOpen, keyboardHeight } = useVirtualKeyboard({
-    isEnabled: isOpen && !IS_NATIVE,
-    // The default 100ms debounce left the web sheet sitting behind the
-    // keyboard until the next interaction: the keyboard-open state
-    // settled too late to pad / reveal the focused field on first
-    // focus. Detect on the leading edge so the reveal runs immediately.
-    debounceDelay: 0,
-  });
-  const clearancePx = isKeyboardOpen
-    ? keyboardHeight + KEYBOARD_ACCESSORY_MARGIN_PX
-    : 0;
+  const webViewport = useWebSheetViewport(isOpen && !IS_NATIVE);
+  const isKeyboardOpen = !IS_NATIVE && webViewport.keyboardOpen;
 
   // Keyboard-free viewport height, the stable basis for the snap
   // ladder's collapse rule. It must NOT shrink when the native
@@ -234,7 +195,7 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
   const snapPoints = fullHeight
     ? undefined
     : useContentSnap
-      ? [0, contentPx, 1]
+      ? [0, IS_NATIVE ? contentPx : Math.min(contentPx, webViewport.height), 1]
       : [0, 1];
 
   // Expanded-to-fullscreen state (user dragged a content-sized sheet
@@ -259,10 +220,19 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
   const keyboardHeightRef = useRef(0);
   // Reassigned after every commit so it reads the latest contentPx /
   // snap without re-subscribing the resize listener.
-  useEffect(() => {
+  useLayoutEffect(() => {
     repositionRef.current = (animated: boolean) => {
       const sheet = sheetRef.current;
-      if (!IS_NATIVE || !sheet || fullHeight || !fullyOpen.current) return;
+      if (!sheet || fullHeight || !fullyOpen.current) return;
+      if (!IS_NATIVE) {
+        const target = useContentSnap && currentSnap.current === 1
+          ? Math.max(0, webViewport.height - (contentPx ?? webViewport.height)) : 0;
+        // Follow the system keyboard geometry directly, without a second tween
+        // chasing it or an old snap animation overwriting the settled position.
+        sheet.y.stop();
+        sheet.y.set(target);
+        return;
+      }
       const idx = currentSnap.current;
       if (idx <= 0) return;
       const active = document.activeElement;
@@ -360,11 +330,8 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
   // already landed the same target, the dedupe makes this a no-op
   // without disturbing a running tween.
   //
-  // Web is deliberately excluded: there the keyboard OVERLAYS (only the
-  // visual viewport shrinks, the root keeps its size), so moving the
-  // sheet would leave a band below it and the field still behind the
-  // keyboard. Web keyboard handling is purely the content padding +
-  // reveal in BottomSheetCard.
+  // Web uses the visual viewport geometry below; native listens here because
+  // its WebView resizes separately from the browser keyboard model.
   useEffect(() => {
     if (!IS_NATIVE || !isOpen || fullHeight) return;
     const onResize = () => repositionRef.current(true);
@@ -416,39 +383,16 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
     };
   }, [isOpen, fullHeight]);
 
-  // Content grew or shrank while resting at the content snap (error
-  // banners, async rows): re-fit so the sheet tracks its content the
-  // way the old auto-height implementation did. Native uses the
-  // race-free reposition; web re-snaps (no native resize race there).
+  // Native content-size changes retain their existing animated reposition.
   useEffect(() => {
-    if (!isOpen || !useContentSnap || !fullyOpen.current) return;
-    if (currentSnap.current !== 1) return;
-    if (IS_NATIVE) {
+    if (IS_NATIVE && isOpen && useContentSnap && currentSnap.current === 1) {
       repositionRef.current(true);
-    } else {
-      sheetRef.current?.snapTo(1);
     }
   }, [contentPx, isOpen, useContentSnap]);
 
-  // Chrome Android (HTTPS) sets overlaysContent = true via the
-  // VirtualKeyboard API, so the visual viewport never shrinks and the
-  // webViewportManager can't detect the keyboard. Drive the CSS var
-  // from the hook's state as well (uses the VK geometrychange event).
-  useEffect(() => {
-    if (IS_NATIVE || !isOpen) return;
-    const html = document.documentElement;
-    if (isKeyboardOpen && keyboardHeight > 0) {
-      html.style.setProperty('--sheet-kb-offset', `-${keyboardHeight}px`);
-      html.classList.add('keyboard-visible');
-    } else {
-      html.style.setProperty('--sheet-kb-offset', '0px');
-      html.classList.remove('keyboard-visible');
-    }
-    return () => {
-      html.style.setProperty('--sheet-kb-offset', '0px');
-      html.classList.remove('keyboard-visible');
-    };
-  }, [isOpen, isKeyboardOpen, keyboardHeight]);
+  useLayoutEffect(() => {
+    if (!IS_NATIVE && isOpen) repositionRef.current(false);
+  }, [isOpen, webViewport.height, contentPx, useContentSnap]);
 
   return (
     <Sheet
@@ -504,14 +448,13 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
       // whole window. The old hand-rolled sheet was absolute inside the
       // column and inherited this for free. The backdrop is a separate
       // fixed child and still covers the full viewport.
-      style={{ zIndex, maxWidth: desktopPointer && !fullHeight ? '42.5rem' : '56rem', marginInline: 'auto' }}
-      // Portal into #root, not document.body: the web viewport
-      // manager pins #root against Safari's focus pan, and sheets
-      // portaled outside it stayed uncompensated. That is what let a
-      // parent sheet slide up behind its child while typing, and
-      // left sheets mispositioned after keyboard dismissal (iOS 26
-      // does not always reset the viewport offset).
-      mountPoint={document.getElementById('root') ?? undefined}
+      style={{
+        zIndex, maxWidth: desktopPointer && !fullHeight ? '42.5rem' : '56rem', marginInline: 'auto',
+        ...(!IS_NATIVE ? {top: webViewport.top, bottom: 'auto', height: webViewport.height} : {}),
+      }}
+      // Web sheets live outside the app root so a page transform cannot change
+      // the containing block of their fixed viewport. Native keeps its portal.
+      mountPoint={IS_NATIVE ? document.getElementById('root') ?? undefined : undefined}
     >
       <Sheet.Container
         onFocusCapture={() => {
@@ -526,15 +469,6 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
         className={`bg-spark-surface ${fullHeight || isFullSnap ? 'rounded-none' : 'bottom-sheet-card-bordered'} shadow-glass-lg w-full ${maxWidthMap[maxWidth]} mx-auto ${className}`}
         style={
           {
-            // Effective keyboard clearance, consumed by the content
-            // scroller's padding and scroll-padding. The reported
-            // inset alone is not enough on iOS: the viewport treats
-            // the keyboard accessory bar (autofill / dismiss pills)
-            // as visible, so fields revealed to the reported edge
-            // land behind it. The margin lifts them clear.
-            '--keyboard-clearance': isKeyboardOpen
-              ? `calc(env(keyboard-inset-height, var(--keyboard-inset-height, 0px)) + ${KEYBOARD_ACCESSORY_MARGIN_PX}px)`
-              : '0px',
             ...(maxHeightVh < 100
               ? { maxHeight: `${maxHeightVh}dvh` }
               : null),
@@ -542,11 +476,11 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
         }
       >
         <ContentMeasureContext.Provider value={reportContentPx}>
-          <KeyboardClearanceContext.Provider value={clearancePx}>
+          <WebSheetViewportContext.Provider value={IS_NATIVE ? null : webViewport}>
             <SheetFullSnapContext.Provider value={isFullSnap}>
               {children}
             </SheetFullSnapContext.Provider>
-          </KeyboardClearanceContext.Provider>
+          </WebSheetViewportContext.Provider>
         </ContentMeasureContext.Provider>
       </Sheet.Container>
       {showBackdrop && (
@@ -579,42 +513,44 @@ export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
       [],
     );
     const reportHeight = useContext(ContentMeasureContext);
-    const clearancePx = useContext(KeyboardClearanceContext);
+    const webViewport = useContext(WebSheetViewportContext);
     const handleRef = useRef<HTMLDivElement | null>(null);
     const scrollerRef = useRef<HTMLDivElement | null>(null);
 
-    // Scroll the focused field clear of the keyboard + accessory bar.
-    // Runs when the keyboard inset settles (first focus) and on every
-    // focus moving within the card (field switches while typing).
+    // Reveal within the actual scrollport in either direction. Measuring only
+    // bottom overlap left fields above the visible area stranded after a pan.
     const revealFocused = useCallback(() => {
       const scroller = scrollerRef.current;
       const active = document.activeElement;
-      // On native the WebView resizes above the keyboard, so the field
-      // only needs to clear the scroller's own bottom edge by a small
-      // margin (clearancePx is 0 on native: useVirtualKeyboard is web
-      // only). On web it must clear the reported inset + accessory bar.
-      // This runs on every focus move within the card, so it reveals the
-      // newly-focused field when switching fields while the keyboard is
-      // already up (no fresh keyboardDidShow fires on a field switch).
-      const clearance = IS_NATIVE ? NATIVE_REVEAL_MARGIN_PX : clearancePx;
-      if (!scroller || clearance <= 0) return;
-      if (!(active instanceof HTMLElement) || !scroller.contains(active)) {
-        return;
-      }
-      if (!active.matches('input, textarea, [contenteditable="true"]')) {
-        return;
-      }
-      const overlap =
-        active.getBoundingClientRect().bottom -
-        (scroller.getBoundingClientRect().bottom - clearance);
-      if (overlap > 0) {
-        scroller.scrollBy({ top: overlap, behavior: 'smooth' });
-      }
-    }, [clearancePx]);
+      if (!scroller || webViewport?.zoomed || !(active instanceof HTMLElement) ||
+          !scroller.contains(active) || !active.matches(EDITABLE_SELECTOR)) return;
+      const bounds = scroller.getBoundingClientRect();
+      const field = active.getBoundingClientRect();
+      const margin = IS_NATIVE ? NATIVE_REVEAL_MARGIN_PX : 16;
+      const top = Math.max(bounds.top, webViewport?.top ?? 0) + margin;
+      const bottom = Math.min(bounds.bottom, webViewport
+        ? webViewport.top + webViewport.height : window.innerHeight) - margin;
+      if (bottom <= top) return;
+      const delta = field.top < top || field.height > bottom - top
+        ? field.top - top : Math.max(0, field.bottom - bottom);
+      if (Math.abs(delta) > 1) scroller.scrollBy({top: delta, behavior: 'instant'});
+    }, [webViewport]);
 
-    useEffect(() => {
-      revealFocused();
+    const revealFrame = useRef(0);
+    const scheduleReveal = useCallback(() => {
+      cancelAnimationFrame(revealFrame.current);
+      revealFrame.current = requestAnimationFrame(revealFocused);
     }, [revealFocused]);
+    useLayoutEffect(() => {
+      scheduleReveal();
+      const scroller = scrollerRef.current;
+      const observer = new ResizeObserver(scheduleReveal);
+      if (scroller) observer.observe(scroller);
+      return () => {
+        observer.disconnect();
+        cancelAnimationFrame(revealFrame.current);
+      };
+    }, [scheduleReveal]);
 
     const measure = useCallback(
       (el: HTMLDivElement | null) => {
@@ -654,7 +590,7 @@ export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
           </div>
         </Sheet.Header>
         <Sheet.Content
-          scrollClassName="scrollbar-hidden"
+          scrollClassName={`scrollbar-hidden ${IS_NATIVE ? '' : 'web-sheet-scrollport'}`}
           scrollRef={scrollerRef}
           // A step with its own scroller (useSheetOwnsScroll) takes the
           // drag off the content. The library suppresses the drag only for
@@ -662,15 +598,12 @@ export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
           // unscrollable, so without this the sheet reads every swipe over
           // the list as a drag and the list moves only when the browser
           // wins the race.
-          disableDrag={ownScrollers > 0}
-          // Manual keyboard avoidance (avoidKeyboard is off on the
-          // root): the container computes --keyboard-clearance from
-          // the live keyboard inset plus the iOS accessory-bar
-          // margin. The padding gives the scroller room; the actual
-          // positioning is revealFocused above (passive
-          // scroll-padding is not honored by Safari's caret reveal).
+          disableDrag={!IS_NATIVE || ownScrollers > 0}
+          // Web content always scrolls; dragging is confined to the handle.
+          // The sheet already fits above the keyboard, so reserve only a small
+          // caret margin rather than adding the keyboard height a second time.
           scrollStyle={{
-            paddingBottom: 'var(--keyboard-clearance, 0px)',
+            paddingBottom: IS_NATIVE ? 0 : 16,
             // touch-action intersects down the ancestor chain, so the
             // pan-down the library pairs with its drag clamps an inner
             // list's pan-y to "downward only", leaving nothing to scroll
@@ -683,11 +616,7 @@ export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
           }}
         >
           <div
-            onFocusCapture={() => {
-              // rAF: let the focus settle and any pending layout
-              // (keyboard padding) apply before measuring.
-              requestAnimationFrame(revealFocused);
-            }}
+            onFocusCapture={scheduleReveal}
             ref={(el) => {
               setCardEl(el);
               // Synchronous first measurement: the ref attaches during

@@ -1,8 +1,9 @@
+import {normalizeDecimalInput, validAmountInput} from '../../../utils/decimalInput';
 import {useFlowText} from '@/hooks/useFlowText';
 import {useFiatData} from '../../../contexts/FiatDataContext';
 import DenominationTabs from '../../../getyoursats/DenominationTabs';
 import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useId } from 'react';
 import type { ConversionOptions } from '@breeztech/breez-sdk-spark';
 import { FormError, PrimaryButton, AMOUNT_FIELD_CLASS } from '../../../components/ui';
 import { useSheetBack } from '../../../components/ui/sheets/BottomSheetCardContext';
@@ -43,6 +44,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   amountFirst = false,
   destinationReviewed = false,
 }) => {
+  const amountInputId=useId();
   const t=useFlowText();
   // USD entry without a stable-balance token, funded from BTC. Cross-chain
   // ("Send USD", amountFirst) starts in USD; plain BTC sends start in sats
@@ -107,7 +109,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
     if(isDenominated)setUnitRaw(satsToAmount(sats,denomination,currentRate));
   };
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw=e.target.value;
+    const raw=isDenominated?normalizeDecimalInput(e.target.value):e.target.value;
     if(isDenominated){
       setUnitRaw(raw);
       const sats=amountToSats(raw,denomination,currentRate);
@@ -116,9 +118,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
     setFeesIncluded(false);
   };
 
-  const validAmount = isTokenMode
-    ? localAmount !== '' && parseFloat(localAmount) > 0
-    : localAmount !== '' && parseInt(localAmount) > 0;
+  const validAmount = validAmountInput(localAmount, isTokenMode ? (config?.fractionSize ?? 2) : 0);
 
   const quickAmounts = pickQuickAmounts(balance.spendableDisplay, quickAmountScale);
   const amountNum = isTokenMode ? parseFloat(localAmount) || 0 : parseInt(localAmount) || 0;
@@ -216,11 +216,12 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const unitUnavailable=isFiatDenomination(denomination)&&!currentRate&&!amountFirst;
   const amountSection = (
     <div>
-        <label className="block text-sm font-medium text-spark-text-primary mb-2">
+        <label htmlFor={amountInputId} className="block text-sm font-medium text-spark-text-primary mb-2">
           {t("Amount")}
         </label>
         <div className="relative">
           <input
+            id={amountInputId}
             type={isDenominated?'text':isTokenMode?'text':'number'}
             inputMode={isDenominated?'decimal':isTokenMode?'decimal':'numeric'}
             enterKeyHint="done"
@@ -245,7 +246,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
             data-testid="amount-input"
           />
           {/* Cross-chain ("Send USD", amountFirst) is USD-only: no sats toggle. */}
-          {!amountFirst && tokenSymbol && (
+          {!amountFirst && tokenIdentifier && tokenSymbol && (
             <CurrencySwitcher
               isTokenMode={isTokenMode}
               tokenSymbol={tokenSymbol}
@@ -266,7 +267,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
               <button
                 key={quickAmount}
                 onClick={() => { setLocalAmount(String(quickAmount)); syncUnitFromSats(quickAmount); setFeesIncluded(false); setLocalError(null); }}
-                className={`flex-1 py-2 rounded-lg text-sm font-mono font-medium transition-all ${
+                className={`flex-1 min-h-11 min-w-0 px-2 py-2 rounded-lg text-sm font-mono font-medium transition-all ${
                   isSelected
                     ? 'bg-spark-primary text-white'
                     : 'bg-transparent border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
@@ -303,7 +304,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
               }}
               disabled={tokenSendAllBelowThreshold || hasPendingConversion}
               title={hasPendingConversion ? t('Balance is updating. Try again in a moment.') : undefined}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 min-h-11 min-w-0 px-2 py-2 rounded-lg text-sm font-medium transition-all ${
                 tokenSendAllBelowThreshold || hasPendingConversion
                   ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
                   : isSendAll
@@ -327,7 +328,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
     <div className="space-y-5">
       {destinationReviewed ? amountSection : amountFirst ? <>{amountSection}{destinationSection}</> : <>{destinationSection}{amountSection}</>}
 
-      <FormError error={inlineBalanceError || localError || error} />
+      <FormError error={(localAmount && !validAmount ? t('Invalid amount') : null) || inlineBalanceError || localError || error} />
 
       <PrimaryButton
         onClick={handleNext}

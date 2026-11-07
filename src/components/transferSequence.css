@@ -37,3 +37,8 @@
 @media(max-height:600px){.gys-sequence__content{top:24px;max-height:calc(100dvh - 110px)}.gys-sequence__identity,.gys-sequence .gys-contour-mark{width:88px;height:88px}.gys-sequence__evidence{margin-top:10px}.gys-sequence__amount{font-size:36px}.gys-sequence__money{margin-top:16px}.gys-sequence__fiat{font-size:15px}.gys-sequence h2{font-size:18px;margin:10px 0 6px}.gys-sequence__description{font-size:10px;max-width:320px}.gys-sequence__footer{bottom:12px}}
 @media(prefers-reduced-motion:reduce){.gys-sequence__canvas{display:none}.gys-sequence{border:2px solid #F7931A}}
 @media(forced-colors:active){.gys-sequence{background:Canvas;color:CanvasText;--sequence-accent:Highlight;--sequence-muted:CanvasText}.gys-sequence__canvas{display:none}.gys-sequence__close{background:ButtonFace;color:ButtonText;border:1px solid ButtonText}}
+
+.gys-sequence__receipt{width:100%;margin-top:20px;font-size:.875rem;line-height:1.5;text-align:start}
+.gys-sequence__receipt>div{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;padding:8px 0;border-top:1px solid currentColor}
+.gys-sequence__receipt dt{color:var(--sequence-muted)}
+.gys-sequence__receipt dd{overflow-wrap:anywhere;max-width:100%}

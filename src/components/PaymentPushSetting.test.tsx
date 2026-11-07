@@ -84,7 +84,7 @@ it('shows an actionable setup error without exposing provider internals',async()
   const {container}=render(<PaymentPushSetting/>);
   await waitFor(()=>expect(screen.getByRole('switch')).toBeEnabled());
   fireEvent.click(screen.getByRole('switch'));
-  expect(await screen.findByText('Could not update alerts. Please try again.')).toBeVisible();
+  expect(await screen.findByText('Could not update alerts. Try again.')).toBeVisible();
   expect(container).not.toHaveTextContent(/provider|webhook/i);
   expect(screen.getByRole('switch')).toHaveAttribute('aria-checked','false');
   expect(subscription.unsubscribe).toHaveBeenCalled();
@@ -92,6 +92,24 @@ it('shows an actionable setup error without exposing provider internals',async()
 
 it('makes no notification enrollment requests on a non-mainnet wallet',()=>{
   mocks.network.mockReturnValue('regtest');render(<PaymentPushSetting/>);
-  expect(screen.getByText('Payment alerts are available on mainnet.')).toBeVisible();
+  expect(screen.getByText('Payment alerts are unavailable on this network.')).toBeVisible();
   expect(fetch).not.toHaveBeenCalled();expect(mocks.signed).not.toHaveBeenCalled();
+});
+
+it('shows no diagnostic notification action after enabling alerts',async()=>{
+  render(<PaymentPushSetting/>);
+  await waitFor(()=>expect(screen.getByRole('switch',{name:'Payment alerts'})).toBeEnabled());
+  expect(Notification.requestPermission).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('switch',{name:'Payment alerts'}));
+  await waitFor(()=>expect(screen.getByRole('switch')).toHaveAttribute('aria-checked','true'));
+  expect(screen.queryByRole('button',{name:/test|preview/i})).toBeNull();
+});
+
+it('recovers from a failed settings lookup without reopening Settings or requesting permission',async()=>{
+  vi.mocked(fetch).mockRejectedValueOnce(new Error('offline'));
+  render(<PaymentPushSetting/>);
+  fireEvent.click(await screen.findByRole('button',{name:'Try again'}));
+  await waitFor(()=>expect(screen.getByRole('switch',{name:'Payment alerts'})).toBeEnabled());
+  expect(Notification.requestPermission).not.toHaveBeenCalled();
+  expect(mocks.sdk.registerWebhook).not.toHaveBeenCalled();
 });

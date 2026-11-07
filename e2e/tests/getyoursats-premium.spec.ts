@@ -16,13 +16,11 @@ for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
   const pos=page.getByRole('button',{name:width>=1024?'Merchant mode':'Open Point of Sale',exact:true});
   const recurring=page.locator('button[aria-label="Recurring Buys coming soon"]');
   await expect(pos).toBeVisible();
-  if(width<1024)await expect(recurring).toBeVisible();
-  else await expect(recurring).not.toBeVisible();
+  await expect(recurring).toHaveCount(0);
   await expect(page.getByRole('button',{name:/Protect your Bitcoin|Review recovery options/})).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   mkdirSync('test-artifacts',{recursive:true});
   await page.screenshot({path:`test-artifacts/wallet-${width}.png`,fullPage:true,animations:'disabled'});
-  await expect(recurring).toBeDisabled();
   await pos.click();
   const terminal=page.getByRole('dialog',{name:'Merchant point of sale'});
   await expect(terminal).toBeVisible();

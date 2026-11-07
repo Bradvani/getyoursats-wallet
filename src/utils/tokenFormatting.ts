@@ -1,4 +1,5 @@
 import type { TokenMetadata, FiatCurrency, Payment } from '@breeztech/breez-sdk-spark';
+import {fiatLocale} from './formatFiat';
 import { toSats, type Sats } from '../types/sats';
 import { isCrossChainPayment } from './paymentDescription';
 
@@ -31,7 +32,7 @@ export interface TokenPaymentInfo {
  * on this branch has no fiat-amount model), so only `symbol`/`fractionSize` are
  * needed for input + display.
  *
- * Falls back to USD-like defaults ($, 2dp) when `fiatCurrencies` hasn't loaded.
+ * Derives currency precision locally when display metadata has not loaded.
  */
 export function buildFiatDisplayConfig(
   currencyId: string,
@@ -49,12 +50,15 @@ export function buildFiatDisplayConfig(
       fiatCurrencyName: match.info.name,
     };
   }
+  const formatter = new Intl.NumberFormat(fiatLocale(currencyId), {style: 'currency', currency: currencyId, numberingSystem: 'latn'});
+  const parts = formatter.formatToParts(0);
+  const digits = formatter.resolvedOptions().maximumFractionDigits ?? 2;
   return {
-    symbol: currencyId === 'USD' ? '$' : currencyId,
+    symbol: parts.find(part => part.type === 'currency')?.value ?? currencyId,
     currencyCode: currencyId,
-    symbolPosition: 'before',
-    fractionSize: 2,
-    decimals: 2,
+    symbolPosition: parts.findIndex(part => part.type === 'currency') < parts.findIndex(part => part.type === 'integer') ? 'before' : 'after',
+    fractionSize: digits,
+    decimals: digits,
     fiatCurrencyId: currencyId,
     fiatCurrencyName: null,
   };
@@ -202,7 +206,7 @@ export function parseAmountToSats(
   btcFiatRate: number,
 ): Sats | null {
   if (isTokenMode) {
-    if (!btcFiatRate || btcFiatRate <= 0) return null;
+    if (!btcFiatRate || btcFiatRate <= 0 || !/^(?:\d+\.?\d*|\.\d+)$/.test(input)) return null;
     const fiat = Number(input);
     if (!Number.isFinite(fiat) || fiat <= 0) return null;
     // fiat→sats requires float division; convert the rounded result to

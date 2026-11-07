@@ -36,8 +36,6 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
     walletLogo:get('.gys-wallet-balance-surface__toolbar .gys-brand-wordmark--compact'),
     merchant:get('.gys-home-quick-actions__button:not(:disabled)'),
     merchantTitle:get('.gys-home-quick-actions__button:not(:disabled) strong'),
-    recurring:get('.gys-home-quick-actions__button:disabled'),
-    recurringTitle:get('.gys-home-quick-actions__button:disabled strong'),
     receive:get('.gys-action-dock__receive'),
     send:get('.gys-action-dock__send'),
     activity:get('.gys-activity'),
@@ -52,7 +50,7 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
   });
   expect(contrast(styles.balance.color,styles.hero.background)).toBeGreaterThan(7);
   expect(contrast(styles.merchantTitle.color,styles.merchant.background)).toBeGreaterThan(7);
-  expect(contrast(styles.recurringTitle.color,styles.recurring.background)).toBeGreaterThan(4.5);
+  await expect(page.locator('.gys-home-quick-actions__button:disabled')).toHaveCount(0);
   expect(contrast(styles.receive.color,styles.receive.background)).toBeGreaterThan(4.5);
   expect(contrast(styles.send.color,styles.send.background)).toBeGreaterThan(4.5);
   expect(contrast(styles.unit.color,styles.unit.background)).toBeGreaterThan(4.5);
@@ -129,11 +127,9 @@ test('@public-smoke Orange Settings, Menu and forms retain clear labels',async({
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture+'?screen=settings');
  await expect(page.getByRole('heading',{name:'Settings',exact:true})).toBeVisible();
- await expect(page.getByTestId('settings-appearance-orange')).toHaveAttribute('aria-pressed','true');
- await expect(page.getByTestId('settings-appearance-dark')).toBeVisible();
- await expect(page.getByTestId('settings-appearance-system')).toBeVisible();
- await expect(page.getByRole('combobox',{name:'Language',exact:true})).toHaveValue('English');
- await expect(page.getByRole('button',{name:/Currencies/i})).toBeVisible();
+ await expect(page.getByTestId('settings-appearance')).toContainText('Orange');
+ await expect(page.getByTestId('settings-language')).toContainText('English');
+ await expect(page.getByTestId('settings-currencies')).toBeVisible();
  await page.screenshot({path:'test-artifacts/orange-settings.png',animations:'disabled'});
  // The isolated fixture has no #content-root drawer anchor; main Settings controls are tested above.
  // Menu rendering is covered in the real wallet integration, not this isolated payment fixture.
