@@ -1,4 +1,5 @@
 import {useCallback, useEffect, useRef, useSyncExternalStore} from 'react';
+import {bitcoinLearningScope, offerBitcoinLearning} from '../getyoursats/bitcoinLearningState';
 import {
   EMPTY_WALLET_SETUP, advanceWalletTour, beginWalletTour, initializeNewWalletSetup,
   dismissWalletSetupCard, readWalletSetup, skipWalletTour, subscribeWalletSetup, walletSetupScope,
@@ -48,6 +49,10 @@ export function useNewWalletSetup({creation, client, connected, scope}: {
     if (connected && scope && client === creation.client) {
       handled.current = creation;
       initializeNewWalletSetup(scope, creation.phraseVerified);
+      // The older six-step wallet tour is opt-in rather than a second forced flow.
+      skipWalletTour(scope);
+      // Education is only offered to freshly created wallets, never restores.
+      offerBitcoinLearning(bitcoinLearningScope(scope));
     }
   }, [creation, client, connected, scope]);
 }

@@ -19,6 +19,8 @@ import MarketPulse from '../getyoursats/MarketPulse';
 import WalletActivityPanel from '../getyoursats/WalletActivityPanel';
 import WalletSetupCard from '../getyoursats/WalletSetupCard';
 import WalletSetupTour from '../getyoursats/WalletSetupTour';
+import BitcoinLearningJourney from '../getyoursats/BitcoinLearningJourney';
+import type {BitcoinLearningController} from '../getyoursats/bitcoinLearningState';
 import type {WalletSetupController} from '../hooks/useWalletSetup';
 import type {WalletRecoveryMethod} from '../getyoursats/walletSetupState';
 import PullToRefresh from '../components/PullToRefresh';
@@ -64,6 +66,7 @@ interface WalletPageProps {
   network?: Network;
   onDepositChanged?: () => void;
   walletSetup?: WalletSetupController;
+  bitcoinLearning?: BitcoinLearningController;
   recoveryMethod?: WalletRecoveryMethod;
   setupTourAllowed?: boolean;
   onReviewRecovery?: () => void;
@@ -89,6 +92,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
   network,
   onDepositChanged,
   walletSetup,
+  bitcoinLearning,
   recoveryMethod = 'phrase',
   setupTourAllowed = true,
   onReviewRecovery,
@@ -151,7 +155,9 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const [sendDialogSession, setSendDialogSession] = useState(0);
   const [receiveDialogSession, setReceiveDialogSession] = useState(0);
   const [buyBitcoinSession, setBuyBitcoinSession] = useState(0);
-  const tourRequested = Boolean(walletSetup?.scope && walletSetup.progress.tourStatus === 'active');
+  const learningOpen = Boolean(bitcoinLearning?.scope &&
+    (bitcoinLearning.progress.status === 'offered' || bitcoinLearning.progress.status === 'active'));
+  const tourRequested = Boolean(walletSetup?.scope && walletSetup.progress.tourStatus === 'active' && !learningOpen);
   const showHistory = historyOpen;
   const setupPaused = !setupTourAllowed || settingsActive || isSendDialogOpen || isReceiveDialogOpen || isQrScannerOpen ||
     isMenuOpen || isBuyBitcoinOpen || partnerBuyOpen || gysPosOpen || Boolean(selectedPayment) ||
@@ -319,6 +325,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   return (
     <div className={`gys-wallet ${showHistory ? "gys-wallet--history-open" : ""} flex flex-col h-[calc(100dvh)] relative overflow-hidden`}>
+      {learningOpen && bitcoinLearning && onReviewRecovery && (
+        <BitcoinLearningJourney learning={bitcoinLearning} paused={setupPaused}
+          onOpenWallet={() => walletSetup?.skip()} onReviewRecovery={onReviewRecovery}/>
+      )}
       <aside className="gys-desktop-nav" aria-label="Wallet navigation">
         <GetYourSatsWordmark compact/>
         <nav>

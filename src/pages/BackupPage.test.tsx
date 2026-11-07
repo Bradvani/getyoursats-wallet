@@ -3,6 +3,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import BackupPage from './BackupPage';
 import {backupSetupCopy} from '@/locales/backupSetup';
+import {bitcoinLearningCopy} from '@/locales/bitcoinLearning';
 import {setAppLanguage} from '@/services/presentationPreferences';
 
 const fixtures = vi.hoisted(() => ({
@@ -77,9 +78,10 @@ beforeEach(() => {
 async function revealWords() {
   const reveal = await screen.findByRole('button', {name: 'Reveal Words Privately'});
   expect(reveal).toBeDisabled();
-  fireEvent.click(screen.getByRole('checkbox', {name: /I am in a private space/}));
+  fireEvent.click(screen.getByRole('button', {name: /Your receiving address/}));
+  fireEvent.click(screen.getByRole('button', {name: /I am in a private space/}));
   expect(reveal).toBeDisabled();
-  fireEvent.click(screen.getByRole('checkbox', {name: /I understand these words control my wallet/}));
+  fireEvent.click(screen.getByRole('button', {name: /I understand these words control my wallet/}));
   expect(reveal).not.toBeDisabled();
   fireEvent.click(reveal);
   await screen.findByText('Recovery Phrase');
@@ -88,8 +90,7 @@ async function revealWords() {
 async function beginCheck() {
   await revealWords();
   const check = screen.getByRole('button', {name: 'Check My Handwritten Backup'});
-  expect(check).toBeDisabled();
-  fireEvent.click(screen.getByRole('checkbox', {name: /I have written down every word/}));
+  expect(check).toBeEnabled();
   fireEvent.click(check);
   expect(screen.queryByText('Recovery Phrase')).toBeNull();
   expect(screen.queryAllByText('abandon')).toHaveLength(0);
@@ -200,7 +201,7 @@ describe('passkey recovery review', () => {
     expect(screen.getByText('My wallet')).toBeVisible();
     expect(screen.getByText(/cannot verify that your passkey has synced/)).toBeVisible();
     expect(fixtures.signIn).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('checkbox', {name: /I know which account and password manager/}));
+    fireEvent.click(screen.getByRole('button', {name: /No. I must check an independent recovery method/}));
     expect(confirmed).not.toHaveBeenCalled();
     fireEvent.click(keep);
     expect(confirmed).toHaveBeenCalledExactlyOnceWith('passkey-reviewed');
@@ -218,7 +219,7 @@ describe('passkey recovery review', () => {
     const back = vi.fn();
     render(<BackupPage onBack={back} onRecoveryConfirmed={confirmed}/>);
     fireEvent.click(screen.getByText('Passkey recovery details'));
-    fireEvent.click(screen.getByRole('checkbox', {name: /I know which account and password manager/}));
+    fireEvent.click(screen.getByRole('button', {name: /No. I must check an independent recovery method/}));
     fireEvent.click(screen.getByRole('button', {name: 'Go Back'}));
     expect(back).toHaveBeenCalledOnce();
     expect(confirmed).not.toHaveBeenCalled();
@@ -289,8 +290,9 @@ describe('native backup authentication paths', () => {
     fixtures.biometricHasSeed.mockResolvedValue(true);
     fixtures.signIn.mockRejectedValueOnce(new Error('Synthetic passkey cancellation'));
     render(<BackupPage onBack={vi.fn()}/>);
-    fireEvent.click(screen.getByRole('checkbox', {name: /I am in a private space/}));
-    fireEvent.click(screen.getByRole('checkbox', {name: /I understand these words control my wallet/}));
+    fireEvent.click(screen.getByRole('button', {name: /Your receiving address/}));
+  fireEvent.click(screen.getByRole('button', {name: /I am in a private space/}));
+    fireEvent.click(screen.getByRole('button', {name: /I understand these words control my wallet/}));
     fireEvent.click(screen.getByRole('button', {name: 'Reveal Words Privately'}));
     await waitFor(() => expect(fixtures.biometricHasSeed).toHaveBeenCalledOnce());
     const fallback = await screen.findByRole('button', {name: 'Reveal Words Privately'});
@@ -311,11 +313,12 @@ describe('backup language and recovery-word order', () => {
     expect(screen.getByRole('heading', {name: 'पैसे जोड़ने से पहले बैकअप बनाएँ'})).toBeVisible();
     const reveal = await screen.findByRole('button', {name: text.reveal});
     expect(reveal).toBeDisabled();
-    fireEvent.click(screen.getByRole('checkbox', {name: text.privateCheck}));
-    fireEvent.click(screen.getByRole('checkbox', {name: text.paperCheck}));
+    fireEvent.click(screen.getByRole('button', {name: bitcoinLearningCopy('hi').quizOptions[0]}));
+    fireEvent.click(screen.getByRole('button', {name: text.privateCheck}));
+    fireEvent.click(screen.getByRole('button', {name: text.paperCheck}));
     fireEvent.click(reveal);
     expect(screen.getByText(text.phrase)).toBeVisible();
-    expect(screen.getByRole('button', {name: text.check})).toBeDisabled();
+    expect(screen.getByRole('button', {name: text.check})).toBeEnabled();
   });
 
   it('keeps recovery words in their original order in an Arabic interface', async () => {
@@ -323,14 +326,14 @@ describe('backup language and recovery-word order', () => {
     render(<BackupPage onBack={vi.fn()}/>);
     const text = backupSetupCopy('ar');
     const reveal = await screen.findByRole('button', {name: text.reveal});
-    fireEvent.click(screen.getByRole('checkbox', {name: text.privateCheck}));
-    fireEvent.click(screen.getByRole('checkbox', {name: text.paperCheck}));
+    fireEvent.click(screen.getByRole('button', {name: bitcoinLearningCopy('ar').quizOptions[0]}));
+    fireEvent.click(screen.getByRole('button', {name: text.privateCheck}));
+    fireEvent.click(screen.getByRole('button', {name: text.paperCheck}));
     fireEvent.click(reveal);
     const words = screen.getByTestId('recovery-word-grid');
     expect(words).toHaveAttribute('dir', 'ltr');
     expect(words.children[0]).toHaveTextContent(/^1\.\s*abandon$/);
     expect(words.children[11]).toHaveTextContent(/^12\.\s*about$/);
-    fireEvent.click(screen.getByRole('checkbox', {name: text.handwritten}));
     fireEvent.click(screen.getByRole('button', {name: text.check}));
     expect(screen.queryByTestId('recovery-word-grid')).toBeNull();
     expect(screen.getByLabelText('الكلمة 1')).toHaveAttribute('dir', 'ltr');
