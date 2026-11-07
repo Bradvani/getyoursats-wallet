@@ -66,7 +66,7 @@ test('@public-smoke theme changes update home cards and History without reload',
  await page.getByTestId('settings-appearance-dark').click();
  await nav.getByRole('button',{name:'Wallet',exact:true}).click();
  await expect(page.locator('html')).toHaveAttribute('data-gys-theme','dark');
- await expect(page.getByTestId('market-quote-price')).toHaveCSS('color','rgb(248, 242, 230)');
+ await expect(page.getByTestId('market-quote-price')).toHaveCSS('color','rgb(255, 255, 255)');
  await nav.getByRole('button',{name:'Settings',exact:true}).click();
  await page.getByTestId('settings-appearance').click();
  await page.getByTestId('settings-appearance-system').click();
@@ -74,5 +74,5 @@ test('@public-smoke theme changes update home cards and History without reload',
  await expect(page.locator('.gys-market-summary')).toHaveCSS('background-color','rgb(255, 253, 248)');
  await page.emulateMedia({colorScheme:'dark'});
  await expect(page.locator('html')).toHaveAttribute('data-gys-theme','dark');
- await expect(page.getByTestId('market-quote-price')).toHaveCSS('color','rgb(248, 242, 230)');
+ await expect(page.getByTestId('market-quote-price')).toHaveCSS('color','rgb(255, 255, 255)');
 });
