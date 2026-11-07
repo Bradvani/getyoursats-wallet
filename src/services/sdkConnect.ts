@@ -45,10 +45,35 @@ function applyLocalCluster(config: Config, network: Network): boolean {
   return true;
 }
 
-/** The network this session connects on. Settings switches it by reloading with
- *  the parameter set, so the URL is what the SDK is connected to. */
-export function selectedNetwork(): Network {
-  return (new URLSearchParams(window.location.search).get('network') ?? 'mainnet') as Network;
+const RAMPNOW_SANDBOX_ORIGIN = 'https://getyoursats-wallet-git-feat-rampnow-integr-d20510-bradvani-8798.vercel.app';
+const isNetwork = (value: unknown): value is Network =>
+  value === 'mainnet' || value === 'regtest' || value === 'signet';
+
+/** Select the network before creating any wallet configuration. A checkout
+ * return must carry its explicit supported sandbox network, never mainnet by
+ * default. The URL is navigation context only: it proves neither order
+ * ownership nor settlement. Status still requires the wallet-signed challenge.
+ */
+export function selectedNetwork(overrideNetwork?: Network): Network {
+  const {origin, pathname, search, hash} = window.location;
+  const params = new URLSearchParams(search);
+  const networks = params.getAll('network');
+  if (pathname === '/rampnow' || pathname.startsWith('/rampnow/')) {
+    const intent = params.get('intent');
+    if (origin !== RAMPNOW_SANDBOX_ORIGIN || pathname !== '/rampnow/return' || hash
+      || [...params].length !== 2 || params.getAll('intent').length !== 1
+      || !intent || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(intent)
+      || networks.length !== 1 || networks[0] !== 'signet'
+      || (overrideNetwork !== undefined && overrideNetwork !== 'signet')) {
+      throw new Error('Could not verify the sandbox checkout return. Reopen the original wallet preview to check the purchase.');
+    }
+    return 'signet';
+  }
+  if (networks.length > 1 || (networks.length === 1 && !isNetwork(networks[0]))
+    || (overrideNetwork !== undefined && !isNetwork(overrideNetwork))) {
+    throw new Error('The wallet network is unsupported or ambiguous. Reopen the original wallet address.');
+  }
+  return overrideNetwork ?? (networks[0] as Network | undefined) ?? 'mainnet';
 }
 
 /**
@@ -56,7 +81,7 @@ export function selectedNetwork(): Network {
  * Pure function — no side effects beyond reading env vars and localStorage.
  */
 export function buildConnectConfig(overrideNetwork?: Network): Config {
-  const network = overrideNetwork ?? selectedNetwork();
+  const network = selectedNetwork(overrideNetwork);
   const config: Config = defaultConfig(network);
   const configuredKey = import.meta.env.VITE_BREEZ_API_KEY?.trim();
   config.apiKey = configuredKey;
