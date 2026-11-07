@@ -1,5 +1,7 @@
 import {test, expect, type Page} from '@playwright/test';
 
+test.setTimeout(30000);
+
 const fixture = '/e2e/fixtures/android-audit.html';
 const cases = [
   {width:360,height:640,language:'en',text:100},
@@ -55,8 +57,9 @@ for (const value of cases) test(`home reflows ${value.width}x${value.height} ${v
   }
   await page.getByTestId('open-bitcoin-market').scrollIntoViewIfNeeded();
   await expect(page.getByTestId('open-bitcoin-market')).toBeInViewport({ratio:1});
-  await page.getByTestId('transaction-item').first().scrollIntoViewIfNeeded();
-  await expect(page.getByTestId('transaction-item').first()).toBeInViewport({ratio:1});
+  const firstPayment = page.locator('.gys-activity__feed button').first();
+  await firstPayment.scrollIntoViewIfNeeded();
+  await expect(firstPayment).toBeInViewport({ratio:1});
   await expect(page.getByTestId('send-button')).toBeInViewport({ratio:1});
   expect(errors).toEqual([]);
 });
