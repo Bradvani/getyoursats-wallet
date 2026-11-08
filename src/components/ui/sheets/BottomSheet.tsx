@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 import { Sheet, type SheetRef } from 'react-modal-sheet';
 import { useWebSheetViewport, type WebSheetViewport } from '../../../hooks/useWebSheetViewport';
+import { useIOSSheetFocusGuard } from '../../../hooks/useIOSSheetFocusGuard';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { animate } from 'motion/react';
 import { usePreventScroll } from '@react-aria/overlays';
@@ -310,14 +311,10 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
     'status',
   );
 
-  // Scroll lock + iOS focus-pan suppression from the maintained
-  // react-aria package instead of the library's vendored snapshot:
-  // the snapshot predates Adobe's iOS 26 fixes, and Safari's focus
-  // pan slipping through is what briefly shoves the page behind the
-  // sheet off-screen when the keyboard opens (the pan is invisible
-  // to JS until it finishes, so it can only be prevented, not
-  // corrected). The matching disableScrollLocking on <Sheet> below
-  // keeps the two locks from stacking.
+  // The maintained scroll lock handles background gestures and programmatic
+  // focus. The card's iOS tap guard covers native first-focus reveal, while
+  // viewport tracking follows keyboard geometry. Disable the vendored lock
+  // below so its body offsets cannot compete with this positioning.
   usePreventScroll({ isDisabled: !isOpen });
 
   // NATIVE ONLY. The keyboard resizes the WebView (Android
@@ -523,6 +520,7 @@ export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
     const webViewport = useContext(WebSheetViewportContext);
     const handleRef = useRef<HTMLDivElement | null>(null);
     const scrollerRef = useRef<HTMLDivElement | null>(null);
+    useIOSSheetFocusGuard(cardEl, !IS_NATIVE);
 
     // Reveal within the actual scrollport in either direction. Measuring only
     // bottom overlap left fields above the visible area stranded after a pan.
