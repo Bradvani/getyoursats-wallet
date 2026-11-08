@@ -1,14 +1,16 @@
 /* Home has three rows: navigation, one scroll viewport and payment actions.
    Keep geometry here so short screens never inherit a second dock allowance. */
 .gys-wallet { min-height: 0; min-width: 0; }
-.gys-wallet-toolbar { position: relative; z-index: 10; flex: none; background: var(--spark-dark); border-bottom: 1px solid var(--spark-border); }
+.gys-wallet-toolbar { position: relative; z-index: 10; flex: none; isolation: isolate; background: var(--spark-dark); border-bottom: 1px solid var(--spark-border); opacity: 1; filter: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .gys-wallet-toolbar__row { display: flex; align-items: center; gap: 8px; min-height: 56px; padding-inline: 12px; }
-.gys-wallet-toolbar .gys-brand-wordmark--compact { width: clamp(110px, 34vw, 148px); height: auto; max-width: 38%; flex: 0 1 auto; }
+/* Keep the new toolbar on an opaque, isolated plane. The balance below it
+   owns decorative blur, which must never be composited over the navigation. */
+.gys-wallet-toolbar .gys-brand-wordmark--compact { display: block; width: clamp(110px, 34vw, 148px); height: auto; max-width: 38%; flex: 0 1 auto; opacity: 1; filter: none; mix-blend-mode: normal; }
 .gys-wallet-toolbar button { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 48px; min-height: 48px; padding: 8px; border-radius: 12px; color: var(--spark-primary); }
 .gys-wallet-toolbar button:hover { background: color-mix(in srgb, var(--spark-primary) 8%, transparent); }
 .gys-wallet-toolbar__menu { gap: 2px; }
 .gys-wallet-toolbar__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; margin-inline-start: auto; min-width: 0; }
-.gys-wallet__activity { flex: 1 1 0%; min-height: 0; min-width: 0; overflow: auto; overscroll-behavior-y: contain; scrollbar-width: thin; padding: 0 0 20px; scroll-padding-block: 16px; -webkit-overflow-scrolling: touch; }
+.gys-wallet__activity { flex: 1 1 0%; min-height: 0; min-width: 0; isolation: isolate; overflow: auto; overscroll-behavior-y: contain; scrollbar-width: thin; padding: 0 0 20px; scroll-padding-block: 16px; -webkit-overflow-scrolling: touch; }
 .gys-home-content { width: 100%; max-width: 760px; margin-inline: auto; }
 .gys-home-balance .gys-wallet-balance-surface { height: auto; background: transparent; }
 .gys-home-balance .gys-wallet-balance-surface__content { min-height: 0; display: flex; flex-direction: column; padding: 16px 16px 4px; }
@@ -34,15 +36,32 @@
 .gys-setup-reminder__primary > svg { flex: none; }
 .gys-setup-reminder__guide { grid-column: 1; padding: 8px; color: var(--spark-primary); }
 .gys-setup-reminder__dismiss { grid-column: 2; grid-row: 1; display: grid; place-items: center; color: var(--spark-text-secondary); }
+.gys-home-pos, .gys-menu-pos { border: 1px solid var(--spark-primary); background: color-mix(in srgb, var(--spark-primary) 12%, var(--spark-surface)); color: var(--spark-primary); }
+.gys-home-pos { display: flex; align-items: center; gap: 12px; width: calc(100% - 32px); min-height: 52px; margin: 0 16px 12px; padding: 12px 16px; border-radius: 16px; text-align: start; font-size: .875rem; line-height: 1.4; font-weight: 700; }
+.gys-home-pos > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.gys-home-pos > svg { flex: none; }
+.gys-home-pos:hover, .gys-menu-pos:hover { background: color-mix(in srgb, var(--spark-primary) 20%, var(--spark-surface)); color: var(--spark-primary); }
+.gys-home-pos:focus-visible, .gys-menu-pos:focus-visible, .gys-market-summary__open:focus-visible { outline: 2px solid var(--spark-primary); outline-offset: 3px; }
 .gys-market-summary { margin: 0 16px 16px; border: 1px solid var(--spark-border); border-radius: 16px; background: var(--spark-surface); }
 .gys-market-summary__open { display: grid; width: 100%; gap: 8px; padding: 14px 16px; text-align: start; color: var(--spark-text-primary); min-height: 48px; border-radius: inherit; }
 .gys-market-summary__title { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .875rem; font-weight: 600; }
 .gys-market-summary__title > svg { flex: none; color: var(--spark-primary); }
+.gys-market-summary__open[aria-expanded="true"] .gys-market-summary__title > svg { transform: rotate(180deg); }
+.gys-market-summary__details { padding: 0 16px 16px; min-width: 0; border-top: 1px solid var(--spark-border); }
+.gys-market-summary__details > .gys-market-pulse__switches { margin-block: 8px; }
+.gys-market-summary__details .gys-market-pulse__denominations { flex-wrap: wrap; overflow: visible; padding-block: 4px 12px; }
 .gys-market-summary__quote { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
 .gys-market-summary__quote strong { font-size: 1.35rem; line-height: 1.3; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; min-width: 0; }
 .gys-market-summary__quote > span, .gys-market-summary__change, .gys-market-summary__stale { font-size: .75rem; line-height: 1.5; color: var(--spark-text-secondary); }
 .gys-market-summary__change { display: flex; gap: 8px; flex-wrap: wrap; }
 .gys-market-summary__change strong { color: var(--spark-text-primary); font-variant-numeric: tabular-nums; }
+:root[data-gys-theme="orange"] .gys-home-pos,
+:root[data-gys-theme="orange"] .gys-menu-pos,
+:root[data-gys-theme="orange"] .gys-wallet-toolbar button,
+:root[data-gys-theme="orange"] .gys-market-summary__title > svg { color: #783c05; }
+:root[data-gys-theme="orange"] .gys-home-pos:focus-visible,
+:root[data-gys-theme="orange"] .gys-menu-pos:focus-visible,
+:root[data-gys-theme="orange"] .gys-market-summary__open:focus-visible { outline-color: #783c05; }
 .gys-action-dock { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); flex: none; position: relative; z-index: 10; width: 100%; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--spark-border); background: var(--spark-dark); }
 .gys-action-dock button { display: flex; align-items: center; justify-content: center; flex-direction: row; gap: 8px; min-width: 0; min-height: 54px; padding: 12px 8px; border: 1px solid var(--spark-primary); border-radius: 16px; font-size: 1rem; line-height: 1.4; font-weight: 700; overflow-wrap: anywhere; }
 .gys-action-dock button > svg { flex: none; width: 20px; height: 20px; }

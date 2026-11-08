@@ -353,3 +353,6 @@
  :root[data-gys-theme="orange"] .gys-action-dock button,
  :root[data-gys-theme="orange"] .gys-home-quick-actions__button{transition:none}
 }
+:root[data-gys-theme="orange"] .gys-send-flow :is(.gys-send-edit-action, .gys-send-max-action) {
+  color: #783c05;
+}

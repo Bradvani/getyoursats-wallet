@@ -133,6 +133,67 @@ test('enlarged text stays editable in a short portrait keyboard viewport', async
   expect(await page.locator('.web-sheet-scrollport').last().evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
 });
 
+test('Spark amount browser reveal cannot pan the outer sheet above the keyboard', async ({page}, testInfo) => {
+  await page.setViewportSize({width: 390, height: 844});
+  await page.goto(origin + '/e2e/fixtures/scan-send.html?kind=spark&manual=1');
+  await page.getByTestId('send-button').tap();
+  const recipient = page.getByTestId('payment-input');
+  await recipient.tap();
+  await expect(recipient).toBeFocused();
+  await page.keyboard.type('spark1synthetic');
+  await page.keyboard.press('Enter');
+  const amount = page.getByTestId('amount-input');
+  await expect(amount).toBeVisible();
+  const sheet = page.locator('.react-modal-sheet-root:has([data-testid="send-flow"])');
+  await expect(sheet).toHaveAttribute('data-sheet-state', 'open');
+
+  // Safari's focus reveal may walk every ancestor, including overflow:hidden
+  // boxes. At the content snap the full-height translated card overflows its
+  // outer root. Scrolling that root shifts the entire form/header, separately
+  // from the intended inner scroller. Keep the frame non-scrollable while
+  // letting the inner scrollport reveal the field.
+  const outerPan = await amount.evaluate(element => {
+    (element as HTMLElement).focus(); // Deliberately no preventScroll.
+    element.scrollIntoView({block: 'center', behavior: 'instant'});
+    const root = element.closest<HTMLElement>('.react-modal-sheet-root')!;
+    const focusPan = root.scrollTop;
+    root.scrollTop = 350; // Simulate a delayed outer-scroll attempt.
+    return {focusPan, delayedPan: root.scrollTop};
+  });
+  expect(outerPan).toEqual({focusPan: 0, delayedPan: 0});
+  await expect(sheet).toHaveCSS('overflow', 'clip');
+
+  for (const geometry of [{height: 494, offsetTop: 28}, {height: 337, offsetTop: 42}]) {
+    await keyboard(page, geometry);
+    await expectFieldInVisibleArea(amount, geometry.offsetTop, geometry.height);
+    expect(await sheet.evaluate(el => el.scrollTop)).toBe(0);
+    await expect(sheet).toHaveCSS('height', `${geometry.height}px`);
+    await expect(sheet).toHaveCSS('top', `${geometry.offsetTop}px`);
+  }
+  // The field must accept a real tap and keyboard text after reveal. Neither
+  // fill() nor programmatic focus is used to rescue it after the resize.
+  await amount.tap();
+  await expect(amount).toBeFocused();
+  await page.keyboard.type('100');
+  await expect(amount).toHaveValue('100');
+  const scroller = sheet.locator('.web-sheet-scrollport');
+  const scroll = await scroller.evaluate(element => {
+    element.scrollTop = element.scrollHeight;
+    return {top: element.scrollTop, range: element.scrollHeight - element.clientHeight};
+  });
+  expect(scroll.range).toBeGreaterThan(0);
+  expect(scroll.top).toBeGreaterThan(0);
+  expect(await sheet.evaluate(el => el.scrollTop)).toBe(0);
+  await page.screenshot({path: testInfo.outputPath('spark-amount-keyboard-outer-pan.png')});
+  await amount.evaluate(element => (element as HTMLElement).blur());
+  await keyboard(page, {height: 844, offsetTop: 42});
+  await expect(sheet).toHaveCSS('top', '0px');
+  await page.getByRole('button', {name: 'Close', exact: true}).tap();
+  await expect(page.getByTestId('send-flow')).toHaveCount(0);
+  await page.getByTestId('send-button').tap();
+  await expect(page.getByTestId('payment-input')).toBeVisible();
+});
+
 test('pinch zoom is preserved and is not treated as an open keyboard', async ({page}) => {
   await page.setViewportSize({width: 390, height: 844});
   await page.goto(origin + '/e2e/fixtures/scan-send.html');

@@ -42,7 +42,7 @@ test('unavailable or stale feed never creates a zero cap or a false neutral sent
   await page.getByTestId('open-bitcoin-market').click();
   await expect(page.getByTestId('market-cap')).toHaveText('Unavailable');
   await expect(page.getByTestId('market-sentiment')).toHaveText('Unavailable');
-  await expect(page.locator('.gys-slide-layer').getByTestId('market-quote-price')).toContainText('$90,000.00');
+  await expect(page.getByTestId('bitcoin-market').getByTestId('market-quote-price')).toContainText('$90,000.00');
 });
 
 test('settings identity, social links and preference destinations work and persist',async({page})=>{
@@ -77,11 +77,14 @@ for(const language of ['en','hi','ar','ta'])test(`market and preference pages re
   await page.goto(fixture);await page.addStyleTag({content:'html{font-size:32px!important}'});
   await page.getByTestId('open-bitcoin-market').click();
   await page.getByTestId('market-overview').scrollIntoViewIfNeeded();
-  // The price card has a deliberately clipped decorative pseudo-element and a horizontally scrollable denomination rail.
-  // Measure the actual new information surface and page reflow, not those intentional overflow areas.
   const geometry=await page.getByTestId('market-overview').evaluate(el=>({width:el.clientWidth,scroll:el.scrollWidth}));
   expect(geometry.scroll,JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.width+1);
+  const home=page.getByTestId('wallet-scroll');
+  expect(await home.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await page.getByTestId('open-bitcoin-market').click();
+  await expect(page.getByTestId('open-bitcoin-market')).toHaveAttribute('aria-expanded','false');
+  await expect(page.getByTestId('market-details')).toBeHidden();
 });
 
 for(const angle of [90,270])test(`scanner preserves its portrait surface when a phone tilts to ${angle} degrees`,async({page})=>{

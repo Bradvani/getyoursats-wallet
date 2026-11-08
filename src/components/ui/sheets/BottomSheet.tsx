@@ -450,6 +450,11 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
       // fixed child and still covers the full viewport.
       style={{
         zIndex, maxWidth: desktopPointer && !fullHeight ? '42.5rem' : '56rem', marginInline: 'auto',
+        // A translated content-snap card overflows this outer frame. Hidden
+        // overflow still lets browser focus reveal scroll the frame itself,
+        // lifting the entire sheet above the keyboard. Only Sheet.Content's
+        // inner scrollport may scroll; clip makes the outer frame non-scrollable.
+        overflow: 'clip',
         ...(!IS_NATIVE ? {top: webViewport.top, bottom: 'auto', height: webViewport.height} : {}),
       }}
       // Web sheets live outside the app root so a page transform cannot change
@@ -493,6 +498,8 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
 export interface BottomSheetCardProps {
   children: ReactNode;
   className?: string;
+  /** Keep form touches and scrolling separate from the sheet's drag handle. */
+  disableContentDrag?: boolean;
 }
 
 /**
@@ -503,7 +510,7 @@ export interface BottomSheetCardProps {
  * scroll handling).
  */
 export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
-  ({ children, className = '' }, ref) => {
+  ({ children, className = '', disableContentDrag = false }, ref) => {
     const [cardEl, setCardEl] = useState<HTMLDivElement | null>(null);
     const [stepBack, setStepBack] = useState<(() => void) | null>(null);
     // Content areas registered via useSheetOwnsScroll.
@@ -590,7 +597,7 @@ export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
           </div>
         </Sheet.Header>
         <Sheet.Content
-          scrollClassName={`scrollbar-hidden ${IS_NATIVE ? '' : 'web-sheet-scrollport'}`}
+          scrollClassName={`scrollbar-hidden ${IS_NATIVE ? '' : 'web-sheet-scrollport'} ${disableContentDrag ? 'sheet-form-scrollport' : ''}`}
           scrollRef={scrollerRef}
           // A step with its own scroller (useSheetOwnsScroll) takes the
           // drag off the content. The library suppresses the drag only for
@@ -598,7 +605,7 @@ export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
           // unscrollable, so without this the sheet reads every swipe over
           // the list as a drag and the list moves only when the browser
           // wins the race.
-          disableDrag={!IS_NATIVE || ownScrollers > 0}
+          disableDrag={!IS_NATIVE || disableContentDrag || ownScrollers > 0}
           // Web content always scrolls; dragging is confined to the handle.
           // The sheet already fits above the keyboard, so reserve only a small
           // caret margin rather than adding the keyboard height a second time.
@@ -612,7 +619,7 @@ export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
             // once its own scroller no longer overflows. Chromium enforces
             // the directional value, WebKit ignores it, which is why this
             // reads as flaky on iOS and immovable on Android.
-            ...(ownScrollers > 0 ? { touchAction: 'pan-y' } : null),
+            ...(disableContentDrag || ownScrollers > 0 ? { touchAction: 'pan-y' } : null),
           }}
         >
           <div

@@ -16,8 +16,6 @@ import { logger, LogCategory } from '@/services/logger';
 import CollapsingWalletHeader from '../components/CollapsingWalletHeader';
 import SideMenu from '../components/SideMenu';
 import MarketPulse from '../getyoursats/MarketPulse';
-import SlideInPage from '../components/layout/SlideInPage';
-import {MARKET_COPY} from '../locales/market';
 import WalletToolbar from '../components/WalletToolbar';
 import WalletIdentityCard from '../getyoursats/WalletIdentityCard';
 import {isGetYourSatsAddress} from '../getyoursats/walletIdentity';
@@ -32,7 +30,7 @@ import type {WalletRecoveryMethod} from '../getyoursats/walletSetupState';
 import PullToRefresh from '../components/PullToRefresh';
 import { GetInfoResponse, Payment, DepositInfo, Network } from '@breeztech/breez-sdk-spark';
 import type { BuyBitcoinProvider } from '../services/settings';
-import { ArrowUpIcon, ArrowDownIcon } from '../components/Icons';
+import { ArrowUpIcon, ArrowDownIcon, ChevronRightIcon } from '../components/Icons';
 import { mergeDepositsWithTransactions, ExtendedPayment, isUnclaimedDepositPayment } from '@/utils/depositHelpers';
 import SendPaymentDialog from '../features/send/SendPaymentDialog';
 import ReceivePaymentDialog from '../features/receive/ReceivePaymentDialog';
@@ -116,7 +114,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   const { historyOpen, setHistoryOpen, gysPosOpen, setGysPosOpen, navigate } = useWalletNavigation(onReturnToWallet, onOpenSettings);
   const [partnerBuyOpen,setPartnerBuyOpen] = useState(false);
-  const [marketOpen, setMarketOpen] = useState(false);
   const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
@@ -162,7 +159,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const tourRequested = Boolean(walletSetup?.scope && walletSetup.progress.tourStatus === 'active');
   const showHistory = historyOpen;
   const setupPaused = !setupTourAllowed || settingsActive || isSendDialogOpen || isReceiveDialogOpen || isQrScannerOpen ||
-    isMenuOpen || marketOpen || isBuyBitcoinOpen || partnerBuyOpen || gysPosOpen || Boolean(selectedPayment) ||
+    isMenuOpen || isBuyBitcoinOpen || partnerBuyOpen || gysPosOpen || Boolean(selectedPayment) ||
     Boolean(selectedDeposit) || Boolean(selectedExitId) || Boolean(saveContactAddress);
   const startTour = () => { navigate('wallet'); walletSetup?.beginTour(); };
   const nextTourStep = () => { walletSetup?.next(); };
@@ -175,8 +172,6 @@ const WalletPage: React.FC<WalletPageProps> = ({
       else previousTourStep();
     } else if (showHistory) setHistoryOpen(false);
   }, (showGuide || showHistory) && !setupPaused);
-
-  useBackButton(() => setMarketOpen(false), marketOpen && !settingsActive);
 
   const openSendDialog = useCallback(() => {
     setSendDialogSession(s => s + 1);
@@ -381,7 +376,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
             <WalletIdentityCard identity={primaryLightningAddress} onPersonalize={onPersonalizeAddress}/>
             {walletSetup?.scope && onReviewRecovery && <WalletSetupCard setup={walletSetup}
               paused={setupPaused} onReviewRecovery={onReviewRecovery} onStartTour={startTour} compact/>}
-            {!settingsActive && <MarketPulse compact onOpenDetails={() => setMarketOpen(true)}/>}
+            <button type="button" className="gys-home-pos" data-testid="home-pos" onClick={()=>setGysPosOpen(true)}>
+              <ArrowDownIcon/><span>{copy.pointOfSale}</span><ChevronRightIcon size="sm" className="rtl:rotate-180"/>
+            </button>
+            {!settingsActive && <MarketPulse compact/>}
           </div>}
           <WalletActivityPanel
             view={showHistory ? 'history' : 'activity'} onViewChange={view => setHistoryOpen(view === 'history')}
@@ -453,17 +451,12 @@ const WalletPage: React.FC<WalletPageProps> = ({
         />
       )}
 
-      {/* Receive and Send stay dominant; scanning and POS stay available in the menu. */}
       <nav className="gys-action-dock" aria-label="Wallet actions" style={{paddingBottom: `max(10px, ${safeAreaBottom})`}}>
         <button type="button" onClick={openReceiveDialog} data-testid="receive-button" aria-label="Receive Bitcoin" data-wallet-tour="receive"
           className="gys-action-dock__receive"><ArrowDownIcon/><span>{wc.receive}</span></button>
         <button type="button" onClick={openSendDialog} data-testid="send-button" aria-label="Send Bitcoin"
           className="gys-action-dock__send"><ArrowUpIcon/><span>{wc.send}</span></button>
       </nav>
-
-      {marketOpen && <SlideInPage title={MARKET_COPY[language].title} closeStyle="back" onClose={() => setMarketOpen(false)}>
-        <MarketPulse/>
-      </SlideInPage>}
 
       {/* Save Contact Dialog */}
       <SaveContactDialog
