@@ -55,6 +55,13 @@
 .gys-market-summary__quote > span, .gys-market-summary__change, .gys-market-summary__stale { font-size: .75rem; line-height: 1.5; color: var(--spark-text-secondary); }
 .gys-market-summary__change { display: flex; gap: 8px; flex-wrap: wrap; }
 .gys-market-summary__change strong { color: var(--spark-text-primary); font-variant-numeric: tabular-nums; }
+:root[data-gys-theme="orange"] .gys-home-pos,
+:root[data-gys-theme="orange"] .gys-menu-pos,
+:root[data-gys-theme="orange"] .gys-wallet-toolbar button,
+:root[data-gys-theme="orange"] .gys-market-summary__title > svg { color: #783c05; }
+:root[data-gys-theme="orange"] .gys-home-pos:focus-visible,
+:root[data-gys-theme="orange"] .gys-menu-pos:focus-visible,
+:root[data-gys-theme="orange"] .gys-market-summary__open:focus-visible { outline-color: #783c05; }
 .gys-action-dock { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); flex: none; position: relative; z-index: 10; width: 100%; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--spark-border); background: var(--spark-dark); }
 .gys-action-dock button { display: flex; align-items: center; justify-content: center; flex-direction: row; gap: 8px; min-width: 0; min-height: 54px; padding: 12px 8px; border: 1px solid var(--spark-primary); border-radius: 16px; font-size: 1rem; line-height: 1.4; font-weight: 700; overflow-wrap: anywhere; }
 .gys-action-dock button > svg { flex: none; width: 20px; height: 20px; }

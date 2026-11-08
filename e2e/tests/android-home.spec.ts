@@ -1,4 +1,4 @@
-import {test, expect, type Page} from '@playwright/test';
+import {test, expect, type Locator, type Page} from '@playwright/test';
 
 test.setTimeout(30000);
 
@@ -25,6 +25,33 @@ async function layout(page: Page) {
     return {height:scroll.height, top:scroll.top, bottom:scroll.bottom, dockTop:dock.top, dockBottom:dock.bottom,
       toolbarBottom:toolbar.bottom, overflow:document.documentElement.scrollWidth > innerWidth + 1,
       scrollOverflow:el.scrollWidth > el.clientWidth + 1};
+  });
+}
+async function surfaceContrast(locator: Locator) {
+  return locator.evaluate(el => {
+    const canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
+    const context = canvas.getContext('2d', {willReadFrequently:true})!;
+    const ancestors: Element[] = [];
+    for (let node: Element | null = el; node; node = node.parentElement) ancestors.push(node);
+    // Canvas resolves CSS Color 4 values and composites translucent surfaces over their ancestors.
+    for (const node of ancestors.reverse()) {
+      context.fillStyle = getComputedStyle(node).backgroundColor;
+      context.fillRect(0,0,1,1);
+    }
+    const background = Array.from(context.getImageData(0,0,1,1).data);
+    if (background[3] !== 255) throw new Error('Contrast requires a resolved opaque surface');
+    const color = getComputedStyle(el).color;
+    context.fillStyle = color; context.fillRect(0,0,1,1);
+    const foreground = Array.from(context.getImageData(0,0,1,1).data);
+    const luminance = (rgba: number[]) => {
+      const [r,g,b] = rgba.slice(0,3).map(value => {
+        const channel = value / 255;
+        return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4;
+      });
+      return .2126 * r + .7152 * g + .0722 * b;
+    };
+    const light = luminance(foreground), dark = luminance(background);
+    return {ratio:(Math.max(light,dark) + .05) / (Math.min(light,dark) + .05), color, foreground, background};
   });
 }
 test.beforeEach(async ({page}) => {
@@ -156,6 +183,18 @@ for (const theme of ['dark','orange']) test(`POS opens from Home and its highlig
   await page.setViewportSize({width:360,height:640});
   await page.goto(fixture + `?entry=existing&balance=1&complete=1&theme=${theme}`);
   const terminal = page.getByRole('dialog',{name:'Merchant point of sale'});
+  if (theme === 'orange') {
+    const posContrast = await surfaceContrast(page.getByTestId('home-pos').locator('span'));
+    expect(posContrast.ratio,JSON.stringify(posContrast)).toBeGreaterThanOrEqual(4.5);
+    const icons = page.locator('.gys-wallet-toolbar button svg');
+    expect(await icons.count()).toBeGreaterThan(0);
+    for (const icon of await icons.all()) {
+      const contrast = await surfaceContrast(icon);
+      expect(contrast.ratio,JSON.stringify(contrast)).toBeGreaterThanOrEqual(3);
+    }
+    const chevronContrast = await surfaceContrast(page.getByTestId('open-bitcoin-market').locator('svg'));
+    expect(chevronContrast.ratio,JSON.stringify(chevronContrast)).toBeGreaterThanOrEqual(3);
+  }
   await page.getByTestId('home-pos').click();
   await expect(terminal).toBeVisible();
   await expect(terminal.getByRole('button',{name:'Charge',exact:true})).toBeDisabled();
@@ -172,6 +211,10 @@ for (const theme of ['dark','orange']) test(`POS opens from Home and its highlig
   });
   expect(prominence.border).toBeGreaterThanOrEqual(1);
   expect(prominence.background).not.toBe(prominence.normalBackground);
+  if (theme === 'orange') {
+    const contrast = await surfaceContrast(menuPos.locator('span').last());
+    expect(contrast.ratio,JSON.stringify(contrast)).toBeGreaterThanOrEqual(4.5);
+  }
   await menuPos.click();
   await expect(terminal).toBeVisible();
   await expect(terminal.getByRole('button',{name:'Charge',exact:true})).toBeDisabled();

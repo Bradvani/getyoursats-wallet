@@ -450,6 +450,11 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
       // fixed child and still covers the full viewport.
       style={{
         zIndex, maxWidth: desktopPointer && !fullHeight ? '42.5rem' : '56rem', marginInline: 'auto',
+        // A translated content-snap card overflows this outer frame. Hidden
+        // overflow still lets browser focus reveal scroll the frame itself,
+        // lifting the entire sheet above the keyboard. Only Sheet.Content's
+        // inner scrollport may scroll; clip makes the outer frame non-scrollable.
+        overflow: 'clip',
         ...(!IS_NATIVE ? {top: webViewport.top, bottom: 'auto', height: webViewport.height} : {}),
       }}
       // Web sheets live outside the app root so a page transform cannot change

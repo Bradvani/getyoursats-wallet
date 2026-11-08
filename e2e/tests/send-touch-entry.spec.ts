@@ -39,18 +39,20 @@ for (const platform of ['android', 'ios'] as const) {
       }, platform);
     });
 
+    for (const kind of ['lnurl', 'spark'] as const) {
     for (const native of [false, true]) {
     for (const [width, height] of [[360, 640], [390, 844], [640, 360]]) {
-      test(`${native ? 'native adapter' : 'web'} ${width}x${height}: tap destination and amount, close and reopen`, async ({page}) => {
+      test(`${kind} ${native ? 'native adapter' : 'web'} ${width}x${height}: tap destination and amount, close and reopen`, async ({page}) => {
+        const rawInput = kind === 'spark' ? 'spark1synthetic' : 'alice@example.invalid';
         await page.setViewportSize({width, height});
-        await page.goto(`${origin}/e2e/fixtures/${native ? 'native-send' : 'scan-send'}.html?comments=1&platform=${platform}`);
+        await page.goto(`${origin}/e2e/fixtures/${native ? 'native-send' : 'scan-send'}.html?comments=1&platform=${platform}&kind=${kind}`);
         await page.getByTestId('send-button').tap();
         if (native) {
           const content = page.locator('.react-modal-sheet-content:has([data-testid="send-flow"])');
           await expect(content).not.toHaveCSS('touch-action', 'pan-x');
           await expect(content.locator('.react-modal-sheet-content-scroller')).toHaveCSS('touch-action', 'pan-y pinch-zoom');
         }
-        await tapAndType(page, page.getByTestId('payment-input'), 'alice@example.invalid');
+        await tapAndType(page, page.getByTestId('payment-input'), rawInput);
         await expect(page.locator('.sheet-form-scrollport')).toHaveCSS('touch-action', 'pan-y pinch-zoom');
         await page.keyboard.press('Enter');
         await expect.poll(() => page.evaluate(() => (window as unknown as {__gysScanFixture: Controls}).__gysScanFixture.evidence().pending)).toBe(true);
@@ -63,14 +65,14 @@ for (const platform of ['android', 'ios'] as const) {
         await page.keyboard.press('ControlOrMeta+A');
         await page.keyboard.press('Backspace');
         await tapAndType(page, amount, '100');
-        await tapAndType(page, page.locator('#lnurl-comment'), 'Thank you');
+        if (kind === 'lnurl') await tapAndType(page, page.locator('#lnurl-comment'), 'Thank you');
         await amount.tap();
         await expect(amount).toBeFocused();
         await page.keyboard.press('Backspace');
         await expect(amount).toHaveValue('10');
         await page.getByTestId('edit-send-destination').tap();
         const destination = page.getByTestId('payment-input');
-        await expect(destination).toHaveValue('alice@example.invalid');
+        await expect(destination).toHaveValue(rawInput);
         await destination.tap();
         await expect(destination).toBeFocused();
         await page.keyboard.press('ControlOrMeta+A');
@@ -85,6 +87,7 @@ for (const platform of ['android', 'ios'] as const) {
         await tapAndType(page, page.getByTestId('payment-input'), 'bob@example.invalid');
         expect(await page.evaluate(() => (window as unknown as {__gysScanFixture: Controls}).__gysScanFixture.evidence().mutations)).toBe(0);
       });
+    }
     }
     }
   });

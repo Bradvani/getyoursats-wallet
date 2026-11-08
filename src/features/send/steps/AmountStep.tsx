@@ -2,6 +2,7 @@ import {normalizeDecimalInput, validAmountInput} from '../../../utils/decimalInp
 import {useFlowText} from '@/hooks/useFlowText';
 import {usePresentation} from '@/hooks/usePresentation';
 import {sendDestinationCopy} from '@/locales/sendDestination';
+import {PAYMENT_UX} from '@/locales/paymentUx';
 import {useFiatData} from '../../../contexts/FiatDataContext';
 import DenominationTabs from '../../../getyoursats/DenominationTabs';
 import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
@@ -10,7 +11,6 @@ import type { ConversionOptions } from '@breeztech/breez-sdk-spark';
 import { FormError, PrimaryButton, AMOUNT_FIELD_CLASS } from '../../../components/ui';
 import { useSheetBack } from '../../../components/ui/sheets/BottomSheetCardContext';
 import { SpinnerIcon } from '../../../components/Icons';
-import { formatQuickAmount, pickQuickAmounts } from '../../../utils/tokenFormatting';
 import CurrencySwitcher from '../../../components/ui/CurrencySwitcher';
 import { useAmountInput, useFiatOverride } from '../../../hooks/useAmountInput';
 import { useBalanceValidation } from '../hooks/useBalanceValidation';
@@ -50,6 +50,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const t=useFlowText();
   const {language}=usePresentation();
   const editDestination=sendDestinationCopy(language).edit;
+  const text=PAYMENT_UX[language];
   // USD entry without a stable-balance token, funded from BTC. Cross-chain
   // ("Send USD", amountFirst) starts in USD; plain BTC sends start in sats
   // with USD as a toggleable secondary option (#253).
@@ -72,7 +73,6 @@ const AmountStep: React.FC<AmountStepProps> = ({
     tokenIdentifier,
     tokenSymbol,
     config,
-    quickAmountScale,
     parseToSats,
     tokenBalanceDisplay,
     formatSatsAsTokenDisplay,
@@ -124,7 +124,6 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
   const validAmount = validAmountInput(localAmount, isTokenMode ? (config?.fractionSize ?? 2) : 0);
 
-  const quickAmounts = pickQuickAmounts(balance.spendableDisplay, quickAmountScale);
   const amountNum = isTokenMode ? parseFloat(localAmount) || 0 : parseInt(localAmount) || 0;
 
   // Send All target value in BTC-as-fiat (when in token mode without a token
@@ -215,7 +214,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
         data-testid="edit-send-destination"
         className="w-full min-h-11 p-4 bg-spark-dark border border-spark-border rounded-xl text-start text-sm disabled:opacity-50">
         <span id={`${amountInputId}-destination`} className="block text-spark-text-secondary font-mono break-all">{paymentInput}</span>
-        <span className="mt-2 block text-spark-primary underline">{editDestination}</span>
+        <span className="gys-send-edit-action mt-2 block text-spark-primary underline">{editDestination}</span>
       </button>
     </div>
   );
@@ -224,12 +223,58 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const unitUnavailable=isFiatDenomination(denomination)&&!currentRate&&!amountFirst;
   const amountSection = (
     <div>
-        <label htmlFor={amountInputId} className="block text-sm font-medium text-spark-text-primary mb-2">
-          {t("Amount")}
-        </label>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+          <label htmlFor={amountInputId} className="text-sm font-medium text-spark-text-primary">{t("Amount")}</label>
+          <div className="ms-auto flex min-w-0 max-w-full items-center gap-2" data-testid="amount-available-balance">
+            <div id={`${amountInputId}-balance`} className="min-w-0 text-end text-xs text-spark-text-secondary">
+              <p>{text.available}</p>
+              <p className="text-spark-text-primary">{balanceSats === undefined ? text.balanceLoading : <SatAmount sats={balanceSats}/>}</p>
+              {hasTokenBalance && tokenBalanceDisplay && <p>{tokenBalanceDisplay} {tokenSymbol}</p>}
+            </div>
+          {showSendAll && (
+            <button
+              onClick={() => {
+                // Sats mode with non-zero BTC: fill with BTC balance.
+                // When BTC=0 (e.g., auto-converted to tokens in stable mode),
+                // fall through to the token branch so Send All switches
+                // denominations instead of inputting 0.
+                if (!isTokenMode && balanceSats !== undefined && balanceSats > 0) {
+                  setLocalAmount(String(balanceSats)); syncUnitFromSats(balanceSats);
+                } else if (hasTokenBalance && tokenBalanceDisplay) {
+                  // Token send-all: switch to token mode + show token balance
+                  if (!isTokenMode) setIsTokenMode(true);
+                  setLocalAmount(tokenBalanceDisplay);
+                } else if (sendAllBtcInTokenDisplay !== null) {
+                  // No token balance but in token mode. Fill with BTC sats
+                  // converted to fiat so the input stays in the user's chosen
+                  // unit instead of jumping back to sats.
+                  setLocalAmount(sendAllBtcInTokenDisplay);
+                } else if (balanceSats !== undefined) {
+                  // Sats mode (with or without stable balance)
+                  setLocalAmount(String(balanceSats)); syncUnitFromSats(balanceSats);
+                }
+                setFeesIncluded(true);
+                setLocalError(null);
+              }}
+              disabled={isLoading || tokenSendAllBelowThreshold || hasPendingConversion}
+              title={hasPendingConversion ? text.updating : text.feesHint}
+              aria-pressed={isSendAll}
+              className="gys-send-max-action min-h-11 min-w-11 shrink-0 rounded-lg px-2 text-sm font-semibold text-spark-primary underline disabled:opacity-40"
+            >
+              {hasPendingConversion ? (
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <SpinnerIcon size="xs" />
+                  {text.max}
+                </span>
+              ) : text.max}
+            </button>
+          )}
+          </div>
+        </div>
         <div className="relative">
           <input
             id={amountInputId}
+            aria-describedby={`${amountInputId}-balance`}
             type={isDenominated?'text':isTokenMode?'text':'number'}
             inputMode={isDenominated?'decimal':isTokenMode?'decimal':'numeric'}
             enterKeyHint="done"
@@ -266,68 +311,7 @@ const AmountStep: React.FC<AmountStepProps> = ({
         {!amountFirst&&<DenominationTabs value={denomination} onChange={selectDenomination} disabled={isLoading} fiatAvailable={!!currentRate}/>}
         {unitUnavailable&&<p role="status" className="text-xs text-spark-warning mt-2">{t('Live {currency}/BTC rate unavailable. Choose sats or BTC.',{currency:denomination})}</p>}
         {isDenominated&&!!localAmount&&<p className="text-xs text-spark-text-muted mt-2">≈ {localAmount} {t('sats · Settlement is denominated in Bitcoin')}</p>}
-        {/* Quick amount buttons */}
-        <div className="flex gap-2 mt-3">
-          {quickAmounts.map((quickAmount) => {
-            const isSelected = amountNum === quickAmount && !isSendAll;
-            return (
-              <button
-                key={quickAmount}
-                onClick={() => { setLocalAmount(String(quickAmount)); syncUnitFromSats(quickAmount); setFeesIncluded(false); setLocalError(null); }}
-                className={`flex-1 min-h-11 min-w-0 px-2 py-2 rounded-lg text-sm font-mono font-medium transition-all ${
-                  isSelected
-                    ? 'bg-spark-primary text-white'
-                    : 'bg-transparent border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
-                }`}
-              >
-                {isTokenMode && config ? formatQuickAmount(quickAmount, config) : <SatAmount sats={quickAmount} />}
-              </button>
-            );
-          })}
-          {showSendAll && (
-            <button
-              onClick={() => {
-                // Sats mode with non-zero BTC: fill with BTC balance.
-                // When BTC=0 (e.g., auto-converted to tokens in stable mode),
-                // fall through to the token branch so Send All switches
-                // denominations instead of inputting 0.
-                if (!isTokenMode && balanceSats !== undefined && balanceSats > 0) {
-                  setLocalAmount(String(balanceSats)); syncUnitFromSats(balanceSats);
-                } else if (hasTokenBalance && tokenBalanceDisplay) {
-                  // Token send-all: switch to token mode + show token balance
-                  if (!isTokenMode) setIsTokenMode(true);
-                  setLocalAmount(tokenBalanceDisplay);
-                } else if (sendAllBtcInTokenDisplay !== null) {
-                  // No token balance but in token mode. Fill with BTC sats
-                  // converted to fiat so the input stays in the user's chosen
-                  // unit instead of jumping back to sats.
-                  setLocalAmount(sendAllBtcInTokenDisplay);
-                } else if (balanceSats !== undefined) {
-                  // Sats mode (with or without stable balance)
-                  setLocalAmount(String(balanceSats)); syncUnitFromSats(balanceSats);
-                }
-                setFeesIncluded(true);
-                setLocalError(null);
-              }}
-              disabled={tokenSendAllBelowThreshold || hasPendingConversion}
-              title={hasPendingConversion ? t('Balance is updating. Try again in a moment.') : undefined}
-              className={`flex-1 min-h-11 min-w-0 px-2 py-2 rounded-lg text-sm font-medium transition-all ${
-                tokenSendAllBelowThreshold || hasPendingConversion
-                  ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
-                  : isSendAll
-                    ? 'bg-spark-primary text-white'
-                    : 'bg-transparent border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
-              }`}
-            >
-              {hasPendingConversion ? (
-                <span className="inline-flex items-center justify-center gap-1.5">
-                  <SpinnerIcon size="xs" />
-                  {t("Send All")}
-                </span>
-              ) : t('Send All')}
-            </button>
-          )}
-        </div>
+
     </div>
   );
 

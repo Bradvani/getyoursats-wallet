@@ -48,6 +48,13 @@ function setup(initial: number | undefined = 2049, min = 1000, prefill: {initial
   };
 }
 describe('LNURL available balance', () => {
+  it('keeps Max in the available balance area without preset amount chips', () => {
+    setup();
+    const max = screen.getByRole('button', {name: 'Max'});
+    expect(document.getElementById('lnurl-balance')).toContainElement(max);
+    expect(screen.queryByRole('button', {name: /[0-9].*sats/})).toBeNull();
+  });
+
   it('lets a user edit Max and prepares the edited amount without fee inclusion', async () => {
     const {onPrepare, onPay, onRun} = setup();
     fireEvent.click(screen.getByRole('button', {name: 'Max'}));
