@@ -1,6 +1,6 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useId,useState} from 'react';
 import MarketOverview from './MarketOverview';
-import {ChevronRightIcon} from '../components/Icons';
+import {ChevronDownIcon} from '../components/Icons';
 import {WALLET_HOME} from '../locales/walletHome';
 import {usePresentation} from '../hooks/usePresentation';
 import {MARKET_COPY} from '../locales/market';
@@ -25,10 +25,12 @@ function selectedMarketUnit():MarketQuoteUnitId {
  * Never an executable trading quote. BTC amount changes affect this card
  * only; wallet custody, balances and payment denominations stay untouched.
  */
-export default function MarketPulse({compact = false, onOpenDetails}: {compact?: boolean; onOpenDetails?: () => void}){
+export default function MarketPulse({compact = false}: {compact?: boolean}){
   const {fiatRates,fetchedAt,refreshFiatData}=useFiatData();
   const {language}=usePresentation();
   const text=MARKET_COPY[language];
+  const detailsId=useId();
+  const [expanded,setExpanded]=useState(false);
   const [refreshing,setRefreshing]=useState(false);
   const [refreshKey,setRefreshKey]=useState(0);
   const [currency,setCurrency]=useState(getDisplayFiatCurrency);
@@ -71,35 +73,13 @@ export default function MarketPulse({compact = false, onOpenDetails}: {compact?:
     window.dispatchEvent(new Event('gys:market-unit-changed'));
   };
 
-  if (compact) return <section className="gys-market-summary" aria-label={text.title} data-testid="bitcoin-market">
-    <button type="button" onClick={onOpenDetails} className="gys-market-summary__open"
-      aria-label={WALLET_HOME[language].openMarket} data-testid="open-bitcoin-market">
-      <span className="gys-market-summary__title">{text.title}<ChevronRightIcon size="sm" className="rtl:rotate-180"/></span>
-      <span className="gys-market-summary__quote"><strong data-testid="market-quote-price"><bdi>{price}</bdi></strong>
-        <span>{text.for} <bdi>{unit.label}</bdi></span></span>
-      <MarketOverview currency={currency} rate={stale ? null : rate ?? null} compact/>
-      {stale && <span className="gys-market-summary__stale" role="status">{hasRate ? text.last : PAYMENT_FIAT_COPY[language]}</span>}
+  const currencyControl=<div className="gys-market-pulse__switches" aria-label={text.currency}>
+    <button type="button" onClick={cycleCurrency} disabled={currencies.length<2}
+      aria-label={text.currency}>
+      {currency}{currencies.length>1?' ↕':''}
     </button>
-  </section>;
-
-  return <section className="gys-market-pulse gys-market-pulse--glance"
-    aria-label={text.title} data-testid="bitcoin-market">
-    <div className="gys-market-pulse__top">
-      <span className="gys-market-pulse__tag">
-        <span className={'gys-market-pulse__dot'+(stale?' gys-market-pulse__dot--stale':'')} aria-hidden="true"/>
-        {text.title.toLocaleUpperCase(language)}
-      </span>
-      <div className="gys-market-pulse__switches" aria-label={text.currency}>
-        <button type="button" onClick={cycleCurrency} disabled={currencies.length<2}
-          aria-label={text.currency}>
-          {currency}{currencies.length>1?' ↕':''}
-        </button>
-      </div>
-    </div>
-    <div className="gys-market-pulse__quote" aria-live="polite" aria-atomic="true">
-      <span className="gys-market-pulse__price" data-testid="market-quote-price"><bdi>{price}</bdi></span>
-      <span className="gys-market-pulse__unit">{text.for} <bdi>{unit.label}</bdi></span>
-    </div>
+  </div>;
+  const details=<>
     <div className="gys-market-pulse__denominations"
       role="group" aria-label={text.amount}>
       {MARKET_QUOTE_UNITS.map(choice=><button key={choice.id} type="button"
@@ -119,5 +99,36 @@ export default function MarketPulse({compact = false, onOpenDetails}: {compact?:
       </button>
     </div>
     <MarketOverview currency={currency} rate={stale?null:rate??null} refreshKey={refreshKey}/>
+  </>;
+
+  if (compact) return <section className="gys-market-summary" aria-label={text.title} data-testid="bitcoin-market">
+    <button type="button" onClick={()=>setExpanded(value=>!value)} className="gys-market-summary__open"
+      aria-expanded={expanded} aria-controls={detailsId}
+      aria-label={expanded?WALLET_HOME[language].closeMarket:WALLET_HOME[language].openMarket} data-testid="open-bitcoin-market">
+      <span className="gys-market-summary__title">{text.title}<ChevronDownIcon size="sm"/></span>
+      <span className="gys-market-summary__quote"><strong data-testid="market-quote-price"><bdi>{price}</bdi></strong>
+        <span>{text.for} <bdi>{unit.label}</bdi></span></span>
+      <MarketOverview currency={currency} rate={stale ? null : rate ?? null} refreshKey={refreshKey} compact/>
+      {stale && <span className="gys-market-summary__stale" role="status">{hasRate ? text.last : PAYMENT_FIAT_COPY[language]}</span>}
+    </button>
+    <div id={detailsId} className="gys-market-summary__details" data-testid="market-details" hidden={!expanded}>
+      {expanded&&<>{currencyControl}{details}</>}
+    </div>
+  </section>;
+
+  return <section className="gys-market-pulse gys-market-pulse--glance"
+    aria-label={text.title} data-testid="bitcoin-market">
+    <div className="gys-market-pulse__top">
+      <span className="gys-market-pulse__tag">
+        <span className={'gys-market-pulse__dot'+(stale?' gys-market-pulse__dot--stale':'')} aria-hidden="true"/>
+        {text.title.toLocaleUpperCase(language)}
+      </span>
+      {currencyControl}
+    </div>
+    <div className="gys-market-pulse__quote" aria-live="polite" aria-atomic="true">
+      <span className="gys-market-pulse__price" data-testid="market-quote-price"><bdi>{price}</bdi></span>
+      <span className="gys-market-pulse__unit">{text.for} <bdi>{unit.label}</bdi></span>
+    </div>
+    {details}
   </section>;
 }

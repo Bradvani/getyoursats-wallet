@@ -33,6 +33,34 @@ function renderAmountStep(props: Partial<AmountStepProps> = {}, client?: BreezSd
 }
 
 describe('AmountStep USD entry (no stable balance)', () => {
+  it('lets a user edit Send All and resets fee inclusion before continuing', async () => {
+    const {onNext} = renderAmountStep();
+    fireEvent.click(screen.getByRole('button', {name: 'Send All'}));
+    const input = screen.getByTestId('amount-input');
+    expect(input).toHaveValue(100000);
+    expect(input).not.toHaveAttribute('readonly');
+    fireEvent.change(input, {target: {value: '1500'}});
+    fireEvent.click(screen.getByRole('button', {name: 'Continue'}));
+    await waitFor(() => expect(onNext).toHaveBeenCalledWith(1500n, false));
+  });
+
+  it('returns to destination entry without preparing or sending', () => {
+    const onBack = vi.fn();
+    const {onNext, client} = renderAmountStep({onBack});
+    fireEvent.click(screen.getByRole('button', {name: 'Edit destination'}));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(onNext).not.toHaveBeenCalled();
+    expect(client.prepareSendPayment).not.toHaveBeenCalled();
+    expect(client.sendPayment).not.toHaveBeenCalled();
+  });
+
+  it('disables destination editing while preparing', () => {
+    const onBack = vi.fn();
+    renderAmountStep({onBack, isLoading: true});
+    expect(screen.getByRole('button', {name: 'Edit destination'})).toBeDisabled();
+    expect(onBack).not.toHaveBeenCalled();
+  });
+
   it('starts in sats and continues with a sats amount', async () => {
     const { onNext } = renderAmountStep();
 

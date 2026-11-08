@@ -1,5 +1,7 @@
 import {normalizeDecimalInput, validAmountInput} from '../../../utils/decimalInput';
 import {useFlowText} from '@/hooks/useFlowText';
+import {usePresentation} from '@/hooks/usePresentation';
+import {sendDestinationCopy} from '@/locales/sendDestination';
 import {useFiatData} from '../../../contexts/FiatDataContext';
 import DenominationTabs from '../../../getyoursats/DenominationTabs';
 import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
@@ -46,6 +48,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
 }) => {
   const amountInputId=useId();
   const t=useFlowText();
+  const {language}=usePresentation();
+  const editDestination=sendDestinationCopy(language).edit;
   // USD entry without a stable-balance token, funded from BTC. Cross-chain
   // ("Send USD", amountFirst) starts in USD; plain BTC sends start in sats
   // with USD as a toggleable secondary option (#253).
@@ -203,12 +207,16 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
   const destinationSection = (
     <div>
-      <label className="block text-sm font-medium text-spark-text-primary mb-2">
+      <p className="block text-sm font-medium text-spark-text-primary mb-2">
         {t("Destination")}
-      </label>
-      <div className="w-full p-4 bg-spark-dark border border-spark-border rounded-xl text-spark-text-secondary font-mono text-sm break-all">
-        {paymentInput}
-      </div>
+      </p>
+      <button type="button" onClick={onBack} disabled={isLoading} aria-label={editDestination}
+        aria-describedby={`${amountInputId}-destination`}
+        data-testid="edit-send-destination"
+        className="w-full min-h-11 p-4 bg-spark-dark border border-spark-border rounded-xl text-start text-sm disabled:opacity-50">
+        <span id={`${amountInputId}-destination`} className="block text-spark-text-secondary font-mono break-all">{paymentInput}</span>
+        <span className="mt-2 block text-spark-primary underline">{editDestination}</span>
+      </button>
     </div>
   );
 
@@ -239,9 +247,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
               }
             }}
             placeholder={t('Enter amount in {currency}',{currency:isDenominated?denomination:isTokenMode&&config?config.currencyCode:'sats'})}
-            className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none read-only:cursor-not-allowed`}
+            className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
             disabled={isLoading}
-            readOnly={isSendAll}
             min={isTokenMode ? undefined : 1}
             data-testid="amount-input"
           />

@@ -86,7 +86,7 @@ test('@public-smoke Orange POS starts at a blank charge even with a previous com
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);
  await page.getByTestId('menu-button').click();
- await page.getByRole('button',{name:'Point of Sale',exact:true}).click();
+ await page.getByTestId('menu-pos').click();
  const pos=page.getByRole('dialog',{name:'Merchant point of sale'});
  await expect(pos).toBeVisible();
  await expect(pos.getByText('Amount to charge')).toBeVisible();
@@ -111,7 +111,7 @@ test('@public-smoke Orange POS starts at a blank charge even with a previous com
  await expect(pos.getByText('Previously issued order')).toHaveCount(0);
  await pos.getByRole('button',{name:'Close point of sale'}).click();
  await page.getByTestId('menu-button').click();
- await page.getByRole('button',{name:'Point of Sale',exact:true}).click();
+ await page.getByTestId('menu-pos').click();
  await expect(pos.getByText('Amount to charge')).toBeVisible();
  await expect(pos.getByText('Payment received')).toHaveCount(0);
 });

@@ -165,6 +165,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     ...(onOpenMerchantPos ? [{
       icon: <ArrowDownIcon />,
       label: copy.pointOfSale,
+      merchant: true,
       onClick: () => closeDrawerThen(onOpenMerchantPos)
     }] : []),
     { icon: <SettingsIcon />, label: copy.settings, onClick: () => closeDrawerThen(onOpenSettings) },
@@ -259,8 +260,11 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                   key={index}
                   type="button"
                   aria-label={item.label}
+                  data-testid={'merchant' in item ? 'menu-pos' : undefined}
                   className={`w-full min-h-12 flex items-center gap-3 px-3 py-2.5 rounded-xl text-start transition-colors hover:bg-white/5 hover:text-spark-text-primary ${
-                    ('highlight' in item && item.highlight)
+                    ('merchant' in item && item.merchant)
+                      ? 'gys-menu-pos'
+                      : ('highlight' in item && item.highlight)
                       ? 'text-spark-warning'
                       : 'text-spark-text-secondary'
                   }`}

@@ -1,8 +1,9 @@
 import {validAmountInput} from '../../../utils/decimalInput';
 import {usePresentation} from '@/hooks/usePresentation';
 import {PAYMENT_UX} from '@/locales/paymentUx';
+import {sendDestinationCopy} from '@/locales/sendDestination';
 import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
-import React, { useMemo, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import type { LnurlPayRequestDetails, PrepareLnurlPayRequest, PrepareLnurlPayResponse } from '@breeztech/breez-sdk-spark';
 import type { PaymentStep } from '../../../types/domain';
 import { FormError, PrimaryButton, AMOUNT_FIELD_CLASS } from '../../../components/ui';
@@ -35,6 +36,7 @@ interface LnurlWorkflowProps {
 const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, balanceSats, tokenBalance, initialAmount='', initialFeesIncluded=false, onBack, onRun, onPrepare, onPay }) => {
   const {language}=usePresentation();
   const text=PAYMENT_UX[language];
+  const recipientId=useId();
   const balanceKnown=balanceSats!==undefined;
   // USD as a secondary entry option on BTC sends (#253): starts in sats,
   // toggleable to USD, converted to sats client-side.
@@ -291,9 +293,12 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
   return (
     <div className="space-y-5">
       {/* Description */}
-      <div className="text-center">
-        <p className="text-spark-text-primary font-medium">{recipientLabel ?? description}</p>
-      </div>
+      <button type="button" onClick={onBack} disabled={isLoading}
+        aria-label={sendDestinationCopy(language).edit} aria-describedby={recipientId} data-testid="edit-send-destination"
+        className="w-full min-h-11 rounded-xl border border-spark-border bg-spark-dark p-3 text-start disabled:opacity-50">
+        <span id={recipientId} className="block break-all text-spark-text-primary font-medium">{recipientLabel ?? description}</span>
+        <span className="mt-2 block text-sm text-spark-primary underline">{sendDestinationCopy(language).edit}</span>
+      </button>
 
       <div id="lnurl-balance" role="status" aria-live="polite" className="rounded-xl bg-spark-surface border border-spark-border p-3">
         <p className="text-sm text-spark-text-secondary">{text.available}</p>
@@ -324,9 +329,8 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
               setFeesIncluded(false);
             }}
             placeholder={text.enterAmount}
-            className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none read-only:cursor-not-allowed`}
+            className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
             disabled={isLoading}
-            readOnly={isSendAll}
             min={isTokenMode ? undefined : minSats}
             max={isTokenMode ? undefined : maxSats}
           />

@@ -19,6 +19,7 @@ function setup(initial: number | undefined = 2049, min = 1000, prefill: {initial
   const onPrepare = vi.fn().mockResolvedValue({ amountSats: 1000, feeSats: 2 });
   const onPay = vi.fn();
   const onRun = vi.fn();
+  const onBack = vi.fn();
   const client = createMockClient() as unknown as BreezSdk;
   const view = (balanceSats: number | undefined) => (
     <WalletProvider client={client}>
@@ -31,7 +32,7 @@ function setup(initial: number | undefined = 2049, min = 1000, prefill: {initial
             onPrepare={onPrepare}
             onPay={onPay}
             onRun={onRun}
-            onBack={() => {}}
+            onBack={onBack}
           />
         </StableBalanceProvider>
       </FiatDataProvider>
@@ -42,10 +43,33 @@ function setup(initial: number | undefined = 2049, min = 1000, prefill: {initial
     onPrepare,
     onPay,
     onRun,
+    onBack,
     update: (n: number | undefined) => mounted.rerender(view(n)),
   };
 }
 describe('LNURL available balance', () => {
+  it('lets a user edit Max and prepares the edited amount without fee inclusion', async () => {
+    const {onPrepare, onPay, onRun} = setup();
+    fireEvent.click(screen.getByRole('button', {name: 'Max'}));
+    const amount = screen.getByLabelText('Amount');
+    expect(amount).toHaveValue(2049);
+    expect(amount).not.toHaveAttribute('readonly');
+    fireEvent.change(amount, {target: {value: '100'}});
+    fireEvent.click(screen.getByRole('button', {name: 'Continue'}));
+    await waitFor(() => expect(onPrepare).toHaveBeenCalledWith(expect.objectContaining({amount: 100n, feePolicy: undefined})));
+    expect(onPay).not.toHaveBeenCalled();
+    expect(onRun).not.toHaveBeenCalled();
+  });
+
+  it('returns to recipient entry without preparing or paying', () => {
+    const {onBack, onPrepare, onPay, onRun} = setup();
+    fireEvent.click(screen.getByRole('button', {name: 'Edit destination'}));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(onPrepare).not.toHaveBeenCalled();
+    expect(onPay).not.toHaveBeenCalled();
+    expect(onRun).not.toHaveBeenCalled();
+  });
+
   it('preserves a fallback amount and fee policy but waits for review before paying', async () => {
     const {onPrepare,onPay,onRun}=setup(2049,1000,{initialAmount:'100',initialFeesIncluded:true});
     expect(screen.getByLabelText('Amount')).toHaveValue(100);

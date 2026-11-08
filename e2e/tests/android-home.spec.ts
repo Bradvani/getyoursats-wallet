@@ -55,6 +55,9 @@ for (const value of cases) test(`home reflows ${value.width}x${value.height} ${v
     await expect(page.getByTestId(id)).toBeInViewport({ratio:1});
     const box = await page.getByTestId(id).boundingBox(); expect(box!.height).toBeGreaterThanOrEqual(48);
   }
+  await page.getByTestId('home-pos').scrollIntoViewIfNeeded();
+  await expect(page.getByTestId('home-pos')).toBeInViewport({ratio:1});
+  const posBox = await page.getByTestId('home-pos').boundingBox(); expect(posBox!.height).toBeGreaterThanOrEqual(48);
   await page.getByTestId('open-bitcoin-market').scrollIntoViewIfNeeded();
   await expect(page.getByTestId('open-bitcoin-market')).toBeInViewport({ratio:1});
   const firstPayment = page.locator('.gys-activity__feed button').first();
@@ -110,24 +113,68 @@ test('username creation is the primary identity action and the real Receive fall
     .toBe('auditexample1234@breez.tips');
 });
 
-test('market details preserve denominations and return to the same Home position', async ({page}) => {
+test('market arrow expands inline, closes by keyboard and preserves the chosen denomination', async ({page}) => {
   await page.setViewportSize({width:360,height:640});
   await page.goto(fixture + '?entry=existing&balance=1&complete=1');
+  const market = page.getByTestId('bitcoin-market');
+  const toggle = market.getByTestId('open-bitcoin-market');
+  const details = market.getByTestId('market-details');
+  const homeHeight = await page.getByTestId('wallet-scroll').evaluate(el => el.clientHeight);
+  await expect(toggle).toHaveAttribute('aria-expanded','false');
   await expect(page.getByTestId('market-overview')).toHaveCount(0);
-  await page.getByTestId('open-bitcoin-market').scrollIntoViewIfNeeded();
-  const before = await page.getByTestId('wallet-scroll').evaluate(el => el.scrollTop);
-  await page.getByTestId('open-bitcoin-market').click();
-  const details = page.getByRole('dialog',{name:'Bitcoin market'});
+  await toggle.locator('svg').click();
+  await expect(toggle).toHaveAttribute('aria-expanded','true');
+  await expect(details).toBeVisible();
+  await expect(details).toHaveAttribute('id',await toggle.getAttribute('aria-controls') ?? '');
+  await expect(page.getByRole('dialog',{name:'Bitcoin market'})).toHaveCount(0);
+  await expect(page.getByTestId('wallet-scroll').getByTestId('market-details')).toBeVisible();
+  await expect(market.locator('button button')).toHaveCount(0);
   await expect(details.getByTestId('market-supply')).toContainText('20,000,000 BTC');
   await expect(details.getByTestId('market-sentiment')).toContainText('50/100Neutral');
   await details.getByTestId('market-unit-1k').click();
-  await expect(details.getByTestId('market-quote-price')).toHaveText('$0.90');
-  await details.getByRole('button',{name:'Go back',exact:true}).click();
-  await expect(details).toHaveCount(0);
-  await expect(page.getByTestId('market-quote-price')).toHaveText('$0.90');
-  expect(await page.getByTestId('wallet-scroll').evaluate(el => el.scrollTop)).toBe(before);
+  await expect(market.getByTestId('market-quote-price')).toHaveText('$0.90');
+  expect(await page.getByTestId('wallet-scroll').evaluate(el => el.clientHeight)).toBe(homeHeight);
+  await toggle.focus();
+  await page.keyboard.press('Space');
+  await expect(toggle).toHaveAttribute('aria-expanded','false');
+  await expect(details).toBeHidden();
+  await expect(toggle).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(toggle).toHaveAttribute('aria-expanded','true');
+  await expect(details.getByTestId('market-unit-1k')).toHaveAttribute('aria-pressed','true');
+  await toggle.locator('svg').click();
+  await expect(toggle).toHaveAttribute('aria-expanded','false');
+  await expect(details).toBeHidden();
+  await expect(market.getByTestId('market-quote-price')).toHaveText('$0.90');
   await page.getByRole('button',{name:'View full transaction history'}).click();
   await expect(page.getByRole('heading',{name:'History',exact:true})).toBeInViewport({ratio:1});
   await page.getByRole('button',{name:'Back to Wallet'}).click();
   await expect(page.getByTestId('home-identity')).toBeInViewport({ratio:1});
+});
+
+for (const theme of ['dark','orange']) test(`POS opens from Home and its highlighted menu entry in ${theme}`, async ({page}) => {
+  await page.setViewportSize({width:360,height:640});
+  await page.goto(fixture + `?entry=existing&balance=1&complete=1&theme=${theme}`);
+  const terminal = page.getByRole('dialog',{name:'Merchant point of sale'});
+  await page.getByTestId('home-pos').click();
+  await expect(terminal).toBeVisible();
+  await expect(terminal.getByRole('button',{name:'Charge',exact:true})).toBeDisabled();
+  await page.getByRole('button',{name:'Close point of sale'}).click();
+  await expect(terminal).toHaveCount(0);
+  await page.getByTestId('menu-button').click();
+  const menuPos = page.getByTestId('menu-pos');
+  await expect(menuPos).toBeInViewport({ratio:1});
+  const prominence = await menuPos.evaluate(el => {
+    const style = getComputedStyle(el);
+    const normal = el.closest('nav')!.querySelector('button:not([data-testid="menu-pos"])')!;
+    return {border:parseFloat(style.borderTopWidth), background:style.backgroundColor,
+      normalBackground:getComputedStyle(normal).backgroundColor};
+  });
+  expect(prominence.border).toBeGreaterThanOrEqual(1);
+  expect(prominence.background).not.toBe(prominence.normalBackground);
+  await menuPos.click();
+  await expect(terminal).toBeVisible();
+  await expect(terminal.getByRole('button',{name:'Charge',exact:true})).toBeDisabled();
+  await page.getByRole('button',{name:'Close point of sale'}).click();
+  await expect(page.getByTestId('home-pos')).toBeVisible();
 });
