@@ -288,8 +288,8 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
       <div id="lnurl-balance" role="status" aria-live="polite" className="flex items-center justify-between gap-3">
         <div id="lnurl-balance-description" className="min-w-0">
           <p className="text-xs text-spark-text-secondary">{text.available}</p>
-          <p className="text-sm font-semibold text-spark-text-primary" data-testid="lnurl-available-balance">
-            {balanceKnown ? <bdi dir="ltr">{formatWithSpaces(balanceSats)} sats</bdi> : text.balanceLoading}
+          <p className="text-sm font-semibold text-spark-text-primary">
+            <span data-testid="lnurl-available-balance">{balanceKnown ? <bdi dir="ltr">{formatWithSpaces(balanceSats)} sats</bdi> : text.balanceLoading}</span>
             <span className="ms-2 text-xs font-normal text-spark-text-muted">{text.beforeFees}</span>
           </p>
           {isStableBalanceActive && tokenBalanceDisplay && tokenSymbol && <p className="text-sm text-spark-text-primary"><bdi dir="ltr">{tokenBalanceDisplay} {tokenSymbol}</bdi></p>}

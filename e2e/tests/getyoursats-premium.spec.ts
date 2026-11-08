@@ -186,11 +186,15 @@ test('@public-smoke installed iOS header keeps the official wordmark clear',asyn
  // balance veil alone cannot establish that the new navigation stays clear.
  await page.getByTestId('wallet-scroll').evaluate(el=>el.scrollTo(0,el.scrollHeight));
  await page.getByTestId('menu-button').click();
+ const drawer=page.locator('body > .fixed.inset-0.z-50');
+ await expect(drawer).toHaveCount(1);
  await page.getByRole('button',{name:'Close',exact:true}).click();
+ // The panel and backdrop leave independently; wait for their portal root.
+ await expect(drawer).toHaveCount(0);
  await expect(page.getByRole('navigation',{name:'Wallet menu'})).toHaveCount(0);
  for(const target of [logo,page.getByTestId('menu-button'),page.getByTestId('scan-button')]){
   await expect(target).toBeVisible();
-  expect(await target.evaluate(el=>{
+  await expect.poll(()=>target.evaluate(el=>{
    const box=el.getBoundingClientRect();
    const hit=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
    return hit===el||el.contains(hit);

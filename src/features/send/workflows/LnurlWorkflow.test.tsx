@@ -89,7 +89,11 @@ describe('LNURL available balance', () => {
   it('shows the live wallet balance separately from the recipient range', () => {
     const { update } = setup();
     expect(screen.getByTestId('lnurl-available-balance')).toHaveTextContent(
-      '2 049 sats'
+      /^2 049 sats$/
+    );
+    expect(screen.getByText('Before fees')).toBeVisible();
+    expect(screen.getByTestId('lnurl-available-balance')).not.toContainElement(
+      screen.getByText('Before fees')
     );
     expect(screen.getByLabelText('Amount')).toHaveAttribute(
       'placeholder',
@@ -97,14 +101,14 @@ describe('LNURL available balance', () => {
     );
     update(3500);
     expect(screen.getByTestId('lnurl-available-balance')).toHaveTextContent(
-      '3 500 sats'
+      /^3 500 sats$/
     );
   });
   it('shows unknown balance as loading and prevents preparation', () => {
     const { onPrepare, update } = setup();
     update(undefined);
     expect(screen.getByTestId('lnurl-available-balance')).toHaveTextContent(
-      'Checking balance'
+      /^Checking balance…$/
     );
     fireEvent.change(screen.getByLabelText('Amount'), {
       target: { value: '1' },
