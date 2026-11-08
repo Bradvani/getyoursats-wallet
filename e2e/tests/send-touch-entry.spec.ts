@@ -68,6 +68,8 @@ for (const platform of ['android', 'ios'] as const) {
         if (kind === 'lnurl') await tapAndType(page, page.locator('#lnurl-comment'), 'Thank you');
         await amount.tap();
         await expect(amount).toBeFocused();
+        // Repeated taps may select the number. Place the caret before testing deletion.
+        await page.keyboard.press('End');
         await page.keyboard.press('Backspace');
         await expect(amount).toHaveValue('10');
         await page.getByTestId('edit-send-destination').tap();
