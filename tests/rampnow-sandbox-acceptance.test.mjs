@@ -55,6 +55,7 @@ test('diagnostics never create orders and retain only scrubbed support evidence'
   assert.equal(row.stage,'quote');assert.equal(row.httpStatus,500);assert.equal(row.providerCode,100008);
   assert.equal(row.traceId,'trace-test-12345');assert.equal(row.displayError,'failure [redacted] [redacted] [redacted]');
   assert.equal(report.diagnostics.find(x=>x.label==='base_sepolia_card').status,'testnet_unverified');
+  assert.ok(f.calls.some(c=>c.url.endsWith('/quote') && JSON.parse(c.options.body).dstChain==='ethereum'));
   assert.ok(!JSON.stringify(report).includes('untrusted internal data'));
 });
 test('rejects arbitrary scenarios before network access',async()=>{const f=fixture();await assert.rejects(f.run({mode:'create',scenario:'mainnet'}),/ACTION_INVALID/);assert.equal(f.calls.length,0);});

@@ -172,17 +172,22 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
       {label:'sepolia_default_payment',method:'POST',path:ROOT+'/quote',payload:Object.fromEntries(Object.entries(ROUTE).filter(([k])=>k!=='paymentMode'))},
       {label:'base_sepolia_card',method:'POST',path:ROOT+'/quote',payload:{...ROUTE,dstChain:'base-sepolia'}},
       {label:'solana_devnet_card',method:'POST',path:ROOT+'/quote',payload:{...ROUTE,dstCurrency:'SOL',dstChain:'solana-devnet'}},
+      // Read-only pricing controls for the chain label in the owner's historical
+      // sandbox screenshot. They NEVER authorize creation or delivery on Ethereum.
+      {label:'ethereum_asset_control',method:'GET',path:ROOT+'/asset_config?currency=ETH&chain=ethereum&orderCurrency=EUR'},
+      {label:'ethereum_quote_control',method:'POST',path:ROOT+'/quote',payload:{...ROUTE,dstChain:'ethereum'}},
     ];
     for (const request of requests) {
       const chain=request.payload?.dstChain??'sepolia'; const asset=request.payload?.dstCurrency??'ETH';
       const advertised=chains.chains.filter(c=>c?.code===chain);
-      if(advertised.length!==1 || advertised[0].isTestnet!==true || !Array.isArray(advertised[0].supportedAssets)
-        || !advertised[0].supportedAssets.some(a=>a===asset || a===asset+':'+chain)) {
+      const readOnlyControl=['ethereum_asset_control','ethereum_quote_control'].includes(request.label);
+      if(!readOnlyControl && (advertised.length!==1 || advertised[0].isTestnet!==true || !Array.isArray(advertised[0].supportedAssets)
+        || !advertised[0].supportedAssets.some(a=>a===asset || a===asset+':'+chain))) {
         report.diagnostics.push({label:request.label,status:'testnet_unverified'});continue;
       }
       try {
         const data=await provider(request.method,request.path,request.payload);
-        const row={label:request.label,status:'response_received'};
+        const row={label:request.label,status:'response_received',creationEligible:false};
         for(const key of ['orderType','srcCurrency','srcChain','dstCurrency','dstChain','paymentMode','currency','chain','orderCurrency','status']) {
           if(typeof data[key]==='string' && /^[A-Za-z0-9_-]{1,64}$/.test(data[key])) row[key]=data[key];
         }
