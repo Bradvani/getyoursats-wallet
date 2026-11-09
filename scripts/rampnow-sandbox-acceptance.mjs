@@ -1,6 +1,6 @@
 /** Explicit operator-only sandbox acceptance. Never imported by an HTTP route or
  * normal build. Requires the integration Preview and dedicated sandbox storage.
- * Usage: node scripts/rampnow-sandbox-acceptance.mjs [inspect|create accepted|create declined|create expired]
+ * Usage: node scripts/rampnow-sandbox-acceptance.mjs [inspect|diagnose|create accepted|create declined|create expired]
  * Create is one dispatch per fixed case, durably reserved BEFORE the API call.
  * Customer fields are fictitious and contacts use reserved example/fiction ranges.
  * Credentials and recipient private keys never enter the report or build logs.
@@ -85,7 +85,7 @@ return 1
 export async function runAcceptance({env = process.env, mode = 'inspect', scenario,
   fetchImpl = fetch, recipientFactory = newRecipient, now = Date.now} = {}) {
   const config = requireAcceptanceEnvironment(env);
-  need(mode === 'inspect' || (mode === 'create' && CASES.includes(scenario)), 'ACTION_INVALID');
+  need(['inspect','diagnose'].includes(mode) || (mode === 'create' && CASES.includes(scenario)), 'ACTION_INVALID');
   async function redis(command) {
     const response = await fetchImpl(config.url, {method: 'POST', redirect: 'error', cache: 'no-store',
       signal: AbortSignal.timeout(10000), headers: {Authorization: 'Bearer ' + config.token,
@@ -108,6 +108,12 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
       error.httpStatus = response.status;
       // Never copy arbitrary provider messages, echoed requests or customer data.
       error.providerCode = typeof data?.code === 'number' && Number.isFinite(data.code) ? data.code : null;
+      error.stage = path.endsWith('/quote') ? 'quote' : path.endsWith('/checkout') ? 'checkout'
+        : path.endsWith('/chain_config') ? 'chain_config' : path.includes('/asset_config?') ? 'asset_config' : 'lookup';
+      error.traceId = typeof data?.traceId === 'string' && /^[A-Za-z0-9_-]{8,128}$/.test(data.traceId) ? data.traceId : null;
+      // Documented end-user display text only, bounded and scrubbed of credentials.
+      error.displayError = typeof data?.displayError === 'string' && data.displayError.length <= 300
+        ? [env.RAMPNOW_API_KEY,env.RAMPNOW_API_SECRET,config.token].reduce((text,secret)=>text.split(secret).join('[redacted]'),data.displayError).replace(/[\u0000-\u001f]/g,' ') : null;
       throw error;
     }
     return data.data;
@@ -156,6 +162,39 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
   }
   const report = {campaign: CAMPAIGN, checkedAt: new Date(now()).toISOString(), environment: 'sandbox',
     route: ROUTE, realFundsUsed: false, productionReady: false, cases: []};
+  if (mode === 'diagnose') {
+    report.diagnostics = [];
+    const chains = await provider('GET', ROOT + '/chain_config');
+    need(Array.isArray(chains.chains) && chains.chains.length <= 512, 'CHAIN_UNVERIFIED');
+    const requests = [
+      {label:'sepolia_asset',method:'GET',path:ROOT+'/asset_config?currency=ETH&chain=sepolia&orderCurrency=EUR'},
+      {label:'sepolia_card',method:'POST',path:ROOT+'/quote',payload:ROUTE},
+      {label:'sepolia_default_payment',method:'POST',path:ROOT+'/quote',payload:Object.fromEntries(Object.entries(ROUTE).filter(([k])=>k!=='paymentMode'))},
+      {label:'base_sepolia_card',method:'POST',path:ROOT+'/quote',payload:{...ROUTE,dstChain:'base-sepolia'}},
+      {label:'solana_devnet_card',method:'POST',path:ROOT+'/quote',payload:{...ROUTE,dstCurrency:'SOL',dstChain:'solana-devnet'}},
+    ];
+    for (const request of requests) {
+      const chain=request.payload?.dstChain??'sepolia'; const asset=request.payload?.dstCurrency??'ETH';
+      const advertised=chains.chains.filter(c=>c?.code===chain);
+      if(advertised.length!==1 || advertised[0].isTestnet!==true || !Array.isArray(advertised[0].supportedAssets)
+        || !advertised[0].supportedAssets.some(a=>a===asset || a===asset+':'+chain)) {
+        report.diagnostics.push({label:request.label,status:'testnet_unverified'});continue;
+      }
+      try {
+        const data=await provider(request.method,request.path,request.payload);
+        const row={label:request.label,status:'response_received'};
+        for(const key of ['orderType','srcCurrency','srcChain','dstCurrency','dstChain','paymentMode','currency','chain','orderCurrency','status']) {
+          if(typeof data[key]==='string' && /^[A-Za-z0-9_-]{1,64}$/.test(data[key])) row[key]=data[key];
+        }
+        for(const key of ['srcAmount','dstAmount'])if(decimalAmount(data[key],false))row[key]=data[key];
+        if(Array.isArray(data.payinModes))row.payinModes=data.payinModes.filter(x=>typeof x==='string'&&/^[a-z_]{1,64}$/.test(x)).slice(0,32);
+        report.diagnostics.push(row);
+      } catch(error) {
+        report.diagnostics.push({label:request.label,status:'unavailable',stage:error.stage??null,
+          httpStatus:error.httpStatus??null,providerCode:error.providerCode??null,traceId:error.traceId??null,displayError:error.displayError??null});
+      }
+    }
+  }
   const rawEvents = await redis(['HGETALL', RAMPNOW_STORE_PREFIX + 'quarantine']);
   need(Array.isArray(rawEvents) && rawEvents.length <= 2000 && rawEvents.length % 2 === 0, 'EVENT_STORE_INVALID');
   for (const name of CASES) {
@@ -208,6 +247,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     console.error(JSON.stringify({check:'rampnow_sandbox_acceptance',
       failure:allowed.includes(error.message)?error.message:'CHECK_FAILED',
       httpStatus:Number.isInteger(error.httpStatus)?error.httpStatus:null,
-      providerCode:typeof error.providerCode==='number'?error.providerCode:null})); process.exitCode=1;
+      providerCode:typeof error.providerCode==='number'?error.providerCode:null,
+      stage:error.stage??null,traceId:error.traceId??null,displayError:error.displayError??null})); process.exitCode=1;
   }
 }

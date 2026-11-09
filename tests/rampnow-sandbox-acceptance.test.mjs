@@ -8,7 +8,7 @@ const env = {VERCEL_ENV:'preview', VERCEL_PROJECT_ID:'prj_kVMt4cd9k0WsufaoRCVCH2
   UPSTASH_REDIS_REST_TOKEN:'private-store-token', RAMPNOW_API_KEY:'private-api-key',RAMPNOW_API_SECRET:'private-api-secret'};
 const address='0x'+'1'.repeat(40); const privateKey='2'.repeat(64);
 const route={orderType:'buy',srcCurrency:'EUR',srcChain:'fiat',srcAmount:'50',dstCurrency:'ETH',dstChain:'sepolia',paymentMode:'card'};
-function fixture({checkout, chains, quote, order, quarantine=[]}={}) {
+function fixture({checkout, chains, quote, quoteFailure, order, quarantine=[]}={}) {
   const state=new Map(); const calls=[]; let created;
   const json=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'content-type':'application/json'}});
   const fetchImpl=async(url, options)=>{
@@ -25,7 +25,7 @@ function fixture({checkout, chains, quote, order, quarantine=[]}={}) {
     assert.equal(new URL(url).origin,'https://api.sandbox.rampnow.io');
     assert.equal(options.redirect,'error');
     if(url.endsWith('/chain_config'))return json({code:0,data:{chains:chains??[{code:'sepolia',isTestnet:true,supportedAssets:['ETH']}]}});
-    if(url.endsWith('/quote'))return json({code:0,data:quote??{...route,dstAmount:'0.02'}});
+    if(url.endsWith('/quote'))return quoteFailure?json(quoteFailure,500):json({code:0,data:quote??{...route,dstAmount:'0.02'}});
     if(url.endsWith('/checkout')){
       created=JSON.parse(options.body);
       if(checkout)return checkout(created,json);
@@ -48,6 +48,15 @@ test('rejects non-sandbox checkout URLs including lookalike hosts and credential
     'http://app.sandbox.rampnow.io/a','https://user:pass@app.sandbox.rampnow.io/a']) assert.throws(()=>safeCheckoutURL(url));
 });
 test('inspect cannot create orders',async()=>{const f=fixture();const report=await f.run();assert.equal(f.creates().length,0);assert.equal(report.cases.length,3);});
+test('diagnostics never create orders and retain only scrubbed support evidence',async()=>{
+  const f=fixture({quoteFailure:{code:100008,traceId:'trace-test-12345',displayError:'failure private-api-secret private-api-key private-store-token',message:'untrusted internal data'}});
+  const report=await f.run({mode:'diagnose'});assert.equal(f.creates().length,0);assert.equal(f.state.size,0);
+  const row=report.diagnostics.find(x=>x.label==='sepolia_card');
+  assert.equal(row.stage,'quote');assert.equal(row.httpStatus,500);assert.equal(row.providerCode,100008);
+  assert.equal(row.traceId,'trace-test-12345');assert.equal(row.displayError,'failure [redacted] [redacted] [redacted]');
+  assert.equal(report.diagnostics.find(x=>x.label==='base_sepolia_card').status,'testnet_unverified');
+  assert.ok(!JSON.stringify(report).includes('untrusted internal data'));
+});
 test('rejects arbitrary scenarios before network access',async()=>{const f=fixture();await assert.rejects(f.run({mode:'create',scenario:'mainnet'}),/ACTION_INVALID/);assert.equal(f.calls.length,0);});
 test('creates only fixed synthetic card order with explicit testnet recipient',async()=>{
   const f=fixture();const report=await f.run({mode:'create',scenario:'accepted'});
