@@ -129,6 +129,14 @@ export function advanceWalletTour(scope: string | null) {
   });
 }
 
+export function retreatWalletTour(scope: string | null) {
+  changeWalletSetup(scope, current => {
+    if (current.tourStatus !== 'active') return current;
+    const previous = WALLET_TOUR_STEPS[WALLET_TOUR_STEPS.indexOf(current.step) - 1];
+    return previous ? {...current, step: previous} : current;
+  });
+}
+
 export function skipWalletTour(scope: string | null) {
   changeWalletSetup(scope, current => current.tourStatus === 'completed' ? current : {...current, tourStatus: 'skipped'});
 }

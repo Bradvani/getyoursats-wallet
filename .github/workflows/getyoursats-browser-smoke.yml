@@ -41,14 +41,26 @@ jobs:
               raise SystemExit('No recognized Ubuntu archive was found; inspect the runner sources')
           PY
       - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Verify Android home viewport, guide and identity regressions across browser engines
+        run: npx playwright test e2e/tests/android-home.spec.ts --project chromium --project firefox --project webkit --workers=2
+        env:
+          VITE_BREEZ_API_KEY: ''
+          VITE_SPARK_LOCAL_CONFIG: ''
+          VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
       - name: Verify market, preferences and portrait scanner across browser engines
-        run: npx playwright test e2e/tests/premium-product-experience.spec.ts --project chromium --project firefox --project webkit --workers=2
+        run: npx playwright test e2e/tests/premium-product-experience.spec.ts e2e/tests/getyoursats-premium.spec.ts --project chromium --project firefox --project webkit --workers=2
         env:
           VITE_BREEZ_API_KEY: ''
           VITE_SPARK_LOCAL_CONFIG: ''
           VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
       - name: Verify send keyboard geometry across browser engines
         run: npx playwright test e2e/tests/ios-send-keyboard.spec.ts --project chromium --project firefox --project webkit --workers=2
+        env:
+          VITE_BREEZ_API_KEY: ''
+          VITE_SPARK_LOCAL_CONFIG: ''
+          VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
+      - name: Verify touch destination and amount entry in web and native adapters
+        run: npx playwright test e2e/tests/send-touch-entry.spec.ts --project chromium --project firefox --project webkit --workers=2
         env:
           VITE_BREEZ_API_KEY: ''
           VITE_SPARK_LOCAL_CONFIG: ''

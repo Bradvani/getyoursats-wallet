@@ -1063,7 +1063,8 @@ video::-webkit-media-controls-panel {
 /* Keyboard geometry belongs to the web sheet viewport, never a transform on
    the whole page. The library writes directional pan values inline: override
    them so content can scroll both ways and pinch zoom remains available. */
-.web-sheet-scrollport {
+.web-sheet-scrollport,
+.sheet-form-scrollport {
   touch-action: pan-y pinch-zoom !important;
   scroll-padding-block: 16px;
 }

@@ -1,5 +1,10 @@
 import { useLayoutEffect, useState } from 'react';
 
+// Standalone Safari can publish the resized height before the final pan offset,
+// without a second viewport event (WebKit 237851). Sample through the keyboard
+// animation, then stop rather than keeping an idle animation-frame loop alive.
+const VIEWPORT_SETTLE_MS = 1000;
+
 export interface WebSheetViewport {
   height: number;
   top: number;
@@ -32,21 +37,28 @@ export function useWebSheetViewport(enabled: boolean): WebSheetViewport {
   useLayoutEffect(() => {
     if (!enabled) return;
     let frame = 0;
+    let settleUntil = 0;
     const update = () => {
-      frame = 0;
       const next = readWebSheetViewport();
       setViewport(previous => previous.height === next.height && previous.top === next.top &&
         previous.keyboardOpen === next.keyboardOpen && previous.zoomed === next.zoomed ? previous : next);
     };
+    const settle: FrameRequestCallback = (now) => {
+      frame = 0;
+      update();
+      if (now < settleUntil) frame = requestAnimationFrame(settle);
+    };
     const schedule = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(update);
+      settleUntil = performance.now() + VIEWPORT_SETTLE_MS;
+      if (!frame) frame = requestAnimationFrame(settle);
     };
     const visualViewport = window.visualViewport;
     update();
+    schedule();
     visualViewport?.addEventListener('resize', schedule);
     visualViewport?.addEventListener('scroll', schedule);
     window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', schedule);
     window.addEventListener('pageshow', schedule);
     document.addEventListener('focusin', schedule);
     document.addEventListener('focusout', schedule);
@@ -55,6 +67,7 @@ export function useWebSheetViewport(enabled: boolean): WebSheetViewport {
       visualViewport?.removeEventListener('resize', schedule);
       visualViewport?.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', schedule);
       window.removeEventListener('pageshow', schedule);
       document.removeEventListener('focusin', schedule);
       document.removeEventListener('focusout', schedule);

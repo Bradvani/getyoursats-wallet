@@ -184,7 +184,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
 
   return (
     <BottomSheetContainer isOpen={isOpen} onClose={handleClose} showBackdrop>
-      <BottomSheetCard>
+      <BottomSheetCard disableContentDrag>
         <div className="gys-send-flow relative overflow-x-clip" data-testid="send-flow" inert={coveredByScanner} aria-hidden={coveredByScanner || undefined}>
           {/* Contacts sub-view — slides in from right */}
           <div

@@ -31,6 +31,34 @@ async function enter(page:Page,query=''){
   await page.getByLabel('Amount',{exact:true}).fill('100');
   await page.getByRole('button',{name:'Continue',exact:true}).click();
 }
+test.describe('visible username completion',()=>{
+  test.use({hasTouch:true});
+  for(const accept of ['Continue','suggestion'])test(`@public-smoke bare username uses the visible full address through ${accept}`,async({page})=>{
+    await page.setViewportSize({width:360,height:640});
+    await page.goto(fixture+'?contacts');
+    const input=page.getByTestId('payment-input');
+    await input.tap();
+    await expect(input).toBeFocused();
+    await page.keyboard.type('alice');
+    await expect(page.getByRole('button',{name:/Alice external alice@other\.example$/})).toBeVisible();
+    const suggestion=page.getByRole('button',{name:'Use address alice@getyoursats.com',exact:true});
+    await suggestion.scrollIntoViewIfNeeded();
+    await expect(suggestion).toBeInViewport({ratio:1});
+    expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
+    if(accept==='suggestion'){
+      await suggestion.tap();
+      await expect(input).toHaveValue('alice@getyoursats.com');
+      await expect(page.getByLabel('Amount',{exact:true})).toHaveCount(0);
+    }
+    await page.getByRole('button',{name:'Continue',exact:true}).tap();
+    await expect(page.getByLabel('Amount',{exact:true})).toBeVisible();
+    await page.getByLabel('Amount',{exact:true}).fill('100');
+    await page.getByRole('button',{name:'Continue',exact:true}).click();
+    await expect(page.getByTestId('send-destination')).toHaveAttribute('title','alice@getyoursats.com');
+    await expect(page.getByText('Network fee',{exact:true}).locator('..')).toContainText('0');
+    expect(await evidence(page)).toEqual({sent:[],lnurlSends:0});
+  });
+});
 for(const width of [360,390,768,1366]){
   test(`@public-smoke GYS address confirms a prepared zero quote at ${width}px`,async({page},testInfo)=>{
     await page.setViewportSize({width,height:844});

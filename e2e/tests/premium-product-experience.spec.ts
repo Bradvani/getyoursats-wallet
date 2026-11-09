@@ -18,6 +18,7 @@ test('market information follows selected INR without changing Bitcoin amounts',
   await page.setViewportSize({width:390,height:844});await page.goto(fixture);
   // Choose using the actual shared preference function, as Settings does.
   await page.evaluate(async()=>{const path='/src/services/settings.ts';const settings=await import(path);settings.setDisplayFiatCurrency('INR');});
+  await page.getByTestId('open-bitcoin-market').click();
   await expect(page.getByTestId('market-cap')).toContainText('₹150.75 lakh crore');
   await page.getByTestId('market-cap').click();
   await expect(page.getByTestId('market-cap-exact')).toContainText('₹15,07,50,00,09,37,500.00');
@@ -26,7 +27,7 @@ test('market information follows selected INR without changing Bitcoin amounts',
   const cap=await page.getByTestId('market-cap').innerText();
   await page.getByTestId('market-unit-1k').click();
   await expect(page.getByTestId('market-cap')).toHaveText(cap);
-  await expect(page.getByTestId('sats-balance-mark')).toBeVisible();
+  await expect(page.getByTestId('sats-balance-mark')).toBeAttached();
   const sats=page.getByRole('button',{name:'sats',exact:true}).first();
   await expect(sats).toHaveText('SATS');await expect(sats.locator('svg')).toHaveCount(0);
   await page.getByTestId('market-overview').scrollIntoViewIfNeeded();
@@ -38,9 +39,10 @@ test('unavailable or stale feed never creates a zero cap or a false neutral sent
     supply:{btc:20100000,updatedAt:Date.now()-86400000},sentiment:null,
   }}));
   await page.goto(fixture);
+  await page.getByTestId('open-bitcoin-market').click();
   await expect(page.getByTestId('market-cap')).toHaveText('Unavailable');
   await expect(page.getByTestId('market-sentiment')).toHaveText('Unavailable');
-  await expect(page.getByTestId('market-quote-price')).toContainText('$90,000.00');
+  await expect(page.getByTestId('bitcoin-market').getByTestId('market-quote-price')).toContainText('$90,000.00');
 });
 
 test('settings identity, social links and preference destinations work and persist',async({page})=>{
@@ -73,12 +75,16 @@ for(const language of ['en','hi','ar','ta'])test(`market and preference pages re
   expect(await surface.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
   await expect(page.getByTestId('settings-appearance-system')).toBeEnabled();
   await page.goto(fixture);await page.addStyleTag({content:'html{font-size:32px!important}'});
+  await page.getByTestId('open-bitcoin-market').click();
   await page.getByTestId('market-overview').scrollIntoViewIfNeeded();
-  // The price card has a deliberately clipped decorative pseudo-element and a horizontally scrollable denomination rail.
-  // Measure the actual new information surface and page reflow, not those intentional overflow areas.
   const geometry=await page.getByTestId('market-overview').evaluate(el=>({width:el.clientWidth,scroll:el.scrollWidth}));
   expect(geometry.scroll,JSON.stringify(geometry)).toBeLessThanOrEqual(geometry.width+1);
+  const home=page.getByTestId('wallet-scroll');
+  expect(await home.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await page.getByTestId('open-bitcoin-market').click();
+  await expect(page.getByTestId('open-bitcoin-market')).toHaveAttribute('aria-expanded','false');
+  await expect(page.getByTestId('market-details')).toBeHidden();
 });
 
 for(const angle of [90,270])test(`scanner preserves its portrait surface when a phone tilts to ${angle} degrees`,async({page})=>{

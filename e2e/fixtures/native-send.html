@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Isolated native send adapter fixture</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Select the native adapter without an OS bridge, wallet or credentials.
+      const platform = new URLSearchParams(location.search).get('platform');
+      window.CapacitorCustomPlatform = {name: platform === 'ios' ? 'ios' : 'android'};
+      const methods = ['hide', 'setStyle', 'setBackgroundColor', 'setNavigationBarColor', 'removeListener'];
+      window.Capacitor = {
+        PluginHeaders: ['Keyboard', 'App', 'StatusBar', 'NavigationBar'].map(name => ({
+          name,
+          methods: [{name: 'addListener', rtype: 'callback'}, ...methods.map(name => ({name, rtype: 'promise'}))]
+        })),
+        nativeCallback: () => 'isolated-native-listener',
+        nativePromise: async () => ({})
+      };
+    </script>
+    <script type="module" src="/e2e/fixtures/scan-send.tsx"></script>
+  </body>
+</html>

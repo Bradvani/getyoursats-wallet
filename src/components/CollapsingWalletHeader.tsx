@@ -27,6 +27,7 @@ interface CollapsingWalletHeaderProps {
   walletInfo: GetInfoResponse | null;
   scrollProgress: number;
   onOpenMenu: () => void;
+  showToolbar?: boolean;
   onOpenBuyBitcoin?: () => void;
   isBuyLoading?: boolean;
   isSyncing?: boolean;
@@ -39,6 +40,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
   walletInfo,
   scrollProgress,
   onOpenMenu,
+  showToolbar = true,
   onOpenBuyBitcoin,
   isBuyLoading,
   isSyncing,
@@ -273,13 +275,13 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
           unreliable) and to env(safe-area-inset-top) on iOS / web. */}
       <div
         className="gys-wallet-balance-surface__content relative z-10 px-4 pb-2"
-        style={{ paddingTop: safeAreaTop }}
+        style={{ paddingTop: showToolbar ? safeAreaTop : 0 }}
       >
         {/* Top bar with menu and network. Fixed h-14 (56dp) matches the
             Material toolbar height used by SlideInPage and PageLayout so
             the menu/back buttons land at the same screen y coordinate on
             every screen. */}
-        <div className="gys-wallet-balance-surface__toolbar h-14 flex items-center justify-between gap-2 mb-4">
+        {showToolbar && <div className="gys-wallet-balance-surface__toolbar h-14 flex items-center justify-between gap-2 mb-4">
           <div className="gys-app-header__identity">
           {/* Menu button */}
           <button
@@ -334,7 +336,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
               </button>
             )}
           </div>
-        </div>
+        </div>}
 
         {/* Balance display */}
         <div className="text-center">
