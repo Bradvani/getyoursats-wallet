@@ -1,8 +1,14 @@
 # RampNow integration and launch evidence
 
-Updated 9 November 2026. Scope: GetYourSats BTC on/off ramps. **Public Buy/Sell and checkout submission remain disabled.** No provider order, customer registration or real payment has been submitted.
+Updated 9 November 2026. Scope: GetYourSats BTC on/off ramps. **Public Buy/Sell and wallet checkout submission remain disabled.** One isolated sandbox checkout request with synthetic customer fields was rejected because checkout orders are not enabled for the partner account. It returned no order ID or hosted checkout URL. No real payment was made.
 
 ## Current activation decision
+
+The immediate sandbox blocker is now specific: Hypermid confirmed payment simulation is enabled and requires no KYC, but the authenticated Intent API `POST /api/partner/v1/ext/ramp_order/checkout` returned HTTP 400, code `100004`, with `Checkout orders are not enabled for your account.` The preceding EUR 50 / ETH / `ethereum` / `card` sandbox quote was usable. This is separate from the payment-simulation switch. The account needs Intent API checkout enabled before the accepted/declined/expired hosted tests can proceed.
+
+Protected Preview `dpl_219F5U6mJULnNPSeR3pbiXssPPwa`, code `e36f5cb675a4dfd87e35a9104c3565cc4351f866`, is READY. Its report at `/rampnow-sandbox-report.json` retains the support trace ID, fixed campaign external ID and provider rejection without credentials or customer fields. No callback matched the attempted case. The one-dispatch reservation remains in place; enabling the account must not cause a blind replay. Reconcile the previous external ID and use a fresh, explicitly reviewed campaign for the next attempt.
+
+Current code validation: the 14 runner tests pass; the RampNow Node suite passes 225 checks with one local Redis-dependent check skipped; the browser client suite passes 66 tests. At the same code commit, CI build, lint, TypeScript, unit tests, GetYourSats verification, CodeQL and all three localization checks pass. The separate browser-smoke job was still running at this observation. SDK and dependency lockfile are unchanged.
 
 The provider does not offer a Bitcoin sandbox or Lightning settlement. The existing signet-only checkout therefore cannot become a working BTC route by enabling its flags. The next possible release is a provider-approved, limited **mainnet on-chain BTC Buy pilot**, after production access and the complete wallet journey are ready. Sell needs separate funding/exit work and acceptance. Sandbox credentials must never be reused as production credentials, and Bitcoin testnet must never be treated as signet.
 
