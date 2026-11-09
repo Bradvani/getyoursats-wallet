@@ -1,0 +1,213 @@
+/** Explicit operator-only sandbox acceptance. Never imported by an HTTP route or
+ * normal build. Requires the integration Preview and dedicated sandbox storage.
+ * Usage: node scripts/rampnow-sandbox-acceptance.mjs [inspect|create accepted|create declined|create expired]
+ * Create is one dispatch per fixed case, durably reserved BEFORE the API call.
+ * Customer fields are fictitious and contacts use reserved example/fiction ranges.
+ * Credentials and recipient private keys never enter the report or build logs.
+ */
+import {createECDH} from 'node:crypto';
+import {mkdir, writeFile} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import {rampnowSignature, decimalAmount} from '../server/rampnow.mjs';
+import {sandboxRampnowConfig, normalizeRampnowEvent, RAMPNOW_STORE_PREFIX} from '../server/rampnowStore.mjs';
+
+export const CAMPAIGN = 'gys-sandbox-20261109-card-v1';
+export const CASES = Object.freeze(['accepted', 'declined', 'expired']);
+const ROOT = '/api/partner/v1/ext/ramp_order';
+const API = 'https://api.sandbox.rampnow.io';
+const ROUTE = Object.freeze({orderType: 'buy', srcCurrency: 'EUR', srcChain: 'fiat',
+  srcAmount: '50', dstCurrency: 'ETH', dstChain: 'sepolia', paymentMode: 'card'});
+const object = x => x !== null && typeof x === 'object' && !Array.isArray(x);
+const identifier = x => typeof x === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(x);
+const need = (x, code) => { if (!x) throw new Error(code); };
+const PREFIX = RAMPNOW_STORE_PREFIX + 'acceptance:' + CAMPAIGN + ':';
+const externalId = scenario => CAMPAIGN + '-' + scenario;
+const sameAmount = (x, y) => decimalAmount(x) && decimalAmount(y)
+  && x.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '') === y.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+
+export function requireAcceptanceEnvironment(env) {
+  need(env.VERCEL_ENV === 'preview' && env.VERCEL_PROJECT_ID === 'prj_kVMt4cd9k0WsufaoRCVCH2bpPtWa'
+    && env.VERCEL_GIT_COMMIT_REF === 'feat/rampnow-integration-20261028'
+    && env.RAMPNOW_ENVIRONMENT === 'sandbox' && env.RAMPNOW_STORAGE_SOURCE === 'upstash_sandbox', 'SANDBOX_GUARD');
+  need(typeof env.RAMPNOW_API_KEY === 'string' && env.RAMPNOW_API_KEY.length > 0
+    && !/[\r\n]/.test(env.RAMPNOW_API_KEY)
+    && typeof env.RAMPNOW_API_SECRET === 'string' && env.RAMPNOW_API_SECRET.length > 0, 'SANDBOX_CREDENTIALS_REQUIRED');
+  return sandboxRampnowConfig(env);
+}
+
+async function boundedJSON(response, max = 2 * 1024 * 1024) {
+  need(!response.redirected && response.body, 'RESPONSE_INVALID');
+  const reader = response.body.getReader(); const chunks = []; let size = 0;
+  try {
+    for (;;) {
+      const {done, value} = await reader.read(); if (done) break;
+      size += value.length;
+      if (size > max) { await reader.cancel(); throw new Error('RESPONSE_TOO_LARGE'); }
+      chunks.push(Buffer.from(value));
+    }
+  } finally { reader.releaseLock(); }
+  return JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(Buffer.concat(chunks)));
+}
+
+export function safeCheckoutURL(value) {
+  need(typeof value === 'string' && value.length <= 4096, 'CHECKOUT_URL_INVALID');
+  const url = new URL(value);
+  need(url.origin === 'https://app.sandbox.rampnow.io' && !url.username && !url.password && !url.hash,
+    'CHECKOUT_URL_INVALID');
+  return url.href;
+}
+
+export function matchedOrder(order, record) {
+  if (!object(order) || order.externalOrderUid !== record.externalOrderUid) return false;
+  for (const key of ['orderType', 'srcCurrency', 'srcChain', 'dstCurrency', 'dstChain']) {
+    if (order[key] !== ROUTE[key]) return false;
+  }
+  return sameAmount(order.srcAmount, ROUTE.srcAmount)
+    && typeof order.walletAddress === 'string' && order.walletAddress.toLowerCase() === record.address.toLowerCase()
+    && identifier(order.orderUid) && (!record.orderUid || order.orderUid === record.orderUid);
+}
+
+async function newRecipient() {
+  // This dependency already exists in the unchanged lockfile.
+  const {keccak_256} = await import('@noble/hashes/sha3');
+  const ecdh = createECDH('secp256k1'); const publicKey = ecdh.generateKeys();
+  return {address: '0x' + Buffer.from(keccak_256(publicKey.subarray(1))).subarray(-20).toString('hex'),
+    privateKey: ecdh.getPrivateKey().toString('hex')};
+}
+
+const RESERVE = `
+if redis.call('EXISTS', KEYS[1]) == 1 then return 0 end
+redis.call('SET', KEYS[1], 'dispatch_reserved')
+redis.call('SET', KEYS[2], ARGV[1], 'EX', 2592000)
+return 1
+`;
+
+export async function runAcceptance({env = process.env, mode = 'inspect', scenario,
+  fetchImpl = fetch, recipientFactory = newRecipient, now = Date.now} = {}) {
+  const config = requireAcceptanceEnvironment(env);
+  need(mode === 'inspect' || (mode === 'create' && CASES.includes(scenario)), 'ACTION_INVALID');
+  async function redis(command) {
+    const response = await fetchImpl(config.url, {method: 'POST', redirect: 'error', cache: 'no-store',
+      signal: AbortSignal.timeout(10000), headers: {Authorization: 'Bearer ' + config.token,
+        'Content-Type': 'application/json'}, body: JSON.stringify(command)});
+    const data = await boundedJSON(response);
+    need(response.ok && object(data) && !Object.hasOwn(data, 'error') && Object.hasOwn(data, 'result'), 'STORE_UNAVAILABLE');
+    return data.result;
+  }
+  async function provider(method, path, payload) {
+    const body = payload === undefined ? '' : JSON.stringify(payload);
+    const timestamp = String(Math.floor(now() / 1000));
+    const response = await fetchImpl(API + path, {method, redirect: 'error', signal: AbortSignal.timeout(15000),
+      headers: {'Content-Type': 'application/json', 'X-RAMPNOW-API-KEY': env.RAMPNOW_API_KEY,
+        'X-RAMPNOW-TIMESTAMP': timestamp,
+        'X-RAMPNOW-SIGN': rampnowSignature(env.RAMPNOW_API_SECRET, timestamp, method, path, body)},
+      ...(payload === undefined ? {} : {body})});
+    const data = await boundedJSON(response);
+    if (!response.ok || data?.code !== 0 || !object(data.data)) {
+      const error = new Error('PROVIDER_REJECTED');
+      error.httpStatus = response.status;
+      // Never copy arbitrary provider messages, echoed requests or customer data.
+      error.providerCode = typeof data?.code === 'number' && Number.isFinite(data.code) ? data.code : null;
+      throw error;
+    }
+    return data.data;
+  }
+  const load = async name => {
+    const raw = await redis(['GET', PREFIX + name]);
+    if (raw === null) return null;
+    need(typeof raw === 'string' && Buffer.byteLength(raw) < 16384, 'RECORD_INVALID');
+    const record = JSON.parse(raw);
+    need(record.externalOrderUid === externalId(name) && /^0x[0-9a-f]{40}$/.test(record.address), 'RECORD_INVALID');
+    return record;
+  };
+  if (mode === 'create' && !(await load(scenario))) {
+    const chainConfig = await provider('GET', ROOT + '/chain_config');
+    need(Array.isArray(chainConfig.chains) && chainConfig.chains.length <= 512, 'CHAIN_UNVERIFIED');
+    const chains = chainConfig.chains.filter(c => c?.code === 'sepolia');
+    need(chains.length === 1 && chains[0].isTestnet === true && Array.isArray(chains[0].supportedAssets)
+      && chains[0].supportedAssets.some(a => a === 'ETH' || a === 'ETH:sepolia'), 'CHAIN_UNVERIFIED');
+    const quote = await provider('POST', ROOT + '/quote', ROUTE);
+    need(Object.entries(ROUTE).every(([k, v]) => k === 'srcAmount' ? sameAmount(quote[k], v) : quote[k] === v)
+      && decimalAmount(quote.dstAmount), 'QUOTE_MISMATCH');
+    const recipient = await recipientFactory();
+    need(/^0x[0-9a-f]{40}$/.test(recipient.address) && /^[0-9a-f]{64}$/.test(recipient.privateKey), 'RECIPIENT_INVALID');
+    const record = {...recipient, externalOrderUid: externalId(scenario), phase: 'dispatch_reserved', createdAt: now()};
+    const reserved = await redis(['EVAL', RESERVE, 2, PREFIX + scenario + ':dispatched', PREFIX + scenario, JSON.stringify(record)]);
+    need(reserved === 0 || reserved === 1, 'RESERVATION_INVALID');
+    if (reserved === 1) {
+      try {
+        const result = await provider('POST', ROOT + '/checkout', {...ROUTE, externalOrderUid: record.externalOrderUid,
+          user: {firstName: 'GetYourSats', lastName: 'Sandbox', email: 'gys-rampnow-20261109@example.invalid',
+            phone: '+447700900123', dateOfBirth: '1990-01-01', gender: 'unknown', country: 'GB'},
+          wallet: {crytpoAccountDetail: {address: record.address, custodyType: 'unhosted'}}});
+        need(identifier(result.orderUid), 'ORDER_RESPONSE_INVALID');
+        record.orderUid = result.orderUid;
+        record.redirectUrl = safeCheckoutURL(result.redirectUrl);
+        record.phase = 'checkout_created';
+      } catch (error) {
+        record.phase = 'dispatch_requires_reconciliation';
+        record.failure = error.message === 'PROVIDER_REJECTED' ? 'provider_rejected' : 'response_unverified';
+        record.httpStatus = Number.isInteger(error.httpStatus) ? error.httpStatus : null;
+        record.providerCode = typeof error.providerCode === 'number' ? error.providerCode : null;
+      }
+      // The permanent reservation is intentionally never removed, including on failure.
+      need(await redis(['SET', PREFIX + scenario, JSON.stringify(record), 'XX', 'EX', 2592000]) === 'OK', 'STORE_UNAVAILABLE');
+    }
+  }
+  const report = {campaign: CAMPAIGN, checkedAt: new Date(now()).toISOString(), environment: 'sandbox',
+    route: ROUTE, realFundsUsed: false, productionReady: false, cases: []};
+  const rawEvents = await redis(['HGETALL', RAMPNOW_STORE_PREFIX + 'quarantine']);
+  need(Array.isArray(rawEvents) && rawEvents.length <= 2000 && rawEvents.length % 2 === 0, 'EVENT_STORE_INVALID');
+  for (const name of CASES) {
+    const record = await load(name);
+    if (!record) { report.cases.push({scenario: name, phase: 'not_created'}); continue; }
+    const item = {scenario: name, externalOrderUid: record.externalOrderUid, phase: record.phase,
+      orderUid: record.orderUid ?? null, address: record.address,
+      failure: record.failure ?? null, httpStatus: record.httpStatus ?? null, providerCode: record.providerCode ?? null,
+      redirectUrl: record.redirectUrl ? safeCheckoutURL(record.redirectUrl) : null,
+      lookupVerified: false, callbackEvents: [], walletCreditVerified: false};
+    try {
+      const lookup = await provider('GET', ROOT + '/' + encodeURIComponent(record.externalOrderUid));
+      need(Array.isArray(lookup.orderList) && lookup.orderList.length === 1
+        && matchedOrder(lookup.orderList[0], record), 'ORDER_LOOKUP_UNVERIFIED');
+      const order = lookup.orderList[0];
+      item.orderUid = order.orderUid; item.lookupVerified = true;
+      if (typeof order.status === 'string' && /^[a-z_]{1,64}$/.test(order.status)) item.orderStatus = order.status;
+      if (decimalAmount(order.dstFillAmount, false)) item.dstFillAmount = order.dstFillAmount;
+      if (Array.isArray(order.transactionHash)) item.transactionHashes = order.transactionHash.filter(x => /^0x[0-9a-fA-F]{64}$/.test(x)).slice(0,10);
+    } catch { item.lookupStatus = 'unverified'; }
+    for (let i = 0; i < rawEvents.length; i += 2) {
+      try {
+        need(typeof rawEvents[i+1] === 'string' && Buffer.byteLength(rawEvents[i+1]) <= 4096, 'EVENT_INVALID');
+        const stored = JSON.parse(rawEvents[i+1]); const event = normalizeRampnowEvent(stored.event);
+        const p = event.payload;
+        if (stored.classification !== 'unbound' || rawEvents[i] !== event.eventUid
+          || p.externalOrderUid !== record.externalOrderUid || p.orderUid !== item.orderUid
+          || !['orderType','srcCurrency','srcChain','dstCurrency','dstChain'].every(k => p[k] === ROUTE[k])) continue;
+        item.callbackEvents.push({eventUid:event.eventUid, status:p.orderStatus, updateTime:p.updateTime,
+          dstFillAmount:p.dstFillAmount, receivedAt:stored.receivedAt});
+      } catch { /* Unrelated malformed quarantine rows never become evidence. */ }
+    }
+    report.cases.push(item);
+  }
+  return report;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  try {
+    const report = await runAcceptance({mode:process.argv[2] ?? 'inspect',scenario:process.argv[3]});
+    await mkdir('dist', {recursive:true});
+    await writeFile('dist/rampnow-sandbox-report.json', JSON.stringify(report, null, 2) + '\n');
+    console.log(JSON.stringify({check:'rampnow_sandbox_acceptance',campaign:CAMPAIGN,
+      cases:report.cases.map(c=>({scenario:c.scenario,phase:c.phase,lookupVerified:c.lookupVerified,
+        callbackCount:c.callbackEvents?.length ?? 0})),productionReady:false}));
+  } catch (error) {
+    const allowed = ['SANDBOX_GUARD','SANDBOX_CREDENTIALS_REQUIRED','ACTION_INVALID','CHAIN_UNVERIFIED',
+      'QUOTE_MISMATCH','RECIPIENT_INVALID','RESERVATION_INVALID','STORE_UNAVAILABLE','RECORD_INVALID',
+      'EVENT_STORE_INVALID','PROVIDER_REJECTED','RESPONSE_INVALID','RESPONSE_TOO_LARGE'];
+    console.error(JSON.stringify({check:'rampnow_sandbox_acceptance',
+      failure:allowed.includes(error.message)?error.message:'CHECK_FAILED',
+      httpStatus:Number.isInteger(error.httpStatus)?error.httpStatus:null,
+      providerCode:typeof error.providerCode==='number'?error.providerCode:null})); process.exitCode=1;
+  }
+}

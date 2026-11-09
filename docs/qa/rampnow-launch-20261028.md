@@ -1,6 +1,6 @@
 # RampNow integration and launch evidence
 
-Updated 7 November 2026. Scope: GetYourSats BTC on/off ramps. **Public Buy/Sell and checkout submission remain disabled.** No provider order, customer registration or real payment has been submitted.
+Updated 9 November 2026. Scope: GetYourSats BTC on/off ramps. **Public Buy/Sell and checkout submission remain disabled.** No provider order, customer registration or real payment has been submitted.
 
 ## Current activation decision
 
@@ -32,13 +32,23 @@ The remaining app work is explicit: wallet-generated deposit address and claim-f
 The current provider documentation supports sandbox card simulation and account-level webhook subscription. This permits testing hosted payment outcomes and signed callbacks independently of Bitcoin delivery. The published testnets are Sepolia, Base Sepolia, Solana Devnet, Arbitrum Sepolia, Optimism Sepolia and Polygon Amoy; the account may enable only a subset. No documented Bitcoin test route has been established.
 
 1. In the sandbox Partner Dashboard, inspect the existing webhook settings. Configure the account-level URL `https://gys-rampnow-sandbox-webhook.vercel.app/api/rampnow/webhook` and enable `ramp_order.status_change`. Preserve unrelated subscriptions. The per-order `webhookUrl` field is not the delivery configuration.
-2. Enable **Payment simulation** in the sandbox account settings. Verify that the order, checkout host and recipient network are all sandbox/testnet. Use a disposable testnet recipient on an explicitly supported route; never substitute a GYS Bitcoin address into an EVM/Solana order. Card simulation does not simulate KYC approval.
+2. Enable **Payment simulation** in the sandbox account settings. Verify that the order, checkout host and recipient network are all sandbox/testnet. Use a disposable testnet recipient on an explicitly supported route; never substitute a GYS Bitcoin address into an EVM/Solana order. Hypermid confirmed on 9 November that payment simulation is already enabled for this account and that simulated payments require no KYC details. Do not request identity documents for this sandbox test.
 3. In hosted checkout, choose the payment method and use the simulator's outcome dropdown. Cover Accepted, Rejected/Failed and Expired with separate uniquely identified test orders. Accepted should progress through `processing` to `completed` after testnet delivery; rejected/failed/canceled payment outcomes map to `payment_failed`. For pending push payments, the dashboard's **Ramp Orders → Settle Transfer** action provides the same outcomes. Prefer explicit outcomes over special amount values.
 4. Correlate each order's console or Get Order evidence with the receiver's verified event, event timestamp and final status. A successful synthetic webhook probe or a nonzero aggregate callback count alone is insufficient. The receiver acknowledges only after signature/replay validation and durable ingestion. Unbound simulator orders enter quarantine and never credit a GYS wallet.
 5. Confirm duplicate delivery leaves one durable event and older updates cannot regress state. Preserve observation after `payment_failed` or `expired`, because a late accepted payment can restart processing. A provider `failed` order remains delayed/reconcilable rather than being silently discarded.
 6. Record the actual provider acceptance results separately from automated tests. Passing a non-BTC simulation establishes payment/callback behavior only. It does not activate BTC Buy, prove spendable Spark receipt or approve Sell.
 
-Dashboard configuration and provider-originated scenario results are still pending verification. The merged integration source includes current wallet main `5562d83281d840e2914df3a6ec8f8e5972445cb2`; no SDK or dependency lockfile change is needed for this work.
+The account owner reports saving the webhook URL with New Webhook and `ramp_order.status_change` enabled. Hypermid has confirmed payment simulation is enabled and needs no KYC. Provider-originated scenario results remain pending verification. The merged integration source includes current wallet main `5562d83281d840e2914df3a6ec8f8e5972445cb2`; no SDK or dependency lockfile change is needed for this work.
+
+## Explicit sandbox acceptance runner
+
+Hypermid's 9 November reply clears the simulation-enable and sandbox KYC questions. The Intent API still documents a required customer object, so the operator runner uses clearly synthetic name/date fields, an `example.invalid` email and a reserved UK fictional phone number. It sends no real identity details, OTPs, card details or funds.
+
+`scripts/rampnow-sandbox-acceptance.mjs` is opt-in and is not invoked by the normal build or an HTTP endpoint. Its guards require this wallet project, the exact integration Preview branch, sandbox credentials and dedicated sandbox storage. The fixed test route is EUR 50 to ETH on provider-advertised Sepolia by card. A new disposable recipient is generated and its private key stays in the isolated server store. A permanent atomic reservation prevents repeated Create Order dispatch, including after timeouts or expiry of the detailed record. Creation never retries automatically.
+
+Run `node scripts/rampnow-sandbox-acceptance.mjs create accepted` in the protected Preview build to prepare the first case. Other fixed cases are `declined` and `expired`; `inspect` is read-only. The operator must choose the matching outcome in hosted checkout. A case name is an intended scenario, not a verified provider result. The runner writes a report under `dist/rampnow-sandbox-report.json` for the existing authenticated Vercel Preview only. It excludes credentials, private keys and customer fields. Checkout URLs are restricted to the sandbox origin. Never publish that report to an unprotected deployment.
+
+The report matches provider lookup and verified stored callback events by external ID, order ID and route; lookup also verifies amount and destination. It never credits a GYS wallet. Thirteen local Node tests pass, covering environment/route guards, duplicate concurrent execution, uncertain submission, permanent reservation, redaction, lookup binding and callback correlation. These tests use mocked provider responses; actual scenario acceptance must be recorded separately.
 
 ## Verified infrastructure
 
@@ -102,3 +112,4 @@ For the return-network correction, 23 negative regression cases failed against t
 - https://docs.rampnow.io/api-reference/go-live-checklist
 
 Current Create Order prose resolves stale examples: repeated `externalOrderUid` values are not idempotent, omitting the wallet sends buy funds to the partner wallet, and webhooks use account-level registration rather than a per-order URL. Account-specific settlement behavior still requires verification. No private partner material or credentials are committed.
+
