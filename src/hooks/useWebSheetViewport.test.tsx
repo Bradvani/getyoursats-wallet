@@ -13,7 +13,7 @@ beforeEach(() => {
   vi.stubGlobal('innerHeight', 844);
   vi.stubGlobal('visualViewport', viewport);
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {vi.restoreAllMocks(); vi.unstubAllGlobals();});
 
 describe('web sheet viewport', () => {
   it('fits the visible portrait area above the keyboard and follows its pan', () => {
@@ -63,5 +63,51 @@ describe('web sheet viewport', () => {
     expect(remove).toHaveBeenCalledWith('resize', expect.any(Function));
     expect(remove).toHaveBeenCalledWith('scroll', expect.any(Function));
     unmount();
+  });
+
+  it('follows a late standalone Safari pan without another viewport event and stops after settling', () => {
+    let now = 0;
+    let nextId = 0;
+    const pending = new Map<number, FrameRequestCallback>();
+    vi.spyOn(performance, 'now').mockImplementation(() => now);
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      pending.set(++nextId, callback);
+      return nextId;
+    });
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => pending.delete(id));
+    const tick = (at: number) => {
+      now = at;
+      const callbacks = [...pending.values()];
+      pending.clear();
+      act(() => callbacks.forEach(callback => callback(now)));
+    };
+    const {result, rerender} = renderHook(({enabled}) => useWebSheetViewport(enabled),
+      {initialProps: {enabled: true}});
+
+    // Native focus first shortens the viewport, then pans it on a later frame.
+    viewport.height = 430;
+    act(() => viewport.dispatchEvent(new Event('resize')));
+    tick(16);
+    expect(result.current).toMatchObject({height: 430, top: 0, keyboardOpen: true});
+    viewport.offsetTop = 280;
+    tick(80);
+    expect(result.current.top).toBe(280);
+    tick(1001);
+    expect(pending.size).toBe(0);
+
+    // A later keyboard cycle restarts sampling. A stale dismissal offset clears.
+    viewport.height = 844;
+    act(() => document.dispatchEvent(new Event('focusout')));
+    tick(1017);
+    expect(result.current).toMatchObject({height: 844, top: 0, keyboardOpen: false});
+    viewport.height = 430;
+    viewport.offsetTop = 0;
+    act(() => document.dispatchEvent(new Event('focusin')));
+    tick(1033);
+    viewport.offsetTop = 190;
+    tick(1080);
+    expect(result.current.top).toBe(190);
+    rerender({enabled: false});
+    expect(pending.size).toBe(0);
   });
 });

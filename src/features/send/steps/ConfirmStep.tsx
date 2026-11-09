@@ -96,7 +96,7 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
       )}
 
       {/* Sats breakdown */}
-      <SimpleFeeBreakdown amount={feesIncluded ? amount - fee : amount} fee={fee} feeLabel={text.networkFee} totalLabel={ux.total} amountLabel={feesIncluded ? text.recipientReceives : ux.amount} />
+      <SimpleFeeBreakdown amount={feesIncluded ? amount - fee : amount} fee={fee} feeLabel={text.networkFee} totalLabel={text.totalDeducted} amountLabel={text.recipientReceives} />
 
       {/* Token conversion details */}
       {isTokenMode && tokenAmount && tokenFee && (

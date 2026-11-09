@@ -1,8 +1,9 @@
 import {validAmountInput} from '../../../utils/decimalInput';
 import {usePresentation} from '@/hooks/usePresentation';
 import {PAYMENT_UX} from '@/locales/paymentUx';
+import {sendDestinationCopy} from '@/locales/sendDestination';
 import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
-import React, { useMemo, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import type { LnurlPayRequestDetails, PrepareLnurlPayRequest, PrepareLnurlPayResponse } from '@breeztech/breez-sdk-spark';
 import type { PaymentStep } from '../../../types/domain';
 import { FormError, PrimaryButton, AMOUNT_FIELD_CLASS } from '../../../components/ui';
@@ -10,9 +11,7 @@ import { useSheetBack } from '../../../components/ui/sheets/BottomSheetCardConte
 import ConfirmStep from '../steps/ConfirmStep';
 import { logger, LogCategory } from '@/services/logger';
 import { SpinnerIcon } from '@/components/Icons';
-import { formatQuickAmount, pickQuickAmounts, satsToFiat } from '../../../utils/tokenFormatting';
 import CurrencySwitcher from '../../../components/ui/CurrencySwitcher';
-import { SatAmount } from '../../../components/SatAmount';
 import { formatWithSpaces } from '../../../utils/formatNumber';
 import { useAmountInput, useFiatOverride } from '../../../hooks/useAmountInput';
 import { useBalanceValidation } from '../hooks/useBalanceValidation';
@@ -35,6 +34,7 @@ interface LnurlWorkflowProps {
 const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, balanceSats, tokenBalance, initialAmount='', initialFeesIncluded=false, onBack, onRun, onPrepare, onPay }) => {
   const {language}=usePresentation();
   const text=PAYMENT_UX[language];
+  const recipientId=useId();
   const balanceKnown=balanceSats!==undefined;
   // USD as a secondary entry option on BTC sends (#253): starts in sats,
   // toggleable to USD, converted to sats client-side.
@@ -51,8 +51,6 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
     tokenIdentifier,
     tokenSymbol,
     config,
-    btcFiatRate,
-    quickAmountScale,
     tokenBalanceDisplay,
     formatSatsAsTokenDisplay,
     tokenSendAllBelowThreshold,
@@ -276,32 +274,60 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
     ? text.exceeds
     : null;
 
-  // Quick amounts answer to the request's own send limits as well as the
-  // balance. Both bounds convert into the typed unit so they bind in fiat mode
-  // too. The max is the request's limit, not the user's, so it goes in as a
-  // hard ceiling and keeps its own value.
-  const toTypedUnit = (sats: number) => (isTokenMode ? satsToFiat(sats, btcFiatRate) : sats);
-  const quickAmounts = pickQuickAmounts(
-    balance.spendableDisplay,
-    quickAmountScale,
-    toTypedUnit(maxSats),
-  ).filter((amt) => amt >= toTypedUnit(minSats));
-
   // amount + optional comment form
   return (
     <div className="space-y-5">
       {/* Description */}
-      <div className="text-center">
-        <p className="text-spark-text-primary font-medium">{recipientLabel ?? description}</p>
-      </div>
+      <button type="button" onClick={onBack} disabled={isLoading}
+        aria-label={sendDestinationCopy(language).edit} aria-describedby={recipientId} data-testid="edit-send-destination"
+        className="w-full min-h-11 rounded-xl border border-spark-border bg-spark-dark p-3 text-start disabled:opacity-50">
+        <span id={recipientId} className="block break-all text-spark-text-primary font-medium">{recipientLabel ?? description}</span>
+        <span className="gys-send-edit-action mt-2 block text-sm text-spark-primary underline">{sendDestinationCopy(language).edit}</span>
+      </button>
 
-      <div id="lnurl-balance" role="status" aria-live="polite" className="rounded-xl bg-spark-surface border border-spark-border p-3">
-        <p className="text-sm text-spark-text-secondary">{text.available}</p>
-        <p className="text-lg font-semibold text-spark-text-primary" data-testid="lnurl-available-balance">
-          {balanceKnown ? <bdi dir="ltr">{formatWithSpaces(balanceSats)} sats</bdi> : text.balanceLoading}
-        </p>
-        {isStableBalanceActive && tokenBalanceDisplay && tokenSymbol && <p className="text-sm text-spark-text-primary"><bdi dir="ltr">{tokenBalanceDisplay} {tokenSymbol}</bdi></p>}
-        <p className="text-xs text-spark-text-muted">{hasPendingConversion ? text.updating : text.beforeFees}</p>
+      <div id="lnurl-balance" role="status" aria-live="polite" className="flex items-center justify-between gap-3">
+        <div id="lnurl-balance-description" className="min-w-0">
+          <p className="text-xs text-spark-text-secondary">{text.available}</p>
+          <p className="text-sm font-semibold text-spark-text-primary">
+            <span data-testid="lnurl-available-balance">{balanceKnown ? <bdi dir="ltr">{formatWithSpaces(balanceSats)} sats</bdi> : text.balanceLoading}</span>
+            <span className="ms-2 text-xs font-normal text-spark-text-muted">{text.beforeFees}</span>
+          </p>
+          {isStableBalanceActive && tokenBalanceDisplay && tokenSymbol && <p className="text-sm text-spark-text-primary"><bdi dir="ltr">{tokenBalanceDisplay} {tokenSymbol}</bdi></p>}
+          {hasPendingConversion && <p className="text-xs text-spark-text-muted">{text.updating}</p>}
+        </div>
+          {(hasTokenBalance
+            || sendAllBtcInTokenDisplay !== null
+            || (sendAllAmount !== null && sendAllAmount >= minSats)) && (
+            <button
+              onClick={() => {
+                if (!isTokenMode && sendAllAmount !== null) {
+                  setAmountInput(String(sendAllAmount));
+                } else if (hasTokenBalance && tokenBalanceDisplay) {
+                  if (!isTokenMode) setIsTokenMode(true);
+                  setAmountInput(tokenBalanceDisplay);
+                } else if (sendAllBtcInTokenDisplay !== null) {
+                  // In token mode without token balance, fill with BTC sats
+                  // converted to fiat (capped at maxSats). Avoids dropping a
+                  // raw sats integer into a fiat-denominated input.
+                  setAmountInput(sendAllBtcInTokenDisplay);
+                } else if (sendAllAmount !== null) {
+                  setAmountInput(String(sendAllAmount));
+                }
+                setFeesIncluded(true);
+              }}
+              disabled={isLoading || !balanceKnown || tokenSendAllBelowThreshold || hasPendingConversion}
+              title={hasPendingConversion ? text.updating : text.feesHint}
+              aria-pressed={isSendAll}
+              className="gys-send-max-action min-h-11 min-w-11 shrink-0 rounded-lg px-2 text-sm font-semibold text-spark-primary underline disabled:opacity-40"
+            >
+              {hasPendingConversion ? (
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <SpinnerIcon size="xs" />
+                  {text.max}
+                </span>
+              ) : text.max}
+            </button>
+          )}
       </div>
       {/* Amount input */}
       <div>
@@ -315,7 +341,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
           <input
             id="lnurl-amount"
             dir="ltr"
-            aria-describedby="lnurl-balance lnurl-limits lnurl-fees"
+            aria-describedby="lnurl-balance-description lnurl-limits lnurl-fees"
             type={isTokenMode ? 'text' : 'number'}
             inputMode={isTokenMode ? 'decimal' : 'numeric'}
             value={amount}
@@ -324,9 +350,8 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
               setFeesIncluded(false);
             }}
             placeholder={text.enterAmount}
-            className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none read-only:cursor-not-allowed`}
+            className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
             disabled={isLoading}
-            readOnly={isSendAll}
             min={isTokenMode ? undefined : minSats}
             max={isTokenMode ? undefined : maxSats}
           />
@@ -342,64 +367,7 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
 
         <p id="lnurl-limits" className="mt-2 text-xs text-spark-text-muted">{text.recipientLimits}: <bdi dir="ltr">{formatWithSpaces(minSats)} … {formatWithSpaces(maxSats)} sats</bdi></p>
         <p id="lnurl-fees" className="mt-1 text-xs text-spark-text-muted">{text.feesHint}</p>
-        {/* Quick amount buttons */}
-        <div className="flex gap-2 mt-3">
-          {quickAmounts.map((quickAmount) => {
-            const isSelected = amountNum === quickAmount && !isSendAll;
-            return (
-              <button
-                key={quickAmount}
-                disabled={isLoading || hasPendingConversion}
-                onClick={() => { setAmountInput(String(quickAmount)); setFeesIncluded(false); }}
-                className={`flex-1 min-h-11 min-w-0 px-2 py-2 text-sm font-medium rounded-lg transition-all ${
-                  isSelected
-                    ? 'bg-spark-primary text-white'
-                    : 'bg-transparent border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
-                }`}
-              >
-                {isTokenMode && config ? formatQuickAmount(quickAmount, config) : <SatAmount sats={quickAmount} />}
-              </button>
-            );
-          })}
-          {(hasTokenBalance
-            || sendAllBtcInTokenDisplay !== null
-            || (sendAllAmount !== null && sendAllAmount >= minSats)) && (
-            <button
-              onClick={() => {
-                if (!isTokenMode && sendAllAmount !== null) {
-                  setAmountInput(String(sendAllAmount));
-                } else if (hasTokenBalance && tokenBalanceDisplay) {
-                  if (!isTokenMode) setIsTokenMode(true);
-                  setAmountInput(tokenBalanceDisplay);
-                } else if (sendAllBtcInTokenDisplay !== null) {
-                  // In token mode without token balance — fill with BTC sats
-                  // converted to fiat (capped at maxSats). Avoids dropping a
-                  // raw sats integer into a fiat-denominated input.
-                  setAmountInput(sendAllBtcInTokenDisplay);
-                } else if (sendAllAmount !== null) {
-                  setAmountInput(String(sendAllAmount));
-                }
-                setFeesIncluded(true);
-              }}
-              disabled={isLoading || !balanceKnown || tokenSendAllBelowThreshold || hasPendingConversion}
-              title={hasPendingConversion ? text.updating : text.feesHint}
-              className={`flex-1 min-h-11 min-w-0 px-2 py-2 text-sm font-medium rounded-lg transition-all ${
-                tokenSendAllBelowThreshold || hasPendingConversion
-                  ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
-                  : isSendAll
-                    ? 'bg-spark-primary text-white'
-                    : 'bg-transparent border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
-              }`}
-            >
-              {hasPendingConversion ? (
-                <span className="inline-flex items-center justify-center gap-1.5">
-                  <SpinnerIcon size="xs" />
-                  {text.max}
-                </span>
-              ) : text.max}
-            </button>
-          )}
-        </div>
+
       </div>
 
       {/* Optional comment */}

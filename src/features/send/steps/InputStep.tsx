@@ -1,6 +1,6 @@
 import {useFlowText} from '@/hooks/useFlowText';
 import LocalizedErrorText from '@/components/LocalizedErrorText';
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { SimpleAlert } from '../../../components/AlertCard';
 import { PrimaryButton, FIELD_BASE_CLASS } from '../../../components/ui';
 import ContactAutocomplete from '../components/ContactAutocomplete';
@@ -13,6 +13,9 @@ import { dismissKeyboard } from '../../../utils/keyboard';
 import { Capacitor } from '@capacitor/core';
 import { Clipboard } from '@capacitor/clipboard';
 import { useLatest } from '../../../hooks/useLatest';
+import {usePresentation} from '@/hooks/usePresentation';
+import {SEND_USERNAME} from '@/locales/sendUsername';
+import {usernameDestination} from '../usernameDestination';
 
 export interface InputStepProps {
   paymentInput: string;
@@ -31,6 +34,9 @@ export interface InputStepProps {
 // a fresh contact pick remounts and lazy-init re-reads the props.
 const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddress, isLoading, suspended = false, error, onClearError, onContinue, onScanQr, onOpenContacts, onStablecoin }) => {
   const t=useFlowText();
+  const {language} = usePresentation();
+  const usernameText = SEND_USERNAME[language];
+  const usernameSuggestionId = useId();
   const { contacts } = useContactsContext();
   const [localPaymentInput, setLocalPaymentInput] = useState<string>(() =>
     selectedContactAddress || paymentInput || ''
@@ -46,6 +52,8 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
   });
 
   const autocompleteContacts = useMemo(() => searchContacts(contacts, localPaymentInput), [contacts, localPaymentInput]);
+  const allowsUsername = preferredRail === 'auto' || preferredRail === 'lightning';
+  const completedUsername = !selectedContact && allowsUsername ? usernameDestination(localPaymentInput) : null;
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const inputAction = useRef(0);
@@ -60,7 +68,9 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
     const action = ++inputAction.current;
     await dismissKeyboard();
     if (action === inputAction.current && canSubmit.current && localPaymentInput.trim()) {
-      onContinue(localPaymentInput);
+      const destination = completedUsername ?? localPaymentInput;
+      if (completedUsername) setLocalPaymentInput(destination);
+      onContinue(destination);
     }
   };
 
@@ -70,7 +80,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
       ? t("Lightning address or invoice (lnbc...)")
       : preferredRail === 'stablecoin'
         ? t("Recipient address for USDT / USDC")
-        : t("Lightning address, invoice, Bitcoin or stablecoin destination");
+        : usernameText.placeholder;
 
   const handlePaste = async () => {
     if (!canSubmit.current) return;
@@ -95,7 +105,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
       if (text?.trim()) {
         setLocalPaymentInput(text);
         setSelectedContact(null);
-        onContinue(text, { requireReview: true });
+        if (!allowsUsername || !usernameDestination(text)) onContinue(text, { requireReview: true });
       }
     } catch (err) {
       if (action !== inputAction.current || !canSubmit.current) return;
@@ -150,7 +160,18 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
           </button>
         </div>
       </div>
-      <p className="text-xs text-spark-text-muted">{t("Or enter a destination below. We’ll recognize the payment format.")}</p>
+      {completedUsername ? <div id={usernameSuggestionId} aria-live="polite">
+        <button type="button" data-testid="username-destination" disabled={isLoading || suspended}
+          onClick={() => {
+            if (!canSubmit.current) return;
+            inputAction.current += 1;
+            setLocalPaymentInput(completedUsername);
+            onClearError?.();
+          }}
+          className="flex min-h-11 w-full flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-spark-border bg-spark-surface px-3 py-2 text-start text-sm text-spark-text-primary disabled:opacity-50">
+          <span>{usernameText.useAddress}</span><bdi className="break-all font-medium">{completedUsername}</bdi>
+        </button>
+      </div> : <p className="text-xs text-spark-text-muted">{t("Or enter a destination below. We’ll recognize the payment format.")}</p>}
       {/* Input with autocomplete */}
       <div className="h-20">
         {selectedContact ? (
@@ -188,17 +209,16 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
               value={localPaymentInput}
               onChange={(e) => {inputAction.current += 1; setLocalPaymentInput(e.target.value);}}
               onPaste={(e) => {
-                // A user-initiated paste fills the field but doesn't
-                // advance. Auto-advance so it matches the Paste button.
-                // This path also needs no readText(), so no iOS
-                // clipboard permission pill.
+                if (!canSubmit.current) return;
+                // Recognized formats keep the explicit review path. Bare
+                // usernames stay here so the full destination is visible.
                 const text = e.clipboardData.getData('text');
                 if (text?.trim()) {
                   e.preventDefault();
                   inputAction.current += 1;
                   setLocalPaymentInput(text);
                   setSelectedContact(null);
-                  onContinue(text, { requireReview: true });
+                  if (!allowsUsername || !usernameDestination(text)) onContinue(text, { requireReview: true });
                 }
               }}
               onFocus={() => setIsInputFocused(true)}
@@ -221,6 +241,7 @@ const InputStep: React.FC<InputStepProps> = ({ paymentInput, selectedContactAddr
               autoCorrect="off"
               spellCheck={false}
               placeholder={recipientPlaceholder}
+              aria-describedby={completedUsername ? usernameSuggestionId : undefined}
               className={`${FIELD_BASE_CLASS} h-full p-4 resize-none font-mono text-sm outline-hidden`}
               disabled={isLoading}
               data-testid="payment-input"

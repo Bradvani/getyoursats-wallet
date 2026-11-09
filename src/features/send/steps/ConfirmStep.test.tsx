@@ -70,6 +70,8 @@ describe('ConfirmStep prepare failure', () => {
 describe('recipient amount and added transfer fee',()=>{
  it('adds the quoted fee to the recipient amount rather than deducting from it',()=>{
   renderConfirmStep({label:'Recipient',value:'alice@example.invalid'},{amountSats:900n,feesSat:2,balanceSats:10000});
+  expect(screen.getByText('Recipient receives')).toBeVisible();
+  expect(screen.getAllByText('Total deducted')).toHaveLength(2);
   expect(screen.getAllByText('902')).not.toHaveLength(0);
   expect(screen.getAllByText('900')).not.toHaveLength(0);
   expect(screen.getByTestId('send-confirm-button')).toBeEnabled();
@@ -79,4 +81,11 @@ describe('recipient amount and added transfer fee',()=>{
   expect(screen.getByTestId('send-confirm-button')).toBeEnabled();
   expect(screen.queryByText('902')).toBeNull();
  });
+});
+
+it('makes the amount received clear when fees are included in the budget',()=>{
+ renderConfirmStep({label:'Recipient',value:'alice@example.invalid'},{amountSats:100n,feesSat:3,feesIncluded:true,balanceSats:100});
+ expect(screen.getByText('Recipient receives').parentElement).toHaveTextContent('97');
+ expect(screen.getAllByText('Total deducted')).toHaveLength(2);
+ expect(screen.getByTestId('send-confirm-button')).toBeEnabled();
 });

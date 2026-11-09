@@ -173,6 +173,9 @@
  --color-spark-success:#17683F;--color-spark-electric:#9A4B00;
 }
 :root[data-gys-theme="orange"] .gys-activity,
+:root[data-gys-theme="orange"] .gys-home-identity,
+:root[data-gys-theme="orange"] .gys-setup-reminder,
+:root[data-gys-theme="orange"] .gys-market-summary,
 :root[data-gys-theme="orange"] .gys-market-pulse{
  color:var(--gys-dark-text);border:1px solid var(--gys-line);
  background:var(--gys-paper);box-shadow:0 7px 24px rgba(68,47,18,.055);
@@ -349,4 +352,7 @@
 @media(prefers-reduced-motion:reduce){
  :root[data-gys-theme="orange"] .gys-action-dock button,
  :root[data-gys-theme="orange"] .gys-home-quick-actions__button{transition:none}
+}
+:root[data-gys-theme="orange"] .gys-send-flow :is(.gys-send-edit-action, .gys-send-max-action) {
+  color: #783c05;
 }

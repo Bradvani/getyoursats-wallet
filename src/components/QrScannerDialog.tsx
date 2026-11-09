@@ -3,11 +3,11 @@ import QrScanner from '@/utils/qrScanner';
 import {useScannerPortrait} from '../hooks/useScannerPortrait';
 import { BottomSheetContainer, FloatingIconButton } from './ui';
 import { useQrScanner } from '../hooks/useQrScanner';
-import { logger, LogCategory } from '@/services/logger';
 import { holdIdleLock } from '@/services/appLock';
 import { CameraFlipIcon, ImageIcon, AlertTriangleIcon } from './Icons';
 import { useLatest } from '../hooks/useLatest';
 import { usePresentation } from '../hooks/usePresentation';
+import {PRODUCT_POLISH} from '../locales/productPolish';
 import { trustCopy } from '../getyoursats/trustCopy';
 
 interface QrScannerDialogProps {
@@ -32,6 +32,8 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
   const galleryRequest = useRef(0);
   const isOpenRef = useLatest(isOpen);
   const {language} = usePresentation();
+  const copy=PRODUCT_POLISH[language];
+  const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
   const handleScan = useCallback((data: string) => {
     if (!isOpenRef.current || acceptedScan.current) return;
@@ -52,7 +54,7 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
     startScanning,
     stopScanning,
     toggleCamera,
-    clearError,
+    clearError, hasTorch, torchOn, toggleTorch,
   } = useQrScanner({ onScan: handleScan });
 
   const handleGalleryPick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,13 +70,13 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
       handleScan(result);
     } catch {
       if (request === galleryRequest.current && isOpenRef.current) {
-        setGalleryError('No QR code found in image. Try another image or use the camera.');
+        setGalleryError(copy.imageError);
       }
     } finally {
       if (request === galleryRequest.current) setIsReadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  }, [handleScan, stopScanning, isOpenRef]);
+  }, [handleScan, stopScanning, isOpenRef, copy.imageError]);
 
   // Aiming a camera produces no pointer or key events, so the idle
   // timer would run to completion mid-scan and lock the screen the
@@ -96,20 +98,14 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
     galleryRequest.current += 1;
     if (isOpen) {
       acceptedScan.current = false;
-      // Wait for the transition to complete (300ms) plus a buffer
-      const timer = setTimeout(() => {
-        logger.debug(LogCategory.UI, 'Checking video element after transition', {
-          videoReady: Boolean(videoRef.current),
-        });
-        if (videoRef.current) {
-          startScanningRef.current();
-        } else {
-          logger.error(LogCategory.UI, 'Video element still null after transition');
-        }
-      }, 400); // 300ms transition + 100ms buffer
-
+      let frame=0;
+      const openCamera=()=>{
+        if(videoRef.current)void startScanningRef.current();
+        else frame=requestAnimationFrame(openCamera);
+      };
+      frame=requestAnimationFrame(openCamera);
       return () => {
-        clearTimeout(timer);
+        cancelAnimationFrame(frame);
         galleryRequest.current += 1;
         acceptedScan.current = true;
         stop();
@@ -207,19 +203,20 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
               <div className="absolute inset-0 flex items-center justify-center bg-spark-surface/70" role="status">
                 <div className="text-center text-white p-4">
                   <div className="animate-spin motion-reduce:animate-none rounded-full h-10 w-10 border-2 border-spark-primary border-t-transparent mx-auto mb-3"></div>
-                  <p className="text-sm text-spark-text-secondary">{isReadingImage ? trustCopy(language).checking : 'Initializing camera...'}</p>
+                  <p className="text-sm text-spark-text-secondary">{isReadingImage ? trustCopy(language).checking : copy.starting}</p>
                 </div>
               </div>
             )}
 
-            {!isScanning && !isInitializing && !isReadingImage && error && (
+            {!isScanning && !isInitializing && !isReadingImage && (
               <div className="absolute inset-0 flex items-center justify-center bg-spark-surface/80">
                 <div className="text-center text-white p-6 max-w-xs">
                   <div className="w-16 h-16 rounded-full bg-spark-primary/20 flex items-center justify-center mx-auto mb-4">
                     <AlertTriangleIcon size="xl" className="text-spark-primary" />
                   </div>
-                  <p className="text-sm mb-2 font-medium">Camera not available</p>
-                  <p className="text-xs text-spark-text-muted">{error}</p>
+                  {error&&<p className="text-sm mb-2 font-medium">{copy.unavailable}</p>}
+                  <p className="text-xs text-spark-text-muted">{error==='denied'?copy.denied:error==='busy'?copy.busy:''}</p>
+                  <button type="button" className="mt-3 min-h-11 underline text-spark-text-primary" onClick={()=>void startScanning()}>{copy.retry}</button>
                 </div>
               </div>
             )}
@@ -232,19 +229,21 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
               onClick={toggleCamera}
               disabled={isReadingImage}
               className="absolute top-4 left-4 z-20"
-              aria-label="Switch camera"
+              aria-label={copy.flip}
               icon={
                 <CameraFlipIcon />
               }
             />
           )}
 
+          {hasTorch&&<button type="button" onClick={()=>void toggleTorch()} aria-pressed={torchOn}
+            className="absolute bottom-4 left-4 z-20 min-h-11 px-4 rounded-xl bg-spark-surface text-spark-text-primary border border-spark-border">{torchOn?copy.torchOff:copy.torchOn}</button>}
           {/* Gallery picker button (top right of the viewport). */}
           <FloatingIconButton
             onClick={() => fileInputRef.current?.click()}
             disabled={isReadingImage}
             className="absolute top-4 right-4 z-20"
-            aria-label="Pick image from gallery"
+            aria-label={copy.gallery}
             icon={
               <ImageIcon />
             }
@@ -269,15 +268,16 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
             (spark-surface/80 backdrop-blur-md, same as .bottom-bar) so
             the scanner blends with the wallet footer visually. */}
         <div className="bg-spark-surface/80 backdrop-blur-md">
-          <div className="p-6">
+          <div className="p-6 max-h-[40dvh] overflow-y-auto">
+            {isiOS&&<details className="mb-3 text-sm text-spark-text-secondary"><summary className="min-h-11 cursor-pointer flex items-center">{copy.access}</summary><p className="pb-3 leading-relaxed">{copy.iosHelp}</p></details>}
             <p className="text-spark-text-secondary text-sm text-center mb-4">
-              Point camera at QR code
+              {copy.point}
             </p>
             <button
               onClick={handleClose}
               className="w-full py-3 border border-spark-border text-spark-text-primary rounded-xl font-medium hover:bg-white/10 transition-colors"
             >
-              Cancel
+              {copy.cancel}
             </button>
           </div>
         </div>

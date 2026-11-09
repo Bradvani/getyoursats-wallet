@@ -16,12 +16,15 @@ import {initPresentation} from '../../src/services/presentationPreferences';
 
 // Production never imports this fixture. All destinations and balances are synthetic.
 const fixed = new URLSearchParams(location.search).get('kind') === 'fixed';
-const rawInput = fixed ? 'lnbc1synthetic' : 'alice@example.invalid';
+const spark = new URLSearchParams(location.search).get('kind') === 'spark';
+const username = new URLSearchParams(location.search).get('kind') === 'username';
+const manual = new URLSearchParams(location.search).get('manual') === '1';
+const rawInput = fixed ? 'lnbc1synthetic' : spark ? 'spark1synthetic' : username ? 'alice@getyoursats.com' : 'alice@example.invalid';
 const info = {identityPubkey: `02${'c'.repeat(64)}`, balanceSats: 500000, recoverableFundsSats: 0,
   tokenBalances: new Map()} as GetInfoResponse;
 const parsed = fixed ? {
   type: 'bolt11Invoice', amountMsat: 100000, invoice: {bolt11: rawInput},
-} : {
+} : spark ? {type: 'sparkAddress', address: rawInput} : {
   type: 'lightningAddress', address: rawInput,
   payRequest: {callback: 'https://example.invalid/pay', minSendable: 1000, maxSendable: 100000000,
     metadataStr: '[["text/plain","Synthetic recipient"]]', commentAllowed: new URLSearchParams(location.search).has('comments') ? 100 : 0,
@@ -47,6 +50,7 @@ const reads = {
   parse: (input: string) => {
     if (input !== rawInput) return Promise.reject(new Error('Unexpected synthetic input'));
     parseCalls += 1;
+    if (manual) return Promise.resolve(parsed as InputType);
     return new Promise<InputType>((resolve, reject) => {pending = {resolve, reject};});
   },
 } satisfies Partial<BreezSdk>;

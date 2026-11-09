@@ -26,7 +26,8 @@ let lnurlSends=0;
 const receipt=(id:string,amount:bigint,fees=0n)=>({id,amount,fees,paymentType:'send',status:'completed',method:'spark',timestamp:1700000000} as Payment);
 const reads:Partial<BreezSdk>={
   addEventListener:async()=> 'isolated-listener',removeEventListener:async()=>true,
-  getInfo:async()=>info,listContacts:async()=>[],getUserSettings:async()=>({sparkPrivateModeEnabled:false}),
+  getInfo:async()=>info,listContacts:async()=>params.has('contacts')?[{id:'synthetic-contact',name:'Alice external',
+    paymentIdentifier:'alice@other.example',createdAt:1,updatedAt:1}]:[],getUserSettings:async()=>({sparkPrivateModeEnabled:false}),
   listFiatCurrencies:async()=>({currencies:[]}),listFiatRates:async()=>({rates:[{coin:'USD',value:90000}]}),
   getPayment:async({paymentId})=>{
     if(params.has('reconciled'))return {payment:receipt(paymentId,100n)};

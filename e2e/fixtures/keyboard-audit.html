@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Isolated keyboard viewport audit</title></head>
+<body><script type="module">
+const params = new URLSearchParams(location.search);
+if (params.has('frame')) {
+  class KeyboardViewport extends EventTarget {
+    height=innerHeight; width=innerWidth; offsetTop=0; offsetLeft=0; pageTop=0; pageLeft=0; scale=1;
+  }
+  const viewport = new KeyboardViewport();
+  Object.defineProperty(window, 'visualViewport', {value:viewport, configurable:true});
+  window.setAuditKeyboard = height => {
+    viewport.height=height;
+    viewport.offsetTop=0;
+    viewport.pageTop=0;
+    viewport.dispatchEvent(new Event('resize'));
+  };
+  window.setAuditDelayedPan = () => {
+    window.setAuditKeyboard(430);
+    // Replay standalone Safari's late offset without sending another event.
+    setTimeout(() => {viewport.offsetTop=280;viewport.pageTop=280;},80);
+  };
+  const root=document.createElement('div');root.id='root';document.body.append(root);
+  await import('/e2e/fixtures/scan-send.tsx');
+} else {
+  document.body.style.cssText='margin:20px;background:#ddd;font:16px system-ui';
+  document.body.innerHTML='<h1>Keyboard viewport audit</h1><p>Read-only synthetic wallet. Geometry simulation, not a physical iPhone.</p><p><button id="keyboard">Show keyboard</button> <button id="reveal">Browser reveal amount</button> <button id="pan">Simulate outer focus pan</button> <button id="late">Delayed viewport pan</button> <button id="hide">Hide keyboard</button></p><pre id="evidence"></pre><iframe title="390 by 844 wallet" id="wallet" width="390" height="844" src="./keyboard-audit.html?frame=1&kind=spark&manual=1" style="border:0"></iframe>';
+  const frame=document.querySelector('iframe');
+  const evidence=()=>{
+    const d=frame.contentDocument;
+    const root=d.querySelector('.react-modal-sheet-root:has([data-testid="send-flow"])');
+    const amount=d.querySelector('[data-testid="amount-input"]');
+    document.querySelector('#evidence').textContent=JSON.stringify({rootScroll:root?.scrollTop,rootOverflow:root&&getComputedStyle(root).overflow,root:root?.getBoundingClientRect().toJSON(),amount:amount?.getBoundingClientRect().toJSON()},null,2);
+  };
+  document.querySelector('#keyboard').onclick=()=>{frame.contentWindow.setAuditKeyboard(494);setTimeout(evidence,400);};
+  document.querySelector('#hide').onclick=()=>{frame.contentWindow.setAuditKeyboard(844);setTimeout(evidence,400);};
+  document.querySelector('#late').onclick=()=>{frame.contentWindow.setAuditDelayedPan();setTimeout(evidence,400);};
+  document.querySelector('#reveal').onclick=()=>{const el=frame.contentDocument.querySelector('[data-testid="amount-input"]');el.focus();el.scrollIntoView({block:'center'});setTimeout(evidence,400);};
+  document.querySelector('#pan').onclick=()=>{const root=frame.contentDocument.querySelector('.react-modal-sheet-root:has([data-testid="send-flow"])');root.scrollTop=350;setTimeout(evidence,100);};
+}
+</script></body></html>

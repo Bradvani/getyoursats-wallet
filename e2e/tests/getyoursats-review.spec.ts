@@ -31,10 +31,10 @@ test('Scan and merchant Accept follow active wallet language',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.addInitScript(()=>localStorage.setItem('gys:language:v1','es'));
  await page.goto('/e2e/fixtures/premium-ui.html');
- await expect(page.getByTestId('scan-button')).toHaveText('Escanear');
+ await expect(page.getByTestId('scan-button')).toHaveAttribute('title','Escanear');
  await expect(page.getByTestId('scan-button')).toHaveAttribute('aria-label','Escanear QR de pago');
- await expect(page.getByTestId('pos-button').locator('span').last()).toHaveText('Cobrar');
- await expect(page.getByTestId('pos-button')).toHaveAttribute('aria-label','Cobrar en modo comercio');
+ await page.getByTestId('menu-button').click();
+ await expect(page.getByRole('navigation',{name:'Wallet menu'}).getByRole('button',{name:'Punto de venta',exact:true})).toBeVisible();
 });
 
 test('mobile drawer retains a compact set of working destinations without inactive promo rows', async ({page}) => {

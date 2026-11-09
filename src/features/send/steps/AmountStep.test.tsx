@@ -33,6 +33,34 @@ function renderAmountStep(props: Partial<AmountStepProps> = {}, client?: BreezSd
 }
 
 describe('AmountStep USD entry (no stable balance)', () => {
+  it('lets a user edit Max and resets fee inclusion before continuing', async () => {
+    const {onNext} = renderAmountStep();
+    fireEvent.click(screen.getByRole('button', {name: 'Max'}));
+    const input = screen.getByTestId('amount-input');
+    expect(input).toHaveValue(100000);
+    expect(input).not.toHaveAttribute('readonly');
+    fireEvent.change(input, {target: {value: '1500'}});
+    fireEvent.click(screen.getByRole('button', {name: 'Continue'}));
+    await waitFor(() => expect(onNext).toHaveBeenCalledWith(1500n, false));
+  });
+
+  it('returns to destination entry without preparing or sending', () => {
+    const onBack = vi.fn();
+    const {onNext, client} = renderAmountStep({onBack});
+    fireEvent.click(screen.getByRole('button', {name: 'Edit destination'}));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(onNext).not.toHaveBeenCalled();
+    expect(client.prepareSendPayment).not.toHaveBeenCalled();
+    expect(client.sendPayment).not.toHaveBeenCalled();
+  });
+
+  it('disables destination editing while preparing', () => {
+    const onBack = vi.fn();
+    renderAmountStep({onBack, isLoading: true});
+    expect(screen.getByRole('button', {name: 'Edit destination'})).toBeDisabled();
+    expect(onBack).not.toHaveBeenCalled();
+  });
+
   it('starts in sats and continues with a sats amount', async () => {
     const { onNext } = renderAmountStep();
 
@@ -89,58 +117,26 @@ describe('AmountStep USD entry (no stable balance)', () => {
     );
   });
 
-  const buttonLabels = () => screen.getAllByRole('button').map((b) => b.textContent);
-
-  // The mock rate matches the pre-rate fallback scale, so a test that asserts
-  // against it cannot tell the two apart. Waiting for the switcher is what
-  // proves the rate landed first.
-  const ratedLabels = async () => {
-    await waitFor(() => expect(screen.getByRole('button', {name:'USD'})).toBeEnabled());
-    return buttonLabels();
-  };
-
-  it('offers only quick amounts the balance covers', async () => {
-    // 3,000 sats clears 1 000 satsand 2 000 satsand nothing above.
-    renderAmountStep({ balanceSats: 3000 });
-
-    const labels = await ratedLabels();
-    expect(labels).toContain('1 000 sats');
-    expect(labels).toContain('2 000 sats');
-    expect(labels).not.toContain('5 000 sats');
-    expect(labels).not.toContain('100 000 sats');
+  it('keeps Max beside the available balance without preset amount chips', () => {
+    renderAmountStep({balanceSats: 3000});
+    const available = screen.getByTestId('amount-available-balance');
+    const max = screen.getByRole('button', {name: 'Max'});
+    expect(available).toHaveTextContent('3 000 sats');
+    expect(available).toContainElement(max);
+    expect(screen.queryByRole('button', {name: /[0-9].*sats/})).toBeNull();
+    fireEvent.click(max);
+    expect(screen.getByTestId('amount-input')).toHaveValue(3000);
+    expect(max).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('never offers the whole balance as a quick amount', async () => {
-    // 100,000 sats: the largest round amount inside the fee headroom is
-    // 50 000 sats, so tapping a quick amount can't dead-end on insufficient funds.
-    renderAmountStep();
-
-    const labels = await ratedLabels();
-    expect(labels).toEqual(expect.arrayContaining(['2 000 sats', '10 000 sats', '50 000 sats']));
-    expect(labels).not.toContain('100 000 sats');
-  });
-
-  it('scales the quick amounts to the loaded rate, not the fallback', async () => {
-    // A rate of 2,000 sats to the dollar puts the smallest round amount worth a
-    // dollar at 2 000 sats. The fallback scale would still offer 1 000 sats.
-    const client = createMockClient({
-      listFiatRates: vi.fn().mockResolvedValue({ rates: [{ coin: 'USD', value: 50000 }] }),
-    } as unknown as Partial<BreezSdk>);
-    renderAmountStep({ balanceSats: 3000 }, client);
-
-    await waitFor(() => expect(buttonLabels()).not.toContain('1 000 sats'));
-    expect(buttonLabels()).toContain('2 000 sats');
-  });
-
-  it('offers sat quick amounts before any rate has loaded', () => {
-    // Sats entry works without a rate, so the row falls back rather than
-    // waiting. Asserted synchronously: the rate never arrives here.
+  it('keeps typed sats usable before a fiat rate arrives', async () => {
     const client = createMockClient({
       listFiatRates: vi.fn(() => new Promise(() => {})),
     } as unknown as Partial<BreezSdk>);
-    renderAmountStep({ balanceSats: 3000 }, client);
-
-    expect(buttonLabels()).toEqual(expect.arrayContaining(['1 000 sats', '2 000 sats']));
+    const {onNext} = renderAmountStep({balanceSats: 3000}, client);
+    fireEvent.change(screen.getByTestId('amount-input'), {target: {value: '1000'}});
+    fireEvent.click(screen.getByRole('button', {name: 'Continue'}));
+    await waitFor(() => expect(onNext).toHaveBeenCalledWith(1000n, false));
   });
 
   it('keeps cross-chain (amountFirst) USD-only with no toggle', async () => {

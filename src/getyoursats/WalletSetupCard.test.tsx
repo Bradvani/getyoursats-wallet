@@ -12,7 +12,7 @@ afterEach(() => { cleanup(); localStorage.clear(); });
 const controller = (progress: Partial<WalletSetupProgress>): WalletSetupController => ({
   scope: 'gys:wallet-setup:v1:mainnet:02' + 'a'.repeat(64),
   progress: {...EMPTY_WALLET_SETUP, ...progress},
-  beginTour: vi.fn(), next: vi.fn(), skip: vi.fn(), dismissCard: vi.fn(),
+  beginTour: vi.fn(), next: vi.fn(), previous: vi.fn(), skip: vi.fn(), dismissCard: vi.fn(),
 });
 
 describe('setup card backup completion', () => {
