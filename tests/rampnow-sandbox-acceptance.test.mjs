@@ -7,7 +7,7 @@ const env = {VERCEL_ENV:'preview', VERCEL_PROJECT_ID:'prj_kVMt4cd9k0WsufaoRCVCH2
   RAMPNOW_STORAGE_SOURCE:'upstash_sandbox', UPSTASH_REDIS_REST_URL:'https://test.upstash.io',
   UPSTASH_REDIS_REST_TOKEN:'private-store-token', RAMPNOW_API_KEY:'private-api-key',RAMPNOW_API_SECRET:'private-api-secret'};
 const address='0x'+'1'.repeat(40); const privateKey='2'.repeat(64);
-const route={orderType:'buy',srcCurrency:'EUR',srcChain:'fiat',srcAmount:'50',dstCurrency:'ETH',dstChain:'sepolia',paymentMode:'card'};
+const route={orderType:'buy',srcCurrency:'EUR',srcChain:'fiat',srcAmount:'50',dstCurrency:'ETH',dstChain:'ethereum',paymentMode:'card'};
 function fixture({checkout, chains, quote, quoteFailure, order, quarantine=[]}={}) {
   const state=new Map(); const calls=[]; let created;
   const json=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'content-type':'application/json'}});
@@ -24,7 +24,7 @@ function fixture({checkout, chains, quote, quoteFailure, order, quarantine=[]}={
     }
     assert.equal(new URL(url).origin,'https://api.sandbox.rampnow.io');
     assert.equal(options.redirect,'error');
-    if(url.endsWith('/chain_config'))return json({code:0,data:{chains:chains??[{code:'sepolia',isTestnet:true,supportedAssets:['ETH']}]}});
+    if(url.endsWith('/chain_config'))return json({code:0,data:{chains:chains??[{code:'sepolia',isTestnet:true,supportedAssets:['ETH']},{code:'ethereum',isTestnet:false,supportedAssets:['ETH']}]}});
     if(url.endsWith('/quote'))return quoteFailure?json(quoteFailure,500):json({code:0,data:quote??{...route,dstAmount:'0.02'}});
     if(url.endsWith('/checkout')){
       created=JSON.parse(options.body);
@@ -59,7 +59,7 @@ test('diagnostics never create orders and retain only scrubbed support evidence'
   assert.ok(!JSON.stringify(report).includes('untrusted internal data'));
 });
 test('rejects arbitrary scenarios before network access',async()=>{const f=fixture();await assert.rejects(f.run({mode:'create',scenario:'mainnet'}),/ACTION_INVALID/);assert.equal(f.calls.length,0);});
-test('creates only fixed synthetic card order with explicit testnet recipient',async()=>{
+test('creates only fixed sandbox card order with explicit disposable recipient',async()=>{
   const f=fixture();const report=await f.run({mode:'create',scenario:'accepted'});
   assert.equal(f.creates().length,1); const p=f.getCreated();
   for(const [k,v]of Object.entries(route))assert.equal(p[k],v);
@@ -89,21 +89,21 @@ test('provider rejection is sanitized and permanently reserved',async()=>{
   const r=await f.run({mode:'create',scenario:'accepted'});await f.run({mode:'create',scenario:'accepted'});
   assert.equal(f.creates().length,1);assert.equal(r.cases[0].providerCode,40001);assert.ok(!JSON.stringify(r).includes('private-api-secret'));
 });
-test('missing, false and ambiguous testnet metadata cannot create orders',async()=>{
-  for(const chains of [[],[{code:'sepolia',supportedAssets:['ETH']}],[{code:'sepolia',isTestnet:false,supportedAssets:['ETH']}],
-    [{code:'sepolia',isTestnet:true,supportedAssets:['ETH']},{code:'sepolia',isTestnet:true,supportedAssets:['ETH']}]]){
+test('missing, ambiguous or unadvertised sandbox route cannot create orders',async()=>{
+  for(const chains of [[],[{code:'ethereum',supportedAssets:['USDC']}],
+    [{code:'ethereum',supportedAssets:['ETH']},{code:'ethereum',supportedAssets:['ETH']}]]){
     const f=fixture({chains});await assert.rejects(f.run({mode:'create',scenario:'accepted'}),/CHAIN_UNVERIFIED/);assert.equal(f.creates().length,0);
   }
 });
 test('quote for a different network fails before reserving or creating',async()=>{
-  const f=fixture({quote:{...route,dstChain:'ethereum',dstAmount:'0.02'}});
+  const f=fixture({quote:{...route,dstChain:'sepolia',dstAmount:'0.02'}});
   await assert.rejects(f.run({mode:'create',scenario:'accepted'}),/QUOTE_MISMATCH/);assert.equal(f.creates().length,0);assert.equal(f.state.size,0);
 });
 test('lookup checks amount, route, destination and identity',()=>{
   const record={externalOrderUid:'external-1',address,orderUid:'order-1'};
   const order={...route,srcAmount:'50.00',externalOrderUid:'external-1',walletAddress:address,orderUid:'order-1'};
   assert.equal(matchedOrder(order,record),true);
-  for(const patch of [{srcAmount:'500'},{dstChain:'ethereum'},{walletAddress:'0x'+'3'.repeat(40)},
+  for(const patch of [{srcAmount:'500'},{dstChain:'sepolia'},{walletAddress:'0x'+'3'.repeat(40)},
     {orderUid:'order-2'},{externalOrderUid:'external-2'}])assert.equal(matchedOrder({...order,...patch},record),false);
 });
 test('only known order events on the selected route become correlated evidence',async()=>{
@@ -112,7 +112,7 @@ test('only known order events on the selected route become correlated evidence',
     dstFillAmount:'0.02',updateTime:'2026-11-09T10:00:00Z'}};
   const record=e=>JSON.stringify({classification:'unbound',receivedAt:1794218400,event:e});
   const quarantine=['event-1',record(event),'event-2',record({...event,eventUid:'event-2',payload:{...event.payload,orderUid:'other'}}),
-    'event-3',record({...event,eventUid:'event-3',payload:{...event.payload,dstChain:'ethereum'}})];
+    'event-3',record({...event,eventUid:'event-3',payload:{...event.payload,dstChain:'sepolia'}})];
   const f=fixture({quarantine});const r=await f.run({mode:'create',scenario:'accepted'});
   assert.deepEqual(r.cases[0].callbackEvents.map(e=>e.eventUid),['event-1']);assert.equal(r.cases[0].walletCreditVerified,false);
 });

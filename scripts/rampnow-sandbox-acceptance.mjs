@@ -11,12 +11,12 @@ import {pathToFileURL} from 'node:url';
 import {rampnowSignature, decimalAmount} from '../server/rampnow.mjs';
 import {sandboxRampnowConfig, normalizeRampnowEvent, RAMPNOW_STORE_PREFIX} from '../server/rampnowStore.mjs';
 
-export const CAMPAIGN = 'gys-sandbox-20261109-card-v1';
+export const CAMPAIGN = 'gys-sandbox-20261109-ethereum-card-v1';
 export const CASES = Object.freeze(['accepted', 'declined', 'expired']);
 const ROOT = '/api/partner/v1/ext/ramp_order';
 const API = 'https://api.sandbox.rampnow.io';
 const ROUTE = Object.freeze({orderType: 'buy', srcCurrency: 'EUR', srcChain: 'fiat',
-  srcAmount: '50', dstCurrency: 'ETH', dstChain: 'sepolia', paymentMode: 'card'});
+  srcAmount: '50', dstCurrency: 'ETH', dstChain: 'ethereum', paymentMode: 'card'});
 const object = x => x !== null && typeof x === 'object' && !Array.isArray(x);
 const identifier = x => typeof x === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(x);
 const need = (x, code) => { if (!x) throw new Error(code); };
@@ -129,9 +129,14 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
   if (mode === 'create' && !(await load(scenario))) {
     const chainConfig = await provider('GET', ROOT + '/chain_config');
     need(Array.isArray(chainConfig.chains) && chainConfig.chains.length <= 512, 'CHAIN_UNVERIFIED');
-    const chains = chainConfig.chains.filter(c => c?.code === 'sepolia');
-    need(chains.length === 1 && chains[0].isTestnet === true && Array.isArray(chains[0].supportedAssets)
-      && chains[0].supportedAssets.some(a => a === 'ETH' || a === 'ETH:sepolia'), 'CHAIN_UNVERIFIED');
+    const chains = chainConfig.chains.filter(c => c?.code === 'ethereum');
+    need(chains.length === 1 && Array.isArray(chains[0].supportedAssets)
+      && chains[0].supportedAssets.some(a => a === 'ETH' || a === 'ETH:ethereum'), 'CHAIN_UNVERIFIED');
+    // Hypermid confirmed simulation is enabled and needs no KYC on 9 Nov.
+    // Its sandbox quotes Ethereum/card but not the advertised testnet chains.
+    // This disposable fixture is NOT a GYS wallet deposit. Do not infer the
+    // delivery network from the chain label. Verify the simulator UI before
+    // choosing an outcome and separately inspect any reported transaction.
     const quote = await provider('POST', ROOT + '/quote', ROUTE);
     need(Object.entries(ROUTE).every(([k, v]) => k === 'srcAmount' ? sameAmount(quote[k], v) : quote[k] === v)
       && decimalAmount(quote.dstAmount), 'QUOTE_MISMATCH');
@@ -155,25 +160,27 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
         record.failure = error.message === 'PROVIDER_REJECTED' ? 'provider_rejected' : 'response_unverified';
         record.httpStatus = Number.isInteger(error.httpStatus) ? error.httpStatus : null;
         record.providerCode = typeof error.providerCode === 'number' ? error.providerCode : null;
+        record.traceId = error.traceId ?? null;
+        record.displayError = error.displayError ?? null;
       }
       // The permanent reservation is intentionally never removed, including on failure.
       need(await redis(['SET', PREFIX + scenario, JSON.stringify(record), 'XX', 'EX', 2592000]) === 'OK', 'STORE_UNAVAILABLE');
     }
   }
   const report = {campaign: CAMPAIGN, checkedAt: new Date(now()).toISOString(), environment: 'sandbox',
-    route: ROUTE, realFundsUsed: false, productionReady: false, cases: []};
+    route: ROUTE, realFundsUsed: false, productionReady: false, networkReceiptVerified: false, cases: []};
   if (mode === 'diagnose') {
     report.diagnostics = [];
     const chains = await provider('GET', ROOT + '/chain_config');
     need(Array.isArray(chains.chains) && chains.chains.length <= 512, 'CHAIN_UNVERIFIED');
     const requests = [
       {label:'sepolia_asset',method:'GET',path:ROOT+'/asset_config?currency=ETH&chain=sepolia&orderCurrency=EUR'},
-      {label:'sepolia_card',method:'POST',path:ROOT+'/quote',payload:ROUTE},
-      {label:'sepolia_default_payment',method:'POST',path:ROOT+'/quote',payload:Object.fromEntries(Object.entries(ROUTE).filter(([k])=>k!=='paymentMode'))},
+      {label:'sepolia_card',method:'POST',path:ROOT+'/quote',payload:{...ROUTE,dstChain:'sepolia'}},
+      {label:'sepolia_default_payment',method:'POST',path:ROOT+'/quote',payload:Object.fromEntries(Object.entries({...ROUTE,dstChain:'sepolia'}).filter(([k])=>k!=='paymentMode'))},
       {label:'base_sepolia_card',method:'POST',path:ROOT+'/quote',payload:{...ROUTE,dstChain:'base-sepolia'}},
       {label:'solana_devnet_card',method:'POST',path:ROOT+'/quote',payload:{...ROUTE,dstCurrency:'SOL',dstChain:'solana-devnet'}},
-      // Read-only pricing controls for the chain label in the owner's historical
-      // sandbox screenshot. They NEVER authorize creation or delivery on Ethereum.
+      // Read-only controls for the sandbox's functioning Ethereum pricing route.
+      // No diagnostic result is a wallet network/receipt authorization.
       {label:'ethereum_asset_control',method:'GET',path:ROOT+'/asset_config?currency=ETH&chain=ethereum&orderCurrency=EUR'},
       {label:'ethereum_quote_control',method:'POST',path:ROOT+'/quote',payload:{...ROUTE,dstChain:'ethereum'}},
     ];
@@ -208,6 +215,7 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
     const item = {scenario: name, externalOrderUid: record.externalOrderUid, phase: record.phase,
       orderUid: record.orderUid ?? null, address: record.address,
       failure: record.failure ?? null, httpStatus: record.httpStatus ?? null, providerCode: record.providerCode ?? null,
+      traceId: record.traceId ?? null, displayError: record.displayError ?? null,
       redirectUrl: record.redirectUrl ? safeCheckoutURL(record.redirectUrl) : null,
       lookupVerified: false, callbackEvents: [], walletCreditVerified: false};
     try {
