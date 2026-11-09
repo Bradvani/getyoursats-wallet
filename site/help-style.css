@@ -137,6 +137,8 @@
 .layout>.prose,.gys-contact-surface,.gys-contact-grid,.gys-field{min-width:0;overflow-wrap:anywhere}
 .gys-field input,.gys-field select,.gys-field textarea{min-width:0;max-width:100%}
 .toc{min-width:0;max-width:100%}
+.footer-links{min-width:0;max-width:100%;flex-wrap:wrap;row-gap:12px}
+.footer-links a{min-width:0;max-width:100%;overflow-wrap:anywhere}
 .prose [id]{scroll-margin-top:160px}
 @media(max-width:420px){
  .navbar{flex-wrap:wrap;padding-block:12px}

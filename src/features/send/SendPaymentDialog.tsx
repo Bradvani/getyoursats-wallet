@@ -2,6 +2,7 @@ import {isRestrictedBrowserWallet,UNAVAILABLE_PAYMENT_MESSAGE,UNAVAILABLE_MAX_ME
 import {flowText} from '@/locales/flowText';
 import {usePresentation} from '@/hooks/usePresentation';
 import {sendDestinationCopy} from '@/locales/sendDestination';
+import {sendAuthorizationCopy} from '@/locales/sendAuthorization';
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import React, { useEffect, useMemo, useState, useId } from 'react';
 import {motion, useReducedMotion} from 'motion/react';
@@ -22,6 +23,7 @@ import LnurlWithdrawWorkflow, { LNURL_WITHDRAW_COMPLETION_TIMEOUT_SECS } from '.
 import CrossChainWorkflow from './workflows/CrossChainWorkflow';
 import AmountStep from './steps/AmountStep';
 import ConfirmStep from './steps/ConfirmStep';
+import PaymentReceiptSummary from '../../components/PaymentReceiptSummary';
 import TransferExperience from '../../components/TransferExperience';
 import {displayPaymentAmount} from '@/getyoursats/paymentDisplay';
 import PaymentFiatAmount from '../../components/PaymentFiatAmount';
@@ -53,7 +55,8 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
   const [destination, setDestination] = useState<StablecoinDestination | null>(null);
   const send = useSendPayment();
   const transferId=useId();
-  const inTransfer=send.currentStep==='processing'||send.currentStep==='result';
+  const awaitingAuthorization = send.currentStep === 'processing' && send.processingPhase === 'authorizing';
+  const inTransfer=(send.currentStep==='processing' && !awaitingAuthorization)||send.currentStep==='result';
   const { findContactByAddress } = useContactsContext();
   const [showContactsView, setShowContactsView] = useState(false);
   const [selectedContactAddress, setSelectedContactAddress] = useState<string | null>(null);
@@ -80,6 +83,10 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
     if (!isOpen) return;
     return holdIdleLock();
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || coveredByScanner) send.cancelAuthorization();
+  }, [isOpen, coveredByScanner, send.cancelAuthorization]);
 
   // The sheet stays mounted beneath the camera. A request ID distinguishes
   // deliberate rescans while its resolving state replaces the entry form.
@@ -126,6 +133,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
   }, [send.paymentResult, send.paymentInput, findContactByAddress]);
 
   const handleClose = () => {
+    send.cancelAuthorization();
     send.cancelPendingInput();
     if (lightningAddressForSave) {
       onSuccessfulSend?.(lightningAddressForSave);
@@ -143,6 +151,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
   const {language}=usePresentation();
   const ux=PAYMENT_UX[language];
   const destinationText=sendDestinationCopy(language);
+  const authorizationText=sendAuthorizationCopy(language);
   const dialogTitle = resolvingInput ? ux.recipient : send.currentStep === 'destination' ? destinationText.title : send.currentStep === 'input'
     ? 'Send BTC or USD'
     : getLnurlPayRequestDetails(send.paymentInput) ? ux.pay : getPaymentMethodName(send.paymentInput);
@@ -176,8 +185,8 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
 
   return (
     <BottomSheetContainer isOpen={isOpen} onClose={handleClose} showBackdrop>
-      <BottomSheetCard>
-        <div className="relative overflow-x-clip" data-testid="send-flow" inert={coveredByScanner} aria-hidden={coveredByScanner || undefined}>
+      <BottomSheetCard disableContentDrag>
+        <div className="gys-send-flow relative overflow-x-clip" data-testid="send-flow" inert={coveredByScanner} aria-hidden={coveredByScanner || undefined}>
           {/* Contacts sub-view — slides in from right */}
           <div
             className={`transition-all duration-200 ease-out ${
@@ -208,10 +217,11 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
             <DialogHeader
               title={flowText(language,dialogTitle)}
               onClose={handleClose}
+              onBack={awaitingAuthorization ? send.cancelAuthorization : undefined}
               icon={headerIcon}
             />
 
-            <motion.div key={resolvingInput ? 'resolving' : inTransfer ? 'transfer' : send.currentStep}
+            <motion.div key={resolvingInput ? 'resolving' : awaitingAuthorization ? 'workflow' : inTransfer ? 'transfer' : send.currentStep}
               data-send-stage={resolvingInput ? 'resolving' : send.currentStep}
               initial={reducedMotion ? false : {opacity: 0, y: 6}}
               animate={{opacity: 1, y: 0}}
@@ -274,7 +284,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
 
             {send.currentStep === 'amount' && (
               <AmountStep
-                paymentInput={send.paymentInput?.rawInput || ''}
+                paymentInput={send.paymentInput?.directRecipient?.lightningAddress ?? send.paymentInput?.rawInput ?? ''}
                 amount={send.amount}
                 balanceSats={send.balanceSats}
                 tokenBalance={send.tokenBalance}
@@ -287,8 +297,9 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
               />
             )}
 
-            {send.currentStep === 'workflow' && (
-              <>
+            {(send.currentStep === 'workflow' || awaitingAuthorization) && (
+              <div hidden={awaitingAuthorization} inert={awaitingAuthorization}>
+                {send.authorizationError && <div role="alert" className="mb-4 rounded-xl border border-spark-border bg-spark-surface p-4 text-sm text-spark-text-primary" data-testid="send-authorization-error">{send.authorizationError}</div>}
                 {send.prepareResponse && send.prepareResponse.paymentMethod.type === 'bolt11Invoice' && (
                   <Bolt11Workflow
                     method={send.prepareResponse.paymentMethod}
@@ -321,6 +332,8 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
                     conversionEstimate={send.prepareResponse.conversionEstimate}
                     balanceSats={send.balanceSats}
                     tokenBalance={send.tokenBalance}
+                    recipient={send.paymentInput?.directRecipient?{label:ux.recipient,value:send.paymentInput.directRecipient.lightningAddress}:undefined}
+                    isLoading={send.isLoading}
                     onBack={() => send.setCurrentStep('input')}
                     onSend={send.handleSend}
                   />
@@ -328,6 +341,8 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
                 {lnurlPayDetails && (
                   <LnurlWorkflow
                     parsed={lnurlPayDetails}
+                    initialAmount={send.amount}
+                    initialFeesIncluded={send.feesIncluded}
                     recipientLabel={recipientLabel}
                     balanceSats={send.balanceSats}
                     tokenBalance={send.tokenBalance}
@@ -389,8 +404,14 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
                     onRun={send.handleRun}
                   />
                 )}
-              </>
+              </div>
             )}
+
+            {awaitingAuthorization && <div className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-spark-border bg-spark-surface p-6 text-center" role="status" aria-live="polite" aria-busy="true" data-testid="send-authorizing">
+              <SpinnerIcon className="animate-spin motion-reduce:animate-none text-spark-primary"/>
+              <h3 className="font-display text-xl font-semibold text-spark-text-primary">{authorizationText.title}</h3>
+              <p className="text-sm text-spark-text-secondary">{authorizationText.body}</p>
+            </div>}
 
             {inTransfer && isOpen && !coveredByScanner && (
               <TransferExperience operationId={transferId} direction="sent"
@@ -400,6 +421,7 @@ const SendPaymentDialog: React.FC<SendPaymentDialogProps> = ({
                 receiptId={send.completedPayment?.id}
                 amount={send.completedPayment?.status==='completed'?displayPaymentAmount(send.completedPayment):undefined}
                 fiatAmount={send.completedPayment?.status==='completed'?<PaymentFiatAmount payment={send.completedPayment}/>:undefined}
+                receipt={send.completedPayment?.status==='completed'?<PaymentReceiptSummary payment={send.completedPayment} destination={getSendLightningAddress(send.paymentInput)??destination?.details.address}/>:undefined}
                 error={send.error} onClose={handleClose}/>
             )}
             </>}

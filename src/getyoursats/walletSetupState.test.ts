@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {
-  EMPTY_WALLET_SETUP, advanceWalletTour, beginWalletTour, clearWalletSetupMemory,
+  EMPTY_WALLET_SETUP, advanceWalletTour, retreatWalletTour, beginWalletTour, clearWalletSetupMemory,
   confirmWalletRecovery, dismissWalletSetupCard, initializeNewWalletSetup, readWalletSetup, skipWalletTour,
   subscribeWalletSetup, walletSetupScope,
 } from './walletSetupState';
@@ -152,4 +152,16 @@ describe('welcome card dismissal', () => {
     clearWalletSetupMemory();
     expect(readWalletSetup(scopeA)).toMatchObject({cardDismissed: true, recoveryStatus: 'phrase-verified'});
   });
+});
+
+it('goes back one guide step without changing backup or another wallet', () => {
+  initializeNewWalletSetup(scopeA, false);
+  retreatWalletTour(scopeA);
+  expect(readWalletSetup(scopeA).step).toBe('language');
+  advanceWalletTour(scopeA); advanceWalletTour(scopeA);
+  retreatWalletTour(scopeA);
+  expect(readWalletSetup(scopeA)).toMatchObject({step:'protect', recoveryStatus:'pending', tourStatus:'active'});
+  expect(readWalletSetup(scopeB)).toEqual(EMPTY_WALLET_SETUP);
+  skipWalletTour(scopeA); retreatWalletTour(scopeA);
+  expect(readWalletSetup(scopeA)).toMatchObject({step:'protect', tourStatus:'skipped'});
 });

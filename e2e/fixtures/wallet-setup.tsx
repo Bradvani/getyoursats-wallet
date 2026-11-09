@@ -126,7 +126,7 @@ function Fixture() {
           onOpenDca={() => {}} onOpenUnilateralExit={() => {}} onBuyBitcoin={async () => {}}
           walletSetup={setup} recoveryMethod={recoveryMethod} setupTourAllowed={screen === 'wallet' && tourAllowed}
           onReviewRecovery={() => setScreen('recovery')} onPersonalizeAddress={() => setScreen('identity')}/>
-        {screen === 'settings' && <SettingsPage onBack={close} config={null}
+        {screen === 'settings' && <SettingsPage onOpenLanguage={()=>{}} onOpenAppearance={()=>{}} onBack={close} config={null}
           onOpenFiatCurrencies={() => {}} onOpenBuyProviders={() => {}} onOpenPasskeySettings={() => {}}
           onOpenSecurity={() => {}} onOpenBackup={() => setScreen('recovery')}
           onOpenEmail={() => setScreen('identity')} onOpenUnilateralExit={() => {}}

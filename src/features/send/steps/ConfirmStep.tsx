@@ -101,10 +101,10 @@ const ConfirmStep: React.FC<ConfirmStepProps> = ({ amountSats, feesSat, feesIncl
       )}
 
       {/* Sats breakdown */}
-      {validQuote ? <SimpleFeeBreakdown amount={feesIncluded ? amount - fee : amount} fee={fee} feeLabel={text.networkFee} totalLabel={ux.total} amountLabel={feesIncluded ? text.recipientReceives : ux.amount} /> : <FeeBreakdownCard items={[
-        {label: ux.amount, pending: true},
+      {validQuote ? <SimpleFeeBreakdown amount={feesIncluded ? amount - fee : amount} fee={fee} feeLabel={text.networkFee} totalLabel={text.totalDeducted} amountLabel={text.recipientReceives} /> : <FeeBreakdownCard items={[
+        {label: text.recipientReceives, pending: true},
         {label: text.networkFee, pending: true},
-        {label: ux.total, pending: true},
+        {label: text.totalDeducted, pending: true},
       ]} />}
 
       {/* Token conversion details */}

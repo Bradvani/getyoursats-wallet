@@ -3,7 +3,7 @@ import {Capacitor} from '@capacitor/core';
 import {Haptics} from '@capacitor/haptics';
 import {playPaymentFeedback,notifyPaymentFeedback,setPaymentHapticsEnabled,paymentVibrationSupported} from './transferHaptics';
 vi.mock('@capacitor/core',()=>({Capacitor:{isNativePlatform:vi.fn(()=>false)}}));
-vi.mock('@capacitor/haptics',()=>({Haptics:{notification:vi.fn().mockResolvedValue(undefined)},NotificationType:{Success:'SUCCESS',Error:'ERROR'}}));
+vi.mock('@capacitor/haptics',()=>({Haptics:{impact:vi.fn().mockResolvedValue(undefined),notification:vi.fn().mockResolvedValue(undefined)},NotificationType:{Success:'SUCCESS',Error:'ERROR'},ImpactStyle:{Light:'LIGHT',Medium:'MEDIUM',Heavy:'HEAVY'}}));
 const vibrate=vi.fn((_pattern:number|number[])=>true);
 beforeEach(()=>{
  vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);vibrate.mockReturnValue(true);
@@ -13,13 +13,13 @@ beforeEach(()=>{
 });
 describe('payment result feedback independent of decorative clocks',()=>{
  it('uses perceptible distinct web success/error patterns and a direct user test',async()=>{
-  expect(await playPaymentFeedback('success')).toBe('accepted');expect(vibrate).toHaveBeenLastCalledWith(70);
-  await playPaymentFeedback('error');expect(vibrate).toHaveBeenLastCalledWith([80,60,100]);
-  await playPaymentFeedback('test');expect(vibrate).toHaveBeenLastCalledWith(120);
+  expect(await playPaymentFeedback('success')).toBe('accepted');expect(vibrate).toHaveBeenLastCalledWith(20);
+  await playPaymentFeedback('error');expect(vibrate).toHaveBeenLastCalledWith([40,50,40]);
+  await playPaymentFeedback('test');expect(vibrate).toHaveBeenLastCalledWith(20);
  });
  it('uses native notification feedback, not a barely perceptible light impact',async()=>{
   vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
-  await playPaymentFeedback('success');expect(Haptics.notification).toHaveBeenCalledWith({type:'SUCCESS'});
+  await playPaymentFeedback('success');expect(Haptics.impact).toHaveBeenCalledWith({style:'LIGHT'});
   await playPaymentFeedback('error');expect(Haptics.notification).toHaveBeenCalledWith({type:'ERROR'});
   expect(vibrate).not.toHaveBeenCalled();
  });
@@ -48,7 +48,19 @@ describe('payment result feedback independent of decorative clocks',()=>{
  });
  it('native engine errors never escape into payment execution',async()=>{
   vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
-  vi.mocked(Haptics.notification).mockRejectedValueOnce(new Error('no hardware'));
+  vi.mocked(Haptics.impact).mockRejectedValueOnce(new Error('no hardware'));
   expect(await playPaymentFeedback('success')).toBe('error');
  });
+});
+
+it('gives confirmed receives an ascending rhythm and sends its reverse',async()=>{
+ await playPaymentFeedback('success','received');expect(vibrate).toHaveBeenLastCalledWith([15,45,30,35,55]);
+ await playPaymentFeedback('success','sent');expect(vibrate).toHaveBeenLastCalledWith([55,35,30,45,15]);
+});
+it('uses light to heavy impacts on native receives and the reverse on sends',async()=>{
+ vi.useFakeTimers();vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);vi.mocked(Haptics.impact).mockClear();
+ const receive=playPaymentFeedback('success','received');await vi.runAllTimersAsync();await receive;
+ expect(vi.mocked(Haptics.impact).mock.calls.map(x=>x[0]?.style)).toEqual(['LIGHT','MEDIUM','HEAVY']);
+ vi.mocked(Haptics.impact).mockClear();const send=playPaymentFeedback('success','sent');await vi.runAllTimersAsync();await send;
+ expect(vi.mocked(Haptics.impact).mock.calls.map(x=>x[0]?.style)).toEqual(['HEAVY','MEDIUM','LIGHT']);vi.useRealTimers();
 });

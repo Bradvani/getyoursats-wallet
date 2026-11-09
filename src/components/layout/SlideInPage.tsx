@@ -1,9 +1,8 @@
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import {usePresentation} from '@/hooks/usePresentation';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import GetYourSatsWordmark from '../GetYourSatsWordmark';
-import React, { ReactNode, useState, useRef, useEffect } from 'react';
-import { Transition, TransitionChild } from '@headlessui/react';
+import React, { ReactNode, useId, useState, useRef, useEffect } from 'react';
+import { FocusTrap, FocusTrapFeatures, Transition, TransitionChild } from '@headlessui/react';
 import { CloseIcon, BackIcon } from '../Icons';
 import { safeAreaTop, safeAreaBottom } from '../../utils/safeAreaInsets';
 import { useStatusBarColor } from '../../hooks/useStatusBarColor';
@@ -47,6 +46,8 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
   footer,
 }) => {
   const {language}=usePresentation();
+  const titleId=useId();
+  const titleRef=useRef<HTMLHeadingElement|null>(null);
   const direction=language==='ar'&&slideFrom==='left'?'right':language==='ar'&&slideFrom==='right'?'left':slideFrom;
   const desktop = useMediaQuery('(min-width: 1024px)');
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
@@ -91,7 +92,13 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
     // above the drawer means the incoming page covers the drawer as
     // it slides in, collapsing two competing left-edge motions into
     // one dominant motion.
-    <div className="gys-slide-layer absolute inset-0 z-60 flex flex-col">
+    <FocusTrap initialFocus={titleRef} features={desktop ? FocusTrapFeatures.InitialFocus | FocusTrapFeatures.RestoreFocus : undefined} className="gys-slide-layer absolute inset-0 z-60 flex flex-col"
+      role={desktop?"region":"dialog"} aria-modal={desktop?undefined:true} aria-labelledby={titleId}
+      onKeyDown={(event:React.KeyboardEvent<HTMLDivElement>)=>{
+        if(event.key==='Escape'&&!event.defaultPrevented&&event.currentTarget.contains(event.target as Node)){
+          event.preventDefault();event.stopPropagation();handleClose();
+        }
+      }}>
       <Transition show={isOpen} appear as="div" className="absolute inset-0 overflow-hidden">
         <TransitionChild
           as="div"
@@ -118,33 +125,15 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
             className="shrink-0 border-b border-spark-border"
             style={{ paddingTop: safeAreaTop }}
           >
-            {/* Fixed h-14 (56dp) Material toolbar height, matching the
-                wallet page CollapsingWalletHeader top row so the back /
-                close buttons land at the same screen y coordinate when
-                navigating between screens. */}
-            <div className="relative px-4 h-14 flex items-center justify-center">
-              <div className={`gys-page-header__brand ${closeStyle==='back'?'gys-page-header__brand--back':''}`}><GetYourSatsWordmark compact /></div>
-              <h1 className="text-center font-display text-lg font-semibold text-spark-text-primary">
-                {title}
-              </h1>
-
-              {closeStyle === 'back' ? (
-                <button
-                  onClick={handleClose}
-                  className="absolute start-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
-                  aria-label={language==='en'?'Go back':PAYMENT_UX[language].back}
-                >
-                  <BackIcon size="md" className="rtl:rotate-180" />
-                </button>
-              ) : (
-                <button
-                  onClick={handleClose}
-                  className="absolute end-4 top-1/2 -translate-y-1/2 p-2 text-spark-text-muted hover:text-spark-text-primary rounded-lg hover:bg-white/5 transition-colors"
-                  aria-label={PAYMENT_UX[language].close}
-                >
-                  <CloseIcon size="md" />
-                </button>
-              )}
+            {/* The toolbar grows when the title wraps or text is enlarged. */}
+            <div className={`gys-page-toolbar ${closeStyle==='back'?'gys-page-toolbar--back':''}`}>
+              {closeStyle==='back'&&<button type="button" onClick={handleClose} className="gys-page-toolbar__action"
+                aria-label={language==='en'?'Go back':PAYMENT_UX[language].back}>
+                <BackIcon size="md" className="rtl:rotate-180"/>
+              </button>}
+              <h1 id={titleId} ref={titleRef} tabIndex={-1}>{title}</h1>
+              {closeStyle==='close'&&<button type="button" onClick={handleClose} className="gys-page-toolbar__action"
+                aria-label={PAYMENT_UX[language].close}><CloseIcon size="md"/></button>}
             </div>
           </header>
 
@@ -179,7 +168,7 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
           )}
         </TransitionChild>
       </Transition>
-    </div>
+    </FocusTrap>
   );
 };
 

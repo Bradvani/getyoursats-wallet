@@ -13,16 +13,14 @@ for (const [width,height] of [[390,844],[320,568],[1365,820]]) {
   await expect(page.getByRole('button',{name:'Send Bitcoin',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Receive Bitcoin',exact:true})).toBeVisible();
   await expect(page.getByTestId('wallet-balance')).toHaveText(/125\s*000/);
-  const pos=page.getByRole('button',{name:width>=1024?'Merchant mode':'Open Point of Sale',exact:true});
+  const pos=page.getByTestId('home-pos');
   const recurring=page.locator('button[aria-label="Recurring Buys coming soon"]');
   await expect(pos).toBeVisible();
-  if(width<1024)await expect(recurring).toBeVisible();
-  else await expect(recurring).not.toBeVisible();
+  await expect(recurring).toHaveCount(0);
   await expect(page.getByRole('button',{name:/Protect your Bitcoin|Review recovery options/})).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   mkdirSync('test-artifacts',{recursive:true});
   await page.screenshot({path:`test-artifacts/wallet-${width}.png`,fullPage:true,animations:'disabled'});
-  await expect(recurring).toBeDisabled();
   await pos.click();
   const terminal=page.getByRole('dialog',{name:'Merchant point of sale'});
   await expect(terminal).toBeVisible();
@@ -39,15 +37,18 @@ test('@public-smoke Bitcoin market is visible before transactions with scrollabl
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);
  const market=page.getByTestId('bitcoin-market');
+ const toggle=market.getByTestId('open-bitcoin-market');
  await expect(market).toBeVisible();
- // The market reference now appears before activity in DOM/visual order,
- // instead of a collapsed <details> after the transaction list.
+ await expect(toggle).toHaveAttribute('aria-expanded','false');
  const beforeActivity=await page.evaluate(()=>{
    const market=document.querySelector('[data-testid="bitcoin-market"]');
    const activity=document.querySelector('.gys-activity');
    return Boolean(market&&activity&&(market.compareDocumentPosition(activity)&Node.DOCUMENT_POSITION_FOLLOWING));
  });
  expect(beforeActivity).toBe(true);
+ await toggle.click();
+ await expect(toggle).toHaveAttribute('aria-expanded','true');
+ await expect(page.getByTestId('wallet-scroll').getByTestId('market-details')).toBeVisible();
  await expect(market.getByTestId('market-quote-price')).toHaveText('$90,000.00');
  const units=market.locator('.gys-market-pulse__denominations');
  await expect(units).toBeVisible();
@@ -62,16 +63,21 @@ test('@public-smoke Bitcoin market is visible before transactions with scrollabl
  await market.getByTestId('market-unit-10m').click();
  await expect(market.getByTestId('market-quote-price')).toHaveText('$9,000.00');
  await expect(market.getByTestId('market-unit-10m')).toHaveAttribute('aria-pressed','true');
+ await toggle.click();
+ await expect(market.getByTestId('market-details')).toBeHidden();
+ await expect(market.getByTestId('market-quote-price')).toHaveText('$9,000.00');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
  await page.reload();
+ await page.getByTestId('open-bitcoin-market').click();
  await expect(page.getByTestId('market-unit-10m')).toHaveAttribute('aria-pressed','true');
- await expect(page.getByTestId('market-quote-price')).toHaveText('$9,000.00');
+ await expect(market.getByTestId('market-quote-price')).toHaveText('$9,000.00');
 });
 
 test('@public-smoke merchant shows lightning flash only after an SDK confirmed receipt',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);
- await page.getByRole('button',{name:'Open Point of Sale'}).click();
+ await page.getByTestId('menu-button').click();
+ await page.getByTestId('menu-pos').click();
  const terminal=page.getByRole('dialog',{name:'Merchant point of sale'});
  await terminal.getByRole('button',{name:'1',exact:true}).click();
  await terminal.getByRole('button',{name:'Charge',exact:true}).click();
@@ -152,10 +158,18 @@ test('@public-smoke installed iOS header keeps the official wordmark clear',asyn
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);
  await page.evaluate(()=>document.documentElement.classList.add('ios-standalone-bottom-gap'));
- const logo=page.locator('.gys-wallet-balance-surface__toolbar img.gys-brand-wordmark--compact');
+ const logo=page.locator('.gys-wallet-toolbar img.gys-brand-wordmark--compact');
  await expect(logo).toBeVisible();
  await expect(logo).toHaveAttribute('src','/brand/wordmark-horizontal-dark.svg');
  await expect(logo).toHaveCSS('opacity','1');
+ const toolbar=page.locator('.gys-wallet-toolbar');
+ await expect(toolbar).toHaveCSS('isolation','isolate');
+ await expect(toolbar).toHaveCSS('backdrop-filter','none');
+ await expect(toolbar).toHaveCSS('filter','none');
+ await expect(toolbar).toHaveCSS('opacity','1');
+ await expect(page.getByTestId('wallet-scroll')).toHaveCSS('isolation','isolate');
+ const background=await toolbar.evaluate(el=>getComputedStyle(el).backgroundColor);
+ expect(background).toMatch(/^rgb\(/);
  const veil=page.locator('.gys-wallet-balance-surface__veil');
  await expect(veil).toHaveCSS('backdrop-filter','none');
  const image=await logo.evaluate((img)=>{
@@ -168,6 +182,24 @@ test('@public-smoke installed iOS header keeps the official wordmark clear',asyn
  expect(image.top).toBeGreaterThanOrEqual(0);
  expect(image.height).toBeGreaterThan(20);
  expect(image.unobstructed).toBe(true);
+ // Verify the actual toolbar after scrolling and an overlay round trip. The
+ // balance veil alone cannot establish that the new navigation stays clear.
+ await page.getByTestId('wallet-scroll').evaluate(el=>el.scrollTo(0,el.scrollHeight));
+ await page.getByTestId('menu-button').click();
+ const drawer=page.locator('body > .fixed.inset-0.z-50');
+ await expect(drawer).toHaveCount(1);
+ await page.getByRole('button',{name:'Close',exact:true}).click();
+ // The panel and backdrop leave independently; wait for their portal root.
+ await expect(drawer).toHaveCount(0);
+ await expect(page.getByRole('navigation',{name:'Wallet menu'})).toHaveCount(0);
+ for(const target of [logo,page.getByTestId('menu-button'),page.getByTestId('scan-button')]){
+  await expect(target).toBeVisible();
+  await expect.poll(()=>target.evaluate(el=>{
+   const box=el.getBoundingClientRect();
+   const hit=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
+   return hit===el||el.contains(hit);
+  })).toBe(true);
+ }
 });
 test('@public-smoke recovery requires the Settings route',async({page})=>{
  await page.goto(fixture);

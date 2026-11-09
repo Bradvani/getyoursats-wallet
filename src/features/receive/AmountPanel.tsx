@@ -79,6 +79,7 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
     setIsTokenMode,
     toggleDenomination,
     tokenSymbol,
+    tokenIdentifier,
     config,
     btcFiatRate,
     amountSats: parsedSats,
@@ -232,10 +233,10 @@ const AmountPanel: React.FC<AmountPanelProps> = ({
               />
               <span aria-label={t("Selected denomination")} className="shrink-0 rounded-lg bg-spark-elevated px-2 py-1 text-sm text-spark-text-secondary font-semibold">{amountUnitLabel}</span>
             </div>
-            {tokenSymbol && denomination==='sats' && (
+            {tokenIdentifier && tokenSymbol && denomination==='sats' && (
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs text-spark-text-secondary">{t("Stable balance")}</span>
-                <CurrencySwitcher
+                <CurrencySwitcher inline
                   isTokenMode={isTokenMode}
                   tokenSymbol={tokenSymbol}
                   onSwitch={handleToggleDenomination}

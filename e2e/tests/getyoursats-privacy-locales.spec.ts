@@ -57,3 +57,18 @@ test('@public-smoke localized contact failures do not leak an English server err
  await page.locator('input[name=consent]').check();await page.locator('[type=submit]').click();
  await expect(page.locator('#gys-contact-status')).toHaveText(catalog.ar.form.formErr);
 });
+
+for(const destination of ['privacy','support','learn','delete-account'])test(`@public-smoke ${destination} social footer fits a narrow phone`,async({page})=>{
+ await page.setViewportSize({width:320,height:700});
+ await page.goto('/site/'+destination+'.html?lang=en');
+ const footer=page.locator('.footer-links');
+ await footer.scrollIntoViewIfNeeded();
+ await expect(footer.getByRole('link',{name:'X (Twitter)',exact:true})).toHaveAttribute('href','https://x.com/getyoursats');
+ await expect(footer.getByRole('link',{name:'ChainReaction · Instagram',exact:true})).toHaveAttribute('href','https://www.instagram.com/getyoursats/');
+ const box=await footer.boundingBox();
+ expect(box).not.toBeNull();
+ expect(box!.x).toBeGreaterThanOrEqual(0);
+ expect(box!.x+box!.width).toBeLessThanOrEqual(320);
+ expect(await footer.evaluate(element=>element.scrollWidth<=element.clientWidth+1)).toBe(true);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+});

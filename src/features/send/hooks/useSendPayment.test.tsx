@@ -1,12 +1,32 @@
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { InputType, PrepareSendPaymentResponse } from '@breeztech/breez-sdk-spark';
 import { WalletProvider } from '@/contexts/WalletContext';
 import { FiatDataProvider } from '@/contexts/FiatDataContext';
 import { StableBalanceProvider } from '@/contexts/StableBalanceContext';
-import { createMockClient } from '@/test/mocks/mockWalletApi';
+import { createMockClient, createMockPayment } from '@/test/mocks/mockWalletApi';
 import { useSendPayment } from './useSendPayment';
+import { SendAuthorizationError, cancelSendAuthorization } from '@/services/sendAuthorization';
+
+const authorization = vi.hoisted(() => ({ required: false, listeners: new Set<(active: boolean) => void>() }));
+vi.mock('@/services/sendAuthorization', () => {
+  class SendAuthorizationError extends Error {
+    constructor(public reason: string) {super('Authorization refused before execution');}
+  }
+  return {
+    SendAuthorizationError,
+    isSendAuthorizationError: (error: unknown) => error instanceof SendAuthorizationError,
+    requiresSendAuthorization: () => authorization.required,
+    subscribeSendAuthorization: (_client: unknown, listener: (active: boolean) => void) => {
+      authorization.listeners.add(listener);
+      return () => authorization.listeners.delete(listener);
+    },
+    cancelSendAuthorization: vi.fn(),
+  };
+});
+
+beforeEach(() => {authorization.required = false; authorization.listeners.clear();});
 
 const BOLT11 = 'lnbc100n1test';
 
@@ -233,5 +253,105 @@ describe('input request isolation', () => {
     await act(async () => {payment.resolve(); await operation;});
     expect(result.current.currentStep).toBe('result');
     expect(result.current.paymentResult).toBe('unknown');
+  });
+});
+
+describe('send authorization presentation', () => {
+  it('keeps a refused direct send reviewable and allows a fresh confirmation', async () => {
+    const {client, result} = renderSendPayment(async input => bolt11Details(input));
+    await act(() => result.current.processInput(BOLT11));
+    const quote = result.current.prepareResponse;
+    vi.mocked(client.sendPayment).mockRejectedValueOnce(new SendAuthorizationError('cancelled'));
+
+    await act(() => result.current.handleSend());
+
+    expect(result.current.currentStep).toBe('workflow');
+    expect(result.current.prepareResponse).toBe(quote);
+    expect(result.current.paymentResult).toBeNull();
+    expect(result.current.authorizationError).toContain('Payment not sent');
+    expect(result.current.isLoading).toBe(false);
+    await act(() => result.current.handleSend());
+    expect(client.sendPayment).toHaveBeenCalledTimes(2);
+    expect(result.current.paymentResult).toBe('success');
+    expect(result.current.authorizationError).toBeNull();
+  });
+
+  it('permits a new LNURL or cross-chain confirmation after pre-execution refusal', async () => {
+    const {result} = renderSendPayment(async input => bolt11Details(input));
+    const runner = vi.fn()
+      .mockRejectedValueOnce(new SendAuthorizationError('expired'))
+      .mockResolvedValueOnce({payment: createMockPayment('send')});
+    await act(() => result.current.handleRun(runner));
+    expect(result.current.currentStep).toBe('workflow');
+    expect(result.current.paymentResult).toBeNull();
+    expect(result.current.authorizationError).toContain('Payment not sent');
+    await act(() => result.current.handleRun(runner));
+    expect(runner).toHaveBeenCalledTimes(2);
+    expect(result.current.paymentResult).toBe('success');
+  });
+
+  it('shows authentication before network execution and ignores a second confirm', async () => {
+    authorization.required = true;
+    const {client, result} = renderSendPayment(async input => bolt11Details(input));
+    await act(() => result.current.processInput(BOLT11));
+    const execution = deferred<Awaited<ReturnType<typeof client.sendPayment>>>();
+    vi.mocked(client.sendPayment).mockReturnValueOnce(execution.promise);
+    let operation!: Promise<void>;
+    act(() => {operation = result.current.handleSend();});
+    expect(result.current.processingPhase).toBe('authorizing');
+    await act(() => result.current.handleSend());
+    expect(client.sendPayment).toHaveBeenCalledOnce();
+
+    act(() => {authorization.listeners.forEach(listener => listener(false));});
+    expect(result.current.processingPhase).toBe('sending');
+    await act(async () => {
+      execution.resolve({payment: createMockPayment('send')});
+      await operation;
+    });
+    expect(result.current.paymentResult).toBe('success');
+  });
+
+  it.each(['direct', 'runner'] as const)('keeps uncertain %s execution blocked from retry', async kind => {
+    const {client, result} = renderSendPayment(async input => bolt11Details(input));
+    await act(() => result.current.processInput(BOLT11));
+    const error = new Error('Response lost after submission');
+    const runner = vi.fn().mockRejectedValue(error);
+    vi.mocked(client.sendPayment).mockRejectedValue(error);
+    await act(() => kind === 'direct' ? result.current.handleSend() : result.current.handleRun(runner));
+    expect(result.current.currentStep).toBe('result');
+    expect(result.current.paymentResult).toBe('unknown');
+    expect(result.current.authorizationError).toBeNull();
+    await act(() => kind === 'direct' ? result.current.handleSend() : result.current.handleRun(runner));
+    expect(kind === 'direct' ? client.sendPayment : runner).toHaveBeenCalledOnce();
+  });
+
+  it('cancels a pending authorization when the wallet view unmounts', () => {
+    const {unmount} = renderSendPayment(async input => bolt11Details(input));
+    unmount();
+    expect(cancelSendAuthorization).toHaveBeenCalledOnce();
+  });
+
+  it('cannot open authentication or send after closing during conversion preparation', async () => {
+    authorization.required = true;
+    const {client, result} = renderSendPayment(async input => bolt11Details(input));
+    vi.mocked(client.prepareSendPayment).mockResolvedValueOnce({
+      amount: 1000n,
+      paymentMethod: {type: 'sparkAddress', address: 'spark1synthetic', fee: 0n},
+      conversionEstimate: {amountIn: 1000n, fee: 1n},
+    } as never);
+    await act(() => result.current.processInput(BOLT11));
+    const balance = deferred<Awaited<ReturnType<typeof client.getInfo>>>();
+    vi.mocked(client.getInfo).mockReturnValueOnce(balance.promise);
+    let operation!: Promise<void>;
+    act(() => {operation = result.current.handleSend();});
+    expect(result.current.processingPhase).toBe('authorizing');
+    act(() => result.current.cancelAuthorization());
+    await act(async () => {
+      balance.resolve({balanceSats: 10000} as never);
+      await operation;
+    });
+    expect(client.sendPayment).not.toHaveBeenCalled();
+    expect(result.current.paymentResult).toBeNull();
+    expect(result.current.authorizationError).toContain('Payment not sent');
   });
 });

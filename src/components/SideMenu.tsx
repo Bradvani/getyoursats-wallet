@@ -3,6 +3,7 @@ import {useLatest} from '@/hooks/useLatest';
 import {useWalletConnection,useHasPendingConversion} from '@/contexts/WalletContext';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {runVerifiedRemoval} from '@/getyoursats/removalPolicy';
+import {checkGysPaymentIntent,CHECK_PREVIOUS_PAYMENT} from '@/services/gysPaymentIntent';
 import { usePresentation } from '@/hooks/usePresentation';
 import React, { useState, useSyncExternalStore } from 'react';
 import { useAppVersion } from '@/hooks/useAppVersion';
@@ -164,6 +165,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     ...(onOpenMerchantPos ? [{
       icon: <ArrowDownIcon />,
       label: copy.pointOfSale,
+      merchant: true,
       onClick: () => closeDrawerThen(onOpenMerchantPos)
     }] : []),
     { icon: <SettingsIcon />, label: copy.settings, onClick: () => closeDrawerThen(onOpenSettings) },
@@ -184,6 +186,14 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
     try {
       if(!sdk)throw Error('Wallet unavailable');
       const outcome=await runVerifiedRemoval({
+        reconcileDirect:async()=>{
+          const info=await sdk.getInfo({});
+          try{await checkGysPaymentIntent(info.identityPubkey,request=>sdk.getPayment(request));}
+          catch(error){
+            // A terminal receipt clears its intent. Uncertain or damaged records remain blocked.
+            if(!(error instanceof Error)||error.message!==CHECK_PREVIOUS_PAYMENT)throw error;
+          }
+        },
         read:offset=>sdk.listPayments({offset,limit:100}),
         isCurrent:()=>{const current=removalContext.current;return epoch===removalEpoch.current&&current.isOpen&&current.showLogoutConfirm&&current.sdk===sdk&&!current.hasPendingConversion&&!current.isExitInProgress;},
         erase:onLogout,
@@ -250,8 +260,11 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose, onLogout, onOpenSe
                   key={index}
                   type="button"
                   aria-label={item.label}
+                  data-testid={'merchant' in item ? 'menu-pos' : undefined}
                   className={`w-full min-h-12 flex items-center gap-3 px-3 py-2.5 rounded-xl text-start transition-colors hover:bg-white/5 hover:text-spark-text-primary ${
-                    ('highlight' in item && item.highlight)
+                    ('merchant' in item && item.merchant)
+                      ? 'gys-menu-pos'
+                      : ('highlight' in item && item.highlight)
                       ? 'text-spark-warning'
                       : 'text-spark-text-secondary'
                   }`}

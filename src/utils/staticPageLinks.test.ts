@@ -12,7 +12,7 @@ describe('GetYourSats policy and support links', () => {
 
   it.each(pages)('links $label from both Menu and Settings', ({ name, url }) => {
     expect(menu).toContain(name);
-    expect(settings).not.toContain(name);
+    expect(settings).toContain(name);
     expect(url).toMatch(/^https:\/\/getyoursats\.com\/(privacy|support)$/);
   });
 

@@ -47,6 +47,7 @@ import { useAppLock } from './hooks/useAppLock';
 import PasskeyPage from './pages/PasskeyPage';
 import type { MigrationEntry, MigrationOutcome } from './features/passkey-migration/types';
 import SettingsPage from './pages/SettingsPage';
+import PreferencesPage from './pages/PreferencesPage';
 import FiatCurrenciesPage from './pages/FiatCurrenciesPage';
 import BuyProvidersPage from './pages/BuyProvidersPage';
 import UnlockPage from './pages/UnlockPage';
@@ -76,7 +77,7 @@ import type { Seed, Payment, BreezSdk } from '@breeztech/breez-sdk-spark';
 
 const PASSKEY_MIGRATION_ENABLED = Capacitor.isNativePlatform();
 
-type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'settings' | 'backup' | 'security' | 'email' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit' | 'web-vault-setup' | 'web-vault-locked' | 'web-vault-recover';
+type Screen = 'home' | 'walletSetup' | 'restore' | 'generate' | 'wallet' | 'dca' | 'getRefund' | 'language' | 'appearance' | 'settings' | 'backup' | 'security' | 'email' | 'fiatCurrencies' | 'buyProviders' | 'passkey' | 'unlock' | 'unlocking' | 'passkeySettings' | 'passkeyManagement' | 'labels' | 'passkeyLocalState' | 'unilateralExit' | 'web-vault-setup' | 'web-vault-locked' | 'web-vault-recover';
 
 // Full-screen dim spinner shown while sdk.isLoading is true (logout in
 // progress, SDK reconnect, etc). Wrapped as its own component so the
@@ -428,8 +429,8 @@ const AppContent: React.FC = () => {
   // Closing + navigation happen when the user clicks Done (handleMigrationClose):
   // a login-entry flow navigates via PasskeyPage's onBack on the resolved
   // outcome, and a banner flow is already on the wallet.
-  const handleMigrationSwitch = useCallback(async (newSdk: BreezSdk, label: string) => {
-    await sdk.adoptMigratedSdk(newSdk, label);
+  const handleMigrationSwitch = useCallback(async (newSdk: BreezSdk, label: string, seed: Seed) => {
+    await sdk.adoptMigratedSdk(newSdk, label, seed);
   }, [sdk]);
 
   const handleLogout = async () => {
@@ -479,6 +480,8 @@ const AppContent: React.FC = () => {
         setUserScreen(walletActionReturn);
         return true;
       case 'security':
+      case 'language':
+      case 'appearance':
       case 'fiatCurrencies':
       case 'buyProviders':
       case 'passkeySettings':
@@ -630,6 +633,9 @@ const AppContent: React.FC = () => {
       <SettingsPage
         onBack={() => setUserScreen('wallet')}
         config={sdk.config}
+        nativeAddress={sdk.nativeLightningAddress?.lightningAddress}
+        onOpenLanguage={()=>setUserScreen('language')}
+        onOpenAppearance={()=>setUserScreen('appearance')}
         onOpenFiatCurrencies={() => setUserScreen('fiatCurrencies')}
         onOpenBuyProviders={() => setUserScreen('buyProviders')}
         onOpenPasskeySettings={() => setUserScreen('passkeySettings')}
@@ -758,6 +764,10 @@ const AppContent: React.FC = () => {
             {renderSettingsPage()}
           </>
         );
+
+      case 'language':
+      case 'appearance':
+        return <>{renderWalletPage()}{renderSettingsPage()}<PreferencesPage kind={currentScreen} onBack={()=>setUserScreen('settings')}/></>;
 
       case 'fiatCurrencies':
         return (

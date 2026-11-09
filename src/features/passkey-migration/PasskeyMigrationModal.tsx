@@ -1,5 +1,5 @@
 import React from 'react';
-import type { BreezSdk } from '@breeztech/breez-sdk-spark';
+import type { BreezSdk, Seed } from '@breeztech/breez-sdk-spark';
 import { DialogContainer, DialogCard } from '@/components/ui';
 import { PasskeyIcon } from '@/components/Icons';
 import { useMigrationFlow } from './hooks/useMigrationFlow';
@@ -24,7 +24,7 @@ export interface PasskeyMigrationModalProps {
    * (already connected + synced) new SDK as the active wallet. Ownership is
    * transferred: the modal will NOT disconnect it afterwards.
    */
-  onSwitchToNewWallet: (newSdk: BreezSdk, label: string) => Promise<void>;
+  onSwitchToNewWallet: (newSdk: BreezSdk, label: string, seed: Seed) => Promise<void>;
 }
 
 /**

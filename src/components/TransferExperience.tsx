@@ -8,7 +8,7 @@ import {bitcoinFill,finalFillProgress,isInterrupted,type TransferPhase,type Tran
 import {contourPoint} from '../utils/transferContours';
 import './transferSequence.css';
 
-type Props={operationId:string;direction:TransferDirection;phase:TransferPhase;receiptId?:string;amount?:ReactNode;fiatAmount?:ReactNode;error?:string|null;onClose:()=>void;children?:ReactNode};
+type Props={operationId:string;direction:TransferDirection;phase:TransferPhase;receiptId?:string;amount?:ReactNode;fiatAmount?:ReactNode;error?:string|null;onClose:()=>void;children?:ReactNode;receipt?:ReactNode};
 function pathAt(progress:number,layer:number,width:number,height:number,cx:number,cy:number,size:number){
  const p=Math.max(0,Math.min(1,progress));
  const w=size+(width+36-size)*p,h=size+(height+36-size)*p;
@@ -25,7 +25,7 @@ function pathAt(progress:number,layer:number,width:number,height:number,cx:numbe
  return points.join(' ')+'Z';
 }
 /** One payment screen owns pending, confirmation and interruption. No UI timer changes SDK state. */
-export default function TransferExperience({operationId,direction,phase:requestedPhase,receiptId,amount,fiatAmount,error,onClose,children}:Props){
+export default function TransferExperience({operationId,direction,phase:requestedPhase,receiptId,amount,fiatAmount,error,onClose,children,receipt}:Props){
  const phase=requestedPhase==='confirmed'&&!receiptId?'unknown':requestedPhase;
  const {language}=usePresentation();const copy=TRANSFER_SEQUENCE_COPY[language];
  const sequence=useTransferSequence(direction,operationId,phase,receiptId);
@@ -84,6 +84,7 @@ export default function TransferExperience({operationId,direction,phase:requeste
     <span className="gys-sequence__caption">{interrupted?copy.lastStep:copy.steps}</span>
     <div className="gys-sequence__steps" aria-hidden="true">{[25,50,75,100].map(n=><i key={n} data-done={sequence.percent>=n}/>)}</div>
    </div>
+   {phase==='confirmed'&&receipt}
    {interrupted&&<div id={`${id}-description`} className="gys-sequence__description">
     <p>{phase==='unknown'?copy.unknownBody:copy.failedBody}</p>
     {phase==='failed'&&error&&<p className="gys-sequence__error-detail">{error}</p>}

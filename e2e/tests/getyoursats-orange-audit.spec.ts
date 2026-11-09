@@ -27,32 +27,30 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
     const element=document.querySelector(selector);
     if(!element)throw new Error('Missing '+selector);
     const style=getComputedStyle(element);
-    return {color:style.color,background:style.backgroundColor,image:style.backgroundImage,opacity:style.opacity};
+    let surface:Element|null=element;
+    while(surface&&getComputedStyle(surface).backgroundColor==='rgba(0, 0, 0, 0)')surface=surface.parentElement;
+    const background=getComputedStyle(surface??document.body).backgroundColor;
+    return {color:style.color,background,image:style.backgroundImage,opacity:style.opacity};
    };
    return {
     balance:get('.gys-wallet-balance-surface__content .balance-display'),
     hero:get('.gys-wallet-balance-surface__content'),
     veil:get('.gys-wallet-balance-surface__veil'),
-    walletLogo:get('.gys-wallet-balance-surface__toolbar .gys-brand-wordmark--compact'),
-    merchant:get('.gys-home-quick-actions__button:not(:disabled)'),
-    merchantTitle:get('.gys-home-quick-actions__button:not(:disabled) strong'),
-    recurring:get('.gys-home-quick-actions__button:disabled'),
-    recurringTitle:get('.gys-home-quick-actions__button:disabled strong'),
+    walletLogo:get('.gys-wallet-toolbar .gys-brand-wordmark--compact'),
     receive:get('.gys-action-dock__receive'),
     send:get('.gys-action-dock__send'),
     activity:get('.gys-activity'),
     activityTitle:get('.gys-activity__heading h2'),
-    market:get('.gys-market-pulse'),
-    price:get('.gys-market-pulse__price'),
-    marketUnit:get('.gys-market-pulse__unit'),
+    market:get('.gys-market-summary'),
+    price:get('.gys-market-summary__quote strong'),
+    marketUnit:get('.gys-market-summary__quote > span'),
     amount:get('.gys-activity__amount'),
     status:get('.gys-activity__status'),
     unit:get('.gys-unit-switch button[aria-pressed="true"]'),
    };
   });
   expect(contrast(styles.balance.color,styles.hero.background)).toBeGreaterThan(7);
-  expect(contrast(styles.merchantTitle.color,styles.merchant.background)).toBeGreaterThan(7);
-  expect(contrast(styles.recurringTitle.color,styles.recurring.background)).toBeGreaterThan(4.5);
+  await expect(page.locator('.gys-home-quick-actions__button:disabled')).toHaveCount(0);
   expect(contrast(styles.receive.color,styles.receive.background)).toBeGreaterThan(4.5);
   expect(contrast(styles.send.color,styles.send.background)).toBeGreaterThan(4.5);
   expect(contrast(styles.unit.color,styles.unit.background)).toBeGreaterThan(4.5);
@@ -63,21 +61,13 @@ test('@public-smoke Orange surfaces are readable at desktop and mobile sizes',as
   expect(contrast(styles.status.color,styles.activity.background)).toBeGreaterThan(4.5);
   expect(styles.veil.background).not.toBe('rgb(11, 11, 11)');
   expect(styles.activity.image).toBe('none');
-  expect(styles.activity.background).toBe(styles.merchant.background);
   expect(contrast(styles.activityTitle.color,styles.activity.background)).toBeGreaterThan(7);
-  await expect(page.locator('.gys-wallet-balance-surface__toolbar img.gys-brand-wordmark--compact'))
+  await expect(page.locator('.gys-wallet-toolbar img.gys-brand-wordmark--compact'))
     .toHaveAttribute('src','/brand/wordmark-horizontal-light.svg');
   await expect(page.getByRole('button',{name:'Send Bitcoin'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Receive Bitcoin'})).toBeVisible();
-  if(width<=720){
-   // The compact action dock intentionally keeps only Send / Receive.
-   await expect(page.getByRole('button',{name:'Open Point of Sale'})).toBeVisible();
-   await expect(page.getByRole('button',{name:'Accept a payment in merchant mode'})).toBeHidden();
-   await expect(page.getByRole('button',{name:'Scan payment QR'})).toBeHidden();
-  }else{
-   await expect(page.getByRole('button',{name:'Scan payment QR'})).toBeVisible();
-   await expect(page.getByRole('button',{name:'Accept a payment in merchant mode'})).toBeVisible();
-  }
+  await expect(page.getByRole('button',{name:'Scan payment QR'})).toBeVisible();
+  await expect(page.locator('.gys-action-dock button')).toHaveCount(2);
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);
   expect(overflow).toBe(false);
   mkdirSync('test-artifacts',{recursive:true});
@@ -95,7 +85,8 @@ test('@public-smoke Orange POS starts at a blank charge even with a previous com
  });
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture);
- await page.getByRole('button',{name:'Open Point of Sale'}).click();
+ await page.getByTestId('menu-button').click();
+ await page.getByTestId('menu-pos').click();
  const pos=page.getByRole('dialog',{name:'Merchant point of sale'});
  await expect(pos).toBeVisible();
  await expect(pos.getByText('Amount to charge')).toBeVisible();
@@ -119,7 +110,8 @@ test('@public-smoke Orange POS starts at a blank charge even with a previous com
  await expect(pos.getByText('Amount to charge')).toBeVisible();
  await expect(pos.getByText('Previously issued order')).toHaveCount(0);
  await pos.getByRole('button',{name:'Close point of sale'}).click();
- await page.getByRole('button',{name:'Open Point of Sale'}).click();
+ await page.getByTestId('menu-button').click();
+ await page.getByTestId('menu-pos').click();
  await expect(pos.getByText('Amount to charge')).toBeVisible();
  await expect(pos.getByText('Payment received')).toHaveCount(0);
 });
@@ -129,11 +121,9 @@ test('@public-smoke Orange Settings, Menu and forms retain clear labels',async({
  await page.setViewportSize({width:390,height:844});
  await page.goto(fixture+'?screen=settings');
  await expect(page.getByRole('heading',{name:'Settings',exact:true})).toBeVisible();
- await expect(page.getByTestId('settings-appearance-orange')).toHaveAttribute('aria-pressed','true');
- await expect(page.getByTestId('settings-appearance-dark')).toBeVisible();
- await expect(page.getByTestId('settings-appearance-system')).toBeVisible();
- await expect(page.getByRole('combobox',{name:'Language',exact:true})).toHaveValue('English');
- await expect(page.getByRole('button',{name:/Currencies/i})).toBeVisible();
+ await expect(page.getByTestId('settings-appearance')).toContainText('Orange');
+ await expect(page.getByTestId('settings-language')).toContainText('English');
+ await expect(page.getByTestId('settings-currencies')).toBeVisible();
  await page.screenshot({path:'test-artifacts/orange-settings.png',animations:'disabled'});
  // The isolated fixture has no #content-root drawer anchor; main Settings controls are tested above.
  // Menu rendering is covered in the real wallet integration, not this isolated payment fixture.

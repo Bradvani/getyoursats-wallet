@@ -15,22 +15,24 @@ const parsed = {
   domain: 'example.invalid',
   url: 'https://example.invalid',
 };
-function setup(initial: number | undefined = 2049, min = 1000) {
+function setup(initial: number | undefined = 2049, min = 1000, prefill: {initialAmount?:string;initialFeesIncluded?:boolean} = {}) {
   const onPrepare = vi.fn().mockResolvedValue({ amountSats: 1000, feeSats: 2 });
   const onPay = vi.fn();
   const onRun = vi.fn();
+  const onBack = vi.fn();
   const client = createMockClient() as unknown as BreezSdk;
   const view = (balanceSats: number | undefined) => (
     <WalletProvider client={client}>
       <FiatDataProvider>
         <StableBalanceProvider>
           <LnurlWorkflow
+            {...prefill}
             parsed={{ ...parsed, minSendable: min }}
             balanceSats={balanceSats}
             onPrepare={onPrepare}
             onPay={onPay}
             onRun={onRun}
-            onBack={() => {}}
+            onBack={onBack}
           />
         </StableBalanceProvider>
       </FiatDataProvider>
@@ -41,14 +43,57 @@ function setup(initial: number | undefined = 2049, min = 1000) {
     onPrepare,
     onPay,
     onRun,
+    onBack,
     update: (n: number | undefined) => mounted.rerender(view(n)),
   };
 }
 describe('LNURL available balance', () => {
+  it('keeps Max in the available balance area without preset amount chips', () => {
+    setup();
+    const max = screen.getByRole('button', {name: 'Max'});
+    expect(document.getElementById('lnurl-balance')).toContainElement(max);
+    expect(screen.queryByRole('button', {name: /[0-9].*sats/})).toBeNull();
+  });
+
+  it('lets a user edit Max and prepares the edited amount without fee inclusion', async () => {
+    const {onPrepare, onPay, onRun} = setup();
+    fireEvent.click(screen.getByRole('button', {name: 'Max'}));
+    const amount = screen.getByLabelText('Amount');
+    expect(amount).toHaveValue(2049);
+    expect(amount).not.toHaveAttribute('readonly');
+    fireEvent.change(amount, {target: {value: '100'}});
+    fireEvent.click(screen.getByRole('button', {name: 'Continue'}));
+    await waitFor(() => expect(onPrepare).toHaveBeenCalledWith(expect.objectContaining({amount: 100n, feePolicy: undefined})));
+    expect(onPay).not.toHaveBeenCalled();
+    expect(onRun).not.toHaveBeenCalled();
+  });
+
+  it('returns to recipient entry without preparing or paying', () => {
+    const {onBack, onPrepare, onPay, onRun} = setup();
+    fireEvent.click(screen.getByRole('button', {name: 'Edit destination'}));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(onPrepare).not.toHaveBeenCalled();
+    expect(onPay).not.toHaveBeenCalled();
+    expect(onRun).not.toHaveBeenCalled();
+  });
+
+  it('preserves a fallback amount and fee policy but waits for review before paying', async () => {
+    const {onPrepare,onPay,onRun}=setup(2049,1000,{initialAmount:'100',initialFeesIncluded:true});
+    expect(screen.getByLabelText('Amount')).toHaveValue(100);
+    expect(onPrepare).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button',{name:'Continue'}));
+    await waitFor(()=>expect(onPrepare).toHaveBeenCalledWith(expect.objectContaining({amount:100n,feePolicy:'feesIncluded'})));
+    expect(onPay).not.toHaveBeenCalled();
+    expect(onRun).not.toHaveBeenCalled();
+  });
   it('shows the live wallet balance separately from the recipient range', () => {
     const { update } = setup();
     expect(screen.getByTestId('lnurl-available-balance')).toHaveTextContent(
-      '2 049 sats'
+      /^2 049 sats$/
+    );
+    expect(screen.getByText('Before fees')).toBeVisible();
+    expect(screen.getByTestId('lnurl-available-balance')).not.toContainElement(
+      screen.getByText('Before fees')
     );
     expect(screen.getByLabelText('Amount')).toHaveAttribute(
       'placeholder',
@@ -56,14 +101,14 @@ describe('LNURL available balance', () => {
     );
     update(3500);
     expect(screen.getByTestId('lnurl-available-balance')).toHaveTextContent(
-      '3 500 sats'
+      /^3 500 sats$/
     );
   });
   it('shows unknown balance as loading and prevents preparation', () => {
     const { onPrepare, update } = setup();
     update(undefined);
     expect(screen.getByTestId('lnurl-available-balance')).toHaveTextContent(
-      'Checking balance'
+      /^Checking balance…$/
     );
     fireEvent.change(screen.getByLabelText('Amount'), {
       target: { value: '1' },

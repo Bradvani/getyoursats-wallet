@@ -73,7 +73,7 @@
 .gys-welcome__caption-line{display:inline-block;width:24px;height:1px;background:#F7931A}
 .gys-welcome__footer{display:flex;align-items:center;justify-content:space-between;gap:15px;position:relative;z-index:1;padding-top:18px;
  border-top:1px solid rgba(255,255,255,.085);font-size:9px;font-weight:700;letter-spacing:.14em;color:#807f76}
-.gys-welcome__start:focus-visible,.gys-welcome__restore:focus-visible,.gys-welcome__secondary button:focus-visible,.gys-action-dock button:focus-visible{outline:2px solid #F7931A;outline-offset:4px}
+.gys-welcome__start:focus-visible,.gys-welcome__restore:focus-visible,.gys-welcome__secondary button:focus-visible{outline:2px solid #F7931A;outline-offset:4px}
 @media(max-width:720px){
  .gys-welcome{padding:26px 22px max(24px,env(safe-area-inset-bottom))}
  .gys-welcome__header-tag{font-size:8px;padding:8px 9px}
@@ -92,14 +92,8 @@
 }
 @media(max-width:360px){.gys-welcome{padding:19px 16px}.gys-welcome__visual{height:178px}.gys-welcome__halo{width:185px}.gys-welcome h1{font-size:34px}.gys-welcome__subtitle{font-size:13px}.gys-welcome__actions{margin-top:17px}.gys-welcome__start{min-height:56px}}
 @media(prefers-reduced-motion:reduce){.gys-welcome__start,.gys-welcome__start svg,.gys-welcome__chevron{transition:none}}
-.gys-action-dock{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;gap:8px;flex-shrink:0;position:relative;z-index:30;background:rgba(15,15,14,.96);border-top:1px solid rgba(247,147,26,.15);padding:11px 12px max(11px,env(safe-area-inset-bottom));box-shadow:0 -8px 35px rgba(0,0,0,.23);backdrop-filter:blur(20px)}
-.gys-action-dock button{min-width:0;min-height:58px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;border:1px solid transparent;border-radius:12px;color:#d8d2c4;font-size:11px;font-weight:700;transition:background .16s ease,transform .16s ease}
-.gys-action-dock button:hover{background:#24231f}.gys-action-dock button:active{transform:scale(.97)}
-.gys-action-dock button svg{width:21px;height:21px}
-.gys-action-dock .gys-action-dock__accept{color:#F7931A;background:rgba(247,147,26,.10);border-color:rgba(247,147,26,.18)}
-.gys-action-dock__bitcoin{font-size:23px;line-height:21px;font-weight:800}
-@media(max-width:360px){.gys-action-dock{gap:3px;padding-left:7px;padding-right:7px}.gys-action-dock button{font-size:10px}.gys-welcome h1{font-size:30px}}
-@media(prefers-reduced-motion:reduce){.gys-welcome__start,.gys-action-dock button{transition:none}}
+@media(max-width:360px){.gys-welcome h1{font-size:30px}}
+@media(prefers-reduced-motion:reduce){.gys-welcome__start{transition:none}}
 
 .gys-unit-switch{display:flex;gap:3px;border:1px solid rgba(247,147,26,.18);background:#171717;padding:4px;border-radius:12px;max-width:max-content;margin:8px 0 10px}
 .gys-unit-switch button{min-width:55px;padding:9px 11px;font-size:12px;font-weight:800;border-radius:9px;color:#c5bda9}
@@ -226,7 +220,6 @@
 
 /* Premium wallet-first mobile hierarchy. Balance/identity are real SDK data. */
 .gys-wallet{background:linear-gradient(160deg,#08090c 0%,#101013 68%,#171613 100%)}
-.gys-wallet__history-trigger{display:none}
 .gys-partner-buy-overlay{position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.77);
  backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:20px;color:#f5f1e9}
 .gys-partner-buy{width:min(100%,470px);max-height:92dvh;overflow:auto;background:linear-gradient(160deg,#202024,#121314);
@@ -252,57 +245,19 @@
 
 @media(max-width:720px){
  .gys-wallet{height:100dvh;overflow:hidden}
- .gys-wallet__header{flex:1 1 auto;min-height:228px;position:relative;top:auto}
  .gys-wallet-balance-surface{height:100%;width:100%;background:transparent}
  .gys-wallet-balance-surface__content{min-height:100%;display:flex;flex-direction:column;padding-bottom:8px}
  .gys-wallet-balance-surface__content>.text-center{margin:auto 0;padding:10px 0 24px}
  .gys-wallet-balance-surface__content>.h-14{margin-bottom:0}
  .gys-wallet-balance-surface__content .balance-display{font-size:clamp(46px,10.3vw,72px);line-height:1.15;letter-spacing:-.055em}
  .gys-wallet-balance-surface__content>.h-4{height:2px}
- .gys-wallet__address{flex:none;align-items:center;gap:4px;text-align:center;background:none;border:none;
-  padding:6px 18px 9px;margin:0 16px;border-radius:8px}
- .gys-wallet__address .gys-address-banner__label{font-size:10px;letter-spacing:.05em;font-weight:650;color:#F7931A}
- .gys-wallet__address .gys-address-banner__value{font-size:clamp(11px,3.15vw,14px);
-  line-height:1.55;text-align:center;max-width:100%;overflow-wrap:anywhere;color:#F7931A}
- .gys-wallet__history-trigger{display:flex;align-items:center;justify-content:center;gap:12px;
-  min-height:55px;flex:none;background:transparent;color:#a9a8af;font-size:16px;font-weight:620;
-  border-top:1px solid rgba(255,255,255,.035);transition:color .2s}
- .gys-wallet__history-trigger:focus-visible{outline:2px solid #F7931A;outline-offset:-3px}
- .gys-wallet__history-trigger:active{color:#F7931A}
- .gys-wallet__history-arrow{display:inline-block;font-size:23px;line-height:1;transition:transform .24s ease}
- .gys-wallet__history-arrow--open{transform:rotate(180deg)}
- .gys-wallet__history-count{font-size:11px;background:rgba(255,255,255,.07);color:#c6c4c1;
-  padding:3px 8px;border-radius:99px}
- .gys-wallet__activity:not(.gys-wallet__activity--open){display:none}
- .gys-wallet__activity--open{display:block;flex:1 1 auto;min-height:0}
- .gys-wallet--history-open .gys-wallet__header{flex:0 0 auto;min-height:0}
- .gys-wallet--history-open .gys-wallet-balance-surface__content{min-height:0}
- .gys-wallet--history-open .gys-wallet-balance-surface__content>.text-center{margin:0;padding:0 0 4px}
- .gys-wallet--history-open .gys-wallet-balance-surface__content .balance-display{font-size:clamp(34px,8vw,50px)}
- .gys-wallet--history-open .gys-wallet-balance-surface__content>.h-4{display:none}
- .gys-action-dock{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px 16px max(17px,env(safe-area-inset-bottom));
-  background:linear-gradient(0deg,rgba(21,21,19,.985),rgba(21,21,19,.94));border-top:1px solid rgba(255,255,255,.055)}
- .gys-action-dock button{min-height:66px;flex-direction:row;font-size:19px;font-weight:770;gap:9px;
-  border-radius:18px;transition:transform .22s cubic-bezier(.2,.75,.15,1),box-shadow .2s ease,background .2s ease}
- .gys-action-dock button svg{height:20px;width:20px}
- .gys-action-dock .gys-action-dock__utility{display:none}
- .gys-action-dock .gys-action-dock__receive{background:transparent;border:1.5px solid #F7931A;color:#F7931A}
- .gys-action-dock .gys-action-dock__send{background:#F7931A;color:#10100d;border:1.5px solid #F7931A;
-  box-shadow:0 10px 32px rgba(247,147,26,.09)}
- .gys-action-dock .gys-action-dock__send:hover{background:#F7931A}
- .gys-action-dock .gys-action-dock__receive:hover{background:rgba(247,147,26,.07)}
 }
-@media(max-width:360px){.gys-action-dock button{font-size:16px;min-height:60px}.gys-action-dock{gap:9px;padding-left:10px;padding-right:10px}}
 @media(max-height:665px) and (max-width:720px){
  .gys-wallet-balance-surface__content>.text-center{padding:0}
  .gys-wallet-balance-surface__content .balance-display{font-size:clamp(38px,10vw,60px)}
- .gys-wallet__history-trigger{min-height:43px}
- .gys-action-dock button{min-height:54px}
- .gys-wallet__address{padding:2px 14px}
 }
 @media(prefers-reduced-motion:reduce){
- .gys-wallet__history-arrow,.gys-wallet__history-trigger,
- .gys-action-dock button,.gys-partner-buy__primary{transition:none}
+ .gys-partner-buy__primary{transition:none}
  .gys-partner-buy{animation:none}
 }
 
@@ -464,3 +419,12 @@
 .gys-market-pulse__price{max-width:100%;overflow-wrap:anywhere}
 .gys-market-pulse__bottom button:disabled{opacity:.65;cursor:wait}
 .gys-market-pulse__bottom button:focus-visible,.gys-market-pulse__switches button:focus-visible{outline:2px solid #F7931A;outline-offset:2px}
+
+.gys-market-cap-detail summary{cursor:pointer;min-height:44px;overflow-wrap:anywhere;list-style:none}
+.gys-market-cap-detail summary::-webkit-details-marker{display:none}
+.gys-market-cap-detail summary::after{content:' ⌄';font-size:.75em;opacity:.65}
+.gys-market-cap-detail[open] summary::after{content:' ⌃'}
+.gys-market-cap-detail p{overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.gys-market-change,.gys-market-remaining{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;font-size:.875rem}
+.gys-market-change{padding:0 0 18px;color:var(--spark-text-secondary)}
+.gys-market-remaining{margin:12px 0}

@@ -1,6 +1,7 @@
 // Shared domain types for the wallet example app
 
 import { InputType } from "@breeztech/breez-sdk-spark/bundler";
+import type {GysDirectRecipient} from '@/services/gysDirectPayments';
 
 // Supported receive tabs / methods in Receive dialog
 export type PaymentMethod = 'lightning' | 'spark' | 'bitcoin' | 'usd';
@@ -26,4 +27,5 @@ export interface SendInput {
    *  inputs; for a BIP21 URI it's the unwrapped bare address/invoice. */
   paymentRequest: string;
   parsedInput: InputType;
+  directRecipient?: GysDirectRecipient;
 }

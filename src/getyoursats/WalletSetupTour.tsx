@@ -15,6 +15,7 @@ import {formatFiat} from '../utils/formatFiat';
 import {currencyCopy} from '../locales/currencies';
 import {WALLET_TOUR_STEPS, type WalletTourStep, type WalletRecoveryMethod, type WalletRecoveryStatus} from './walletSetupState';
 import './walletSetup.css';
+import {PAYMENT_UX} from '../locales/paymentUx';
 
 export type {WalletTourStep} from './walletSetupState';
 
@@ -39,6 +40,7 @@ interface WalletSetupTourProps {
   hasNativeAddress: boolean;
   paused?: boolean;
   onNext: () => void;
+  onPrevious?: () => void;
   onSkip: () => void;
   onReviewRecovery: () => void;
   onPersonalize: () => void;
@@ -122,7 +124,7 @@ function FeaturePreview({step, language, text, verified, named}: {
 
 export default function WalletSetupTour({
   step, recoveryMethod, recoveryStatus, hasNativeAddress, paused = false,
-  onNext, onSkip, onReviewRecovery, onPersonalize, onOpenReceive, onOpenPos,
+  onNext, onPrevious, onSkip, onReviewRecovery, onPersonalize, onOpenReceive, onOpenPos,
 }: WalletSetupTourProps) {
   const {language} = usePresentation();
   const text = walletSetupCopy(language);
@@ -178,7 +180,7 @@ export default function WalletSetupTour({
         <div className="gys-wallet-guide__copy">
           <div className="gys-wallet-guide__heading">
             <p className="gys-wallet-guide__chapter-label">{text.stepNames[step]}</p>
-            <h2 id={titleId}>{content.title}</h2>
+            <h2 id={titleId} tabIndex={-1} data-guide-heading>{content.title}</h2>
           </div>
           <p className="gys-wallet-guide__description">{content.body}</p>
           {step === 'language' && <div className="gys-wallet-guide__language-choice"><LanguageSelect/></div>}
@@ -196,6 +198,8 @@ export default function WalletSetupTour({
         </div>
       </motion.div>
       <footer className="gys-wallet-guide__actions">
+        {index > 0 && onPrevious && <button type="button" className="gys-wallet-guide__back"
+          data-testid="wallet-setup-back" onClick={onPrevious}>{PAYMENT_UX[language].back}</button>}
         {action && <PrimaryButton key="context" className="gys-wallet-guide__action" data-testid="wallet-setup-action" onClick={action.run}>{action.label}</PrimaryButton>}
         <PrimaryButton key="next" className="gys-wallet-guide__next" data-secondary={Boolean(action)}
           data-testid="wallet-setup-next" onClick={onNext}>

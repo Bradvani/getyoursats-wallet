@@ -54,7 +54,7 @@ function visibility(state: 'hidden' | 'visible') {
   document.dispatchEvent(new Event('visibilitychange'));
 }
 const props = {
-  onBack: vi.fn(), onOpenFiatCurrencies: vi.fn(), onOpenBuyProviders: vi.fn(),
+  onOpenLanguage: vi.fn(), onOpenAppearance: vi.fn(), onBack: vi.fn(), onOpenFiatCurrencies: vi.fn(), onOpenBuyProviders: vi.fn(),
   onOpenPasskeySettings: vi.fn(), onOpenSecurity: vi.fn(), onOpenBackup: vi.fn(),
   onOpenEmail: vi.fn(), onOpenUnilateralExit: vi.fn(),
 };

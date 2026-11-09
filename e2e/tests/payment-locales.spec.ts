@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { PAYMENT_UX } from '../../src/locales/paymentUx';
 async function waitForScriptFont(page: Page, family: string) {
   await expect
     .poll(() =>
@@ -64,15 +65,14 @@ test('language picker supports search, keyboard selection, persistence and RTL r
   await page.getByRole('option').click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
 });
-test('Settings uses a compact dropdown with all ten languages', async ({
+test('Settings opens a dedicated page with all ten languages', async ({
   page,
 }) => {
   await page.goto('/e2e/fixtures/premium-ui.html?screen=settings');
-  await page
-    .getByRole('combobox', { name: 'Language' })
-    .scrollIntoViewIfNeeded();
-  await page.getByRole('button', { name: 'Language', exact: true }).click();
-  await expect(page.getByRole('option')).toHaveCount(10);
+  await page.getByTestId('settings-language').click();
+  await expect(page.getByRole('heading', { name: 'Language', exact: true })).toBeVisible();
+  await expect(page.getByRole('radio')).toHaveCount(10);
+  await expect(page.getByRole('radio', { name: /English/ })).toBeChecked();
   await page.screenshot({ path: 'test-artifacts/language-settings.png' });
 });
 
@@ -111,13 +111,13 @@ for (const width of [390, 1366])
     );
     await page.goto('/e2e/fixtures/premium-ui.html?screen=settings');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    const input = page.getByRole('combobox', { name: 'اللغة' });
-    await input.scrollIntoViewIfNeeded();
-    await expect(input).toHaveValue('العربية');
-    await input.fill('Chinese');
-    await expect(page.getByRole('option')).toHaveCount(1);
+    await expect(page.getByTestId('settings-language')).toContainText('العربية');
+    await page.getByTestId('settings-language').click();
+    await expect(page.getByRole('radio')).toHaveCount(10);
+    await expect(page.getByRole('radio', { name: /العربية/ })).toBeChecked();
     await page.screenshot({ path: `test-artifacts/settings-ar-${width}.png` });
-    await input.press('Escape');
+    await page.getByRole('button', { name: PAYMENT_UX.ar.back, exact: true }).click();
+    await expect(page.getByTestId('settings-language')).toContainText('العربية');
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth

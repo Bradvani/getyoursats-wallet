@@ -1,15 +1,17 @@
 import {isRestrictedBrowserWallet,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
 import {normalizeDecimalInput, validAmountInput} from '../../../utils/decimalInput';
 import {useFlowText} from '@/hooks/useFlowText';
+import {usePresentation} from '@/hooks/usePresentation';
+import {sendDestinationCopy} from '@/locales/sendDestination';
+import {PAYMENT_UX} from '@/locales/paymentUx';
 import {useFiatData} from '../../../contexts/FiatDataContext';
 import DenominationTabs from '../../../getyoursats/DenominationTabs';
 import {amountToSats,getDenomination,isFiatDenomination,saveDenomination,satsToAmount,type Denomination} from '../../../getyoursats/denomination';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useId } from 'react';
 import type { ConversionOptions } from '@breeztech/breez-sdk-spark';
 import { FormError, PrimaryButton, AMOUNT_FIELD_CLASS } from '../../../components/ui';
 import { useSheetBack } from '../../../components/ui/sheets/BottomSheetCardContext';
 import { SpinnerIcon } from '../../../components/Icons';
-import { formatQuickAmount, pickQuickAmounts } from '../../../utils/tokenFormatting';
 import CurrencySwitcher from '../../../components/ui/CurrencySwitcher';
 import { useAmountInput, useFiatOverride } from '../../../hooks/useAmountInput';
 import { useBalanceValidation } from '../hooks/useBalanceValidation';
@@ -45,7 +47,11 @@ const AmountStep: React.FC<AmountStepProps> = ({
   amountFirst = false,
   destinationReviewed = false,
 }) => {
+  const amountInputId=useId();
   const t=useFlowText();
+  const {language}=usePresentation();
+  const editDestination=sendDestinationCopy(language).edit;
+  const text=PAYMENT_UX[language];
   // USD entry without a stable-balance token, funded from BTC. Cross-chain
   // ("Send USD", amountFirst) starts in USD; plain BTC sends start in sats
   // with USD as a toggleable secondary option (#253).
@@ -68,7 +74,6 @@ const AmountStep: React.FC<AmountStepProps> = ({
     tokenIdentifier,
     tokenSymbol,
     config,
-    quickAmountScale,
     parseToSats,
     tokenBalanceDisplay,
     formatSatsAsTokenDisplay,
@@ -122,7 +127,6 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
   const validAmount = validAmountInput(localAmount, isTokenMode ? (config?.fractionSize ?? 2) : 0);
 
-  const quickAmounts = pickQuickAmounts(balance.spendableDisplay, quickAmountScale);
   const amountNum = isTokenMode ? parseFloat(localAmount) || 0 : parseInt(localAmount) || 0;
 
   // Send All target value in BTC-as-fiat (when in token mode without a token
@@ -205,12 +209,16 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
   const destinationSection = (
     <div>
-      <label className="block text-sm font-medium text-spark-text-primary mb-2">
+      <p className="block text-sm font-medium text-spark-text-primary mb-2">
         {t("Destination")}
-      </label>
-      <div className="w-full p-4 bg-spark-dark border border-spark-border rounded-xl text-spark-text-secondary font-mono text-sm break-all">
-        {paymentInput}
-      </div>
+      </p>
+      <button type="button" onClick={onBack} disabled={isLoading} aria-label={editDestination}
+        aria-describedby={`${amountInputId}-destination`}
+        data-testid="edit-send-destination"
+        className="w-full min-h-11 p-4 bg-spark-dark border border-spark-border rounded-xl text-start text-sm disabled:opacity-50">
+        <span id={`${amountInputId}-destination`} className="block text-spark-text-secondary font-mono break-all">{paymentInput}</span>
+        <span className="gys-send-edit-action mt-2 block text-spark-primary underline">{editDestination}</span>
+      </button>
     </div>
   );
 
@@ -218,66 +226,14 @@ const AmountStep: React.FC<AmountStepProps> = ({
   const unitUnavailable=isFiatDenomination(denomination)&&!currentRate&&!amountFirst;
   const amountSection = (
     <div>
-        <label className="block text-sm font-medium text-spark-text-primary mb-2">
-          {t("Amount")}
-        </label>
-        <div className="relative">
-          <input
-            type={isDenominated?'text':isTokenMode?'text':'number'}
-            inputMode={isDenominated?'decimal':isTokenMode?'decimal':'numeric'}
-            enterKeyHint="done"
-            value={unitInputValue}
-            onChange={handleAmountChange}
-            onKeyDown={async (e) => {
-              // Enter on the amount field commits and advances to
-              // the confirm step. Matches the soft keyboard's Done
-              // action hint.
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                if (validAmount && !isLoading) {
-                  await handleNext();
-                }
-              }
-            }}
-            placeholder={t('Enter amount in {currency}',{currency:isDenominated?denomination:isTokenMode&&config?config.currencyCode:'sats'})}
-            className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none read-only:cursor-not-allowed`}
-            disabled={isLoading}
-            readOnly={isSendAll}
-            min={isTokenMode ? undefined : 1}
-            data-testid="amount-input"
-          />
-          {/* Cross-chain ("Send USD", amountFirst) is USD-only: no sats toggle. */}
-          {!amountFirst && tokenSymbol && (
-            <CurrencySwitcher
-              isTokenMode={isTokenMode}
-              tokenSymbol={tokenSymbol}
-              onSwitch={handleToggleDenomination}
-              disabled={isLoading}
-            />
-          )}
-        </div>
-
-        {!amountFirst&&<DenominationTabs value={denomination} onChange={selectDenomination} disabled={isLoading} fiatAvailable={!!currentRate}/>}
-        {unitUnavailable&&<p role="status" className="text-xs text-spark-warning mt-2">{t('Live {currency}/BTC rate unavailable. Choose sats or BTC.',{currency:denomination})}</p>}
-        {isDenominated&&!!localAmount&&<p className="text-xs text-spark-text-muted mt-2">≈ {localAmount} {t('sats · Settlement is denominated in Bitcoin')}</p>}
-        {/* Quick amount buttons */}
-        <div className="flex gap-2 mt-3">
-          {quickAmounts.map((quickAmount) => {
-            const isSelected = amountNum === quickAmount && !isSendAll;
-            return (
-              <button
-                key={quickAmount}
-                onClick={() => { setLocalAmount(String(quickAmount)); syncUnitFromSats(quickAmount); setFeesIncluded(false); setLocalError(null); }}
-                className={`flex-1 py-2 rounded-lg text-sm font-mono font-medium transition-all ${
-                  isSelected
-                    ? 'bg-spark-primary text-white'
-                    : 'bg-transparent border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
-                }`}
-              >
-                {isTokenMode && config ? formatQuickAmount(quickAmount, config) : <SatAmount sats={quickAmount} />}
-              </button>
-            );
-          })}
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+          <label htmlFor={amountInputId} className="text-sm font-medium text-spark-text-primary">{t("Amount")}</label>
+          <div className="ms-auto flex min-w-0 max-w-full items-center gap-2" data-testid="amount-available-balance">
+            <div id={`${amountInputId}-balance`} className="min-w-0 text-end text-xs text-spark-text-secondary">
+              <p>{text.available}</p>
+              <p className="text-spark-text-primary">{balanceSats === undefined ? text.balanceLoading : <SatAmount sats={balanceSats}/>}</p>
+              {hasTokenBalance && tokenBalanceDisplay && <p>{tokenBalanceDisplay} {tokenSymbol}</p>}
+            </div>
           {showSendAll && (
             <button
               onClick={() => {
@@ -303,25 +259,62 @@ const AmountStep: React.FC<AmountStepProps> = ({
                 setFeesIncluded(true);
                 setLocalError(null);
               }}
-              disabled={maxUnavailable || tokenSendAllBelowThreshold || hasPendingConversion}
-              title={maxUnavailable?UNAVAILABLE_MAX_MESSAGE:hasPendingConversion ? t('Balance is updating. Try again in a moment.') : undefined}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                maxUnavailable || tokenSendAllBelowThreshold || hasPendingConversion
-                  ? 'opacity-40 cursor-not-allowed border border-spark-border text-spark-text-secondary'
-                  : isSendAll
-                    ? 'bg-spark-primary text-white'
-                    : 'bg-transparent border border-spark-border text-spark-text-secondary hover:text-spark-text-primary hover:border-spark-border-light'
-              }`}
+              disabled={maxUnavailable || isLoading || tokenSendAllBelowThreshold || hasPendingConversion}
+              title={maxUnavailable ? UNAVAILABLE_MAX_MESSAGE : hasPendingConversion ? text.updating : text.feesHint}
+              aria-pressed={isSendAll}
+              className="gys-send-max-action min-h-11 min-w-11 shrink-0 rounded-lg px-2 text-sm font-semibold text-spark-primary underline disabled:opacity-40"
             >
               {hasPendingConversion ? (
                 <span className="inline-flex items-center justify-center gap-1.5">
                   <SpinnerIcon size="xs" />
-                  {t("Send All")}
+                  {text.max}
                 </span>
-              ) : t('Send All')}
+              ) : text.max}
             </button>
           )}
+          </div>
         </div>
+        <div className="relative">
+          <input
+            id={amountInputId}
+            aria-describedby={`${amountInputId}-balance`}
+            type={isDenominated?'text':isTokenMode?'text':'number'}
+            inputMode={isDenominated?'decimal':isTokenMode?'decimal':'numeric'}
+            enterKeyHint="done"
+            value={unitInputValue}
+            onChange={handleAmountChange}
+            onKeyDown={async (e) => {
+              // Enter on the amount field commits and advances to
+              // the confirm step. Matches the soft keyboard's Done
+              // action hint.
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (validAmount && !isLoading) {
+                  await handleNext();
+                }
+              }
+            }}
+            placeholder={t('Enter amount in {currency}',{currency:isDenominated?denomination:isTokenMode&&config?config.currencyCode:'sats'})}
+            className={`${AMOUNT_FIELD_CLASS} pr-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+            disabled={isLoading}
+            min={isTokenMode ? undefined : 1}
+            data-testid="amount-input"
+          />
+          {/* Cross-chain ("Send USD", amountFirst) is USD-only: no sats toggle. */}
+          {!amountFirst && tokenIdentifier && tokenSymbol && (
+            <CurrencySwitcher
+              isTokenMode={isTokenMode}
+              tokenSymbol={tokenSymbol}
+              onSwitch={handleToggleDenomination}
+              disabled={isLoading}
+            />
+          )}
+        </div>
+
+        {!amountFirst&&<DenominationTabs value={denomination} onChange={selectDenomination} disabled={isLoading} fiatAvailable={!!currentRate}/>}
+        {unitUnavailable&&<p role="status" className="text-xs text-spark-warning mt-2">{t('Live {currency}/BTC rate unavailable. Choose sats or BTC.',{currency:denomination})}</p>}
+        {isDenominated&&!!localAmount&&<p className="text-xs text-spark-text-muted mt-2">≈ {localAmount} {t('sats · Settlement is denominated in Bitcoin')}</p>}
+
     </div>
   );
 
