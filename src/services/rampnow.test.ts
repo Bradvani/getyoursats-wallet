@@ -164,7 +164,7 @@ describe('RampNow sandbox browser client', () => {
   });
 
   it('rejects a semantically equivalent challenge with non-canonical whitespace', async () => {
-    const {client, signMessage} = harness({challenge: challenge => ({...challenge, message: challenge.message.replaceAll('[', '[ ')})});
+    const {client, signMessage} = harness({challenge: challenge => ({...challenge, message: challenge.message.replace(/\[/g, '[ ')})});
     await expect(client.prepare(INPUT)).rejects.toMatchObject({code: 'RAMPNOW_AUTH_INVALID'});
     expect(signMessage).not.toHaveBeenCalled();
   });
