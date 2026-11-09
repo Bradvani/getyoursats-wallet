@@ -10,7 +10,7 @@ This is the coordination record for the UX audit, security readiness and on-ramp
 | Wallet security and recovery | [PR #71](https://github.com/Bradvani/getyoursats-wallet/pull/71) | Consolidated draft candidate. Current production changes are integrated. Retain the production interlock and route restrictions until the existing acceptance gates are closed. |
 | RampNow / Hypermid on-ramp | [PR #72](https://github.com/Bradvani/getyoursats-wallet/pull/72) | Draft sandbox integration. Current production changes are integrated. Hosted checkout is blocked by provider checkout entitlement, even though payment simulation is enabled. |
 | Optional Bitcoin education | [PR #87](https://github.com/Bradvani/getyoursats-wallet/pull/87) | Separate proposal. Keep out of the on-ramp release dependency chain; review against the current Settings and onboarding UX before merging. |
-| Public repository documentation | [PR #51](https://github.com/Bradvani/getyoursats-wallet/pull/51) | Separate documentation proposal. Reconcile its historical release wording before merging. |
+| Public repository documentation | `main`; historical [PR #51](https://github.com/Bradvani/getyoursats-wallet/pull/51) | Substantive proposal already incorporated in production. Superseded PR closed; its remaining commented base-path example correction is carried in the active candidates. |
 
 ## Superseded proposals
 
@@ -23,6 +23,7 @@ Retain all branch tips, review discussion and recorded evidence. Closing a super
 | #43 | Its own handoff explicitly identifies #71 as the integrated successor. Preserve the earlier security evidence on the original branch. |
 | #46 | Direct Spark receiving and its regression coverage are incorporated into #71 with later containment and localization changes. |
 | #58 | Superseded by the shipped localization work in #65 and later production UX changes. Original browser/Android evidence remains available on #58's branch. |
+| #51 | Its substantive documentation is already in production. Only the commented base-path example differed after retaining newer production wording; that correction is preserved in the active candidates. |
 | #30 | The production receive dialog already uses the typed sats formatter for nonzero receive fees. |
 | #9, #10 | Early public-page and wallet-experience proposals have been superseded by the current production product and subsequent security/on-ramp work. Preserve their original proposal and rollout documents as historical context. |
 
