@@ -2,6 +2,14 @@
 
 Updated 10 November 2026. **Intent API checkout is now enabled and verified by a successful sandbox order creation. Public Buy/Sell and production checkout remain disabled.** No real payment was made.
 
+## 10 November: customer email comparison
+
+The contact-v4 hosted page reached email verification with the approved partner-login address, but the owner reported no code after several attempts. The page displayed a sent-code message with no visible error. This is not delivery evidence. No provider response has yet established whether partner/customer email overlap caused the failure.
+
+The owner approved a different personal email for one controlled customer-flow comparison. The fixed customer-v5 campaign reads it only from the sensitive, branch-scoped Preview variable and permits only the accepted scenario. It first reconciles both existing v3/v4 fixtures by exact provider identifier, route and amount, retains their records and permanent reservations and preserves the earlier rejected-campaign checks. These identity checks do not verify a payment or wallet receipt. No real address or hosted URL is committed here. Intent creation creates or reuses a provider customer record by email, so the contact is not promised to be disposable. Creation, email delivery and payment outcomes must each be verified separately.
+
+The focused acceptance runner passes **35 tests**, including seven customer-comparison checks for prior fixture mismatches, missing email, unsupported scenarios, duplicate dispatch prevention, uncertain responses and callback isolation. Application and SDK behavior are unchanged by this comparison.
+
 ## 10 November: confirmed checkout activation
 
 At **2026-11-10 16:58 UTC**, protected Preview `dpl_6dPW5JTA9wBPYHvZ3TxMx14fDPSY` (source `1d862a924798e2b58ea933e72817d02a4f29b1e3`) created the fixed v3 sandbox accepted case and received an order identifier plus a hosted checkout URL. Before dispatch, fresh authenticated lookups confirmed that both earlier explicitly rejected campaigns still contained no orders. All three permanent dispatch reservations remain intact. Do not replay the create command.

@@ -2,8 +2,8 @@
  * normal build. Requires the integration Preview and dedicated sandbox storage.
  * Usage: node scripts/rampnow-sandbox-acceptance.mjs [inspect|diagnose|create accepted|create declined|create expired]
  * Create is one dispatch per fixed case, durably reserved BEFORE the API call.
- * Customer fields are fictitious. The contact campaign uses an explicitly
- * approved operator email supplied privately for sandbox OTP verification.
+ * Other customer fields are fictitious. Contact campaigns use an explicitly
+ * approved email supplied privately for sandbox customer creation and OTP.
  * Credentials and recipient private keys never enter the report or build logs.
  */
 import {createECDH} from 'node:crypto';
@@ -16,6 +16,7 @@ export const CAMPAIGN = 'gys-sandbox-20261109-ethereum-card-v1';
 export const ENABLEMENT_CAMPAIGN = 'gys-sandbox-20261110-checkout-v2';
 export const CONFIRMED_CAMPAIGN = 'gys-sandbox-20261110-enabled-v3';
 export const CONTACT_CAMPAIGN = 'gys-sandbox-20261110-contact-v4';
+export const CUSTOMER_CAMPAIGN = 'gys-sandbox-20261110-customer-v5';
 export const CASES = Object.freeze(['accepted', 'declined', 'expired']);
 const ROOT = '/api/partner/v1/ext/ramp_order';
 const API = 'https://api.sandbox.rampnow.io';
@@ -91,10 +92,11 @@ return 1
 export async function runAcceptance({env = process.env, mode = 'inspect', scenario,
   campaign = CAMPAIGN, fetchImpl = fetch, recipientFactory = newRecipient, now = Date.now} = {}) {
   const config = requireAcceptanceEnvironment(env);
-  need([CAMPAIGN, ENABLEMENT_CAMPAIGN, CONFIRMED_CAMPAIGN, CONTACT_CAMPAIGN].includes(campaign), 'CAMPAIGN_INVALID');
+  need([CAMPAIGN, ENABLEMENT_CAMPAIGN, CONFIRMED_CAMPAIGN, CONTACT_CAMPAIGN, CUSTOMER_CAMPAIGN].includes(campaign), 'CAMPAIGN_INVALID');
   const PREFIX = RAMPNOW_STORE_PREFIX + 'acceptance:' + campaign + ':';
   const externalId = name => campaign + '-' + name;
   need(['inspect','diagnose'].includes(mode) || (mode === 'create' && CASES.includes(scenario)), 'ACTION_INVALID');
+  need(campaign !== CUSTOMER_CAMPAIGN || mode !== 'create' || scenario === 'accepted', 'ACTION_INVALID');
   async function redis(command) {
     const response = await fetchImpl(config.url, {method: 'POST', redirect: 'error', cache: 'no-store',
       signal: AbortSignal.timeout(10000), headers: {Authorization: 'Bearer ' + config.token,
@@ -138,29 +140,34 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
   };
   if (mode === 'create' && !(await load(scenario))) {
     let email = 'gys-rampnow-20261109@example.invalid';
-    if (campaign === CONTACT_CAMPAIGN) {
+    if ([CONTACT_CAMPAIGN, CUSTOMER_CAMPAIGN].includes(campaign)) {
       email = env.RAMPNOW_ACCEPTANCE_EMAIL;
       need(typeof email === 'string' && email.length <= 254 && /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/.test(email)
         && !/\.(invalid|test|localhost)$/i.test(email), 'OPERATOR_EMAIL_REQUIRED');
-      // A distinct, explicitly approved contact fixture, not a retry of v3.
-      // Keep the inaccessible synthetic-email order and its permanent lock.
-      const previousId = CONFIRMED_CAMPAIGN + '-accepted';
-      const raw = await redis(['GET', RAMPNOW_STORE_PREFIX + 'acceptance:' + CONFIRMED_CAMPAIGN + ':accepted']);
-      need(typeof raw === 'string' && Buffer.byteLength(raw) < 16384, 'PREVIOUS_ATTEMPT_UNRESOLVED');
-      const previous = JSON.parse(raw);
-      need(previous.externalOrderUid === previousId && previous.phase === 'checkout_created'
-        && identifier(previous.orderUid) && typeof previous.redirectUrl === 'string', 'PREVIOUS_ATTEMPT_UNRESOLVED');
-      safeCheckoutURL(previous.redirectUrl);
-      const lookup = await provider('GET', ROOT + '/' + previousId);
-      const order = lookup.orderList?.[0];
-      need(Array.isArray(lookup.orderList) && lookup.orderList.length === 1 && object(order)
-        && order.uid === previous.orderUid && sameAmount(order.srcAmount, ROUTE.srcAmount)
-        && ['orderType','srcCurrency','srcChain','dstCurrency','dstChain'].every(key => order[key] === ROUTE[key])
-        && (!Object.hasOwn(order,'externalOrderUid') || order.externalOrderUid === previousId), 'PREVIOUS_ATTEMPT_UNRESOLVED');
-      // This lookup establishes the previous fixture's identity only. An absent
-      // walletAddress still fails matchedOrder and never verifies delivery.
+      // Each explicitly approved contact fixture is a separate customer/order
+      // comparison. Reconcile prior created fixtures without replaying them or
+      // changing their durable records and permanent dispatch reservations.
+      const createdPredecessors = campaign === CUSTOMER_CAMPAIGN
+        ? [CONTACT_CAMPAIGN, CONFIRMED_CAMPAIGN] : [CONFIRMED_CAMPAIGN];
+      for (const predecessor of createdPredecessors) {
+        const previousId = predecessor + '-accepted';
+        const raw = await redis(['GET', RAMPNOW_STORE_PREFIX + 'acceptance:' + predecessor + ':accepted']);
+        need(typeof raw === 'string' && Buffer.byteLength(raw) < 16384, 'PREVIOUS_ATTEMPT_UNRESOLVED');
+        const previous = JSON.parse(raw);
+        need(previous.externalOrderUid === previousId && previous.phase === 'checkout_created'
+          && identifier(previous.orderUid) && typeof previous.redirectUrl === 'string', 'PREVIOUS_ATTEMPT_UNRESOLVED');
+        safeCheckoutURL(previous.redirectUrl);
+        const lookup = await provider('GET', ROOT + '/' + previousId);
+        const order = lookup.orderList?.[0];
+        need(Array.isArray(lookup.orderList) && lookup.orderList.length === 1 && object(order)
+          && order.uid === previous.orderUid && sameAmount(order.srcAmount, ROUTE.srcAmount)
+          && ['orderType','srcCurrency','srcChain','dstCurrency','dstChain'].every(key => order[key] === ROUTE[key])
+          && (!Object.hasOwn(order,'externalOrderUid') || order.externalOrderUid === previousId), 'PREVIOUS_ATTEMPT_UNRESOLVED');
+        // This establishes the previous fixture's identity only. An absent
+        // walletAddress still fails matchedOrder and never verifies delivery.
+      }
     }
-    const predecessors = [CONFIRMED_CAMPAIGN, CONTACT_CAMPAIGN].includes(campaign) ? [CAMPAIGN, ENABLEMENT_CAMPAIGN]
+    const predecessors = [CONFIRMED_CAMPAIGN, CONTACT_CAMPAIGN, CUSTOMER_CAMPAIGN].includes(campaign) ? [CAMPAIGN, ENABLEMENT_CAMPAIGN]
       : campaign === ENABLEMENT_CAMPAIGN ? [CAMPAIGN] : [];
     for (const predecessor of predecessors) {
       // Do not replay or erase the first dispatch. A new campaign is allowed
