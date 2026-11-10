@@ -2,7 +2,8 @@
  * normal build. Requires the integration Preview and dedicated sandbox storage.
  * Usage: node scripts/rampnow-sandbox-acceptance.mjs [inspect|diagnose|create accepted|create declined|create expired]
  * Create is one dispatch per fixed case, durably reserved BEFORE the API call.
- * Customer fields are fictitious and contacts use reserved example/fiction ranges.
+ * Customer fields are fictitious. The contact campaign uses an explicitly
+ * approved operator email supplied privately for sandbox OTP verification.
  * Credentials and recipient private keys never enter the report or build logs.
  */
 import {createECDH} from 'node:crypto';
@@ -14,6 +15,7 @@ import {sandboxRampnowConfig, normalizeRampnowEvent, RAMPNOW_STORE_PREFIX} from 
 export const CAMPAIGN = 'gys-sandbox-20261109-ethereum-card-v1';
 export const ENABLEMENT_CAMPAIGN = 'gys-sandbox-20261110-checkout-v2';
 export const CONFIRMED_CAMPAIGN = 'gys-sandbox-20261110-enabled-v3';
+export const CONTACT_CAMPAIGN = 'gys-sandbox-20261110-contact-v4';
 export const CASES = Object.freeze(['accepted', 'declined', 'expired']);
 const ROOT = '/api/partner/v1/ext/ramp_order';
 const API = 'https://api.sandbox.rampnow.io';
@@ -89,7 +91,7 @@ return 1
 export async function runAcceptance({env = process.env, mode = 'inspect', scenario,
   campaign = CAMPAIGN, fetchImpl = fetch, recipientFactory = newRecipient, now = Date.now} = {}) {
   const config = requireAcceptanceEnvironment(env);
-  need([CAMPAIGN, ENABLEMENT_CAMPAIGN, CONFIRMED_CAMPAIGN].includes(campaign), 'CAMPAIGN_INVALID');
+  need([CAMPAIGN, ENABLEMENT_CAMPAIGN, CONFIRMED_CAMPAIGN, CONTACT_CAMPAIGN].includes(campaign), 'CAMPAIGN_INVALID');
   const PREFIX = RAMPNOW_STORE_PREFIX + 'acceptance:' + campaign + ':';
   const externalId = name => campaign + '-' + name;
   need(['inspect','diagnose'].includes(mode) || (mode === 'create' && CASES.includes(scenario)), 'ACTION_INVALID');
@@ -120,7 +122,8 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
       error.traceId = typeof data?.traceId === 'string' && /^[A-Za-z0-9_-]{8,128}$/.test(data.traceId) ? data.traceId : null;
       // Documented end-user display text only, bounded and scrubbed of credentials.
       error.displayError = typeof data?.displayError === 'string' && data.displayError.length <= 300
-        ? [env.RAMPNOW_API_KEY,env.RAMPNOW_API_SECRET,config.token].reduce((text,secret)=>text.split(secret).join('[redacted]'),data.displayError).replace(/[\u0000-\u001f]/g,' ') : null;
+        ? [env.RAMPNOW_API_KEY,env.RAMPNOW_API_SECRET,config.token,env.RAMPNOW_ACCEPTANCE_EMAIL].filter(Boolean)
+          .reduce((text,secret)=>text.split(secret).join('[redacted]'),data.displayError).replace(/[\u0000-\u001f]/g,' ') : null;
       throw error;
     }
     return data.data;
@@ -134,7 +137,30 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
     return record;
   };
   if (mode === 'create' && !(await load(scenario))) {
-    const predecessors = campaign === CONFIRMED_CAMPAIGN ? [CAMPAIGN, ENABLEMENT_CAMPAIGN]
+    let email = 'gys-rampnow-20261109@example.invalid';
+    if (campaign === CONTACT_CAMPAIGN) {
+      email = env.RAMPNOW_ACCEPTANCE_EMAIL;
+      need(typeof email === 'string' && email.length <= 254 && /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/.test(email)
+        && !/\.(invalid|test|localhost)$/i.test(email), 'OPERATOR_EMAIL_REQUIRED');
+      // A distinct, explicitly approved contact fixture, not a retry of v3.
+      // Keep the inaccessible synthetic-email order and its permanent lock.
+      const previousId = CONFIRMED_CAMPAIGN + '-accepted';
+      const raw = await redis(['GET', RAMPNOW_STORE_PREFIX + 'acceptance:' + CONFIRMED_CAMPAIGN + ':accepted']);
+      need(typeof raw === 'string' && Buffer.byteLength(raw) < 16384, 'PREVIOUS_ATTEMPT_UNRESOLVED');
+      const previous = JSON.parse(raw);
+      need(previous.externalOrderUid === previousId && previous.phase === 'checkout_created'
+        && identifier(previous.orderUid) && typeof previous.redirectUrl === 'string', 'PREVIOUS_ATTEMPT_UNRESOLVED');
+      safeCheckoutURL(previous.redirectUrl);
+      const lookup = await provider('GET', ROOT + '/' + previousId);
+      const order = lookup.orderList?.[0];
+      need(Array.isArray(lookup.orderList) && lookup.orderList.length === 1 && object(order)
+        && order.uid === previous.orderUid && sameAmount(order.srcAmount, ROUTE.srcAmount)
+        && ['orderType','srcCurrency','srcChain','dstCurrency','dstChain'].every(key => order[key] === ROUTE[key])
+        && (!Object.hasOwn(order,'externalOrderUid') || order.externalOrderUid === previousId), 'PREVIOUS_ATTEMPT_UNRESOLVED');
+      // This lookup establishes the previous fixture's identity only. An absent
+      // walletAddress still fails matchedOrder and never verifies delivery.
+    }
+    const predecessors = [CONFIRMED_CAMPAIGN, CONTACT_CAMPAIGN].includes(campaign) ? [CAMPAIGN, ENABLEMENT_CAMPAIGN]
       : campaign === ENABLEMENT_CAMPAIGN ? [CAMPAIGN] : [];
     for (const predecessor of predecessors) {
       // Do not replay or erase the first dispatch. A new campaign is allowed
@@ -171,7 +197,7 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
     if (reserved === 1) {
       try {
         const result = await provider('POST', ROOT + '/checkout', {...ROUTE, externalOrderUid: record.externalOrderUid,
-          user: {firstName: 'GetYourSats', lastName: 'Sandbox', email: 'gys-rampnow-20261109@example.invalid',
+          user: {firstName: 'GetYourSats', lastName: 'Sandbox', email,
             phone: '+447700900123', dateOfBirth: '1990-01-01', gender: 'unknown', country: 'GB'},
           wallet: {crytpoAccountDetail: {address: record.address, custodyType: 'unhosted'}}});
         need(identifier(result.orderUid), 'ORDER_RESPONSE_INVALID');
@@ -295,7 +321,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       cases:report.cases.map(c=>({scenario:c.scenario,phase:c.phase,lookupVerified:c.lookupVerified,
         callbackCount:c.callbackEvents?.length ?? 0})),productionReady:false}));
   } catch (error) {
-    const allowed = ['SANDBOX_GUARD','SANDBOX_CREDENTIALS_REQUIRED','ACTION_INVALID','CAMPAIGN_INVALID','PREVIOUS_ATTEMPT_UNRESOLVED','CHAIN_UNVERIFIED',
+    const allowed = ['SANDBOX_GUARD','SANDBOX_CREDENTIALS_REQUIRED','ACTION_INVALID','CAMPAIGN_INVALID','OPERATOR_EMAIL_REQUIRED','PREVIOUS_ATTEMPT_UNRESOLVED','CHAIN_UNVERIFIED',
       'QUOTE_MISMATCH','RECIPIENT_INVALID','RESERVATION_INVALID','STORE_UNAVAILABLE','RECORD_INVALID',
       'EVENT_STORE_INVALID','PROVIDER_REJECTED','RESPONSE_INVALID','RESPONSE_TOO_LARGE'];
     console.error(JSON.stringify({check:'rampnow_sandbox_acceptance',

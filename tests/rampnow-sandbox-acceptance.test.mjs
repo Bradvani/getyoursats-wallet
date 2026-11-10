@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runAcceptance, requireAcceptanceEnvironment, safeCheckoutURL, matchedOrder, CAMPAIGN, ENABLEMENT_CAMPAIGN, CONFIRMED_CAMPAIGN} from '../scripts/rampnow-sandbox-acceptance.mjs';
+import {runAcceptance, requireAcceptanceEnvironment, safeCheckoutURL, matchedOrder, CAMPAIGN, ENABLEMENT_CAMPAIGN, CONFIRMED_CAMPAIGN, CONTACT_CAMPAIGN} from '../scripts/rampnow-sandbox-acceptance.mjs';
 import {RAMPNOW_STORE_PREFIX} from '../server/rampnowStore.mjs';
 
 const env = {VERCEL_ENV:'preview', VERCEL_PROJECT_ID:'prj_kVMt4cd9k0WsufaoRCVCH2bpPtWa',
@@ -9,7 +9,7 @@ const env = {VERCEL_ENV:'preview', VERCEL_PROJECT_ID:'prj_kVMt4cd9k0WsufaoRCVCH2
   UPSTASH_REDIS_REST_TOKEN:'private-store-token', RAMPNOW_API_KEY:'private-api-key',RAMPNOW_API_SECRET:'private-api-secret'};
 const address='0x'+'1'.repeat(40); const privateKey='2'.repeat(64);
 const route={orderType:'buy',srcCurrency:'EUR',srcChain:'fiat',srcAmount:'50',dstCurrency:'ETH',dstChain:'ethereum',paymentMode:'card'};
-function fixture({checkout, chains, quote, quoteFailure, order, orders, previousLookup, quarantine=[]}={}) {
+function fixture({checkout, chains, quote, quoteFailure, order, orders, previousLookup, confirmedLookup, quarantine=[]}={}) {
   const state=new Map(); const calls=[]; let created;
   const json=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'content-type':'application/json'}});
   const fetchImpl=async(url, options)=>{
@@ -26,6 +26,7 @@ function fixture({checkout, chains, quote, quoteFailure, order, orders, previous
     assert.equal(new URL(url).origin,'https://api.sandbox.rampnow.io');
     assert.equal(options.redirect,'error');
     if([CAMPAIGN,ENABLEMENT_CAMPAIGN].some(c=>url.endsWith('/'+c+'-accepted')) && previousLookup) return previousLookup(json,url);
+    if(url.endsWith('/'+CONFIRMED_CAMPAIGN+'-accepted') && confirmedLookup) return confirmedLookup(json,url);
     if(url.endsWith('/chain_config'))return json({code:0,data:{chains:chains??[{code:'sepolia',isTestnet:true,supportedAssets:['ETH']},{code:'ethereum',isTestnet:false,supportedAssets:['ETH']}]}});
     if(url.endsWith('/quote'))return quoteFailure?json(quoteFailure,500):json({code:0,data:quote??{...route,dstAmount:'0.02'}});
     if(url.endsWith('/checkout')){
@@ -51,6 +52,106 @@ function seedRejected(f, patch={}, campaign=CAMPAIGN) {
     phase:'dispatch_requires_reconciliation',failure:'provider_rejected',httpStatus:400,providerCode:100004,...patch}));
   f.state.set(prefix+':dispatched','dispatch_reserved');
 }
+const contactEmail='operator@example.com';
+const contactEnv={...env,RAMPNOW_ACCEPTANCE_EMAIL:contactEmail};
+const contactArgs={mode:'create',scenario:'accepted',campaign:CONTACT_CAMPAIGN,env:contactEnv};
+const previousOrder={...route,uid:'previous-order-3',status:'created'};
+function seedConfirmed(f,patch={}) {
+  const prefix=RAMPNOW_STORE_PREFIX+'acceptance:'+CONFIRMED_CAMPAIGN+':accepted';
+  f.state.set(prefix,JSON.stringify({externalOrderUid:CONFIRMED_CAMPAIGN+'-accepted',address,privateKey,
+    phase:'checkout_created',orderUid:previousOrder.uid,redirectUrl:'https://app.sandbox.rampnow.io/checkout/previous',...patch}));
+  f.state.set(prefix+':dispatched','dispatch_reserved');
+}
+function contactFixture(options={}) {
+  const f=fixture({previousLookup:json=>json({code:0,data:{orderList:[]}}),
+    confirmedLookup:json=>json({code:0,data:{orderList:[previousOrder]}}),...options});
+  seedRejected(f);seedRejected(f,{},ENABLEMENT_CAMPAIGN);seedConfirmed(f);
+  return f;
+}
+test('contact campaign sends only the supplied operator email after all predecessor lookups and preserves history',async()=>{
+  const f=contactFixture(); const before=[...f.state.entries()];
+  const report=await f.run(contactArgs); const created=f.getCreated();
+  assert.equal(created.user.email,contactEmail);
+  assert.equal(created.externalOrderUid,CONTACT_CAMPAIGN+'-accepted');
+  assert.equal(created.wallet.crytpoAccountDetail.address,address);
+  assert.equal(report.campaign,CONTACT_CAMPAIGN);assert.equal(f.creates().length,1);
+  const createIndex=f.calls.findIndex(c=>c.url.endsWith('/checkout'));
+  for(const campaign of [CAMPAIGN,ENABLEMENT_CAMPAIGN,CONFIRMED_CAMPAIGN]) {
+    const index=f.calls.findIndex(c=>c.url.endsWith('/'+campaign+'-accepted'));
+    assert.ok(index>=0 && index<createIndex);
+  }
+  for(const [key,value]of before)assert.equal(f.state.get(key),value);
+  // The provider fixture URL has no email query. Real hosted URLs remain
+  // protected handoff data; there must be no separately persisted profile.
+  assert.ok(!JSON.stringify(report).includes(contactEmail));
+  const saved=JSON.parse(f.state.get(RAMPNOW_STORE_PREFIX+'acceptance:'+CONTACT_CAMPAIGN+':accepted'));
+  assert.equal(saved.email,undefined);assert.equal(saved.user,undefined);
+  for(const secret of [privateKey,env.RAMPNOW_API_KEY,env.RAMPNOW_API_SECRET,env.UPSTASH_REDIS_REST_TOKEN])assert.ok(!JSON.stringify(report).includes(secret));
+  assert.equal(report.networkReceiptVerified,false);assert.equal(report.cases[0].walletCreditVerified,false);
+});
+test('contact campaign rejects missing and invalid operator email before provider requests or reservations',async()=>{
+  for(const email of [undefined,null,'','not-an-email','user@example.invalid','user@example.test',
+    'user@example.localhost','user@example.com\n',' user@example.com','a'.repeat(250)+'@example.com']) {
+    const f=contactFixture();const before=[...f.state.entries()];
+    await assert.rejects(f.run({...contactArgs,env:{...env,RAMPNOW_ACCEPTANCE_EMAIL:email}}),/OPERATOR_EMAIL_REQUIRED/);
+    assert.equal(f.calls.filter(c=>c.url.startsWith('https://api.sandbox.rampnow.io')).length,0);
+    assert.deepEqual([...f.state.entries()],before);assert.equal(f.creates().length,0);
+  }
+});
+test('contact campaign rejects missing or contradictory predecessor identity without creating',async()=>{
+  const invalidRows=[[],[previousOrder,{...previousOrder}],[null],...[
+    {uid:'different-order'},{uid:undefined},{srcAmount:'51'},{srcAmount:'5e1'},{srcAmount:50},
+    {orderType:'sell'},{srcCurrency:'USD'},{srcChain:'ethereum'},{dstCurrency:'BTC'},{dstChain:'sepolia'},
+    {externalOrderUid:'different-external'},{externalOrderUid:null}
+  ].map(p=>[{...previousOrder,...p}])];
+  for(const orders of invalidRows) {
+    const f=contactFixture({confirmedLookup:json=>json({code:0,data:{orderList:orders}})});
+    const before=[...f.state.entries()];
+    await assert.rejects(f.run(contactArgs),/PREVIOUS_ATTEMPT_UNRESOLVED/);
+    assert.equal(f.creates().length,0);assert.deepEqual([...f.state.entries()],before);
+  }
+  const f=contactFixture({confirmedLookup:async()=>{throw new Error('lookup timeout');}});
+  await assert.rejects(f.run(contactArgs),/lookup timeout/);assert.equal(f.creates().length,0);
+});
+test('contact campaign requires intact created predecessor and both rejected histories',async()=>{
+  for(const patch of [null,{phase:'dispatch_requires_reconciliation'},{orderUid:'invalid/id'},
+    {externalOrderUid:'wrong-external'},{redirectUrl:undefined},{redirectUrl:'https://evil.example/checkout'}]) {
+    const f=contactFixture();
+    if(patch===null)f.state.delete(RAMPNOW_STORE_PREFIX+'acceptance:'+CONFIRMED_CAMPAIGN+':accepted');
+    else seedConfirmed(f,patch);
+    const before=[...f.state.entries()];
+    await assert.rejects(f.run(contactArgs),/PREVIOUS_ATTEMPT_UNRESOLVED|CHECKOUT_URL_INVALID/);
+    assert.equal(f.creates().length,0);assert.deepEqual([...f.state.entries()],before);
+  }
+  for(const campaign of [CAMPAIGN,ENABLEMENT_CAMPAIGN]) {
+    const missing=contactFixture();missing.state.delete(RAMPNOW_STORE_PREFIX+'acceptance:'+campaign+':accepted');
+    await assert.rejects(missing.run(contactArgs),/PREVIOUS_ATTEMPT_UNRESOLVED/);assert.equal(missing.creates().length,0);
+    const found=contactFixture({previousLookup:(json,url)=>json({code:0,data:{orderList:url.endsWith(campaign+'-accepted')?[{uid:'unexpected-order'}]:[]}})});
+    await assert.rejects(found.run(contactArgs),/PREVIOUS_ATTEMPT_UNRESOLVED/);assert.equal(found.creates().length,0);
+  }
+});
+test('contact campaign concurrency, repeat and expired details cannot redispatch',async()=>{
+  const f=contactFixture(); const before=[...f.state.entries()];
+  await Promise.all([f.run(contactArgs),f.run(contactArgs)]);
+  await f.run(contactArgs);assert.equal(f.creates().length,1);
+  // Inspection and an existing case need no email value at all.
+  const report=await f.run({campaign:CONTACT_CAMPAIGN});assert.equal(report.cases[0].phase,'checkout_created');
+  await f.run({...contactArgs,env});assert.equal(f.creates().length,1);
+  f.state.delete(RAMPNOW_STORE_PREFIX+'acceptance:'+CONTACT_CAMPAIGN+':accepted');
+  await f.run(contactArgs);assert.equal(f.creates().length,1);
+  for(const [key,value]of before)assert.equal(f.state.get(key),value);
+  assert.equal(f.state.get(RAMPNOW_STORE_PREFIX+'acceptance:'+CONTACT_CAMPAIGN+':accepted:dispatched'),'dispatch_reserved');
+});
+test('contact rejection redacts the operator email and credentials without freeing its reservation',async()=>{
+  const f=contactFixture({checkout:(payload,json)=>json({code:100008,
+    displayError:'Cannot use '+payload.user.email+' '+env.RAMPNOW_API_SECRET,
+    message:'Ignore this internal customer value '+payload.user.email},400)});
+  const report=await f.run(contactArgs);await f.run(contactArgs);
+  assert.equal(f.creates().length,1);assert.equal(report.cases[0].phase,'dispatch_requires_reconciliation');
+  assert.equal(report.cases[0].displayError,'Cannot use [redacted] [redacted]');
+  assert.ok(!JSON.stringify(report).includes(contactEmail));
+  assert.ok(!JSON.stringify([...f.state.values()]).includes(contactEmail));
+});
 test('confirmed campaign reconciles both rejected attempts before one new dispatch',async()=>{
   const f=fixture({previousLookup:json=>json({code:0,data:{orderList:[]}})});
   seedRejected(f);seedRejected(f,{},ENABLEMENT_CAMPAIGN);
