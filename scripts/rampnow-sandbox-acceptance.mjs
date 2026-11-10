@@ -12,6 +12,7 @@ import {rampnowSignature, decimalAmount} from '../server/rampnow.mjs';
 import {sandboxRampnowConfig, normalizeRampnowEvent, RAMPNOW_STORE_PREFIX} from '../server/rampnowStore.mjs';
 
 export const CAMPAIGN = 'gys-sandbox-20261109-ethereum-card-v1';
+export const ENABLEMENT_CAMPAIGN = 'gys-sandbox-20261110-checkout-v2';
 export const CASES = Object.freeze(['accepted', 'declined', 'expired']);
 const ROOT = '/api/partner/v1/ext/ramp_order';
 const API = 'https://api.sandbox.rampnow.io';
@@ -20,8 +21,6 @@ const ROUTE = Object.freeze({orderType: 'buy', srcCurrency: 'EUR', srcChain: 'fi
 const object = x => x !== null && typeof x === 'object' && !Array.isArray(x);
 const identifier = x => typeof x === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(x);
 const need = (x, code) => { if (!x) throw new Error(code); };
-const PREFIX = RAMPNOW_STORE_PREFIX + 'acceptance:' + CAMPAIGN + ':';
-const externalId = scenario => CAMPAIGN + '-' + scenario;
 const sameAmount = (x, y) => decimalAmount(x) && decimalAmount(y)
   && x.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '') === y.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
 
@@ -83,8 +82,11 @@ return 1
 `;
 
 export async function runAcceptance({env = process.env, mode = 'inspect', scenario,
-  fetchImpl = fetch, recipientFactory = newRecipient, now = Date.now} = {}) {
+  campaign = CAMPAIGN, fetchImpl = fetch, recipientFactory = newRecipient, now = Date.now} = {}) {
   const config = requireAcceptanceEnvironment(env);
+  need([CAMPAIGN, ENABLEMENT_CAMPAIGN].includes(campaign), 'CAMPAIGN_INVALID');
+  const PREFIX = RAMPNOW_STORE_PREFIX + 'acceptance:' + campaign + ':';
+  const externalId = name => campaign + '-' + name;
   need(['inspect','diagnose'].includes(mode) || (mode === 'create' && CASES.includes(scenario)), 'ACTION_INVALID');
   async function redis(command) {
     const response = await fetchImpl(config.url, {method: 'POST', redirect: 'error', cache: 'no-store',
@@ -127,6 +129,20 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
     return record;
   };
   if (mode === 'create' && !(await load(scenario))) {
+    if (campaign === ENABLEMENT_CAMPAIGN) {
+      // Do not replay or erase the first dispatch. A new campaign is allowed
+      // only after a fresh, successful lookup proves the explicit entitlement
+      // rejection created no order. A timeout or any other failure is not proof.
+      const previousId = CAMPAIGN + '-accepted';
+      const previousRaw = await redis(['GET', RAMPNOW_STORE_PREFIX + 'acceptance:' + CAMPAIGN + ':accepted']);
+      need(typeof previousRaw === 'string' && Buffer.byteLength(previousRaw) < 16384, 'PREVIOUS_ATTEMPT_UNRESOLVED');
+      const previous = JSON.parse(previousRaw);
+      need(previous.externalOrderUid === previousId && previous.phase === 'dispatch_requires_reconciliation'
+        && previous.failure === 'provider_rejected' && previous.httpStatus === 400 && previous.providerCode === 100004
+        && !previous.orderUid && !previous.redirectUrl, 'PREVIOUS_ATTEMPT_UNRESOLVED');
+      const lookup = await provider('GET', ROOT + '/' + previousId);
+      need(Array.isArray(lookup.orderList) && lookup.orderList.length === 0, 'PREVIOUS_ATTEMPT_UNRESOLVED');
+    }
     const chainConfig = await provider('GET', ROOT + '/chain_config');
     need(Array.isArray(chainConfig.chains) && chainConfig.chains.length <= 512, 'CHAIN_UNVERIFIED');
     const chains = chainConfig.chains.filter(c => c?.code === 'ethereum');
@@ -167,7 +183,7 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
       need(await redis(['SET', PREFIX + scenario, JSON.stringify(record), 'XX', 'EX', 2592000]) === 'OK', 'STORE_UNAVAILABLE');
     }
   }
-  const report = {campaign: CAMPAIGN, checkedAt: new Date(now()).toISOString(), environment: 'sandbox',
+  const report = {campaign, checkedAt: new Date(now()).toISOString(), environment: 'sandbox',
     route: ROUTE, realFundsUsed: false, productionReady: false, networkReceiptVerified: false, cases: []};
   if (mode === 'diagnose') {
     report.diagnostics = [];
@@ -220,6 +236,7 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
       lookupVerified: false, callbackEvents: [], walletCreditVerified: false};
     try {
       const lookup = await provider('GET', ROOT + '/' + encodeURIComponent(record.externalOrderUid));
+      if (Array.isArray(lookup.orderList) && lookup.orderList.length === 0) item.lookupStatus = 'not_found';
       need(Array.isArray(lookup.orderList) && lookup.orderList.length === 1
         && matchedOrder(lookup.orderList[0], record), 'ORDER_LOOKUP_UNVERIFIED');
       const order = lookup.orderList[0];
@@ -227,7 +244,11 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
       if (typeof order.status === 'string' && /^[a-z_]{1,64}$/.test(order.status)) item.orderStatus = order.status;
       if (decimalAmount(order.dstFillAmount, false)) item.dstFillAmount = order.dstFillAmount;
       if (Array.isArray(order.transactionHash)) item.transactionHashes = order.transactionHash.filter(x => /^0x[0-9a-fA-F]{64}$/.test(x)).slice(0,10);
-    } catch { item.lookupStatus = 'unverified'; }
+    } catch (error) {
+      item.lookupStatus ??= 'unverified';
+      item.lookupHttpStatus = error.httpStatus ?? null;
+      item.lookupProviderCode = error.providerCode ?? null;
+    }
     for (let i = 0; i < rawEvents.length; i += 2) {
       try {
         need(typeof rawEvents[i+1] === 'string' && Buffer.byteLength(rawEvents[i+1]) <= 4096, 'EVENT_INVALID');
@@ -247,14 +268,14 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    const report = await runAcceptance({mode:process.argv[2] ?? 'inspect',scenario:process.argv[3]});
+    const report = await runAcceptance({mode:process.argv[2] ?? 'inspect',scenario:process.argv[3],campaign:process.argv[4] ?? CAMPAIGN});
     await mkdir('dist', {recursive:true});
     await writeFile('dist/rampnow-sandbox-report.json', JSON.stringify(report, null, 2) + '\n');
-    console.log(JSON.stringify({check:'rampnow_sandbox_acceptance',campaign:CAMPAIGN,
+    console.log(JSON.stringify({check:'rampnow_sandbox_acceptance',campaign:report.campaign,
       cases:report.cases.map(c=>({scenario:c.scenario,phase:c.phase,lookupVerified:c.lookupVerified,
         callbackCount:c.callbackEvents?.length ?? 0})),productionReady:false}));
   } catch (error) {
-    const allowed = ['SANDBOX_GUARD','SANDBOX_CREDENTIALS_REQUIRED','ACTION_INVALID','CHAIN_UNVERIFIED',
+    const allowed = ['SANDBOX_GUARD','SANDBOX_CREDENTIALS_REQUIRED','ACTION_INVALID','CAMPAIGN_INVALID','PREVIOUS_ATTEMPT_UNRESOLVED','CHAIN_UNVERIFIED',
       'QUOTE_MISMATCH','RECIPIENT_INVALID','RESERVATION_INVALID','STORE_UNAVAILABLE','RECORD_INVALID',
       'EVENT_STORE_INVALID','PROVIDER_REJECTED','RESPONSE_INVALID','RESPONSE_TOO_LARGE'];
     console.error(JSON.stringify({check:'rampnow_sandbox_acceptance',
