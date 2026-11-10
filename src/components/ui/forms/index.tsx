@@ -73,7 +73,7 @@ export interface FormInputProps {
  * itself and throws an adornment centred against that wrapper off by a few
  * pixels.
  */
-export const FIELD_BASE_CLASS = 'block w-full bg-spark-dark border border-spark-border rounded-xl text-spark-text-primary placeholder-spark-text-muted focus:border-spark-primary focus:ring-2 focus:ring-spark-primary/20 transition-all';
+export const FIELD_BASE_CLASS = 'block w-full bg-spark-dark border border-spark-border rounded-xl text-spark-text-primary placeholder-spark-text-muted focus:border-spark-primary focus:ring-2 focus:ring-spark-primary/20 transition-colors';
 
 export const AMOUNT_FIELD_CLASS = `${FIELD_BASE_CLASS} p-4`;
 

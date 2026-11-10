@@ -1,6 +1,7 @@
 import {beforeEach,describe,expect,it,vi} from 'vitest';
 import type {Payment} from '@breeztech/breez-sdk-spark';
 import {checkGysPaymentIntent,reserveGysPaymentIntent,finishGysPaymentIntent} from './gysPaymentIntent';
+import {paymentRecipient} from './paymentCounterparty';
 
 const identity='0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798';
 const intent={id:'8a9aeed5-9b3d-4cb6-8ab5-ceba896b890f',recipient:'alice@getyoursats.com',amount:'100',createdAt:1000};
@@ -13,6 +14,13 @@ beforeEach(()=>{
   }}});
 });
 describe('durable direct payment authorization',()=>{
+  it('retains the recipient after the settled intent is cleared',async()=>{
+    await reserveGysPaymentIntent(identity,intent,missing);
+    const payment={id:intent.id,status:'completed',paymentType:'send',method:'spark',details:{type:'spark'},amount:100n} as Payment;
+    await finishGysPaymentIntent(identity,intent.id,payment);
+    expect(paymentRecipient(payment,identity)).toBe('alice@getyoursats.com');
+    await expect(checkGysPaymentIntent(identity,missing)).resolves.toBeUndefined();
+  });
   it('keeps uncertain sends blocked across a new invocation and a different recipient',async()=>{
     await reserveGysPaymentIntent(identity,intent,missing);
     await expect(checkGysPaymentIntent(identity,missing)).rejects.toThrow('Check payment history');

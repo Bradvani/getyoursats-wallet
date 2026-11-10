@@ -1,4 +1,5 @@
 import type {Payment} from '@breeztech/breez-sdk-spark';
+import {rememberGysRecipient} from './paymentCounterparty';
 
 const ROOT='gys:payment-intent:v1:';
 export const CHECK_PREVIOUS_PAYMENT='Check payment history before sending again.';
@@ -54,6 +55,7 @@ export async function reserveGysPaymentIntent(identity:string,intent:Intent,getP
     const raw=JSON.stringify(intent);
     localStorage.setItem(key,raw);
     if(localStorage.getItem(key)!==raw)throw new Error(CHECK_PREVIOUS_PAYMENT);
+    rememberGysRecipient(identity, intent.id, intent.recipient, intent.amount);
   });
 }
 
@@ -61,6 +63,10 @@ export async function finishGysPaymentIntent(identity:string,id:string,payment?:
   if(payment&&(payment.id!==id||!['completed','failed'].includes(payment.status)))return;
   await locked(identity,async key=>{
     const raw=localStorage.getItem(key);
-    if(raw&&JSON.parse(raw).id===id)localStorage.removeItem(key);
+    if(raw&&JSON.parse(raw).id===id){
+      const intent:Intent=JSON.parse(raw);
+      if(payment)rememberGysRecipient(identity,id,intent.recipient,intent.amount);
+      localStorage.removeItem(key);
+    }
   });
 }

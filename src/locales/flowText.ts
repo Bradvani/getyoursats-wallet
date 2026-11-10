@@ -3,6 +3,7 @@ import type {AppLanguage} from '../services/presentationPreferences';
 import completion from './flowCompletion.json' with {type:'json'};
 import {PAYMENT_UX} from './paymentUx';
 import {PAYMENT_EXPERIENCE} from './paymentExperience';
+import {PAYMENT_HISTORY_COPY} from './paymentHistoryCopy';
 
 const aliases:Record<string,string>={
  'Generate Invoice':'Create Invoice','On-chain':'Bitcoin on-chain deposit',
@@ -26,7 +27,7 @@ const aliases:Record<string,string>={
  'Failed to add contact':'Unable to complete this request. Check the details before trying again.'
 };
 const dictionaries=Object.fromEntries(Object.entries(completion).map(([language,copy])=>[language,{...copy}])) as unknown as Record<AppLanguage,Record<string,string>>;
-for(const catalog of [PAYMENT_UX,PAYMENT_EXPERIENCE,TRUST_COPY]){
+for(const catalog of [PAYMENT_UX,PAYMENT_EXPERIENCE,TRUST_COPY,PAYMENT_HISTORY_COPY]){
  for(const [key,english] of Object.entries(catalog.en)){
   for(const language of Object.keys(dictionaries) as AppLanguage[]){
    const translated=(catalog[language] as Record<string,string>)[key];

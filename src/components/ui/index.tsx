@@ -128,7 +128,7 @@ export const DialogHeader: React.FC<{
       )}
       <div className="flex items-center gap-2 min-w-0 max-w-full">
         {icon && <span className="text-spark-primary shrink-0">{icon}</span>}
-        <h2 className="font-display text-lg font-bold text-spark-text-primary text-center break-words">{title}</h2>
+        <h2 className="font-display text-lg font-semibold tracking-tight text-spark-text-primary text-center break-words">{title}</h2>
         {icon && <span className="w-5 h-5 shrink-0" aria-hidden="true" />}
       </div>
       <button
