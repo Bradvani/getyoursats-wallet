@@ -4,7 +4,8 @@ import type {BreezSdk, ListPaymentsRequest, Payment} from '@breeztech/breez-sdk-
 import WalletActivityPanel from './WalletActivityPanel';
 
 const wallet = vi.hoisted(() => ({sdk: null as BreezSdk | null}));
-vi.mock('../contexts/WalletContext', () => ({useWalletConnection: () => ({sdk: wallet.sdk})}));
+vi.mock('../contexts/WalletContext', () => ({useWalletConnection: () => ({sdk: wallet.sdk}),useWalletInfo:()=>null}));
+vi.mock('../contexts/ContactsContext', () => ({useContactsContext:()=>({findContactByAddress:()=>undefined})}));
 beforeEach(() => { wallet.sdk = null; });
 
 vi.mock('../components/TransactionList', () => ({
@@ -24,6 +25,7 @@ describe('WalletActivityPanel', () => {
       onExitSelected={vi.fn()} onRefresh={vi.fn()}/>);
     expect(screen.getByRole('tab',{name:'Activity'}).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByText('Received payment')).toBeTruthy();
+    expect(screen.getByText('Sender not shared')).toBeTruthy();
     expect(screen.getByText('Outgoing payment')).toBeTruthy();
     fireEvent.click(screen.getByRole('button',{name:/Received payment, 1 000 sats, Lightning, view payment details/i}));
     expect(onPaymentSelected).toHaveBeenCalledWith(transactions[0]);

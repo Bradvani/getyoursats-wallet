@@ -27,7 +27,7 @@ beforeEach(()=>{
   mocks.prepare.mockImplementation(async input=>({externalOrderUid:id,quoteHash:'ab'.repeat(32),expiresAt:Date.now()+120000,
     destination:input.destination,network:'signet',quote:{srcCurrency:'INR',srcAmount:'1000',dstAmount:'0.0001',paymentMode:'card',feeDetails:[
       {type:'platform',fee:'20',currency:'INR',isInclusive:true},{type:'network',fee:'1',currency:'USDT',isInclusive:false}]}}));
-  mocks.submit.mockResolvedValue({...completed,providerStatus:'created'});mocks.reconcile.mockResolvedValue(completed);
+  mocks.submit.mockResolvedValue({...completed,providerStatus:'created'});mocks.reconcile.mockResolvedValue(completed);mocks.open.mockResolvedValue(undefined);
 });
 afterEach(()=>vi.unstubAllGlobals());
 function open(returnIntent?:string){return render(<RampnowBuyDialog walletPubkey={pub} network="signet" returnIntent={returnIntent} onClose={vi.fn()}/>);}
@@ -73,4 +73,52 @@ it('refuses a different network destination before signing a purchase',async()=>
   fireEvent.change(await screen.findByLabelText('Amount (INR)'),{target:{value:'1000'}});
   fireEvent.submit(screen.getByRole('button',{name:'Review purchase'}).closest('form')!);
   await waitFor(()=>expect(screen.getByRole('alert')).toBeInTheDocument());expect(mocks.prepare).not.toHaveBeenCalled();
+});
+it('recovers an unsubmitted saved quote with a new intent while retaining the old reference',async()=>{
+  const unsubmitted={...completed,phase:'prepared',orderUid:null,checkoutUrl:null,providerStatus:null,dstFillAmount:null,reconciliation:'not_submitted'};
+  mocks.reconcile.mockResolvedValue(unsubmitted);
+  const nextId='22345678-1234-4234-9234-123456789abc';
+  const originalPrepare=mocks.prepare.getMockImplementation()!;
+  mocks.prepare.mockImplementation(async input=>({...await originalPrepare(input),externalOrderUid:nextId}));
+  open(id);fireEvent.click(await screen.findByRole('button',{name:'Check purchase status'}));
+  fireEvent.click(await screen.findByRole('button',{name:'Review a new quote'}));
+  await fill();
+  const refs=JSON.parse(localStorage.getItem('gys:rampnow:sandbox:signet:v1:'+pub)!);
+  expect(refs.map((row:{id:string})=>row.id)).toEqual([nextId,id]);
+  expect(mocks.reconcile).toHaveBeenCalledTimes(2);expect(mocks.submit).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('checkbox'));fireEvent.click(screen.getByRole('button',{name:'Create checkout'}));
+  await waitFor(()=>expect(mocks.submit).toHaveBeenCalledTimes(1));
+  expect(mocks.submit.mock.calls[0][0].externalOrderUid).toBe(nextId);
+});
+it.each(['not_found','mismatch','ambiguous'])('does not reopen checkout or allow a fresh quote after %s reconciliation',async reconciliation=>{
+  mocks.reconcile.mockResolvedValue({...completed,providerStatus:'created',reconciliation});
+  open(id);fireEvent.click(await screen.findByRole('button',{name:'Check purchase status'}));
+  await waitFor(()=>expect(mocks.reconcile).toHaveBeenCalledWith(id));
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Check purchase status'})).toBeEnabled());
+  expect(screen.queryByRole('button',{name:'Continue to secure checkout'})).toBeNull();
+  expect(screen.queryByRole('button',{name:'Review a new quote'})).toBeNull();expect(mocks.open).not.toHaveBeenCalled();
+});
+it('does not reopen checkout during provider processing',async()=>{
+  mocks.reconcile.mockResolvedValue({...completed,providerStatus:'processing',reconciliation:'matched'});
+  open(id);fireEvent.click(await screen.findByRole('button',{name:'Check purchase status'}));
+  await waitFor(()=>expect(mocks.reconcile).toHaveBeenCalledWith(id));
+  expect(screen.queryByRole('button',{name:'Continue to secure checkout'})).toBeNull();
+});
+it('hides old wallet checkout controls and history immediately on an owner change',async()=>{
+  mocks.reconcile.mockResolvedValue({...completed,providerStatus:'created',reconciliation:'matched'});
+  const view=open(id);fireEvent.click(await screen.findByRole('button',{name:'Check purchase status'}));
+  await screen.findByRole('button',{name:'Continue to secure checkout'});
+  let resolve!: (value:{available:boolean})=>void;
+  mocks.availability.mockImplementation(()=>new Promise(r=>{resolve=r;}));
+  view.rerender(<RampnowBuyDialog walletPubkey={'03'+'b'.repeat(64)} network="signet" onClose={vi.fn()}/>);
+  expect(screen.queryByRole('button',{name:'Continue to secure checkout'})).toBeNull();
+  expect(screen.queryByRole('region',{name:'Saved purchases'})).toBeNull();
+  resolve({available:true});await screen.findByLabelText('Amount (INR)');
+  expect(screen.queryByText('Reference: '+id)).toBeNull();expect(mocks.open).not.toHaveBeenCalled();
+});
+it('reports hosted-browser failure without creating another checkout',async()=>{
+  mocks.open.mockRejectedValue(new Error('browser unavailable'));
+  open();await fill();fireEvent.click(screen.getByRole('checkbox'));fireEvent.click(screen.getByRole('button',{name:'Create checkout'}));
+  fireEvent.click(await screen.findByRole('button',{name:'Continue to secure checkout'}));
+  await screen.findByRole('alert');expect(mocks.submit).toHaveBeenCalledTimes(1);
 });

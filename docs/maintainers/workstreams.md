@@ -1,14 +1,14 @@
 # GetYourSats workstreams
 
-Reviewed 9 November 2026 (UTC). Production baseline: `0a17493142597e1cca932be128c1a16d8ebfe3ca`.
+Reviewed 10 November 2026 (UTC). Production baseline: `7090e7cd11d8062ba25d8b6ca5d0e5aaded6f3a7`.
 
 This is the coordination record for the UX audit, security readiness and on-ramp work. It records ownership and dependencies, not release approval. Historical test results apply only to their recorded source revisions.
 
 | Workstream | Authoritative location | Status and next action |
 | --- | --- | --- |
-| Production UX | `main`, most recently PRs #88, #89 and #90 | Shipped Home, mobile Pay/keyboard and username-completion fixes. Start further UX fixes from current main and use a separate focused PR. |
-| Wallet security and recovery | [PR #71](https://github.com/Bradvani/getyoursats-wallet/pull/71) | Consolidated draft candidate. Current production changes are integrated. Retain the production interlock and route restrictions until the existing acceptance gates are closed. |
-| RampNow / Hypermid on-ramp | [PR #72](https://github.com/Bradvani/getyoursats-wallet/pull/72) | Draft sandbox integration. Current production changes are integrated. Hosted checkout is blocked by provider checkout entitlement, even though payment simulation is enabled. |
+| Production UX | `main`, most recently PR #91 | Shipped orange-theme, typography/motion, payment counterparty/history and on-chain receive-copy improvements alongside the earlier Home, mobile Pay/keyboard and username-completion fixes. Start further UX fixes from current main and use a separate focused PR. |
+| Wallet security and recovery | [PR #71](https://github.com/Bradvani/getyoursats-wallet/pull/71) | Consolidated draft candidate. New PR #91 conflicts and a localization selector failure require reconciliation before its next acceptance run. Retain the production interlock and route restrictions until the existing acceptance gates are closed. |
+| RampNow / Hypermid on-ramp | [PR #72](https://github.com/Bradvani/getyoursats-wallet/pull/72) | Draft sandbox integration with PR #91 production changes integrated. Intent checkout activation is confirmed by a created sandbox order. Hosted sign-in/terms and an unusable synthetic email now block simulator completion; production credentials and BTC receipt acceptance remain outstanding. |
 | Optional Bitcoin education | [PR #87](https://github.com/Bradvani/getyoursats-wallet/pull/87) | Separate proposal. Keep out of the on-ramp release dependency chain; review against the current Settings and onboarding UX before merging. |
 | Public repository documentation | `main`; historical [PR #51](https://github.com/Bradvani/getyoursats-wallet/pull/51) | Substantive proposal already incorporated in production. Superseded PR closed; its remaining commented base-path example correction is carried in the active candidates. |
 
@@ -31,8 +31,8 @@ Retain all branch tips, review discussion and recorded evidence. Closing a super
 
 1. Keep production UX patches small and merge current main into each active candidate before testing. Do not overwrite the other thread's workspace or force-push a shared branch.
 2. Complete #71's original populated-wallet ownership/migration, provider/receiving/exit, device recovery and rollout/rollback acceptance. Obtain the independent security release verdict on the final integrated artifact. Push notification signing/registration capability remains a separate incompatibility to resolve within the restricted gateway; do not broaden generic signing to hide it.
-3. Have Hypermid enable Intent API checkout for the sandbox merchant. The observed response is HTTP 400, provider code `100004`, “Checkout orders are not enabled for your account”. The owner has already sent the unblock request.
-4. Reconcile the previously reserved sandbox attempt before any new create campaign. Do not repeat the old create command or treat synthetic webhook/order simulations as a settled purchase.
+3. Intent API checkout activation is verified. Complete sandbox sign-in using a provider-supported test identity or an owner-approved real test identity. The generated checkout requires email verification and terms acceptance before simulation.
+4. Preserve every permanent dispatch reservation. The two earlier rejected attempts were reconciled before v3 created one order. Do not repeat its create command. Verify authenticated lookup and signed callbacks against actual hosted simulator outcomes; no simulated status is a wallet receipt.
 5. Complete the actual wallet purchase, hosted return and verified receipt flow. Obtain confirmed production merchant access and the supported BTC settlement route, then validate a separately authorized controlled real-funds purchase on the final reviewed release candidate.
 6. Merge/promote only after the relevant checks and real-funds release gates pass. Sandbox credentials remain Preview-only. This cleanup does not enable Buy, DCA or production checkout.
 

@@ -1,8 +1,22 @@
 # RampNow integration and launch evidence
 
-Updated 9 November 2026. Scope: GetYourSats BTC on/off ramps. **Public Buy/Sell and wallet checkout submission remain disabled.** One isolated sandbox checkout request with synthetic customer fields was rejected because checkout orders are not enabled for the partner account. It returned no order ID or hosted checkout URL. No real payment was made.
+Updated 10 November 2026. **Intent API checkout is now enabled and verified by a successful sandbox order creation. Public Buy/Sell and production checkout remain disabled.** No real payment was made.
 
-## 10 November continuation
+## 10 November: confirmed checkout activation
+
+At **2026-11-10 16:58 UTC**, protected Preview `dpl_6dPW5JTA9wBPYHvZ3TxMx14fDPSY` (source `1d862a924798e2b58ea933e72817d02a4f29b1e3`) created the fixed v3 sandbox accepted case and received an order identifier plus a hosted checkout URL. Before dispatch, fresh authenticated lookups confirmed that both earlier explicitly rejected campaigns still contained no orders. All three permanent dispatch reservations remain intact. Do not replay the create command.
+
+The hosted URL was opened in a browser. It redirected to sandbox sign-in with the synthetic order email locked in, email-code verification and an unchecked terms acceptance control. No terms were accepted and no payment outcome was selected. The synthetic example.invalid email cannot receive a code. Hosted simulator acceptance therefore needs a provider-supported test identity/authentication procedure or an owner-controlled test identity with the owner's consent and verification. This is now the hosted-flow blocker; checkout entitlement is resolved.
+
+The initial report's lookup verification exposed a runner contract mismatch. The current official Get Order schema uses `orderList[].uid`, while Create Checkout and webhook payloads use `orderUid`. The runner is corrected to use `uid`, retain the known provider identifier and exact route/amount/destination checks, accept an absent optional external reference and reject a contradictory one. Duplicate or ambiguous results remain unverified. The normal server reconciler already used the correct field.
+
+The candidate integrates production UX source `7090e7cd11d8062ba25d8b6ca5d0e5aaded6f3a7` (PR #91) without reverting its theme, typography, motion, counterparty/history or on-chain receive copy. Purchase recovery now permits a fresh review only after owner-authenticated reconciliation of every saved reference proves no checkout was submitted. Old references remain saved. Mismatched, missing, ambiguous, processing or terminal orders cannot offer another payment link. Controls are bound to the current wallet session and return reference. A fresh review does not cancel a prepared review in another tab.
+
+Production credentials are still absent. The provider does not supply a Bitcoin sandbox or Lightning settlement. Mainnet support, the final restricted wallet security gateway, deposit minimum/claim-fee treatment, an independently verified spendable BTC receipt and device/recovery acceptance remain required. Sandbox order creation alone does not meet these gates.
+
+Combined candidate validation in a clean isolated runtime: **1,678 application tests across 154 files**, **244 RampNow Node checks with no skips** (including real Redis intent tests and 21 acceptance-runner cases), **28 focused purchase UI/controller checks** and **8 real Redis webhook checks** pass. TypeScript/application build passes. Lint has zero errors and eight existing warnings. Exact-head CI, the final authenticated provider lookup and SDK proof check are tracked separately; these counts do not prove hosted payment completion.
+
+## 10 November continuation (before provider activation)
 
 At **2026-11-10 13:42 UTC**, the fresh protected Preview `dpl_9U6LgMibsvFPsrPvgP1oxzY2oZWA` (source `dfdd6e850e1f2f391a1cf6c044982548bbcd4ff4`) still received HTTP 400 / provider code `100004`: **Checkout orders are not enabled for your account.** Hypermid's latest Telegram reply at 07:48 UTC said it would enable them shortly; no completed enablement was established by that reply.
 
@@ -14,7 +28,7 @@ The continuation adds a **disabled, preview-scoped wallet purchase UI**: the con
 
 Only minimal purchase references are saved in browser storage, scoped by wallet identity and sandbox/signet. No profile fields, destinations, signatures or hosted checkout tokens are persisted there. References are saved before submission. An uncertain response consumes the review and leaves status/reconciliation actions; reload cannot resubmit it. Return URLs are navigation context, never payment or ownership evidence. Provider completion explicitly remains **wallet receipt unverified**.
 
-The UI is wired to the existing signed browser client and available only at the fixed integration Preview origin on signet with `VITE_RAMPNOW_WALLET_PREVIEW=true`. Backend availability is independently required before collecting customer fields or generating a deposit address. A valid return can reopen saved status even with creation disabled. The flag is not enabled and cannot authorize mainnet. Hosted scenarios remain blocked by provider entitlement. BTC mainnet support, confirmed claim minimum/fee treatment, independent spendable receipt, final security gateway integration and device/production acceptance remain unfinished.
+The UI is wired to the existing signed browser client and available only at the fixed integration Preview origin on signet with `VITE_RAMPNOW_WALLET_PREVIEW=true`. Backend availability is independently required before collecting customer fields or generating a deposit address. A valid return can reopen saved status even with creation disabled. The flag is not enabled and cannot authorize mainnet. At that earlier observation, hosted scenarios remained blocked by provider entitlement; the activation section above supersedes that blocker. BTC mainnet support, confirmed claim minimum/fee treatment, independent spendable receipt, final security gateway integration and device/production acceptance remain unfinished.
 
 Validation of the continuation: 1,658 application tests pass across 153 files in an isolated clean-install runtime. The 14 new purchase UI/controller checks pass after the final lifecycle refinement. The RampNow Node suite passes 229 checks with one Redis-dependent check skipped locally. TypeScript/application build passes; lint has no errors and the eight pre-existing warnings. Final-head CI and hosted/device acceptance are separate.
 

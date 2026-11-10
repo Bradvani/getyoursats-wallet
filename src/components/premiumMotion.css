@@ -37,15 +37,15 @@
 @keyframes gys-check{to{stroke-dashoffset:0}}
 @keyframes gys-receive{from{transform:translateY(-18px) rotate(-6deg);opacity:0}to{transform:rotate(-6deg);opacity:1}}
 .gys-payment-stage{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 12px;text-align:center}
-.gys-payment-stage h3{font-size:27px;letter-spacing:-.045em;font-weight:800;margin:10px 0}
+.gys-payment-stage h3{font-size:24px;letter-spacing:-.02em;font-weight:650;margin:10px 0}
 .gys-payment-stage p{max-width:300px;font-size:14px;line-height:1.65;color:var(--color-spark-text-secondary);margin-bottom:20px}
 .gys-overline{text-transform:uppercase;letter-spacing:.16em;font-size:10px;font-weight:750;color:#F7931A}
 .gys-payment-stage__note{max-width:260px;font-size:11px;line-height:1.6;color:var(--color-spark-text-muted)}
 .gys-receive-status{display:flex;align-items:center;gap:14px;max-width:320px;text-align:left}
 .gys-receive-status strong{display:block;font-size:13px}.gys-receive-status small{display:block;font-size:11px;color:var(--color-spark-text-secondary);line-height:1.5;margin-top:3px}
 .gys-payment-done{min-width:150px;padding:14px 25px;border:1px solid rgba(255,255,255,.22);border-radius:16px;color:#FAF9F6}
-.gys-flow-step>div{animation:gys-step .24s ease-out both}
-@keyframes gys-step{from{opacity:.4;transform:translateY(9px)}to{opacity:1;transform:none}}
+.gys-flow-step>div{animation:gys-step .18s ease-out both}
+@keyframes gys-step{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){
  .gys-brand-reveal:not(.gys-brand-reveal--inline){display:none}
  .gys-brand-reveal--inline img{animation:none;clip-path:none;opacity:1}
@@ -65,7 +65,7 @@
   border-radius:29px;background:rgba(247,147,26,.10);
   border:1px solid rgba(247,147,26,.32);box-shadow:0 0 0 8px rgba(247,147,26,.035)}
 .gys-transfer--pending .gys-transfer__glow{opacity:.3}
-.gys-transfer--success .gys-transfer__glow{animation:gys-moment-glow .88s ease-out both}
+.gys-transfer--success .gys-transfer__glow{animation:gys-moment-glow .4s ease-out both}
 .gys-transfer__streak{position:absolute;z-index:3;inset:-12%;width:124%;height:124%;
   pointer-events:none;opacity:0;filter:drop-shadow(0 0 3px rgba(247,147,26,.30))}
 .gys-transfer__streak-path{stroke-dasharray:185;stroke-dashoffset:185}
@@ -74,7 +74,7 @@
 .gys-transfer--received .gys-transfer__streak{transform:rotate(180deg);animation:gys-streak-in .74s cubic-bezier(.2,.8,.2,1) both}
 .gys-transfer--received .gys-transfer__streak-path{animation:gys-wire-in .60s cubic-bezier(.2,.8,.2,1) both}
 .gys-transfer--success .gys-transfer__core{transform:none;
-  animation:gys-monogram-land .58s cubic-bezier(.18,.85,.25,1.05) both;
+  animation:gys-monogram-land .28s cubic-bezier(.2,.8,.2,1) both;
   background:#15110e;border-color:rgba(247,147,26,.38);border-radius:27px}
 .gys-transfer__mark{display:block;width:67px;height:67px;object-fit:contain;
   border-radius:16px;box-shadow:0 7px 19px rgba(247,147,26,.10)}
@@ -94,7 +94,7 @@
   box-shadow:none}
 .gys-transfer--compact .gys-transfer__mark{width:24px;height:24px;border-radius:6px}
 .gys-payment-stage__amount{margin:2px 0 15px;text-align:center;color:#F7931A;
-  font-size:clamp(27px,7vw,37px);font-weight:800;letter-spacing:-.055em;
+  font-size:clamp(27px,7vw,37px);font-weight:650;letter-spacing:-.03em;
   animation:gys-amount-arrive .52s .17s both}
 .gys-moment__amount{animation:gys-amount-arrive .54s .23s both}
 .gys-moment__title{animation:gys-amount-arrive .4s .16s both}
@@ -120,15 +120,14 @@
   100%{opacity:.22;transform:scale(1)}
 }
 @keyframes gys-monogram-land{
-  0%{opacity:0;transform:scale(.74) rotate(-6deg)}
-  62%{opacity:1;transform:scale(1.06) rotate(1deg)}
+  0%{opacity:0;transform:scale(.96)}
   100%{opacity:1;transform:scale(1)}
 }
 @keyframes gys-seal-appear{
   from{opacity:0;transform:scale(.65)}to{opacity:1;transform:scale(1)}
 }
 @keyframes gys-amount-arrive{
-  from{opacity:0;transform:translateY(10px) scale(.96)}
+  from{opacity:0;transform:translateY(4px)}
   to{opacity:1;transform:translateY(0) scale(1)}
 }
 @media(prefers-reduced-motion:reduce){

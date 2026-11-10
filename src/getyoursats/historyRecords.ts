@@ -1,5 +1,7 @@
 import {getTokenAmountFromPayment} from '../utils/tokenFormatting';
 import type {Payment} from '@breeztech/breez-sdk-spark';
+import {paymentRecipient} from '../services/paymentCounterparty';
+import {paymentMethodLabel} from '../utils/paymentDescription';
 
 export type HistoryDirection = 'all' | 'send' | 'receive';
 export type HistoryStatus = 'all' | 'pending' | 'completed' | 'failed';
@@ -10,13 +12,14 @@ export function selectHistory(
   query: string,
   direction: HistoryDirection,
   status: HistoryStatus,
+  identity?: string,
 ): Payment[] {
   const normalized = query.trim().toLowerCase();
   return records
     .filter(tx =>
       (direction === 'all' || tx.paymentType === direction) &&
       (status === 'all' || tx.status === status) &&
-      (!normalized || [tx.id, tx.paymentType, tx.method, tx.status]
+      (!normalized || [tx.id, tx.paymentType, tx.method, tx.status, paymentRecipient(tx,identity), paymentMethodLabel(tx,identity)]
         .some(value => String(value ?? '').toLowerCase().includes(normalized)))
     )
     .sort((a, b) => b.timestamp - a.timestamp);

@@ -17,6 +17,7 @@ import SettingsPage from '../../src/pages/SettingsPage';
 import {initPresentation} from '../../src/services/presentationPreferences';
 import {useNewWalletSetup, useWalletSetup} from '../../src/hooks/useWalletSetup';
 import {confirmWalletRecovery, type WalletRecoveryMethod} from '../../src/getyoursats/walletSetupState';
+import {rememberGysRecipient} from '../../src/services/paymentCounterparty';
 
 // The production entry never imports this fixture. No key, credential or SDK connection exists here.
 const identities = {a: '02'+crypto.randomUUID().replace(/-/g,'').repeat(2), b: '03'+crypto.randomUUID().replace(/-/g,'').repeat(2)} as const;
@@ -47,7 +48,7 @@ function createReadOnlySdk(info: GetInfoResponse): BreezSdk {
     listFiatRates: async () => ({rates: [{coin: 'USD', value: 90000}]}),
     getUserSettings: async () => ({sparkPrivateModeEnabled: false}),
     getTokensMetadata: async () => ({tokensMetadata: []}),
-    listPayments: async () => ({payments: []}),
+    listPayments: async () => ({payments: new URLSearchParams(location.search).has('counterparties') ? auditPayments : []}),
     syncWallet: async () => ({}),
     receivePayment: async request => {
       // Receive preloads its Bitcoin address. Keep the response synthetic and
@@ -159,6 +160,13 @@ localStorage.setItem('gys:appearance:v1',auditParameters.get('theme')||'dark');
 initPresentation();
 document.documentElement.style.fontSize=(Number(auditParameters.get('text')||100)/100*16)+'px';
 const auditPayments=Array.from({length:12},(_,index)=>({id:'audit-'+index,paymentType:index%3?'receive':'send',status:'completed',amount:BigInt(1000+index*100),fees:0n,timestamp:Math.floor(Date.now()/1000)-index*86400,method:'lightning'}) as Payment);
+if(auditParameters.has('counterparties')){
+  // Synthetic receipt identities for read-only UI acceptance. No SDK send exists.
+  auditPayments[0]={...auditPayments[0],method:'spark',details:{type:'spark'}};
+  rememberGysRecipient(identities.a,auditPayments[0].id,'shiv@getyoursats.com',auditPayments[0].amount.toString());
+  auditPayments[1]={...auditPayments[1],method:'spark',details:{type:'spark'}};
+  auditPayments[3]={...auditPayments[3],details:{type:'lightning',invoice:'lnbc1fixture',destinationPubkey:'fixture-node',htlcDetails:{paymentHash:'fixture',expiryTime:0,status:'preimageShared'},lnurlPayInfo:{lnAddress:'alice@example.com',domain:'example.com',comment:'Dinner',metadata:'[]'}}} as Payment;
+}
 const realFetch=window.fetch.bind(window);
 window.fetch=async(input,options)=>{
   const url=typeof input==='string'?input:input instanceof URL?input.href:input.url;

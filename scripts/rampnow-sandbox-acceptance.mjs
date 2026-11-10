@@ -58,13 +58,17 @@ export function safeCheckoutURL(value) {
 }
 
 export function matchedOrder(order, record) {
-  if (!object(order) || order.externalOrderUid !== record.externalOrderUid) return false;
+  // Get Order scopes the response by external ID in the authenticated request
+  // path. Its OrderSummary uses uid; unlike checkout/webhooks, it need not echo
+  // externalOrderUid. Reject a contradictory echo if the provider includes one.
+  if (!object(order) || (Object.hasOwn(order, 'externalOrderUid')
+    && order.externalOrderUid !== record.externalOrderUid)) return false;
   for (const key of ['orderType', 'srcCurrency', 'srcChain', 'dstCurrency', 'dstChain']) {
     if (order[key] !== ROUTE[key]) return false;
   }
   return sameAmount(order.srcAmount, ROUTE.srcAmount)
     && typeof order.walletAddress === 'string' && order.walletAddress.toLowerCase() === record.address.toLowerCase()
-    && identifier(order.orderUid) && (!record.orderUid || order.orderUid === record.orderUid);
+    && identifier(order.uid) && (!record.orderUid || order.uid === record.orderUid);
 }
 
 async function newRecipient() {
@@ -243,7 +247,7 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
       need(Array.isArray(lookup.orderList) && lookup.orderList.length === 1
         && matchedOrder(lookup.orderList[0], record), 'ORDER_LOOKUP_UNVERIFIED');
       const order = lookup.orderList[0];
-      item.orderUid = order.orderUid; item.lookupVerified = true;
+      item.orderUid = order.uid; item.lookupVerified = true;
       if (typeof order.status === 'string' && /^[a-z_]{1,64}$/.test(order.status)) item.orderStatus = order.status;
       if (decimalAmount(order.dstFillAmount, false)) item.dstFillAmount = order.dstFillAmount;
       if (Array.isArray(order.transactionHash)) item.transactionHashes = order.transactionHash.filter(x => /^0x[0-9a-fA-F]{64}$/.test(x)).slice(0,10);

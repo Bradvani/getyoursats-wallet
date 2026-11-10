@@ -5,6 +5,32 @@ type Client = ReturnType<typeof createRampnowBrowserClient>;
 export type PurchaseReference = {id: string; createdAt: number};
 const uuid = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(v);
 
+const FLOW_ERRORS = {
+  session: 'Wallet session changed. Reopen the purchase.',
+  busy: 'Please wait for the current request.',
+  consumed: 'Check the saved purchase status before continuing.',
+  expired: 'This quote expired. Check its status to review a new quote.',
+  unresolved: 'A saved purchase may already have started. Check its status before reviewing another quote.',
+} as const;
+export class PurchaseFlowError extends Error {
+  constructor(code: keyof typeof FLOW_ERRORS) {super(FLOW_ERRORS[code]);this.name='PurchaseFlowError';}
+}
+
+/** An empty lookup or failed provider payment is NOT proof of no dispatch. */
+export function canReviewPurchaseAgain(status: RampnowCheckoutStatus): boolean {
+  return status.phase === 'prepared' && status.reconciliation === 'not_submitted'
+    && status.orderUid === null && status.checkoutUrl === null && status.providerStatus === null
+    && status.dstFillAmount === null;
+}
+
+/** Do not offer payment again while delivery is processing or reconciliation
+ * is missing, ambiguous or mismatched, even if a saved hosted URL exists. */
+export function canOpenPurchaseCheckout(status: RampnowCheckoutStatus): boolean {
+  return status.phase === 'bound' && status.orderUid !== null && status.checkoutUrl !== null
+    && (status.reconciliation === undefined || status.reconciliation === 'matched')
+    && (status.providerStatus === null || status.providerStatus === 'created');
+}
+
 /** Keep fee currencies separate and never round money through JS floats. */
 export function checkoutAmounts(quote: RampnowQuote): {currency: string; amount: string}[] {
   const scale=10n**18n;
@@ -65,24 +91,33 @@ export function createPurchaseController(client: Client, references: ReturnType<
   let review: {input: RampnowBuyInput; prepared: RampnowPreparedCheckout} | null = null;
   let busy = false;
   let alive = true;
-  const check = () => {if (!alive) throw new Error('Wallet session changed. Reopen the purchase.');};
+  const check = () => {if (!alive) throw new PurchaseFlowError('session');};
   return {
     dispose() {alive = false; review = null;},
     async prepare(input: RampnowBuyInput) {
-      check(); if (busy) throw new Error('Please wait for the current request.');
+      check(); if (busy) throw new PurchaseFlowError('busy');
       busy = true; review = null;
       try {
         const copy: RampnowBuyInput = structuredClone(input);
+        // Reloaded references are hints only. Authenticate every saved intent
+        // before replacing an unsubmitted review with a new quote. Never clear
+        // old references or reuse a submitted/uncertain intent's create action.
+        for (const reference of references.list()) {
+          const status = await client.reconcile(reference.id); check();
+          if (status.externalOrderUid !== reference.id || !canReviewPurchaseAgain(status)) {
+            throw new PurchaseFlowError('unresolved');
+          }
+        }
         const prepared = await client.prepare(copy); check();
         references.remember(prepared.externalOrderUid);
-        review = {input: copy, prepared};
+        review = {input: copy, prepared: structuredClone(prepared)};
         return prepared;
       } finally {busy = false;}
     },
     async submit(): Promise<RampnowCheckoutStatus> {
-      check(); if (busy || !review) throw new Error('Check the saved purchase status before continuing.');
+      check(); if (busy || !review) throw new PurchaseFlowError('consumed');
       const reviewed = review;
-      if (Date.now() >= reviewed.prepared.expiresAt) {review = null; throw new Error('This quote expired. Review a new quote.');}
+      if (Date.now() >= reviewed.prepared.expiresAt) {review = null; throw new PurchaseFlowError('expired');}
       references.remember(reviewed.prepared.externalOrderUid);
       busy = true; review = null; // consumed before the first await, including failures
       try {
@@ -92,7 +127,7 @@ export function createPurchaseController(client: Client, references: ReturnType<
       } finally {busy = false;}
     },
     async reconcile(id: string) {
-      check(); if (busy) throw new Error('Please wait for the current request.');
+      check(); if (busy) throw new PurchaseFlowError('busy');
       busy = true; review = null;
       try {
         const result = await client.reconcile(id); check();

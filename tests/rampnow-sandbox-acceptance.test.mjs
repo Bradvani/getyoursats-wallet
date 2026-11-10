@@ -9,7 +9,7 @@ const env = {VERCEL_ENV:'preview', VERCEL_PROJECT_ID:'prj_kVMt4cd9k0WsufaoRCVCH2
   UPSTASH_REDIS_REST_TOKEN:'private-store-token', RAMPNOW_API_KEY:'private-api-key',RAMPNOW_API_SECRET:'private-api-secret'};
 const address='0x'+'1'.repeat(40); const privateKey='2'.repeat(64);
 const route={orderType:'buy',srcCurrency:'EUR',srcChain:'fiat',srcAmount:'50',dstCurrency:'ETH',dstChain:'ethereum',paymentMode:'card'};
-function fixture({checkout, chains, quote, quoteFailure, order, previousLookup, quarantine=[]}={}) {
+function fixture({checkout, chains, quote, quoteFailure, order, orders, previousLookup, quarantine=[]}={}) {
   const state=new Map(); const calls=[]; let created;
   const json=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'content-type':'application/json'}});
   const fetchImpl=async(url, options)=>{
@@ -33,8 +33,8 @@ function fixture({checkout, chains, quote, quoteFailure, order, previousLookup, 
       if(checkout)return checkout(created,json);
       return json({code:0,data:{orderUid:'order-1',redirectUrl:'https://app.sandbox.rampnow.io/checkout/test'}});
     }
-    const item=order??{...route,externalOrderUid:created?.externalOrderUid,orderUid:'order-1',walletAddress:address,status:'unknown',dstFillAmount:'0'};
-    return json({code:0,data:{orderList:created?[item]:[]}});
+    const item=order??{...route,uid:'order-1',walletAddress:address,status:'unknown',dstFillAmount:'0'};
+    return json({code:0,data:{orderList:orders??(created?[item]:[])}});
   };
   return {state,calls,run:(args={})=>runAcceptance({env,fetchImpl,recipientFactory:async()=>({address,privateKey}),...args}),
     creates:()=>calls.filter(c=>c.url.endsWith('/checkout')),getCreated:()=>created};
@@ -124,6 +124,7 @@ test('creates only fixed sandbox card order with explicit disposable recipient',
   assert.equal(p.wallet.crytpoAccountDetail.address,address);
   assert.equal(p.externalOrderUid,CAMPAIGN+'-accepted');
   assert.equal(report.cases[0].lookupVerified,true);
+  assert.equal(report.cases[0].orderUid,'order-1');
   for(const secret of [privateKey,env.RAMPNOW_API_KEY,env.RAMPNOW_API_SECRET,env.UPSTASH_REDIS_REST_TOKEN,p.user.email])assert.ok(!JSON.stringify(report).includes(secret));
 });
 test('repeat and concurrent invocation dispatch exactly once',async()=>{
@@ -156,12 +157,26 @@ test('quote for a different network fails before reserving or creating',async()=
   const f=fixture({quote:{...route,dstChain:'sepolia',dstAmount:'0.02'}});
   await assert.rejects(f.run({mode:'create',scenario:'accepted'}),/QUOTE_MISMATCH/);assert.equal(f.creates().length,0);assert.equal(f.state.size,0);
 });
-test('lookup checks amount, route, destination and identity',()=>{
+test('documented lookup uid binds without an external ID echo and rejects conflicting identity or route',()=>{
   const record={externalOrderUid:'external-1',address,orderUid:'order-1'};
-  const order={...route,srcAmount:'50.00',externalOrderUid:'external-1',walletAddress:address,orderUid:'order-1'};
+  const order={...route,srcAmount:'50.00',walletAddress:address,uid:'order-1'};
   assert.equal(matchedOrder(order,record),true);
-  for(const patch of [{srcAmount:'500'},{dstChain:'sepolia'},{walletAddress:'0x'+'3'.repeat(40)},
-    {orderUid:'order-2'},{externalOrderUid:'external-2'}])assert.equal(matchedOrder({...order,...patch},record),false);
+  assert.equal(matchedOrder({...order,externalOrderUid:'external-1'},record),true);
+  assert.equal(matchedOrder(order,{...record,orderUid:undefined}),true);
+  for(const patch of [{srcAmount:'500'},{srcAmount:'5e1'},{orderType:'sell'},{srcCurrency:'USD'},
+    {srcChain:'ethereum'},{dstCurrency:'BTC'},{dstChain:'sepolia'},{walletAddress:'0x'+'3'.repeat(40)},
+    {uid:'order-2'},{uid:'invalid/id'},{uid:undefined},{uid:undefined,orderUid:'order-1'},
+    {externalOrderUid:'external-2'},{externalOrderUid:null}])assert.equal(matchedOrder({...order,...patch},record),false);
+});
+test('duplicate lookup rows remain unverified even when each row matches the stored order',async()=>{
+  const order={...route,uid:'order-1',walletAddress:address,status:'completed',dstFillAmount:'0.02'};
+  const f=fixture({orders:[order,{...order}]});
+  const report=await f.run({mode:'create',scenario:'accepted'});
+  assert.equal(report.cases[0].lookupVerified,false);
+  assert.equal(report.cases[0].lookupStatus,'unverified');
+  assert.equal(report.cases[0].orderStatus,undefined);
+  await f.run({mode:'create',scenario:'accepted'});
+  assert.equal(f.creates().length,1);
 });
 test('only known order events on the selected route become correlated evidence',async()=>{
   const event={eventUid:'event-1',eventType:'ramp_order.status_change',payload:{...route,
