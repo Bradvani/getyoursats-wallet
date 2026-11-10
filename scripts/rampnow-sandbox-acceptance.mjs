@@ -243,6 +243,19 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
       lookupVerified: false, callbackEvents: [], walletCreditVerified: false};
     try {
       const lookup = await provider('GET', ROOT + '/' + encodeURIComponent(record.externalOrderUid));
+      // Bounded diagnostic booleans distinguish contract gaps without copying
+      // arbitrary provider fields, customer data or another order's values.
+      item.lookupShape = {list: Array.isArray(lookup.orderList), count: Array.isArray(lookup.orderList) ? Math.min(lookup.orderList.length, 1001) : null};
+      if (Array.isArray(lookup.orderList) && lookup.orderList.length === 1 && object(lookup.orderList[0])) {
+        const candidate = lookup.orderList[0];
+        item.lookupShape.fields = Object.fromEntries(['uid','orderUid','externalOrderUid','srcAmount','walletAddress'].map(key =>
+          [key, candidate[key] === null ? 'null' : typeof candidate[key]]));
+        item.lookupShape.matches = Object.fromEntries(['orderType','srcCurrency','srcChain','dstCurrency','dstChain'].map(key => [key,candidate[key] === ROUTE[key]]));
+        item.lookupShape.matches.uid = candidate.uid === record.orderUid;
+        item.lookupShape.matches.external = !Object.hasOwn(candidate,'externalOrderUid') || candidate.externalOrderUid === record.externalOrderUid;
+        item.lookupShape.matches.amount = Boolean(sameAmount(candidate.srcAmount,ROUTE.srcAmount));
+        item.lookupShape.matches.destination = typeof candidate.walletAddress === 'string' && candidate.walletAddress.toLowerCase() === record.address.toLowerCase();
+      }
       if (Array.isArray(lookup.orderList) && lookup.orderList.length === 0) item.lookupStatus = 'not_found';
       need(Array.isArray(lookup.orderList) && lookup.orderList.length === 1
         && matchedOrder(lookup.orderList[0], record), 'ORDER_LOOKUP_UNVERIFIED');

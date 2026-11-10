@@ -127,6 +127,16 @@ test('creates only fixed sandbox card order with explicit disposable recipient',
   assert.equal(report.cases[0].orderUid,'order-1');
   for(const secret of [privateKey,env.RAMPNOW_API_KEY,env.RAMPNOW_API_SECRET,env.UPSTASH_REDIS_REST_TOKEN,p.user.email])assert.ok(!JSON.stringify(report).includes(secret));
 });
+test('lookup diagnostics expose only bounded shape and match booleans',async()=>{
+  const f=fixture({order:{...route,uid:'order-1',walletAddress:{private:'never-copy-this'},srcAmount:50,
+    email:'private-customer@example.invalid',extra:'never-copy-this'}});
+  const report=await f.run({mode:'create',scenario:'accepted'}); const item=report.cases[0];
+  assert.equal(item.lookupVerified,false);assert.equal(item.lookupShape.count,1);
+  assert.equal(item.lookupShape.fields.walletAddress,'object');assert.equal(item.lookupShape.fields.srcAmount,'number');
+  assert.equal(item.lookupShape.matches.uid,true);assert.equal(item.lookupShape.matches.amount,false);
+  assert.equal(item.lookupShape.matches.destination,false);
+  assert.ok(!JSON.stringify(report).includes('never-copy-this'));assert.ok(!JSON.stringify(report).includes('private-customer'));
+});
 test('repeat and concurrent invocation dispatch exactly once',async()=>{
   const f=fixture();await Promise.all([f.run({mode:'create',scenario:'accepted'}),f.run({mode:'create',scenario:'accepted'})]);
   await f.run({mode:'create',scenario:'accepted'});assert.equal(f.creates().length,1);
