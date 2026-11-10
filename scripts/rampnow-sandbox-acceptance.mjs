@@ -13,6 +13,7 @@ import {sandboxRampnowConfig, normalizeRampnowEvent, RAMPNOW_STORE_PREFIX} from 
 
 export const CAMPAIGN = 'gys-sandbox-20261109-ethereum-card-v1';
 export const ENABLEMENT_CAMPAIGN = 'gys-sandbox-20261110-checkout-v2';
+export const CONFIRMED_CAMPAIGN = 'gys-sandbox-20261110-enabled-v3';
 export const CASES = Object.freeze(['accepted', 'declined', 'expired']);
 const ROOT = '/api/partner/v1/ext/ramp_order';
 const API = 'https://api.sandbox.rampnow.io';
@@ -84,7 +85,7 @@ return 1
 export async function runAcceptance({env = process.env, mode = 'inspect', scenario,
   campaign = CAMPAIGN, fetchImpl = fetch, recipientFactory = newRecipient, now = Date.now} = {}) {
   const config = requireAcceptanceEnvironment(env);
-  need([CAMPAIGN, ENABLEMENT_CAMPAIGN].includes(campaign), 'CAMPAIGN_INVALID');
+  need([CAMPAIGN, ENABLEMENT_CAMPAIGN, CONFIRMED_CAMPAIGN].includes(campaign), 'CAMPAIGN_INVALID');
   const PREFIX = RAMPNOW_STORE_PREFIX + 'acceptance:' + campaign + ':';
   const externalId = name => campaign + '-' + name;
   need(['inspect','diagnose'].includes(mode) || (mode === 'create' && CASES.includes(scenario)), 'ACTION_INVALID');
@@ -129,12 +130,14 @@ export async function runAcceptance({env = process.env, mode = 'inspect', scenar
     return record;
   };
   if (mode === 'create' && !(await load(scenario))) {
-    if (campaign === ENABLEMENT_CAMPAIGN) {
+    const predecessors = campaign === CONFIRMED_CAMPAIGN ? [CAMPAIGN, ENABLEMENT_CAMPAIGN]
+      : campaign === ENABLEMENT_CAMPAIGN ? [CAMPAIGN] : [];
+    for (const predecessor of predecessors) {
       // Do not replay or erase the first dispatch. A new campaign is allowed
       // only after a fresh, successful lookup proves the explicit entitlement
       // rejection created no order. A timeout or any other failure is not proof.
-      const previousId = CAMPAIGN + '-accepted';
-      const previousRaw = await redis(['GET', RAMPNOW_STORE_PREFIX + 'acceptance:' + CAMPAIGN + ':accepted']);
+      const previousId = predecessor + '-accepted';
+      const previousRaw = await redis(['GET', RAMPNOW_STORE_PREFIX + 'acceptance:' + predecessor + ':accepted']);
       need(typeof previousRaw === 'string' && Buffer.byteLength(previousRaw) < 16384, 'PREVIOUS_ATTEMPT_UNRESOLVED');
       const previous = JSON.parse(previousRaw);
       need(previous.externalOrderUid === previousId && previous.phase === 'dispatch_requires_reconciliation'

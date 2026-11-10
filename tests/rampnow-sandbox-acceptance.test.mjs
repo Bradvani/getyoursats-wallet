@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runAcceptance, requireAcceptanceEnvironment, safeCheckoutURL, matchedOrder, CAMPAIGN, ENABLEMENT_CAMPAIGN} from '../scripts/rampnow-sandbox-acceptance.mjs';
+import {runAcceptance, requireAcceptanceEnvironment, safeCheckoutURL, matchedOrder, CAMPAIGN, ENABLEMENT_CAMPAIGN, CONFIRMED_CAMPAIGN} from '../scripts/rampnow-sandbox-acceptance.mjs';
 import {RAMPNOW_STORE_PREFIX} from '../server/rampnowStore.mjs';
 
 const env = {VERCEL_ENV:'preview', VERCEL_PROJECT_ID:'prj_kVMt4cd9k0WsufaoRCVCH2bpPtWa',
@@ -25,7 +25,7 @@ function fixture({checkout, chains, quote, quoteFailure, order, previousLookup, 
     }
     assert.equal(new URL(url).origin,'https://api.sandbox.rampnow.io');
     assert.equal(options.redirect,'error');
-    if(url.endsWith('/'+CAMPAIGN+'-accepted') && previousLookup) return previousLookup(json);
+    if([CAMPAIGN,ENABLEMENT_CAMPAIGN].some(c=>url.endsWith('/'+c+'-accepted')) && previousLookup) return previousLookup(json,url);
     if(url.endsWith('/chain_config'))return json({code:0,data:{chains:chains??[{code:'sepolia',isTestnet:true,supportedAssets:['ETH']},{code:'ethereum',isTestnet:false,supportedAssets:['ETH']}]}});
     if(url.endsWith('/quote'))return quoteFailure?json(quoteFailure,500):json({code:0,data:quote??{...route,dstAmount:'0.02'}});
     if(url.endsWith('/checkout')){
@@ -45,12 +45,34 @@ test('rejects production, wrong project/branch and shared storage before any req
     assert.throws(()=>requireAcceptanceEnvironment({...env,...patch}),/SANDBOX_GUARD/);
   }
 });
-function seedRejected(f, patch={}) {
-  const prefix=RAMPNOW_STORE_PREFIX+'acceptance:'+CAMPAIGN+':accepted';
-  f.state.set(prefix,JSON.stringify({externalOrderUid:CAMPAIGN+'-accepted',address,privateKey,
+function seedRejected(f, patch={}, campaign=CAMPAIGN) {
+  const prefix=RAMPNOW_STORE_PREFIX+'acceptance:'+campaign+':accepted';
+  f.state.set(prefix,JSON.stringify({externalOrderUid:campaign+'-accepted',address,privateKey,
     phase:'dispatch_requires_reconciliation',failure:'provider_rejected',httpStatus:400,providerCode:100004,...patch}));
   f.state.set(prefix+':dispatched','dispatch_reserved');
 }
+test('confirmed campaign reconciles both rejected attempts before one new dispatch',async()=>{
+  const f=fixture({previousLookup:json=>json({code:0,data:{orderList:[]}})});
+  seedRejected(f);seedRejected(f,{},ENABLEMENT_CAMPAIGN);
+  const previous=[...f.state.entries()];
+  const r=await f.run({mode:'create',scenario:'accepted',campaign:CONFIRMED_CAMPAIGN});
+  assert.equal(r.campaign,CONFIRMED_CAMPAIGN);assert.equal(f.creates().length,1);
+  for(const [key,value]of previous)assert.equal(f.state.get(key),value);
+  const createIndex=f.calls.findIndex(c=>c.url.endsWith('/checkout'));
+  for(const p of [CAMPAIGN,ENABLEMENT_CAMPAIGN])assert.ok(f.calls.findIndex(c=>c.url.endsWith('/'+p+'-accepted'))<createIndex);
+  await f.run({mode:'create',scenario:'accepted',campaign:CONFIRMED_CAMPAIGN});assert.equal(f.creates().length,1);
+});
+test('confirmed campaign refuses if either earlier attempt has an order or missing history',async()=>{
+  for(const previous of [CAMPAIGN,ENABLEMENT_CAMPAIGN]) {
+    const f=fixture({previousLookup:(json,url)=>json({code:0,data:{orderList:url.endsWith(previous+'-accepted')?[{orderUid:'old'}]:[]}})});
+    seedRejected(f);seedRejected(f,{},ENABLEMENT_CAMPAIGN);
+    await assert.rejects(f.run({mode:'create',scenario:'accepted',campaign:CONFIRMED_CAMPAIGN}),/PREVIOUS_ATTEMPT_UNRESOLVED/);
+    assert.equal(f.creates().length,0);
+  }
+  const f=fixture();seedRejected(f);
+  await assert.rejects(f.run({mode:'create',scenario:'accepted',campaign:CONFIRMED_CAMPAIGN}),/PREVIOUS_ATTEMPT_UNRESOLVED/);
+  assert.equal(f.creates().length,0);
+});
 test('new enablement campaign requires fresh empty lookup and preserves the old reservation',async()=>{
   const f=fixture({previousLookup:json=>json({code:0,data:{orderList:[]}})});seedRejected(f);
   const previous=[...f.state.entries()];
