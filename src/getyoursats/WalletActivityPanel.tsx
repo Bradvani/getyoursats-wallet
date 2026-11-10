@@ -7,8 +7,12 @@ import type {AppLanguage} from '../services/presentationPreferences';
 import {useEffect, useMemo, useState} from 'react';
 import type {BreezSdk, Payment} from '@breeztech/breez-sdk-spark';
 import TransactionList from '../components/TransactionList';
-import {BackIcon} from '../components/Icons';
-import {useWalletConnection} from '../contexts/WalletContext';
+import {ArrowDownIcon, ArrowUpIcon, BackIcon, ChevronRightIcon, RefreshIcon} from '../components/Icons';
+import {useWalletConnection, useWalletInfo} from '../contexts/WalletContext';
+import {useContactsContext} from '../contexts/ContactsContext';
+import {paymentRecipient} from '../services/paymentCounterparty';
+import {paymentMethodLabel} from '../utils/paymentDescription';
+import {PAYMENT_HISTORY_COPY} from '../locales/paymentHistoryCopy';
 import {readPaymentHistory, type PaymentHistorySnapshot} from '../services/paymentHistory';
 import {isUnclaimedDepositPayment} from '../utils/depositHelpers';
 import type {UnilateralExitEntry} from '../features/unilateral-exit/listEntries';
@@ -46,13 +50,6 @@ function titleFor(payment: Payment, language: AppLanguage): string {
   return payment.paymentType==='receive'?trustCopy(language).received:trustCopy(language).sent;
 }
 
-function methodFor(payment: Payment, language: AppLanguage): string {
-  if (payment.method === 'lightning') return 'Lightning';
-  if (payment.method === 'deposit') return flowText(language,'Bitcoin deposit');
-  if (payment.method === 'spark') return 'Spark';
-  return 'Bitcoin';
-}
-
 /**
  * Activity is reconstructed from actual wallet SDK payments on every render.
  * Nothing here is an invented transaction, a fake payment acknowledgement,
@@ -64,6 +61,15 @@ export default function WalletActivityPanel({
   const {language}=usePresentation();const text=trustCopy(language);
   const t=useFlowText();
   const {sdk}=useWalletConnection();
+  const identity=useWalletInfo()?.identityPubkey;
+  const {findContactByAddress}=useContactsContext();
+  const historyCopy=PAYMENT_HISTORY_COPY[language];
+  const counterpartyFor=(payment:Payment)=>{
+    const address=paymentRecipient(payment,identity);
+    if(address)return `${historyCopy.recipient}: ${findContactByAddress(address)?.name || address}`;
+    if(payment.method==='lightning'||payment.method==='spark')return payment.paymentType==='receive'?historyCopy.senderUnknown:historyCopy.recipientUnknown;
+    return '';
+  };
   const [localTab, setLocalTab] = useState<'activity'|'history'>('activity');
   const tab=view??localTab;
   const setTab=(next:'activity'|'history')=>{setLocalTab(next);onViewChange?.(next);};
@@ -94,12 +100,12 @@ export default function WalletActivityPanel({
     ? [...transactions.filter(isUnclaimedDepositPayment), ...snapshot.payments]
     : transactions, [snapshot, transactions]);
   const filteredHistory = useMemo(
-    () => selectHistory(historyRecords, query, direction, status),
-    [historyRecords, query, direction, status],
+    () => selectHistory(historyRecords, query, direction, status, identity),
+    [historyRecords, query, direction, status, identity],
   );
   const exportableHistory = useMemo(() => selectHistory(
-    (snapshot?.payments ?? transactions).filter(payment => !isUnclaimedDepositPayment(payment)), query, direction, status,
-  ), [snapshot, transactions, query, direction, status]);
+    (snapshot?.payments ?? transactions).filter(payment => !isUnclaimedDepositPayment(payment)), query, direction, status, identity,
+  ), [snapshot, transactions, query, direction, status, identity]);
   const historyReady = !sdk || (!!snapshot && !historyLoading && !historyError);
   const exportCsv = () => {
     if (!historyReady || !exportableHistory.length) return;
@@ -131,7 +137,7 @@ export default function WalletActivityPanel({
         </div>
       </div>
       <button className="gys-activity__refresh" type="button"
-        onClick={() => { onRefresh(); setHistoryRevision(value => value + 1); }} aria-label={t('Sync wallet activity')}>↻</button>
+        onClick={() => { onRefresh(); setHistoryRevision(value => value + 1); }} aria-label={t('Sync wallet activity')}><RefreshIcon size="sm"/></button>
     </div>
     {view===undefined&&<div className="gys-activity__tabs" role="tablist" aria-label={text.history}>
       <button type="button" role="tab" id="gys-tab-activity" aria-controls="gys-panel-activity"
@@ -149,17 +155,18 @@ export default function WalletActivityPanel({
         {latest.length ? <ul className="gys-activity__feed">
           {latest.map((tx, index)=><li key={tx.id || `${tx.timestamp}-${index}`}>
             <button type="button" onClick={()=>onPaymentSelected(tx)}
-              aria-label={`${titleFor(tx,language)}, ${displayPaymentAmount(tx)}, ${methodFor(tx,language)}, ${text.details}`}>
+              aria-label={`${titleFor(tx,language)}, ${displayPaymentAmount(tx)}, ${paymentMethodLabel(tx,identity)}, ${text.details}${counterpartyFor(tx)?`, ${counterpartyFor(tx)}`:''}`}>
               <span className={`gys-activity__event-icon ${tx.paymentType==='receive'?'gys-activity__event-icon--in':'gys-activity__event-icon--out'}`} aria-hidden="true">
-                {tx.paymentType==='receive'?'↙':'↗'}
+                {tx.paymentType==='receive'?<ArrowDownIcon size="sm"/>:<ArrowUpIcon size="sm"/>}
               </span>
               <span className="gys-activity__event-text">
                 <strong>{titleFor(tx,language)}</strong>
                 <span className="gys-activity__amount">{tx.paymentType==='receive'?'+':'−'}{displayPaymentAmount(tx)}</span>
-                <small>{methodFor(tx,language)} · {new Date(tx.timestamp*1000).toLocaleString(language, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</small>
+                {counterpartyFor(tx)&&<span className="gys-activity__counterparty"><bdi>{counterpartyFor(tx)}</bdi></span>}
+                <small>{paymentMethodLabel(tx,identity)} · {new Date(tx.timestamp*1000).toLocaleString(language, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</small>
               </span>
               <span className={`gys-activity__status ${tx.status==='pending'?'gys-activity__status--pending':''}`}>
-                {t(tx.status==='pending'?'Pending':tx.status==='failed'?'Failed':'View')} <span aria-hidden="true">↗</span>
+                {t(tx.status==='pending'?'Pending':tx.status==='failed'?'Failed':'View')} <ChevronRightIcon size="xs"/>
               </span>
             </button>
           </li>)}

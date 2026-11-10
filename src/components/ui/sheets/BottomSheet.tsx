@@ -80,6 +80,7 @@ const ContentMeasureContext = createContext<(px: number | null) => void>(
 // Web sheets fit the visible viewport. Native sheets retain the platform
 // keyboard resize path below. There is no second keyboard-height padding.
 const WebSheetViewportContext = createContext<WebSheetViewport | null>(null);
+const RevealAfterPositionContext = createContext<React.RefObject<(() => void) | null> | null>(null);
 
 const IS_NATIVE = Capacitor.isNativePlatform();
 
@@ -123,6 +124,7 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
   const currentSnap = useRef(1);
   const fullyOpen = useRef(false);
   const [snapIndex, setSnapIndex] = useState(1);
+  const revealAfterPositionRef = useRef<(() => void) | null>(null);
 
   // Freeze the measured content height while the user holds the sheet at
   // the full snap: content that grows to fill the expanded sheet would
@@ -232,6 +234,9 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
         // chasing it or an old snap animation overwriting the settled position.
         sheet.y.stop();
         sheet.y.set(target);
+        // Focus can arrive during opening, before the container reaches its
+        // final position. A transform does not trigger ResizeObserver.
+        revealAfterPositionRef.current?.();
         return;
       }
       const idx = currentSnap.current;
@@ -479,9 +484,11 @@ export const BottomSheetContainer: React.FC<BottomSheetContainerProps> = ({
       >
         <ContentMeasureContext.Provider value={reportContentPx}>
           <WebSheetViewportContext.Provider value={IS_NATIVE ? null : webViewport}>
-            <SheetFullSnapContext.Provider value={isFullSnap}>
-              {children}
-            </SheetFullSnapContext.Provider>
+            <RevealAfterPositionContext.Provider value={revealAfterPositionRef}>
+              <SheetFullSnapContext.Provider value={isFullSnap}>
+                {children}
+              </SheetFullSnapContext.Provider>
+            </RevealAfterPositionContext.Provider>
           </WebSheetViewportContext.Provider>
         </ContentMeasureContext.Provider>
       </Sheet.Container>
@@ -518,6 +525,7 @@ export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
     );
     const reportHeight = useContext(ContentMeasureContext);
     const webViewport = useContext(WebSheetViewportContext);
+    const revealAfterPositionRef = useContext(RevealAfterPositionContext);
     const handleRef = useRef<HTMLDivElement | null>(null);
     const scrollerRef = useRef<HTMLDivElement | null>(null);
     useIOSSheetFocusGuard(cardEl, !IS_NATIVE);
@@ -547,15 +555,23 @@ export const BottomSheetCard = forwardRef<HTMLDivElement, BottomSheetCardProps>(
       revealFrame.current = requestAnimationFrame(revealFocused);
     }, [revealFocused]);
     useLayoutEffect(() => {
+      if (IS_NATIVE || !revealAfterPositionRef) return;
+      revealAfterPositionRef.current = scheduleReveal;
+      return () => {
+        if (revealAfterPositionRef.current === scheduleReveal) revealAfterPositionRef.current = null;
+      };
+    }, [revealAfterPositionRef, scheduleReveal]);
+    useLayoutEffect(() => {
       scheduleReveal();
       const scroller = scrollerRef.current;
       const observer = new ResizeObserver(scheduleReveal);
       if (scroller) observer.observe(scroller);
+      if (!IS_NATIVE && cardEl) observer.observe(cardEl);
       return () => {
         observer.disconnect();
         cancelAnimationFrame(revealFrame.current);
       };
-    }, [scheduleReveal]);
+    }, [scheduleReveal, cardEl]);
 
     const measure = useCallback(
       (el: HTMLDivElement | null) => {

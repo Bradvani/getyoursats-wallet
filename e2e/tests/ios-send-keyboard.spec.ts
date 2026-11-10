@@ -72,10 +72,12 @@ async function expectFieldInVisibleArea(field: Locator, top: number, height: num
     const rect = element.getBoundingClientRect();
     const scroller = element.closest('.react-modal-sheet-content-scroller')!;
     const clip = scroller.getBoundingClientRect();
-    return rect.top >= Math.max(clip.top, area.top) &&
+    const visible = rect.top >= Math.max(clip.top, area.top) &&
       rect.bottom <= Math.min(clip.bottom, area.top + area.height) &&
       rect.left >= 0 && rect.right <= innerWidth;
-  }, {top, height})).toBe(true);
+    return {visible, field:{top:rect.top,bottom:rect.bottom,left:rect.left,right:rect.right},
+      clip:{top:clip.top,bottom:clip.bottom}, viewport:area, scrollTop:scroller.scrollTop};
+  }, {top, height})).toMatchObject({visible:true});
 }
 async function expectFieldHitTarget(field: Locator) {
   await expect.poll(() => field.evaluate(element => {

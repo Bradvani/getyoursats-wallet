@@ -1,6 +1,7 @@
 import {getAppLanguage} from '../services/presentationPreferences';
 import {flowText} from '../locales/flowText';
 import type { Payment, PaymentDetails } from '@breeztech/breez-sdk-spark';
+import {paymentRecipient} from '../services/paymentCounterparty';
 
 type ContactLookup = (address: string) => { name: string } | undefined;
 
@@ -44,10 +45,12 @@ export const isConversionPayment = (payment: Payment): boolean =>
 const truncate = (text: string, maxLen: number): string =>
   text.length > maxLen ? `${text.slice(0, maxLen)}…` : text;
 
-export function getPaymentDescription(payment: Payment, findContactByAddress?: ContactLookup, fiatCurrencyName?: string | null): string {
+export function getPaymentDescription(payment: Payment, findContactByAddress?: ContactLookup, fiatCurrencyName?: string | null, identity?: string): string {
   const language=getAppLanguage();
   const t=(text:string,values:Record<string,string>={})=>flowText(language,text,values);
   const convInfo = getConversionInfo(payment.details);
+  const recipient = paymentRecipient(payment, identity);
+  if (recipient && !isConversionPayment(payment)) return t('Pay to {recipient}', {recipient:findContactByAddress?.(recipient)?.name || recipient});
 
   if (payment.method === 'lightning') {
     if (isCrossChain(convInfo)) return t('USD Transfer');
@@ -55,7 +58,7 @@ export function getPaymentDescription(payment: Payment, findContactByAddress?: C
       const comment = payment.details.lnurlPayInfo?.comment
         ?? payment.details.lnurlReceiveMetadata?.senderComment;
       if (comment) return truncate(comment, 50);
-      if (payment.details.lnurlPayInfo?.lnAddress) {
+      if (payment.paymentType === 'send' && payment.details.lnurlPayInfo?.lnAddress) {
         const contact = findContactByAddress?.(payment.details.lnurlPayInfo.lnAddress);
         const isSend = payment.paymentType === 'send';
         if (contact) return isSend ? t('Pay to {recipient}',{recipient:contact.name}) : contact.name;
@@ -71,7 +74,7 @@ export function getPaymentDescription(payment: Payment, findContactByAddress?: C
       const dir = payment.paymentType === 'send' ? 'from' : 'to';
       return t(dir==='from'?'Conversion from {asset}':'Conversion to {asset}',{asset:'Bitcoin'});
     }
-    return t('Spark Transfer');
+    return t('Bitcoin payment');
   }
   if (payment.method === 'token') {
     const ticker = payment.details?.type === 'token' ? payment.details.metadata.ticker : null;
@@ -86,4 +89,13 @@ export function getPaymentDescription(payment: Payment, findContactByAddress?: C
   if (payment.method === 'deposit') return t('BTC Transfer');
   if (payment.method === 'withdraw') return t('BTC Transfer');
   return t('Payment');
+}
+
+export function paymentMethodLabel(payment: Payment, identity?: string): string {
+  const t=(text:string)=>flowText(getAppLanguage(),text);
+  if (isCrossChainPayment(payment)) return t('USD Transfer');
+  if (payment.method === 'lightning') return 'Lightning';
+  if (payment.method === 'spark') return t(paymentRecipient(payment, identity)?.endsWith('@getyoursats.com') ? 'GetYourSats payment' : 'Bitcoin payment');
+  if (payment.method === 'deposit') return t('Bitcoin deposit');
+  return 'Bitcoin';
 }

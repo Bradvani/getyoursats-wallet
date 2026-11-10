@@ -1,4 +1,4 @@
-import {cleanup, render, screen, within} from '@testing-library/react';
+import {cleanup, render, screen, within, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import MarketPulse from './MarketPulse';
@@ -42,7 +42,7 @@ describe('Home market disclosure', () => {
     expect(market.querySelector('button button')).toBeNull();
     await user.keyboard(' ');
     expect(toggle).toHaveAttribute('aria-expanded','false');
-    expect(screen.queryByTestId('market-overview')).not.toBeInTheDocument();
+    await waitFor(()=>expect(screen.queryByTestId('market-overview')).not.toBeInTheDocument());
     expect(toggle).toHaveFocus();
   });
 

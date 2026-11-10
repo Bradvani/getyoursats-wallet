@@ -14,6 +14,9 @@ import { useContactsContext } from '../contexts/ContactsContext';
 import { getPaymentDescription, getProviderDisplayName, isCrossChainPayment } from '../utils/paymentDescription';
 import { formatChainName, getCrossChainDestination, getCrossChainSendOutcome, formatReceiveAmount } from '../utils/crossChainFormat';
 import { explorerTxUrl, chainExplorerTxUrl } from '../utils/explorer';
+import {useWalletInfo} from '../contexts/WalletContext';
+import {paymentRecipient} from '../services/paymentCounterparty';
+import {PAYMENT_HISTORY_COPY} from '../locales/paymentHistoryCopy';
 
 interface PaymentDetailsDialogProps {
   optionalPayment: Payment | null;
@@ -43,6 +46,8 @@ const getDefaultVisibleFields = () => ({
 const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPayment, onClose }) => {
   const t=useFlowText();
   const {language}=usePresentation();
+  const identity=useWalletInfo()?.identityPubkey;
+  const historyCopy=PAYMENT_HISTORY_COPY[language];
   // Parent unmounts/remounts this component on payment selection change
   // (`{selectedPayment && <PaymentDetailsDialog ... />}`), so lazy init is
   // sufficient — no reset-in-effect needed.
@@ -78,6 +83,7 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
 
   );
   const payment = optionalPayment!;
+  const recipient=paymentRecipient(payment,identity);
 
   // Format a conversion side's amount or fee in its native unit
   const formatSideValue = (side: ConversionSide, isFee?: boolean): ReactNode => {
@@ -158,10 +164,14 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
   return (
     <BottomSheetContainer isOpen={optionalPayment != null} onClose={onClose}>
       <BottomSheetCard>
-        <DialogHeader title={getPaymentDescription(payment, findContactByAddress, stableBalance.displayConfig?.fiatCurrencyName)} onClose={onClose} />
+        <DialogHeader title={getPaymentDescription(payment, findContactByAddress, stableBalance.displayConfig?.fiatCurrencyName, identity)} onClose={onClose} />
         <div className="space-y-4 overflow-y-auto">
           {/* General Payment Information */}
           <PaymentInfoCard>
+            {(payment.method==='lightning'||payment.method==='spark')&&!dest&&<div className="gys-receipt-counterparty">
+              <span>{isReceive?historyCopy.sender:historyCopy.recipient}</span>
+              <bdi>{recipient || (isReceive?historyCopy.senderUnknown:historyCopy.recipientUnknown)}</bdi>
+            </div>}
             <PaymentInfoRow
               label={t("Amount")}
               value={amountDisplay}
@@ -238,22 +248,6 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
                 <PaymentInfoRow
                   label={t("Description")}
                   value={payment.details.description}
-                />
-              )
-            )}
-
-            {payment.details?.type === 'lightning' && payment.details.lnurlPayInfo?.lnAddress && (
-              payment.details.lnurlPayInfo.lnAddress.length > LONG_TEXT_THRESHOLD ? (
-                <CollapsibleCodeField
-                  label={t("Lightning Address")}
-                  value={payment.details.lnurlPayInfo.lnAddress}
-                  isVisible={visibleFields.lnAddress}
-                  onToggle={() => toggleField('lnAddress')}
-                />
-              ) : (
-                <PaymentInfoRow
-                  label={t("Lightning Address")}
-                  value={payment.details.lnurlPayInfo.lnAddress}
                 />
               )
             )}
