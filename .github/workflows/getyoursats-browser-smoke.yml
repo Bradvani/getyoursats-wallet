@@ -41,6 +41,12 @@ jobs:
               raise SystemExit('No recognized Ubuntu archive was found; inspect the runner sources')
           PY
       - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Repeat early-focus keyboard entry at the narrowest phone width
+        run: npx playwright test e2e/tests/ios-send-keyboard.spec.ts --grep 'portrait 320:' --project chromium --project firefox --project webkit --workers=2 --repeat-each=4 --retries=0 --output=browser-evidence/early-focus
+        env:
+          VITE_BREEZ_API_KEY: ''
+          VITE_SPARK_LOCAL_CONFIG: ''
+          VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
       - name: Verify Android home viewport, guide and identity regressions across browser engines
         run: npx playwright test e2e/tests/android-home.spec.ts --project chromium --project firefox --project webkit --workers=2
         env:
@@ -54,7 +60,7 @@ jobs:
           VITE_SPARK_LOCAL_CONFIG: ''
           VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
       - name: Verify send keyboard geometry across browser engines
-        run: npx playwright test e2e/tests/ios-send-keyboard.spec.ts --project chromium --project firefox --project webkit --workers=2
+        run: npx playwright test e2e/tests/ios-send-keyboard.spec.ts --project chromium --project firefox --project webkit --workers=2 --output=browser-evidence/keyboard
         env:
           VITE_BREEZ_API_KEY: ''
           VITE_SPARK_LOCAL_CONFIG: ''
@@ -92,5 +98,7 @@ jobs:
             test-artifacts/*.png
             test-results/**/*.png
             test-results/**/error-context.md
+            browser-evidence/**/*.png
+            browser-evidence/**/error-context.md
           if-no-files-found: ignore
           retention-days: 7
