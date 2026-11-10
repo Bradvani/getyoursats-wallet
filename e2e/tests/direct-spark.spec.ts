@@ -46,8 +46,10 @@ for(const fee of [0,7])test(`direct send preserves recipient amount and adds the
  await page.getByTestId('amount-input').fill('1000');
  await page.getByRole('button',{name:'Continue',exact:true}).click();
  await expect(page.getByTestId('send-destination')).toHaveAttribute('title',address);
- const total=page.getByText('Total deducted',{exact:true}).locator('..');
- await expect(total).toContainText(fee===0?'1 000':'1 007');
+ const totals=page.getByText('Total deducted',{exact:true}).locator('..');
+ await expect(totals).toHaveCount(2);
+ const expectedTotal=fee===0?'1 000':'1 007';
+ await expect(totals).toContainText([expectedTotal,expectedTotal]);
  await page.getByTestId('send-confirm-button').click();
  await expect(page.getByTestId('payment-success')).toBeVisible();
  expect(JSON.parse(await page.getByTestId('fixture-calls').textContent()||'{}')).toEqual({

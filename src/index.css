@@ -521,15 +521,16 @@ h6 {
   font-family: var(--gys-locale-font, 'Plus Jakarta Sans'), system-ui, sans-serif;
 }
 
-/* Balance display - large clean numbers with background glow */
+/* Proportional UI typography with stable numeric columns. */
 .balance-display {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--gys-locale-font, 'Plus Jakarta Sans'), system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
   font-size: 2.75rem;
   letter-spacing: -0.02em;
-  word-spacing: -0.4em;
+  word-spacing: 0;
   color: #ffffff;
-  text-shadow: 0 0 40px var(--glow-primary);
+  text-shadow: none;
 }
 
 /* ============================================
@@ -544,14 +545,14 @@ h6 {
   background: linear-gradient(135deg, var(--spark-primary) 0%, var(--spark-primary-light) 100%);
   color: #000;
   letter-spacing: 0.01em;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color .16s ease, border-color .16s ease, transform .12s ease;
   box-shadow: 0 4px 10px var(--glow-primary);
   border: none;
   cursor: pointer;
 }
 
 .button:hover {
-  transform: translateY(-2px);
+  transform: none;
   box-shadow: 0 8px 20px var(--glow-primary);
 }
 

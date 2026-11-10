@@ -216,8 +216,7 @@ const CollapsingWalletHeader: React.FC<CollapsingWalletHeaderProps> = ({
   }, [stableBalance.isActive, btcBalanceSat]);
 
   // Format primary balance display — strip the currency symbol so we can position it separately.
-  // Use a regular space (not thin-space) so the .balance-display word-spacing
-  // CSS can tighten the gap between thousand groups in JetBrains Mono.
+  // Keep group separators visible in the proportional balance typography.
   const formattedPrimaryBalance = useMemo(() => {
     if (stableBalance.isActive && stableBalance.displayConfig) {
       const full = formatTokenAmount(BigInt(displayBalance), stableBalance.displayConfig);

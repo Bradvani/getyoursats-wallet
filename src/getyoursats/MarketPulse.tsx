@@ -1,4 +1,5 @@
 import {useEffect,useId,useState} from 'react';
+import {AnimatePresence, motion, useReducedMotion} from 'motion/react';
 import MarketOverview from './MarketOverview';
 import {ChevronDownIcon} from '../components/Icons';
 import {WALLET_HOME} from '../locales/walletHome';
@@ -30,6 +31,7 @@ export default function MarketPulse({compact = false}: {compact?: boolean}){
   const {language}=usePresentation();
   const text=MARKET_COPY[language];
   const detailsId=useId();
+  const reducedMotion=useReducedMotion();
   const [expanded,setExpanded]=useState(false);
   const [refreshing,setRefreshing]=useState(false);
   const [refreshKey,setRefreshKey]=useState(0);
@@ -111,9 +113,13 @@ export default function MarketPulse({compact = false}: {compact?: boolean}){
       <MarketOverview currency={currency} rate={stale ? null : rate ?? null} refreshKey={refreshKey} compact/>
       {stale && <span className="gys-market-summary__stale" role="status">{hasRate ? text.last : PAYMENT_FIAT_COPY[language]}</span>}
     </button>
-    <div id={detailsId} className="gys-market-summary__details" data-testid="market-details" hidden={!expanded}>
-      {expanded&&<>{currencyControl}{details}</>}
-    </div>
+    <AnimatePresence initial={false}>
+      {expanded&&<motion.div key="market-details" id={detailsId} data-testid="market-details"
+        initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}}
+        transition={{duration:reducedMotion?0:.2,ease:[.2,.8,.2,1]}} style={{overflow:'hidden'}}>
+        <div className="gys-market-summary__details">{currencyControl}{details}</div>
+      </motion.div>}
+    </AnimatePresence>
   </section>;
 
   return <section className="gys-market-pulse gys-market-pulse--glance"

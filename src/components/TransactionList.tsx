@@ -11,6 +11,10 @@ import { formatTokenAmount, buildTokenDisplayConfig, tokenAmountDisplaysAsZero, 
 import { getPaymentDescription } from '../utils/paymentDescription';
 import { getCrossChainSendOutcome } from '../utils/crossChainFormat';
 import type { UnilateralExitEntry } from '../features/unilateral-exit/listEntries';
+import {useWalletInfo} from '../contexts/WalletContext';
+import {usePresentation} from '../hooks/usePresentation';
+import {PAYMENT_HISTORY_COPY} from '../locales/paymentHistoryCopy';
+import {paymentRecipient} from '../services/paymentCounterparty';
 
 // Hoisted static JSX elements (rendering-hoist-jsx optimization)
 const ReceiveIcon = <ArrowDownIcon size="sm" />;
@@ -75,6 +79,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
   const stableBalance = useStableBalance();
   const { fiatCurrencies } = useFiatData();
   const { findContactByAddress } = useContactsContext();
+  const identity=useWalletInfo()?.identityPubkey;
+  const {language}=usePresentation();
+  const historyCopy=PAYMENT_HISTORY_COPY[language];
   // Split transactions into pending deposits and regular payments
   const sections = useMemo(() => {
     const confirming: Payment[] = [];
@@ -211,7 +218,7 @@ const TransactionList: React.FC<TransactionListProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <p className="text-[15px] font-medium text-spark-text-primary truncate">
-              {getPaymentDescription(tx, findContactByAddress, stableBalance.displayConfig?.fiatCurrencyName)}
+              {getPaymentDescription(tx, findContactByAddress, stableBalance.displayConfig?.fiatCurrencyName, identity)}
             </p>
             <span className="text-spark-text-muted shrink-0">{getMethodIcon(tx)}</span>
             {isPending && (
@@ -223,6 +230,9 @@ const TransactionList: React.FC<TransactionListProps> = ({
               </span>
             )}
           </div>
+          {(tx.method==='lightning'||tx.method==='spark')&&<p className="gys-history-counterparty">
+            <bdi>{paymentRecipient(tx,identity) || (isReceive?historyCopy.senderUnknown:historyCopy.recipientUnknown)}</bdi>
+          </p>}
           {/* min-h holds the line when there is no subtitle, so a row without
               one keeps its title on the same baseline as every other row. A
               chip's box reaches the bottom of its line where a date's text
