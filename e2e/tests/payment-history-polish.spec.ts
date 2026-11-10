@@ -35,3 +35,23 @@ test('Orange market toggles repeatedly with reduced motion',async({page})=>{
     await expect(page.getByTestId('market-details')).toBeHidden();
   }
 });
+
+test('Orange Bitcoin receive guidance and copy control have readable contrast',async({page})=>{
+  await page.setViewportSize({width:320,height:568});
+  await page.goto('/e2e/fixtures/android-audit.html?theme=orange&entry=existing&balance=1&complete=1');
+  await page.getByRole('button',{name:'Receive Bitcoin',exact:true}).click();
+  await page.getByRole('button',{name:'Bitcoin on-chain deposit',exact:true}).click();
+  await expect(page.getByText('Send only bitcoin (BTC) on the Bitcoin network.',{exact:true})).toBeVisible();
+  const readable=async(selector:string)=>page.locator(selector).evaluate(el=>{
+    const luminance=(color:string)=>{
+      const [r,g,b]=color.match(/[\d.]+/g)!.slice(0,3).map(Number).map(n=>{const x=n/255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4;});
+      return r*.2126+g*.7152+b*.0722;
+    };
+    let surface:Element|null=el;
+    while(surface&&getComputedStyle(surface).backgroundColor==='rgba(0, 0, 0, 0)')surface=surface.parentElement;
+    const a=luminance(getComputedStyle(el).color),b=luminance(getComputedStyle(surface??document.body).backgroundColor);
+    return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+  });
+  expect(await readable('[data-testid="bitcoin-address-text"] [data-testid="copy-button"]')).toBeGreaterThanOrEqual(4.5);
+  expect(await readable('.gys-deposit-guidance + button')).toBeGreaterThanOrEqual(4.5);
+});

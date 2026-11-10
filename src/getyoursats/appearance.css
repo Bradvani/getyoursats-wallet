@@ -18,6 +18,9 @@
  --color-spark-warn-title:#56300C;--color-spark-warn-text:#6C4A24;
 }
 :root[data-gys-theme='orange'] body{background:#F7F8FA;color:#17191C}
+/* Orange fills keep the brand hue; text needs a darker shade on light surfaces. */
+:root[data-gys-theme='orange'] .text-spark-primary{color:#9A4B00}
+:root[data-gys-theme='orange'] :is(button,a).bg-spark-primary{color:#17191C}
 :root[data-gys-theme='orange'].ios-standalone-bottom-gap,
 :root[data-gys-theme='orange'].ios-standalone-bottom-gap .bottom-bar{background:#F1F3F5}
 :root[data-gys-theme='orange'] .gys-welcome{background:#F7F8FA;color:#17191C}
