@@ -9,6 +9,7 @@ import GetYourSatsPos from '../getyoursats/PosPage';
 import {featureAvailability} from '../getyoursats/featureAvailability';
 import PosErrorBoundary from '../components/PosErrorBoundary';
 import PartnerBuyDialog from '../getyoursats/PartnerBuyDialog';
+import {rampnowPreviewAccess, rampnowReturnIntent} from '../features/buy/rampnowPurchase';
 import React, { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { useToast } from '../contexts/ToastContext';
@@ -48,6 +49,8 @@ import { useUnilateralExitEngineState } from '../features/unilateral-exit/hooks/
 import { useStatusBarColor } from '../hooks/useStatusBarColor';
 import { STATUS_BAR_WALLET_GLASS } from '../utils/statusBarManager';
 import { onDeepLink } from '../utils/deepLink';
+
+const RampnowBuyDialog = React.lazy(() => import('../features/buy/RampnowBuyDialog'));
 
 interface WalletPageProps {
   walletInfo: GetInfoResponse | null;
@@ -114,6 +117,10 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
   const { historyOpen, setHistoryOpen, gysPosOpen, setGysPosOpen, navigate } = useWalletNavigation(onReturnToWallet, onOpenSettings);
   const [partnerBuyOpen,setPartnerBuyOpen] = useState(false);
+  const rampnowReturn = rampnowReturnIntent(new URL(window.location.href));
+  const [rampnowOpen,setRampnowOpen] = useState(Boolean(rampnowReturn));
+  const rampnowPreview = rampnowPreviewAccess(window.location.origin,network)
+    && import.meta.env.VITE_RAMPNOW_WALLET_PREVIEW === 'true';
   const primaryLightningAddress = useLightningAddress();
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isReceiveDialogOpen, setIsReceiveDialogOpen] = useState(false);
@@ -159,7 +166,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
   const tourRequested = Boolean(walletSetup?.scope && walletSetup.progress.tourStatus === 'active');
   const showHistory = historyOpen;
   const setupPaused = !setupTourAllowed || settingsActive || isSendDialogOpen || isReceiveDialogOpen || isQrScannerOpen ||
-    isMenuOpen || isBuyBitcoinOpen || partnerBuyOpen || gysPosOpen || Boolean(selectedPayment) ||
+    isMenuOpen || isBuyBitcoinOpen || partnerBuyOpen || rampnowOpen || gysPosOpen || Boolean(selectedPayment) ||
     Boolean(selectedDeposit) || Boolean(selectedExitId) || Boolean(saveContactAddress);
   const startTour = () => { navigate('wallet'); walletSetup?.beginTour(); };
   const nextTourStep = () => { walletSetup?.next(); };
@@ -345,7 +352,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
 
       <WalletToolbar
         onOpenMenu={() => setIsMenuOpen(true)} onScan={handleScanFromWallet}
-        onOpenBuyBitcoin={!featureAvailability.buyBitcoin || enabledBuyProviders.length === 0 ? undefined : () => {
+        onOpenBuyBitcoin={rampnowPreview ? () => setRampnowOpen(true) : !featureAvailability.buyBitcoin || enabledBuyProviders.length === 0 ? undefined : () => {
           if (enabledBuyProviders.length === 1 && enabledBuyProviders[0] === 'moonpay') {
             setIsBuyLoading(true);
             onBuyBitcoin(enabledBuyProviders[0]).finally(() => setIsBuyLoading(false));
@@ -469,6 +476,9 @@ const WalletPage: React.FC<WalletPageProps> = ({
       {/* Side Menu */}
       {gysPosOpen&&<PosErrorBoundary onClose={()=>setGysPosOpen(false)}><GetYourSatsPos onClose={()=>setGysPosOpen(false)}/></PosErrorBoundary>}
       {partnerBuyOpen&&<PartnerBuyDialog network={network} onClose={()=>setPartnerBuyOpen(false)}/>}
+      {rampnowOpen && walletInfo && rampnowPreviewAccess(window.location.origin,network) && <React.Suspense fallback={null}><RampnowBuyDialog
+        key={`${walletInfo.identityPubkey}:${network}`} walletPubkey={walletInfo.identityPubkey} network={network}
+        returnIntent={rampnowReturn} onClose={()=>setRampnowOpen(false)}/></React.Suspense>}
       <SideMenu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
