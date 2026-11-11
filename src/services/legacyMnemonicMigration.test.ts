@@ -18,11 +18,13 @@ vi.mock('./secureStorage', async importOriginal => ({
   },
 }));
 
-import { migrateLegacyMnemonicIfNeeded, getSavedMnemonic, saveMnemonic } from './legacyMnemonicMigration';
+import { migrateLegacyMnemonicIfNeeded, getSavedMnemonic } from './legacyMnemonicMigration';
 import { SecureStorageError } from './secureStorage';
 
 const MNEMONIC = 'abandon abandon ability';
 const OTHER = 'zoo zoo wrong';
+// Model pre-existing installations. Application code has no plaintext writer.
+const saveMnemonic = (value: string) => localStorage.setItem('walletMnemonic', value);
 
 describe('migrateLegacyMnemonicIfNeeded', () => {
   beforeEach(() => {

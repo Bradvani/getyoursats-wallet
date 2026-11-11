@@ -1,9 +1,10 @@
 import {createLinkedCredential,evaluateLinkedCredential,wrappingKey,b64,unb64,sha,source,assertCredentialScope,isLinkedUserHandle,LINKED_USER_PREFIX,type LinkedCredential} from './linkedPasskeyProtocol';
 import {isSpendingSessionLocked,subscribeSpendingSessionLock,lockSpendingSession} from './spendApproval';
 /**
- * Browser recovery-word vault. This only protects the *persisted phrase* against
- * casual storage disclosure; it does not secure a running compromised origin.
- * An authenticated Spark external signer is required for true signing isolation.
+ * Browser recovery-word vault. The unlock secret is not persisted alongside
+ * the encrypted phrase. Copied password vaults still permit offline guesses.
+ * Neither this vault nor the software operation gateway secures a compromised
+ * running origin, browser or operating system.
  */
 import { Capacitor } from '@capacitor/core';
 import {withCoordinatedVaultMutation as withVaultMutation} from './vaultOperationCoordination';

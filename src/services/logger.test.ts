@@ -5,6 +5,24 @@ import { logger, LogCategory, scrubSecrets, redactDeep } from './logger';
 const MNEMONIC =
   'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
 
+// Public all-zero-entropy BIP39 vectors, covering every supported word count.
+// These are deliberately predictable test data and must never hold funds.
+const MNEMONIC_VECTORS = [
+  { count: 12, last: 'about' },
+  { count: 15, last: 'address' },
+  { count: 18, last: 'agent' },
+  { count: 21, last: 'admit' },
+  { count: 24, last: 'art' },
+].map(({ count, last }) => ({ count, words: [...Array<string>(count - 1).fill('abandon'), last] }));
+
+const MNEMONIC_FORMATS = [
+  { name: 'uppercase', format: (words: string[]) => words.join(' ').toUpperCase() },
+  { name: 'title case', format: (words: string[]) => words.map(word => word[0].toUpperCase() + word.slice(1)).join(' ') },
+  { name: 'mixed case', format: (words: string[]) => words.map((word, i) => i % 2 ? word.toUpperCase() : word).join(' ') },
+  { name: 'comma separated', format: (words: string[]) => words.join(', ') },
+  { name: 'newlines and tabs', format: (words: string[]) => words.join('\n\t') },
+];
+
 describe('logger', () => {
   beforeEach(() => {
     logger.clear();
@@ -152,9 +170,45 @@ describe('logger', () => {
 
     expect(logger.getLogs()[0].message).toBe('paying [REDACTED] now');
   });
+
+  it('scrubs formatted recovery words before they enter the buffer or log export', () => {
+    const formatted = MNEMONIC.toUpperCase().replace(/ /g, ',\n');
+    logger.error(LogCategory.SDK_INTERNAL, `Restore rejected: [${formatted}]`, {
+      diagnostic: { detail: `Input [${formatted}] was rejected` },
+    });
+
+    expect(logger.getLogs()[0].message).toBe('Restore rejected: [[REDACTED]]');
+    expect(logger.getLogs()[0].context).toEqual({ diagnostic: { detail: 'Input [[REDACTED]] was rejected' } });
+    expect(logger.getLogsAsString()).not.toContain('ABANDON');
+    expect(logger.getLogsAsString()).toContain('Restore rejected');
+  });
 });
 
 describe('scrubSecrets', () => {
+  for (const { name, format } of MNEMONIC_FORMATS) {
+    it.each(MNEMONIC_VECTORS)(`redacts $count recovery words in ${name}`, ({ words }) => {
+      expect(scrubSecrets(`RPC rejected: [${format(words)}]; retry later`))
+        .toBe('RPC rejected: [[REDACTED]]; retry later');
+    });
+  }
+
+  it('redacts separate phrases without swallowing the diagnostics between them', () => {
+    const first = MNEMONIC.toUpperCase();
+    const second = MNEMONIC.replace(/ /g, ',');
+    expect(scrubSecrets(`input=[${first}]; RPC_TIMEOUT; retry=[${second}]`))
+      .toBe('input=[[REDACTED]]; RPC_TIMEOUT; retry=[[REDACTED]]');
+  });
+
+  it.each([
+    'RPC_TIMEOUT: Wallet reconnect failed, retry after the network returns.',
+    'CLAIM_FAILED: txid unavailable, deposit remains pending; retry requires confirmation.',
+    'balance, history, contacts, payments, address, amount, status, network',
+    Array<string>(11).fill('ABANDON').join(', '),
+    `${Array<string>(6).fill('abandon').join(' ')}; ${Array<string>(6).fill('about').join(' ')}`,
+  ])('keeps ordinary diagnostics and separate short word runs: %s', text => {
+    expect(scrubSecrets(text)).toBe(text);
+  });
+
   it('redacts secret-shaped values inside free-form text', () => {
     const secrets = [
       MNEMONIC,

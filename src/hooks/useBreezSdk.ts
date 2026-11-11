@@ -132,6 +132,13 @@ export type StartupState =
   | 'web-vault-locked'
   | 'connected';
 
+function existingBrowserProtectionState(): 'web-vault-locked' | 'web-vault-enroll' | null {
+  if (Capacitor.isNativePlatform()) return null;
+  if (hasWebWalletVault()) return 'web-vault-locked';
+  if (hasLegacyWebMnemonic()) return 'web-vault-enroll';
+  return null;
+}
+
 export interface BreezSdkState {
   sdk: BreezSdk | null;
   nativeLightningAddress: LightningAddressInfo | null;
@@ -558,6 +565,11 @@ export function useBreezSdk(
       if (!Capacitor.isNativePlatform() && passkeyLabel == null
         && seed.type === 'mnemonic' && !hasWebWalletVault())
         throw new Error('Protect the wallet with a password before connecting.');
+      const assertBrowserPasskeySelection = () => {
+        if (passkeyLabel != null && existingBrowserProtectionState() !== null)
+          throw new Error('Unlock and protect the existing wallet before selecting a different passkey wallet.');
+      };
+      assertBrowserPasskeySelection();
       setIsLoading(true);
       setIsSyncing(restore);
       setError(null);
@@ -584,10 +596,12 @@ export function useBreezSdk(
 
       // connectSdk() = Spark auth + initial wallet sync (no Nostr; the label
       // publish was already kicked off, fire-and-forget, inside register()).
+      assertBrowserPasskeySelection();
       connectedSdk = await logger.time('[onboarding] sdk.connect', () =>
         connectSdk({ config: cfg, seed, storageDir: 'spark-wallet-example' }));
       const sendPasskeyLabel = passkeyLabel ??
-        (source === 'secureStorage' && isPasskeyMode() ? getPasskeyLabel() ?? 'Default' : undefined);
+        (Capacitor.isNativePlatform() && source === 'secureStorage' && isPasskeyMode()
+          ? getPasskeyLabel() ?? 'Default' : undefined);
       if (sendPasskeyLabel != null) {
         const sendRpId = getPasskeyRpId() ?? defaultRpId;
         connectedSdk = await withPasskeySendAuthorization(connectedSdk, {
@@ -604,7 +618,9 @@ export function useBreezSdk(
       const assertConnectionCurrent=()=>{
         if(nativeWalletEpochRef.current!==connectionEpoch||nativeSessionSdkRef.current!==connectedSdk)throw new Error('Wallet connection changed while loading recovery data');
         if(!Capacitor.isNativePlatform())assertCurrentSession(browserEpoch);
+        assertBrowserPasskeySelection();
       };
+      assertConnectionCurrent();
 
       logger.sdkInitialized();
       logger.authSuccess(passkeyLabel != null ? 'passkey' : seed.type);
@@ -633,9 +649,9 @@ export function useBreezSdk(
       // Persist the seed. Skip entirely when it was just retrieved from
       // the native vault. Native => device-only tier, always (silent
       // launch; PIN/biometric gating is app-level, see appLock.ts).
-      // Web passkey => no cache, web non-passkey => plaintext fallback.
-      // Failures are non-fatal: the wallet is already connected, and
-      // the storage layer emits its own typed breadcrumb.
+      // Browser passkeys never persist their derived seed. Browser mnemonic
+      // wallets already have a verified encrypted vault. A failed secure
+      // write must not publish an unrecoverable connected wallet.
       if (source !== 'secureStorage') {
         if (deviceOnlyStorage.isSupported()) {
           try {
@@ -649,8 +665,8 @@ export function useBreezSdk(
             throw e;
           }
         } else if (passkeyLabel != null) {
-          // Web passkey mode: never cache the PRF-derived seed.
-          clearMnemonic();
+          // No seed cache and no deletion of another wallet's recovery data.
+          assertBrowserPasskeySelection();
         } else if (seed.type === 'mnemonic') {
           if (!hasWebWalletVault()) throw new Error('Wallet password protection is required');
           // Browser vault is already encrypted and verified by onboarding.
@@ -736,7 +752,7 @@ export function useBreezSdk(
 
       if(!Capacitor.isNativePlatform()){
         setIsConnected(false);
-        setStartupState(hasWebWalletVault()?'web-vault-locked':isPasskeyMode()?'native-locked':'no-wallet');
+        setStartupState(existingBrowserProtectionState() ?? (isPasskeyMode() ? 'native-locked' : 'no-wallet'));
         clearUnlockedWebMnemonic();lockSpendingSession('Browser recovery connection did not complete');
       }
       setError('Failed to connect wallet. Please try again.');
@@ -1286,6 +1302,13 @@ export function useBreezSdk(
     }
     retryUnlockInFlightRef.current = true;
     if (!secureStorage.isSupported()) {
+      const protectionState = existingBrowserProtectionState();
+      if (protectionState) {
+        setStartupState(protectionState);
+        setIsLoading(false);
+        retryUnlockInFlightRef.current = false;
+        return;
+      }
       if (!isPasskeyMode()) {
         setStartupState('no-wallet');
         retryUnlockInFlightRef.current = false;
@@ -1307,7 +1330,7 @@ export function useBreezSdk(
       } catch (e) {
         logger.error(LogCategory.AUTH, 'Web passkey retry failed', { error: formatError(e) });
         setError(passkeyUnlockErrorMessage(e));
-        setStartupState('native-locked');
+        setStartupState(existingBrowserProtectionState() ?? 'native-locked');
         setIsLoading(false);
       } finally {
         retryUnlockInFlightRef.current = false;
@@ -1546,14 +1569,14 @@ export function useBreezSdk(
 
       // (D) Legacy flow: web, or native with no stored seed.
       if (useLegacy) {
-        if (isPasskeyMode()) {
-          // Passkey mode always re-derives via PRF on launch.
-          clearMnemonic();
-        }
+        // Browser mode flags are unauthenticated routing hints. They cannot
+        // authorize deleting an existing phrase or bypassing its vault.
+        // Preserve the original wallet and require its protection flow even
+        // when stale or tampered metadata also claims a passkey wallet.
         const savedMnemonic = !isPasskeyMode() ? getSavedMnemonic() : null;
-        if (!Capacitor.isNativePlatform() && !isPasskeyMode()
-          && (hasWebWalletVault() || hasLegacyWebMnemonic())) {
-          setStartupState(hasWebWalletVault() ? 'web-vault-locked' : 'web-vault-enroll');
+        const protectionState = existingBrowserProtectionState();
+        if (protectionState) {
+          setStartupState(protectionState);
           setIsLoading(false);
         } else if (savedMnemonic) {
           try {
@@ -1594,7 +1617,7 @@ export function useBreezSdk(
           } catch (e) {
             logger.error(LogCategory.AUTH, 'Passkey authentication failed', { error: formatError(e) });
             setError(passkeyUnlockErrorMessage(e));
-            setStartupState('native-locked');
+            setStartupState(existingBrowserProtectionState() ?? 'native-locked');
             setIsLoading(false);
           }
           if (wallet) {
@@ -1603,7 +1626,7 @@ export function useBreezSdk(
             } catch (e) {
               logger.error(LogCategory.SDK, 'Failed to connect after passkey auth', { error: formatError(e) });
               setError('Failed to connect wallet. Please try again.');
-              setStartupState('native-locked');
+              setStartupState(existingBrowserProtectionState() ?? 'native-locked');
               setIsLoading(false);
             }
           }
@@ -1631,7 +1654,7 @@ export function useBreezSdk(
       setIsLoading(false);
       setError(e instanceof SecureStorageError && e.code === 'KEY_INVALIDATED'
         ? NATIVE_KEY_RECOVERY_MESSAGE : 'Could not check the saved wallet. Please try again.');
-      setStartupState('native-locked');
+      setStartupState(existingBrowserProtectionState() ?? 'native-locked');
       if (isInitialLoadRef.current) {
         isInitialLoadRef.current = false;
         void hideSplash();
