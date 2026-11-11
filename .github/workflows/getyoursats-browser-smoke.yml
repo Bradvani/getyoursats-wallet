@@ -41,6 +41,12 @@ jobs:
               raise SystemExit('No recognized Ubuntu archive was found; inspect the runner sources')
           PY
       - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Verify deposit fee disclosure and explicit faster-delivery consent
+        run: npx playwright test e2e/tests/deposit-fees.spec.ts --project chromium --project firefox --project webkit --workers=2 --output=browser-evidence/deposit-fees
+        env:
+          VITE_BREEZ_API_KEY: ''
+          VITE_SPARK_LOCAL_CONFIG: ''
+          VITE_GETYOURSATS_PASSKEY_ORIGIN: ''
       - name: Repeat early-focus keyboard entry at the narrowest phone width
         run: npx playwright test e2e/tests/ios-send-keyboard.spec.ts --grep 'portrait 320:' --project chromium --project firefox --project webkit --workers=2 --repeat-each=4 --retries=0 --output=browser-evidence/early-focus
         env:

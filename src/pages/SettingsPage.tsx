@@ -9,6 +9,7 @@ import {trustCopy} from '@/getyoursats/trustCopy';
 import { usePresentation } from '@/hooks/usePresentation';
 import { walletSetupCopy } from '@/locales/walletSetup';
 import {CUSTOMER_SETTINGS} from '@/locales/customerSettings';
+import {DEPOSIT_FEES_COPY} from '@/locales/depositFees';
 import {PRIVACY_POLICY_URL, SUPPORT_URL, INSTAGRAM_URL, TWITTER_URL} from '@/constants/publicPages';
 import {useToast} from '@/contexts/ToastContext';
 import {APP_LANGUAGES} from '@/services/presentationPreferences';
@@ -445,7 +446,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             <div className="border-t border-spark-border p-4 space-y-4">
             <PaymentFeedbackSetting/>
             <h3 className="font-display font-semibold text-spark-text-primary">{detailCopy.fees}</h3>
-            <p className="text-sm text-spark-text-muted mb-3">{t("On-chain deposits are claimed automatically while the network fee stays under this limit.")}</p>
+            <p className="text-sm text-spark-text-muted mb-3">{DEPOSIT_FEES_COPY[language].settingsHelp}</p>
             <FormGroup>
               <div className="gys-settings-fee-fields">
                 <div className="min-w-0"><label htmlFor="deposit-fee-type" className="block text-sm text-spark-text-secondary mb-2">{t("Max fee type")}</label>

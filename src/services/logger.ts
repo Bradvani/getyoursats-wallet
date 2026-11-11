@@ -106,10 +106,10 @@ const BIP39_WORDS = new Set(wordlists.english);
 const MNEMONIC_MIN_WORDS = 12;
 
 /**
- * Redact runs of 12+ whitespace-separated wordlist words. Every word is
- * checked, so prose has to be a valid phrase to match: scanning for runs
- * rather than regex-matching a shape is what keeps a phrase quoted
- * mid-sentence from hiding inside a longer, non-matching run.
+ * Redact runs of 12+ English BIP39 words regardless of display casing or
+ * whitespace/comma separators. Every token must be a wordlist entry; other
+ * punctuation breaks a run so separate diagnostics are not combined. Do not
+ * require a valid checksum: a mistyped recovery phrase is still sensitive.
  */
 function redactMnemonics(text: string): string {
   const spans: Array<[number, number]> = [];
@@ -117,11 +117,10 @@ function redactMnemonics(text: string): string {
   let end = -1;
   let words = 0;
 
-  for (const match of text.matchAll(/[a-z]+/g)) {
+  for (const match of text.matchAll(/[a-z]+/gi)) {
     const at = match.index ?? 0;
-    const isWord = BIP39_WORDS.has(match[0]);
-    // Anything but whitespace between two words breaks the phrase.
-    const joined = words > 0 && /^\s+$/.test(text.slice(end, at));
+    const isWord = BIP39_WORDS.has(match[0].toLowerCase());
+    const joined = words > 0 && /^[\s,]+$/.test(text.slice(end, at));
 
     if (isWord && (words === 0 || joined)) {
       if (words === 0) start = at;

@@ -12,6 +12,32 @@ This is the current combined-status record. Older chronological sections in
 test attribution; statements that no scenario has completed or that the return
 UI remains unimplemented are superseded by the evidence below.
 
+## Production onboarding update
+
+Rampnow's 11 November reply confirms that production Intent API activation
+follows approval of production onboarding. It confirms India/UPI support and
+KYC for all on-ramp customers, and says partner fees will be added after
+onboarding. Receiving the three KYB forms is not onboarding approval or live
+merchant activation. Their legal-entity, ownership and compliance declarations
+must be completed from verified business records before submission.
+General geographic marketing coverage is not an authoritative country
+allowlist; the enabled merchant route must still pass API capability checks.
+
+The reply does not establish our account's fixed-fee denomination, conversion
+or rounding rules, commission payout arrangements, BTC purchase minimums or
+maximums, supported mainnet deposit-address formats or live credentials. These
+remain required before running the protected production quote inspection or
+enabling any production checkout. No form, signature, KYC attestation, live
+credential or financial record is stored in this source repository.
+
+The candidate now incorporates current main source
+`00df9fcc0d8bf36c582ffb9e1856c2561707abfe`, using the previously integrated
+production source `7090e7cd11d8062ba25d8b6ca5d0e5aaded6f3a7` as the merge base.
+This preserves the shipped deposit-cost disclosure, confirmation before raising
+a future deposit-claim fee ceiling, cross-chain fee disclosure and mnemonic
+log redaction. It does not activate a GetYourSats fee or change the candidate's
+modified SDK, restricted gateway or production build interlock.
+
 ## Provider simulation evidence
 
 The simulator uses disposable EUR-to-ETH card orders. These outcomes do not
@@ -182,3 +208,20 @@ preview build, exact production-interlock refusal and diff checks passed.
 Dependency and modified SDK archive hashes remain unchanged. These are local
 combined-tree results; published-head CI remains separately attributable. No
 provider production request or live transaction was performed.
+
+The subsequent reconciliation of main `00df9fc` passed 337 affected UI, fee,
+gateway, notification and recovery tests across 13 files, plus 40 Node
+fee/network/production-preflight tests. Types, changed-file lint (zero errors;
+three intentionally ignored browser-fixture files), preview build and the
+expected production-build refusal passed. Two independent read-only reviews
+found no blocking merge defect. The SDK archive and release controls are
+unchanged.
+
+The broader local application run reported 2,956 passing assertions, one
+existing opt-in skip and no failing assertions but exited nonzero. Its
+diagnostics included asynchronous localhost iframe requests; the unchanged
+external-link tests passed when isolated, so this is not recorded as a clean
+full-suite run. Local browser fixtures could not launch because Playwright
+binaries were absent, and the attempted download returned a truncated archive.
+Fresh published-head CI remains required; no test or release gate was weakened
+to remove these local limits.

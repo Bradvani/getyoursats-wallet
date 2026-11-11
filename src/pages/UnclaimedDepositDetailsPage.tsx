@@ -32,6 +32,8 @@ import { useSheetFullSnap } from '../components/ui/sheets/BottomSheetCardContext
 import { useLatest } from '../hooks/useLatest';
 import { unsettledDeposits } from '../utils/depositHelpers';
 import { logger, LogCategory } from '@/services/logger';
+import { usePresentation } from '@/hooks/usePresentation';
+import { DEPOSIT_FEES_COPY } from '@/locales/depositFees';
 
 interface UnclaimedDepositDetailsPageProps {
   deposit: DepositInfo | null;
@@ -203,6 +205,8 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
 }) => {
   const wallet = useWallet();
   const subscribeToSdkEvents = useSdkEvents();
+  const { language } = usePresentation();
+  const feeCopy = DEPOSIT_FEES_COPY[language];
 
   // Seeded from the record and kept current by handleClaim's retries and by the
   // sync listener below, either of which can turn a confirming deposit into one
@@ -270,10 +274,9 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
   // What is selected, which is what the breakdown prices. A route still short
   // of its depth counts: it is a wait, not a refusal.
   const earlySelected = offer !== null && (instantOn ?? willClaimEarly);
-  // The one tap that spends, and so the only one left for a button: the early
-  // route is picked, already at its depth, and the ceiling does not cover it
-  // yet. Every other instruction is carried by the switch itself.
-  const claimsNow = offer !== null && earlySelected && offer.ready && !willClaimEarly;
+  // Authorizing a future claim spends just as surely as an immediate claim.
+  // Both require the confirmation button before raising the saved ceiling.
+  const needsEarlyApproval = offer !== null && earlySelected && !willClaimEarly;
   // Waiting is still worth pricing without an early route: the breakdown then
   // shows what the automatic claim will cost. Nothing to price under a claim in
   // flight with no receipt: that claim is one this sheet did not send, so there
@@ -295,16 +298,14 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
   /**
    * Choosing a speed, refused mid-flight so the route cannot change under it.
    *
-   * The choice is itself the instruction, so the ceiling it implies is recorded
-   * on the tap. Held back only where the tap would spend rather than record: an
-   * early route already at its depth is claimed the moment its ceiling covers
-   * it, and spending is the button's to ask for, not a radio's.
+   * Lowering a ceiling to wait can take effect immediately. Raising it for
+   * faster delivery always waits for confirmation, even before the route opens:
+   * a persisted ceiling authorizes the SDK to spend on a later sync.
    */
   const chooseSpeed = (early: boolean) => {
     if (isProcessing) return;
     setInstantOn(early);
-    const spendsNow = early && offer !== null && offer.ready;
-    if (!spendsNow && instructs(early)) void claimRoute(early);
+    if (!early && instructs(false)) void claimRoute(false);
   };
   /** The paid row names what it is: a route that has not opened yet is not instant. */
   const earlyLabel = offer?.ready ? 'Instant delivery' : 'Expedited delivery';
@@ -338,7 +339,7 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
   // ready early route speaks through its own button, so it needs no line.
   // Only draw the scroll fade when something is actually under it: on the states
   // that fit, an unconditional one dims the last card for no reason.
-  const moreBelow = useMoreBelow(scrollRef, [quote, earlySelected, instantFeeFrom, instantError, requiredFeeSats, claimError, isClaimInFlight, standingCeiling, claimsNow]);
+  const moreBelow = useMoreBelow(scrollRef, [quote, earlySelected, instantFeeFrom, instantError, requiredFeeSats, claimError, isClaimInFlight, standingCeiling, needsEarlyApproval]);
   const statusLine: ReactNode = isClaimInFlight
     // Says what the toast said, so reopening the sheet mid-settlement reports
     // the claim rather than showing an amount and nothing else.
@@ -492,8 +493,8 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
    * Records the ceiling a route needs, which claims it outright when the route
    * is already at its depth and only records the instruction otherwise.
    *
-   * Takes the route rather than reading the selection: a row's tap commits, and
-   * the state behind `earlySelected` has not updated by the time it runs.
+   * Takes the route rather than reading the selection: the standard row lowers
+   * the limit immediately, while faster delivery has a separate confirmation.
    */
   const claimRoute = async (early: boolean) => {
     if (!deposit || !quote || !offer) return;
@@ -645,7 +646,7 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
           {!claimError && requiredFeeSats !== null && (
             <>
               {feeRaised && (
-                <AlertCard variant="warning" title="Network fee changed">
+                <AlertCard variant="warning" title={feeCopy.feeChanged}>
                   <p className="text-sm">
                     The fee rose to <SatAmount sats={requiredFeeSats} /> while you were confirming.
                     Approve to claim at the new fee.
@@ -656,7 +657,8 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
               <FeeBreakdownCard
                 items={[
                   { label: 'Amount', value: depositAmount },
-                  { label: 'Network fee', value: requiredFeeSats },
+                  { label: feeCopy.providerFee, value: requiredFeeSats },
+                  { label: feeCopy.gysFee, value: 0 },
                   { label: 'You receive', value: receiveAmount, highlight: true },
                 ]}
               />
@@ -712,6 +714,9 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
                       onSelect={() => chooseSpeed(true)}
                     />
                   </div>
+                  <p className="min-w-0 [overflow-wrap:anywhere] text-xs text-spark-text-muted" role="note">
+                    {willClaimEarly ? feeCopy.autoFaster : needsEarlyApproval ? feeCopy.confirmFaster : feeCopy.automatic}
+                  </p>
                 </div>
               )}
 
@@ -719,7 +724,8 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
                 items={receipt
                   ? [
                       { label: 'Amount', value: depositAmount },
-                      { label: 'Delivery fee', value: receipt.feeSats, emphasis: true },
+                      { label: feeCopy.providerFee, value: receipt.feeSats, emphasis: true },
+                      { label: feeCopy.gysFee, value: 0 },
                       { label: 'You receive', value: receipt.creditAmountSats, highlight: true },
                     ]
                   : chosen
@@ -729,13 +735,15 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
                       // maturity fee is marked, not presented as firm.
                       // The one row the group above changes, so it is lifted
                       // without taking the accent that marks what lands.
-                      { label: earlySelected ? 'Delivery fee' : 'Network fee', value: chosen.feeSats, approximate: chosen.isEstimate, emphasis: earlySelected },
+                      { label: feeCopy.providerFee, value: chosen.feeSats, approximate: chosen.isEstimate, emphasis: earlySelected },
+                      { label: feeCopy.gysFee, value: 0 },
                       { label: 'You receive', value: chosen.creditAmountSats, highlight: true },
                     ]
                   : isPricing
                   ? [
                       { label: 'Amount', value: depositAmount },
-                      { label: 'Network fee', pending: true },
+                      { label: feeCopy.providerFee, pending: true },
+                      { label: feeCopy.gysFee, value: 0 },
                       { label: 'You receive', pending: true, highlight: true },
                     ]
                   : [{ label: 'Amount', value: depositAmount, highlight: true }]}
@@ -786,9 +794,9 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
               // label stays the plain action and a screen reader still hears it.
               <PrimaryButton
                 onClick={() => void claimRoute(true)}
-                disabled={isProcessing || !claimsNow}
+                disabled={isProcessing || !needsEarlyApproval}
                 aria-describedby={INSTANT_OFFER_ID}
-                className="w-full"
+                className="w-full min-w-0 whitespace-normal [overflow-wrap:anywhere]"
               >
                 {isProcessing ? (
                   <span className="flex items-center justify-center gap-2">
@@ -796,7 +804,7 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
                     Processing...
                   </span>
                 ) : (
-                  'Claim'
+                  feeCopy.confirmDelivery
                 )}
               </PrimaryButton>
             )}

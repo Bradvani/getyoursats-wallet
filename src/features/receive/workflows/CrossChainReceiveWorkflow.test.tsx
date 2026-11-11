@@ -8,6 +8,7 @@ import { StableBalanceProvider } from '@/contexts/StableBalanceContext';
 import { createMockClient } from '@/test/mocks/mockWalletApi';
 import { waitForSheetOpen } from '@/test/utils/waitForSheetOpen';
 import ReceivePaymentDialog from '../ReceivePaymentDialog';
+import CrossChainReceiveWorkflow from './CrossChainReceiveWorkflow';
 
 const usdcOn = (chain: string): CrossChainRoutePair => ({
   provider: 'orchestra',
@@ -65,11 +66,16 @@ describe('USD receive deposit address', () => {
     expect(screen.queryByTestId('cross-chain-deposit-address')).toBeNull();
     expect(screen.getByRole('button',{name:'Continue to deposit QR'})).toBeDisabled();
     expect(screen.getByTestId('cross-chain-deposit-amount')).toHaveTextContent('10.05 USDC');
-    fireEvent.click(screen.getByText('Cost details'));
+    // Service cost is visible before revealing a deposit address or opening
+    // the additional cost details. The SDK quote is already net of it.
     expect(screen.getByText('0.01 USDC')).toBeInTheDocument();
+    expect(screen.getAllByText('0.01 USDC')).toHaveLength(1);
+    expect(screen.getByText('12 298 sats')).toBeInTheDocument();
+    expect(screen.getByText('Includes provider charges and any GetYourSats fee.')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Cost details'));
     // The SDK's service-fee asset differs from the source asset on some
     // routes. Never mislabel their arithmetic difference as chain gas.
-    expect(screen.getByText('Cross-chain service fee')).toBeInTheDocument();
+    expect(screen.getByText('Service fee')).toBeInTheDocument();
     expect(screen.getByText('Additional quoted deposit')).toBeInTheDocument();
     expect(screen.queryByText('Cross-Chain Network Fee')).toBeNull();
 
@@ -107,5 +113,39 @@ describe('USD receive amount', () => {
 
     expect(amount).toHaveValue('5.50');
     expect(screen.getByTestId('cross-chain-receive-continue')).toBeEnabled();
+  });
+});
+
+describe('cross-chain deposit service cost', () => {
+  it.each([
+    { fee: 12_345n, asset: 'USDC', decimals: 6, display: '0.012345 USDC' },
+    { fee: 0n, asset: 'USDC', decimals: 6, display: '0 USDC' },
+    { fee: 120n, asset: undefined, decimals: undefined, display: '120 sats' },
+    { fee: 120n, asset: 'USDC', decimals: undefined, display: 'Fee unavailable' },
+  ])('discloses $display once without changing the deposit or net receipt', async ({fee, asset, decimals, display}) => {
+    const client = createMockClient();
+    const route = {...usdcOn('bsc'), asset:'USDT', decimals:18};
+    client.getCrossChainRoutes = vi.fn().mockResolvedValue([route]);
+    client.receivePayment = vi.fn().mockResolvedValue({
+      paymentRequest: '0xdeposit', fee:0n,
+      crossChainInfo: {
+        depositAddress:'0xdeposit', depositAmount:10_050_000_000_000_000_000n,
+        expectedReceivedAmount:12_298n, destinationAsset:'BTC', serviceFeeAmount:fee,
+        serviceFeeAsset:asset, serviceFeeAssetDecimals:decimals, expiresAt:1_900_000_000,
+      },
+    });
+    render(<ToastProvider><WalletProvider client={client} isConnected><FiatDataProvider><StableBalanceProvider>
+      <CrossChainReceiveWorkflow active />
+    </StableBalanceProvider></FiatDataProvider></WalletProvider></ToastProvider>);
+    fireEvent.change(screen.getByTestId('cross-chain-receive-amount-input'), {target:{value:'10'}});
+    fireEvent.click(screen.getByTestId('cross-chain-receive-continue'));
+    await screen.findByText('Your deposit quote');
+    expect(screen.getAllByText(display)).toHaveLength(1);
+    expect(screen.getByTestId('cross-chain-deposit-amount')).toHaveTextContent('10.05 USDT');
+    expect(screen.getByText('12 298 sats')).toBeInTheDocument();
+    expect(screen.queryByTestId('cross-chain-deposit-address')).toBeNull();
+    expect(client.receivePayment).toHaveBeenCalledWith({
+      paymentMethod:{type:'crossChain', route, amount:10_000_000_000_000_000_000n},
+    });
   });
 });
