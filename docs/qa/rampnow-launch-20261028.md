@@ -1,6 +1,16 @@
 # RampNow integration and launch evidence
 
-Updated 10 November 2026. **Intent API checkout is now enabled and verified by a successful sandbox order creation. Public Buy/Sell and production checkout remain disabled.** No real payment was made.
+Updated 11 November 2026. **Intent API checkout is now enabled and verified by a successful sandbox order creation. Public Buy/Sell and production checkout remain disabled.** No real payment was made.
+
+## 11 November: guarded fresh card attempt
+
+After the provider reported its checkout fix, the existing contact-v4 checkout advanced from confirmation to the hosted payment-processing page. One submission using the provider-supplied sandbox card opened a blank popup and a provider-side JavaScript error; no simulator outcome was visible. The browser error alone did not establish payment failure and the submission was not blindly repeated.
+
+The fresh authenticated inspection at **2026-11-11 07:19:58 UTC** matched exactly one v4 order by provider identifier, route, source amount and destination wallet address. It reported `expired` with `dstFillAmount: "0"`; no matching normalized callback was observed in the retained quarantine. This resolves the earlier missing-destination lookup for that order, not settlement or wallet receipt.
+
+The fixed `gys-sandbox-20261111-card-retry-v6` campaign permits one accepted-scenario dispatch using the privately configured, owner-approved email. Before creating a fresh order it requires another strict v4 lookup with the same destination, `expired` status and a decimal zero fill. It also reconciles the v3/v5 identities and both earlier explicit rejection histories. All prior records and permanent reservations remain intact: an expired provider order can still receive late events, so it remains subject to reconciliation. Normal builds and inspect mode never create orders. No email, card data or hosted URL is committed here.
+
+The focused acceptance runner passes **40 tests**, including five new checks for the strict expiry/destination gate, prior-history requirements, accepted-only scope, private email input and concurrency/uncertain-response replay protection. This change prepares a fresh sandbox attempt; its hosted outcome must still be observed. Production activation and independent BTC receipt gates remain unchanged.
 
 ## 10 November: customer email comparison
 
