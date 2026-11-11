@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "date": "2026-10-27",
+  "remoteSourceCommit": "e827e4a0bdc89245d8539a314e3dc81bdfdccfab",
+  "localEquivalentSourceCommit": "f787cb9a82c71ccb260d5a7c0775a048333ac821",
+  "sourceTree": "504ee6c787031dfb991c05c1265b320d4959842f",
+  "sdk": {
+    "schema": 1,
+    "sdkSourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+    "patchSha256": "0881588afefe212b426854b06dc2b0956c1084bfec9b1981677d93642276baa4",
+    "baselinePackageSha256": "4294f03c86c3b7bcea740e8ecdad6f46b1351de3707ff6d85d574ae8a6f98026",
+    "cargoLockSha256": "a4ff9d25f17511301751298d67caa1cd123d2ad220013f14875034ba1311b0b9",
+    "rustToolchain": "1.95.0",
+    "wasmBindgenVersion": "0.2.120",
+    "cargoProfile": "release (upstream profile, wasm-opt disabled)",
+    "rawCompiledWasmSha256": "21edbf2ab3c50cc9b9d1e486d473fdd105e5efe1a2b07e537c4683c72bf91145",
+    "generatedArtifacts": {
+      "web/breez_sdk_spark_wasm.js": "87b0bed1139178b4ed734639a1448cbd36e9e65f078a352b22ef936d9153739a",
+      "web/breez_sdk_spark_wasm.d.ts": "96c85d7153c80135a15c1364d751cdfad29b6410b7a9c143ed5f460a40616f7a",
+      "web/breez_sdk_spark_wasm_bg.wasm": "9abda552816478f079f5b02649a52211ab032aa8e0da3f200362b937554eba2e",
+      "nodejs/breez_sdk_spark_wasm.js": "d484061ddf6adbf4e128986caaf410e0a1481f13107388cc1741dc9cf550acd0",
+      "nodejs/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+      "nodejs/breez_sdk_spark_wasm_bg.wasm": "9abda552816478f079f5b02649a52211ab032aa8e0da3f200362b937554eba2e",
+      "bundler/breez_sdk_spark_wasm.js": "6342628f134d0ad21d634559fe7b5a3cea6389e2e5a82134009cc94cfaec81e2",
+      "bundler/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+      "bundler/breez_sdk_spark_wasm_bg.wasm": "9abda552816478f079f5b02649a52211ab032aa8e0da3f200362b937554eba2e",
+      "deno/breez_sdk_spark_wasm.js": "871574fb1e6cbd93ac0c631527b2344f15272f1c1d140f75c295894a2393be29",
+      "deno/breez_sdk_spark_wasm.d.ts": "cc88e398141c9e7559e94fd4e6b1a70ea8af04e99d56ad876349278e4440208f",
+      "deno/breez_sdk_spark_wasm_bg.wasm": "9abda552816478f079f5b02649a52211ab032aa8e0da3f200362b937554eba2e"
+    },
+    "securityClaim": "same-wallet software signing with observation-only network queries; not isolated or hardware-backed",
+    "extensions": [
+      "seed-compatible-external-signers-v1",
+      "observation-only-wallet-state-v1",
+      "signed-recovery-v1",
+      "explicit-incoming-claim-v1",
+      "bounded-mature-deposit-claim-v1",
+      "unreceived-deposit-continuation-v1",
+      "recovery-signer-envelope-v1"
+    ],
+    "packageSha256": "35caab4481e30f68bc1165b0037cfbec27b8131383c38d61d48443ec8f361b0a"
+  },
+  "nativeTests": {
+    "seed_factory": 3,
+    "observation": 8,
+    "signed_recovery": 8,
+    "incoming_claim": 16,
+    "mature_deposit": 25,
+    "outspend": 6,
+    "exit_signing": 28
+  },
+  "applicationTests": {
+    "passed": 1510,
+    "skipped": 1,
+    "filesPassed": 147,
+    "filesSkipped": 1
+  },
+  "localBrowserSecurity": {
+    "passed": 7,
+    "browser": "Chrome Headless Shell 147.0.7727.15"
+  },
+  "installedArtifactChecks": {
+    "identityComparisons": 36,
+    "seedFactoryComparisons": 108,
+    "guardAssertions": 18,
+    "pbkdf2Comparisons": 17,
+    "generatedArtifacts": 12,
+    "networkCalls": 0
+  },
+  "typecheck": "PASS",
+  "lint": {
+    "errors": 0,
+    "warnings": 8
+  },
+  "previewBuild": "PASS",
+  "productionInterlock": "PASS_EXPECTED_REFUSAL",
+  "fullProductAcceptance": false,
+  "independentSecurityApproval": false,
+  "productionPromotion": false,
+  "note": "Local compiled artifact; the independent GitHub SDK workflow has not completed at this checkpoint. Funded acceptance is recorded separately and is not implied by these offline checks."
+}

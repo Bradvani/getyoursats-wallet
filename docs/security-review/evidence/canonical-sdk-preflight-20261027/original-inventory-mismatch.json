@@ -1,0 +1,27 @@
+{
+  "extra": [
+    "bundler/.npmignore",
+    "deno/.npmignore",
+    "examples/node/.npmignore",
+    "examples/ssr/.npmignore",
+    "examples/web/.npmignore",
+    "itest/.npmignore",
+    "nodejs/.npmignore",
+    "ssr/.npmignore",
+    "web/.npmignore"
+  ],
+  "missing": [
+    "bundler/.gitignore",
+    "deno/.gitignore",
+    "examples/node/.gitignore",
+    "examples/ssr/.gitignore",
+    "examples/web/.gitignore",
+    "itest/.gitignore",
+    "nodejs/.gitignore",
+    "ssr/.gitignore",
+    "web/.gitignore"
+  ],
+  "changed": [],
+  "archiveFiles": 125,
+  "installedFiles": 125
+}

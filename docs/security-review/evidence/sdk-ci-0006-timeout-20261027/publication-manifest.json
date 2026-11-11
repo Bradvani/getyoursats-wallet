@@ -1,0 +1,231 @@
+{
+  "schema": 1,
+  "createdAt": "2026-10-27T08:23:39.186824+00:00",
+  "scope": "Documentation-only persistence of cancelled0006 CI diagnostics; original payloads retained byte-for-byte, logs losslessly compressed",
+  "workflow": {
+    "runId": 40466031487,
+    "jobId": 122061530504,
+    "artifactId": 12719400354,
+    "runUrl": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40466031487",
+    "jobUrl": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40466031487/job/122061530504",
+    "artifactUrl": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40466031487/artifacts/12719400354",
+    "overallConclusion": "CANCELLED",
+    "preserveJob": "SKIPPED",
+    "overallStatusProvenance": "Root GitHub observation retained in the original independent receipt; no new network query"
+  },
+  "originalSource": {
+    "commit": "c4236476b9d7bb52ae0da278ea2171a7018fa979",
+    "tree": "2c007e3c1b202db0ca013dc28496d669ebaa5999",
+    "sdkPatchSha256": "526a66a84989313aa91a391e2681635d147bfa934d8d8310358e19725609e195",
+    "packageVersion": "0.1.0-getyoursats.recovery.2"
+  },
+  "documentationBase": {
+    "commit": "99ad36089fb746b1a288ad66e74df42f1eb57254",
+    "tree": "7bcff6d98ab129d082a926e70209d6bf3d561e1f"
+  },
+  "publishedFiles": [
+    {
+      "publishedFile": "receipt.json",
+      "source": "original independent reconstruction receipt",
+      "originalFile": "receipt.json",
+      "originalBytes": 6677,
+      "originalSha256": "44c42653ab1744e55e934665a008e03ab0268108acf94f79345d665b29ff779c",
+      "publishedBytes": 6677,
+      "publishedSha256": "44c42653ab1744e55e934665a008e03ab0268108acf94f79345d665b29ff779c",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "receipt.md",
+      "source": "original independent reconstruction narrative",
+      "originalFile": "receipt.md",
+      "originalBytes": 2804,
+      "originalSha256": "d00869b25a2719d62f6807144e6ab0b64d36224fbc83b939b8f8107835675366",
+      "publishedBytes": 2804,
+      "publishedSha256": "d00869b25a2719d62f6807144e6ab0b64d36224fbc83b939b8f8107835675366",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "reconstruct_and_verify.py",
+      "source": "exact executed reconstruction script",
+      "originalFile": "reconstruct_and_verify.py",
+      "originalBytes": 12014,
+      "originalSha256": "74bd4c43f909cbca87f4e28a0785e45a7e095aadbe79e4c6e35af512fa5c96d3",
+      "publishedBytes": 12014,
+      "publishedSha256": "74bd4c43f909cbca87f4e28a0785e45a7e095aadbe79e4c6e35af512fa5c96d3",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "artifact-manifest.json",
+      "source": "uploaded CI artifact",
+      "originalFile": "artifact-manifest.json",
+      "originalBytes": 3955,
+      "originalSha256": "50d0ef195aa402d37d16a347eb14ab9762381b33dabc4860fdba18c68201b145",
+      "publishedBytes": 3955,
+      "publishedSha256": "50d0ef195aa402d37d16a347eb14ab9762381b33dabc4860fdba18c68201b145",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "browser-storage-cas.json",
+      "source": "uploaded CI artifact",
+      "originalFile": "browser-storage-cas.json",
+      "originalBytes": 36968,
+      "originalSha256": "abd52f9203323187f2a83c4c6512420a3d60e1d94da9dcdb8ad2b56daeaaf48f",
+      "publishedBytes": 36968,
+      "publishedSha256": "abd52f9203323187f2a83c4c6512420a3d60e1d94da9dcdb8ad2b56daeaaf48f",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "base.txt",
+      "source": "uploaded CI artifact",
+      "originalFile": "base.txt",
+      "originalBytes": 41,
+      "originalSha256": "050d5220df6da2be8c4a037af50bf98f3f8d1031188ed7a25077c9bee4a09625",
+      "publishedBytes": 41,
+      "publishedSha256": "050d5220df6da2be8c4a037af50bf98f3f8d1031188ed7a25077c9bee4a09625",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "toolchain.txt",
+      "source": "uploaded CI artifact",
+      "originalFile": "toolchain.txt",
+      "originalBytes": 540,
+      "originalSha256": "1c69bc5ce0af08319504c7766afc8172eafcf73eed56c9a615272d26286ca9bb",
+      "publishedBytes": 540,
+      "publishedSha256": "1c69bc5ce0af08319504c7766afc8172eafcf73eed56c9a615272d26286ca9bb",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/native-and-wasm-build.log.gz",
+      "source": "complete uploaded CI log",
+      "originalFile": "native-and-wasm-build.log",
+      "originalBytes": 101320,
+      "originalSha256": "1933dc2448d2e27fcdbbb5fa354991eb9026ea3de29f0011af764feb9d37112f",
+      "publishedBytes": 18475,
+      "publishedSha256": "bd5e1b36b0ed725ba977f2edb2726b971cd3760f6991e78b8ef9743ce5941105",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/installed-wasm-tests.log.gz",
+      "source": "complete uploaded CI log",
+      "originalFile": "installed-wasm-tests.log",
+      "originalBytes": 2567,
+      "originalSha256": "a46f0f07642f70dbdc3717171f144681105844c7d35e21d4669485cc3958c347",
+      "publishedBytes": 1121,
+      "publishedSha256": "c99221a5b08a0c1cee925b4c22c0aa94b3a0ef9dc22e2eaf838bd6bd6f4af0b0",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/browser-storage-cas.log.gz",
+      "source": "complete uploaded CI log",
+      "originalFile": "browser-storage-cas.log",
+      "originalBytes": 3731,
+      "originalSha256": "cea621081e813cd4c969c34f9331efcf0f4cf1f20c4683603d6cf08f7398e277",
+      "publishedBytes": 639,
+      "publishedSha256": "c85e25c699649bcd7d574f03852f544075b01ce401a32a63eb978714b2560df4",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/browser-install.log.gz",
+      "source": "complete uploaded CI log",
+      "originalFile": "browser-install.log",
+      "originalBytes": 91777,
+      "originalSha256": "d9482dcefaf2d7e8ccc8ca92cc32385abdaa72fe7c12e8715326ee314d235769",
+      "publishedBytes": 13555,
+      "publishedSha256": "09ded1a4935d27c11f7891e2ea3db889dc3f9f568c4fa036cac5e945bd8e36d5",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/python-proof-guards.log.gz",
+      "source": "complete uploaded CI log",
+      "originalFile": "python-proof-guards.log",
+      "originalBytes": 3007,
+      "originalSha256": "727bdf09f15b2b8c8a7cd36989cd0b5174f5576b91ff56b840d1604dde79b516",
+      "publishedBytes": 665,
+      "publishedSha256": "97aea292c0bcc9604529329f6c1d8b97c57813a7f1ee31f286883d6fa13bb72a",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/node-proof-guards.log.gz",
+      "source": "complete uploaded CI log",
+      "originalFile": "node-proof-guards.log",
+      "originalBytes": 6379,
+      "originalSha256": "0ed6fc2c1c10824bf36c220f1a5fc0a256bc0bf21ce7facfa5843eb08249c127",
+      "publishedBytes": 1370,
+      "publishedSha256": "6bc1b48a6fa88cf806310f0a1a40a689cde68e315c8e717eb9a51db3da8c2e43",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/typescript.log.gz",
+      "source": "complete uploaded CI log",
+      "originalFile": "typescript.log",
+      "originalBytes": 0,
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedBytes": 20,
+      "publishedSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    }
+  ],
+  "largeArtifactsNotAddedToGit": [
+    {
+      "originalFile": "sdk.patch",
+      "source": "uploaded CI binary patch",
+      "bytes": 43054710,
+      "sha256": "abb9330172f2f777eda839114c9aec4c673825cd3bfa1e663f945e6df5389d48",
+      "published": false
+    },
+    {
+      "originalFile": "breeztech-breez-sdk-spark.tgz",
+      "source": "independently reconstructed generated package",
+      "bytes": 21075080,
+      "sha256": "a140f22e7314bfd8cccc679da18111225bb4b91df23453857be11e3ee5b1bfec",
+      "published": false
+    },
+    {
+      "originalFile": "gys-sdk-0006-timeout-evidence.zip",
+      "source": "original downloaded GitHub artifact ZIP",
+      "bytes": 35001946,
+      "sha256": "4cf54d1a95cc8e79c990bf88144eb4587a7c50529be8661fa694a3c0af407c0e",
+      "published": false
+    }
+  ],
+  "omittedTemporaryFiles": [
+    "source-c423.tar is reproducible from the exact source commit",
+    "local-checkout-path.txt is an ephemeral filesystem location, not release evidence"
+  ],
+  "recordedSubtestResults": {
+    "native": 221,
+    "wasmBridge": 6,
+    "browser": 27,
+    "browserByEngine": {
+      "chromium": 9,
+      "firefox": 9,
+      "webkit": 9
+    },
+    "browserUnexpected": 0,
+    "browserSkipped": 0,
+    "browserFlaky": 0
+  },
+  "interpretation": [
+    "Overall CI remains cancelled despite recorded passing subtests",
+    "Preservation job did not execute",
+    "Independent check reconstructed and hashed files without SDK imports or test reruns",
+    "No third-party audit or funded/device acceptance is claimed",
+    "The0006 package retains the known external-signer namespace defect",
+    "Successor0007 identity and preservation changes are outside this historical run",
+    "This documentation commit changes no runtime source, package or deployment"
+  ]
+}

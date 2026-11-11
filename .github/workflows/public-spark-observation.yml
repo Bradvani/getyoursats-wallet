@@ -1,0 +1,53 @@
+name: Public Spark regtest observation
+on:
+  push:
+    branches: [release/browser-pwa-security-localization-20261025]
+    paths:
+      - e2e/fixtures/public-spark-regtest.*
+      - scripts/security/probe-public-spark-regtest.mjs
+      - .github/workflows/public-spark-observation.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pr43-public-spark-observation
+  cancel-in-progress: true
+jobs:
+  observe-only:
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx tsc --noEmit
+      - run: npx playwright install --with-deps chromium
+      - name: Query actual public regtest with two fresh disposable profiles
+        env:
+          VITE_BREEZ_API_KEY: ''
+          VITE_SPARK_LOCAL_CONFIG: ''
+          VITE_STAGING_PASSWORD: ''
+          VITE_ESPLORA_BASE_URL: ''
+          VITE_MEMPOOL_BASE_URL: ''
+          GYS_NETWORK_EVIDENCE_DIR: /tmp/public-spark-evidence
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/public-spark-evidence
+          npm run dev -- --host 127.0.0.1 --port 5173 --strictPort >/tmp/public-spark-vite.log 2>&1 &
+          server=$!
+          trap 'kill $server || true' EXIT
+          for n in $(seq 1 100); do if curl -fsS http://127.0.0.1:5173/e2e/fixtures/public-spark-regtest.html >/dev/null; then break; fi; sleep .2; done
+          node scripts/security/probe-public-spark-regtest.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: public-spark-observation-${{ github.sha }}
+          path: /tmp/public-spark-evidence/
+          retention-days: 30

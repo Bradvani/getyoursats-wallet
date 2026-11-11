@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "kind": "public-regtest-chain-observation-only",
+  "observedAtUTC": "2026-10-26T22:04:11.655770+00:00",
+  "baseUrl": "https://regtest-mempool.us-west-2.sparkinfra.net/api",
+  "txid": "c49b23b1e762fcf7add88f0e8741c7d6c54f3ae5ff83a5a719d45c65ba2a2b6c",
+  "vout": 0,
+  "methods": [
+    "GET"
+  ],
+  "walletConnected": false,
+  "claimInvoked": false,
+  "broadcastInvoked": false,
+  "journalModified": false,
+  "retryAuthorized": false,
+  "evidence": {
+    "transaction": {
+      "httpStatus": 200,
+      "bodySha256": "776f29973367e9589667cd082b5665a3bcc0ebcdd9f1f152df18482ed43e229e",
+      "data": {
+        "txid": "c49b23b1e762fcf7add88f0e8741c7d6c54f3ae5ff83a5a719d45c65ba2a2b6c",
+        "version": 2,
+        "locktime": 0,
+        "size": 278,
+        "weight": 782,
+        "fee": 1372,
+        "vin": [
+          {
+            "is_coinbase": false,
+            "prevout": {
+              "value": 36289329,
+              "scriptpubkey": "0014b0a9234b6af6a50ed21334ae574d18dcaf53378a",
+              "scriptpubkey_address": "bcrt1qkz5jxjm276jsa5snxjh9wngcmjh4xdu24f89sy",
+              "scriptpubkey_asm": "OP_0 OP_PUSHBYTES_20 b0a9234b6af6a50ed21334ae574d18dcaf53378a",
+              "scriptpubkey_type": "v0_p2wpkh"
+            },
+            "scriptsig": "",
+            "scriptsig_asm": "",
+            "sequence": 4294967293,
+            "txid": "c34f5c7209697760819b4a8efd49ae69433a26364555b32eaba260c2a845e863",
+            "vout": 1,
+            "witness": [
+              "3045022100b7e74fdbcb9575b9d76ddf73631d8e6b28c3f37e1cc729e047fafbda56df3be102205f27f3cf997aa9784e934c6376309037ec2d2423adea8a304e5815ee8342d64f01",
+              "02c219de3a904947f4f7cfb7af18e06f24a98e6bc2cb003431545825b3c8d9d8f3"
+            ],
+            "inner_redeemscript_asm": "",
+            "inner_witnessscript_asm": ""
+          }
+        ],
+        "vout": [
+          {
+            "value": 5000,
+            "scriptpubkey": "512000dd7aa694ebd4efc8be34946d1c4480be68bd3df347ef22198a7c44243e8706",
+            "scriptpubkey_address": "bcrt1pqrwh4f55a02wlj97xj2x68zyszlx30fa7dr77gse3f7ygfp7surqq734zl",
+            "scriptpubkey_asm": "OP_PUSHNUM_1 OP_PUSHBYTES_32 00dd7aa694ebd4efc8be34946d1c4480be68bd3df347ef22198a7c44243e8706",
+            "scriptpubkey_type": "v1_p2tr"
+          },
+          {
+            "value": 4620,
+            "scriptpubkey": "5120431ca4c105b59f09abcafc11d518193ad5aabb31dc9db557a7b6633dcd8b2f6e",
+            "scriptpubkey_address": "bcrt1pgvw2fsg9kk0sn272lsga2xqe8t264we3mjwm24a8ke3nmnvt9ahq7lhfv4",
+            "scriptpubkey_asm": "OP_PUSHNUM_1 OP_PUSHBYTES_32 431ca4c105b59f09abcafc11d518193ad5aabb31dc9db557a7b6633dcd8b2f6e",
+            "scriptpubkey_type": "v1_p2tr"
+          },
+          {
+            "value": 36278337,
+            "scriptpubkey": "00147fcd45bba6f372939035c8c7ecd1ed695680cd5b",
+            "scriptpubkey_address": "bcrt1q0lx5twax7def8yp4err7e50dd9tgpn2m207076",
+            "scriptpubkey_asm": "OP_0 OP_PUSHBYTES_20 7fcd45bba6f372939035c8c7ecd1ed695680cd5b",
+            "scriptpubkey_type": "v0_p2wpkh"
+          }
+        ],
+        "status": {
+          "confirmed": true,
+          "block_height": 3657960,
+          "block_hash": "313a0cada7e05c3b852d6bd038edb996fe468f98a4518f2bfe4c6c7520148c52",
+          "block_time": 1793025786
+        },
+        "order": 1814768314,
+        "vsize": 196,
+        "adjustedVsize": 195.5,
+        "sigops": 1,
+        "feePerVsize": 7.017902813299233,
+        "adjustedFeePerVsize": 7.017902813299233,
+        "effectiveFeePerVsize": 7.017902813299233
+      }
+    },
+    "status": {
+      "httpStatus": 200,
+      "bodySha256": "7a427148c4aa3723f0ef4e825f97f604cd72451c16fe13a78f6cf8098d876243",
+      "data": {
+        "confirmed": true,
+        "block_height": 3657960,
+        "block_hash": "313a0cada7e05c3b852d6bd038edb996fe468f98a4518f2bfe4c6c7520148c52",
+        "block_time": 1793025786
+      }
+    },
+    "outspends": {
+      "httpStatus": 200,
+      "bodySha256": "abfb14d59247bc6cbdae72f70c2a014ab42b135e329f3a3cb1499bf2efa5b9a4",
+      "data": [
+        {
+          "spent": false
+        },
+        {
+          "spent": false
+        },
+        {
+          "spent": true
+        }
+      ]
+    }
+  },
+  "observedOutputValueSats": 5000,
+  "observedOutputSpent": false,
+  "limitation": "Chain state does not prove that a remote deposit claim was never submitted, nor that operator credit settled. The existing uncertain browser record must remain preserved."
+}

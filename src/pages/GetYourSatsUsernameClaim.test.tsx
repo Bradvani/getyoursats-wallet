@@ -3,6 +3,9 @@ import {act, fireEvent, render, screen} from '@testing-library/react';
 import type {LightningAddressInfo} from '@breeztech/breez-sdk-spark';
 import type {ReactNode} from 'react';
 import GetYourSatsUsernameClaim from './GetYourSatsUsernameClaim';
+import {WalletProvider} from '../contexts/WalletContext';
+import {createMockClient} from '../test/mocks/mockWalletApi';
+import {BROWSER_SPENDING_POLICY} from '../security/browserReleasePolicy';
 
 const mocks = vi.hoisted(() => ({copy: vi.fn().mockResolvedValue(undefined)}));
 vi.mock('../utils/clipboard', () => ({copyToClipboard: mocks.copy}));
@@ -23,6 +26,19 @@ const props = () => ({email: 'verified@example.com', onBack: vi.fn()});
 afterEach(() => {vi.unstubAllGlobals();});
 
 describe('native Lightning name claims', () => {
+  it.each([false,true])('keeps names in a restricted browser without offering payment addresses or new registration (saved=%s)',async saved=>{
+    vi.stubGlobal('fetch',lookup());
+    const client=createMockClient(),claim=vi.fn();Reflect.set(client,BROWSER_SPENDING_POLICY,true);
+    render(<WalletProvider client={client} isConnected><GetYourSatsUsernameClaim {...props()}
+      nativeAddress={saved?address():null} onClaimNativeAddress={claim}/></WalletProvider>);
+    expect(screen.getByText(/Lightning receiving is unavailable/)).toBeInTheDocument();
+    if(saved)expect(screen.getByText('bharat')).toBeInTheDocument();
+    expect(screen.queryByText('bharat@getyoursats.com')).toBeNull();
+    expect(screen.queryByText('Ready to receive payments.')).toBeNull();
+    expect(screen.queryByRole('button',{name:'Copy Address'})).toBeNull();
+    expect(screen.queryByRole('button',{name:'Claim Name'})).toBeNull();
+    expect(claim).not.toHaveBeenCalled();expect(mocks.copy).not.toHaveBeenCalled();
+  });
   it('stays unavailable without a native lifecycle action and never calls legacy aliases', () => {
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);

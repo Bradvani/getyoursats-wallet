@@ -13,6 +13,7 @@ export interface InvoiceAmount {
 }
 import { LIGHTNING_INVOICE_MIN_SATS } from '../../../constants/receive';
 import { formatWithSpaces } from '../../../utils/formatNumber';
+import {browserReceivingRestriction} from '../../../security/browserReleasePolicy';
 
 export interface UseReceivePaymentReturn {
   // State
@@ -136,6 +137,7 @@ export function useReceivePayment(): UseReceivePaymentReturn {
 
   const generateSparkAddress = useCallback(async () => {
     if (sparkAddress || sparkLoading) return;
+    setError(null);
     setSparkLoading(true);
     try {
       const receiveResponse = await wallet.receivePayment({
@@ -151,6 +153,8 @@ export function useReceivePayment(): UseReceivePaymentReturn {
   }, [wallet, sparkAddress, sparkLoading]);
 
   const generateBitcoinAddress = useCallback(async () => {
+    const restriction=browserReceivingRestriction(wallet,'bitcoinAddress');
+    if(restriction){setError(restriction);return;}
     if (bitcoinAddress || bitcoinLoading) return;
     setBitcoinLoading(true);
     try {
@@ -167,6 +171,8 @@ export function useReceivePayment(): UseReceivePaymentReturn {
   }, [wallet, bitcoinAddress, bitcoinLoading]);
 
   const generateBolt11Invoice = useCallback(async () => {
+    const restriction=browserReceivingRestriction(wallet,'bolt11Invoice');
+    if(restriction){setError(restriction);return;}
     logger.info(LogCategory.PAYMENT, 'Starting invoice generation', {
       amountSats: amountSats !== null ? String(amountSats) : null,
     });

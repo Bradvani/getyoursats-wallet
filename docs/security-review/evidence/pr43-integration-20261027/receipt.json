@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "source": "3234bef8c89b6b354de696696d39e7caf351e8ea",
+  "tree": "8c1ab64b88e0b627b6a911ae17249736b9bf6ef2",
+  "installedSdkArchiveSha256": "32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c",
+  "nodeVersion": "v24.22.1",
+  "canonicalInstalledCheck": "PASS:125completefiles",
+  "firstAttempt": "Local sandbox denied the required Python subprocess before inventory verification; original failure retained. Same unchanged verifier passed with authorized local subprocess access.",
+  "sdkImported": false,
+  "walletOrProviderOperations": false,
+  "applicationTestsRerunHere": false,
+  "files": {
+    "canonical-installed.log": {
+      "bytes": 2258,
+      "sha256": "534a5f42a1f7812f17ca1f9582a93af08f8e75b6f4bba24ec1616e34b28f48ec",
+      "storedPath": "canonical-installed.log.gz",
+      "storedSha256": "36810867d060c139696af2335f5e0cc912befef28b7e2ef7141a68aa1be5a419"
+    },
+    "canonical-subprocess-sandbox-denial.log": {
+      "bytes": 1087,
+      "sha256": "646ffbc4ce5e36b225ff2d484af74336c7aa84ea688505cd4c07fa51e2104821",
+      "storedPath": "canonical-subprocess-sandbox-denial.log.gz",
+      "storedSha256": "a8fefc7fa101cb8e2ea9ef670a4bd16847b0310dd283fe0a98efb1a96f4ed9e4"
+    }
+  },
+  "limits": [
+    "This verifies the local installed file inventory only",
+    "Isolated CI uses Node22 and records its own installed runtime checks",
+    "Final combined application CI belongs to the final published PR head",
+    "No release approval"
+  ]
+}

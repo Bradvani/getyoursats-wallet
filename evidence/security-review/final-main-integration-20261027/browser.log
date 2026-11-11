@@ -1,0 +1,55 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+[WebServer] (node:113728) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] 11:55:34 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+
+[WebServer] Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+[WebServer]   banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+[WebServer]     'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+[WebServer]     "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+[WebServer]     'globalThis.global = globalThis.global || __global_polyfill\n' +
+[WebServer]     "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+[WebServer]     'globalThis.process = globalThis.process || __process_polyfill\n'
+[WebServer] }`
+
+
+Running 16 tests using 1 worker
+
+(node:113771) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:113771) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/16] e2e/tests/browser-security-preview.spec.ts:6:2 › security preview states are explicit at 390px
+[2/16] e2e/tests/browser-security-preview.spec.ts:6:2 › security preview states are explicit at 768px
+[3/16] e2e/tests/browser-security-preview.spec.ts:6:2 › security preview states are explicit at 1366px
+[4/16] e2e/tests/browser-vault-concurrency.spec.ts:14:1 › real Web Locks holds a second tab until the first writer releases
+[5/16] e2e/tests/browser-vault-concurrency.spec.ts:35:1 › simultaneous first-time enrollment in two tabs commits only one wallet
+(node:114165) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:114165) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[6/16] e2e/tests/browser-vault-security.spec.ts:17:1 › migrates a legacy wallet and fails closed on denied browser spend approval
+[7/16] e2e/tests/browser-vault-security.spec.ts:36:1 › requires unlock after reload and restores same phrase on password reset
+[8/16] e2e/tests/getyoursats-startup-theme.spec.ts:8:2 › @public-smoke first paint honors orange with system dark
+[9/16] e2e/tests/getyoursats-startup-theme.spec.ts:8:2 › @public-smoke first paint honors dark with system light
+[10/16] e2e/tests/getyoursats-startup-theme.spec.ts:8:2 › @public-smoke first paint honors system with system light
+[11/16] e2e/tests/getyoursats-startup-theme.spec.ts:8:2 › @public-smoke first paint honors system with system dark
+[12/16] e2e/tests/getyoursats-startup-theme.spec.ts:8:2 › @public-smoke first paint honors invalid with system light
+[13/16] e2e/tests/getyoursats-startup-theme.spec.ts:25:1 › @public-smoke startup survives unavailable browser storage
+[14/16] e2e/tests/getyoursats-startup-theme.spec.ts:34:2 › @public-smoke animated and unlock logos remain readable in orange
+[15/16] e2e/tests/getyoursats-startup-theme.spec.ts:34:2 › @public-smoke animated and unlock logos remain readable in dark
+[16/16] e2e/tests/getyoursats-startup-theme.spec.ts:51:1 › @public-smoke theme changes update home cards and History without reload
+[WebServer] 11:55:57 PM [vite] (client) [console.warn] You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled
+
+  16 passed (25.5s)

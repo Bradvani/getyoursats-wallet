@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "priorCandidate": "c6518cc695c82ae110d16a43c96f2c5c6548ebbd",
+  "priorTree": "61f993c61a583a0f467039396bfde726e5cbdf20",
+  "workflowRun": 40483780128,
+  "job": 122120362240,
+  "conclusion": "cancelled",
+  "cause": "Job exceeded its 20-minute limit during signed Ubuntu package downloads from the Azure HTTP archive; actual browser tests did not run.",
+  "runnerImage": "ubuntu-24.04",
+  "requestedArchiveMegabytes": 117,
+  "tests": {
+    "security": "skipped",
+    "rollback": "skipped",
+    "executedWebkitCases": 0
+  },
+  "originalLog": {
+    "stored": "webkit-job-122120362240.original.log.gz",
+    "utf8Bytes": 41906,
+    "utf8Sha256": "533007fd2f0f7c039f68870079b1e756874b4ff675359f8d314b897b345678a9",
+    "gzipBytes": 10457,
+    "gzipSha256": "2208bb3d42f095814881d10ac4240c8856f3c05df737cdf1066cfeb109bbd453",
+    "source": "Complete decoded UTF-8 from GitHub workflow job logs; no normalization, redaction or truncation"
+  },
+  "annotations": {
+    "stored": "timeout-annotations.json",
+    "bytes": 2478,
+    "sha256": "62cac15a1ac75a825fe73eafd2e701000097401fdd1a38db8fed14de30f75b9e",
+    "source": "Unauthenticated public GitHub check annotations GET; normal TLS"
+  },
+  "correction": {
+    "workflow": ".github/workflows/release-security-matrix.yml",
+    "sha256": "6de57b7803a4379ade5bfbd40386de3690b1caf76c0598761a6154df229bd4ec",
+    "runner": "ubuntu-24.04",
+    "mirror": "https://archive.ubuntu.com/ubuntu",
+    "sourceChange": "24 insertions and 1 deletion in one workflow",
+    "sourceReview": "Internal read-only review cleared exact diff; mirror Python matches successful SDK builder",
+    "zeroMirrorMatches": "explicit failure",
+    "timeLimitMinutes": 20,
+    "testsPermissionsGatesUnchanged": true,
+    "applicationAndSdkUnchanged": true
+  },
+  "validation": {
+    "yamlParsed": true,
+    "embeddedPythonParsed": true,
+    "diffWhitespacePassed": true,
+    "correctedCiExecutedAtPreparation": false
+  },
+  "limits": [
+    "The historical Chromium/Firefox and smoke results retain their own scope; no executed WebKit security or rollback cases are inferred for this failed attempt.",
+    "This source change does not guarantee download speed or any test outcome; final CI must identify its exact new source.",
+    "No package-signature check, test selection, permission, timeout or release gate is relaxed.",
+    "No qualified independent release approval, provider operation or physical-device result is established."
+  ]
+}

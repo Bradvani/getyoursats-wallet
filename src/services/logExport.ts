@@ -1,3 +1,5 @@
+import type {Network} from '@breeztech/breez-sdk-spark';
+import {resolveWalletExportDatabase} from '../security/storageMigration/ownedStorage';
 import { logger, LogCategory, redactDeep } from './logger';
 import { getAllSessions, isStorageAvailable, peekCurrentSessionId } from './logStorage';
 import JSZip from 'jszip';
@@ -96,8 +98,16 @@ const openExistingDatabase = (name: string): Promise<IDBDatabase> =>
     req.onerror = () => reject(req.error);
   });
 
-export const exportDatabaseState = async (identityPubkey: string, network: string): Promise<void> => {
-  const dbName = await buildSdkDatabaseName(identityPubkey, network);
+export const exportDatabaseState = async (
+  identityPubkey: string,
+  network: string,
+  assertAuthorized?: () => void,
+): Promise<void> => {
+  assertAuthorized?.();
+  const dbName = Capacitor.isNativePlatform()
+    ? await buildSdkDatabaseName(identityPubkey, network)
+    : await resolveWalletExportDatabase(STORAGE_DIR,network as Network,identityPubkey,assertAuthorized??(()=>{}));
+  assertAuthorized?.();
   let db: IDBDatabase;
   try {
     db = await openExistingDatabase(dbName);
@@ -107,13 +117,16 @@ export const exportDatabaseState = async (identityPubkey: string, network: strin
   }
 
   try {
+    assertAuthorized?.();
     // The SDK database holds the full payment history: bolt11 invoices,
     // payment preimages, and the cached Breez JWT in `settings`. The dump
     // is for debugging state machines, not for carrying credentials, so
     // every row goes through the log redactor first.
     const objectStores: Record<string, unknown[]> = {};
     for (const name of db.objectStoreNames) {
-      objectStores[name] = redactDeep(await dumpIndexedDBStore(db, name)) as unknown[];
+      const records = await dumpIndexedDBStore(db, name);
+      assertAuthorized?.();
+      objectStores[name] = redactDeep(records) as unknown[];
     }
 
     const json = JSON.stringify({
@@ -130,6 +143,7 @@ export const exportDatabaseState = async (identityPubkey: string, network: strin
     if (canShareFiles()) {
       const file = new File([blob], filename, { type: 'application/json' });
       if (navigator.canShare({ files: [file] })) {
+        assertAuthorized?.();
         try {
           await navigator.share({ files: [file], title: 'Glow SDK Database Export' });
           return;
@@ -139,6 +153,7 @@ export const exportDatabaseState = async (identityPubkey: string, network: strin
       }
     }
 
+    assertAuthorized?.();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

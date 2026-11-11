@@ -1,8 +1,12 @@
-import {connect, defaultServerConfig, type BreezSdk, type LightningAddressInfo, type Seed} from '@breeztech/breez-sdk-spark';
+import {defaultExternalSignersFromSeed, defaultServerConfig, SdkBuilder, type BreezSdk, type LightningAddressInfo, type Seed} from '@breeztech/breez-sdk-spark';
 import {sdkReady} from './sdkReady';
 import {assertNativeLightningAddress, NATIVE_LIGHTNING_DOMAIN} from './nativeLightningAddress';
+import {assertCurrentSession, getSpendingSessionEpoch, isSpendingSessionLocked, matchesSignerIdentity} from '../security/spendApproval';
+import {guardExternalSigners} from '../security/guardedExternalSigners';
+import {createBrowserSdkLifetime, waitForBrowserSdkShutdowns} from '../security/browserSdkLifetime';
 
 export {assertNativeLightningAddress, NATIVE_LIGHTNING_DOMAIN} from './nativeLightningAddress';
+export type NativeLightningCapabilities = Pick<BreezSdk, 'checkLightningAddressAvailable' | 'registerLightningAddress'>;
 
 async function clearTemporaryStorage(directory: string): Promise<void> {
   const databases = await indexedDB.databases();
@@ -25,36 +29,68 @@ export async function withNativeLightningSession<T>(options: {
   apiKey: string;
   expectedIdentityPubkey: string;
   ensureActive?: () => void;
-  use: (session: {sdk: BreezSdk; identityPubkey: string; address: LightningAddressInfo | null}) => Promise<T>;
+  use: (session: {sdk: NativeLightningCapabilities; identityPubkey: string; address: LightningAddressInfo | null}) => Promise<T>;
 }): Promise<T> {
+  const epoch = getSpendingSessionEpoch();
+  let closed = false;
+  const ensureActive = () => {
+    assertCurrentSession(epoch);
+    if (closed || isSpendingSessionLocked()) throw new Error('Wallet session is locked or closed');
+    options.ensureActive?.();
+  };
+  ensureActive();
   if (typeof indexedDB === 'undefined' || typeof indexedDB.databases !== 'function') {
     throw new Error('This browser cannot set up a Lightning name. Please try an updated browser.');
   }
   await sdkReady();
-  options.ensureActive?.();
+  await waitForBrowserSdkShutdowns();
+  if (!await matchesSignerIdentity(options.seed)) throw new Error('The selected passkey belongs to a different wallet. Please use this wallet’s passkey.');
+  ensureActive();
   const directory = `getyoursats-lnurl-session-${crypto.randomUUID()}`;
   const config = defaultServerConfig('mainnet');
   config.apiKey = options.apiKey;
   config.lnurlDomain = NATIVE_LIGHTNING_DOMAIN;
-  let sdk: BreezSdk | undefined;
+  config.backgroundTasksEnabled = false;
+  config.realTimeSyncServerUrl = undefined;
+  config.crossChainConfig = undefined;
+  config.stableBalanceConfig = undefined;
+  config.leafOptimizationConfig = {...config.leafOptimizationConfig, autoEnabled: false};
+  config.tokenOptimizationConfig = {...config.tokenOptimizationConfig, autoEnabled: false};
+  const signers = guardExternalSigners(defaultExternalSignersFromSeed(options.seed, 'mainnet', undefined));
+  const lifetime = createBrowserSdkLifetime(signers);
   try {
-    sdk = await connect({config, seed: options.seed, storageDir: directory});
-    options.ensureActive?.();
+    const builder = SdkBuilder.newWithSigner(config, signers.breezSigner, signers.sparkSigner)
+      .withPaymentObserver({beforeSend: async () => {throw new Error('Lightning name sessions cannot send payments');}, afterSend: async () => {}});
+    const sdk = await lifetime.attach(await (await builder.withDefaultStorage(directory)).build());
+    ensureActive();
     const proof = await sdk.signMessage({message: 'gys-native-lnurl-session-v1', compact: true});
-    options.ensureActive?.();
+    ensureActive();
     if (!/^(02|03)[a-f0-9]{64}$/i.test(proof.pubkey)
       || proof.pubkey.toLowerCase() !== options.expectedIdentityPubkey.toLowerCase()) {
       throw new Error('The selected passkey belongs to a different wallet. Please use this wallet’s passkey.');
     }
     const address = await sdk.getLightningAddress() ?? null;
-    options.ensureActive?.();
+    ensureActive();
     if (address) assertNativeLightningAddress(address);
-    return await options.use({sdk, identityPubkey: proof.pubkey, address});
+    const capabilities: NativeLightningCapabilities = Object.freeze(Object.assign(Object.create(null), {
+      checkLightningAddressAvailable: async (request: Parameters<BreezSdk['checkLightningAddressAvailable']>[0]) => {
+        ensureActive();
+        const result = await sdk.checkLightningAddressAvailable(structuredClone(request));
+        ensureActive();
+        return result;
+      },
+      registerLightningAddress: async (request: Parameters<BreezSdk['registerLightningAddress']>[0]) => {
+        ensureActive();
+        const result = await sdk.registerLightningAddress(structuredClone(request));
+        ensureActive();
+        assertNativeLightningAddress(result);
+        return result;
+      },
+    }));
+    return await options.use({sdk: capabilities, identityPubkey: proof.pubkey, address});
   } finally {
-    if (sdk) {
-      try {await sdk.disconnect();} catch { /* Cleanup must not hide a confirmed registration. */ }
-      try {sdk.free();} catch { /* The temporary signer must not outlive its completed operation. */ }
-    }
+    closed = true;
+    await lifetime.stop();
     try {await clearTemporaryStorage(directory);} catch { /* Only this random session's databases are eligible for cleanup. */ }
   }
 }

@@ -17,7 +17,7 @@ interface SparkWorkflowProps {
 }
 
 const SparkWorkflow: React.FC<SparkWorkflowProps> = ({ method, amountSats, feesIncluded, conversionEstimate, balanceSats, tokenBalance, recipient, isLoading=false, onBack, onSend }) => {
-  const validFee=method.fee>=0n&&method.fee<=BigInt(Number.MAX_SAFE_INTEGER);
+  const validFee=typeof method.fee==='bigint'&&method.fee>=0n&&method.fee<=BigInt(Number.MAX_SAFE_INTEGER);
   const feesSat=validFee?Number(method.fee):null;
   const handleSend = () => onSend();
   return <ConfirmStep amountSats={amountSats} feesSat={feesSat} feesIncluded={feesIncluded} conversionEstimate={conversionEstimate} balanceSats={balanceSats} tokenBalance={tokenBalance} destination={recipient??getSendDestination(method)} error={validFee?null:'Couldn’t get a quote'} disableConfirm={!validFee} isLoading={isLoading} onBack={onBack} onConfirm={handleSend} />;

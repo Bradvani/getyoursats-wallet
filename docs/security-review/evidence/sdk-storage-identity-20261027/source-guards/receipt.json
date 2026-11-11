@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "sourceCommit": "1e8cd959eb937530746d21ad84ea2fb809fad9ff",
+  "sourceTree": "69e75c7591b815282027afb5eea9eb440bb743f5",
+  "result": "PASS_OFFLINE_SOURCE_GUARDS",
+  "normalization": "Only the absolute worktree prefix is replaced with <worktree> in published logs.",
+  "gates": [
+    {
+      "gate": "canonical",
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "file": "canonical.log.gz",
+      "originalSha256": "9ac046300e6be512117dce657c2c0081b56ab769b3fc9f0cc41a317561c5527b",
+      "publishedTextSha256": "9ac046300e6be512117dce657c2c0081b56ab769b3fc9f0cc41a317561c5527b",
+      "gzipSha256": "932a5d31889b79338aabd5b378527bbe9fda9eca222ef6a282c696423b1a7b46"
+    },
+    {
+      "gate": "python",
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "file": "python.log.gz",
+      "originalSha256": "c181ead97709a23133b69c4d775c228f1046084007193614607ade10e0f84038",
+      "publishedTextSha256": "c181ead97709a23133b69c4d775c228f1046084007193614607ade10e0f84038",
+      "gzipSha256": "9a794911ca604eb086e6a11c417dff5d06d9342fd56355dda5b9177b710530bc"
+    },
+    {
+      "gate": "node",
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0,
+      "file": "node.log.gz",
+      "originalSha256": "3ff4a90a03f396f5bbc14dccbd87e6ccf1d5f5fdd6087a761f9b2899991dd9c3",
+      "publishedTextSha256": "3ff4a90a03f396f5bbc14dccbd87e6ccf1d5f5fdd6087a761f9b2899991dd9c3",
+      "gzipSha256": "68dff4edb86b640bf28f627f16b318a93ca5030da6036627884684e6dad3e840"
+    }
+  ],
+  "sdkImported": false,
+  "compiledSuccessorTested": false,
+  "providerAcceptance": false,
+  "productionPromoted": false
+}

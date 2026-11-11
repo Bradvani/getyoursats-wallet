@@ -1,0 +1,21 @@
+Breez SDK: Failed to load Node.js storage: better-sqlite3 not found. Please install it in your project: npm install better-sqlite3@^9.2.2
+Original error: Cannot find module 'better-sqlite3'
+Require stack:
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/combined/extracted/package/nodejs/storage/index.cjs
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/combined/extracted/package/nodejs/index.js
+Fallback error: Cannot find module 'better-sqlite3'
+Require stack:
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/combined/extracted/package/nodejs/storage/index.cjs
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/combined/extracted/package/nodejs/index.js
+Breez SDK: Storage operations may not work properly. Ignore this warning if you are not using the default storage.
+Breez SDK: Failed to load Node.js tree store: better-sqlite3 not found. Please install it in your project: npm install better-sqlite3@^9.2.2
+Original error: Cannot find module 'better-sqlite3'
+Require stack:
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/combined/extracted/package/nodejs/tree-store/index.cjs
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/combined/extracted/package/nodejs/index.js
+Fallback error: Cannot find module 'better-sqlite3'
+Require stack:
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/combined/extracted/package/nodejs/tree-store/index.cjs
+- /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/package/combined/extracted/package/nodejs/index.js
+Breez SDK: Tree state will not be persisted. Ignore this warning if you are not using the default storage.
+{"test":"installed observation/recovery API, generated correlation models and artifact integrity","result":"PASS","extensions":["seed-compatible-external-signers-v1","observation-only-wallet-state-v1","signed-recovery-v1","explicit-incoming-claim-v1","bounded-mature-deposit-claim-v1","strict-transfer-evidence-v1","bounded-deposit-observation-v1","incoming-lightning-observation-v1","external-exit-envelope-validation-v1"],"methods":10,"models":5,"runtimeMethodTargets":["nodejs","web"],"browserWasmObservationExport":true,"generatedTargets":4,"artifacts":17,"walletOperationsInvoked":false,"networkCallsInstrumented":false}

@@ -1,0 +1,23 @@
+   Compiling spark v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/spark)
+   Compiling macros v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/macros)
+   Compiling platform-utils v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/platform-utils)
+   Compiling utils v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/utils)
+   Compiling breez-sdk-common v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/breez-sdk/common)
+   Compiling breez-sdk-spark v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/breez-sdk/core)
+   Compiling lnurl-models v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/breez-sdk/lnurl-models)
+   Compiling breez-sdk-spark-wasm v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/breez-sdk/wasm)
+   Compiling spark-wallet v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/spark-wallet)
+   Compiling flashnet v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/flashnet)
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `breez-sdk-spark` (lib) generated 1 warning
+    Finished `release` profile [optimized + debuginfo] target(s) in 4m 20s

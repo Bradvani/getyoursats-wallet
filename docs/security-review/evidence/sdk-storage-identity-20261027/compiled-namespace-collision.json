@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "observedAt": "2026-10-27T07:42:36.333Z",
+  "result": "CONFIRMED",
+  "scope": "Compiled WASM builder interrupted at the first default-storage factory before storage opening and core SDK startup",
+  "packageVersion": "0.1.0-getyoursats.recovery.1",
+  "wasmSha256": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+  "harnessSha256": "34a830be7eeae09095ff7116584abdbd94aec1f5b3c89e0a0bd4dd15556c1806",
+  "cases": 4,
+  "constructorInvocations": 12,
+  "results": [
+    {
+      "network": "mainnet",
+      "fixture": "published-bip39-vector",
+      "publicIdentity": "0281363910b0dc0015a4a25e758da30f0e28388ea5252c0e3713936f2d4ef7d3d5",
+      "seeded": "spark-wallet-example/mainnet/d2ea863c",
+      "external": "spark-wallet-example/mainnet/9ce7940a",
+      "signingOnly": "spark-wallet-example/mainnet/9ce7940a"
+    },
+    {
+      "network": "mainnet",
+      "fixture": "public-raw-bip32-fixture",
+      "publicIdentity": "030f83925c7247bcc020ec5e1ec86139ebcd351cb6592968b34c92922a62674ac3",
+      "seeded": "spark-wallet-example/mainnet/958a2438",
+      "external": "spark-wallet-example/mainnet/9ce7940a",
+      "signingOnly": "spark-wallet-example/mainnet/9ce7940a"
+    },
+    {
+      "network": "regtest",
+      "fixture": "published-bip39-vector",
+      "publicIdentity": "02698b27ac308b275671b3ca25436346469d04a5bba578ae39feba1d65897a6abc",
+      "seeded": "spark-wallet-example/regtest/da91de82",
+      "external": "spark-wallet-example/regtest/2687e55a",
+      "signingOnly": "spark-wallet-example/regtest/2687e55a"
+    },
+    {
+      "network": "regtest",
+      "fixture": "public-raw-bip32-fixture",
+      "publicIdentity": "023adb59165f857dd77504b0cb2bd2c38d7f7e179a7429aedf747682b0aa7dd88d",
+      "seeded": "spark-wallet-example/regtest/e14ea653",
+      "external": "spark-wallet-example/regtest/2687e55a",
+      "signingOnly": "spark-wallet-example/regtest/2687e55a"
+    }
+  ],
+  "operations": {
+    "networkAttempts": 0,
+    "storageOpenAttempts": 0,
+    "treeFactoryCalls": 0,
+    "externalSignerIdentityReads": 0,
+    "externalSignerOtherCalls": 0
+  },
+  "limits": [
+    "Published synthetic seed fixtures only",
+    "No real profile or wallet API was used",
+    "No stored records were opened, modified, or enumerated",
+    "This proves the default-storage bridge; PostgreSQL and MySQL tenant scoping are source-traced, not executed",
+    "Installed compiled package is the retained 0005 build; pinned source and cumulative 0006 retain the same namespace dataflow"
+  ]
+}

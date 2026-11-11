@@ -1,0 +1,251 @@
+{
+  "schemaVersion": 1,
+  "verificationDateUtc": "2026-10-26",
+  "sourceRevision": "d0d85e30e4ef48cafa33c5060d1a5ee5450e315c",
+  "sourceTree": "ea394118c675700674b8bdc0471abdb8e3f270b6",
+  "productionDecision": "NO-GO",
+  "productionInterlockEnabled": true,
+  "deployed": false,
+  "realFundsUsed": false,
+  "hostedFundingRetried": false,
+  "inputs": {
+    "previousLocalEvidenceCommit": "1554f07df598f9fe874eb9ed8d7376bcc226b802",
+    "publishedEquivalentPreviousTree": "2329157c3a8aed401c8602f246c76f6e22ecaf3d",
+    "publishedCorrectiveIntegration": "13f7ff73f89ccde9c633cde981ce306c285a0942",
+    "concurrentMainRetained": "77cb496a453823099725977b6f7975a49b24c179",
+    "siteProvenanceFix": "e2edc4da2333d6ec480ec1d14195bbef846562f7",
+    "originalDiscoveryCommit": "60fe2ae06ceda3ae76f32f45224b2b324d002154",
+    "integratedDiscoveryCommit": "3d5923dc3155463fa3a28649293fd27576410746"
+  },
+  "scope": [
+    "Bounded paginated incoming direct-transfer discovery with per-page session checks",
+    "Exact committed site configuration projection provenance",
+    "Concurrent startup/theme behavior and bounded-worker cache compatibility"
+  ],
+  "applicationSourceChangedFrom48e1659": true,
+  "checks": [
+    {
+      "id": "full-unit",
+      "result": "PASS",
+      "passed": 1482,
+      "skipped": 1,
+      "unhandledErrors": 0,
+      "testFilesPassed": 147,
+      "testFilesSkipped": 1,
+      "command": "npm test -- --maxWorkers=2",
+      "exitCode": 0,
+      "log": "unit.log"
+    },
+    {
+      "id": "build-and-typescript",
+      "result": "PASS",
+      "command": "npm run build",
+      "exitCode": 0,
+      "sourceDirty": false,
+      "releaseId": "0aaa172e05828901fb9d",
+      "log": "build.log"
+    },
+    {
+      "id": "lint",
+      "result": "PASS",
+      "errors": 0,
+      "warnings": 8,
+      "command": "npm run lint",
+      "exitCode": 0,
+      "log": "lint.log"
+    },
+    {
+      "id": "release-manifest",
+      "result": "PASS",
+      "passed": 23,
+      "command": "node tests/release-manifest.test.mjs",
+      "exitCode": 0,
+      "log": "manifest.log"
+    },
+    {
+      "id": "service-worker-policy",
+      "result": "PASS",
+      "passed": 9,
+      "command": "node tests/service-worker-policy.test.mjs",
+      "exitCode": 0,
+      "log": "service-worker.log"
+    },
+    {
+      "id": "chromium-security-and-startup",
+      "result": "PASS",
+      "passed": 16,
+      "securityCases": 7,
+      "startupThemeCases": 9,
+      "fixtureOrigin": "http://127.0.0.1:5196",
+      "exitCode": 0,
+      "traceVideoScreenshotsOfRecovery": false,
+      "realSdkSettlement": false,
+      "log": "browser.log"
+    },
+    {
+      "id": "local-built-artifact-chromium",
+      "result": "PASS",
+      "passed": 3,
+      "fixtureOrigin": "http://127.0.0.1:5199",
+      "deployedProduct": false,
+      "exitCode": 0,
+      "log": "built-browser.log"
+    },
+    {
+      "id": "production-interlock",
+      "result": "PASS_EXPECTED_REFUSAL",
+      "command": "VERCEL_ENV=production npx vite build",
+      "exitCode": 1,
+      "bundled": false,
+      "log": "interlock.log"
+    }
+  ],
+  "discoveryRegressionEvidence": {
+    "newCases": 8,
+    "beforeFixFailed": 5,
+    "beforeFixControlsPassed": 3,
+    "focusedAfterFixPassed": 33,
+    "focusedTypecheckAndLint": "Passed in isolated author worktree; combined build/typescript and repository lint passed above.",
+    "focusCountsOverlapFullSuite": true,
+    "missingHistoryNeverReleasesAttemptGuard": true,
+    "discoveryDoesNotClaim": true,
+    "transactionalSnapshotAdded": false
+  },
+  "sdk": {
+    "sourceRevision": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+    "packageSha256": "cbb19e1e16760d63e8cba74a33e21ec75dac6684bc8d389da6c9921b8ba58505",
+    "installedBrowserWasmSha256": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+    "dependencyLockSha256": "93dcb8e7d76f5de9a2e73f3f162df30aadeb71d2169dfb2490611b4b5fb8b4bb",
+    "rebuilt": false
+  },
+  "verifiedUnchangedObjects": [
+    {
+      "path": "package.json",
+      "gitObject": "c91ef21900d397ee10f345f13f9f3ede81675de1",
+      "identicalToEarlierTestedSource": true
+    },
+    {
+      "path": "package-lock.json",
+      "gitObject": "5d0ee775a224094e139c563be180625c5fe19401",
+      "identicalToEarlierTestedSource": true
+    },
+    {
+      "path": "vendor",
+      "gitObject": "1de3b84c33189d5bdce4dd3dab5d503c647b635a",
+      "identicalToEarlierTestedSource": true
+    },
+    {
+      "path": "vite.config.ts",
+      "gitObject": "38d83025fda7ca6d92f1c87caad817abbe4c3219",
+      "identicalToEarlierTestedSource": true
+    },
+    {
+      "path": "src/security/operationGateway.ts",
+      "gitObject": "fc0990526a104743006c0c5760a63d54b5612c19",
+      "identicalToEarlierTestedSource": true
+    },
+    {
+      "path": "src/security/browserReleasePolicy.ts",
+      "gitObject": "d7ffa572f791bdb55a45714d63f88d26e1a7bcf0",
+      "identicalToEarlierTestedSource": true
+    },
+    {
+      "path": "src/security/signedRecoveryController.ts",
+      "gitObject": "8954dce2c3a6171bdf490b87adf131495dac3e34",
+      "identicalToEarlierTestedSource": true
+    },
+    {
+      "path": "src/security/depositClaimController.ts",
+      "gitObject": "621edf0f3a2eb5aed50eb2f4233c9e7d23a820e8",
+      "identicalToEarlierTestedSource": true
+    }
+  ],
+  "earlierReceiptsRemainSeparate": [
+    "evidence/security-review/settlement-receive-containment-20261027.json",
+    "evidence/security-review/settlement-receive-containment-20261027/public-regtest-attempt.json"
+  ],
+  "hostedProtocolBoundary": "The successful actual-SDK connection and rejected faucet request identify earlier source48e1659. No hosted funded settlement was established and no network funding retry followed. Existing profiles and uncertain stranded claim remain unchanged.",
+  "remainingSdkContractsDocument": "docs/security-review/remaining-sdk-contracts-20261027.md",
+  "remainingReleaseBoundaries": [
+    "Bounded Lightning execution and authoritative reconciliation",
+    "Complete uncertain deposit correlation and recovery",
+    "Durable fresh/rebuilt unilateral exit construction with exact semantics",
+    "Actual final-SDK enabled-route settlement after authorized manual regtest funding",
+    "Physical devices, separate trusted-device recovery and original-origin funded-state rollout",
+    "Sensitive-copy localization, RTL and accessibility acceptance",
+    "Qualified independent source and artifact audit"
+  ],
+  "publicationBoundary": "Local source and tree identify the tested implementation. A later docs/evidence-only commit or rewritten remote publication must be separately recorded and tree equivalence checked.",
+  "artifacts": [
+    {
+      "path": "evidence/security-review/final-main-integration-20261027/unit.log",
+      "sha256": "9d0c56bcbbb47ca91c1e36636be9e2d20f8262b78bce62cd7ffa3154c0442680",
+      "bytes": 437,
+      "rawLocalLogSha256": "a46a6f0ae7851624a5862610cabdfb0c051c7c15c93a7ab699244642b334cd41",
+      "normalization": "Terminal control sequences and trailing whitespace removed only."
+    },
+    {
+      "path": "evidence/security-review/final-main-integration-20261027/build.log",
+      "sha256": "82c425a7e5d53557e31c1b073c715eaaa9096f76670b53f3b1a1c5b648a9a724",
+      "bytes": 46703,
+      "rawLocalLogSha256": "f4d82130f19d9d0645068833a65e39735a37d0226bb2fcde8b9efc1b0e269321",
+      "normalization": "Terminal control sequences and trailing whitespace removed only."
+    },
+    {
+      "path": "evidence/security-review/final-main-integration-20261027/lint.log",
+      "sha256": "2721e0ebe2e6b727b420eb63ad4bae39c7ffd4001e6f8a4c62984b0114c237b1",
+      "bytes": 6600,
+      "rawLocalLogSha256": "d425965655bf255f9b8d56b0755e317b86a4388c9183bf83ad7dff0da9561e29",
+      "normalization": "Terminal control sequences and trailing whitespace removed only."
+    },
+    {
+      "path": "evidence/security-review/final-main-integration-20261027/manifest.log",
+      "sha256": "cffa9f424dd8cbc2e38cd34c757060350505d70f93a14085c79c33d1cc7ef1a2",
+      "bytes": 2268,
+      "rawLocalLogSha256": "cffa9f424dd8cbc2e38cd34c757060350505d70f93a14085c79c33d1cc7ef1a2",
+      "normalization": "Terminal control sequences and trailing whitespace removed only."
+    },
+    {
+      "path": "evidence/security-review/final-main-integration-20261027/service-worker.log",
+      "sha256": "1383eb9491f03ae071e8a139c1ce17e9b11b8f0ca9d63ba2deca5008f313913e",
+      "bytes": 925,
+      "rawLocalLogSha256": "1383eb9491f03ae071e8a139c1ce17e9b11b8f0ca9d63ba2deca5008f313913e",
+      "normalization": "Terminal control sequences and trailing whitespace removed only."
+    },
+    {
+      "path": "evidence/security-review/final-main-integration-20261027/browser.log",
+      "sha256": "6672aaa80fbfe3b41ea4ac59d1b5d3cbbe6bdf9d267d8b14ee32450ba8bab006",
+      "bytes": 4169,
+      "rawLocalLogSha256": "4a01707605fb6e5bac56a9375c571c40a58854dcb9c406874307efdf8d802009",
+      "normalization": "Terminal control sequences and trailing whitespace removed only."
+    },
+    {
+      "path": "evidence/security-review/final-main-integration-20261027/built-browser.log",
+      "sha256": "1d257b457daa0c4b388bf01ce196429c47cba8da8389ecdf064cf1e1e29d4093",
+      "bytes": 2038,
+      "rawLocalLogSha256": "5a66a537e2c6ef1c6483166a320a627006eb7c5e7f1000dba156634d328b6e23",
+      "normalization": "Terminal control sequences and trailing whitespace removed only."
+    },
+    {
+      "path": "evidence/security-review/final-main-integration-20261027/interlock.log",
+      "sha256": "9005849f4f5c8d63c9d81d469c1b37ccfe62bc2fe3f68dbce3ee1d1723ff3e5b",
+      "bytes": 1086,
+      "rawLocalLogSha256": "9005849f4f5c8d63c9d81d469c1b37ccfe62bc2fe3f68dbce3ee1d1723ff3e5b",
+      "normalization": "Terminal control sequences and trailing whitespace removed only."
+    },
+    {
+      "path": "evidence/security-review/final-main-integration-20261027/release-manifest.json",
+      "sha256": "2e942ba9e85755f4f9c70299ab945299913f0058b1fb6067e1377716da5c80bd",
+      "bytes": 109567
+    }
+  ],
+  "publicationReview": {
+    "artifactHashesVerified": 9,
+    "secretPatternFilesScanned": 14,
+    "privateKeyTokenProfilePathOrCertificateFindings": 0,
+    "mnemonicFilesScanned": 12,
+    "validMnemonicFindings": 0,
+    "publishedRepositorySourceLinksVerified": 12,
+    "privateOperatorHandoffPublished": false
+  }
+}

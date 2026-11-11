@@ -19,9 +19,10 @@ import type { ArchivedExit } from './archive';
  * only an exit has, since the exit fee was paid from another wallet and this
  * is the one place it is recorded.
  */
-export const ArchivedExitDialog: React.FC<{ exit: ArchivedExit; onClose: () => void }> = ({
+export const ArchivedExitDialog: React.FC<{ exit: ArchivedExit; onClose: () => void; fundingUnavailable?:boolean }> = ({
   exit,
   onClose,
+  fundingUnavailable=false,
 }) => {
   const [shown, setShown] = useState({ destination: false, exitFeeAddress: false, txid: false });
   const toggle = (field: keyof typeof shown) => setShown(current => ({ ...current, [field]: !current[field] }));
@@ -84,12 +85,15 @@ export const ArchivedExitDialog: React.FC<{ exit: ArchivedExit; onClose: () => v
             onToggle={() => toggle('destination')}
           />
           {exitFeeAddress && (
+            <>
+            {fundingUnavailable&&<p role="status" className="text-sm text-spark-text-secondary">This is a record of an earlier exit. Do not send additional bitcoin to this fee address.</p>}
             <CollapsibleCodeField
               label="Exit Fee Address"
               value={exitFeeAddress}
               isVisible={shown.exitFeeAddress}
               onToggle={() => toggle('exitFeeAddress')}
             />
+            </>
           )}
           {/* The sweep: the transaction that delivered the money. */}
           <CollapsibleCodeField

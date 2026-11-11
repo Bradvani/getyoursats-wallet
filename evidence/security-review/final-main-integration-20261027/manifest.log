@@ -1,0 +1,31 @@
+✔ manifest binds every emitted asset and installed package to the source commit (135.299423ms)
+✔ release ID is deterministic and changes when worker policy changes (372.998708ms)
+✔ production provenance rejects mismatched and missing revisions (321.055171ms)
+✔ untracked build inputs cannot be represented as a clean production source (250.349948ms)
+✔ invalid SDK provenance and missing worker placeholder fail the build (194.169026ms)
+✔ Vercel-only configuration formatting is restored without accepting changed settings (382.914934ms)
+✔ Vercel site builds restore the observed committed site-to-root projection and bind the site artifacts (176.382623ms)
+✔ site projection and same-path formatting are recorded separately before hashing (132.718484ms)
+✔ site projection is rejected for non-Vercel site builds (145.111568ms)
+✔ site projection is rejected for non-exact Vercel flag (149.490587ms)
+✔ site projection is rejected for wallet builds (153.160589ms)
+✔ site projection preserves the clean-source failure for changed projected header (146.014018ms)
+✔ site projection preserves the clean-source failure for added projected setting (156.261186ms)
+✔ site projection preserves the clean-source failure for changed selected site header (151.997951ms)
+✔ site projection preserves the clean-source failure for matching but uncommitted root and site values (138.756416ms)
+✔ site projection preserves the clean-source failure for invalid projected JSON (166.69032ms)
+✔ site projection preserves the clean-source failure for invalid selected site JSON (156.860855ms)
+✔ site projection preserves the clean-source failure for missing root configuration (152.317776ms)
+✔ site projection preserves the clean-source failure for missing site configuration (145.719721ms)
+✔ site projection preserves the clean-source failure for untracked selected site configuration (146.029835ms)
+✔ valid site projection cannot conceal changed tracked input (152.767208ms)
+✔ valid site projection cannot conceal new untracked input (175.914819ms)
+✔ valid site projection cannot conceal staged configuration change (176.529928ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4293.339011

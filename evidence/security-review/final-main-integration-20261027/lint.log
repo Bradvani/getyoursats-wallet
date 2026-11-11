@@ -1,0 +1,92 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> wasm-example-app@1.1.0 lint
+> eslint . --report-unused-disable-directives
+
+
+/workspace/scratch/bc5943411884/getyoursats-security/src/components/CollapsingWalletHeader.tsx
+  163:6  warning  React Hook useMemo has an unnecessary dependency: 'fiatRevision'. Either exclude it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/scratch/bc5943411884/getyoursats-security/src/components/SideMenu.tsx
+  248:16  warning  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/workspace/scratch/bc5943411884/getyoursats-security/src/components/SideMenu.tsx:248:16
+  246 |             {/* Compact navigation: working destinations only. */}
+  247 |             <nav className="flex-1 min-h-0 overflow-y-auto space-y-1" aria-label="Wallet menu">
+> 248 |               {menuItems.map((item, index) => (
+      |                ^^^^^^^^^ Cannot access ref value during render
+  249 |                 <button
+  250 |                   key={index}
+  251 |                   type="button"      react-hooks/refs
+  248:16  warning  Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+/workspace/scratch/bc5943411884/getyoursats-security/src/components/SideMenu.tsx:248:16
+  246 |             {/* Compact navigation: working destinations only. */}
+  247 |             <nav className="flex-1 min-h-0 overflow-y-auto space-y-1" aria-label="Wallet menu">
+> 248 |               {menuItems.map((item, index) => (
+      |                ^^^^^^^^^^^^^ Cannot access ref value during render
+  249 |                 <button
+  250 |                   key={index}
+  251 |                   type="button"  react-hooks/refs
+
+/workspace/scratch/bc5943411884/getyoursats-security/src/features/receive/AmountPanel.tsx
+  132:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/workspace/scratch/bc5943411884/getyoursats-security/src/features/receive/AmountPanel.tsx:132:5
+  130 |     if (resetCount === 0) return;
+  131 |     resetAmount();
+> 132 |     setUnitRaw('');
+      |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  133 |   }, [resetCount, resetAmount]);
+  134 |
+  135 |   // Also clear when the dialog closes via the `isOpen` prop, so the                                      react-hooks/set-state-in-effect
+  139:34  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/workspace/scratch/bc5943411884/getyoursats-security/src/features/receive/AmountPanel.tsx:139:34
+  137 |   // parent hasn't bumped `resetCount`.
+  138 |   useEffect(() => {
+> 139 |     if (!isOpen) {resetAmount(); setUnitRaw('')}
+      |                                  ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  140 |   }, [isOpen, resetAmount]);
+  141 |
+  142 |   const handleToggleDenomination = () => {  react-hooks/set-state-in-effect
+
+/workspace/scratch/bc5943411884/getyoursats-security/src/pages/FiatCurrenciesPage.tsx
+  147:80  warning  React Hook useMemo has a missing dependency: 'selectedCurrencyList'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+  148:83  warning  React Hook useMemo has a missing dependency: 'unselectedCurrencyList'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/scratch/bc5943411884/getyoursats-security/src/pages/GeneratePage.tsx
+  41:6  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/workspace/scratch/bc5943411884/getyoursats-security/src/pages/GeneratePage.tsx:41:6
+  39 |      // BIP39 uses a cryptographically secure random source, not Math.random.
+  40 |      const phrase=bip39.generateMnemonic(128);
+> 41 |      setMnemonic(phrase);
+     |      ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |    }catch(error){
+  43 |      logger.error(LogCategory.AUTH,'Failed to generate recovery phrase',{error:error instanceof Error?error.message:String(error)});
+  44 |      setGenerationError('Secure wallet key generation is unavailable on this device.');  react-hooks/set-state-in-effect
+
+✖ 8 problems (0 errors, 8 warnings)

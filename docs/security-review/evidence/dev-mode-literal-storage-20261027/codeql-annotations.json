@@ -1,0 +1,14 @@
+[
+  {
+    "path": "src/services/settings.ts",
+    "blob_href": "https://github.com/Bradvani/getyoursats-wallet/blob/f912253d7a618f7fdc361e8221d37b6962b7eb8e/src/services/settings.ts",
+    "start_line": 404,
+    "start_column": 38,
+    "end_line": 404,
+    "end_column": 53,
+    "annotation_level": "failure",
+    "title": "Clear text storage of sensitive information",
+    "message": "This stores sensitive data returned by [a call to useSecretTap](1) as clear text.",
+    "raw_details": null
+  }
+]

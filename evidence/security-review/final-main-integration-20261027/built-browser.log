@@ -1,0 +1,32 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+[WebServer] npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+[WebServer] (node:115960) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+[WebServer] 11:56:55 PM [vite] warning: `esbuild` option was specified by "vite-plugin-node-polyfills" plugin. This option is deprecated, please use `oxc` instead.
+
+[WebServer] Both esbuild and oxc options were set. oxc options will be used and esbuild options will be ignored. The following esbuild options were set: `{
+[WebServer]   banner: "import __buffer_polyfill from 'vite-plugin-node-polyfills/shims/buffer'\n" +
+[WebServer]     'globalThis.Buffer = globalThis.Buffer || __buffer_polyfill\n' +
+[WebServer]     "import __global_polyfill from 'vite-plugin-node-polyfills/shims/global'\n" +
+[WebServer]     'globalThis.global = globalThis.global || __global_polyfill\n' +
+[WebServer]     "import __process_polyfill from 'vite-plugin-node-polyfills/shims/process'\n" +
+[WebServer]     'globalThis.process = globalThis.process || __process_polyfill\n'
+[WebServer] }`
+
+
+Running 3 tests using 1 worker
+
+(node:115995) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:115995) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/3] e2e/production/release-boundaries.spec.ts:3:1 › production ignores the removed deposit-fixture query and retains real onboarding
+[2/3] e2e/production/release-boundaries.spec.ts:14:1 › onboarding text stays readable when font requests fail
+[3/3] e2e/production/release-boundaries.spec.ts:25:1 › deployed artifact exposes its source and stamps its service-worker release
+  3 passed (2.3s)

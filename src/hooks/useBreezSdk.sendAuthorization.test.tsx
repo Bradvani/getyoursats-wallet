@@ -2,6 +2,7 @@ import {act, cleanup, renderHook, waitFor} from '@testing-library/react';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import type {BreezSdk, Seed} from '@breeztech/breez-sdk-spark';
 import {useBreezSdk} from './useBreezSdk';
+import {resetNativeSeedSelection} from '../services/nativeSeedSelection';
 
 const mocks = vi.hoisted(() => ({
   connect: vi.fn(), guard: vi.fn(), cancel: vi.fn(), passkeyMode: vi.fn(), label: vi.fn(), rpId: vi.fn(),
@@ -9,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   native: vi.fn(), deviceSupported: vi.fn(), secureSupported: vi.fn(),
   deviceStore: vi.fn(), secureStore: vi.fn(), savedMnemonic: vi.fn(),
   saveMnemonic: vi.fn(), clearMnemonic: vi.fn(), revokePush: vi.fn(),
+  deviceHasSeed: vi.fn(), retrieveSeed: vi.fn(), reconciliation: vi.fn(), wipe: vi.fn(),
 }));
 
 vi.mock('@breeztech/breez-sdk-spark', () => ({initLogging: vi.fn()}));
@@ -51,8 +53,8 @@ vi.mock('../services/secureStorage', () => ({
     storeSeed: mocks.secureStore, retrieveSeed: vi.fn(), clearSeed: vi.fn(async () => {}),
   },
   deviceOnlyStorage: {
-    isSupported: mocks.deviceSupported, hasStoredSeed: vi.fn(async () => false),
-    storeSeed: mocks.deviceStore, retrieveSeed: vi.fn(), clearSeed: vi.fn(async () => {}),
+    isSupported: mocks.deviceSupported, hasStoredSeed: mocks.deviceHasSeed,
+    storeSeed: mocks.deviceStore, retrieveSeed: mocks.retrieveSeed, clearSeed: vi.fn(async () => {}),
   },
 }));
 vi.mock('../services/legacyMnemonicMigration', () => ({
@@ -63,7 +65,13 @@ vi.mock('../services/settings', () => ({
   setCachedStableTicker: vi.fn(), clearNetworkOverride: vi.fn(), clearStableRestorePrompted: vi.fn(),
   ensureSparkPrivateMode: vi.fn(async () => {}),
 }));
-vi.mock('../services/accountDeletion', () => ({wipeAllLocalData: vi.fn(async () => {})}));
+vi.mock('../services/accountDeletion', () => ({wipeAllLocalData: mocks.wipe}));
+// These connection-boundary tests supply the SDK's removal capability. The
+// controller's journal/locking policy is exercised by the gateway suites.
+vi.mock('../security/operationGateway', async importOriginal => ({
+  ...await importOriginal<typeof import('../security/operationGateway')>(),
+  getOperationReconciliation: mocks.reconciliation,
+}));
 vi.mock('../services/pushLifecycle', () => ({revokeBrowserPushOnLogout: mocks.revokePush}));
 vi.mock('../services/appLock', () => ({clearPin: vi.fn(), isAppLockSupported: vi.fn(() => false)}));
 vi.mock('../contexts/WalletContext', () => ({hasConversionInFlight: vi.fn(() => false)}));
@@ -77,7 +85,7 @@ type GuardPolicy = {
 };
 function client(): BreezSdk {
   return {
-    getInfo: vi.fn(async () => ({identityPubkey: 'test-identity'})),
+    getInfo: vi.fn(async () => ({identityPubkey: '0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798', balanceSats: 0, recoverableFundsSats: 0})),
     listPayments: vi.fn(async () => ({payments: []})),
     listUnclaimedDeposits: vi.fn(async () => ({deposits: []})),
     disconnect: vi.fn(async () => {}),
@@ -97,6 +105,8 @@ function deferred<T>() {
 }
 
 beforeEach(() => {
+  localStorage.clear();
+  resetNativeSeedSelection();
   mocks.connect.mockReset().mockImplementation(async () => client());
   mocks.guard.mockReset().mockImplementation(async (sdk: BreezSdk) => new Proxy(sdk, {}));
   mocks.passkeyMode.mockReset().mockReturnValue(false);
@@ -107,6 +117,10 @@ beforeEach(() => {
   mocks.derive.mockReset();
   mocks.native.mockReset().mockReturnValue(false);
   mocks.deviceSupported.mockReset().mockReturnValue(false);
+  mocks.deviceHasSeed.mockReset().mockResolvedValue(false);
+  mocks.retrieveSeed.mockReset().mockResolvedValue(seed);
+  mocks.reconciliation.mockReset().mockReturnValue({withWalletRemovalLock: (remove: () => Promise<void>) => remove()});
+  mocks.wipe.mockReset().mockResolvedValue(undefined);
   mocks.secureSupported.mockReset().mockReturnValue(false);
   mocks.savedMnemonic.mockReset().mockReturnValue(null);
   mocks.revokePush.mockReset().mockResolvedValue(undefined);
@@ -125,18 +139,20 @@ describe('send authorization at wallet connection boundaries', () => {
     expect(mocks.saveMnemonic).not.toHaveBeenCalled();
   });
 
-  it('does not attach another wallet passkey to a phrase restore even with stale passkey metadata', async () => {
+  it('refuses an unprotected browser phrase restore even with stale passkey metadata', async () => {
     const {result} = await mount();
     mocks.passkeyMode.mockReturnValue(true);
-    await act(async () => { await result.current.connectWallet(seed, true); });
+    await act(async () => { await expect(result.current.connectWallet(seed, true)).rejects.toThrow('Protect the wallet with a password'); });
     expect(mocks.guard).not.toHaveBeenCalled();
-    expect(mocks.saveMnemonic).toHaveBeenCalledWith(seed.mnemonic);
+    expect(mocks.connect).not.toHaveBeenCalled();
+    expect(mocks.saveMnemonic).not.toHaveBeenCalled();
   });
 
   it.each([true, false])('preserves native vault reconnect storage for passkey mode %s', async (passkeyMode) => {
     const {result} = await mount();
     mocks.native.mockReturnValue(true);
     mocks.deviceSupported.mockReturnValue(true);
+    mocks.deviceHasSeed.mockResolvedValue(true);
     mocks.passkeyMode.mockReturnValue(passkeyMode);
     await act(async () => { await result.current.connectWallet(seed, false, undefined, 'secureStorage'); });
     expect(mocks.guard).toHaveBeenCalledTimes(passkeyMode ? 1 : 0);
@@ -223,11 +239,24 @@ describe('send authorization at wallet connection boundaries', () => {
       outcome = result.current.connectWallet(seed, false, 'Personal').then(() => 'connected', () => 'refused');
     });
     await waitFor(() => expect(mocks.guard).toHaveBeenCalledOnce());
-    await act(async () => { await result.current.handleLogout(); });
+    await act(async () => { await expect(result.current.handleLogout()).rejects.toThrow('Wallet data was preserved'); });
     await act(async () => { pendingGuard.resolve(client()); await outcome; });
     expect(await outcome).toBe('refused');
     expect(result.current.sdk).toBeNull();
     expect(result.current.isConnected).toBe(false);
+    expect(mocks.wipe).not.toHaveBeenCalled();
+  });
+
+  it('preserves an active wallet when its removal capability is unavailable', async () => {
+    const {result} = await mount();
+    await act(async () => { await result.current.connectWallet(seed, false, 'Personal'); });
+    const original = result.current.sdk;
+    mocks.reconciliation.mockReturnValueOnce(null);
+    await act(async () => { await expect(result.current.handleLogout()).rejects.toThrow('Cannot verify payment recovery records'); });
+    expect(result.current.sdk).toBe(original);
+    expect(policy().isActive()).toBe(true);
+    expect(original!.disconnect).not.toHaveBeenCalled();
+    expect(mocks.wipe).not.toHaveBeenCalled();
   });
 
   it('revokes send approval as logout starts even while push cleanup is pending', async () => {

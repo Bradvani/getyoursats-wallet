@@ -1,3 +1,4 @@
+import {isRestrictedBrowserWallet,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
 import {normalizeDecimalInput, validAmountInput} from '../../../utils/decimalInput';
 import {useFlowText} from '@/hooks/useFlowText';
 import {usePresentation} from '@/hooks/usePresentation';
@@ -14,7 +15,7 @@ import { SpinnerIcon } from '../../../components/Icons';
 import CurrencySwitcher from '../../../components/ui/CurrencySwitcher';
 import { useAmountInput, useFiatOverride } from '../../../hooks/useAmountInput';
 import { useBalanceValidation } from '../hooks/useBalanceValidation';
-import { useHasPendingConversion } from '../../../contexts/WalletContext';
+import { useHasPendingConversion, useWalletConnection } from '../../../contexts/WalletContext';
 import { dismissKeyboard } from '../../../utils/keyboard';
 import { SatAmount } from '../../../components/SatAmount';
 import {getDisplayFiatCurrency} from '../../../services/settings';
@@ -81,6 +82,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
 
   const balance = useBalanceValidation(isTokenMode, setIsTokenMode, balanceSats, tokenBalance, fiatOverride);
   const hasPendingConversion = useHasPendingConversion();
+  const {sdk:policyWallet}=useWalletConnection();
+  const maxUnavailable=!!policyWallet&&isRestrictedBrowserWallet(policyWallet);
   useSheetBack(isLoading ? undefined : onBack);
 
   const [feesIncluded, setFeesIncluded] = useState(false);
@@ -256,8 +259,8 @@ const AmountStep: React.FC<AmountStepProps> = ({
                 setFeesIncluded(true);
                 setLocalError(null);
               }}
-              disabled={isLoading || tokenSendAllBelowThreshold || hasPendingConversion}
-              title={hasPendingConversion ? text.updating : text.feesHint}
+              disabled={maxUnavailable || isLoading || tokenSendAllBelowThreshold || hasPendingConversion}
+              title={maxUnavailable ? UNAVAILABLE_MAX_MESSAGE : hasPendingConversion ? text.updating : text.feesHint}
               aria-pressed={isSendAll}
               className="gys-send-max-action min-h-11 min-w-11 shrink-0 rounded-lg px-2 text-sm font-semibold text-spark-primary underline disabled:opacity-40"
             >

@@ -1,0 +1,25 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+[WebServer] (node:220481) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 9 tests using 1 worker
+
+(node:220494) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+(node:220494) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1/9] [chromium] › e2e/tests/sdk-storage-cas.spec.ts:5:1 › same-store reservations have one winner across independent connections
+[2/9] [chromium] › e2e/tests/sdk-storage-cas.spec.ts:32:1 › competing phase updates preserve the single winning value
+[3/9] [chromium] › e2e/tests/sdk-storage-cas.spec.ts:59:1 › request success cannot acknowledge an aborted transaction
+[4/9] [chromium] › e2e/tests/sdk-storage-cas.spec.ts:93:1 › acknowledgement follows transaction completion
+[5/9] [chromium] › e2e/tests/sdk-storage-cas.spec.ts:131:1 › malformed inputs and malformed stored values remain blocked and preserved
+[6/9] [chromium] › e2e/tests/sdk-storage-cas.spec.ts:166:1 › unsupported strict durability aborts before the read or write
+[7/9] [chromium] › e2e/tests/sdk-storage-cas.spec.ts:189:1 › exact strings are compared without normalization or coercion
+[8/9] [chromium] › e2e/tests/sdk-storage-cas.spec.ts:207:1 › two tabs sharing one database cannot both reserve the same attempt
+[9/9] [chromium] › e2e/tests/sdk-storage-cas.spec.ts:223:1 › the tested adapter is identified and closed storage rejects access
+  9 passed (1.9s)
