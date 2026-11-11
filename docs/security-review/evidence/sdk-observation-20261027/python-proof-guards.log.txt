@@ -1,0 +1,17 @@
+test_duplicate_or_terminal_declaration_is_rejected (__main__.OutcomeProofTests.test_duplicate_or_terminal_declaration_is_rejected) ... ok
+test_exact_nonterminal_union_is_accepted (__main__.OutcomeProofTests.test_exact_nonterminal_union_is_accepted) ... ok
+test_unquoted_type_widening_is_rejected_after_old_false_positive (__main__.OutcomeProofTests.test_unquoted_type_widening_is_rejected_after_old_false_positive) ... ok
+test_clean_baseline_is_accepted (__main__.SourceProofTests.test_clean_baseline_is_accepted) ... ok
+test_complete_head_diff_covers_staged_and_unstaged_changes (__main__.SourceProofTests.test_complete_head_diff_covers_staged_and_unstaged_changes) ... ok
+test_declared_new_source_is_included_before_comparison (__main__.SourceProofTests.test_declared_new_source_is_included_before_comparison) ... ok
+test_staged_baseline_cannot_pass_clean_gate (__main__.SourceProofTests.test_staged_baseline_cannot_pass_clean_gate) ... ok
+test_staged_source_cannot_hide_outside_patch (__main__.SourceProofTests.test_staged_source_cannot_hide_outside_patch) ... ok
+test_undeclared_new_source_is_rejected (__main__.SourceProofTests.test_undeclared_new_source_is_rejected) ... ok
+test_untracked_baseline_is_rejected (__main__.SourceProofTests.test_untracked_baseline_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.147s
+
+OK
+Complete SDK source verified: 2 patched files
+Complete SDK source verified: 2 patched files

@@ -3,7 +3,7 @@
  * Dedicated sandbox storage is mandatory; account/support stores are never an
  * automatic fallback. Redis must provide persistent storage without eviction.
  */
-import {applyRampnowOrderEvent, decimalAmount, rampnowOrderState, RampnowError} from './rampnow.mjs';
+import {applyRampnowOrderEvent, decimalAmount, rampnowOrderState, rampnowStateTimestamp, rampnowTimestamp, RampnowError} from './rampnow.mjs';
 
 export const RAMPNOW_STORE_PREFIX = 'gys:rampnow:{sandbox}:v1:';
 const EVENT_TTL = 7 * 86400;
@@ -36,23 +36,45 @@ export function sandboxRampnowConfig(env = process.env) {
   return {url: url.href, token};
 }
 
-/** Explicit allow-list removes customer, wallet address, bank and KYC fields. */
-export function normalizeRampnowEvent(event) {
-  need(object(event) && identifier(event.eventUid) && event.eventType === 'ramp_order.status_change'
-    && object(event.payload), 'RAMPNOW_EVENT_INVALID');
+/** Fixed field/type labels only. These diagnostics never retain provider values. */
+export function rampnowEventValidationIssues(event) {
+  const issues = [];
+  const kind = value => value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value;
+  const check = (valid, field, value) => { if (!valid) issues.push({field, type: kind(value)}); };
+  check(object(event), 'event', event);
+  if (!object(event)) return issues;
+  check(identifier(event.eventUid), 'eventUid', event.eventUid);
+  check(event.eventType === 'ramp_order.status_change', 'eventType', event.eventType);
+  check(object(event.payload), 'payload', event.payload);
+  if (!object(event.payload)) return issues;
   const p = event.payload;
-  need(identifier(p.orderUid) && identifier(p.externalOrderUid)
-    && ['buy', 'sell'].includes(p.orderType)
-    && typeof p.orderStatus === 'string' && /^[a-z_]{1,64}$/.test(p.orderStatus)
-    && typeof p.updateTime === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(p.updateTime)
-    && Number.isFinite(Date.parse(p.updateTime))
-    && decimalAmount(p.dstFillAmount, p.orderStatus === 'completed'), 'RAMPNOW_EVENT_INVALID');
+  check(identifier(p.orderUid), 'orderUid', p.orderUid);
+  check(identifier(p.externalOrderUid), 'externalOrderUid', p.externalOrderUid);
+  check(['buy', 'sell'].includes(p.orderType), 'orderType', p.orderType);
+  check(typeof p.orderStatus === 'string' && /^[a-z_]{1,64}$/.test(p.orderStatus), 'orderStatus', p.orderStatus);
+  const validTime = rampnowTimestamp(p.updateTime) !== null;
+  check(validTime, 'updateTime', p.updateTime);
+  if (!validTime && typeof p.updateTime === 'string') {
+    // Classification is diagnostic only; no provider string is copied.
+    const issue = issues.at(-1);
+    issue.format = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{4,9}Z$/.test(p.updateTime)
+      ? 'utc_submillisecond' : /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?[+-]\d{2}:\d{2}$/.test(p.updateTime)
+        ? 'iso_offset' : 'other';
+  }
+  check(decimalAmount(p.dstFillAmount, p.orderStatus === 'completed'), 'dstFillAmount', p.dstFillAmount);
   for (const key of ['srcCurrency', 'dstCurrency']) {
-    need(typeof p[key] === 'string' && /^[A-Z0-9]{2,16}$/.test(p[key]), 'RAMPNOW_EVENT_INVALID');
+    check(typeof p[key] === 'string' && /^[A-Z0-9]{2,16}$/.test(p[key]), key, p[key]);
   }
   for (const key of ['srcChain', 'dstChain']) {
-    need(typeof p[key] === 'string' && /^[a-z0-9_-]{1,40}$/.test(p[key]), 'RAMPNOW_EVENT_INVALID');
+    check(typeof p[key] === 'string' && /^[a-z0-9_-]{1,40}$/.test(p[key]), key, p[key]);
   }
+  return issues;
+}
+
+/** Explicit allow-list removes customer, wallet address, bank and KYC fields. */
+export function normalizeRampnowEvent(event) {
+  need(rampnowEventValidationIssues(event).length === 0, 'RAMPNOW_EVENT_INVALID');
+  const p = event.payload;
   const keys = ['orderUid', 'externalOrderUid', 'orderType', 'srcCurrency', 'srcChain', 'dstCurrency', 'dstChain',
     'orderStatus', 'updateTime', 'dstFillAmount'];
   return {eventUid: event.eventUid, eventType: event.eventType,
@@ -120,12 +142,12 @@ function readState(raw) {
   if (raw === null) return null;
   const state = storedObject(raw);
   need(identifier(state.orderUid) && identifier(state.externalOrderUid) && identifier(state.eventUid)
-    && Number.isSafeInteger(state.updatedAt) && typeof state.status === 'string'
+    && rampnowStateTimestamp(state) && typeof state.status === 'string'
     && /^[a-z_]{1,64}$/.test(state.status) && decimalAmount(state.dstFillAmount, false)
     && state.keepObserving === true && state.needsReconciliation === true
     && state.phase === rampnowOrderState(state.status).phase);
   // Reconstruct an allow-listed record, even if a stored record is malformed.
-  const keys = ['orderUid', 'externalOrderUid', 'eventUid', 'updatedAt', 'status', 'dstFillAmount', 'phase', 'keepObserving', 'needsReconciliation'];
+  const keys = ['orderUid', 'externalOrderUid', 'eventUid', 'updatedAt', 'updatedAtPrecise', 'status', 'dstFillAmount', 'phase', 'keepObserving', 'needsReconciliation'];
   return Object.fromEntries(keys.map(key => [key, state[key]]));
 }
 

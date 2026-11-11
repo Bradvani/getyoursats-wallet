@@ -72,6 +72,12 @@ export interface RampnowAvailability {
   buyOnly: true;
 }
 
+export interface RampnowPartnerFeePolicy {
+  partnerPctFee: number;
+  partnerFixedFee: number;
+  baseCurrency: string;
+}
+
 export interface RampnowQuote {
   orderType: 'buy';
   srcCurrency: 'INR';
@@ -82,6 +88,7 @@ export interface RampnowQuote {
   dstAmount: string;
   paymentMode: string;
   feeDetails: {type: string; fee: string; currency: string; isInclusive: boolean}[];
+  partnerFeePolicy?: RampnowPartnerFeePolicy;
 }
 
 export interface RampnowPreparedCheckout {
@@ -248,11 +255,24 @@ function parsePrepared(value: unknown, input: RampnowBuyInput): RampnowPreparedC
       && typeof fee.isInclusive === 'boolean');
     return {type: fee.type, fee: fee.fee, currency: fee.currency, isInclusive: fee.isInclusive};
   });
+  let partnerFeePolicy: RampnowPartnerFeePolicy | undefined;
+  if (quote.partnerFeePolicy !== undefined) {
+    const policy = quote.partnerFeePolicy;
+    need(object(policy) && typeof policy.partnerPctFee === 'number' && Number.isFinite(policy.partnerPctFee)
+      && policy.partnerPctFee >= 0 && policy.partnerPctFee <= 100
+      && typeof policy.partnerFixedFee === 'number' && Number.isFinite(policy.partnerFixedFee)
+      && policy.partnerFixedFee >= 0 && policy.partnerFixedFee <= Number.MAX_SAFE_INTEGER
+      && decimal(String(policy.partnerPctFee)) && decimal(String(policy.partnerFixedFee))
+      && typeof policy.baseCurrency === 'string' && /^[A-Z]{3}$/.test(policy.baseCurrency));
+    partnerFeePolicy = {partnerPctFee: policy.partnerPctFee, partnerFixedFee: policy.partnerFixedFee,
+      baseCurrency: policy.baseCurrency};
+  }
   return {
     externalOrderUid: value.externalOrderUid, quoteHash: value.quoteHash, expiresAt: value.expiresAt,
     destination: value.destination, network: value.network,
     quote: {orderType: 'buy', srcCurrency: 'INR', srcChain: 'fiat', dstCurrency: 'BTC', dstChain: 'bitcoin',
-      srcAmount: quote.srcAmount, dstAmount: quote.dstAmount, paymentMode: quote.paymentMode, feeDetails},
+      srcAmount: quote.srcAmount, dstAmount: quote.dstAmount, paymentMode: quote.paymentMode, feeDetails,
+      ...(partnerFeePolicy === undefined ? {} : {partnerFeePolicy})},
   };
 }
 

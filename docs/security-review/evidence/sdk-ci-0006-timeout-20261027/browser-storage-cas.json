@@ -1,0 +1,1140 @@
+{
+  "config": {
+    "configFile": "/home/runner/work/getyoursats-wallet/getyoursats-wallet/playwright.sdk-storage.config.ts",
+    "rootDir": "/home/runner/work/getyoursats-wallet/getyoursats-wallet/e2e/tests",
+    "forbidOnly": true,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "ci": {
+        "commitHref": "https://github.com/Bradvani/getyoursats-wallet/commit/c4236476b9d7bb52ae0da278ea2171a7018fa979",
+        "commitHash": "c4236476b9d7bb52ae0da278ea2171a7018fa979",
+        "buildHref": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40466031487"
+      },
+      "gitCommit": {
+        "shortHash": "c423647",
+        "hash": "c4236476b9d7bb52ae0da278ea2171a7018fa979",
+        "subject": "build(security): freeze atomic SDK recovery source for isolated verification",
+        "body": "build(security): freeze atomic SDK recovery source for isolated verification",
+        "author": {
+          "name": "bradvani",
+          "email": "150425543+Bradvani@users.noreply.github.com",
+          "time": 1793085321000
+        },
+        "committer": {
+          "name": "bradvani",
+          "email": "150425543+Bradvani@users.noreply.github.com",
+          "time": 1793085321000
+        },
+        "branch": "HEAD"
+      },
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/runner/work/getyoursats-wallet/getyoursats-wallet/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/Bradvani/getyoursats-wallet/commit/c4236476b9d7bb52ae0da278ea2171a7018fa979",
+            "commitHash": "c4236476b9d7bb52ae0da278ea2171a7018fa979",
+            "buildHref": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40466031487"
+          },
+          "gitCommit": {
+            "shortHash": "c423647",
+            "hash": "c4236476b9d7bb52ae0da278ea2171a7018fa979",
+            "subject": "build(security): freeze atomic SDK recovery source for isolated verification",
+            "body": "build(security): freeze atomic SDK recovery source for isolated verification",
+            "author": {
+              "name": "bradvani",
+              "email": "150425543+Bradvani@users.noreply.github.com",
+              "time": 1793085321000
+            },
+            "committer": {
+              "name": "bradvani",
+              "email": "150425543+Bradvani@users.noreply.github.com",
+              "time": 1793085321000
+            },
+            "branch": "HEAD"
+          },
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/runner/work/getyoursats-wallet/getyoursats-wallet/e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "sdk-storage-cas.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/runner/work/getyoursats-wallet/getyoursats-wallet/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/Bradvani/getyoursats-wallet/commit/c4236476b9d7bb52ae0da278ea2171a7018fa979",
+            "commitHash": "c4236476b9d7bb52ae0da278ea2171a7018fa979",
+            "buildHref": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40466031487"
+          },
+          "gitCommit": {
+            "shortHash": "c423647",
+            "hash": "c4236476b9d7bb52ae0da278ea2171a7018fa979",
+            "subject": "build(security): freeze atomic SDK recovery source for isolated verification",
+            "body": "build(security): freeze atomic SDK recovery source for isolated verification",
+            "author": {
+              "name": "bradvani",
+              "email": "150425543+Bradvani@users.noreply.github.com",
+              "time": 1793085321000
+            },
+            "committer": {
+              "name": "bradvani",
+              "email": "150425543+Bradvani@users.noreply.github.com",
+              "time": 1793085321000
+            },
+            "branch": "HEAD"
+          },
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/home/runner/work/getyoursats-wallet/getyoursats-wallet/e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "sdk-storage-cas.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/home/runner/work/getyoursats-wallet/getyoursats-wallet/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "ci": {
+            "commitHref": "https://github.com/Bradvani/getyoursats-wallet/commit/c4236476b9d7bb52ae0da278ea2171a7018fa979",
+            "commitHash": "c4236476b9d7bb52ae0da278ea2171a7018fa979",
+            "buildHref": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40466031487"
+          },
+          "gitCommit": {
+            "shortHash": "c423647",
+            "hash": "c4236476b9d7bb52ae0da278ea2171a7018fa979",
+            "subject": "build(security): freeze atomic SDK recovery source for isolated verification",
+            "body": "build(security): freeze atomic SDK recovery source for isolated verification",
+            "author": {
+              "name": "bradvani",
+              "email": "150425543+Bradvani@users.noreply.github.com",
+              "time": 1793085321000
+            },
+            "committer": {
+              "name": "bradvani",
+              "email": "150425543+Bradvani@users.noreply.github.com",
+              "time": 1793085321000
+            },
+            "branch": "HEAD"
+          },
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/home/runner/work/getyoursats-wallet/getyoursats-wallet/e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "sdk-storage-cas.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "line",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/tmp/recovery-sdk-evidence/browser-storage-cas.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": {
+      "command": "node scripts/security/sdk-storage-test-server.mjs",
+      "url": "http://127.0.0.1:4186",
+      "reuseExistingServer": false,
+      "timeout": 20000
+    }
+  },
+  "suites": [
+    {
+      "title": "sdk-storage-cas.spec.ts",
+      "file": "sdk-storage-cas.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "same-store reservations have one winner across independent connections",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 104,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:25.878Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-10f1c695c137c603a8a1",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "competing phase updates preserve the single winning value",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 70,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:27.395Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-fbe1a8e55852e3309712",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 32,
+          "column": 1
+        },
+        {
+          "title": "request success cannot acknowledge an aborted transaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 59,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:27.478Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-1f09369a27c085699f25",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 59,
+          "column": 1
+        },
+        {
+          "title": "acknowledgement follows transaction completion",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 58,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:27.553Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-5042bf84bd6eefef4875",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 93,
+          "column": 1
+        },
+        {
+          "title": "malformed inputs and malformed stored values remain blocked and preserved",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 194,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:27.623Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-0d9b294824b4ad922701",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 131,
+          "column": 1
+        },
+        {
+          "title": "unsupported strict durability aborts before the read or write",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 53,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:27.826Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-e5f7e8c3647d3c236bc7",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 166,
+          "column": 1
+        },
+        {
+          "title": "exact strings are compared without normalization or coercion",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 55,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:27.889Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-2af65d3a43ed35877c81",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 189,
+          "column": 1
+        },
+        {
+          "title": "two tabs sharing one database cannot both reserve the same attempt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 133,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:27.953Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-4682b72817693404e6f1",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 207,
+          "column": 1
+        },
+        {
+          "title": "the tested adapter is identified and closed storage rejects access",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 69,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:28.094Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "adapter-identity",
+                      "contentType": "application/json",
+                      "body": "eyJzb3VyY2UiOiJpbnN0YWxsZWQtc2RrIiwic2hhMjU2IjoiMWU5YmU2Njc1N2VmZWRiODk2MjRmYWViYWY0ZTZlMTc2Y2UyYzNiYjViZTJiM2NjNDkyYmJhZWFjN2ZjMTM0OSIsImJ5dGVzIjoxMDE4MTl9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-cf00c45157f5af4e11f9",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 223,
+          "column": 1
+        },
+        {
+          "title": "same-store reservations have one winner across independent connections",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 809,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:28.660Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-bfa0746cb07d19992940",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "competing phase updates preserve the single winning value",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 227,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:29.889Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-cfbbc361d9bd79c8c48f",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 32,
+          "column": 1
+        },
+        {
+          "title": "request success cannot acknowledge an aborted transaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 225,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:30.133Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-d1f49bd3c103d8f9aedc",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 59,
+          "column": 1
+        },
+        {
+          "title": "acknowledgement follows transaction completion",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 204,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:30.376Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-7462bf1fb8b1c8989131",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 93,
+          "column": 1
+        },
+        {
+          "title": "malformed inputs and malformed stored values remain blocked and preserved",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 178,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:30.597Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-038d8a11067c37776922",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 131,
+          "column": 1
+        },
+        {
+          "title": "unsupported strict durability aborts before the read or write",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 195,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:30.786Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-beecbf0e69f73401cc38",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 166,
+          "column": 1
+        },
+        {
+          "title": "exact strings are compared without normalization or coercion",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 183,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:30.990Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-aaacc0256cf82067a444",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 189,
+          "column": 1
+        },
+        {
+          "title": "two tabs sharing one database cannot both reserve the same attempt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 365,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:31.183Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-024104c6a4fe55ddc895",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 207,
+          "column": 1
+        },
+        {
+          "title": "the tested adapter is identified and closed storage rejects access",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 203,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:31.559Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "adapter-identity",
+                      "contentType": "application/json",
+                      "body": "eyJzb3VyY2UiOiJpbnN0YWxsZWQtc2RrIiwic2hhMjU2IjoiMWU5YmU2Njc1N2VmZWRiODk2MjRmYWViYWY0ZTZlMTc2Y2UyYzNiYjViZTJiM2NjNDkyYmJhZWFjN2ZjMTM0OSIsImJ5dGVzIjoxMDE4MTl9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-c693e4d6d18bda093770",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 223,
+          "column": 1
+        },
+        {
+          "title": "same-store reservations have one winner across independent connections",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4401,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:32.742Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-08244dc05ca2e2ba63c5",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 5,
+          "column": 1
+        },
+        {
+          "title": "competing phase updates preserve the single winning value",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 209,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:37.577Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-011bd77c045dc7cc2079",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 32,
+          "column": 1
+        },
+        {
+          "title": "request success cannot acknowledge an aborted transaction",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 231,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:37.803Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-ade8a5ad4a0011c364c1",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 59,
+          "column": 1
+        },
+        {
+          "title": "acknowledgement follows transaction completion",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 214,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:38.058Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-2409b82e6caa6b9350f9",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 93,
+          "column": 1
+        },
+        {
+          "title": "malformed inputs and malformed stored values remain blocked and preserved",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 356,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:38.298Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-6b5ecbd20a73d828a56a",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 131,
+          "column": 1
+        },
+        {
+          "title": "unsupported strict durability aborts before the read or write",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 190,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:38.666Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-80eb1e6e6431bdb29a0a",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 166,
+          "column": 1
+        },
+        {
+          "title": "exact strings are compared without normalization or coercion",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 217,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:38.864Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-13180275726d539b0553",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 189,
+          "column": 1
+        },
+        {
+          "title": "two tabs sharing one database cannot both reserve the same attempt",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 390,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:39.091Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-beb16da9b81dfb8e81e9",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 207,
+          "column": 1
+        },
+        {
+          "title": "the tested adapter is identified and closed storage rejects access",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 231,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T08:10:39.495Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "adapter-identity",
+                      "contentType": "application/json",
+                      "body": "eyJzb3VyY2UiOiJpbnN0YWxsZWQtc2RrIiwic2hhMjU2IjoiMWU5YmU2Njc1N2VmZWRiODk2MjRmYWViYWY0ZTZlMTc2Y2UyYzNiYjViZTJiM2NjNDkyYmJhZWFjN2ZjMTM0OSIsImJ5dGVzIjoxMDE4MTl9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "5e3d5e460185d395da0b-56b7f53d03ecf74abc38",
+          "file": "sdk-storage-cas.spec.ts",
+          "line": 223,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-27T08:10:25.203Z",
+    "duration": 14594.190999999999,
+    "expected": 27,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

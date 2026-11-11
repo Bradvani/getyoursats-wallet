@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyRampnowOrderEvent, bitcoinQuoteRequest, createRampnowClient, decimalAmount,
-  rampnowSignature, verifyRampnowWebhook, validateBitcoinQuote, rampnowOrderState } from '../server/rampnow.mjs';
+  rampnowSignature, verifyRampnowWebhook, validateBitcoinQuote, rampnowOrderState, rampnowStateTimestamp, rampnowTimestamp } from '../server/rampnow.mjs';
 
 const secret = 'test-secret-key';
 const timestamp = '1772080882';
@@ -57,6 +57,45 @@ test('duplicate and older events never regress the displayed order', () => {
 test('conflicting equal timestamps require reconciliation without replacement', () => {
   const previous = applyRampnowOrderEvent(null, event('processing', 1), expected);
   assert.equal(applyRampnowOrderEvent(previous, event('completed', 1), expected).status, 'processing');
+});
+test('UTC timestamp parser validates calendar and preserves all fractional precision', () => {
+  for (const fraction of ['', '.1', '.123', '.123456', '.123456789']) {
+    const value = '2024-02-29T23:59:59' + fraction + 'Z';
+    const parsed = rampnowTimestamp(value);
+    assert.equal(parsed.milliseconds, Date.parse(value));
+    assert.equal(parsed.precise, '2024-02-29T23:59:59.' + fraction.slice(1).padEnd(9, '0') + 'Z');
+  }
+  for (const value of [undefined, 1, '', '2026-02-29T12:00:00Z', '2026-04-31T12:00:00Z',
+    '2026-13-01T12:00:00Z', '2026-10-28T24:00:00Z', '2026-10-28T12:00:60Z',
+    '2026-10-28T12:00:00.Z', '2026-10-28T12:00:00.1234567890Z', '2026-10-28T12:00:00+00:00',
+    '2026-10-28 12:00:00Z', '2026-10-28T12:00:00z', '2026-10-28T12:00:00Z\n']) assert.equal(rampnowTimestamp(value), null);
+});
+test('same-millisecond nanosecond events remain ordered, duplicate-safe and conflict-safe', () => {
+  const older = event('processing', 0, {updateTime: '2026-10-28T10:00:00.123456788Z'});
+  const newer = event('completed', 0, {updateTime: '2026-10-28T10:00:00.123456789Z'});
+  const first = applyRampnowOrderEvent(null, older, expected);
+  const next = applyRampnowOrderEvent(first, newer, expected);
+  assert.equal(next.status, 'completed'); assert.equal(next.updatedAt, first.updatedAt);
+  assert.equal(next.updatedAtPrecise, newer.payload.updateTime);
+  assert.equal(applyRampnowOrderEvent(next, older, expected), next);
+  assert.equal(applyRampnowOrderEvent(next, {...newer, payload: {...newer.payload, updateTime: '2026-10-28T10:00:00.999999999Z'}}, expected), next);
+  const equal = event('expired', 0, {updateTime: newer.payload.updateTime});
+  assert.equal(applyRampnowOrderEvent(next, equal, expected).status, 'completed');
+  const legacy = {...first}; delete legacy.updatedAtPrecise;
+  assert.equal(applyRampnowOrderEvent(legacy, newer, expected).status, 'completed');
+  assert.equal(rampnowStateTimestamp(legacy).precise, '2026-10-28T10:00:00.123000000Z');
+  for (const updatedAtPrecise of [null, '2026-10-28T10:00:00.124000000Z', '2026-10-28T10:00:00.123Z']) {
+    assert.equal(rampnowStateTimestamp({...first, updatedAtPrecise}), null);
+    assert.throws(() => applyRampnowOrderEvent({...first, updatedAtPrecise}, newer, expected), /ORDER_MISMATCH/);
+  }
+});
+test('equivalent fraction encodings are equal instants and invalid calendar events fail closed', () => {
+  const first = applyRampnowOrderEvent(null, event('processing', 0, {updateTime: '2026-10-28T10:00:00.1234Z'}), expected);
+  const equal = event('completed', 0, {updateTime: '2026-10-28T10:00:00.123400000Z'});
+  assert.equal(applyRampnowOrderEvent(first, equal, expected).status, 'processing');
+  for (const updateTime of ['2026-02-29T10:00:00.123456789Z', '2026-10-28T24:00:00Z']) {
+    assert.throws(() => applyRampnowOrderEvent(null, event('processing', 0, {updateTime}), expected), /EVENT_INVALID/);
+  }
 });
 test('event must match the recorded provider order, external ID, direction and asset', () => {
   for (const key of Object.keys(expected)) assert.throws(() => applyRampnowOrderEvent(null,

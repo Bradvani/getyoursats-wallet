@@ -3,7 +3,7 @@ import { unilateralExitEntries } from './listEntries';
 import { coin, pendingExit } from './testFixtures';
 import type { UnilateralExitEngineState } from './engine';
 
-const row = (over: Partial<UnilateralExitEngineState> = {}) =>
+const row = (over: Partial<UnilateralExitEngineState> = {},fundingUnavailable=false) =>
   unilateralExitEntries({
     plan: null,
     pending: pendingExit(),
@@ -15,9 +15,16 @@ const row = (over: Partial<UnilateralExitEngineState> = {}) =>
     tipHeight: null,
     isAdvancing: false,
     ...over,
-  })[0];
+  },fundingUnavailable)[0];
 
 describe('a pending exit in the wallet list', () => {
+  it.each([{pendingCoins:[]},{pendingCoins:[coin(3_000,false)]},{pendingCoins:[coin(5_898)]}])('does not solicit further funding for a retained browser exit with unavailable continuation %#',({pendingCoins})=>{
+    expect(row({pendingCoins},true)).toMatchObject({
+      id:'pending',title:'Saved pending exit',
+      subtitle:'Additional exit funding is unavailable in this preview. Do not send more bitcoin.',
+      amountSat:94_000,isActive:true,
+    });
+  });
   it('says what to send before anything arrives, and opens the flow', () => {
     expect(row()).toMatchObject({
       title: 'Waiting for exit fee',

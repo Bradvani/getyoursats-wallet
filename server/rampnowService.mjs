@@ -1,9 +1,10 @@
 /** Authenticated sandbox buy orchestration. No wallet credit or automatic retry. */
 import {randomUUID} from 'node:crypto';
-import {createRampnowClient, decimalAmount, RampnowError, rampnowOrderState} from './rampnow.mjs';
+import {createRampnowClient, decimalAmount, RampnowError, rampnowOrderState, rampnowStateTimestamp, rampnowTimestamp} from './rampnow.mjs';
 import {hashRampnowPayload} from './rampnowAuth.mjs';
 import {createRampnowCheckoutClient, normalizeRampnowBuyInput} from './rampnowCheckout.mjs';
 import {createRampnowStore, RAMPNOW_STORE_PREFIX} from './rampnowStore.mjs';
+import {configuredRampnowPartnerFees} from './rampnowFees.mjs';
 
 const BRANCH = 'feat/rampnow-integration-20261028';
 const RETURN = 'https://getyoursats-wallet-git-feat-rampnow-integr-d20510-bradvani-8798.vercel.app/rampnow/return';
@@ -52,6 +53,7 @@ export function createRampnowService({env = process.env, store, now = Date.now,
   }
   async function eligible(input) {
     const network = configuredNetwork();
+    configuredRampnowPartnerFees(env);
     if (input) need(input.network === network, 'RAMPNOW_NETWORK_MISMATCH');
     const [chain, asset, countries] = await Promise.all([
       client.getBitcoinNetwork(), client.getBitcoinAsset('INR'), client.getBlockedCurrencies('IN'),
@@ -73,9 +75,14 @@ export function createRampnowService({env = process.env, store, now = Date.now,
     return {network, asset};
   }
   async function freshQuote(input, asset) {
-    const quote = quoteView(await client.getBitcoinQuote({orderType: 'buy', fiatCurrency: 'INR', srcAmount: input.srcAmount}));
+    const partnerFeePolicy = configuredRampnowPartnerFees(env);
+    const quote = quoteView(await client.getBitcoinQuote({orderType: 'buy', fiatCurrency: 'INR', srcAmount: input.srcAmount,
+      ...(partnerFeePolicy === undefined ? {} : {partnerFees: partnerFeePolicy})}));
+    need(JSON.stringify(configuredRampnowPartnerFees(env)) === JSON.stringify(partnerFeePolicy), 'RAMPNOW_FEE_POLICY_CHANGED');
     need(quote.srcAmount === input.srcAmount && asset.payinModes.includes(quote.paymentMode), 'RAMPNOW_QUOTE_MISMATCH');
-    return quote;
+    // Policy joins the reviewed quote hash. Quote platform fees already include
+    // the partner markup; do not add it again to feeDetails or destination math.
+    return {...quote, ...(partnerFeePolicy === undefined ? {} : {partnerFeePolicy})};
   }
   async function owned(id, pub) {
     const intent = await store.get(id, pub);
@@ -91,7 +98,7 @@ export function createRampnowService({env = process.env, store, now = Date.now,
         need(object(state) && state.orderUid === intent.orderUid && state.externalOrderUid === intent.externalOrderUid
           && typeof state.status === 'string' && /^[a-z_]{1,64}$/.test(state.status)
           && decimalAmount(state.dstFillAmount, state.status === 'completed', 8)
-          && Number.isSafeInteger(state.updatedAt) && state.phase === rampnowOrderState(state.status).phase,
+          && rampnowStateTimestamp(state) && state.phase === rampnowOrderState(state.status).phase,
         'RAMPNOW_STORE_UNAVAILABLE');
       }
     }
@@ -139,8 +146,10 @@ export function createRampnowService({env = process.env, store, now = Date.now,
       try {
         // A delayed worker consumes its reservation but never submits an expired review.
         need(now() < intent.expiresAt, 'RAMPNOW_INTENT_EXPIRED');
+        need(JSON.stringify(configuredRampnowPartnerFees(env)) === JSON.stringify(quote.partnerFeePolicy), 'RAMPNOW_FEE_POLICY_CHANGED');
         const result = await checkout.createBuyOrder({externalOrderUid: intent.externalOrderUid, input,
           paymentMode: quote.paymentMode,
+          ...(quote.partnerFeePolicy === undefined ? {} : {partnerFees: quote.partnerFeePolicy}),
           returnUrl: RETURN + '?intent=' + intent.externalOrderUid + '&network=' + intent.network});
         const bound = await store.bind(intent.externalOrderUid, pub, intent.requestHash,
           {orderUid: result.orderUid, checkoutUrl: result.redirectUrl});
@@ -166,8 +175,7 @@ export function createRampnowService({env = process.env, store, now = Date.now,
         && hashRampnowPayload(order.walletAddress) === intent.destinationHash;
       if (!matches) return {...await statusView(intent), reconciliation: 'mismatch'};
       const updateTime = order.updatedAt;
-      need(typeof updateTime === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(updateTime)
-        && Number.isFinite(Date.parse(updateTime)) && typeof order.status === 'string'
+      need(rampnowTimestamp(updateTime) && typeof order.status === 'string'
         && /^[a-z_]{1,64}$/.test(order.status) && decimalAmount(order.dstFillAmount, order.status === 'completed', 8), 'RAMPNOW_RESPONSE_INVALID');
       if (intent.phase !== 'bound') intent = await store.bind(id, pub, intent.requestHash, {orderUid: order.uid, checkoutUrl: null});
       const payload = {orderUid: order.uid, externalOrderUid: id, ...ROUTE, orderStatus: order.status, updateTime, dstFillAmount: order.dstFillAmount};

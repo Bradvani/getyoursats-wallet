@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {Readable} from 'node:stream';
 import {createWebhookHandler, config} from '../api/rampnow/webhook.js';
 import {rampnowSignature} from '../server/rampnow.mjs';
-import {createRampnowStore, normalizeRampnowEvent, sandboxRampnowConfig} from '../server/rampnowStore.mjs';
+import {createRampnowStore, normalizeRampnowEvent, rampnowEventValidationIssues, sandboxRampnowConfig} from '../server/rampnowStore.mjs';
 
 const env = {VERCEL_ENV: 'preview', RAMPNOW_ENVIRONMENT: 'sandbox', RAMPNOW_API_SECRET: 'test-only-secret',
   RAMPNOW_REDIS_REST_URL: 'https://sandbox-storage.invalid', RAMPNOW_REDIS_REST_TOKEN: 'test-only-token'};
@@ -50,22 +50,84 @@ test('webhook result logs distinguish signature, schema, storage and durable suc
   valid.headers.cookie = 'private-cookie-secret';
   const results = [
     [await call(invalidSignature), 401, 'INVALID_SIGNATURE', false],
-    [await call(request(Buffer.from('{invalid-json'))), 400, 'INVALID_EVENT', true],
+    [await call(request(Buffer.from('{invalid-json'))), 400, 'INVALID_EVENT', true, {failureStage: 'json'}],
     [await call(request(), {storeFactory: () => ({async ingest() { throw new Error('private-store-secret'); }})}), 503, 'WEBHOOK_UNAVAILABLE', true],
     [await call(valid), 200, 'EVENT_STORED', true],
     [await call(request(), {env: {...env, RAMPNOW_API_SECRET: ''}}), 503, 'WEBHOOK_UNAVAILABLE', false],
     [await call(request(undefined, {method: 'GET'})), 405, 'METHOD_NOT_ALLOWED', false],
     [await call(request(Buffer.alloc(65537))), 413, 'BODY_TOO_LARGE', false],
   ];
-  for (const [result, status, code, signatureVerified] of results) {
+  for (const [result, status, code, signatureVerified, diagnostics = {}] of results) {
     assert.equal(result.statusCode, status);
-    assert.deepEqual(result.logs, [{component: 'rampnow_webhook', status, code, signatureVerified}]);
+    assert.deepEqual(result.logs, [{component: 'rampnow_webhook', status, code, signatureVerified, ...diagnostics}]);
     const text = JSON.stringify(result.logs);
     for (const value of [env.RAMPNOW_API_SECRET, env.RAMPNOW_REDIS_REST_TOKEN,
       'private-address', 'private@example.invalid', 'private-identity', 'private-reference',
       'private-url-secret', 'private-cookie-secret', 'private-store-secret', 'order-1', 'event-1',
       request().headers['x-rampnow-sign']]) assert.equal(text.includes(value), false);
   }
+});
+
+test('signed rejection diagnostics distinguish UTF-8, JSON and fixed schema fields without retaining values', async () => {
+  const utf8 = await call(request(Buffer.from([0xff])));
+  assert.equal(utf8.statusCode, 400); assert.equal(utf8.logs[0].failureStage, 'utf8');
+  assert.equal(utf8.logs[0].validationIssues, undefined);
+  const input = event();
+  input.eventUid = 'private-event-value/';
+  input.payload.externalOrderUid = null;
+  input.payload.updateTime = '2026-02-29T12:00:00.123456Z';
+  input.payload.dstFillAmount = 0;
+  const bytes = Buffer.from(JSON.stringify(input));
+  const result = await call(request(bytes));
+  assert.equal(result.statusCode, 400); assert.equal(result.stored, 0);
+  assert.deepEqual(result.logs, [{component: 'rampnow_webhook', status: 400, code: 'INVALID_EVENT', signatureVerified: true,
+    failureStage: 'ingest', failureKind: 'schema', validationIssues: [
+      {field: 'eventUid', type: 'string'}, {field: 'externalOrderUid', type: 'null'},
+      {field: 'updateTime', type: 'string', format: 'utc_submillisecond'}, {field: 'dstFillAmount', type: 'number'},
+    ]}]);
+  const logs = JSON.stringify(result.logs);
+  for (const value of ['private-event-value', input.payload.updateTime, 'private-address', 'private@example.invalid',
+    'private-identity', 'private-reference', 'order-1', 'intent-1', env.RAMPNOW_API_SECRET]) assert.equal(logs.includes(value), false);
+  const unsigned = request(bytes); unsigned.headers['x-rampnow-sign'] = '0'.repeat(64);
+  assert.deepEqual((await call(unsigned)).logs, [{component: 'rampnow_webhook', status: 401, code: 'INVALID_SIGNATURE', signatureVerified: false}]);
+});
+
+test('schema diagnostics preserve every existing rejection predicate and valid input', () => {
+  const cases = [
+    [null, [{field: 'event', type: 'null'}]],
+    [[], [{field: 'event', type: 'array'}]],
+    [{...event(), eventUid: '../private'}, [{field: 'eventUid', type: 'string'}]],
+    [{...event(), eventType: 'private'}, [{field: 'eventType', type: 'string'}]],
+    [{...event(), payload: 'private'}, [{field: 'payload', type: 'string'}]],
+    ...Object.entries({orderUid: '', externalOrderUid: undefined, orderType: 'private', orderStatus: 'private/value',
+      dstFillAmount: '-1', srcCurrency: 'private', dstCurrency: 'private', srcChain: 'private/path', dstChain: 'private/path'})
+      .map(([field, value]) => [{...event(), payload: {...event().payload, [field]: value}}, [{field, type: typeof value}]]),
+    [{...event(), payload: {...event().payload, updateTime: '2026-10-28T12:00:00+00:00'}},
+      [{field: 'updateTime', type: 'string', format: 'iso_offset'}]],
+    [{...event(), payload: {...event().payload, updateTime: 'private-time'}},
+      [{field: 'updateTime', type: 'string', format: 'other'}]],
+    [{...event(), payload: {...event().payload, orderStatus: 'completed'}}, [{field: 'dstFillAmount', type: 'string'}]],
+  ];
+  for (const [input, issues] of cases) {
+    assert.deepEqual(rampnowEventValidationIssues(input), issues);
+    assert.throws(() => normalizeRampnowEvent(input), /RAMPNOW_EVENT_INVALID/);
+  }
+  for (const updateTime of ['2026-10-28T12:00:00Z', '2026-10-28T12:00:00.1Z', '2026-10-28T12:00:00.123Z',
+    '2026-10-28T12:00:00.123456Z', '2026-10-28T12:00:00.123456789Z']) {
+    const input = {...event(), payload: {...event().payload, updateTime}};
+    assert.deepEqual(rampnowEventValidationIssues(input), []);
+    assert.equal(normalizeRampnowEvent(input).payload.updateTime, updateTime);
+  }
+});
+
+test('signed callbacks accept nanosecond timestamps only after durable ingestion', async () => {
+  const input = event(); input.payload.updateTime = '2026-10-28T12:00:00.123456789Z';
+  const result = await call(request(Buffer.from(JSON.stringify(input))));
+  assert.equal(result.statusCode, 200); assert.equal(result.stored, 1);
+  const failed = await call(request(Buffer.from(JSON.stringify(input))), {
+    storeFactory: () => ({async ingest() { throw new Error('storage failed'); }}),
+  });
+  assert.equal(failed.statusCode, 503); assert.equal(failed.stored, 0);
 });
 
 test('webhook logging failure cannot alter signature rejection or a durable acknowledgement', async () => {

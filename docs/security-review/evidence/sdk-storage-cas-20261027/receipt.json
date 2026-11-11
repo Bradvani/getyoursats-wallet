@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-10-27T01:20:08.655Z",
+  "scope": "Source adapter in disposable Chromium storage fixtures before the combined SDK package build",
+  "adapterSource": "crates/breez-sdk/wasm/js/web-storage/index.js",
+  "adapterSha256": "1e9be66757efedb89624faebaf4e6e176ce2c3bb5be2b3cc492bbaeac7fc1349",
+  "adapterBytes": 101819,
+  "stats": {
+    "startTime": "2026-10-27T01:20:08.655Z",
+    "duration": 1896.922,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "browserExecutions": 9,
+  "installedSdkAcceptance": false,
+  "fundedAcceptance": false,
+  "physicalDeviceAcceptance": false,
+  "crossDeviceExclusivityAccepted": false,
+  "initialEnvironmentAttempt": {
+    "result": "loopback server blocked by restricted execution networking policy",
+    "code": "EPERM",
+    "assertionsExecuted": 0,
+    "resolution": "approved local test execution permitted the loopback fixture"
+  },
+  "coverage": [
+    "two independent connections have one winner",
+    "two tabs have one winner",
+    "old non-atomic negative control permits two winners",
+    "stale phase acknowledgement cannot overwrite receiving marker",
+    "close/reopen retains winning value",
+    "request success followed by transaction abort rejects and preserves prior value",
+    "success acknowledgement follows strict transaction completion",
+    "malformed inputs and stored records remain blocked and preserved",
+    "unsupported strict durability aborts before store access",
+    "exact strings compared without normalization or coercion",
+    "closed storage rejects access"
+  ],
+  "reportLifecycleFix": "CI report moved outside Playwright test-results to test-artifacts so subsequent browser invocations retain it; no runtime code changed",
+  "artifacts": [
+    {
+      "path": "chromium-source.log.txt",
+      "originalSha256": "f4d5758d2579fba43c24898e317c322624370163cdcfc3713bfdc217bc7f5e0e",
+      "publishedSha256": "3951a8d50813d2a7c37afd476af55ccafad88f057cf79ccdfc70c94f87a03b37",
+      "normalization": [
+        "ANSI display controls removed",
+        "runtime paths replaced with role labels",
+        "trailing blank lines normalized"
+      ]
+    },
+    {
+      "path": "chromium-source.json",
+      "originalSha256": "26d6a9223e6f521d102d49a1e3c084ff5efc222eb81b055eb54ec86ee394c4af",
+      "publishedSha256": "18dd8e38e77c4715c34b43a8997742555b27e3aca5ed048d40c475bb501e7626",
+      "normalization": [
+        "ANSI display controls removed",
+        "runtime paths replaced with role labels",
+        "trailing blank lines normalized"
+      ]
+    },
+    {
+      "path": "adapter-baseline-comparison.json",
+      "publishedSha256": "eb9cedd099fe18556a768e0a22c2fa53f8b84708996895441da7a15b1369d678",
+      "normalization": []
+    }
+  ],
+  "adapterBaseline": "Both retained browser adapters were byte-identical to the pinned upstream before the CAS-only addition; the existing schema and migrations are preserved."
+}

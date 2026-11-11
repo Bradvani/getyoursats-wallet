@@ -1,10 +1,25 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {connect, defaultServerConfig, type BreezSdk, type LightningAddressInfo} from '@breeztech/breez-sdk-spark';
-import {withNativeLightningSession} from './nativeLightningSession';
+import {defaultServerConfig, type BreezSdk, type LightningAddressInfo, type PaymentObserver} from '@breeztech/breez-sdk-spark';
+import {clearSignerIdentity,lockSpendingSession,rememberSignerIdentity} from '../security/spendApproval';
+import {withNativeLightningSession, type NativeLightningCapabilities} from './nativeLightningSession';
 
+const harness = vi.hoisted(() => ({build:vi.fn(),config:vi.fn(),storage:vi.fn(),observer:vi.fn(),factory:vi.fn(),rawConnect:vi.fn()}));
 vi.mock('@breeztech/breez-sdk-spark', () => ({
-  connect: vi.fn(),
+  connect: harness.rawConnect,
   defaultServerConfig: vi.fn(() => ({network: 'mainnet', backgroundTasksEnabled: false})),
+  defaultExternalSignersFromSeed: (...args:unknown[]) => {
+    harness.factory(...args);
+    return {breezSigner:{free:vi.fn()},sparkSigner:{free:vi.fn()},free:vi.fn()};
+  },
+  SdkBuilder:{newWithSigner:(config:unknown)=>{
+    harness.config(config);
+    const builder={
+      withPaymentObserver:(observer:unknown)=>{harness.observer(observer);return builder;},
+      withDefaultStorage:async(directory:string)=>{harness.storage(directory);return builder;},
+      build:harness.build,
+    };
+    return builder;
+  }},
 }));
 vi.mock('./sdkReady', () => ({sdkReady: vi.fn().mockResolvedValue(undefined)}));
 
@@ -19,19 +34,23 @@ const ADDRESS: LightningAddressInfo = {
 let sdk: BreezSdk;
 const deleted: string[] = [];
 
-beforeEach(() => {
+beforeEach(async () => {
+  vi.clearAllMocks();
+  await rememberSignerIdentity(SEED);
   deleted.length = 0;
   sdk = {
     signMessage: vi.fn().mockResolvedValue({pubkey: IDENTITY, signature: 'fixture'}),
     getLightningAddress: vi.fn().mockResolvedValue(undefined),
     disconnect: vi.fn().mockResolvedValue(undefined),
     free: vi.fn(),
+    checkLightningAddressAvailable:vi.fn().mockResolvedValue(true),
+    registerLightningAddress:vi.fn().mockResolvedValue(ADDRESS),
   } as unknown as BreezSdk;
-  vi.mocked(connect).mockResolvedValue(sdk);
+  harness.build.mockResolvedValue(sdk);
   vi.stubGlobal('indexedDB', {
     databases: vi.fn(async () => [
       {name: 'spark-wallet-example/mainnet/main-wallet'},
-      ...vi.mocked(connect).mock.calls.map(([request]) => ({name: `${request.storageDir}/mainnet/temp-wallet`})),
+      ...harness.storage.mock.calls.map(([directory]) => ({name: `${directory}/mainnet/temp-wallet`})),
     ]),
     deleteDatabase: vi.fn((name: string) => {
       deleted.push(name);
@@ -42,7 +61,7 @@ beforeEach(() => {
   });
 });
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {clearSignerIdentity();vi.unstubAllGlobals();});
 
 const options = () => ({seed: SEED, apiKey: 'test-client-key', expectedIdentityPubkey: IDENTITY});
 
@@ -52,14 +71,12 @@ describe('isolated native Lightning sessions', () => {
     await withNativeLightningSession({...options(), use: async session => session.address});
 
     expect(defaultServerConfig).toHaveBeenCalledWith('mainnet');
-    const [first, second] = vi.mocked(connect).mock.calls.map(([request]) => request);
-    expect(first.config.backgroundTasksEnabled).toBe(false);
-    expect(first.config.lnurlDomain).toBe('getyoursats.com');
-    expect(first.seed).toBe(SEED);
-    expect(first.storageDir).not.toBe(second.storageDir);
-    expect(deleted).toEqual([
-      `${first.storageDir}/mainnet/temp-wallet`, `${second.storageDir}/mainnet/temp-wallet`,
-    ]);
+    const [first, second] = harness.storage.mock.calls.map(([directory]) => directory);
+    expect(harness.config).toHaveBeenCalledWith(expect.objectContaining({backgroundTasksEnabled:false,lnurlDomain:'getyoursats.com',realTimeSyncServerUrl:undefined,crossChainConfig:undefined,stableBalanceConfig:undefined}));
+    expect(harness.factory).toHaveBeenCalledWith(SEED,'mainnet',undefined);
+    expect(harness.rawConnect).not.toHaveBeenCalled();
+    expect(first).not.toBe(second);
+    expect(deleted).toEqual([`${first}/mainnet/temp-wallet`, `${second}/mainnet/temp-wallet`]);
     expect(deleted.some(name => name.includes('spark-wallet-example'))).toBe(false);
     expect(sdk.disconnect).toHaveBeenCalledTimes(2);
     expect(sdk.free).toHaveBeenCalledTimes(2);
@@ -119,5 +136,49 @@ describe('isolated native Lightning sessions', () => {
     expect(sdk.disconnect).toHaveBeenCalled();
     expect(sdk.free).toHaveBeenCalled();
     expect(deleted).toHaveLength(1);
+  });
+});
+
+
+describe('Lightning-name capability and signing lifetime',()=>{
+  it('exposes only name operations and revokes a retained capability after completion',async()=>{
+    let retained:NativeLightningCapabilities|undefined;
+    await withNativeLightningSession({...options(),use:async session=>{
+      retained=session.sdk;
+      expect(Object.getPrototypeOf(session.sdk)).toBeNull();
+      expect(Object.keys(session.sdk).sort()).toEqual(['checkLightningAddressAvailable','registerLightningAddress']);
+      expect(Reflect.get(session.sdk,'sendPayment')).toBeUndefined();
+      expect(Reflect.get(session.sdk,'signMessage')).toBeUndefined();
+      expect(Reflect.get(session.sdk,'claimDeposit')).toBeUndefined();
+      expect(Object.isFrozen(session.sdk)).toBe(true);
+      await session.sdk.checkLightningAddressAvailable({username:'alice'});
+      return session.sdk.registerLightningAddress({username:'alice'});
+    }});
+    expect(sdk.registerLightningAddress).toHaveBeenCalledOnce();
+    await expect(retained!.registerLightningAddress({username:'bob'})).rejects.toThrow(/closed/);
+    expect(sdk.registerLightningAddress).toHaveBeenCalledOnce();
+  });
+  it('blocks all payment-observer requests in the temporary SDK',async()=>{
+    await withNativeLightningSession({...options(),use:async()=>{
+      const observer=harness.observer.mock.calls[0][0] as PaymentObserver;
+      await expect(observer.beforeSend([])).rejects.toThrow(/cannot send payments/);
+    }});
+  });
+  it('rejects seed material that differs from the active signing session before building another signer',async()=>{
+    await expect(withNativeLightningSession({...options(),seed:{type:'mnemonic',mnemonic:'different-disposable-fixture'},use:vi.fn()}))
+      .rejects.toThrow(/different wallet/);
+    expect(harness.factory).not.toHaveBeenCalled();
+    expect(harness.build).not.toHaveBeenCalled();
+  });
+  it('does not expose name operations after backgrounding during provider recovery',async()=>{
+    const use=vi.fn();
+    vi.mocked(sdk.getLightningAddress).mockImplementation(async()=>{
+      lockSpendingSession('Backgrounded during name recovery');
+      return ADDRESS;
+    });
+    await expect(withNativeLightningSession({...options(),use})).rejects.toThrow(/session changed|locked/);
+    expect(use).not.toHaveBeenCalled();
+    expect(sdk.disconnect).toHaveBeenCalledOnce();
+    expect(sdk.free).toHaveBeenCalledOnce();
   });
 });

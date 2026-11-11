@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import {getUnlockedWebMnemonic} from '../security/webWalletVault';
+import React, { useEffect, useRef, useState } from 'react';
 import { EyeIcon, EyeOffIcon } from '../components/Icons';
 import { Capacitor } from '@capacitor/core';
+import type { Seed } from '@breeztech/breez-sdk-spark';
 import SlideInPage from '../components/layout/SlideInPage';
 import { PinGate } from '../components/PinEntry';
 import { LoadingSpinner } from '../components/ui';
@@ -13,7 +15,9 @@ import {
   isPasskeyMode,
   signInPinnedToActiveCredential,
 } from '@/services/passkeyService';
-import { deviceOnlyStorage, secureStorage } from '@/services/secureStorage';
+import { secureStorage } from '@/services/secureStorage';
+import { chooseNativeSeedTier, readSeedForActiveNativeWallet, readSelectedNativeSeed } from '@/services/nativeSeedSelection';
+import { assertNativeReadLease, captureNativeReadLease, getNativeReadLeaseRevision, subscribeNativeReadLease, type NativeReadLease } from '@/services/nativeReadLease';
 import { logger, LogCategory } from '@/services/logger';
 import { useScreenCaptureProtection } from '@/utils/screenSecurity';
 import { usePresentation } from '@/hooks/usePresentation';
@@ -25,6 +29,14 @@ interface BackupPageProps {
   closeStyle?: 'close' | 'back';
   recoveryStatus?: 'pending' | 'passkey-reviewed' | 'phrase-verified';
   onRecoveryConfirmed?: (status: 'passkey-reviewed' | 'phrase-verified') => void;
+}
+
+function mnemonicForBackup(seed: Seed): string {
+  if (seed.type !== 'mnemonic' || !seed.mnemonic) throw new Error('Could not retrieve this wallet\'s recovery phrase');
+  if (seed.passphrase !== undefined && seed.passphrase !== null && seed.passphrase !== '') {
+    throw new Error('Words alone cannot recover this wallet. Its original mnemonic passphrase is also required.');
+  }
+  return seed.mnemonic;
 }
 
 const BackupPage: React.FC<BackupPageProps> = ({
@@ -54,20 +66,66 @@ const BackupPage: React.FC<BackupPageProps> = ({
   // Lock Screen settings use. 'checking' avoids a one-frame content
   // flash while the async PIN read resolves; web has no app lock, so
   // it opens synchronously (no spinner flash).
-  const [gate, setGate] = useState<'checking' | 'locked' | 'open'>(
+  const [gate, setGate] = useState<'checking' | 'locked' | 'open' | 'unavailable'>(
     () => (isAppLockSupported() ? 'checking' : 'open'),
   );
+  const [readRevision, setReadRevision] = useState(getNativeReadLeaseRevision);
+  const [gateLease, setGateLease] = useState<NativeReadLease | null>(null);
+  const generation = useRef(0);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const unsubscribe = subscribeNativeReadLease(() => {
+      generation.current += 1;
+      setGateLease(null);
+      setMnemonic(null);
+      setIsRevealed(false);
+      setIsLoading(false);
+      setPrivateViewing(false);
+      setPaperReady(false);
+      setHandwritten(false);
+      setAnswers(['', '']);
+      setStage('view');
+      setGate('checking');
+      setReadRevision(getNativeReadLeaseRevision());
+    });
+    return () => { generation.current += 1; unsubscribe(); };
+  }, []);
+
   useEffect(() => {
     if (gate !== 'checking') return;
     let cancelled = false;
-    void isPinEnabled().then((pin) => {
-      if (!cancelled) setGate(pin ? 'locked' : 'open');
+    void (async () => {
+      const lease = Capacitor.isNativePlatform() ? captureNativeReadLease() : null;
+      const pin = await isPinEnabled();
+      if (cancelled) return;
+      if (lease !== null) assertNativeReadLease(lease);
+      setGateLease(lease);
+      setError(null);
+      setGate(pin ? 'locked' : 'open');
+    })().catch(e => {
+      if (cancelled) return;
+      setGateLease(null);
+      setError(e instanceof Error ? e.message : 'PIN settings could not be verified. Your wallet data is preserved.');
+      setGate('unavailable');
     });
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once at mount
-  }, []);
+  }, [gate, readRevision]);
+
+  const unlockBackup = () => {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        if (gateLease === null) throw new Error('Unlock the wallet and retry backup.');
+        assertNativeReadLease(gateLease);
+      }
+      setGate('open');
+    } catch {
+      setError('Wallet access changed. Unlock the wallet and retry backup. Saved wallet data is preserved.');
+      setGate('unavailable');
+    }
+  };
 
   // Block screen capture for the whole Backup screen, from mount, so
   // protection is already active before the seed can render (the native
@@ -94,24 +152,21 @@ const BackupPage: React.FC<BackupPageProps> = ({
     if (gate !== 'open') return;
     let cancelled = false;
     (async () => {
+      const lease = Capacitor.isNativePlatform() ? captureNativeReadLease() : null;
       // The device-only tier carries no auth binding, so once the gate
       // has passed there is nothing left to authenticate against: read
       // it for passkey accounts too rather than charging a ceremony for
       // a phrase the OS already hands over.
-      if (deviceOnlyStorage.isSupported() && (await deviceOnlyStorage.hasStoredSeed())) {
-        try {
-          const seed = await deviceOnlyStorage.retrieveSeed();
-          if (cancelled) return;
-          if (seed.type === 'mnemonic') {
-            setMnemonic(seed.mnemonic);
-            setSeedFromVault(true);
-            return;
-          }
-        } catch (e) {
-          logger.warn(LogCategory.AUTH, 'Failed to read mnemonic from device-only storage', {
-            error: e instanceof Error ? e.message : String(e),
-          });
-        }
+      const tier = await chooseNativeSeedTier();
+      if (cancelled) return;
+      if (tier === 'device') {
+        const seed = await readSelectedNativeSeed();
+        if (cancelled) return;
+        if (lease !== null) assertNativeReadLease(lease);
+        if (!seed) throw new Error('The selected wallet is unavailable');
+        setMnemonic(mnemonicForBackup(seed));
+        setSeedFromVault(true);
+        return;
       }
       // Remaining tiers are mnemonic-only: a passkey account with no
       // device-only copy falls through to the ceremony below.
@@ -119,13 +174,25 @@ const BackupPage: React.FC<BackupPageProps> = ({
       // Legacy biometric-bound seed (pre-migration install). Don't read
       // it here (that would fire an OS prompt at page mount); flag it
       // so the reveal tile triggers the prompt on tap.
-      if (secureStorage.isSupported() && (await secureStorage.hasStoredSeed())) {
+      if (tier === 'biometric') {
         if (!cancelled) setBiometricSeedPresent(true);
         return;
       }
       if (cancelled) return;
-      setMnemonic(localStorage.getItem('walletMnemonic'));
-    })();
+      const words = getUnlockedWebMnemonic() ?? localStorage.getItem('walletMnemonic');
+      if (Capacitor.isNativePlatform() && words) {
+        const seed = await readSeedForActiveNativeWallet(async () => ({ type: 'mnemonic', mnemonic: words }));
+        if (!cancelled) {
+          if (lease !== null) assertNativeReadLease(lease);
+          setMnemonic(mnemonicForBackup(seed));
+        }
+      } else setMnemonic(words);
+    })().catch(e => {
+      logger.warn(LogCategory.AUTH, 'Failed to read the selected wallet for backup', {
+        error: e instanceof Error ? e.message : String(e),
+      });
+      if (!cancelled) setError(e instanceof Error ? e.message : 'Could not read the selected wallet');
+    });
     return () => {
       cancelled = true;
     };
@@ -149,20 +216,23 @@ const BackupPage: React.FC<BackupPageProps> = ({
     if (!isPasskey || !passkeyAttemptFailed || !secureStorage.isSupported()) return;
     let cancelled = false;
     void (async () => {
-      const tier = (await secureStorage.hasStoredSeed().catch(() => false))
-        ? 'biometric' as const
-        : (await deviceOnlyStorage.hasStoredSeed().catch(() => false))
-          ? 'device' as const
-          : 'none' as const;
-      if (!cancelled) setFallbackTier(tier);
-    })();
+      const tier = await chooseNativeSeedTier();
+      if (!cancelled) setFallbackTier(tier ?? 'none');
+    })().catch(e => {
+      if (!cancelled) {
+        setFallbackTier('none');
+        setError(e instanceof Error ? e.message : 'Could not check the selected wallet');
+      }
+    });
     return () => { cancelled = true; };
   }, [isPasskey, passkeyAttemptFailed]);
 
   const handleRevealPasskey = async () => {
+    const started = generation.current;
     setIsLoading(true);
     setError(null);
     try {
+      const lease = Capacitor.isNativePlatform() ? captureNativeReadLease() : null;
       // Resolve the active label from the localStorage `passkeyLabel`
       // key so the SDK derives the right wallet for this device.
       const effectiveLabel = localStorage.getItem('passkeyLabel') ?? undefined;
@@ -170,49 +240,48 @@ const BackupPage: React.FC<BackupPageProps> = ({
       // recovery phrase for the currently logged-in passkey: an empty
       // allowCredentials would let the OS substitute a sibling cred and
       // derive a different wallet's seed.
-      const response = await signInPinnedToActiveCredential(effectiveLabel);
-      const w = response.wallet;
-      if (w.seed.type === 'mnemonic' && w.seed.mnemonic) {
-        setMnemonic(w.seed.mnemonic);
-        setIsRevealed(true);
-      } else {
-        setError('Could not derive recovery phrase');
-        setPasskeyAttemptFailed(true);
-      }
+      const read = async () => (await signInPinnedToActiveCredential(effectiveLabel)).wallet.seed;
+      const seed = Capacitor.isNativePlatform() ? await readSeedForActiveNativeWallet(read) : await read();
+      if (started !== generation.current) return;
+      if (lease !== null) assertNativeReadLease(lease);
+      setMnemonic(mnemonicForBackup(seed));
+      setIsRevealed(true);
     } catch (e) {
+      if (started !== generation.current) return;
       logger.error(LogCategory.AUTH, 'Failed to derive mnemonic from passkey', {
         error: e instanceof Error ? e.message : String(e),
       });
       setError(e instanceof Error ? e.message : 'Failed to authenticate');
       setPasskeyAttemptFailed(true);
     } finally {
-      setIsLoading(false);
+      if (started === generation.current) setIsLoading(false);
     }
   };
 
-  // Fallback path: read the cached seed from the given vault tier
+  // Fallback path: read the cached seed from the already selected vault tier
   // (legacy biometric-bound prompts, device-only is silent). For
   // passkey wallets this only surfaces after the passkey path failed,
   // so intact passkeys never bypass the ceremony.
-  const revealFromVault = async (tier: 'biometric' | 'device') => {
+  const revealFromVault = async () => {
+    const started = generation.current;
     setIsLoading(true);
     setError(null);
     try {
-      const store = tier === 'biometric' ? secureStorage : deviceOnlyStorage;
-      const seed = await store.retrieveSeed();
-      if (seed.type === 'mnemonic' && seed.mnemonic) {
-        setMnemonic(seed.mnemonic);
-        setIsRevealed(true);
-      } else {
-        setError('Could not retrieve recovery phrase');
-      }
+      const lease = Capacitor.isNativePlatform() ? captureNativeReadLease() : null;
+      const seed = await readSelectedNativeSeed();
+      if (started !== generation.current) return;
+      if (lease !== null) assertNativeReadLease(lease);
+      if (!seed) throw new Error('The selected wallet is unavailable');
+      setMnemonic(mnemonicForBackup(seed));
+      setIsRevealed(true);
     } catch (e) {
+      if (started !== generation.current) return;
       logger.error(LogCategory.AUTH, 'Biometric fallback retrieveSeed failed', {
         error: e instanceof Error ? e.message : String(e),
       });
       setError(e instanceof Error ? e.message : 'Failed to authenticate');
     } finally {
-      setIsLoading(false);
+      if (started === generation.current) setIsLoading(false);
     }
   };
 
@@ -273,6 +342,7 @@ const BackupPage: React.FC<BackupPageProps> = ({
   };
 
   const closeBackup = () => {
+    generation.current += 1;
     setAnswers(['', '']);
     setMnemonic(null);
     setIsRevealed(false);
@@ -285,8 +355,8 @@ const BackupPage: React.FC<BackupPageProps> = ({
     if (gate !== 'open' || !canReveal || isLoading || isRevealed) return;
     if (mnemonic) setIsRevealed(true);
     else if (isPasskey && !passkeyAttemptFailed) void handleRevealPasskey();
-    else if (isPasskey && (fallbackTier === 'biometric' || fallbackTier === 'device')) void revealFromVault(fallbackTier);
-    else if (!isPasskey && biometricSeedPresent) void revealFromVault('biometric');
+    else if (isPasskey && (fallbackTier === 'biometric' || fallbackTier === 'device')) void revealFromVault();
+    else if (!isPasskey && biometricSeedPresent) void revealFromVault();
   };
 
   const footer = gate !== 'open' ? undefined : stage === 'verify' ? (
@@ -326,7 +396,16 @@ const BackupPage: React.FC<BackupPageProps> = ({
           )}
 
           {gate === 'locked' && (
-            <PinGate reason={text.unlock} onUnlocked={() => setGate('open')} />
+            <PinGate reason={text.unlock} onUnlocked={unlockBackup} />
+          )}
+
+          {gate === 'unavailable' && (
+            <div className="space-y-4">
+              <AlertCard variant="error" title="Backup is locked">
+                {error ?? 'Wallet access could not be verified. Saved wallet data is preserved.'}
+              </AlertCard>
+              <SecondaryButton onClick={() => setGate('checking')}>Retry</SecondaryButton>
+            </div>
           )}
 
           {gate === 'open' && stage === 'complete' && (

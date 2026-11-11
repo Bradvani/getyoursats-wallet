@@ -178,4 +178,3 @@ For the return-network correction, 23 negative regression cases failed against t
 - https://docs.rampnow.io/api-reference/go-live-checklist
 
 Current Create Order prose resolves stale examples: repeated `externalOrderUid` values are not idempotent, omitting the wallet sends buy funds to the partner wallet, and webhooks use account-level registration rather than a per-order URL. Account-specific settlement behavior still requires verification. No private partner material or credentials are committed.
-

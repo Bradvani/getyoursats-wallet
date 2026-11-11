@@ -46,7 +46,7 @@ jobs:
           PY
       - run: node scripts/build-public-locale-fonts.mjs
       - run: npx playwright install --with-deps ${{ matrix.browser }}
-      - run: npx playwright test e2e/tests/localization-complete.spec.ts e2e/tests/getyoursats-privacy-locales.spec.ts --project ${{ matrix.browser }}
+      - run: npx playwright test e2e/tests/localization-complete.spec.ts e2e/tests/getyoursats-privacy-locales.spec.ts e2e/tests/direct-spark.spec.ts --project ${{ matrix.browser }}
         env:
           VITE_BREEZ_API_KEY: ''
           VITE_SPARK_LOCAL_CONFIG: ''

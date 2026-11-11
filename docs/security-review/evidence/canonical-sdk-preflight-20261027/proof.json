@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "scope": "canonical installed SDK provenance guards only; no SDK runtime or wallet/provider acceptance",
+  "baseCommit": "18d253702913cf8344697a99dec67fa0db418896",
+  "sourceSha256": {
+    "scripts/security/verify-canonical-installed-sdk.mjs": "122e14464db5c71de8ac49f72e1c52e2f50adee7776ba644e966fcffa4aa9b3a",
+    "scripts/security/verify-canonical-installed-sdk.py": "a77f0b705ad913e81f36a6d1bdca1f2e965c22e6acd11ecd45ff20ae5f1857cb",
+    "tests/canonical-installed-sdk.test.py": "64d5cd2d1dddc1cdcba6dc658f821cb0a7181b5a473ee3670dd8ed8a4e17d6ac",
+    "scripts/security/verify-installed-wasm-signers.mjs": "f22fd1abf74593e6cd537b4e63520e483e0da8764eea39b80385c6a8ea48db98",
+    "scripts/security/verify-observation-extension.mjs": "974fe2dcb35092314cb222c3558d9c61180c86af199baa0efdc936b764ce1fb1"
+  },
+  "selectedRelease": {
+    "patch": "vendor/patches/0007-signer-storage-identity.patch",
+    "version": "0.1.0-getyoursats.recovery.3",
+    "sourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4"
+  },
+  "tests": [
+    {
+      "command": "python3 -B tests/canonical-installed-sdk.test.py",
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "log": "controls.log",
+      "scope": "synthetic archives/packages, no real SDK evaluation"
+    },
+    {
+      "command": "node tests/sdk-build-guards.test.mjs",
+      "passed": 29,
+      "failed": 0,
+      "skipped": 0,
+      "log": "existing-js-guards.log",
+      "scope": "existing declaration/artifact/export guards, no wallet operations"
+    }
+  ],
+  "initialFailure": {
+    "log": "initial-process-restriction.log",
+    "passed": 27,
+    "failed": 3,
+    "reason": "Sandbox denied Node-to-Python spawnSync with EPERM. Same original30-case suite subsequently passed outside that process restriction; final36-case suite passed with no-bytecode invocation. No assertion or source guard was weakened.",
+    "originalTestSha256": "6d59b18e2d0e8ee4879dd32582ab97da56741ab0e797456ec74be0bd8bd58dfb"
+  },
+  "realInstalledDiagnostic": {
+    "file": "retained-installed-package.json",
+    "files": 125,
+    "sameNameFiles": 116,
+    "metadataRenames": 9,
+    "canonical0007Acceptance": "REJECTED",
+    "scope": "Retained 0005 archive and installed files only; no imported SDK or runtime proof"
+  },
+  "earlierInventoryRejection": {
+    "file": "original-inventory-mismatch.json",
+    "reason": "Strict unnormalized comparison rejected npm metadata filename changes despite exact contents. Only nine reviewed .gitignore paths may map to same-directory .npmignore with identical bytes and no archive sibling."
+  },
+  "digestDiagnostic": {
+    "file": "inventory-digest-diagnostic.json",
+    "reason": "An initial diagnostic incorrectly compared the installed-name inventory digest to the parent archive-name digest. Both maps are now named and recorded separately; all125filebytes match."
+  },
+  "inventoryDigestDefinitions": {
+    "archiveInventorySha256": "SHA256 of sorted compact JSON mapping original archive relative names to file SHA256 values",
+    "packageInventorySha256": "SHA256 of sorted compact JSON mapping actual installed relative names to file SHA256 values",
+    "npmIgnoreRenames": "Explicit archivePath/installedPath/sha256 entries; only nine fixed baseline metadata paths can map"
+  },
+  "peerReview": {
+    "reviewer": "audit_gate_review",
+    "kind": "internal source-level review only",
+    "status": "cleared frozen source and final -B/no-cache delta; no independent test rerun or qualified approval"
+  },
+  "historicalBytesPreserved": {
+    "vendor/patches/0006-reconciled-recovery-source.patch": "526a66a84989313aa91a391e2681635d147bfa934d8d8310358e19725609e195",
+    "scripts/security/verify-observation-package.py": "5d9831b027d2bd09c6a232d2003cd2b4f4473f03dc2f4bb79520670042afb40b"
+  },
+  "runtime": {
+    "python": "Python 3.12.14",
+    "node": "v24.22.1"
+  },
+  "limits": [
+    "Trusted reviewed checkout/archive authority is required.",
+    "This verifies a filesystem snapshot, not concurrent mutation exclusion after checking.",
+    "Diagnostic filesystem copies must match the same canonical package; their runtime receipts remain separately labeled.",
+    "Existing 0005 and 0006 evidence does not become 0007 acceptance.",
+    "No package/vendor bytes, SDK source, profiles, wallet operations, provider requests, interlocks, workflows or production deployments were changed by this commit."
+  ],
+  "evidenceSha256": {
+    "controls.log": "89c925b3cf755d5142011892aa4cd0815a0ac5fb073a38b6b4846a253b1684c4",
+    "existing-js-guards.log": "cc05596bf210b0d27a6d58d0c283e1f854ffe0407520329127fc72cb8f7ec865",
+    "initial-process-restriction.log": "2f9871c2e66100867c7343ccf680c876b664c6d62575b7b607c12cde3c7d1691",
+    "original-inventory-mismatch.json": "c7146773d6daf7dcdb1e6ea0675947b4c15dd261584056aa24f488b77c5cb4bf",
+    "inventory-digest-diagnostic.json": "e60ccea682eb10ecbffccbdbc3b3827e5b3e175ff2751da9c59fd34843c4005b",
+    "retained-installed-package.json": "03e8c99a988e9ecdb366586469ab1bcbf01cabfb9603228e652e1f0002057204"
+  }
+}

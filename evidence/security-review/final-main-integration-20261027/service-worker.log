@@ -1,0 +1,17 @@
+✔ replacement waits for existing clients and retains only two owned release caches (95.306057ms)
+✔ activation purges API and query keys only from owned caches (23.615225ms)
+✔ API, LNURL, other origins and non-GET requests bypass the worker (1.371799ms)
+✔ never stores private, no-store or error responses as public assets (6.479306ms)
+✔ authorized, no-store and query asset requests cannot populate a public cache key (4.177043ms)
+✔ entry count remains bounded and fixed shell assets survive a long font session (298.630471ms)
+✔ previous private responses cannot be served by the offline fallback (1.469687ms)
+✔ offline shell and previous immutable chunks remain usable without forced activation (7.166082ms)
+✔ offline onboarding and wallet branding survive legacy-cache cleanup (8.500896ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 486.223946

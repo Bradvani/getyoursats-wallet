@@ -1,3 +1,4 @@
+import LinkedPasskeyBackupRestore from '../security/LinkedPasskeyBackupRestore';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {usePresentation} from '@/hooks/usePresentation';
 import {Capacitor} from '@capacitor/core';
@@ -14,6 +15,7 @@ interface RestorePageProps {
   onBack: () => void;
   onClearError: () => void;
   isLoading?: boolean;
+  onRestoreProtectedFile?: (text:string,signal:AbortSignal,password?:string)=>Promise<void>;
 }
 
 const RestorePage: React.FC<RestorePageProps> = ({
@@ -22,6 +24,7 @@ const RestorePage: React.FC<RestorePageProps> = ({
   onBack,
   onClearError,
   isLoading = false,
+  onRestoreProtectedFile,
 }) => {
   const {language}=usePresentation(); const text=trustCopy(language);
   const [mnemonic, setMnemonic] = useState<string>('');
@@ -79,6 +82,7 @@ const RestorePage: React.FC<RestorePageProps> = ({
             If this device can't find the passkey, check its password manager or return here for offline recovery.
           </p>
         </div>
+        {!Capacitor.isNativePlatform()&&onRestoreProtectedFile&&<LinkedPasskeyBackupRestore onRestore={onRestoreProtectedFile}/>}
         <button type="button" className="w-full rounded-xl border border-spark-border px-4 py-3 text-sm text-spark-text-secondary"
           aria-expanded={manualOpen} aria-controls="offline-restore-form"
           onClick={() => setManualOpen(open => !open)}>

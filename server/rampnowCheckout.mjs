@@ -5,7 +5,7 @@
 import {createHash} from 'node:crypto';
 import {bech32, bech32m, createBase58check} from '@scure/base';
 import {normalizeEmail} from './emailCrypto.mjs';
-import {RampnowError, rampnowSignature} from './rampnow.mjs';
+import {RampnowError, rampnowSignature, rampnowPartnerFeeParameters} from './rampnow.mjs';
 
 const CHECKOUT_HOST = 'https://api.sandbox.rampnow.io';
 const CHECKOUT_PATH = '/api/partner/v1/ext/ramp_order/checkout';
@@ -137,7 +137,7 @@ export function createRampnowCheckoutClient({apiKey, apiSecret, fetchImpl = fetc
   return Object.freeze({
     async createBuyOrder(params) {
       need(object(params), 'RAMPNOW_CHECKOUT_INPUT_INVALID');
-      const {externalOrderUid, input, returnUrl, paymentMode} = params;
+      const {externalOrderUid, input, returnUrl, paymentMode, partnerFees} = params;
       need(uuid(externalOrderUid), 'RAMPNOW_ORDER_ID_INVALID');
       need(paymentMode === undefined || (typeof paymentMode === 'string'
         && /^[a-z][a-z0-9_]{0,63}$/.test(paymentMode) && paymentMode !== 'unknown'), 'RAMPNOW_PAYMENT_MODE_INVALID');
@@ -146,7 +146,7 @@ export function createRampnowCheckoutClient({apiKey, apiSecret, fetchImpl = fetc
         srcAmount: normalized.srcAmount, dstCurrency: 'BTC', dstChain: 'bitcoin', user: normalized.user,
         wallet: {crytpoAccountDetail: {custodyType: 'unhosted', address: normalized.destination}},
         returnUrl: checkoutReturnUrl(returnUrl, externalOrderUid, normalized.network),
-        ...(paymentMode === undefined ? {} : {paymentMode})});
+        ...(paymentMode === undefined ? {} : {paymentMode}), ...rampnowPartnerFeeParameters(partnerFees)});
       const timestamp = String(Math.floor(now() / 1000));
       const signature = rampnowSignature(apiSecret, timestamp, 'POST', CHECKOUT_PATH, body);
       try {

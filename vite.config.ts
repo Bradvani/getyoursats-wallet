@@ -22,6 +22,13 @@ const allowLocalClusterCsp = () => ({
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
+  // This continuation candidate intentionally restricts sync and recovery.
+  // Remove this deployment interlock only after the documented release gates
+  // pass. A successful preview build is not production approval.
+  if (env.VERCEL_ENV === 'production') {
+    throw new Error('Browser wallet security release is not approved. Resolve the blockers in docs/security-review/browser-continuation-release.md before production deployment.');
+  }
+
   return {
     base: env.VITE_BASE_PATH || '/',
     // The web build has no native shell to ask, so the label falls back to

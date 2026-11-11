@@ -1,0 +1,58 @@
+name: Rollback compatibility artifact
+on:
+  push:
+    branches: [release/browser-pwa-security-localization-20261025]
+    paths:
+      - rollback/**
+      - vite.rollback.config.ts
+      - playwright.rollback.config.ts
+      - scripts/security/package-rollback.mjs
+      - scripts/security/rollback-test-server.mjs
+      - e2e/fixtures/rollback-migration.*
+      - e2e/tests/rollback-compatibility.spec.ts
+      - .github/workflows/rollback-compatibility.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pr43-rollback-compatibility
+  cancel-in-progress: true
+jobs:
+  verify:
+    name: verify-rollback-compatibility
+    if: github.repository == 'Bradvani/getyoursats-wallet' && github.ref == 'refs/heads/release/browser-pwa-security-localization-20261025'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Build a separate non-spending artifact
+        run: |
+          set -euo pipefail
+          npx tsc --project rollback/tsconfig.json
+          npx vite build --config vite.rollback.config.ts
+          node scripts/security/package-rollback.mjs
+      - run: npx playwright install --with-deps chromium
+      - name: Exercise migration, original-phrase recovery and unchanged pending state
+        run: npx playwright test --config playwright.rollback.config.ts
+      - name: Package byte-pinned containment rollback, not a production deployment
+        run: |
+          set -euo pipefail
+          tar -czf getyoursats-containment-rollback-${GITHUB_SHA}.tgz -C dist-rollback .
+          sha256sum getyoursats-containment-rollback-${GITHUB_SHA}.tgz > rollback-artifact-sha256.txt
+          cat rollback-artifact-sha256.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: containment-rollback-${{ github.sha }}
+          path: |
+            getyoursats-containment-rollback-*.tgz
+            rollback-artifact-sha256.txt
+            dist-rollback/rollback-manifest.json
+          retention-days: 30

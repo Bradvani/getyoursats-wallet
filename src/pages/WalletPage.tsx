@@ -1,3 +1,7 @@
+import IncomingPaymentsPanel from '../security/IncomingPaymentsPanel';
+import PaymentReconciliationBanner from '../security/PaymentReconciliationBanner';
+import WalletRecoveryPanel from '../security/WalletRecoveryPanel';
+import {browserReceivingRestriction,isRestrictedBrowserWallet} from '../security/browserReleasePolicy';
 import { useWalletNavigation } from '../hooks/useWalletNavigation';
 import {trustCopy} from '../getyoursats/trustCopy';
 import GetYourSatsWordmark from '../components/GetYourSatsWordmark';
@@ -56,7 +60,7 @@ interface WalletPageProps {
   walletInfo: GetInfoResponse | null;
   transactions: Payment[];
   unclaimedDeposits: DepositInfo[];
-  refreshWalletData: (showLoading?: boolean) => Promise<boolean>;
+  refreshWalletData: (showLoading?: boolean, observeLive?: boolean) => Promise<boolean>;
   isSyncing: boolean;
   error: string | null;
   onClearError: () => void;
@@ -104,6 +108,8 @@ const WalletPage: React.FC<WalletPageProps> = ({
   onPersonalizeAddress,
 }) => {
   const wallet = useWallet();
+  const restrictedBrowser = isRestrictedBrowserWallet(wallet);
+  const lightningRestriction=browserReceivingRestriction(wallet,'bolt11Invoice');
   const {language,copy}=usePresentation();
   const wc=WALLET_COPY[language];
   const { showToast } = useToast();
@@ -211,15 +217,23 @@ const WalletPage: React.FC<WalletPageProps> = ({
   // A forced sync rather than the 60s timer's, so a deposit sent from another
   // device shows at once. The synced event it fires refreshes the list.
   const syncNow = useCallback(async () => {
+    if (restrictedBrowser) {
+      // Restricted browser invokes observation only, never bulk sync/claims.
+      const fresh=await refreshWalletData(false,true);
+      showToast(fresh?'success':'error',fresh?'Wallet status checked':'Live status unavailable',
+        fresh?'Provider balances and payment history were refreshed without claiming funds. Pending payments may still require reconciliation.':
+          'Saved records are preserved. Displayed balances may be out of date.');
+      return;
+    }
     try {
       await wallet.syncWallet({});
     } catch (e) {
       logger.warn(LogCategory.SDK, 'Pull to refresh failed', { error: e instanceof Error ? e.message : String(e) });
     }
-  }, [wallet]);
+  }, [wallet, restrictedBrowser, refreshWalletData, showToast]);
 
   const exitState = useUnilateralExitEngineState();
-  const exitEntries = useMemo(() => unilateralExitEntries(exitState), [exitState]);
+  const exitEntries = useMemo(() => unilateralExitEntries(exitState,restrictedBrowser), [exitState,restrictedBrowser]);
   const selectedExit = exitState.archive.find(exit => exit.id === selectedExitId) ?? null;
   const handleExitSelected = useCallback((entry: UnilateralExitEntry) => {
     if (entry.isActive) onOpenUnilateralExit();
@@ -365,6 +379,12 @@ const WalletPage: React.FC<WalletPageProps> = ({
         className={`gys-wallet__activity ${showGuide ? 'gys-wallet__activity--guide' : ''}`}
         data-testid="wallet-scroll">
         <PullToRefresh scrollerRef={transactionsContainerRef} onRefresh={syncNow}/>
+      {restrictedBrowser && <aside role="status" className="mx-4 my-3 rounded-xl border border-spark-warning p-3 text-sm text-spark-text-primary">
+        <strong>Security preview: payment claims and some recovery routes remain restricted.</strong>{' '}
+        Refresh checks provider balances and payment history without starting a claim. A missing or failed payment status is not proof that funds have returned. Use disposable test wallets only.
+      </aside>}
+
+        <PaymentReconciliationBanner/><WalletRecoveryPanel/><IncomingPaymentsPanel/>
         {showGuide && walletSetup && onReviewRecovery && onPersonalizeAddress ? (
           <WalletSetupTour
             step={walletSetup.progress.step}
@@ -380,7 +400,8 @@ const WalletPage: React.FC<WalletPageProps> = ({
               <CollapsingWalletHeader walletInfo={walletInfo} scrollProgress={0} showToolbar={false}
                 onOpenMenu={() => setIsMenuOpen(true)} isSyncing={isSyncing}/>
             </div>
-            <WalletIdentityCard identity={primaryLightningAddress} onPersonalize={onPersonalizeAddress}/>
+            {lightningRestriction ? <p role="status" className="gys-address-banner__pending">{lightningRestriction}</p> :
+              <WalletIdentityCard identity={primaryLightningAddress} onPersonalize={onPersonalizeAddress}/>}
             {walletSetup?.scope && onReviewRecovery && <WalletSetupCard setup={walletSetup}
               paused={setupPaused} onReviewRecovery={onReviewRecovery} onStartTour={startTour} compact/>}
             <button type="button" className="gys-home-pos" data-testid="home-pos" onClick={()=>setGysPosOpen(true)}>
@@ -443,7 +464,7 @@ const WalletPage: React.FC<WalletPageProps> = ({
       )}
 
       {selectedExit && (
-        <ArchivedExitDialog exit={selectedExit} onClose={() => setSelectedExitId(null)} />
+        <ArchivedExitDialog exit={selectedExit} onClose={() => setSelectedExitId(null)} fundingUnavailable={restrictedBrowser} />
       )}
 
       {/* Keyed on deposit identity so the page remounts on a new

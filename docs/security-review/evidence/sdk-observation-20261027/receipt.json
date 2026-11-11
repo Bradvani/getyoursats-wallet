@@ -1,0 +1,1213 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-10-27T01:01:43.345904+00:00",
+  "scope": "Local pinned SDK baseline reconstruction and new observation/signing-envelope source verification, followed by source/build-support handoff only",
+  "releaseDecision": "NO-GO remains in force",
+  "appBuildSupportBase": "f5c319882d172ec2710a712aa02f15497b6eb2e7",
+  "upstreamSdk": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+  "finalSourceTree": "a1400c1851d4a6e2c274133be0d86d272d6f4586",
+  "finalPatchSha256": "f00e39b8013d239a1560ceaf1ac0369fa6519a0ab6f0bd3bd3d271c0ee7e05c8",
+  "sourceFreezeFile": "source-freeze.json",
+  "sourceFiles": 32,
+  "sourceUnchangedAcrossFinalNativeWasmAndPackaging": true,
+  "toolVersions": {
+    "rustc": {
+      "exitCode": 0,
+      "version": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2"
+    },
+    "cargo": {
+      "exitCode": 0,
+      "version": "cargo 1.95.0 (f2d3ce0bd 2026-03-21)"
+    },
+    "wasm-bindgen": {
+      "exitCode": 0,
+      "version": "wasm-bindgen 0.2.120"
+    },
+    "clang": {
+      "exitCode": 0,
+      "version": "Ubuntu clang version 18.1.3 (1ubuntu1)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/tools/ubuntu-20260828/usr/lib/llvm-18/bin"
+    },
+    "llvm-ar": {
+      "exitCode": 0,
+      "version": "Ubuntu LLVM version 18.1.3\n  Optimized build."
+    },
+    "protoc": {
+      "exitCode": 0,
+      "version": "libprotoc 3.21.12"
+    },
+    "cmake": {
+      "exitCode": 0,
+      "version": "cmake version 3.28.3\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+    },
+    "pkg-config": {
+      "exitCode": 0,
+      "version": "1.8.1"
+    },
+    "gcc": {
+      "exitCode": 0,
+      "version": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+    }
+  },
+  "officialPinnedToolDownloads": [
+    {
+      "filename": "rustc-1.95.0-x86_64-unknown-linux-gnu.tar.xz",
+      "url": "https://static.rust-lang.org/dist/2026-04-16/rustc-1.95.0-x86_64-unknown-linux-gnu.tar.xz",
+      "bytes": 80351960,
+      "sha256": "8426a3d170a5879f5682f5fbdd024a1779b3951e7baba685af2d6dc32a6dfc15",
+      "checksumVerified": true
+    },
+    {
+      "filename": "cargo-1.95.0-x86_64-unknown-linux-gnu.tar.xz",
+      "url": "https://static.rust-lang.org/dist/2026-04-16/cargo-1.95.0-x86_64-unknown-linux-gnu.tar.xz",
+      "bytes": 10984780,
+      "sha256": "e74edd2cf7d0f1f1383b4f00eb90c843750bc489e2ccf7214e6476678a907425",
+      "checksumVerified": true
+    },
+    {
+      "filename": "rust-std-1.95.0-x86_64-unknown-linux-gnu.tar.xz",
+      "url": "https://static.rust-lang.org/dist/2026-04-16/rust-std-1.95.0-x86_64-unknown-linux-gnu.tar.xz",
+      "bytes": 29573972,
+      "sha256": "047ea7098803d3500fa1072e9cee5392697e21525559e4458128a2bf874aa382",
+      "checksumVerified": true
+    },
+    {
+      "filename": "rust-std-1.95.0-wasm32-unknown-unknown.tar.xz",
+      "url": "https://static.rust-lang.org/dist/2026-04-16/rust-std-1.95.0-wasm32-unknown-unknown.tar.xz",
+      "bytes": 21450508,
+      "sha256": "5587b89ff69623d09e476439d44a24453b4e4ea3d5e0b53a5c0a935151ff3fd1",
+      "checksumVerified": true
+    },
+    {
+      "filename": "wasm-bindgen-0.2.120-x86_64-unknown-linux-musl.tar.gz",
+      "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.120/wasm-bindgen-0.2.120-x86_64-unknown-linux-musl.tar.gz",
+      "bytes": 11326853,
+      "sha256": "ceb6f0b9fea9d2868f258215a1d7f86a4c28330a0d64432cc7d53674618772d6",
+      "checksumVerified": true
+    },
+    {
+      "filename": "rustfmt-1.95.0-x86_64-unknown-linux-gnu.tar.xz",
+      "url": "https://static.rust-lang.org/dist/2026-04-16/rustfmt-1.95.0-x86_64-unknown-linux-gnu.tar.xz",
+      "bytes": 2164880,
+      "sha256": "f1b2a7301513ffdd95ebf22ebbdd932e4d17fc806f748d93924740d0297b1396",
+      "checksumVerified": true
+    }
+  ],
+  "officialHostToolDownloads": [
+    {
+      "name": "clang-18",
+      "version": "1:18.1.3-1ubuntu1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/universe/l/llvm-toolchain-18/clang-18_18.1.3-1ubuntu1_amd64.deb",
+      "sha256": "628b16701014ef7ad648380b20ea74b90dd543857f933b3e34d2fc042783de25",
+      "filename": "clang-18_18.1.3-1ubuntu1_amd64.deb",
+      "bytes": 80040,
+      "checksumVerified": true
+    },
+    {
+      "name": "llvm-18",
+      "version": "1:18.1.3-1ubuntu1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/universe/l/llvm-toolchain-18/llvm-18_18.1.3-1ubuntu1_amd64.deb",
+      "sha256": "139cb82e16e75fcdd4a56562804ff9bfb482b65d0929580d621d28088075a27e",
+      "filename": "llvm-18_18.1.3-1ubuntu1_amd64.deb",
+      "bytes": 25291124,
+      "checksumVerified": true
+    },
+    {
+      "name": "libllvm18",
+      "version": "1:18.1.3-1ubuntu1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/l/llvm-toolchain-18/libllvm18_18.1.3-1ubuntu1_amd64.deb",
+      "sha256": "af6197096ce3b89aab86de59f01c1b5feb008b2ae1514a03906c0664edb8b0b1",
+      "filename": "libllvm18_18.1.3-1ubuntu1_amd64.deb",
+      "bytes": 27518500,
+      "checksumVerified": true
+    },
+    {
+      "name": "libclang-cpp18",
+      "version": "1:18.1.3-1ubuntu1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/l/llvm-toolchain-18/libclang-cpp18_18.1.3-1ubuntu1_amd64.deb",
+      "sha256": "e91eda104813ee0468d145d010a4a4e142401f3f17f9a65596c66d416298d018",
+      "filename": "libclang-cpp18_18.1.3-1ubuntu1_amd64.deb",
+      "bytes": 13492572,
+      "checksumVerified": true
+    },
+    {
+      "name": "libclang-common-18-dev",
+      "version": "1:18.1.3-1ubuntu1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/universe/l/llvm-toolchain-18/libclang-common-18-dev_18.1.3-1ubuntu1_amd64.deb",
+      "sha256": "d41631bb752815a8196261d1030c096591c59678c8adfbf2e6a740a691b49e80",
+      "filename": "libclang-common-18-dev_18.1.3-1ubuntu1_amd64.deb",
+      "bytes": 735998,
+      "checksumVerified": true
+    },
+    {
+      "name": "libclang1-18",
+      "version": "1:18.1.3-1ubuntu1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/l/llvm-toolchain-18/libclang1-18_18.1.3-1ubuntu1_amd64.deb",
+      "sha256": "1ed67106d743ab4f12db2726c5fc11c436c5e1fba613e9f1006bf3fa05cc69bd",
+      "filename": "libclang1-18_18.1.3-1ubuntu1_amd64.deb",
+      "bytes": 7803214,
+      "checksumVerified": true
+    },
+    {
+      "name": "llvm-18-linker-tools",
+      "version": "1:18.1.3-1ubuntu1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/universe/l/llvm-toolchain-18/llvm-18-linker-tools_18.1.3-1ubuntu1_amd64.deb",
+      "sha256": "50f0bcfa784e42f8bf0eac31aeb6a20798fb6174cc31efe021f12ae71af91b23",
+      "filename": "llvm-18-linker-tools_18.1.3-1ubuntu1_amd64.deb",
+      "bytes": 1313500,
+      "checksumVerified": true
+    },
+    {
+      "name": "llvm-18-runtime",
+      "version": "1:18.1.3-1ubuntu1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/universe/l/llvm-toolchain-18/llvm-18-runtime_18.1.3-1ubuntu1_amd64.deb",
+      "sha256": "1ad04ff658929491f8bf30fcf6454e07b1815a2b04164f1894156e92c91ef895",
+      "filename": "llvm-18-runtime_18.1.3-1ubuntu1_amd64.deb",
+      "bytes": 538178,
+      "checksumVerified": true
+    },
+    {
+      "name": "libz3-4",
+      "version": "4.8.12-3.1build1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/universe/z/z3/libz3-4_4.8.12-3.1build1_amd64.deb",
+      "sha256": "67ceb432593fe62afbaf3bd85c73d46c66fa19433a6b58326a3248162f139b19",
+      "filename": "libz3-4_4.8.12-3.1build1_amd64.deb",
+      "bytes": 5836188,
+      "checksumVerified": true
+    },
+    {
+      "name": "libpfm4",
+      "version": "4.13.0+git32-g0d4ed0e-1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/universe/libp/libpfm4/libpfm4_4.13.0+git32-g0d4ed0e-1_amd64.deb",
+      "sha256": "037cdd0aad754b70df1df39aae34a9f857daa78fdfa132673b476c256e33ad52",
+      "filename": "libpfm4_4.13.0+git32-g0d4ed0e-1_amd64.deb",
+      "bytes": 413816,
+      "checksumVerified": true
+    },
+    {
+      "name": "protobuf-compiler",
+      "version": "3.21.12-8.2ubuntu0.3",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/universe/p/protobuf/protobuf-compiler_3.21.12-8.2ubuntu0.3_amd64.deb",
+      "sha256": "f308788203b1fc4292783115b9a0517eb2f3d1dbbfe28916f4aea6aca702691a",
+      "filename": "protobuf-compiler_3.21.12-8.2ubuntu0.3_amd64.deb",
+      "bytes": 28972,
+      "checksumVerified": true
+    },
+    {
+      "name": "libprotobuf32t64",
+      "version": "3.21.12-8.2ubuntu0.3",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/p/protobuf/libprotobuf32t64_3.21.12-8.2ubuntu0.3_amd64.deb",
+      "sha256": "0b0dd45060288fbe5505b4b3c86e6222d6f4214574f653b2a7d0bbe72d5c6d87",
+      "filename": "libprotobuf32t64_3.21.12-8.2ubuntu0.3_amd64.deb",
+      "bytes": 922638,
+      "checksumVerified": true
+    },
+    {
+      "name": "libprotoc32t64",
+      "version": "3.21.12-8.2ubuntu0.3",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/p/protobuf/libprotoc32t64_3.21.12-8.2ubuntu0.3_amd64.deb",
+      "sha256": "a6f2417722c0a6cb2cfc59b580aa6260da7f8b7c6969c520decd3218a3e2febe",
+      "filename": "libprotoc32t64_3.21.12-8.2ubuntu0.3_amd64.deb",
+      "bytes": 682962,
+      "checksumVerified": true
+    },
+    {
+      "name": "libprotobuf-dev",
+      "version": "3.21.12-8.2ubuntu0.3",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/p/protobuf/libprotobuf-dev_3.21.12-8.2ubuntu0.3_amd64.deb",
+      "sha256": "967d7e6fa8af8d2b658e956662288843e77dbe4d10e1627c396ac6482a33d8c3",
+      "filename": "libprotobuf-dev_3.21.12-8.2ubuntu0.3_amd64.deb",
+      "bytes": 1413280,
+      "checksumVerified": true
+    },
+    {
+      "name": "cmake",
+      "version": "3.28.3-1build7",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/c/cmake/cmake_3.28.3-1build7_amd64.deb",
+      "sha256": "4b0a7f8c0daf27b26b46997d994ae5d1ee7a3d11dfcda9f7627bb1462c162295",
+      "filename": "cmake_3.28.3-1build7_amd64.deb",
+      "bytes": 11190006,
+      "checksumVerified": true
+    },
+    {
+      "name": "cmake-data",
+      "version": "3.28.3-1build7",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/c/cmake/cmake-data_3.28.3-1build7_all.deb",
+      "sha256": "20a3b644211ce82f35c24f1f5052199adeb0ac159978a8740fd6c0959611557f",
+      "filename": "cmake-data_3.28.3-1build7_all.deb",
+      "bytes": 2154936,
+      "checksumVerified": true
+    },
+    {
+      "name": "libjsoncpp25",
+      "version": "1.9.5-6build1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libj/libjsoncpp/libjsoncpp25_1.9.5-6build1_amd64.deb",
+      "sha256": "8efea5b75952f3ad1c40e6b5b31de687c297ea29f87f8b63efebb55e13467211",
+      "filename": "libjsoncpp25_1.9.5-6build1_amd64.deb",
+      "bytes": 82754,
+      "checksumVerified": true
+    },
+    {
+      "name": "librhash0",
+      "version": "1.4.3-3build1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/r/rhash/librhash0_1.4.3-3build1_amd64.deb",
+      "sha256": "e9ee69963ff1a56378b9c5ffdd21ea0feaec9647c522349b7612b25103490528",
+      "filename": "librhash0_1.4.3-3build1_amd64.deb",
+      "bytes": 128748,
+      "checksumVerified": true
+    },
+    {
+      "name": "libuv1t64",
+      "version": "1.48.0-1.1build1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/libu/libuv1/libuv1t64_1.48.0-1.1build1_amd64.deb",
+      "sha256": "72a1856b30af1e533494ab90742a2446f4491b15ddebcade6661a6e8d61b4359",
+      "filename": "libuv1t64_1.48.0-1.1build1_amd64.deb",
+      "bytes": 97288,
+      "checksumVerified": true
+    },
+    {
+      "name": "pkg-config",
+      "version": "1.8.1-2build1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/p/pkgconf/pkg-config_1.8.1-2build1_amd64.deb",
+      "sha256": "16bda455d9216da31ad55d72df5a7380cb9d5ac32a2393941cab262a4e5b526f",
+      "filename": "pkg-config_1.8.1-2build1_amd64.deb",
+      "bytes": 7264,
+      "checksumVerified": true
+    },
+    {
+      "name": "pkgconf",
+      "version": "1.8.1-2build1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/p/pkgconf/pkgconf_1.8.1-2build1_amd64.deb",
+      "sha256": "834a58031069d97d7cfb8b2f5bfd5effc69cecf7f30cc362071875f1f8dc1828",
+      "filename": "pkgconf_1.8.1-2build1_amd64.deb",
+      "bytes": 16790,
+      "checksumVerified": true
+    },
+    {
+      "name": "pkgconf-bin",
+      "version": "1.8.1-2build1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/p/pkgconf/pkgconf-bin_1.8.1-2build1_amd64.deb",
+      "sha256": "7a812f05ee1610154b433e2ad54f6e4163fcbb306b9fb31afe959afb2e5e1545",
+      "filename": "pkgconf-bin_1.8.1-2build1_amd64.deb",
+      "bytes": 20730,
+      "checksumVerified": true
+    },
+    {
+      "name": "libpkgconf3",
+      "version": "1.8.1-2build1",
+      "url": "https://snapshot.ubuntu.com/ubuntu/20260828T000000Z/pool/main/p/pkgconf/libpkgconf3_1.8.1-2build1_amd64.deb",
+      "sha256": "fc3a57e8f931ec06cb7c51acc56878f1fec247ff02a7adcab26905c2faeb2792",
+      "filename": "libpkgconf3_1.8.1-2build1_amd64.deb",
+      "bytes": 30652,
+      "checksumVerified": true
+    }
+  ],
+  "baselineReconstruction": {
+    "patchSha256": "280e182624968ddb5755103d28dd0a9a07f867c37cd6b7f0d4ff9c1025da3f55",
+    "nativeTestsPassed": 52,
+    "nativeAndWasmCommands": [
+      {
+        "name": "seed_factory",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "breez-sdk-spark",
+          "seed_factory",
+          "--lib"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 293.14,
+        "log": "logs/baseline-seed_factory.log",
+        "logSha256": "f9ca92c402dcb696a3065458e17fef4cbf8a43f9540d7ca6fd4081a5f8cecc87",
+        "passed": 3
+      },
+      {
+        "name": "observation",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "breez-sdk-spark",
+          "observation_",
+          "--lib"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.77,
+        "log": "logs/baseline-observation.log",
+        "logSha256": "18c16f3824bba3cb1ff6d067ac4f033e9b890829d19efcf8e094c01b02bc7ec4",
+        "passed": 8
+      },
+      {
+        "name": "signed_recovery",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "breez-sdk-spark",
+          "signed_recovery_",
+          "--lib"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.62,
+        "log": "logs/baseline-signed_recovery.log",
+        "logSha256": "c2c97b1dfd311c5cf9e75aeb57ea1a9e7b380cbf4d8b886db4bd4373bf47375f",
+        "passed": 8
+      },
+      {
+        "name": "incoming_claim",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "breez-sdk-spark",
+          "incoming_claim_",
+          "--lib"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.53,
+        "log": "logs/baseline-incoming_claim.log",
+        "logSha256": "078a522f4bb5dbc5e7dc90e260264d34c1a3b966e27af44192a155b3d9cf77ba",
+        "passed": 16
+      },
+      {
+        "name": "mature_deposit",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "breez-sdk-spark",
+          "mature_deposit_",
+          "--lib"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.49,
+        "log": "logs/baseline-mature_deposit.log",
+        "logSha256": "021c972c0e0cabf69603aeecf2e58836298603e32f08602c5da47c3827dcfeff",
+        "passed": 11
+      },
+      {
+        "name": "outspend",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--offline",
+          "-p",
+          "breez-sdk-spark",
+          "outspend_",
+          "--lib"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.53,
+        "log": "logs/baseline-outspend.log",
+        "logSha256": "9de7ee721ad8882d347bf29b9b8344ff41e83f88496637b372c30469b93acd37",
+        "passed": 6
+      },
+      {
+        "name": "wasm_release",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "-p",
+          "breez-sdk-spark-wasm",
+          "--target",
+          "wasm32-unknown-unknown",
+          "--release"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 380.7,
+        "log": "logs/baseline-wasm_release.log",
+        "logSha256": "fa7e229e4f74b845da4861361d99dc3219700251489632beae527d877f1a1a69"
+      }
+    ],
+    "actualWasmChecks": {
+      "mnemonicIdentityComparisons": 36,
+      "seedFactoryIdentityDerivationComparisons": 108,
+      "signerGuardAssertions": 18,
+      "generatedArtifactApiChecksThenPresent": 12,
+      "browserPbkdf2Comparisons": 17
+    },
+    "artifactComparison": {
+      "sameSource": true,
+      "samePatch": true,
+      "sameLock": true,
+      "rawWasmSame": false,
+      "rawWasm": "e6e2edb7c05ab726d8c9ebb7b594999d58020a7723d3fbd56d860eedf079db96",
+      "packageSame": false,
+      "package": "ca7a377ffc6c9f55c2d925caaf7fb0cfea7025e0ddf0b02cf165be4ab1dcfb00",
+      "generated": {
+        "web/breez_sdk_spark_wasm.js": {
+          "same": true,
+          "recorded": "abb1a95d7c6b506cc5f1fa4373ddbecd02f2a545bf99f4e1ad323b93575de025",
+          "rebuilt": "abb1a95d7c6b506cc5f1fa4373ddbecd02f2a545bf99f4e1ad323b93575de025"
+        },
+        "web/breez_sdk_spark_wasm.d.ts": {
+          "same": true,
+          "recorded": "37c3511355608d49fd83ad9e5897bb132d92b61da8a7cf9446e9b05d5a42681a",
+          "rebuilt": "37c3511355608d49fd83ad9e5897bb132d92b61da8a7cf9446e9b05d5a42681a"
+        },
+        "web/breez_sdk_spark_wasm_bg.wasm": {
+          "same": false,
+          "recorded": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+          "rebuilt": "d1c8a8feabf0e14ace78f5be30f03cac62728b009edbd1810be26f62136d7878"
+        },
+        "nodejs/breez_sdk_spark_wasm.js": {
+          "same": true,
+          "recorded": "bbc86dfd4584be21e72ae0fabde9b0d5a5081cbcc161a0db6beebde948992a78",
+          "rebuilt": "bbc86dfd4584be21e72ae0fabde9b0d5a5081cbcc161a0db6beebde948992a78"
+        },
+        "nodejs/breez_sdk_spark_wasm.d.ts": {
+          "same": true,
+          "recorded": "7d7a98ae2c6840e171ae93a5e4efb2249abf57698cb33076ca6fb5a5d64a0e0e",
+          "rebuilt": "7d7a98ae2c6840e171ae93a5e4efb2249abf57698cb33076ca6fb5a5d64a0e0e"
+        },
+        "nodejs/breez_sdk_spark_wasm_bg.wasm": {
+          "same": false,
+          "recorded": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+          "rebuilt": "d1c8a8feabf0e14ace78f5be30f03cac62728b009edbd1810be26f62136d7878"
+        },
+        "bundler/breez_sdk_spark_wasm.js": {
+          "same": true,
+          "recorded": "6342628f134d0ad21d634559fe7b5a3cea6389e2e5a82134009cc94cfaec81e2",
+          "rebuilt": "6342628f134d0ad21d634559fe7b5a3cea6389e2e5a82134009cc94cfaec81e2"
+        },
+        "bundler/breez_sdk_spark_wasm.d.ts": {
+          "same": true,
+          "recorded": "7d7a98ae2c6840e171ae93a5e4efb2249abf57698cb33076ca6fb5a5d64a0e0e",
+          "rebuilt": "7d7a98ae2c6840e171ae93a5e4efb2249abf57698cb33076ca6fb5a5d64a0e0e"
+        },
+        "bundler/breez_sdk_spark_wasm_bg.wasm": {
+          "same": false,
+          "recorded": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+          "rebuilt": "d1c8a8feabf0e14ace78f5be30f03cac62728b009edbd1810be26f62136d7878"
+        },
+        "deno/breez_sdk_spark_wasm.js": {
+          "same": true,
+          "recorded": "4a24e272d97d509eca59c90282efa83d97dce9dc89d52c5c2f4e7bfc78416dd3",
+          "rebuilt": "4a24e272d97d509eca59c90282efa83d97dce9dc89d52c5c2f4e7bfc78416dd3"
+        },
+        "deno/breez_sdk_spark_wasm.d.ts": {
+          "same": true,
+          "recorded": "7d7a98ae2c6840e171ae93a5e4efb2249abf57698cb33076ca6fb5a5d64a0e0e",
+          "rebuilt": "7d7a98ae2c6840e171ae93a5e4efb2249abf57698cb33076ca6fb5a5d64a0e0e"
+        },
+        "deno/breez_sdk_spark_wasm_bg.wasm": {
+          "same": false,
+          "recorded": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+          "rebuilt": "d1c8a8feabf0e14ace78f5be30f03cac62728b009edbd1810be26f62136d7878"
+        }
+      }
+    },
+    "wasmSectionComparison": {
+      "oldSize": 12402381,
+      "newSize": 12421145,
+      "sameSectionCount": true,
+      "sections": [
+        {
+          "id": 1,
+          "name": null,
+          "oldBytes": 1778,
+          "newBytes": 1778,
+          "same": true,
+          "oldSha256": "90d18d7097cfc606b642dd1beedd4a47792fd752bf4e7c9f3bd3dbdca7224e07",
+          "newSha256": "90d18d7097cfc606b642dd1beedd4a47792fd752bf4e7c9f3bd3dbdca7224e07"
+        },
+        {
+          "id": 2,
+          "name": null,
+          "oldBytes": 21815,
+          "newBytes": 21815,
+          "same": true,
+          "oldSha256": "752275411cac8279710a280660f9ac339f2d5aaca97934cd37c8fc854a2366e6",
+          "newSha256": "752275411cac8279710a280660f9ac339f2d5aaca97934cd37c8fc854a2366e6"
+        },
+        {
+          "id": 3,
+          "name": null,
+          "oldBytes": 19778,
+          "newBytes": 19778,
+          "same": true,
+          "oldSha256": "c81b3782a2c527e06c164539f682ad6953e630ea7ddb37761d513e4159c90664",
+          "newSha256": "c81b3782a2c527e06c164539f682ad6953e630ea7ddb37761d513e4159c90664"
+        },
+        {
+          "id": 4,
+          "name": null,
+          "oldBytes": 11,
+          "newBytes": 11,
+          "same": true,
+          "oldSha256": "9783195eb7e1c92279bf88ab6007795546fc2486a5a25848674cfc46883c66f1",
+          "newSha256": "9783195eb7e1c92279bf88ab6007795546fc2486a5a25848674cfc46883c66f1"
+        },
+        {
+          "id": 5,
+          "name": null,
+          "oldBytes": 3,
+          "newBytes": 3,
+          "same": false,
+          "oldSha256": "8189989994cd3e64b35576485b9e9d97cd548d72f7abec073748dd37448d8fde",
+          "newSha256": "507547b14ac3339efb2da6f7b74a91be07a837a4ec08decae0e9c4ee94f3d8d9"
+        },
+        {
+          "id": 6,
+          "name": null,
+          "oldBytes": 9,
+          "newBytes": 9,
+          "same": true,
+          "oldSha256": "da3c74f89a28b8e9a570d349d0f0a216ef8e69818c7226007164845feaceaf63",
+          "newSha256": "da3c74f89a28b8e9a570d349d0f0a216ef8e69818c7226007164845feaceaf63"
+        },
+        {
+          "id": 7,
+          "name": null,
+          "oldBytes": 8170,
+          "newBytes": 8170,
+          "same": true,
+          "oldSha256": "1258c1c22cd99e35ca2dd25ef330483cf02e5df151631ae6f523481e58302d3f",
+          "newSha256": "1258c1c22cd99e35ca2dd25ef330483cf02e5df151631ae6f523481e58302d3f"
+        },
+        {
+          "id": 9,
+          "name": null,
+          "oldBytes": 10760,
+          "newBytes": 10760,
+          "same": true,
+          "oldSha256": "fab905b61710fc7a4b62eca2822e2dae10d191228b03a2b4894d2daeb1279de6",
+          "newSha256": "fab905b61710fc7a4b62eca2822e2dae10d191228b03a2b4894d2daeb1279de6"
+        },
+        {
+          "id": 10,
+          "name": null,
+          "oldBytes": 7698580,
+          "newBytes": 7698580,
+          "same": false,
+          "oldSha256": "f0082686d53c3f48e157db9191d15bd611ab83fcde22f1df6f3ff0ef52c74f9c",
+          "newSha256": "9830a3d33ba47a95b4b892e2616d9e31dd1849261c4322bd742b48622ffda827"
+        },
+        {
+          "id": 11,
+          "name": null,
+          "oldBytes": 2480853,
+          "newBytes": 2499605,
+          "same": false,
+          "oldSha256": "8cb5e7c623ac592d0012f7df60bb2a975d6fe27d808332dc6cf4eb169054da3e",
+          "newSha256": "5ee1f2f7ac1f6d2eda767464ca62ac9c277754ae12dcb053f9a41140d46c3394"
+        },
+        {
+          "id": 0,
+          "name": "name",
+          "oldBytes": 2160281,
+          "newBytes": 2160281,
+          "same": true,
+          "oldSha256": "63a61663e68d06ef6fae5ca1651f658688aaf7585c1baff5aa5cfd93d2ac18c3",
+          "newSha256": "63a61663e68d06ef6fae5ca1651f658688aaf7585c1baff5aa5cfd93d2ac18c3"
+        },
+        {
+          "id": 0,
+          "name": "producers",
+          "oldBytes": 143,
+          "newBytes": 155,
+          "same": false,
+          "oldSha256": "7ee56ea05e1d2c927f382a0b442fded119d982f4d3bac6bc10fe4567b9052d84",
+          "newSha256": "51685f3e2a112fd18deb0469fed926689278ccb6dac84e3500472b880196f9a2"
+        },
+        {
+          "id": 0,
+          "name": "target_features",
+          "oldBytes": 148,
+          "newBytes": 148,
+          "same": true,
+          "oldSha256": "97ceea95e0687b14437e21c205ebb40eea27aa5ecaa971f7d87601e3aa213bfd",
+          "newSha256": "97ceea95e0687b14437e21c205ebb40eea27aa5ecaa971f7d87601e3aa213bfd"
+        }
+      ]
+    },
+    "reproducibilityConclusion": "Functional reconstruction passed; WASM and archive were not byte-identical. Eight JS/declaration entry files matched. Cargo paths and producer metadata differ; this is not complete semantic equivalence or cross-host bit-for-bit reproducibility proof."
+  },
+  "sourcePeerReview": {
+    "reviewedAt": "2026-10-27T00:33:23.178158+00:00",
+    "reviewer": "internal task peer audit_gate_review",
+    "sourceTree": "eb5f6d0c2f3e138be3d547d3252c1afa91adfd2f",
+    "patchSha256": "418912d26e28af6a5c877d0a45a9f6762a8f311aca4868f03c9b92cb16ee76f1",
+    "scope": "raw/full-ID/preclaim/cancellation/storage and unchanged exit delta",
+    "sourceBlockersRemaining": [],
+    "resolvedFindings": [
+      "legacy raw cursor normalization, lossy malformed-row conversion and dropped network/participants",
+      "participant-projected exact reads replaced with full QueryTransfersById, without fallback",
+      "pre-claim funding below credit or fractional units rejected before fee normalization",
+      "positional/nonobject intent records rejected without overwriting original bytes"
+    ],
+    "pending": "native compilation/tests; final WASM and generated API checks; hosted provider and physical/independent acceptance",
+    "testDriverSha256": "b99114e61dd862e1395af657ba031ba6e78eaa8b68df94d1939f53f27a80b009",
+    "cacheNote": "Moved retained target outputs into one final combined workspace; cleaned flashnet to avoid the previously reproduced cross-worktree artifact mismatch; baseline raw/package/log receipts retained separately",
+    "fixtureCompatibilityReview": {
+      "sourceTree": "a1400c1851d4a6e2c274133be0d86d272d6f4586",
+      "patchSha256": "f00e39b8013d239a1560ceaf1ac0369fa6519a0ab6f0bd3bd3d271c0ee7e05c8",
+      "reviewer": "audit_gate_review",
+      "runtimeHashesUnchanged": true,
+      "assertionsUnchanged": true,
+      "changedFiles": 2,
+      "constructorCalls": 3,
+      "priorFailureLogSha256": "8c80ffb745da2c08569bfdda173e9e1c7420477cd5990264199504a6983b5d91"
+    },
+    "reviewBoundary": "Internal implementation peer review; not an independent third-party audit or release approval."
+  },
+  "combinedNativeAttempts": {
+    "attempts": [
+      {
+        "attempt": 1,
+        "sourceTree": "eb5f6d0c2f3e138be3d547d3252c1afa91adfd2f",
+        "patchBeforeSha256": "418912d26e28af6a5c877d0a45a9f6762a8f311aca4868f03c9b92cb16ee76f1",
+        "patchAfterSha256": "418912d26e28af6a5c877d0a45a9f6762a8f311aca4868f03c9b92cb16ee76f1",
+        "status": "FAILED",
+        "passedGates": [
+          {
+            "rustGate": "seed_factory",
+            "crate": "breez-sdk-spark",
+            "passed": 3
+          },
+          {
+            "rustGate": "sdk::observation::tests::",
+            "crate": "breez-sdk-spark",
+            "passed": 8
+          },
+          {
+            "rustGate": "signed_recovery_",
+            "crate": "breez-sdk-spark",
+            "passed": 8
+          },
+          {
+            "rustGate": "incoming_claim_",
+            "crate": "breez-sdk-spark",
+            "passed": 16
+          },
+          {
+            "rustGate": "mature_deposit_",
+            "crate": "breez-sdk-spark",
+            "passed": 36
+          },
+          {
+            "rustGate": "outspend_",
+            "crate": "breez-sdk-spark",
+            "passed": 6
+          },
+          {
+            "rustGate": "incoming_lightning_",
+            "crate": "breez-sdk-spark",
+            "passed": 15
+          },
+          {
+            "rustGate": "sdk::unilateral_exit::tests::",
+            "crate": "breez-sdk-spark",
+            "passed": 41
+          },
+          {
+            "rustGate": "signer::single_key_signer::tests::",
+            "crate": "breez-sdk-spark",
+            "passed": 3
+          }
+        ],
+        "passedBeforeFailure": 136,
+        "failure": "spark lib test compilation E0599: pinned secp256k1 0.29.1 has no SecretKey::from_byte_array; no test assertion failure",
+        "log": "logs/combined-native-attempt1.log",
+        "logSha256": "8c80ffb745da2c08569bfdda173e9e1c7420477cd5990264199504a6983b5d91",
+        "fix": "Three fixture-only constructor calls changed to from_slice with identical32-byte inputs; reviewer confirmed all runtime hashes and assertions unchanged"
+      },
+      {
+        "attempt": 2,
+        "sourceTree": "a1400c1851d4a6e2c274133be0d86d272d6f4586",
+        "patchBeforeSha256": "f00e39b8013d239a1560ceaf1ac0369fa6519a0ab6f0bd3bd3d271c0ee7e05c8",
+        "patchAfterSha256": "f00e39b8013d239a1560ceaf1ac0369fa6519a0ab6f0bd3bd3d271c0ee7e05c8",
+        "status": "PASS",
+        "passedGates": [
+          {
+            "rustGate": "seed_factory",
+            "crate": "breez-sdk-spark",
+            "passed": 3
+          },
+          {
+            "rustGate": "sdk::observation::tests::",
+            "crate": "breez-sdk-spark",
+            "passed": 8
+          },
+          {
+            "rustGate": "signed_recovery_",
+            "crate": "breez-sdk-spark",
+            "passed": 8
+          },
+          {
+            "rustGate": "incoming_claim_",
+            "crate": "breez-sdk-spark",
+            "passed": 16
+          },
+          {
+            "rustGate": "mature_deposit_",
+            "crate": "breez-sdk-spark",
+            "passed": 36
+          },
+          {
+            "rustGate": "outspend_",
+            "crate": "breez-sdk-spark",
+            "passed": 6
+          },
+          {
+            "rustGate": "incoming_lightning_",
+            "crate": "breez-sdk-spark",
+            "passed": 15
+          },
+          {
+            "rustGate": "sdk::unilateral_exit::tests::",
+            "crate": "breez-sdk-spark",
+            "passed": 41
+          },
+          {
+            "rustGate": "signer::single_key_signer::tests::",
+            "crate": "breez-sdk-spark",
+            "passed": 3
+          },
+          {
+            "rustGate": "strict_transfer_",
+            "crate": "spark",
+            "passed": 8
+          },
+          {
+            "rustGate": "strict_htlc_",
+            "crate": "spark",
+            "passed": 7
+          },
+          {
+            "rustGate": "wallet::deposit_observation::tests::",
+            "crate": "spark-wallet",
+            "passed": 10
+          },
+          {
+            "rustGate": "wallet::direct_observation::tests::",
+            "crate": "spark-wallet",
+            "passed": 6
+          },
+          {
+            "rustGate": "wallet::incoming_lightning::tests::",
+            "crate": "spark-wallet",
+            "passed": 4
+          }
+        ],
+        "uniquePassed": 171,
+        "log": "logs/combined-native.log",
+        "logSha256": "3f42ecb51c5235111713d78a35efe58642cf2bf7f70903a6d02a927ffbedb955",
+        "note": "All14 gates and post-source check passed; second spark invocation replayed prior E0599 text from its diagnostic cache despite freshly built8+7 passing tests. A forced fresh strict-test artifact rebuild is required to remove ambiguity."
+      }
+    ],
+    "hostedOperations": false,
+    "cachedDiagnostic": {
+      "sha256": "d71cae748307bff04d70a3801a07f18fdbbb4cd93c7cc8972611e2c3b709a4ec",
+      "retained": "evidence/retained-stale-spark-test-diagnostics.jsonl",
+      "action": "Remove affected test target fingerprint and executable, force rustc rebuild; not suppressing source or diagnostics",
+      "confirmation": {
+        "forcedFreshNativeTestCompilation": true,
+        "gates": [
+          {
+            "rustGate": "strict_transfer_",
+            "crate": "spark",
+            "passed": 8
+          },
+          {
+            "rustGate": "strict_htlc_",
+            "crate": "spark",
+            "passed": 7
+          }
+        ],
+        "compilerErrorDiagnostics": 0,
+        "log": "logs/combined-strict-cache-confirmation.log",
+        "logSha256": "3b9219531cb912ff549de508a8ff358824258591f2a2da84a18d4d2d012b556f",
+        "note": "Overlapping15 tests confirm the existing171 unique native passes; they are not additional test coverage."
+      }
+    },
+    "finalNativeStatus": "PASS",
+    "finalSourceTree": "a1400c1851d4a6e2c274133be0d86d272d6f4586",
+    "finalPatchSha256": "f00e39b8013d239a1560ceaf1ac0369fa6519a0ab6f0bd3bd3d271c0ee7e05c8",
+    "uniqueNativeTestsPassed": 171
+  },
+  "combinedWasmBuild": {
+    "sourceTree": "a1400c1851d4a6e2c274133be0d86d272d6f4586",
+    "patchBeforeSha256": "f00e39b8013d239a1560ceaf1ac0369fa6519a0ab6f0bd3bd3d271c0ee7e05c8",
+    "startedAt": "2026-10-27T00:43:01.708615+00:00",
+    "status": "PASS",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "-p",
+      "breez-sdk-spark-wasm",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--release"
+    ],
+    "exitCode": 0,
+    "durationSeconds": 260.55,
+    "patchAfterSha256": "f00e39b8013d239a1560ceaf1ac0369fa6519a0ab6f0bd3bd3d271c0ee7e05c8",
+    "sourceUnchanged": true,
+    "rawWasmSha256": "72ad6571525be7c03ea997ecff89b6406468665cdf289088818b28452a37e269",
+    "log": "logs/combined-wasm-build.log",
+    "logSha256": "894903de5ee50aeb3f24440c4caf24c80c2d3bcb38c89c757df9485bc88383f1"
+  },
+  "rustGateWrapperControls": {
+    "test": "required Rust gate positive and zero-selection/failure controls",
+    "sharedBuildScriptSha256": "a8972f5a9f215c3c429f2549ee609436f752bd8792220fc91494e376cd96a078",
+    "cases": [
+      {
+        "case": "one passing selected test",
+        "expectedExit": 0,
+        "actualExit": 0
+      },
+      {
+        "case": "zero selected tests",
+        "expectedFailure": true,
+        "actualExit": 1
+      },
+      {
+        "case": "missing test summary",
+        "expectedFailure": true,
+        "actualExit": 1
+      },
+      {
+        "case": "nonzero Cargo exit despite a passing summary",
+        "expectedFailure": true,
+        "actualExit": 1
+      },
+      {
+        "case": "multiple test summaries",
+        "expectedFailure": true,
+        "actualExit": 1
+      }
+    ],
+    "status": "PASS",
+    "countedAsNativeTests": false,
+    "hostedOperations": false
+  },
+  "buildProofGuards": {
+    "recordedAt": "2026-10-27T00:57:17.819038+00:00",
+    "sdkRuntimeSourceChanged": false,
+    "checks": [
+      {
+        "name": "python-proof-guards",
+        "command": [
+          "python3",
+          "tests/sdk-build-guards.test.py"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.21,
+        "log": "logs/python-proof-guards.log",
+        "logSha256": "05ec52d9a272197f6c8b27a1844b24a050f91f3ec15ce61992e3a8816fab1382",
+        "passingCases": 10
+      },
+      {
+        "name": "node-proof-guards",
+        "command": [
+          "node",
+          "tests/sdk-build-guards.test.mjs"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.11,
+        "log": "logs/node-proof-guards.log",
+        "logSha256": "bc581e6b0580aecec9142cd1302915f3de173851907729cb619359587971bf28",
+        "passingCases": 16
+      },
+      {
+        "name": "head-source-check",
+        "command": [
+          "python3",
+          "scripts/security/check-sdk-source.py",
+          "--source",
+          "/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined",
+          "--patch",
+          "vendor/patches/0004-complete-signed-recovery-source.patch"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.09,
+        "log": "logs/head-source-check.log",
+        "logSha256": "793f141358a420d3bcc08c54a2475231542d181fe78282b8a86c80854d6ee4b1"
+      }
+    ],
+    "supportFiles": {
+      "scripts/security/check-sdk-source.py": "20c48e8f63ea00c234698e00365ef39e3467756f70026b939b0aecf2dba9688e",
+      "scripts/security/build-seed-signer-sdk.sh": "2775ce2c3417e016d0bd4cbba7e7a8becd5fede834cfe644f9d324ef3cb563a0",
+      "scripts/security/package-seed-signer-sdk.py": "9912e35f10b0c0efc9b2da7bd393b3974803e01fca11488125375cba1044a538",
+      "scripts/security/verify-observation-extension.mjs": "cd6b82d58448ac28cb2850f95ba7208d7d8231d60e6ba5d860f82df05197bd9a",
+      "tests/sdk-build-guards.test.py": "8e90fd026fcbf910b57a8707dcb15f492c83ce289bf9da4c53227ea5888f748b",
+      "tests/sdk-build-guards.test.mjs": "78b1650aa223fe0e619bca488d4e4eb282153a2ce4052116c301300bc96bc6f4"
+    },
+    "status": "PASS",
+    "reportingCorrection": "API verifier explicitly marks network counting as uninstrumented; no assertion or package bytes changed",
+    "peerRerun": {
+      "pythonCasesPassed": 10,
+      "nodeCasesPassed": 16,
+      "skipped": 0,
+      "reviewer": "audit_gate_review",
+      "sourceProof": "Complete HEAD diff equals the frozen cumulative patch; lock unchanged; standalone prepackage source assertion passed."
+    }
+  },
+  "localPackaging": {
+    "recordedAt": "2026-10-27T00:57:53.300101+00:00",
+    "status": "PASS",
+    "exitCode": 0,
+    "durationSeconds": 16.08,
+    "log": "logs/combined-package-guarded.log",
+    "logSha256": "f118a219ece5047c7f9de2a65db96183389e2ded4283b2c8ac73420647fdbb08",
+    "packagerSha256": "9912e35f10b0c0efc9b2da7bd393b3974803e01fca11488125375cba1044a538",
+    "priorSuccessfulPackagingSupersededForGuardProof": {
+      "status": "PASS",
+      "exitCode": 0,
+      "durationSeconds": 15.2,
+      "log": "logs/combined-package.log",
+      "logSha256": "f118a219ece5047c7f9de2a65db96183389e2ded4283b2c8ac73420647fdbb08",
+      "packagerSha256": "c95fa10c34a1c8dc5e0d49edf6215560fda3d517a9776e18d96a87e14b66e7ef",
+      "patchSha256": "f00e39b8013d239a1560ceaf1ac0369fa6519a0ab6f0bd3bd3d271c0ee7e05c8",
+      "existingApplicationPackageReplaced": false
+    },
+    "existingApplicationPackageReplaced": false,
+    "patchSha256": "f00e39b8013d239a1560ceaf1ac0369fa6519a0ab6f0bd3bd3d271c0ee7e05c8",
+    "rawCompiledWasmSha256": "72ad6571525be7c03ea997ecff89b6406468665cdf289088818b28452a37e269",
+    "generatedArtifactCount": 17,
+    "packageSha256": "c555e57462ddfd2f902946ee96823b78fed457813da7c5513e40dc3e9f0fa5cc",
+    "samePackageBytesAfterGuardChanges": true
+  },
+  "localPackageManifestFile": "package-manifest-local.json",
+  "isolatedInstalledChecks": {
+    "recordedAt": "2026-10-27T00:58:13.313246+00:00",
+    "packageSha256": "c555e57462ddfd2f902946ee96823b78fed457813da7c5513e40dc3e9f0fa5cc",
+    "checks": [
+      {
+        "script": "scripts/security/verify-installed-wasm-signers.mjs",
+        "scriptSha256": "ff436841487d44ff97afeeae03638f236424e41f7946e428daf9d1f658dc7a0a",
+        "exitCode": 0,
+        "durationSeconds": 0.98,
+        "log": "logs/combined-verify-installed-wasm-signers.log",
+        "logSha256": "8d9ddf2425fff516c896e965ed8aaae9bfdd0e4df69bc37a30ae7e1184d223e2"
+      },
+      {
+        "script": "scripts/security/verify-observation-extension.mjs",
+        "scriptSha256": "cd6b82d58448ac28cb2850f95ba7208d7d8231d60e6ba5d860f82df05197bd9a",
+        "exitCode": 0,
+        "durationSeconds": 0.18,
+        "log": "logs/combined-verify-observation-extension.log",
+        "logSha256": "a3b01f4e0be8830c0c61f4d965537d9762bf374a9b3e9faad1f3d167cdd2475c"
+      },
+      {
+        "script": "scripts/security/verify-browser-pbkdf2.mjs",
+        "scriptSha256": "ecdf3fc4d3fc7484d7a9255aba146260cdec2a6f604a7eb73f2a2ff9dd839f27",
+        "exitCode": 0,
+        "durationSeconds": 0.37,
+        "log": "logs/combined-verify-browser-pbkdf2.log",
+        "logSha256": "12f960d46dc906274cf521499b63636b29a258c336d6eaf4993b36773ac5f0d5"
+      }
+    ],
+    "hostedOperations": false,
+    "sharedCandidateDependenciesModified": false,
+    "status": "PASS",
+    "browserWasmSha256": "a72c3295496c8a706ffcc2ac0f9085d612911b35324b66e972efcf400c2392ae",
+    "unchangedSharedCandidateWasmSha256": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+    "supersededApiReport": {
+      "script": "scripts/security/verify-observation-extension.mjs",
+      "scriptSha256": "a6a97d7b3fbad825972f4e91778a70eb8bfb97ae904dafc88196f8d83cef48fe",
+      "exitCode": 0,
+      "durationSeconds": 0.19,
+      "log": "logs/combined-verify-observation-extension-before-reporting-correction.log",
+      "logSha256": "a82f59ce50c9087110b6ad12933b192bb79e1732ae644218c8cbb379d97a6a7e",
+      "reason": "Replace unmeasured networkCalls:0 with explicit networkCallsInstrumented:false; assertions unchanged"
+    },
+    "actualApiReport": {
+      "test": "installed observation/recovery API, generated correlation models and artifact integrity",
+      "result": "PASS",
+      "extensions": [
+        "seed-compatible-external-signers-v1",
+        "observation-only-wallet-state-v1",
+        "signed-recovery-v1",
+        "explicit-incoming-claim-v1",
+        "bounded-mature-deposit-claim-v1",
+        "strict-transfer-evidence-v1",
+        "bounded-deposit-observation-v1",
+        "incoming-lightning-observation-v1",
+        "external-exit-envelope-validation-v1"
+      ],
+      "methods": 10,
+      "models": 5,
+      "runtimeMethodTargets": [
+        "nodejs",
+        "web"
+      ],
+      "browserWasmObservationExport": true,
+      "generatedTargets": 4,
+      "artifacts": 17,
+      "walletOperationsInvoked": false,
+      "networkCallsInstrumented": false
+    },
+    "networkEvidenceBoundary": "Verification invokes no wallet build/connect/observe/claim/payment operations. These local scripts do not instrument all network transports; historical networkCalls fields are static descriptions, not measured traffic counts.",
+    "finalRecordedAt": "2026-10-27T00:59:33.720509+00:00"
+  },
+  "installedCheckCounts": {
+    "mnemonicIdentityComparisons": 36,
+    "seedFactoryIdentityDerivationComparisons": 108,
+    "signerGuardAssertions": 18,
+    "browserPbkdf2Comparisons": 17,
+    "prototypeMethods": 10,
+    "prototypeRuntimeTargets": [
+      "nodejs",
+      "web"
+    ],
+    "declarationModelContracts": 5,
+    "declarationTargets": 4,
+    "generatedArtifacts": 17,
+    "actualBrowserWasmObservationExport": true
+  },
+  "localNativeGateFunctionAndFiltersMatchSharedBuildScript": true,
+  "deployedMethodAvailabilityReceipt": "query-transfers-preflight.json",
+  "deployedMethodAvailabilityDoesNotEstablishProviderCompatibility": true,
+  "logs": {
+    "native-attempt1.log.txt": {
+      "sha256": "8c80ffb745da2c08569bfdda173e9e1c7420477cd5990264199504a6983b5d91",
+      "bytes": 31109,
+      "originalScratchLog": "combined-native-attempt1.log",
+      "modified": false
+    },
+    "native-final.log.txt": {
+      "sha256": "3f42ecb51c5235111713d78a35efe58642cf2bf7f70903a6d02a927ffbedb955",
+      "bytes": 33239,
+      "originalScratchLog": "combined-native.log",
+      "modified": false
+    },
+    "native-strict-confirmation.log.txt": {
+      "sha256": "3b9219531cb912ff549de508a8ff358824258591f2a2da84a18d4d2d012b556f",
+      "bytes": 2715,
+      "originalScratchLog": "combined-strict-cache-confirmation.log",
+      "modified": false
+    },
+    "wasm-build.log.txt": {
+      "sha256": "894903de5ee50aeb3f24440c4caf24c80c2d3bcb38c89c757df9485bc88383f1",
+      "bytes": 1926,
+      "originalScratchLog": "combined-wasm-build.log",
+      "modified": false
+    },
+    "installed-wasm.log.txt": {
+      "sha256": "8d9ddf2425fff516c896e965ed8aaae9bfdd0e4df69bc37a30ae7e1184d223e2",
+      "bytes": 1370,
+      "originalScratchLog": "combined-verify-installed-wasm-signers.log",
+      "modified": false
+    },
+    "installed-api.log.txt": {
+      "sha256": "a3b01f4e0be8830c0c61f4d965537d9762bf374a9b3e9faad1f3d167cdd2475c",
+      "bytes": 2445,
+      "originalScratchLog": "combined-verify-observation-extension.log",
+      "modified": false
+    },
+    "browser-pbkdf2.log.txt": {
+      "sha256": "12f960d46dc906274cf521499b63636b29a258c336d6eaf4993b36773ac5f0d5",
+      "bytes": 99,
+      "originalScratchLog": "combined-verify-browser-pbkdf2.log",
+      "modified": false
+    },
+    "python-proof-guards.log.txt": {
+      "sha256": "05ec52d9a272197f6c8b27a1844b24a050f91f3ec15ce61992e3a8816fab1382",
+      "bytes": 1478,
+      "originalScratchLog": "python-proof-guards.log",
+      "modified": false
+    },
+    "node-proof-guards.log.txt": {
+      "sha256": "bc581e6b0580aecec9142cd1302915f3de173851907729cb619359587971bf28",
+      "bytes": 1510,
+      "originalScratchLog": "node-proof-guards.log",
+      "modified": false
+    },
+    "baseline-wasm-checks.log.txt": {
+      "sha256": "141655b9fce5af5053873cd0b8f946c8a433700a0a1d15bca0313e8471f998cc",
+      "bytes": 3537,
+      "originalScratchLog": "baseline-rebuilt-wasm-checks.log",
+      "modified": false
+    },
+    "baseline-wasm-build.log.txt": {
+      "sha256": "fa7e229e4f74b845da4861361d99dc3219700251489632beae527d877f1a1a69",
+      "bytes": 13917,
+      "originalScratchLog": "baseline-wasm_release.log",
+      "modified": false
+    },
+    "baseline-seed_factory.log.txt": {
+      "sha256": "5197684dc73da1d02d5ba588bc3d4dd69d2e5278adb3718140ec0ff7fdf28030",
+      "bytes": 17909,
+      "originalScratchLog": "baseline-seed_factory.log",
+      "modified": true,
+      "originalLogSha256": "f9ca92c402dcb696a3065458e17fef4cbf8a43f9540d7ca6fd4081a5f8cecc87",
+      "normalization": "Only trailing empty lines removed for repository whitespace validation; original raw log digest retained."
+    },
+    "baseline-observation.log.txt": {
+      "sha256": "03014fa1b6f0ba9734dfd66aa62218d6d256ba6ff1303cf90b80b2a54bb18bf1",
+      "bytes": 1752,
+      "originalScratchLog": "baseline-observation.log",
+      "modified": true,
+      "originalLogSha256": "18c16f3824bba3cb1ff6d067ac4f033e9b890829d19efcf8e094c01b02bc7ec4",
+      "normalization": "Only trailing empty lines removed for repository whitespace validation; original raw log digest retained."
+    },
+    "baseline-signed_recovery.log.txt": {
+      "sha256": "ec88e1e5ba3e8c8ced96919cec82b7a2a0660e5c9e52ab6176cd8cb68eeda02d",
+      "bytes": 1540,
+      "originalScratchLog": "baseline-signed_recovery.log",
+      "modified": true,
+      "originalLogSha256": "c2c97b1dfd311c5cf9e75aeb57ea1a9e7b380cbf4d8b886db4bd4373bf47375f",
+      "normalization": "Only trailing empty lines removed for repository whitespace validation; original raw log digest retained."
+    },
+    "baseline-incoming_claim.log.txt": {
+      "sha256": "ae40d009ad663edd3137cf4c2ed4ed01d9b1ee22353d05fb07081d4e04712143",
+      "bytes": 2146,
+      "originalScratchLog": "baseline-incoming_claim.log",
+      "modified": true,
+      "originalLogSha256": "078a522f4bb5dbc5e7dc90e260264d34c1a3b966e27af44192a155b3d9cf77ba",
+      "normalization": "Only trailing empty lines removed for repository whitespace validation; original raw log digest retained."
+    },
+    "baseline-mature_deposit.log.txt": {
+      "sha256": "93ecc79ca1ae0a8d5bdf5cf040a954a2a2f1f90b8cafd4ad2eb833699d70c7a6",
+      "bytes": 1739,
+      "originalScratchLog": "baseline-mature_deposit.log",
+      "modified": true,
+      "originalLogSha256": "021c972c0e0cabf69603aeecf2e58836298603e32f08602c5da47c3827dcfeff",
+      "normalization": "Only trailing empty lines removed for repository whitespace validation; original raw log digest retained."
+    },
+    "baseline-outspend.log.txt": {
+      "sha256": "31c01f0dea2ea852b234289941abc4b2e877894f9fd3d75b1c5aef2962b2211e",
+      "bytes": 1467,
+      "originalScratchLog": "baseline-outspend.log",
+      "modified": true,
+      "originalLogSha256": "9de7ee721ad8882d347bf29b9b8344ff41e83f88496637b372c30469b93acd37",
+      "normalization": "Only trailing empty lines removed for repository whitespace validation; original raw log digest retained."
+    }
+  },
+  "scopePreserved": {
+    "hostedFundedOperations": false,
+    "walletIdentityChanges": false,
+    "oldUncertainAttemptResetOrRetry": false,
+    "productionDeployment": false,
+    "routeEnablement": false,
+    "realFundsApproval": false,
+    "appVendorArchiveOrLockReplaced": false,
+    "localArchiveCommitted": false,
+    "sharedCandidateInstalledWasmUnchanged": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8"
+  },
+  "remainingGates": [
+    "Canonical isolated Actions artifact build/preservation and installed checks on those exact package bytes",
+    "Authoritative continuation/terminal evidence after lost deposit acknowledgments; absence never authorizes retry",
+    "Exact bounded Lightning claim and preimage release; new method is observation-only",
+    "Durable complete fresh/rebuilt exit builder, partial-result recovery and rebuild lineage",
+    "Owned-transfer/full-field/authenticated provider compatibility and interruption acceptance with final compiled SDK",
+    "Independent qualified review and physical-device/recovery acceptance"
+  ]
+}

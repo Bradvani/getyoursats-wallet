@@ -1,0 +1,564 @@
+Complete SDK source verified: 32 patched files
+   Compiling spark v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/spark)
+   Compiling macros v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/macros)
+   Compiling platform-utils v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/platform-utils)
+   Compiling utils v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/utils)
+   Compiling breez-sdk-common v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/breez-sdk/common)
+   Compiling breez-sdk-spark v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/breez-sdk/core)
+   Compiling lnurl-models v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/breez-sdk/lnurl-models)
+   Compiling spark-wallet v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/spark-wallet)
+   Compiling spark-postgres v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/spark-postgres)
+   Compiling spark-sqlite v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/spark-sqlite)
+   Compiling spark-mysql v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/spark-mysql)
+   Compiling flashnet v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/flashnet)
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 2m 47s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 3 tests
+test sdk::tests::seed_factory_does_not_reinterpret_raw_entropy_as_mnemonic_entropy ... ok
+test sdk::tests::seed_factory_keeps_mnemonic_api_and_network_defaults_compatible ... ok
+test sdk::tests::seed_factory_preserves_mnemonic_and_raw_entropy_wallets ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1231 filtered out; finished in 0.90s
+
+{"rustGate": "seed_factory", "crate": "breez-sdk-spark", "passed": 3}
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 1.29s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 8 tests
+test sdk::observation::tests::observation_completed_label_without_preimage_never_proves_lightning_payment ... ok
+test sdk::observation::tests::observation_incoming_record_cannot_resolve_outgoing_operation ... ok
+test sdk::observation::tests::observation_generic_failure_is_never_a_refund ... ok
+test sdk::observation::tests::observation_spark_completion_requires_final_operator_status ... ok
+test sdk::observation::tests::observation_lightning_return_needs_operator_provider_and_htlc_agreement ... ok
+test sdk::observation::tests::observation_spark_return_requires_operator_return_and_failed_projection ... ok
+test sdk::observation::tests::observation_withdrawal_acceptance_is_not_payout_proof ... ok
+test sdk::observation::tests::observation_preimage_conflict_keeps_return_unresolved ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1226 filtered out; finished in 0.00s
+
+{"rustGate": "sdk::observation::tests::", "crate": "breez-sdk-spark", "passed": 8}
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.40s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 8 tests
+test sdk::signed_recovery::tests::signed_recovery_mismatched_txid ... ok
+test sdk::signed_recovery::tests::signed_recovery_malformed_encoding ... ok
+test sdk::signed_recovery::tests::signed_recovery_exact_refund_envelope ... ok
+test sdk::signed_recovery::tests::signed_recovery_changed_destination ... ok
+test sdk::signed_recovery::tests::signed_recovery_extra_output ... ok
+test sdk::signed_recovery::tests::signed_recovery_wrong_fee ... ok
+test sdk::signed_recovery::tests::signed_recovery_wrong_outpoint ... ok
+test sdk::signed_recovery::tests::signed_recovery_unsigned ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1226 filtered out; finished in 0.00s
+
+{"rustGate": "signed_recovery_", "crate": "breez-sdk-spark", "passed": 8}
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.55s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 16 tests
+test sdk::incoming_claim::tests::incoming_claim_identity_binding ... ok
+test sdk::incoming_claim::tests::incoming_claim_expired ... ok
+test sdk::incoming_claim::tests::incoming_claim_network_binding ... ok
+test sdk::incoming_claim::tests::incoming_claim_invalid_transfer_id ... ok
+test sdk::incoming_claim::tests::incoming_claim_exact_intent ... ok
+test sdk::incoming_claim::tests::incoming_claim_standing_mandate_rejected ... ok
+test sdk::incoming_claim::tests::incoming_claim_plain_peer_receipt ... ok
+test sdk::incoming_claim::tests::incoming_claim_rejects_ssp_request_on_plain_transfer ... ok
+test sdk::incoming_claim::tests::incoming_claim_rejects_htlc_on_plain_transfer ... ok
+test sdk::incoming_claim::tests::incoming_claim_zero_amount ... ok
+test sdk::incoming_claim::tests::incoming_claim_wrong_direction ... ok
+test sdk::incoming_claim::tests::incoming_claim_wrong_receiver ... ok
+test sdk::incoming_claim::tests::incoming_claim_wrong_transfer_id ... ok
+test sdk::incoming_claim::tests::incoming_claim_plain_ssp_receipt ... ok
+test sdk::incoming_claim::tests::incoming_claim_wrong_amount ... ok
+test sdk::incoming_claim::tests::incoming_claim_rejects_other_protocols ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 1218 filtered out; finished in 0.00s
+
+{"rustGate": "incoming_claim_", "crate": "breez-sdk-spark", "passed": 16}
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.54s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 36 tests
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_absent_sdk_intent_never_invents_attempt_or_correlation ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_exact_economic_and_network_mismatches_are_rejected ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_cancellation_during_page_requires_new_pages_and_preserves_attempt ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_empty_or_stalled_continuation_fails_closed ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_cancellation_after_storage_write_never_makes_cache_authoritative ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_content_address_is_idempotent_and_damage_is_preserved ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_duplicate_object_fields_remain_invalid ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_exact_saved_id_never_scans_or_changes_receiving_marker ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_exact_id_duplicates_or_continuation_are_rejected ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_intent_commitment_binds_immutable_economics_not_execution_flags ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_noncanonical_outpoint_is_rejected_without_network ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_missing_exact_id_does_not_reset_or_persist_correlation ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_fresh_request_or_credit_change_cannot_replace_discovered_correlation ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_original_record_change_prevents_completion ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_recovers_positive_correlation_and_preserves_expired_attempt ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_lost_or_changed_fresh_receipt_remains_unresolved ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_persistence_failure_or_mismatched_readback_cannot_report_completion ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_rejects_positional_and_non_object_records_without_rewriting ... ok
+test sdk::mature_deposit::tests::mature_deposit_chain_depth ... ok
+test sdk::mature_deposit::tests::mature_deposit_credit_bound ... ok
+test sdk::mature_deposit::tests::mature_deposit_exact_intent ... ok
+test sdk::mature_deposit::tests::mature_deposit_expired ... ok
+test sdk::mature_deposit::tests::mature_deposit_fee_consumes_output ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_provider_incomplete_status_never_leaks_completed_projection ... ok
+test sdk::mature_deposit::tests::mature_deposit_missing_or_reorged_height ... ok
+test sdk::mature_deposit::tests::mature_deposit_no_early_route ... ok
+test sdk::mature_deposit::tests::mature_deposit_noncanonical_txid ... ok
+test sdk::mature_deposit::tests::mature_deposit_standing_approval ... ok
+test sdk::mature_deposit::tests::mature_deposit_wrong_identity ... ok
+test sdk::mature_deposit::tests::mature_deposit_wrong_network ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_storage_read_failures_never_report_completion_or_erase_attempt ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_malformed_records_fail_before_network_and_preserve_bytes ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_later_page_failure_never_returns_partial_completion ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_repeated_page_and_second_outpoint_receipt_fail_closed ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_scans_275_receipts_then_rechecks_exact_id ... ok
+test sdk::mature_deposit::observation::tests::mature_deposit_observation_scan_cap_preserves_unknown_even_after_candidate ... ok
+
+test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 1198 filtered out; finished in 0.85s
+
+{"rustGate": "mature_deposit_", "crate": "breez-sdk-spark", "passed": 36}
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.60s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 6 tests
+test sdk::watchtower_exit::tests::the_spend_of_an_output_is_read_from_its_outspend_result ... ok
+test chain::rest_client::tests::outspend_connectivity_error_is_not_a_fallback ... ok
+test chain::rest_client::tests::outspend_404_falls_back_to_exact_bulk_index ... ok
+test chain::rest_client::tests::outspend_404_never_implies_unspent ... ok
+test chain::rest_client::tests::outspend_primary_result_does_not_need_fallback ... ok
+test chain::rest_client::tests::outspend_fallback_preserves_spent_evidence ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1228 filtered out; finished in 0.00s
+
+{"rustGate": "outspend_", "crate": "breez-sdk-spark", "passed": 6}
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.44s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 15 tests
+test sdk::incoming_lightning::tests::incoming_lightning_checks_every_embedded_spark_identity ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_exact_millisatoshis_and_case_normalize_without_rounding ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_distinct_unpinned_views_cannot_overwrite_each_other ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_binding_schema_rejects_self_hashed_alternate_encodings ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_expiry_during_storage_does_not_refresh_evidence ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_persists_exact_binding_before_positive_observation ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_reopened_observation_pins_binding_without_rewriting ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_fee_and_credit_limits_are_independent_and_inclusive ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_cached_binding_cannot_replace_a_fresh_read ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_pinned_changes_are_rejected_and_original_evidence_survives ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_invalid_intents_fail_before_reads_or_writes ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_storage_failures_never_return_positive_evidence ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_corrupt_or_missing_retained_bindings_fail_closed ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_rejects_substituted_or_incomplete_correlation ... ok
+test sdk::incoming_lightning::tests::incoming_lightning_no_status_manufactures_settlement_or_retry_permission ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 1219 filtered out; finished in 0.26s
+
+{"rustGate": "incoming_lightning_", "crate": "breez-sdk-spark", "passed": 15}
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.54s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 41 tests
+test sdk::unilateral_exit::tests::a_check_that_learned_nothing_leaves_a_recomputable_status_alone ... ok
+test sdk::unilateral_exit::tests::a_check_promotes_an_unverified_transaction_but_never_clears_it ... ok
+test sdk::unilateral_exit::tests::a_confirmation_the_chain_contradicts_is_dropped ... ok
+test sdk::unilateral_exit::tests::a_height_outside_the_list_is_read_from_the_chain ... ok
+test sdk::unilateral_exit::tests::a_sweep_over_an_unverified_refund_is_unverified ... ok
+test sdk::unilateral_exit::tests::a_matured_timelock_is_ready_one_block_early ... ok
+test sdk::unilateral_exit::tests::a_settled_ancestor_keeps_the_height_the_caller_already_had ... ok
+test sdk::unilateral_exit::tests::a_leaf_with_a_stored_sweep_is_reported_as_swept ... ok
+test sdk::unilateral_exit::tests::a_sweep_over_verified_refunds_starts_out_waiting_on_them ... ok
+test sdk::unilateral_exit::tests::an_unmatured_timelock_reports_the_block_it_waits_for ... ok
+test sdk::unilateral_exit::tests::an_unreadable_height_leaves_the_timelock_unknown ... ok
+test sdk::unilateral_exit::tests::an_unconfirmed_dependency_outranks_the_timelock ... ok
+test sdk::unilateral_exit::tests::ensure_all_inputs_finalized_accepts_finalized ... ok
+test sdk::unilateral_exit::tests::exit_fee_totals_reject_overflow_and_excessive_money ... ok
+test sdk::unilateral_exit::tests::ensure_all_inputs_finalized_rejects_unsigned ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_change_prevout_values_even_at_same_total_fee ... ok
+test sdk::unilateral_exit::tests::an_exited_leaf_with_no_refund_at_its_address_stays_to_recover ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_change_prevout_script ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_change_fee ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_add_output ... ok
+test sdk::unilateral_exit::tests::an_exited_leaf_is_checked_on_its_own_results ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_remove_or_replace_leaf_witness ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_change_version_sequence_or_locktime ... ok
+test sdk::unilateral_exit::tests::an_exited_leaf_without_every_result_is_left_for_the_next_sync ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_remove_prevout ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_reorder_inputs ... ok
+test sdk::unilateral_exit::tests::exit_signer_empty_funding_witness_is_not_finalized ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_replace_outpoint ... ok
+test sdk::unilateral_exit::tests::exit_signer_preserves_zero_value_ephemeral_anchor ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_use_scriptsig_to_change_txid ... ok
+test sdk::unilateral_exit::tests::exit_signer_cannot_replace_destination ... ok
+test sdk::unilateral_exit::tests::only_a_swept_refund_ends_an_exit ... ok
+test sdk::unilateral_exit::tests::exit_signer_rejects_changed_anchor_witness ... ok
+test sdk::unilateral_exit::tests::exit_signer_rejects_invalid_input_envelopes_before_callback ... ok
+test sdk::unilateral_exit::tests::exit_signer_sweep_preserves_existing_leaf_signature_and_no_callback_path ... ok
+test sdk::unilateral_exit::tests::sign_psbt_via_errors_when_an_input_is_left_unsigned ... ok
+test sdk::unilateral_exit::tests::sign_psbt_via_succeeds_when_every_input_is_signed ... ok
+test sdk::unilateral_exit::tests::signing_without_a_signer_asks_for_one ... ok
+test sdk::unilateral_exit::tests::an_exited_leaf_is_stored_with_the_sweep_of_its_refund ... ok
+test sdk::unilateral_exit::tests::the_check_of_an_exited_leaf_takes_two_requests ... ok
+test sdk::unilateral_exit::tests::exit_signer_preserves_real_p2wpkh_and_p2tr_signing ... ok
+
+test result: ok. 41 passed; 0 failed; 0 ignored; 0 measured; 1193 filtered out; finished in 0.01s
+
+{"rustGate": "sdk::unilateral_exit::tests::", "crate": "breez-sdk-spark", "passed": 41}
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external.rs:43:12
+   |
+34 | impl DefaultExternalSigner {
+   | -------------------------- associated function in this implementation
+...
+43 |     pub fn new(
+   |            ^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `new` is never used
+  --> crates/breez-sdk/core/src/signer/default_external_spark.rs:52:12
+   |
+49 | impl DefaultExternalSparkSigner {
+   | ------------------------------- associated function in this implementation
+...
+52 |     pub fn new(
+   |            ^^^
+
+warning: `breez-sdk-spark` (lib) generated 2 warnings
+    Finished `test` profile [unoptimized] target(s) in 0.56s
+     Running unittests src/lib.rs (target/debug/deps/breez_sdk_spark-ab266d53884e5846)
+
+running 3 tests
+test signer::single_key_signer::tests::single_key_missing_witness_utxo_errors ... ok
+test signer::single_key_signer::tests::single_key_unsupported_script_type_errors ... ok
+test signer::single_key_signer::tests::single_key_signs_p2wpkh_and_skips_anchor ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1231 filtered out; finished in 0.00s
+
+{"rustGate": "signer::single_key_signer::tests::", "crate": "breez-sdk-spark", "passed": 3}
+   Compiling serde_core v1.0.228
+   Compiling typenum v1.20.0
+   Compiling generic-array v0.14.7
+   Compiling serde v1.0.228
+   Compiling crypto-common v0.1.7
+   Compiling tokio v1.52.1
+   Compiling const-oid v0.9.6
+   Compiling futures-task v0.3.32
+   Compiling futures-util v0.3.32
+   Compiling block-buffer v0.10.4
+   Compiling smallvec v1.15.1
+   Compiling digest v0.10.7
+   Compiling tokio-util v0.7.18
+   Compiling regex-automata v0.4.14
+   Compiling h2 v0.4.13
+   Compiling regex v1.12.3
+   Compiling arrayvec v0.7.6
+   Compiling hex-conservative v0.2.2
+   Compiling hyper v1.9.0
+   Compiling prost-build v0.13.5
+   Compiling der v0.7.10
+   Compiling hyper-util v0.1.20
+   Compiling bitcoin_hashes v0.14.1
+   Compiling rustls v0.23.40
+   Compiling tower v0.5.3
+   Compiling hmac v0.12.1
+   Compiling either v1.15.0
+   Compiling byteorder v1.5.0
+   Compiling hash32 v0.2.1
+   Compiling spki v0.7.3
+   Compiling bitcoin-internals v0.3.0
+   Compiling icu_normalizer v2.2.0
+   Compiling inout v0.1.4
+   Compiling darling_core v0.23.0
+   Compiling tokio-rustls v0.26.4
+   Compiling cipher v0.4.4
+   Compiling idna_adapter v1.2.2
+   Compiling heapless v0.7.17
+   Compiling pkcs8 v0.10.2
+   Compiling secp256k1 v0.29.1
+   Compiling sec1 v0.7.3
+   Compiling sha2 v0.10.9
+   Compiling universal-hash v0.5.1
+   Compiling crypto-bigint v0.5.5
+   Compiling polyval v0.6.2
+   Compiling postcard v1.1.3
+   Compiling prost-reflect-build v0.14.0
+   Compiling axum-core v0.4.5
+   Compiling elliptic-curve v0.13.8
+   Compiling idna v1.1.0
+   Compiling darling_macro v0.23.0
+   Compiling base58ck v0.1.0
+   Compiling bitcoin-units v0.1.3
+   Compiling itertools v0.14.0
+   Compiling rfc6979 v0.4.0
+   Compiling serde_json v1.0.149
+   Compiling serdect v0.2.0
+   Compiling num-traits v0.2.19
+   Compiling signature v2.2.0
+   Compiling bitflags v2.11.1
+   Compiling axum v0.7.9
+   Compiling tower-http v0.6.8
+   Compiling frost-core v2.1.0 (https://github.com/lightsparkdev/frost?rev=9aaf1b6b9fa3c2c3c2c7c70da83061deda1a9180#9aaf1b6b)
+   Compiling ecdsa v0.16.9
+   Compiling serde_urlencoded v0.7.1
+   Compiling bitcoin v0.32.8
+   Compiling darling v0.23.0
+   Compiling url v2.5.8
+   Compiling spark-primitives v0.2.0
+   Compiling tower v0.4.13
+   Compiling ghash v0.5.1
+   Compiling aes v0.8.4
+   Compiling ctr v0.9.2
+   Compiling hyper-rustls v0.27.9
+   Compiling hyper-timeout v0.5.2
+   Compiling tonic-build v0.12.3
+   Compiling tokio-stream v0.1.18
+   Compiling aead v0.5.2
+   Compiling futures-io v0.3.32
+   Compiling uuid v1.23.1
+   Compiling aes-gcm v0.10.3
+   Compiling futures v0.3.32
+   Compiling tonic v0.12.3
+   Compiling reqwest v0.12.28
+   Compiling spark v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/spark)
+   Compiling lightning-types v0.2.0
+   Compiling serde_with_macros v3.18.0
+   Compiling prost-reflect v0.14.7
+   Compiling k256 v0.13.4
+   Compiling frost-rerandomized v2.1.0 (https://github.com/lightsparkdev/frost?rev=9aaf1b6b9fa3c2c3c2c7c70da83061deda1a9180#9aaf1b6b)
+   Compiling tokio-socks v0.5.2
+   Compiling hkdf v0.12.4
+   Compiling chrono v0.4.44
+   Compiling platform-utils v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/platform-utils)
+   Compiling utils v0.1.0 (/workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/source/combined/crates/utils)
+   Compiling frost-secp256k1-tr v2.1.0 (https://github.com/lightsparkdev/frost?rev=9aaf1b6b9fa3c2c3c2c7c70da83061deda1a9180#9aaf1b6b)
+   Compiling graphql_client v0.16.0
+   Compiling serde_with v3.18.0
+   Compiling lightning-invoice v0.33.2
+   Compiling tonic-types v0.12.3
+error[E0599]: no function or associated item named `from_byte_array` found for struct `bitcoin::secp256k1::SecretKey` in the current scope
+   --> crates/spark/src/services/transfer/strict_observation/tests.rs:12:62
+    |
+ 12 |         |fill| PublicKey::from_secret_key(&secp, &SecretKey::from_byte_array([fill; 32]).unwrap());
+    |                                                              ^^^^^^^^^^^^^^^ function or associated item not found in `bitcoin::secp256k1::SecretKey`
+    |
+note: if you're trying to build a new `bitcoin::secp256k1::SecretKey` consider using one of the following associated functions:
+      bitcoin::secp256k1::SecretKey::new
+      bitcoin::secp256k1::SecretKey::from_slice
+      bitcoin::secp256k1::SecretKey::from_keypair
+   --> /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/secp256k1-0.29.1/src/key.rs:192:5
+    |
+192 |     pub fn new<R: rand::Rng + ?Sized>(rng: &mut R) -> SecretKey {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+215 |     pub fn from_slice(data: &[u8]) -> Result<SecretKey, Error> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+247 |     pub fn from_keypair(keypair: &Keypair) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: there is an associated function `from_str` with a similar name
+    |
+ 12 -         |fill| PublicKey::from_secret_key(&secp, &SecretKey::from_byte_array([fill; 32]).unwrap());
+ 12 +         |fill| PublicKey::from_secret_key(&secp, &SecretKey::from_str([fill; 32]).unwrap());
+    |
+
+error[E0599]: no function or associated item named `from_byte_array` found for struct `bitcoin::secp256k1::SecretKey` in the current scope
+   --> crates/spark/src/services/transfer/strict_observation/tests.rs:273:21
+    |
+273 |         &SecretKey::from_byte_array([9; 32]).unwrap(),
+    |                     ^^^^^^^^^^^^^^^ function or associated item not found in `bitcoin::secp256k1::SecretKey`
+    |
+note: if you're trying to build a new `bitcoin::secp256k1::SecretKey` consider using one of the following associated functions:
+      bitcoin::secp256k1::SecretKey::new
+      bitcoin::secp256k1::SecretKey::from_slice
+      bitcoin::secp256k1::SecretKey::from_keypair
+   --> /workspace/scratch/bc5943411884/gys-sdk-reconstruction-20261026-_8vbc02b/cargo-home/registry/src/index.crates.io-1949cf8c6b5b557f/secp256k1-0.29.1/src/key.rs:192:5
+    |
+192 |     pub fn new<R: rand::Rng + ?Sized>(rng: &mut R) -> SecretKey {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+215 |     pub fn from_slice(data: &[u8]) -> Result<SecretKey, Error> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+247 |     pub fn from_keypair(keypair: &Keypair) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: there is an associated function `from_str` with a similar name
+    |
+273 -         &SecretKey::from_byte_array([9; 32]).unwrap(),
+273 +         &SecretKey::from_str([9; 32]).unwrap(),
+    |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `spark` (lib test) due to 2 previous errors

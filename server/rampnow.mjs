@@ -32,6 +32,35 @@ export function decimalAmount(value, positive = true, precision = 18) {
     && (!positive || /[1-9]/.test(value));
 }
 
+/** Strict calendar-valid UTC, with exact ordering through nanosecond precision.
+ * Keep milliseconds for existing readers, never use them alone for ordering.
+ */
+export function rampnowTimestamp(value) {
+  if (typeof value !== 'string') return null;
+  const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?Z$/.exec(value);
+  if (!match) return null;
+  const fraction = (match[2] ?? '').padEnd(9, '0');
+  const millisecondIso = match[1] + '.' + fraction.slice(0, 3) + 'Z';
+  const milliseconds = Date.parse(millisecondIso);
+  // Round-trip rejects invalid calendar dates, 24:00 and leap-second rollover.
+  if (!Number.isSafeInteger(milliseconds) || new Date(milliseconds).toISOString() !== millisecondIso) return null;
+  return {milliseconds, precise: match[1] + '.' + fraction + 'Z'};
+}
+
+/** Older records were accepted only at millisecond precision. Preserve that
+ * exact instant while requiring every new precise field to agree with it.
+ */
+export function rampnowStateTimestamp(state) {
+  if (!object(state) || !Number.isSafeInteger(state.updatedAt)) return null;
+  let value = state.updatedAtPrecise;
+  if (value === undefined) {
+    try { value = new Date(state.updatedAt).toISOString(); } catch { return null; }
+  }
+  const parsed = rampnowTimestamp(value);
+  return parsed && parsed.milliseconds === state.updatedAt
+    && (state.updatedAtPrecise === undefined || parsed.precise === state.updatedAtPrecise) ? parsed : null;
+}
+
 export function rampnowSignature(secret, timestamp, method, path, rawBody = '') {
   requireValue(typeof secret === 'string' && secret.length > 0, 'RAMPNOW_SECRET_MISSING');
   requireValue(typeof timestamp === 'string' && /^\d{1,12}$/.test(timestamp), 'RAMPNOW_TIMESTAMP_INVALID');
@@ -53,8 +82,26 @@ export function verifyRampnowWebhook({ secret, timestamp, signature, rawBody,
   return timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'));
 }
 
-/** Use decimal strings throughout; a quote is not a payment authorization. */
-export function bitcoinQuoteRequest({ orderType, fiatCurrency, srcAmount, paymentMode }) {
+/** Overrides are server-owned, numeric percentages (1 means 1%), and an
+ * account-base-currency fixed amount. Omission keeps the account's fees; it
+ * must never silently turn a partially configured policy into a zero fee.
+ */
+export function rampnowPartnerFeeParameters(partnerFees) {
+  if (partnerFees === undefined) return {};
+  requireValue(object(partnerFees), 'RAMPNOW_FEE_CONFIG_INVALID');
+  const {partnerPctFee, partnerFixedFee} = partnerFees;
+  requireValue(typeof partnerPctFee === 'number' && Number.isFinite(partnerPctFee)
+    && partnerPctFee >= 0 && partnerPctFee <= 100
+    && typeof partnerFixedFee === 'number' && Number.isFinite(partnerFixedFee)
+    && partnerFixedFee >= 0 && partnerFixedFee <= Number.MAX_SAFE_INTEGER,
+  'RAMPNOW_FEE_CONFIG_INVALID');
+  return {partnerPctFee, partnerFixedFee};
+}
+
+/** Amounts remain decimal strings; the provider's fee override fields are
+ * numbers by contract. A quote is not a payment authorization.
+ */
+export function bitcoinQuoteRequest({ orderType, fiatCurrency, srcAmount, paymentMode, partnerFees }) {
   requireValue(orderType === 'buy' || orderType === 'sell', 'RAMPNOW_DIRECTION_INVALID');
   requireValue(currencyCode(fiatCurrency) && fiatCurrency !== 'BTC', 'RAMPNOW_FIAT_INVALID');
   requireValue(decimalAmount(srcAmount, true, orderType === 'sell' ? 8 : 3), 'RAMPNOW_AMOUNT_INVALID');
@@ -67,6 +114,7 @@ export function bitcoinQuoteRequest({ orderType, fiatCurrency, srcAmount, paymen
     dstCurrency: orderType === 'buy' ? 'BTC' : fiatCurrency,
     dstChain: orderType === 'buy' ? 'bitcoin' : 'fiat',
     ...(paymentMode === undefined ? {} : { paymentMode }),
+    ...rampnowPartnerFeeParameters(partnerFees),
   };
 }
 
@@ -273,15 +321,16 @@ export function applyRampnowOrderEvent(previous, event, expected) {
     requireValue(typeof expected[key] === 'string' && p[key] === expected[key], 'RAMPNOW_ORDER_MISMATCH');
   }
   requireValue(expected.orderType === 'buy' || expected.orderType === 'sell', 'RAMPNOW_BINDING_REQUIRED');
-  const updatedAt = typeof p.updateTime === 'string' && /Z$/.test(p.updateTime) ? Date.parse(p.updateTime) : NaN;
-  requireValue(Number.isFinite(updatedAt) && typeof p.orderStatus === 'string'
+  const timestamp = rampnowTimestamp(p.updateTime);
+  requireValue(timestamp && typeof p.orderStatus === 'string'
     && /^[a-z_]{1,64}$/.test(p.orderStatus), 'RAMPNOW_EVENT_INVALID');
   requireValue(decimalAmount(p.dstFillAmount, p.orderStatus === 'completed', expected.orderType === 'buy' ? 8 : 18), 'RAMPNOW_FILL_INVALID');
   if (previous) {
+    const previousTimestamp = rampnowStateTimestamp(previous);
     requireValue(previous.orderUid === expected.orderUid && previous.externalOrderUid === expected.externalOrderUid
-      && Number.isFinite(previous.updatedAt), 'RAMPNOW_ORDER_MISMATCH');
-    if (event.eventUid === previous.eventUid || updatedAt < previous.updatedAt) return previous;
-    if (updatedAt === previous.updatedAt) {
+      && previousTimestamp, 'RAMPNOW_ORDER_MISMATCH');
+    if (event.eventUid === previous.eventUid || timestamp.precise < previousTimestamp.precise) return previous;
+    if (timestamp.precise === previousTimestamp.precise) {
       // Equal timestamps with conflicting status cannot be ordered: poll instead.
       if (p.orderStatus !== previous.status || p.dstFillAmount !== previous.dstFillAmount) {
         return { ...previous, needsReconciliation: true };
@@ -291,7 +340,8 @@ export function applyRampnowOrderEvent(previous, event, expected) {
   }
   return {
     orderUid: p.orderUid, externalOrderUid: p.externalOrderUid, eventUid: event.eventUid,
-    updatedAt, status: p.orderStatus, dstFillAmount: p.dstFillAmount,
+    updatedAt: timestamp.milliseconds, updatedAtPrecise: timestamp.precise,
+    status: p.orderStatus, dstFillAmount: p.dstFillAmount,
     ...rampnowOrderState(p.orderStatus), needsReconciliation: true,
   };
 }

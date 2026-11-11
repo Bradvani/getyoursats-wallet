@@ -54,8 +54,23 @@ export function savePosOrders(identityPubkey: string, orders: PosOrder[]): boole
   const key = walletKey(identityPubkey);
   if (!key) return false;
   try {
-    localStorage.setItem(key, JSON.stringify(orders.filter(isPosOrder)));
-    return true;
+    // A silently dropped order destroys the invoice-to-payment association.
+    // Refuse writes if either the proposed or existing journal is damaged.
+    if (!Array.isArray(orders) || orders.some(order => !isPosOrder(order))) return false;
+    const allowed=new Set(['id','invoice','amountSats','unit','description','createdAt','feeSats','originalAmount','fiatPerBtc','rateAt','expiresAt']);
+    if(orders.some(order=>Object.keys(order).some(key=>!allowed.has(key))))return false;
+    const ids = new Set(orders.map(order => order.id));
+    const invoices = new Set(orders.map(order => order.invoice.toLowerCase()));
+    if (ids.size !== orders.length || invoices.size !== orders.length) return false;
+    const original = localStorage.getItem(key);
+    if (original !== null) {
+      const existing:unknown = JSON.parse(original);
+      if (!Array.isArray(existing) || existing.some(row => !isPosOrder(row))) return false;
+    }
+    const encoded = JSON.stringify(orders);
+    localStorage.setItem(key, encoded);
+    // A storage shim may acknowledge a write it did not persist.
+    return localStorage.getItem(key) === encoded;
   } catch { return false; }
 }
 

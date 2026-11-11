@@ -1,0 +1,20 @@
+▶ support submission budgets use atomic disposable Redis state
+  ✔ distinct submissions in one millisecond have distinct references (41.201927ms)
+  ✔ same payload retries preserve reference, provider idempotency and one budget reservation (36.971829ms)
+  ✔ daily budget TTL remains valid across a request clock second boundary (15.542487ms)
+  ✔ a 20-send daily limit holds across concurrent fresh handler instances (113.661135ms)
+  ✔ a four-per-IP hourly limit holds across concurrent instances with different emails (41.206123ms)
+  ✔ a four-per-email daily limit holds across concurrent instances with different IPs (44.599287ms)
+  ✔ provider timeouts retain reservations while safe retries reuse the same delivery key (31.563822ms)
+  ✔ storage outages and malformed reservation responses fail closed before mail delivery (12.5269ms)
+  ✔ missing, excessive and corrupt TTL/count states fail closed in the real Lua script (77.58786ms)
+  ✔ oversized bodies, unsupported origins and spoof-only IPs never reserve or send (7.807072ms)
+✔ support submission budgets use atomic disposable Redis state (517.657864ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 607.524642

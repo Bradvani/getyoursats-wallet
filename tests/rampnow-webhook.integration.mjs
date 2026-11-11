@@ -133,6 +133,52 @@ test('durable RampNow ingestion uses real Redis atomic scripts', async t => {
     assert.equal(await redis('ZCARD', key('seen')), 2);
   });
 
+  await t.test('nanosecond callbacks remain exact through quarantine, atomic CAS and duplicate retries', async () => {
+    await reset();
+    const latest = '2026-10-28T12:00:00.123456789Z';
+    assert.equal(await store().ingest(event('nano-unbound', 'created', latest)), 'QUARANTINED');
+    const quarantine = JSON.parse(await redis('HGET', key('quarantine'), 'nano-unbound'));
+    assert.equal(quarantine.event.payload.updateTime, latest);
+    await reset(); await bind();
+    let inserted = false;
+    intercept = async command => {
+      if (command[0] === 'EVAL' && command[1] === COMMIT_SCRIPT && !inserted) {
+        inserted = true;
+        await store().ingest(event('nano-newer', 'completed', latest));
+      }
+    };
+    await store().ingest(event('nano-older', 'processing', '2026-10-28T12:00:00.123456788Z'));
+    const state = JSON.parse(await redis('GET', key('state:intent-1')));
+    assert.equal(state.eventUid, 'nano-newer'); assert.equal(state.status, 'completed');
+    assert.equal(state.updatedAt, Date.parse(latest)); assert.equal(state.updatedAtPrecise, latest);
+    assert.equal(await store().ingest(event('nano-newer', 'expired', '2026-10-28T12:00:01Z')), 'DUPLICATE');
+    await store().ingest(event('nano-equal', 'expired', latest));
+    assert.deepEqual(JSON.parse(await redis('GET', key('state:intent-1'))), state);
+    assert.equal(await redis('ZCARD', key('seen')), 3);
+  });
+
+  await t.test('legacy millisecond state upgrades without discarding nanosecond precision', async () => {
+    await reset(); await bind();
+    await store().ingest(event('legacy', 'processing', '2026-10-28T12:00:00.123Z'));
+    const legacy = JSON.parse(await redis('GET', key('state:intent-1')));
+    delete legacy.updatedAtPrecise;
+    await redis('SET', key('state:intent-1'), JSON.stringify(legacy));
+    const latest = '2026-10-28T12:00:00.123000001Z';
+    await store().ingest(event('upgrade', 'completed', latest));
+    assert.equal(JSON.parse(await redis('GET', key('state:intent-1'))).updatedAtPrecise, latest);
+  });
+
+  await t.test('corrupted precise state fails before mutation or event acknowledgement', async () => {
+    await reset(); await bind();
+    await store().ingest(event('base'));
+    const corrupted = JSON.parse(await redis('GET', key('state:intent-1')));
+    corrupted.updatedAtPrecise = '2026-10-28T12:00:01.000000000Z';
+    await redis('SET', key('state:intent-1'), JSON.stringify(corrupted));
+    await assert.rejects(store().ingest(event('unacknowledged', 'completed', '2026-10-28T12:00:02Z')), /STORE_UNAVAILABLE/);
+    assert.equal(await redis('ZSCORE', key('seen'), 'unacknowledged'), null);
+    assert.deepEqual(JSON.parse(await redis('GET', key('state:intent-1'))), corrupted);
+  });
+
   await t.test('binding created during quarantine race is re-read and validated before committing', async () => {
     await reset(); let inserted = false;
     intercept = async command => {

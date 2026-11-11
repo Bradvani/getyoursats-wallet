@@ -1,3 +1,4 @@
+import {WalletPurposePasskeyProvider} from './walletPurposePasskeyProvider';
 /**
  * Passkey service. Dispatches to the SDK's `PasskeyClient` directly
  * on web or to the native plugin (which owns its own `PasskeyClient`
@@ -18,7 +19,6 @@ import {
 import {
   PasskeyAlreadyExistsError,
   PasskeyCredentialNotFoundError,
-  PasskeyProvider,
   PasskeyTimedOutError,
 } from '@breeztech/breez-sdk-spark/passkey-prf-provider';
 import { PasskeyCreatedNotDerivedError } from './passkeyPrfProvider';
@@ -387,7 +387,7 @@ class NativePasskey implements PasskeyApi {
 const browserRegistry = Capacitor.isNativePlatform() ? null : new LocalStorageCredentialRegistry();
 
 export function buildBrowserPasskeyClient(opts: { userName?: string; userDisplayName?: string; rpId?: string } = {}): PasskeyClient {
-  const provider = new PasskeyProvider(
+  const provider = new WalletPurposePasskeyProvider(
     {
       rpId: opts.rpId ?? rpId,
       rpName,

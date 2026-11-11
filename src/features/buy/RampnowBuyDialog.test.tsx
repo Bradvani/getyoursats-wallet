@@ -55,6 +55,20 @@ it('binds the wallet destination and shows fees before a single explicit submiss
   fireEvent.click(screen.getByRole('button',{name:'Continue to secure checkout'}));
   expect(mocks.open).toHaveBeenCalledWith(completed.checkoutUrl);
 });
+it('discloses the reviewed GetYourSats rate and fixed currency without adding them again',async()=>{
+  const originalPrepare=mocks.prepare.getMockImplementation()!;
+  mocks.prepare.mockImplementation(async input=>{
+    const review=await originalPrepare(input);
+    return {...review,quote:{...review.quote,partnerFeePolicy:{partnerPctFee:0.25,partnerFixedFee:0.1,baseCurrency:'USD'}}};
+  });
+  open();await fill();
+  expect(screen.getByText('GetYourSats fee')).toBeInTheDocument();
+  expect(screen.getByText('0.25% + 0.10 USD (included in platform fee)')).toBeInTheDocument();
+  expect(screen.getByText('1000 INR + 1 USDT')).toBeInTheDocument();
+  expect(screen.getByText('20 INR (included)')).toBeInTheDocument();
+  expect(screen.getByText('0.0001 BTC')).toBeInTheDocument();
+  expect(mocks.submit).not.toHaveBeenCalled();
+});
 it('reload and provider return reconcile without creating or claiming receipt',async()=>{
   open(id);fireEvent.click(await screen.findByRole('button',{name:'Check purchase status'}));
   await screen.findByText(/Bitcoin receipt in your wallet is still unverified/);

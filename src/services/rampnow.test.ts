@@ -263,6 +263,31 @@ describe('RampNow sandbox browser client', () => {
     await expect(client.prepare(INPUT)).rejects.toMatchObject({code: 'RAMPNOW_RESPONSE_INVALID'});
   });
 
+  it('preserves the reviewed fee policy and quote hash without changing provider fee lines', async () => {
+    const policy = {partnerPctFee: 0.25, partnerFixedFee: 0.1, baseCurrency: 'USD'};
+    const {client} = harness({response: {...PREPARED, quote: {...PREPARED.quote, partnerFeePolicy: policy}}});
+    const review = await client.prepare(INPUT);
+    expect(review.quote.partnerFeePolicy).toEqual(policy);
+    expect(review.quoteHash).toBe(QUOTE_HASH);
+    expect(review.quote.feeDetails).toEqual(PREPARED.quote.feeDetails);
+    expect(review.quote.dstAmount).toBe(PREPARED.quote.dstAmount);
+  });
+
+  it.each([null, [], {}, {partnerPctFee: 0.25, partnerFixedFee: 0.1},
+    {partnerPctFee: '0.25', partnerFixedFee: 0.1, baseCurrency: 'USD'},
+    {partnerPctFee: -0.25, partnerFixedFee: 0.1, baseCurrency: 'USD'},
+    {partnerPctFee: 100.01, partnerFixedFee: 0.1, baseCurrency: 'USD'},
+    {partnerPctFee: 0.25, partnerFixedFee: -0.1, baseCurrency: 'USD'},
+    {partnerPctFee: 0.25, partnerFixedFee: Number.MAX_SAFE_INTEGER + 1, baseCurrency: 'USD'},
+    {partnerPctFee: 0.25, partnerFixedFee: Infinity, baseCurrency: 'USD'},
+    {partnerPctFee: 0.25, partnerFixedFee: 0.0000001, baseCurrency: 'USD'},
+    {partnerPctFee: 0.25, partnerFixedFee: 0.1, baseCurrency: 'usd'},
+    {partnerPctFee: 0.25, partnerFixedFee: 0.1, baseCurrency: 'USD extra'},
+  ])('rejects a malformed public fee policy: %j', async partnerFeePolicy => {
+    const {client} = harness({response: {...PREPARED, quote: {...PREPARED.quote, partnerFeePolicy}}});
+    await expect(client.prepare(INPUT)).rejects.toMatchObject({code: 'RAMPNOW_RESPONSE_INVALID'});
+  });
+
   it('returns only fixed safe errors and never retains provider details', async () => {
     const fetchImpl = vi.fn<typeof fetch>(async () => json({error: 'private customer text', message: INPUT.user.email}, 500));
     const client = createRampnowBrowserClient({walletPubkey: PUBKEY, signMessage: vi.fn(), fetchImpl});

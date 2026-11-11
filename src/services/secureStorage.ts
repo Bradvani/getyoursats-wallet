@@ -7,8 +7,7 @@
  *   `glow-app/plugins/`. The plugin owns the iOS Keychain accessibility
  *   policy (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`) and the
  *   Android Keystore key generation.
- * - Web: not supported — callers fall back to the existing legacy storage
- *   path (today: plaintext localStorage; future: password-encrypted vault).
+ * - Web: not supported here; callers use the browser wallet storage paths.
  *
  * The interface is identical on both platforms; callers branch on
  * `isSupported()` (cheap, synchronous) to decide whether to use this service
@@ -112,8 +111,14 @@ function getNativeVault(): NativeVaultPlugin {
  */
 const INSTALL_MARKER_KEY = 'glow.secureStorageInitialized';
 
-// Preserve historical F3 markers without treating them as migration evidence.
-// The plugin has no verified legacy-record conversion contract.
+/**
+ * The historical `glow.secureStorageF3Migrated` marker is deliberately no
+ * longer read or written here. Earlier builds deleted a legacy bound seed
+ * when it was absent and called that a migration, without converting or
+ * verifying the record. Preserve any existing marker and both vault tiers.
+ * The current plugin interface has no verified legacy-record conversion;
+ * initialization must not manufacture a migration-complete assertion.
+ */
 
 // ============================================
 // Stored payload — versioned for migrations
@@ -153,7 +158,7 @@ export type { StoredSeedBlob };
  * is JSON-safe, then reconstructing the array+type intersection on read.
  */
 type PersistedSeed =
-  | { type: 'mnemonic'; mnemonic: string; passphrase?: string }
+  | { type: 'mnemonic'; mnemonic: string; passphrase?: string | null }
   | { type: 'entropy'; bytes: number[] };
 
 interface PersistedSeedBlob {
@@ -163,17 +168,50 @@ interface PersistedSeedBlob {
 }
 
 function serializeSeedForStorage(seed: Seed): PersistedSeed {
+  if (typeof seed !== 'object' || seed === null) {
+    throw new TypeError('Wallet seed is not valid');
+  }
   if (seed.type === 'mnemonic') {
+    const mnemonic: unknown = seed.mnemonic;
+    const passphrase: unknown = seed.passphrase;
+    if (Array.isArray(seed) || typeof mnemonic !== 'string') {
+      throw new TypeError('Wallet mnemonic is not valid');
+    }
+    if (passphrase !== undefined && passphrase !== null && typeof passphrase !== 'string') {
+      throw new TypeError('Wallet mnemonic passphrase is not valid');
+    }
     return {
       type: 'mnemonic',
-      mnemonic: seed.mnemonic,
-      passphrase: seed.passphrase,
+      mnemonic,
+      passphrase: passphrase ?? undefined,
     };
   }
-  // Entropy variant: copy the array's index entries into a plain `number[]`.
-  // `Array.from(seed)` here gives us the byte array without the `type`
-  // property, which is exactly what we want for the `bytes` field.
-  return { type: 'entropy', bytes: Array.from(seed as ArrayLike<number>) };
+  if (seed.type !== 'entropy' || !Array.isArray(seed)) {
+    throw new TypeError('Wallet seed variant is not valid');
+  }
+  // Snapshot before any await. Array.from materializes holes as undefined,
+  // so sparse input cannot pass the byte check and change meaning in JSON.
+  const bytes = Array.from(seed);
+  if (!bytes.every(isByte)) throw new TypeError('Wallet seed bytes are not valid');
+  return { type: 'entropy', bytes };
+}
+
+function isByte(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 255;
+}
+
+function isSameSeed(left: PersistedSeed, right: PersistedSeed): boolean {
+  if (left.type === 'mnemonic' && right.type === 'mnemonic') {
+    // Only null/undefined absence is normalized. Preserve literal text and
+    // conservatively reject empty versus absent passphrases as a conflict.
+    return left.mnemonic === right.mnemonic &&
+      (left.passphrase ?? undefined) === (right.passphrase ?? undefined);
+  }
+  if (left.type === 'entropy' && right.type === 'entropy') {
+    return left.bytes.length === right.bytes.length &&
+      left.bytes.every((value, index) => value === right.bytes[index]);
+  }
+  return false;
 }
 
 function deserializeSeedFromStorage(persisted: PersistedSeed): Seed {
@@ -181,7 +219,7 @@ function deserializeSeedFromStorage(persisted: PersistedSeed): Seed {
     return {
       type: 'mnemonic',
       mnemonic: persisted.mnemonic,
-      passphrase: persisted.passphrase,
+      passphrase: persisted.passphrase ?? undefined,
     };
   }
   // Reconstruct the `number[] & { type: 'entropy' }` intersection that the
@@ -198,10 +236,11 @@ function isPersistedSeedBlob(value: unknown): value is PersistedSeedBlob {
   if (typeof v.seed !== 'object' || v.seed === null) return false;
   const s = v.seed as Record<string, unknown>;
   if (s.type === 'mnemonic') {
-    return typeof s.mnemonic === 'string';
+    return typeof s.mnemonic === 'string' &&
+      (s.passphrase === undefined || s.passphrase === null || typeof s.passphrase === 'string');
   }
   if (s.type === 'entropy') {
-    return Array.isArray(s.bytes);
+    return Array.isArray(s.bytes) && s.bytes.every(isByte);
   }
   return false;
 }
@@ -222,6 +261,8 @@ export type SecureStorageErrorCode =
   | 'BIOMETRIC_NOT_ENROLLED'  // Device has no biometric credentials registered.
   | 'BIOMETRIC_UNAVAILABLE'   // Hardware missing, disabled, or temporarily unavailable.
   | 'KEY_INVALIDATED'         // Stored entry voided (e.g. new biometric enrollment on iOS).
+  | 'INVALID_STORED_SEED'     // Malformed seed data; retain the entry for recovery.
+  | 'SEED_CONFLICT'           // A different saved seed must not be replaced.
   | 'UNKNOWN';                // Catch-all; treat as recoverable failure.
 
 export class SecureStorageError extends Error {
@@ -248,12 +289,15 @@ export interface SecureStorage {
   /**
    * Returns true if a seed blob is currently persisted.
    * Does NOT trigger a biometric prompt.
+   * Throws on a failed presence check; failure is not proof of absence.
    */
   hasStoredSeed(): Promise<boolean>;
 
   /**
-   * Persist a seed, replacing any existing one.
-   * May trigger a biometric prompt depending on platform policy.
+   * Create a device-only seed only after a fresh, explicit absence read.
+   * The same exact seed is a no-op; a different or unreadable saved record
+   * is retained and the call fails. Writes and explicit clears are serialized
+   * in this JavaScript singleton, not atomically across native processes.
    *
    * @throws {SecureStorageError} on any platform failure.
    */
@@ -264,22 +308,24 @@ export interface SecureStorage {
    *
    * @throws {SecureStorageError} with one of:
    *   NO_STORED_SEED | USER_CANCELLED | BIOMETRIC_LOCKOUT |
-   *   BIOMETRIC_NOT_ENROLLED | BIOMETRIC_UNAVAILABLE | KEY_INVALIDATED | UNKNOWN
+   *   BIOMETRIC_NOT_ENROLLED | BIOMETRIC_UNAVAILABLE | KEY_INVALIDATED |
+   *   INVALID_STORED_SEED | UNKNOWN
    */
   retrieveSeed(): Promise<Seed>;
 
   /**
-   * Wipe the persisted seed. Does NOT require biometric.
-   * Safe to call on logout — never throws on a missing entry.
+   * Explicitly wipe this tier's persisted seed. Does NOT require biometric;
+   * callers own the confirmation/recovery policy. Never throws on a missing
+   * entry. Initialization and read failures must not call this method.
    */
   clearSeed(): Promise<void>;
 }
 
 /**
  * The retired biometric-bound tier: readable and clearable, never
- * written. Legacy installs still have an entry here, which is moved
- * into device-only storage on first unlock. The native plugin has no
- * write path for it either.
+ * written. Legacy entries remain readable in their original tier through
+ * unlock and initialization. The native plugin has no write or verified
+ * conversion path for this tier.
  */
 export type DrainOnlySecureStorage = Omit<SecureStorage, 'storeSeed'>;
 
@@ -296,7 +342,10 @@ export type DrainOnlySecureStorage = Omit<SecureStorage, 'storeSeed'>;
  */
 function mapNativeVaultErrorCode(err: unknown): SecureStorageErrorCode {
   if (err && typeof err === 'object' && 'code' in err) {
-    const code = String((err as { code: unknown }).code);
+    const code = (err as { code: unknown }).code;
+    // Absence authorizes a write, so coercion or message matching must not
+    // turn an unexpected plugin response into that authority.
+    if (typeof code !== 'string') return 'UNKNOWN';
     switch (code) {
       case 'NOT_SUPPORTED':
       case 'NO_STORED_SEED':
@@ -351,6 +400,8 @@ function logSecureStorageFailure(operation: string, code: SecureStorageErrorCode
     case 'BIOMETRIC_LOCKOUT':
     case 'BIOMETRIC_UNAVAILABLE':
     case 'KEY_INVALIDATED':
+    case 'INVALID_STORED_SEED':
+    case 'SEED_CONFLICT':
       logger.warn(LogCategory.AUTH, 'Secure storage operation failed', context);
       break;
     case 'NOT_SUPPORTED':
@@ -464,13 +515,12 @@ class NativeSecureStorage implements DrainOnlySecureStorage {
     await ensureSharedInitialized();
     try {
       const result = await getNativeVault().hasStoredSeed();
+      if (typeof result.stored !== 'boolean') throw new Error('Unexpected seed presence response');
       return result.stored;
     } catch (err) {
-      // If even checking presence throws, treat as "no seed" so callers fall
-      // through to the legacy onboarding path.
       const code = mapNativeVaultErrorCode(err);
       logSecureStorageFailure('hasStoredSeed', code);
-      return false;
+      throw new SecureStorageError(code, 'Could not check the saved wallet.');
     }
   }
 
@@ -500,7 +550,7 @@ class NativeSecureStorage implements DrainOnlySecureStorage {
       throw new SecureStorageError(code, getErrorMessage(err) ?? 'Failed to retrieve seed.');
     }
 
-    return decodeStoredSeedBlob(result.seed, 'retrieveSeed');
+    return decodeStoredSeedBlob(result?.seed, 'retrieveSeed');
   }
 
   async clearSeed(): Promise<void> {
@@ -521,21 +571,27 @@ class NativeSecureStorage implements DrainOnlySecureStorage {
  * identical across biometric / device-only — only the on-disk encryption
  * policy differs — so parsing is tier-agnostic.
  */
-function decodeStoredSeedBlob(raw: string, operation: string): Seed {
+function decodeStoredSeedBlob(raw: unknown, operation: string): Seed {
+  if (typeof raw !== 'string') {
+    logSecureStorageFailure(operation, 'INVALID_STORED_SEED');
+    throw new SecureStorageError('INVALID_STORED_SEED', 'Stored seed blob is not a string.');
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    logSecureStorageFailure(operation, 'KEY_INVALIDATED');
+    logSecureStorageFailure(operation, 'INVALID_STORED_SEED');
     throw new SecureStorageError(
-      'KEY_INVALIDATED',
+      'INVALID_STORED_SEED',
       'Stored seed blob is not valid JSON.',
     );
   }
   if (!isPersistedSeedBlob(parsed)) {
-    logSecureStorageFailure(operation, 'KEY_INVALIDATED');
+    // Malformed data is not proof that the OS invalidated its encryption key.
+    // Keep that platform failure distinct and preserve this entry for recovery.
+    logSecureStorageFailure(operation, 'INVALID_STORED_SEED');
     throw new SecureStorageError(
-      'KEY_INVALIDATED',
+      'INVALID_STORED_SEED',
       'Stored seed blob has an unexpected shape.',
     );
   }
@@ -557,6 +613,17 @@ function decodeStoredSeedBlob(raw: string, operation: string): Seed {
  * shared call sites in `useBreezSdk.ts`.
  */
 class NativeDeviceOnlyStorage implements SecureStorage {
+  // The plugin exposes no cross-process compare-and-swap primitive. This
+  // queue only orders writes and explicit clears through this JS singleton.
+  private mutationTail: Promise<void> = Promise.resolve();
+
+  private enqueueMutation(operation: () => Promise<void>): Promise<void> {
+    const result = this.mutationTail.then(operation);
+    // Preserve the caller's rejection while allowing a fresh later attempt.
+    this.mutationTail = result.catch(() => undefined);
+    return result;
+  }
+
   isSupported(): boolean {
     return true;
   }
@@ -565,30 +632,46 @@ class NativeDeviceOnlyStorage implements SecureStorage {
     await ensureSharedInitialized();
     try {
       const result = await getNativeVault().hasStoredSeedDeviceOnly();
+      if (typeof result.stored !== 'boolean') throw new Error('Unexpected seed presence response');
       return result.stored;
     } catch (err) {
       const code = mapNativeVaultErrorCode(err);
       logSecureStorageFailure('hasStoredSeedDeviceOnly', code);
-      return false;
+      throw new SecureStorageError(code, 'Could not check the saved wallet.');
     }
   }
 
   async storeSeed(seed: Seed): Promise<void> {
-    await ensureSharedInitialized();
-    const blob: PersistedSeedBlob = {
-      version: 1,
-      seed: serializeSeedForStorage(seed),
-      createdAt: new Date().toISOString(),
-    };
-    try {
-      await getNativeVault().storeSeedDeviceOnly({ seed: JSON.stringify(blob) });
-      await recordStorageInitialization();
-      logSecureStorageSuccess('storeSeedDeviceOnly');
-    } catch (err) {
-      const code = mapNativeVaultErrorCode(err);
-      logSecureStorageFailure('storeSeedDeviceOnly', code);
-      throw new SecureStorageError(code, getErrorMessage(err) ?? 'Failed to persist seed.');
-    }
+    // Validate and snapshot identity before the first await or queue delay.
+    const persistedSeed = serializeSeedForStorage(seed);
+    return this.enqueueMutation(async () => {
+      let existing: Seed | undefined;
+      try {
+        existing = await this.retrieveSeed();
+      } catch (err) {
+        if (!(err instanceof SecureStorageError) || err.code !== 'NO_STORED_SEED') throw err;
+      }
+      if (existing !== undefined) {
+        if (isSameSeed(serializeSeedForStorage(existing), persistedSeed)) return;
+        throw new SecureStorageError('SEED_CONFLICT', 'A different wallet is already saved on this device.');
+      }
+      const blob: PersistedSeedBlob = {
+        version: 1,
+        seed: persistedSeed,
+        createdAt: new Date().toISOString(),
+      };
+      try {
+        await getNativeVault().storeSeedDeviceOnly({ seed: JSON.stringify(blob) });
+        await recordStorageInitialization();
+        logSecureStorageSuccess('storeSeedDeviceOnly');
+      } catch (err) {
+        // A failed acknowledgement can follow a committed write. Never clear
+        // or blindly retry; the next queued create must freshly read it.
+        const code = mapNativeVaultErrorCode(err);
+        logSecureStorageFailure('storeSeedDeviceOnly', code);
+        throw new SecureStorageError(code, getErrorMessage(err) ?? 'Failed to persist seed.');
+      }
+    });
   }
 
   async retrieveSeed(): Promise<Seed> {
@@ -601,19 +684,21 @@ class NativeDeviceOnlyStorage implements SecureStorage {
       logSecureStorageFailure('retrieveSeedDeviceOnly', code);
       throw new SecureStorageError(code, getErrorMessage(err) ?? 'Failed to retrieve seed.');
     }
-    return decodeStoredSeedBlob(result.seed, 'retrieveSeedDeviceOnly');
+    return decodeStoredSeedBlob(result?.seed, 'retrieveSeedDeviceOnly');
   }
 
   async clearSeed(): Promise<void> {
-    await ensureSharedInitialized();
-    try {
-      await getNativeVault().clearSeedDeviceOnly();
-      logSecureStorageSuccess('clearSeedDeviceOnly');
-    } catch (err) {
-      const code = mapNativeVaultErrorCode(err);
-      logSecureStorageFailure('clearSeedDeviceOnly', code);
-      throw new SecureStorageError(code, getErrorMessage(err) ?? 'Failed to clear stored seed.');
-    }
+    return this.enqueueMutation(async () => {
+      await ensureSharedInitialized();
+      try {
+        await getNativeVault().clearSeedDeviceOnly();
+        logSecureStorageSuccess('clearSeedDeviceOnly');
+      } catch (err) {
+        const code = mapNativeVaultErrorCode(err);
+        logSecureStorageFailure('clearSeedDeviceOnly', code);
+        throw new SecureStorageError(code, getErrorMessage(err) ?? 'Failed to clear stored seed.');
+      }
+    });
   }
 }
 

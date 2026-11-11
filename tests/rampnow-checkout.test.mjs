@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {bech32, bech32m, createBase58check} from '@scure/base';
 import {createRampnowCheckoutClient, normalizeRampnowBuyInput} from '../server/rampnowCheckout.mjs';
-import {rampnowSignature} from '../server/rampnow.mjs';
+import {bitcoinQuoteRequest, rampnowSignature} from '../server/rampnow.mjs';
 
 const base58check = createBase58check(bytes => createHash('sha256').update(bytes).digest());
 const witness = (prefix = 'tb', version = 0, length = 20, coder = version === 0 ? bech32 : bech32m) =>
@@ -137,6 +137,29 @@ test('checkout carries the server-reviewed payment method and refuses an unknown
   await client.createBuyOrder({...request, paymentMode: 'upi'});
   for (const paymentMode of ['unknown', 'UPI', '', 'private\nmethod', {}]) {
     await assert.rejects(client.createBuyOrder({...request, paymentMode}), /RAMPNOW_PAYMENT_MODE_INVALID/);
+  }
+  assert.equal(calls, 1);
+});
+
+test('checkout and quote send identical server fee overrides, excluding local currency metadata', async () => {
+  const partnerFees = {partnerPctFee: 0.75, partnerFixedFee: 0.25, baseCurrency: 'USD'};
+  const quote = bitcoinQuoteRequest({orderType: 'buy', fiatCurrency: 'INR', srcAmount: '1000', partnerFees});
+  let calls = 0;
+  const client = createRampnowCheckoutClient({...config, fetchImpl: async (_url, init) => {
+    calls++;
+    const body = JSON.parse(init.body);
+    assert.equal(body.partnerPctFee, quote.partnerPctFee);
+    assert.equal(body.partnerFixedFee, quote.partnerFixedFee);
+    assert.equal(Object.hasOwn(body, 'baseCurrency'), false);
+    assert.equal(Object.hasOwn(body, 'partnerFees'), false);
+    assert.equal(init.headers['X-RAMPNOW-SIGN'], rampnowSignature(secret, timestamp, 'POST',
+      '/api/partner/v1/ext/ramp_order/checkout', init.body));
+    return response(result);
+  }});
+  await client.createBuyOrder({...request, partnerFees,
+    input: {...input, partnerPctFee: 99, partnerFixedFee: 99}});
+  for (const invalid of [{partnerPctFee: 1}, {partnerPctFee: 1, partnerFixedFee: -1}, null]) {
+    await assert.rejects(client.createBuyOrder({...request, partnerFees: invalid}), /RAMPNOW_FEE_CONFIG_INVALID/);
   }
   assert.equal(calls, 1);
 });

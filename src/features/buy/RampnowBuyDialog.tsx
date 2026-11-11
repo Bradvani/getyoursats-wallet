@@ -11,6 +11,10 @@ const emptyProfile: RampnowBuyInput['user'] = {firstName:'',lastName:'',email:''
 const fields = [{key:'firstName',label:'First name',type:'text'}, {key:'lastName',label:'Last name',type:'text'},
   {key:'email',label:'Email',type:'email'}, {key:'phone',label:'Phone with country code',type:'tel'},
   {key:'dateOfBirth',label:'Date of birth',type:'date'}] as const;
+const fixedFeeLabel = (value: number) => {
+  const [whole, fraction = ''] = String(value).split('.');
+  return `${whole}.${fraction.padEnd(2,'0')}`;
+};
 
 /** Preview-only purchase flow. Availability remains a server decision. */
 export default function RampnowBuyDialog({walletPubkey,network,returnIntent,onClose}: Props) {
@@ -130,6 +134,8 @@ export default function RampnowBuyDialog({walletPubkey,network,returnIntent,onCl
             <div><dt>Payment method</dt><dd>{prepared.quote.paymentMode.replace(/_/g,' ')}</dd></div>
             {prepared.quote.feeDetails.map((item,index)=><div key={index}><dt>{item.type.replace(/_/g,' ')} fee</dt>
               <dd>{item.fee} {item.currency} ({item.isInclusive?'included':'additional'})</dd></div>)}
+            {prepared.quote.partnerFeePolicy && <div><dt>GetYourSats fee</dt>
+              <dd>{prepared.quote.partnerFeePolicy.partnerPctFee}% + {fixedFeeLabel(prepared.quote.partnerFeePolicy.partnerFixedFee)} {prepared.quote.partnerFeePolicy.baseCurrency} (included in platform fee)</dd></div>}
             <div><dt>Quoted amounts including additional fees</dt><dd>{checkoutAmounts(prepared.quote).map(item=>`${item.amount} ${item.currency}`).join(' + ')}</dd></div>
             <div><dt>Wallet receiving fee estimate</dt><dd>{fee} sats</dd></div>
             <div><dt>Delivery address</dt><dd className="break-all text-sm">{prepared.destination}</dd></div>

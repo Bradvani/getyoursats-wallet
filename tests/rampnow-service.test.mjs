@@ -222,6 +222,54 @@ test('fresh quote changes require a new review before reservation', async () => 
   }
 });
 
+const feeConfig = {RAMPNOW_PARTNER_PCT_FEE: '0.50', RAMPNOW_PARTNER_FIXED_FEE: '1.00',
+  RAMPNOW_PARTNER_FEE_BASE_CURRENCY: 'USD'};
+
+test('review binds server fee policy and checkout uses exactly the quoted overrides without double counting', async () => {
+  const h = fixture(feeConfig);
+  const review = await h.service.prepare(owner, {...input, partnerPctFee: 99, partnerFixedFee: 99});
+  const expected = {partnerPctFee: 0.5, partnerFixedFee: 1, baseCurrency: 'USD'};
+  assert.deepEqual(review.quote.partnerFeePolicy, expected);
+  assert.equal(review.quote.feeDetails.length, h.provider.quote.feeDetails.length);
+  assert.equal(review.quote.feeDetails[0].fee, '25.5');
+  assert.equal(h.calls.prepare[0].quoteHash, hashRampnowPayload(review.quote));
+  await h.service.submit(owner, {...h.payload(review), partnerFees: {partnerPctFee: 99, partnerFixedFee: 99}});
+  assert.deepEqual(h.calls.quote[0].partnerFees, expected);
+  assert.deepEqual(h.calls.quote[1].partnerFees, expected);
+  assert.deepEqual(h.calls.post[0].partnerFees, expected);
+});
+
+test('fee amount, percentage, denomination and configuration changes require a new review before reservation', async () => {
+  for (const change of [{RAMPNOW_PARTNER_PCT_FEE: '0.75'}, {RAMPNOW_PARTNER_FIXED_FEE: '2'},
+    {RAMPNOW_PARTNER_FEE_BASE_CURRENCY: 'EUR'}, {RAMPNOW_PARTNER_PCT_FEE: undefined,
+      RAMPNOW_PARTNER_FIXED_FEE: undefined, RAMPNOW_PARTNER_FEE_BASE_CURRENCY: undefined}]) {
+    const h = fixture(feeConfig); const review = await h.prepare(); Object.assign(h.env, change);
+    await assert.rejects(h.service.submit(owner, h.payload(review)), errorCode('RAMPNOW_QUOTE_CHANGED'));
+    assert.equal(h.calls.reserve.length, 0); assert.equal(h.calls.post.length, 0);
+  }
+  const h = fixture(); const review = await h.prepare(); Object.assign(h.env, feeConfig);
+  await assert.rejects(h.service.submit(owner, h.payload(review)), errorCode('RAMPNOW_QUOTE_CHANGED'));
+  assert.equal(h.calls.reserve.length, 0); assert.equal(h.calls.post.length, 0);
+});
+
+test('invalid fee configuration prevents availability and quotes', async () => {
+  const h = fixture({RAMPNOW_PARTNER_PCT_FEE: '0.5'});
+  assert.equal((await h.service.availability()).available, false);
+  await assert.rejects(h.prepare(), errorCode('RAMPNOW_FEE_CONFIG_INVALID'));
+  assert.equal(h.calls.quote.length, 0); assert.equal(h.calls.prepare.length, 0); assert.equal(h.calls.post.length, 0);
+});
+
+test('policy changes during quote or after reservation never dispatch stale fees', async () => {
+  const h = fixture(feeConfig); const review = await h.prepare();
+  h.quoteHook = async () => {h.env.RAMPNOW_PARTNER_PCT_FEE = '0.75';};
+  await assert.rejects(h.service.submit(owner, h.payload(review)), errorCode('RAMPNOW_FEE_POLICY_CHANGED'));
+  assert.equal(h.calls.reserve.length, 0); assert.equal(h.calls.post.length, 0);
+  const after = fixture(feeConfig); const otherReview = await after.prepare();
+  after.afterReserve = () => {after.env.RAMPNOW_PARTNER_FIXED_FEE = '2';};
+  await assert.rejects(after.service.submit(owner, after.payload(otherReview)), errorCode('RAMPNOW_RECONCILIATION_REQUIRED'));
+  assert.equal(after.calls.post.length, 0); assert.equal(after.intents.get(otherReview.externalOrderUid).phase, 'uncertain');
+});
+
 test('flag or wallet network changes after review still block submit before reservation', async () => {
   for (const [changes, code] of [[{RAMPNOW_CHECKOUT_ENABLED: 'false'}, 'RAMPNOW_CHECKOUT_DISABLED'],
     [{RAMPNOW_BITCOIN_TEST_NETWORK: undefined}, 'RAMPNOW_NETWORK_CONFIRMATION_REQUIRED'],
@@ -334,12 +382,28 @@ test('a bound intent rejects a different provider UID and preserves its known ch
 });
 
 test('invalid lookup settlement fields fail before binding or ingestion', async () => {
-  for (const changes of [{updatedAt: 'invalid-date'}, {status: undefined}, {dstFillAmount: '0'}, {dstFillAmount: '0.000000001'}]) {
+  for (const changes of [{updatedAt: 'invalid-date'}, {updatedAt: '2026-02-29T12:00:05.123456789Z'},
+    {updatedAt: '2026-10-28T12:00:05.1234567890Z'}, {updatedAt: '2026-10-28T12:00:05+00:00'},
+    {status: undefined}, {dstFillAmount: '0'}, {dstFillAmount: '0.000000001'}]) {
     const h = fixture(); const review = await h.prepare(); await h.consume(review);
     h.provider.orders = [h.order(changes)];
     await assert.rejects(h.service.reconcile(owner, review.externalOrderUid), errorCode('RAMPNOW_RESPONSE_INVALID'));
     assert.equal(h.calls.bind.length, 0); assert.equal(h.calls.ingest.length, 0);
   }
+});
+
+test('lookup reconciliation preserves nanoseconds and prevents older same-millisecond status regression', async () => {
+  const h = fixture(); const review = await h.prepare(); await h.consume(review);
+  const latest = '2026-10-28T12:00:05.123456789Z';
+  h.provider.orders = [h.order({updatedAt: latest})];
+  assert.equal((await h.service.reconcile(owner, review.externalOrderUid)).providerStatus, 'completed');
+  const key = RAMPNOW_STORE_PREFIX + 'state:' + review.externalOrderUid;
+  assert.equal(h.states.get(key).updatedAtPrecise, latest);
+  assert.equal(h.calls.ingest[0].payload.updateTime, latest);
+  h.provider.orders = [h.order({updatedAt: '2026-10-28T12:00:05.123456788Z', status: 'processing', dstFillAmount: '0'})];
+  assert.equal((await h.service.reconcile(owner, review.externalOrderUid)).providerStatus, 'completed');
+  h.states.get(key).updatedAtPrecise = '2026-10-28T12:00:06.000000000Z';
+  await assert.rejects(h.service.status(owner, review.externalOrderUid), errorCode('RAMPNOW_STORE_UNAVAILABLE'));
 });
 
 test('expired review is rejected before reservation', async () => {

@@ -1,5 +1,5 @@
 import {RampnowError, verifyRampnowWebhook} from '../../server/rampnow.mjs';
-import {createRampnowStore, sandboxRampnowConfig} from '../../server/rampnowStore.mjs';
+import {createRampnowStore, rampnowEventValidationIssues, sandboxRampnowConfig} from '../../server/rampnowStore.mjs';
 
 // Signature verification requires the original request bytes, never JSON reserialization.
 export const config = {api: {bodyParser: false}};
@@ -36,11 +36,13 @@ export function createWebhookHandler({env = process.env, now = Date.now, storeFa
   logResult = record => console.info(JSON.stringify(record))} = {}) {
   return async function handler(req, res) {
     let signatureVerified = false;
-    const finish = (status, code) => {
+    let stage = 'request';
+    let event;
+    const finish = (status, code, diagnostics = {}) => {
       // Fixed result metadata only. Never log request bodies, headers, URLs,
       // identifiers, credentials or arbitrary exception text. Logging cannot
       // change acknowledgement semantics or turn a persisted event into a retry.
-      try { logResult({component: 'rampnow_webhook', status, code, signatureVerified}); } catch {}
+      try { logResult({component: 'rampnow_webhook', status, code, signatureVerified, ...diagnostics}); } catch {}
       return reply(res, status, code);
     };
     if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return finish(405, 'METHOD_NOT_ALLOWED'); }
@@ -55,7 +57,11 @@ export function createWebhookHandler({env = process.env, now = Date.now, storeFa
         return finish(401, 'INVALID_SIGNATURE');
       }
       signatureVerified = true;
-      const event = JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(bytes));
+      stage = 'utf8';
+      const decoded = new TextDecoder('utf-8', {fatal: true}).decode(bytes);
+      stage = 'json';
+      event = JSON.parse(decoded);
+      stage = 'ingest';
       await storeFactory({env, now}).ingest(event);
       // 2xx only follows durable storage. It never asserts wallet settlement.
       return finish(200, 'EVENT_STORED');
@@ -63,7 +69,16 @@ export function createWebhookHandler({env = process.env, now = Date.now, storeFa
       if (error instanceof RampnowError && error.code === 'RAMPNOW_BODY_TOO_LARGE') return finish(413, 'BODY_TOO_LARGE');
       if (error instanceof SyntaxError || error instanceof TypeError || (error instanceof RampnowError
         && ['RAMPNOW_RAW_BODY_REQUIRED', 'RAMPNOW_EVENT_INVALID', 'RAMPNOW_ORDER_MISMATCH', 'RAMPNOW_FILL_INVALID'].includes(error.code))) {
-        return finish(400, 'INVALID_EVENT');
+        // Values are local stage labels and fixed schema classifications only.
+        // Do not copy exception messages or arbitrary exception properties.
+        const diagnostics = signatureVerified ? {failureStage: stage} : {};
+        if (signatureVerified && stage === 'ingest') {
+          diagnostics.validationIssues = rampnowEventValidationIssues(event);
+          diagnostics.failureKind = error instanceof RampnowError
+            ? ({RAMPNOW_EVENT_INVALID: 'schema', RAMPNOW_ORDER_MISMATCH: 'order_mismatch', RAMPNOW_FILL_INVALID: 'fill_invalid'}[error.code] ?? 'processing')
+            : 'processing';
+        }
+        return finish(400, 'INVALID_EVENT', diagnostics);
       }
       return finish(503, 'WEBHOOK_UNAVAILABLE');
     }

@@ -405,7 +405,7 @@ export function isDevMode(): boolean {
 }
 
 export function setDevMode(enabled: boolean): void {
-  localStorage.setItem(DEV_MODE_KEY, String(enabled));
+  localStorage.setItem(DEV_MODE_KEY, enabled === true ? 'true' : 'false');
 }
 
 /**
