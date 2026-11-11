@@ -1,4 +1,4 @@
-import {act,fireEvent,render,screen,waitFor,within} from '@testing-library/react';
+import {act,fireEvent,render,screen,within} from '@testing-library/react';
 import {describe,expect,it,vi} from 'vitest';
 import type {BreezSdk,LightningAddressInfo,Payment} from '@breeztech/breez-sdk-spark';
 import type {ReactNode} from 'react';
@@ -91,11 +91,12 @@ describe('browser receive containment',()=>{
   if(completed)vi.mocked(sdk.listPayments).mockResolvedValue({payments:[{id:'receipt',paymentType:'receive',status:'completed',
    amount:100n,fees:0n,timestamp:Math.floor(Date.now()/1000),method:'lightning',details:{type:'lightning',invoice:saved.invoice}} as Payment]});
   view(sdk,<PosPage onClose={vi.fn()}/>);
-  await waitFor(()=>expect(sdk.getInfo).toHaveBeenCalled());
+  const history=await screen.findByRole('button',{name:'Payment history'});
+  expect(sdk.getInfo).toHaveBeenCalled();
   // Without our explicit provider observer the guarded wallet must not
   // elevate cached completed records into a merchant settlement claim.
   expect(sdk.listPayments).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole('button',{name:'Payment history'}));
+  fireEvent.click(history);
   const record=await screen.findByRole('button',{name:/100 sats · Saved receipt/});
   fireEvent.click(record);
   await screen.findByText(/expires:/i);

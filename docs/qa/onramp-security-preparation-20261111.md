@@ -25,18 +25,32 @@ spendable GetYourSats wallet credit.
 | v7 expired | PaymentExpired after selecting Expired in the simulator | At `2026-11-11T08:22:07.016Z`, one strictly matched order reported `expired` with `dstFillAmount: "0"`. |
 
 The inspections validate provider identity, external reference, source amount,
-destination address and the complete route. Failure-case reports contain no
-correlated retained callback and explicitly report `walletCreditVerified: false`.
-The accepted report also has no transaction hash or correlated retained callback.
+destination address and the complete route. At `2026-11-11T08:38:55.276Z`,
+the accepted order still reported `completed`, but its correlated callback had
+not yet been retained. Provider retry or dashboard replay of that successful
+order remains outstanding. No transaction hash or independently spendable
+wallet receipt is established.
+
+At `2026-11-11T08:38:56.035Z`, the declined and expired reports each contained
+two signed, durably retained and exactly correlated provider callbacks:
+`created` followed by `payment_failed`, and `created` plus `expired`, respectively.
+Both terminal callbacks report zero fill. For the expiry case, the older
+`created` callback arrived after `expired`; both retained their nine-digit UTC
+precision. Receiver logs independently show signature-verified `EVENT_STORED`
+after deployment `dpl_ChaSYVyZ9AtYghXk375jByrFfCFg`. These are unbound sandbox
+quarantine records correlated by the acceptance runner, not a production BTC
+order ledger or wallet receipt.
+
+The earlier signed callback rejection was isolated to `updateTime` carrying
+UTC precision beyond milliseconds. The deployed fix accepts calendar-valid
+UTC timestamps with up to nine fractional digits and preserves canonical
+precision for ordering, including legacy millisecond state compatibility.
+Raw-body authentication, the replay window, event deduplication and atomic
+persistence remain enforced. Synthetic signed delivery probes are separate from
+these correlated provider events.
+
 All previous order records and permanent dispatch reservations remain intact.
 Provider order completion is never used to authorize automatic creation retries.
-
-Signed provider callbacks have reached the isolated receiver, but acceptance is
-not yet established. The bounded diagnostic for the `08:23:28 UTC` event isolated
-the rejection to `updateTime` carrying UTC precision beyond milliseconds. The candidate now accepts strictly validated UTC timestamps with up to nine
-fractional digits and preserves canonical precision for ordering, including
-legacy millisecond state compatibility. A fresh provider retry, durable storage
-and order correlation must still be verified before callback acceptance passes.
 
 ## Implemented candidate behavior
 
@@ -121,9 +135,20 @@ After fee disclosure, 155 focused browser client, dialog and gateway contract
 tests passed with types and changed-file lint. After the timestamp correction,
 167 combined fee/checkout/service/webhook/acceptance tests passed. These are
 separate attributable runs, not an additive test total or a production verdict.
-Local Node is 24; GitHub CI uses Node 22. Final-head CI and fresh provider
-callback correlation are still required. Device acceptance and real-funds
+Local Node is 24; GitHub CI uses Node 22. Final-head CI and the accepted-order provider callback
+correlation are still required. Device acceptance and real-funds
 receipt remain separate from automated tests.
 
 No production credentials, feature flags, fee settings, wallet records or
 payment reservations are changed by publishing this preparation candidate.
+
+Exact source `9ad3396` subsequently passed Companion security acceptance
+(software, Chromium, Firefox, WebKit and isolated Bitcoin recovery), CodeQL and
+localization checks. Its main checks passed 2,816 application tests and 572
+Node tests before a later SDK check found the existing SQLite rebuild occurred
+too late. A separate workflow exposed a POS hydration race in one test. The
+followup moves that existing rebuild before the first SDK integration and waits
+for the actual history control, retaining every containment assertion. Fifteen
+focused UI tests, two real SDK integrations, types, lint and diff check passed.
+The final timestamp code also passed 27 real TCP Redis tests and 171 focused
+Node checks. Fresh final-head CI is required after these two test/CI fixes.
