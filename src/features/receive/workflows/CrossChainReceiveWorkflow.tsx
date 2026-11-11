@@ -1,6 +1,8 @@
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import {useFlowText} from '@/hooks/useFlowText';
 import {formatMoney} from '@/getyoursats/money';
+import {crossChainFeeCopy} from '@/locales/crossChainFees';
+import {crossChainServiceFee} from '@/utils/crossChainServiceFee';
 import {receiveQuoteEvidence} from '@/getyoursats/receiveQuote';
 import {trustCopy} from '@/getyoursats/trustCopy';
 import {usePresentation} from '@/hooks/usePresentation';
@@ -75,6 +77,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
   const [pendingChain, setPendingChain] = useState<string | null>(null);
   const [pendingProvider, setPendingProvider] = useState<string | null>(null);
   const {language}=usePresentation(); const text=trustCopy(language);
+  const feeText=crossChainFeeCopy(language);
   const [acknowledged,setAcknowledged]=useState(false);
   const [revealed,setRevealed]=useState(false);
   const [now,setNow]=useState(Date.now);
@@ -278,7 +281,7 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
   const requestedAtomic=selectedRoute?parseCrossChainAmount(usdInput,selectedRoute.decimals):null;
   const quote=resultInfo&&requestedAtomic!==null?receiveQuoteEvidence(resultInfo,requestedAtomic):null;
   const quoteUsable=!!quote?.expiresAtMs && now<quote.expiresAtMs;
-  const fee=quote?.fee;
+  const fee=crossChainServiceFee(resultInfo);
   const copyDepositAmount=async()=>{if(!revealed||!quoteUsable)return;try{await copyToClipboard(resultDepositAmount);showToast('success',text.copySuccess);}catch{showToast('error',text.copyFailure);}};
 
   // Steps are content-sized: the sheet re-measures and re-snaps per step, so a
@@ -448,13 +451,16 @@ const CrossChainReceiveWorkflow: React.FC<CrossChainReceiveWorkflowProps> = ({ a
                 <dd className="mt-1 text-spark-text-primary">{quote?.expiresAtMs?new Date(quote.expiresAtMs).toLocaleString(language):text.expiryUnavailable}</dd>
               </div>
             </dl>
+            <div>
+              <dl className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-spark-text-secondary">
+                <dt>{feeText.serviceFee}</dt>
+                <dd className="font-mono text-spark-text-primary">{fee ? formatMoney(fee) : feeText.unavailable}</dd>
+              </dl>
+              <p className="mt-1 text-xs text-spark-text-muted">{feeText.included}</p>
+            </div>
             <details className="group text-spark-text-secondary">
               <summary className="cursor-pointer py-2 font-semibold text-spark-text-primary focus-visible:outline-spark-primary">{text.quoteDetails}</summary>
               <dl className="space-y-3 pt-2">
-                <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
-                  <dt>{text.providerFee}</dt>
-                  <dd className="font-mono text-spark-text-primary">{fee?formatMoney({kind:'token',amount:fee.amount,decimals:fee.decimals,ticker:fee.asset}):text.feeUnavailable}</dd>
-                </div>
                 {quote&&quote.difference!==0n&&<div className="border-t border-spark-border pt-3">
                   <dt>{text.difference}</dt>
                   <dd className="mt-1 font-mono text-spark-text-primary">{formatMoney({kind:'token',amount:quote.difference,decimals:selectedRoute.decimals,ticker:resultAssetName})}</dd>

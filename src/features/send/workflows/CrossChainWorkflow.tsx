@@ -1,5 +1,9 @@
 import LocalizedErrorText from '@/components/LocalizedErrorText';
 import {useFlowText} from '@/hooks/useFlowText';
+import {usePresentation} from '@/hooks/usePresentation';
+import {crossChainFeeCopy} from '@/locales/crossChainFees';
+import {crossChainServiceFee} from '@/utils/crossChainServiceFee';
+import {formatMoney} from '@/getyoursats/money';
 import type {PaymentExecutionResult} from '@/getyoursats/paymentOutcome';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type {
@@ -62,6 +66,8 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
   onRun,
 }) => {
   const t=useFlowText();
+  const {language}=usePresentation();
+  const feeText=crossChainFeeCopy(language);
   const wallet = useWallet();
   const stableBalance = useStableBalance();
   const [step, setStep] = useState<WorkflowStep>('loading');
@@ -284,7 +290,15 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
   // Extract quote details from prepare response
   const method = prepareResponse?.paymentMethod;
   const quote = method?.type === 'crossChainAddress' ? method : null;
+  const serviceFee = crossChainServiceFee(quote);
   const confirmedRoute = quote?.route ?? null;
+  // The provider's amountIn excludes this separate BTC source-leg budget.
+  // Add only that budget to a BTC debit; never add overlapping conversion
+  // and service fees or mix a sats budget into token base units.
+  const sourceFeeSats = quote?.sourceTransferFeeSats ?? 0;
+  const hasSourceFee = Number.isSafeInteger(sourceFeeSats) && sourceFeeSats > 0;
+  const maximumBitcoinDebit = quote && !effectiveTokenId
+    ? quote.amountIn + (hasSourceFee ? BigInt(sourceFeeSats) : 0n) : null;
 
   // Provider-step derived state. Failed providers are hidden from the list; if
   // *every* provider fails we surface a single reason + retry instead of a list
@@ -360,6 +374,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
                   const key = pq.route.provider;
                   const pMethod = pq.response?.paymentMethod;
                   const pQuote = pMethod?.type === 'crossChainAddress' ? pMethod : null;
+                  const providerFee = crossChainServiceFee(pQuote);
                   const ready = isProviderReady(pq);
                   return (
                     <button
@@ -386,12 +401,24 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
                             </span>
                           </div>
                           <div className="border-t border-spark-border/50" />
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-spark-text-secondary">{t("Fee")}</span>
+                          <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1">
+                            <span className="text-sm text-spark-text-secondary">{feeText.estimatedCost}</span>
                             <span className="font-mono text-sm text-spark-text-primary">
                               {formatCrossChainAmount(BigInt(pQuote.feeAmount), pq.route.decimals)} {pq.route.asset}
                             </span>
                           </div>
+                          <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 text-xs text-spark-text-muted">
+                            <span>{feeText.includedServiceFee}</span>
+                            <span className="font-mono text-sm text-spark-text-primary">
+                              {providerFee ? formatMoney(providerFee) : feeText.unavailable}
+                            </span>
+                          </div>
+                          {Number.isSafeInteger(pQuote.sourceTransferFeeSats) && pQuote.sourceTransferFeeSats > 0 && (
+                            <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1 text-sm text-spark-text-secondary">
+                              <span>{feeText.networkFeeLimit}</span>
+                              <span className="font-mono text-spark-text-primary">{formatMoney({kind:'sats',amount:pQuote.sourceTransferFeeSats})}</span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </button>
@@ -436,8 +463,8 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
         <>
           {/* Amount header */}
           <div className="text-center py-4">
-            <p className="text-spark-text-muted text-sm mb-2">{t("You're sending")}</p>
-            <div className="flex items-baseline justify-center gap-2">
+            <p className="text-spark-text-muted text-sm mb-2">{hasSourceFee && !effectiveTokenId ? feeText.maximumDebit : t("You're sending")}</p>
+            <div className="flex items-baseline justify-center gap-2" data-testid="cross-chain-source-debit">
               <span className="text-4xl font-mono font-bold text-spark-text-primary">
                 {effectiveTokenId && stableBalance.displayConfig ? (
                   <span className="inline-flex items-center">
@@ -445,7 +472,7 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
                     {formatTokenAmount(BigInt(quote.amountIn), { ...stableBalance.displayConfig, symbol: '', symbolPosition: 'after' })}
                   </span>
                 ) : (
-                  <SatAmount sats={Number(quote.amountIn)} />
+                  <SatAmount sats={maximumBitcoinDebit ?? quote.amountIn} />
                 )}
               </span>
             </div>
@@ -471,12 +498,21 @@ const CrossChainWorkflow: React.FC<CrossChainWorkflowProps> = ({
                 value: truncateAddress(quote.recipientAddress, 20),
               },
               {
-                label: 'Fee',
+                label: feeText.estimatedCost,
                 value: `${formatCrossChainAmount(BigInt(quote.feeAmount), confirmedRoute.decimals)} ${confirmedRoute.asset}`,
               },
+              {
+                label: feeText.includedServiceFee,
+                value: serviceFee ? formatMoney(serviceFee) : feeText.unavailable,
+              },
+              ...(hasSourceFee ? [{
+                label: feeText.networkFeeLimit,
+                value: formatMoney({kind:'sats',amount:sourceFeeSats}),
+              }] : []),
             ]}
-            className="mb-6"
+            className="mb-2 [&>div]:flex-wrap [&>div]:gap-x-3 [&>div]:gap-y-1 [&>div>span]:max-w-full [&>div>span]:break-words"
           />
+          <p className="mb-6 text-xs text-spark-text-muted">{feeText.included}</p>
 
           {error && (
             <div className="mb-4 p-3 bg-spark-warn-surface border border-spark-warn-border rounded-xl text-sm text-spark-warn-text">
