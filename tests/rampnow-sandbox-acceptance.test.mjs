@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runAcceptance, requireAcceptanceEnvironment, safeCheckoutURL, matchedOrder, CAMPAIGN, ENABLEMENT_CAMPAIGN, CONFIRMED_CAMPAIGN, CONTACT_CAMPAIGN, CUSTOMER_CAMPAIGN, CARD_RETRY_CAMPAIGN} from '../scripts/rampnow-sandbox-acceptance.mjs';
+import {runAcceptance, requireAcceptanceEnvironment, safeCheckoutURL, matchedOrder, CAMPAIGN, ENABLEMENT_CAMPAIGN, CONFIRMED_CAMPAIGN, CONTACT_CAMPAIGN, CUSTOMER_CAMPAIGN, CARD_RETRY_CAMPAIGN, FAILURE_CASES_CAMPAIGN} from '../scripts/rampnow-sandbox-acceptance.mjs';
 import {RAMPNOW_STORE_PREFIX} from '../server/rampnowStore.mjs';
 
 const env = {VERCEL_ENV:'preview', VERCEL_PROJECT_ID:'prj_kVMt4cd9k0WsufaoRCVCH2bpPtWa',
@@ -9,7 +9,7 @@ const env = {VERCEL_ENV:'preview', VERCEL_PROJECT_ID:'prj_kVMt4cd9k0WsufaoRCVCH2
   UPSTASH_REDIS_REST_TOKEN:'private-store-token', RAMPNOW_API_KEY:'private-api-key',RAMPNOW_API_SECRET:'private-api-secret'};
 const address='0x'+'1'.repeat(40); const privateKey='2'.repeat(64);
 const route={orderType:'buy',srcCurrency:'EUR',srcChain:'fiat',srcAmount:'50',dstCurrency:'ETH',dstChain:'ethereum',paymentMode:'card'};
-function fixture({checkout, chains, quote, quoteFailure, order, orders, previousLookup, confirmedLookup, contactLookup, customerLookup, quarantine=[]}={}) {
+function fixture({checkout, chains, quote, quoteFailure, order, orders, previousLookup, confirmedLookup, contactLookup, customerLookup, cardRetryLookup, quarantine=[]}={}) {
   const state=new Map(); const calls=[]; let created;
   const json=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'content-type':'application/json'}});
   const fetchImpl=async(url, options)=>{
@@ -29,6 +29,7 @@ function fixture({checkout, chains, quote, quoteFailure, order, orders, previous
     if(url.endsWith('/'+CONFIRMED_CAMPAIGN+'-accepted') && confirmedLookup) return confirmedLookup(json,url);
     if(url.endsWith('/'+CONTACT_CAMPAIGN+'-accepted') && contactLookup) return contactLookup(json,url);
     if(url.endsWith('/'+CUSTOMER_CAMPAIGN+'-accepted') && customerLookup) return customerLookup(json,url);
+    if(url.endsWith('/'+CARD_RETRY_CAMPAIGN+'-accepted') && cardRetryLookup) return cardRetryLookup(json,url);
     if(url.endsWith('/chain_config'))return json({code:0,data:{chains:chains??[{code:'sepolia',isTestnet:true,supportedAssets:['ETH']},{code:'ethereum',isTestnet:false,supportedAssets:['ETH']}]}});
     if(url.endsWith('/quote'))return quoteFailure?json(quoteFailure,500):json({code:0,data:quote??{...route,dstAmount:'0.02'}});
     if(url.endsWith('/checkout')){
@@ -88,6 +89,89 @@ function cardRetryFixture(options={}) {
   seedConfirmed(f,{orderUid:previousCustomerOrder.uid},CUSTOMER_CAMPAIGN);
   return f;
 }
+const failureArgs={...contactArgs,campaign:FAILURE_CASES_CAMPAIGN,scenario:'declined'};
+const completedCardOrder={...route,uid:'previous-order-6',walletAddress:address,status:'completed',dstFillAmount:'0.025226'};
+function failureFixture(options={}) {
+  const f=cardRetryFixture({cardRetryLookup:json=>json({code:0,data:{orderList:[completedCardOrder]}}),...options});
+  seedConfirmed(f,{orderUid:completedCardOrder.uid},CARD_RETRY_CAMPAIGN);
+  return f;
+}
+test('failure campaign creates independent declined and expired cases after strict completed control and preserves all history',async()=>{
+  const f=failureFixture();const before=[...f.state.entries()];
+  await f.run(failureArgs);
+  // Creating expired does not wait for the declined fixture to settle.
+  const report=await f.run({...failureArgs,scenario:'expired'});
+  const created=f.creates().map(c=>JSON.parse(c.options.body));
+  assert.deepEqual(created.map(c=>c.externalOrderUid),['declined','expired'].map(s=>FAILURE_CASES_CAMPAIGN+'-'+s));
+  for(const c of created)assert.equal(c.user.email,contactEmail);
+  for(const campaign of [CAMPAIGN,ENABLEMENT_CAMPAIGN,CONFIRMED_CAMPAIGN,CONTACT_CAMPAIGN,CUSTOMER_CAMPAIGN,CARD_RETRY_CAMPAIGN]) {
+    const calls=f.calls.filter(c=>c.url.endsWith('/'+campaign+'-accepted'));
+    assert.equal(calls.length,2);
+    assert.ok(f.calls.indexOf(calls[0])<f.calls.indexOf(f.creates()[0]));
+    assert.ok(f.calls.indexOf(calls[1])<f.calls.indexOf(f.creates()[1]));
+  }
+  for(const [key,value]of before)assert.equal(f.state.get(key),value);
+  assert.equal(report.cases.find(c=>c.scenario==='accepted').phase,'not_created');
+  for(const scenario of ['declined','expired']) {
+    assert.equal(report.cases.find(c=>c.scenario===scenario).phase,'checkout_created');
+    assert.equal(f.state.get(RAMPNOW_STORE_PREFIX+'acceptance:'+FAILURE_CASES_CAMPAIGN+':'+scenario+':dispatched'),'dispatch_reserved');
+  }
+  assert.equal(report.productionReady,false);assert.equal(report.networkReceiptVerified,false);
+  assert.ok(report.cases.every(c=>!c.walletCreditVerified));
+});
+test('failure campaign permits only declined and expired with privately supplied email',async()=>{
+  for(const scenario of ['accepted','accepted-again',undefined]) {
+    const f=failureFixture();await assert.rejects(f.run({...failureArgs,scenario}),/ACTION_INVALID/);assert.equal(f.calls.length,0);
+  }
+  for(const scenario of ['declined','expired'])for(const email of [undefined,'','bad-email','user@example.invalid']) {
+    const f=failureFixture();
+    await assert.rejects(f.run({...failureArgs,scenario,env:{...env,RAMPNOW_ACCEPTANCE_EMAIL:email}}),/OPERATOR_EMAIL_REQUIRED/);
+    assert.equal(f.creates().length,0);assert.ok(!f.calls.some(c=>c.url.startsWith('https://api.sandbox.rampnow.io')));
+  }
+});
+test('failure campaign rejects incomplete, zero-fill or mismatched v6 before reserving either failure case',async()=>{
+  const patches=[{status:'created'},{status:'processing'},{status:'expired'},{status:'payment_failed'},{status:undefined},
+    {dstFillAmount:'0'},{dstFillAmount:'0.00000000'},{dstFillAmount:0.025226},{dstFillAmount:undefined},
+    {dstFillAmount:'2.5226e-2'},{dstFillAmount:'-1'},{walletAddress:undefined},{walletAddress:'0x'+'3'.repeat(40)},
+    {uid:'wrong-order'},{srcAmount:'51'},{orderType:'sell'},{srcCurrency:'USD'},{srcChain:'ethereum'},
+    {dstCurrency:'BTC'},{dstChain:'sepolia'},{externalOrderUid:'wrong-external'}];
+  for(const scenario of ['declined','expired'])for(const rows of [[],[completedCardOrder,{...completedCardOrder}],...patches.map(p=>[{...completedCardOrder,...p}])]) {
+    const f=failureFixture({cardRetryLookup:json=>json({code:0,data:{orderList:rows}})});const before=[...f.state.entries()];
+    await assert.rejects(f.run({...failureArgs,scenario}),/PREVIOUS_ATTEMPT_UNRESOLVED/);
+    assert.equal(f.creates().length,0);assert.deepEqual([...f.state.entries()],before);
+    assert.ok(!f.calls.some(c=>c.url.endsWith('/quote')||c.url.endsWith('/chain_config')));
+  }
+});
+test('failure campaign fails closed on late v4 changes, absent history and predecessor lookup failures',async()=>{
+  for(const patch of [{status:'processing'},{status:'completed',dstFillAmount:'0.01'},{dstFillAmount:'0.01'},
+    {walletAddress:undefined},{walletAddress:'0x'+'3'.repeat(40)}]) {
+    const f=failureFixture({contactLookup:json=>json({code:0,data:{orderList:[{...expiredContactOrder,...patch}]}})});
+    await assert.rejects(f.run(failureArgs),/PREVIOUS_ATTEMPT_UNRESOLVED/);assert.equal(f.creates().length,0);
+  }
+  for(const campaign of [CAMPAIGN,ENABLEMENT_CAMPAIGN,CONFIRMED_CAMPAIGN,CONTACT_CAMPAIGN,CUSTOMER_CAMPAIGN,CARD_RETRY_CAMPAIGN]) {
+    const f=failureFixture();f.state.delete(RAMPNOW_STORE_PREFIX+'acceptance:'+campaign+':accepted');
+    await assert.rejects(f.run(failureArgs),/PREVIOUS_ATTEMPT_UNRESOLVED/);assert.equal(f.creates().length,0);
+  }
+  for(const lookup of ['cardRetryLookup','customerLookup','confirmedLookup','previousLookup']) {
+    const f=failureFixture({[lookup]:async()=>{throw new Error('provider lookup unavailable');}});
+    await assert.rejects(f.run(failureArgs),/provider lookup unavailable/);assert.equal(f.creates().length,0);
+  }
+});
+test('failure cases each reserve only one dispatch through concurrent calls, repeats, uncertainty and detail expiry',async()=>{
+  for(const checkout of [undefined,async()=>{throw new Error('uncertain provider response');}]) {
+    const f=failureFixture({checkout});const before=[...f.state.entries()];
+    const calls=['declined','expired'].flatMap(scenario=>[f.run({...failureArgs,scenario}),f.run({...failureArgs,scenario})]);
+    await Promise.all(calls);
+    for(const scenario of ['declined','expired']) {
+      await f.run({...failureArgs,scenario});await f.run({...failureArgs,scenario,env});
+      f.state.delete(RAMPNOW_STORE_PREFIX+'acceptance:'+FAILURE_CASES_CAMPAIGN+':'+scenario);
+      await f.run({...failureArgs,scenario});
+    }
+    assert.equal(f.creates().length,2);
+    for(const [key,value]of before)assert.equal(f.state.get(key),value);
+    for(const scenario of ['declined','expired'])assert.equal(f.state.get(RAMPNOW_STORE_PREFIX+'acceptance:'+FAILURE_CASES_CAMPAIGN+':'+scenario+':dispatched'),'dispatch_reserved');
+  }
+});
 test('card retry requires a fully matched expired zero-fill v4 and reconciles every older fixture',async()=>{
   for(const zero of ['0','0.00000000']) {
     const f=cardRetryFixture({contactLookup:json=>json({code:0,data:{orderList:[{...expiredContactOrder,dstFillAmount:zero}]}})});

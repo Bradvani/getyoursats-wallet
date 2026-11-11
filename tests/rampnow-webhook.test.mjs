@@ -36,12 +36,60 @@ function response() {
   return {headers: {}, setHeader(key, value) { this.headers[key] = value; }, end(value) { this.body = JSON.parse(value); }};
 }
 async function call(req, options = {}) {
-  let stored = 0;
-  const handler = createWebhookHandler({env, now, storeFactory: () => ({async ingest(value) {
+  let stored = 0; const logs = [];
+  const handler = createWebhookHandler({env, now, logResult: record => logs.push(record), storeFactory: () => ({async ingest(value) {
     normalizeRampnowEvent(value); stored++; return 'QUARANTINED';
   }}), ...options});
-  const res = response(); await handler(req, res); return {...res, stored};
+  const res = response(); await handler(req, res); return {...res, stored, logs};
 }
+
+test('webhook result logs distinguish signature, schema, storage and durable success without private data', async () => {
+  const invalidSignature = request(); invalidSignature.headers['x-rampnow-sign'] = '0'.repeat(64);
+  const valid = request();
+  valid.url = '/api/rampnow/webhook?private-url-secret';
+  valid.headers.cookie = 'private-cookie-secret';
+  const results = [
+    [await call(invalidSignature), 401, 'INVALID_SIGNATURE', false],
+    [await call(request(Buffer.from('{invalid-json'))), 400, 'INVALID_EVENT', true],
+    [await call(request(), {storeFactory: () => ({async ingest() { throw new Error('private-store-secret'); }})}), 503, 'WEBHOOK_UNAVAILABLE', true],
+    [await call(valid), 200, 'EVENT_STORED', true],
+    [await call(request(), {env: {...env, RAMPNOW_API_SECRET: ''}}), 503, 'WEBHOOK_UNAVAILABLE', false],
+    [await call(request(undefined, {method: 'GET'})), 405, 'METHOD_NOT_ALLOWED', false],
+    [await call(request(Buffer.alloc(65537))), 413, 'BODY_TOO_LARGE', false],
+  ];
+  for (const [result, status, code, signatureVerified] of results) {
+    assert.equal(result.statusCode, status);
+    assert.deepEqual(result.logs, [{component: 'rampnow_webhook', status, code, signatureVerified}]);
+    const text = JSON.stringify(result.logs);
+    for (const value of [env.RAMPNOW_API_SECRET, env.RAMPNOW_REDIS_REST_TOKEN,
+      'private-address', 'private@example.invalid', 'private-identity', 'private-reference',
+      'private-url-secret', 'private-cookie-secret', 'private-store-secret', 'order-1', 'event-1',
+      request().headers['x-rampnow-sign']]) assert.equal(text.includes(value), false);
+  }
+});
+
+test('webhook logging failure cannot alter signature rejection or a durable acknowledgement', async () => {
+  const logResult = () => { throw new Error('unavailable logger'); };
+  const accepted = await call(request(), {logResult});
+  assert.equal(accepted.statusCode, 200); assert.equal(accepted.stored, 1);
+  const req = request(); req.headers['x-rampnow-sign'] = '0'.repeat(64);
+  const rejected = await call(req, {logResult});
+  assert.equal(rejected.statusCode, 401); assert.equal(rejected.stored, 0);
+});
+
+test('webhook success logging follows durable storage, never preceding it', async () => {
+  let entered; const started = new Promise(resolve => { entered = resolve; });
+  let persist; const persisted = new Promise(resolve => { persist = resolve; });
+  const logs = []; const res = response();
+  const handler = createWebhookHandler({env, now, logResult: record => logs.push(record),
+    storeFactory: () => ({async ingest() { entered(); await persisted; }})});
+  const pending = handler(request(), res);
+  await started;
+  assert.deepEqual(logs, []); assert.equal(res.body, undefined);
+  persist(); await pending;
+  assert.deepEqual(logs, [{component: 'rampnow_webhook', status: 200, code: 'EVENT_STORED', signatureVerified: true}]);
+  assert.deepEqual(res.body, {code: 'EVENT_STORED'});
+});
 
 test('webhook accepts exact signed stream only after durable storage without exposing settlement', async () => {
   assert.equal(config.api.bodyParser, false);

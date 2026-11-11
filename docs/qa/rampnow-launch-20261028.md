@@ -2,6 +2,14 @@
 
 Updated 11 November 2026. **Intent API checkout is now enabled and verified by a successful sandbox order creation. Public Buy/Sell and production checkout remain disabled.** No real payment was made.
 
+## 11 November: accepted simulation and isolated failure cases
+
+The v6 hosted simulator displayed payment success. The protected inspection at **2026-11-11 07:33:17 UTC** strictly matched its provider identifier, route, amount and destination, with `orderStatus: "completed"` and `dstFillAmount: "0.025226"`. No transaction hashes or matching retained callback were reported. This verifies the accepted sandbox outcome, not a mainnet transaction, Bitcoin delivery or spendable wallet receipt.
+
+The fixed `gys-sandbox-20261111-failure-cases-v7` campaign allows only `declined` and `expired`, with a separate permanent reservation and disposable recipient for each case. Before either dispatch it requires a fresh, strictly matched v6 lookup that is completed with a positive decimal fill. It also preserves the strict v4 expired/zero-fill check and reconciles all older histories. Any late v4 change fails closed. All previous records and locks remain intact; the successful v6 case is never replayed.
+
+Each failure case is created through its own existing CLI command. Both commands may run sequentially in one protected build; the final report includes both records and neither case requires the other to have completed. Their names specify the intended simulator tests, not observed outcomes. The approved contact is supplied only through the sensitive, branch-scoped Preview environment variable. The focused runner passes **45 tests**, including independent failure-case reservations, strict predecessor validation and protection against uncertain-response replay. Hosted outcomes and callback correlation must still be verified separately. Production activation and wallet-credit gates are unchanged.
+
 ## 11 November: guarded fresh card attempt
 
 After the provider reported its checkout fix, the existing contact-v4 checkout advanced from confirmation to the hosted payment-processing page. One submission using the provider-supplied sandbox card opened a blank popup and a provider-side JavaScript error; no simulator outcome was visible. The browser error alone did not establish payment failure and the submission was not blindly repeated.

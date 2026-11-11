@@ -32,30 +32,40 @@ async function rawBody(req) {
 }
 
 /** Injection is for tests only. The deployed export uses server environment. */
-export function createWebhookHandler({env = process.env, now = Date.now, storeFactory = createRampnowStore} = {}) {
+export function createWebhookHandler({env = process.env, now = Date.now, storeFactory = createRampnowStore,
+  logResult = record => console.info(JSON.stringify(record))} = {}) {
   return async function handler(req, res) {
-    if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return reply(res, 405, 'METHOD_NOT_ALLOWED'); }
+    let signatureVerified = false;
+    const finish = (status, code) => {
+      // Fixed result metadata only. Never log request bodies, headers, URLs,
+      // identifiers, credentials or arbitrary exception text. Logging cannot
+      // change acknowledgement semantics or turn a persisted event into a retry.
+      try { logResult({component: 'rampnow_webhook', status, code, signatureVerified}); } catch {}
+      return reply(res, status, code);
+    };
+    if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return finish(405, 'METHOD_NOT_ALLOWED'); }
     try {
       sandboxRampnowConfig(env);
       if (typeof env.RAMPNOW_API_SECRET !== 'string' || !env.RAMPNOW_API_SECRET) {
-        return reply(res, 503, 'WEBHOOK_UNAVAILABLE');
+        return finish(503, 'WEBHOOK_UNAVAILABLE');
       }
       const bytes = await rawBody(req);
       if (!verifyRampnowWebhook({secret: env.RAMPNOW_API_SECRET,
         timestamp: req.headers['x-rampnow-timestamp'], signature: req.headers['x-rampnow-sign'], rawBody: bytes, now: now()})) {
-        return reply(res, 401, 'INVALID_SIGNATURE');
+        return finish(401, 'INVALID_SIGNATURE');
       }
+      signatureVerified = true;
       const event = JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(bytes));
       await storeFactory({env, now}).ingest(event);
       // 2xx only follows durable storage. It never asserts wallet settlement.
-      return reply(res, 200, 'EVENT_STORED');
+      return finish(200, 'EVENT_STORED');
     } catch (error) {
-      if (error instanceof RampnowError && error.code === 'RAMPNOW_BODY_TOO_LARGE') return reply(res, 413, 'BODY_TOO_LARGE');
+      if (error instanceof RampnowError && error.code === 'RAMPNOW_BODY_TOO_LARGE') return finish(413, 'BODY_TOO_LARGE');
       if (error instanceof SyntaxError || error instanceof TypeError || (error instanceof RampnowError
         && ['RAMPNOW_RAW_BODY_REQUIRED', 'RAMPNOW_EVENT_INVALID', 'RAMPNOW_ORDER_MISMATCH', 'RAMPNOW_FILL_INVALID'].includes(error.code))) {
-        return reply(res, 400, 'INVALID_EVENT');
+        return finish(400, 'INVALID_EVENT');
       }
-      return reply(res, 503, 'WEBHOOK_UNAVAILABLE');
+      return finish(503, 'WEBHOOK_UNAVAILABLE');
     }
   };
 }
