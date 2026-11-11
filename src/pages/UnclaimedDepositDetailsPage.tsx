@@ -714,7 +714,7 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
                       onSelect={() => chooseSpeed(true)}
                     />
                   </div>
-                  <p className="text-xs text-spark-text-muted" role="note">
+                  <p className="min-w-0 [overflow-wrap:anywhere] text-xs text-spark-text-muted" role="note">
                     {willClaimEarly ? feeCopy.autoFaster : needsEarlyApproval ? feeCopy.confirmFaster : feeCopy.automatic}
                   </p>
                 </div>
@@ -796,7 +796,7 @@ const UnclaimedDepositDetailsPage: React.FC<UnclaimedDepositDetailsPageProps> = 
                 onClick={() => void claimRoute(true)}
                 disabled={isProcessing || !needsEarlyApproval}
                 aria-describedby={INSTANT_OFFER_ID}
-                className="w-full"
+                className="w-full min-w-0 whitespace-normal [overflow-wrap:anywhere]"
               >
                 {isProcessing ? (
                   <span className="flex items-center justify-center gap-2">
