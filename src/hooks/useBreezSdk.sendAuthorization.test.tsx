@@ -128,6 +128,32 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('send authorization at wallet connection boundaries', () => {
+  it.each([
+    ['walletMnemonic', 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about', 'web-vault-enroll'],
+    ['gys:wallet-vault:v1', '{"fixture":"preserve-even-if-damaged"}', 'web-vault-locked'],
+  ])('preserves %s and selects its protection flow despite a tampered passkey marker', async (key, value, expectedState) => {
+    // Model direct file changes before startup, without a storage event.
+    // A routing flag does not prove ownership of the pre-existing wallet.
+    localStorage.setItem(key, value);
+    localStorage.setItem('passkeyLabel', 'untrusted-mode-marker');
+    mocks.passkeyMode.mockReturnValue(true);
+    const before = Object.fromEntries(Array.from({length: localStorage.length}, (_, i) => {
+      const storedKey = localStorage.key(i)!;
+      return [storedKey, localStorage.getItem(storedKey)];
+    }));
+
+    const {result} = renderHook(() => useBreezSdk(vi.fn()));
+    await waitFor(() => expect(result.current.startupState).toBe(expectedState));
+
+    expect(mocks.clearMnemonic).not.toHaveBeenCalled();
+    expect(mocks.derive).not.toHaveBeenCalled();
+    expect(mocks.connect).not.toHaveBeenCalled();
+    for (const [storedKey, storedValue] of Object.entries(before)) {
+      expect(localStorage.getItem(storedKey)).toBe(storedValue);
+    }
+    expect(result.current.isConnected).toBe(false);
+  });
+
   it('publishes the guarded client and exact passkey identity on initial connection', async () => {
     const {result} = await mount();
     await act(async () => { await result.current.connectWallet(seed, false, 'Personal'); });
@@ -148,6 +174,80 @@ describe('send authorization at wallet connection boundaries', () => {
     expect(mocks.saveMnemonic).not.toHaveBeenCalled();
   });
 
+  it.each(['walletMnemonic', 'gys:wallet-vault:v1'])('rejects direct passkey connection over existing %s before SDK or metadata writes', async key => {
+    const {result} = await mount();
+    const original = 'pre-existing-recovery-record';
+    localStorage.setItem(key, original);
+    await act(async () => {
+      await expect(result.current.connectWallet(seed, false, 'Personal')).rejects.toThrow('existing wallet');
+    });
+    expect(mocks.connect).not.toHaveBeenCalled();
+    expect(mocks.setMode).not.toHaveBeenCalled();
+    expect(mocks.clearMnemonic).not.toHaveBeenCalled();
+    expect(localStorage.getItem(key)).toBe(original);
+    expect(result.current.startupState).toBe(key === 'walletMnemonic' ? 'web-vault-enroll' : 'web-vault-locked');
+  });
+
+  it('disconnects a pending passkey connection if original recovery data appears before it returns', async () => {
+    const {result} = await mount();
+    const raw = client();
+    mocks.connect.mockImplementationOnce(async () => {
+      localStorage.setItem('walletMnemonic', 'pre-existing-recovery-record');
+      return raw;
+    });
+    await act(async () => {
+      await expect(result.current.connectWallet(seed, false, 'Personal')).rejects.toThrow('existing wallet');
+    });
+    expect(raw.disconnect).toHaveBeenCalledOnce();
+    expect(mocks.setMode).not.toHaveBeenCalled();
+    expect(mocks.clearMnemonic).not.toHaveBeenCalled();
+    expect(localStorage.getItem('walletMnemonic')).toBe('pre-existing-recovery-record');
+    expect(result.current.startupState).toBe('web-vault-enroll');
+    expect(result.current.isConnected).toBe(false);
+  });
+
+  it.each(['walletMnemonic', 'gys:wallet-vault:v1'])('keeps retry unlock on the original %s without requesting a different passkey', async key => {
+    const {result} = await mount();
+    localStorage.setItem(key, 'pre-existing-recovery-record');
+    mocks.passkeyMode.mockReturnValue(true);
+    await act(async () => { await result.current.retryUnlock(); });
+    expect(mocks.derive).not.toHaveBeenCalled();
+    expect(mocks.connect).not.toHaveBeenCalled();
+    expect(mocks.clearMnemonic).not.toHaveBeenCalled();
+    expect(localStorage.getItem(key)).toBe('pre-existing-recovery-record');
+    expect(result.current.startupState).toBe(key === 'walletMnemonic' ? 'web-vault-enroll' : 'web-vault-locked');
+  });
+
+  it('preserves recovery data that appears during a passkey retry and routes back to protection', async () => {
+    const {result} = await mount();
+    mocks.passkeyMode.mockReturnValue(true);
+    mocks.derive.mockImplementationOnce(async () => {
+      localStorage.setItem('walletMnemonic', 'pre-existing-recovery-record');
+      return {wallet: {seed, label: 'Personal'}};
+    });
+    await act(async () => { await result.current.retryUnlock(); });
+    expect(mocks.connect).not.toHaveBeenCalled();
+    expect(mocks.clearMnemonic).not.toHaveBeenCalled();
+    expect(localStorage.getItem('walletMnemonic')).toBe('pre-existing-recovery-record');
+    expect(result.current.startupState).toBe('web-vault-enroll');
+    expect(result.current.isConnected).toBe(false);
+  });
+
+  it.each([false, true])('preserves a vault appearing during startup passkey authentication (cancelled: %s)', async cancelled => {
+    mocks.passkeyMode.mockReturnValue(true);
+    mocks.derive.mockImplementationOnce(async () => {
+      localStorage.setItem('gys:wallet-vault:v1', 'pre-existing-encrypted-vault');
+      if (cancelled) throw new DOMException('Cancelled', 'NotAllowedError');
+      return {wallet: {seed, label: 'Personal'}};
+    });
+    const {result} = renderHook(() => useBreezSdk(vi.fn()));
+    await waitFor(() => expect(result.current.startupState).toBe('web-vault-locked'));
+    expect(mocks.connect).not.toHaveBeenCalled();
+    expect(mocks.clearMnemonic).not.toHaveBeenCalled();
+    expect(localStorage.getItem('gys:wallet-vault:v1')).toBe('pre-existing-encrypted-vault');
+    expect(result.current.isConnected).toBe(false);
+  });
+
   it.each([true, false])('preserves native vault reconnect storage for passkey mode %s', async (passkeyMode) => {
     const {result} = await mount();
     mocks.native.mockReturnValue(true);
@@ -160,6 +260,18 @@ describe('send authorization at wallet connection boundaries', () => {
     expect(mocks.deviceStore).not.toHaveBeenCalled();
     expect(mocks.secureStore).not.toHaveBeenCalled();
     expect(mocks.saveMnemonic).not.toHaveBeenCalled();
+  });
+
+  it('does not bind a browser vault reconnect to an unrelated passkey mode marker', async () => {
+    const {result} = await mount();
+    localStorage.setItem('gys:wallet-vault:v1', 'existing-encrypted-wallet');
+    mocks.passkeyMode.mockReturnValue(true);
+    await act(async () => { await result.current.connectWallet(seed, false, undefined, 'secureStorage'); });
+    expect(mocks.guard).not.toHaveBeenCalled();
+    expect(mocks.setMode).not.toHaveBeenCalled();
+    expect(mocks.clearMnemonic).not.toHaveBeenCalled();
+    expect(localStorage.getItem('gys:wallet-vault:v1')).toBe('existing-encrypted-wallet');
+    expect(result.current.isConnected).toBe(true);
   });
 
   it('rebinds authorization to a newly selected label and revokes the previous session', async () => {

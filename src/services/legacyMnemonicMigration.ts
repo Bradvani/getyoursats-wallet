@@ -5,7 +5,8 @@ import { logger, LogCategory } from './logger';
 const MNEMONIC_KEY = 'walletMnemonic';
 let pendingMigration: Promise<void> | null = null;
 
-export const saveMnemonic = (m: string) => localStorage.setItem(MNEMONIC_KEY, m);
+// Compatibility is read-only until a verified same-wallet migration completes.
+// Do not reintroduce a plaintext writer for any platform or fallback path.
 export const getSavedMnemonic = () => localStorage.getItem(MNEMONIC_KEY);
 export const clearMnemonic = () => localStorage.removeItem(MNEMONIC_KEY);
 
