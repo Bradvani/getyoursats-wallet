@@ -25,11 +25,13 @@ spendable GetYourSats wallet credit.
 | v7 expired | PaymentExpired after selecting Expired in the simulator | At `2026-11-11T08:22:07.016Z`, one strictly matched order reported `expired` with `dstFillAmount: "0"`. |
 
 The inspections validate provider identity, external reference, source amount,
-destination address and the complete route. At `2026-11-11T08:38:55.276Z`,
-the accepted order still reported `completed`, but its correlated callback had
-not yet been retained. Provider retry or dashboard replay of that successful
-order remains outstanding. No transaction hash or independently spendable
-wallet receipt is established.
+destination address and the complete route. At `2026-11-11T09:15:26.498Z`,
+the accepted order reported `completed` and had three signed, durably retained,
+exactly correlated provider callbacks: `created`, `processing` and `completed`.
+The completed callback and authenticated lookup both report `dstFillAmount:
+"0.025226"`. This closes the provider callback acceptance for the successful
+simulation. No transaction hash or independently spendable wallet receipt is
+established. The test route remains EUR-to-ETH and proves no BTC settlement.
 
 At `2026-11-11T08:38:56.035Z`, the declined and expired reports each contained
 two signed, durably retained and exactly correlated provider callbacks:
@@ -69,6 +71,21 @@ Provider order completion is never used to authorize automatic creation retries.
 - The combined candidate inherits the security SDK archive and patches from
   PR #71 unchanged. It retains the production build interlock, receiving/claim
   restrictions, recovery checks and guarded value-moving operations.
+- Notification identity proofs now have a separate exact-origin, mainnet,
+  owner/session-bound capability with nonce replay protection. Generic signing,
+  mainnet checkout proofs and raw invoice webhook registration remain denied.
+  See [notification authorization and recovery gates](../security-review/notification-proof-recovery-gates-20261111.md).
+- A disconnected BTC claim observer validates fresh authenticated SDK evidence
+  against the captured session, owner, network, exact outpoint, gross/net amount
+  and reviewed claim-fee ceiling. It distinguishes unobserved, pending and
+  settled claims. It does not establish purchase attribution, destination or
+  current spendability and always leaves `walletReceiptVerified: false`. It is
+  not connected to the purchase UI or gateway and authorizes no claim.
+- A [protected production inspection script](../rampnow-production-preflight.md)
+  is ready for separate live credentials and explicit fee-currency confirmation.
+  It validates merchant/network/route metadata, limits and a non-binding quote
+  only. It creates no order and always leaves `productionReady: false`. It has
+  not been run against the provider's production API.
 
 ## Fee policy remains inactive
 
@@ -78,7 +95,7 @@ omission does not mean zero.
 
 The dashboard's EUR reporting currency does not establish the fixed-fee
 denomination. Confirm the actual account fee currency, conversion and rounding,
-an all-in sandbox quote/order, and settlement/payout arrangements before
+an all-in quote for the intended BTC production route, and payout arrangements before
 activating this policy. No USD-to-EUR substitution or local FX conversion is
 implemented. See [the fee preparation record](../rampnow-partner-fees.md).
 
@@ -102,8 +119,8 @@ implemented. See [the fee preparation record](../rampnow-partner-fees.md).
    deposit minimums, claim fees and the match from provider order to on-chain
    transaction, wallet claim and spendable credit. `walletReceiptVerified` is
    still hardcoded false; provider completion alone cannot change it.
-4. **Callbacks and operations.** Complete provider-originated signed callback
-   ingestion/correlation, duplicate and out-of-order handling, interrupted/mobile
+4. **Production callbacks and operations.** Complete production-specific signed
+   callback ingestion/correlation, duplicate and out-of-order handling, interrupted/mobile
    return and reload acceptance, support reconciliation and production retention.
    The existing thirty-day sandbox retention is not a production accounting
    ledger. Do not relax order, destination, amount or event validation to pass a
@@ -116,9 +133,9 @@ implemented. See [the fee preparation record](../rampnow-partner-fees.md).
    minimum live BTC Buy acceptance transaction. Match fiat paid, provider fill,
    chain settlement, claim fees and spendable wallet credit before expanding it.
 
-The separate notification signing/registration incompatibility remains a
-security workstream dependency; checkout proof support does not introduce a
-generic signing capability or resolve notification authorization.
+The narrow notification proof incompatibility is corrected in this candidate.
+Fresh invoice webhook registration still requires its own scoped capability;
+notification proof support does not expose generic signing or raw registration.
 
 ## Final validation attribution
 
@@ -135,8 +152,8 @@ After fee disclosure, 155 focused browser client, dialog and gateway contract
 tests passed with types and changed-file lint. After the timestamp correction,
 167 combined fee/checkout/service/webhook/acceptance tests passed. These are
 separate attributable runs, not an additive test total or a production verdict.
-Local Node is 24; GitHub CI uses Node 22. Final-head CI and the accepted-order provider callback
-correlation are still required. Device acceptance and real-funds
+Local Node is 24; GitHub CI uses Node 22. The accepted-order provider callback
+correlation subsequently passed as recorded above. Device acceptance and real-funds
 receipt remain separate from automated tests.
 
 No production credentials, feature flags, fee settings, wallet records or
@@ -151,4 +168,17 @@ followup moves that existing rebuild before the first SDK integration and waits
 for the actual history control, retaining every containment assertion. Fifteen
 focused UI tests, two real SDK integrations, types, lint and diff check passed.
 The final timestamp code also passed 27 real TCP Redis tests and 171 focused
-Node checks. Fresh final-head CI is required after these two test/CI fixes.
+Node checks. All six workflows for final baseline `28f2afce09ee3785ec208b19aa57f9673bcc6360`
+then passed, including browser smoke, Companion security, GetYourSats checks,
+Tests, CodeQL and Localization. Subsequent preparation changes require their
+own exact-head verification.
+
+The subsequent combined preparation changes passed 2,908 application tests
+across 217 files, with one existing opt-in Bitcoin regtest skipped in the normal
+application run. This includes 43 notification-proof and 49 BTC-observation
+tests. Ninety-seven focused Node fee/network/preflight/notification checks passed
+with no skips. Full TypeScript, changed TypeScript lint, new MJS syntax checks,
+preview build, exact production-interlock refusal and diff checks passed.
+Dependency and modified SDK archive hashes remain unchanged. These are local
+combined-tree results; published-head CI remains separately attributable. No
+provider production request or live transaction was performed.

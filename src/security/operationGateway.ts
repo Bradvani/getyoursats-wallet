@@ -22,6 +22,7 @@ import {observationSdk,verifyObservationWithoutCommit} from './paymentObservatio
 import {INCOMING_CLAIMS,createIncomingClaimController} from './incomingClaimController';
 import {REGTEST_STANDARD_INVOICE,createStandardRegtestInvoiceIssuer} from './regtestStandardInvoice';
 import {parseRampnowProof,createRampnowProofReservation} from './rampnowProof';
+import {parseNotificationProof,createNotificationProofReservation} from './notificationProof';
 
 const RECONCILIATION=Symbol('wallet-operation-reconciliation');
 const STORAGE_GENERATION_KEY='gys:wallet-operation-generation:v1';
@@ -104,6 +105,7 @@ export function createOperationGateway(network:Network) {
   };
   const preparations = new WeakMap<object,Preparation>();
   const reserveRampnowProof = createRampnowProofReservation();
+  const reserveNotificationProof = createNotificationProofReservation();
   let active:Authorized|null = null;
   let busy = false;
   let attached = false;
@@ -383,12 +385,14 @@ export function createOperationGateway(network:Network) {
           const input=frozenCopy(request);
           const match=typeof input.message==='string'&&/^gys-email-v1:(send|status):((?:02|03)[0-9a-f]{64}):[0-9a-f]{36}$/.exec(input.message);
           const checkout=parseRampnowProof(input.message,network,window.location.origin);
-          if((!match&&!checkout)||input.compact!==true)throw new Error('This wallet only signs its scoped email-verification or checkout challenges');
-          const owner=match?match[2]:checkout!.walletPubkey;
+          const notification=parseNotificationProof(input.message,network,window.location.origin);
+          if((!match&&!checkout&&!notification)||input.compact!==true)throw new Error('This wallet only signs its scoped email-verification, checkout or notification challenges');
+          const owner=match?match[2]:checkout?.walletPubkey??notification!.walletPubkey;
           const info=await raw.getInfo({ensureSynced:false});
           assertConnection();assertUnlocked(epoch);
           if(info.identityPubkey?.toLowerCase()!==owner)throw new Error('Proof challenge belongs to a different wallet');
           if(checkout)reserveRampnowProof(checkout.nonce);
+          if(notification)reserveNotificationProof(notification.nonce);
           const result=await raw.signMessage({message:input.message,compact:true});
           assertConnection();assertUnlocked(epoch);
           if(result.pubkey.toLowerCase()!==owner)throw new Error('Signed proof belongs to a different wallet');
