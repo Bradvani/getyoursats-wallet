@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+test('production excludes the development deposit fee harness', async ({ request }) => {
+  const response = await request.get('/e2e/fixtures/deposit-fees.html');
+  const html = await response.text();
+  expect(html).not.toContain('Isolated deposit fee acceptance');
+  expect(html).not.toContain('deposit-fees.tsx');
+});
+
 test('production ignores the removed deposit-fixture query and retains real onboarding', async ({ page }) => {
   await page.goto('/?claimtest=1');
   await expect(page.locator('#splash')).toHaveCount(0);
