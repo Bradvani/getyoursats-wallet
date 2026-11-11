@@ -1,3 +1,4 @@
+import {browserPaymentRestriction,isRestrictedBrowserWallet,UNAVAILABLE_PAYMENT_MESSAGE,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
 import {notifyPaymentFeedback} from '@/utils/transferHaptics';
 import {classifyLookupFailure} from '@/getyoursats/lookupFailure';
 import {trustCopy} from '@/getyoursats/trustCopy';
@@ -171,6 +172,9 @@ export function useSendPayment(): UseSendPaymentReturn {
     directRecipient?: GysDirectRecipient,
   ) => {
     if (!isCurrentInput(generation)) return;
+    if(isRestrictedBrowserWallet(wallet)&&(tokenIdentifier||conversionOptions||feePolicy==='feesIncluded')){
+      setError(feePolicy==='feesIncluded'?UNAVAILABLE_MAX_MESSAGE:UNAVAILABLE_PAYMENT_MESSAGE);return;
+    }
     if (amount <= 0n) {
       setError('Please enter a valid amount');
       return;
@@ -273,6 +277,8 @@ export function useSendPayment(): UseSendPaymentReturn {
       // BIP21 URI, or the `lightning:` prefix a QR code carries) reaches the
       // decoder and fails there (breez/glow-app#168). `rawInput` keeps the original text so
       // the input field still shows it on back-navigation.
+      const restriction=browserPaymentRestriction(wallet,effective);
+      if(restriction){setError(restriction);setCurrentStep('input');return;}
       let paymentRequest = bareDestination(effective) ?? currentInput;
       const candidate=selectedNetwork()==='mainnet'?gysRecipient(effective):null;
       if(selectedNetwork()==='mainnet'&&isGysPaymentInput(effective)&&!candidate){
@@ -293,6 +299,8 @@ export function useSendPayment(): UseSendPaymentReturn {
       if(directRecipient){
         effective=await wallet.parse(directRecipient.sparkAddress);
         if(!isCurrentInput(generation))return;
+        const resolvedRestriction=browserPaymentRestriction(wallet,effective);
+        if(resolvedRestriction){setError(resolvedRestriction);setCurrentStep('input');return;}
         paymentRequest=directRecipient.sparkAddress;
       }
 

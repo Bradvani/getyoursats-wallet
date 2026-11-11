@@ -1,0 +1,3 @@
+
+# Unified diff context lines retain a required single-space prefix.
+vendor/patches/*.patch whitespace=-blank-at-eol

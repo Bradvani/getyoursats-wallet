@@ -1,0 +1,448 @@
+{
+  "schema": 1,
+  "createdAt": "2026-10-27T08:53:14.906796+00:00",
+  "scope": "Documentation-only preservation of successful 0007 CI and offline artifact cross-check; runtime assertions remain recorded CI evidence",
+  "workflow": {
+    "runId": 40473745510,
+    "runAttempt": 1,
+    "buildJobId": 122086803034,
+    "preserveJobId": 122093933028,
+    "artifactId": 12720123774,
+    "runUrl": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40473745510",
+    "buildJobUrl": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40473745510/job/122086803034",
+    "preserveJobUrl": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40473745510/job/122093933028",
+    "artifactUrl": "https://github.com/Bradvani/getyoursats-wallet/actions/runs/40473745510/artifacts/12720123774",
+    "overallConclusion": "SUCCESS",
+    "buildConclusion": "SUCCESS",
+    "preserveConclusion": "SUCCESS",
+    "statusProvenance": "Root fetched run/jobs using the GitHub connector; saved responses were supplied to the offline verifier and are preserved unchanged"
+  },
+  "source": {
+    "commit": "1298724dfe1d95b7a0a24f19be80e6e977cec011",
+    "tree": "fbbf531f53d0dc5b8de1196a0ecac94431d29bfc",
+    "sdkCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+    "sdkPatchedTree": "0fad9ee69476211ee47bafb413ba75639a22014f",
+    "sdkPatchSha256": "e56dde90e545646dbce6e6f3218bb67c54084f13110fcbbafdb1eccc211b3eb7",
+    "sdkChangedPaths": 48
+  },
+  "documentationBase": {
+    "commit": "de5100c3728bc11d019744f09624648b4aff8803",
+    "tree": "b47f806ea0905412476cc54e669de99db6fc6f19"
+  },
+  "package": {
+    "version": "0.1.0-getyoursats.recovery.3",
+    "archiveSha256": "32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c",
+    "bytes": 21081690,
+    "manifestSha256": "eac310fa021a62262a8b7cfad5e0bd214cd3555e64c5752719fa5bd2e9ef012c",
+    "regularFiles": 125,
+    "generatedArtifactsVerified": 17,
+    "storageAdaptersVerified": 2,
+    "webWasmSha256": "d77b97e2041c62575702a3c1227c7efa1299b7c2ce2f6e05612b8c14992e206a",
+    "embeddedManifestMatches": true,
+    "lockSha512Matches": true
+  },
+  "publishedFiles": [
+    {
+      "publishedFile": "verifier.py",
+      "originalFile": "reconstruct_and_verify.py",
+      "source": "exact executed offline reconstruction verifier",
+      "originalBytes": 41014,
+      "originalSha256": "4114e620d3b7ccfa7bb5a24062b1566aae20f4d553ccd9f9b307ac869ec224e5",
+      "publishedBytes": 41014,
+      "publishedSha256": "4114e620d3b7ccfa7bb5a24062b1566aae20f4d553ccd9f9b307ac869ec224e5",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "receipt.json",
+      "originalFile": "receipt.json",
+      "source": "original offline verification output",
+      "originalBytes": 16132,
+      "originalSha256": "33bd27d6f03382a329e09c814e4cd5e4b4f70694f2e611fe842022d7b407f71f",
+      "publishedBytes": 16132,
+      "publishedSha256": "33bd27d6f03382a329e09c814e4cd5e4b4f70694f2e611fe842022d7b407f71f",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "receipt.md",
+      "originalFile": "receipt.md",
+      "source": "original offline verification output",
+      "originalBytes": 1904,
+      "originalSha256": "df9452b156f4a70069c6e6694a000a16d9af2db9e16108a729da987ee149af18",
+      "publishedBytes": 1904,
+      "publishedSha256": "df9452b156f4a70069c6e6694a000a16d9af2db9e16108a729da987ee149af18",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "archive-inventory.json",
+      "originalFile": "archive-inventory.json",
+      "source": "original offline verification output",
+      "originalBytes": 12740,
+      "originalSha256": "e5b06b710c8d0c91fb87b304456c5f806ca45eeba3abfa9dfd1de319804e5293",
+      "publishedBytes": 12740,
+      "publishedSha256": "e5b06b710c8d0c91fb87b304456c5f806ca45eeba3abfa9dfd1de319804e5293",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "workflow-run.json",
+      "originalFile": "workflow-run.json",
+      "source": "GitHub connector response saved by root",
+      "originalBytes": 14758,
+      "originalSha256": "ad49aeb8b7697a34f90bef5a017a21333527ac1e8439610a7167eeee426040c0",
+      "publishedBytes": 14758,
+      "publishedSha256": "ad49aeb8b7697a34f90bef5a017a21333527ac1e8439610a7167eeee426040c0",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "workflow-jobs.json",
+      "originalFile": "workflow-jobs.json",
+      "source": "GitHub connector response saved by root",
+      "originalBytes": 8410,
+      "originalSha256": "5da492a187893ab4e5a5502aa87d5171e27cc98d91b895f46f4fb75a0da80e27",
+      "publishedBytes": 8410,
+      "publishedSha256": "5da492a187893ab4e5a5502aa87d5171e27cc98d91b895f46f4fb75a0da80e27",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "artifact-manifest.json",
+      "originalFile": "artifact-manifest.json",
+      "source": "uploaded CI artifact",
+      "originalBytes": 3998,
+      "originalSha256": "eac310fa021a62262a8b7cfad5e0bd214cd3555e64c5752719fa5bd2e9ef012c",
+      "publishedBytes": 3998,
+      "publishedSha256": "eac310fa021a62262a8b7cfad5e0bd214cd3555e64c5752719fa5bd2e9ef012c",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "base.txt",
+      "originalFile": "base.txt",
+      "source": "uploaded CI artifact",
+      "originalBytes": 41,
+      "originalSha256": "e651e21b280ddba834c8c18d054ab62d514ffbd60b065b64c039e3cff26c3e76",
+      "publishedBytes": 41,
+      "publishedSha256": "e651e21b280ddba834c8c18d054ab62d514ffbd60b065b64c039e3cff26c3e76",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "toolchain.txt",
+      "originalFile": "toolchain.txt",
+      "source": "uploaded CI artifact",
+      "originalBytes": 540,
+      "originalSha256": "1c69bc5ce0af08319504c7766afc8172eafcf73eed56c9a615272d26286ca9bb",
+      "publishedBytes": 540,
+      "publishedSha256": "1c69bc5ce0af08319504c7766afc8172eafcf73eed56c9a615272d26286ca9bb",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "compiled-unverified/build-source.txt",
+      "originalFile": "compiled-unverified/build-source.txt",
+      "source": "uploaded CI artifact",
+      "originalBytes": 41,
+      "originalSha256": "e651e21b280ddba834c8c18d054ab62d514ffbd60b065b64c039e3cff26c3e76",
+      "publishedBytes": 41,
+      "publishedSha256": "e651e21b280ddba834c8c18d054ab62d514ffbd60b065b64c039e3cff26c3e76",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "compiled-unverified/getyoursats-sdk-build.json",
+      "originalFile": "compiled-unverified/getyoursats-sdk-build.json",
+      "source": "uploaded CI artifact",
+      "originalBytes": 3998,
+      "originalSha256": "eac310fa021a62262a8b7cfad5e0bd214cd3555e64c5752719fa5bd2e9ef012c",
+      "publishedBytes": 3998,
+      "publishedSha256": "eac310fa021a62262a8b7cfad5e0bd214cd3555e64c5752719fa5bd2e9ef012c",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "compiled-unverified/sha256.txt",
+      "originalFile": "compiled-unverified/sha256.txt",
+      "source": "uploaded CI artifact",
+      "originalBytes": 203,
+      "originalSha256": "737b24a0d06514d0ece5a4ecc767ec738844c4a15784b1dc4ac43e0d3663df59",
+      "publishedBytes": 203,
+      "publishedSha256": "737b24a0d06514d0ece5a4ecc767ec738844c4a15784b1dc4ac43e0d3663df59",
+      "encoding": "unchanged",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/browser-install.log.gz",
+      "originalFile": "browser-install.log",
+      "source": "uploaded CI artifact",
+      "originalBytes": 90825,
+      "originalSha256": "fe94d86833ff625c3b68ebef23408f71e06642fe7e3073a54fbe3f25d05172fa",
+      "publishedBytes": 13500,
+      "publishedSha256": "4796fc6ceafea49bdda38ed24b4b312386b1d8469644e2f389b46011482d6943",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/browser-storage-cas.log.gz",
+      "originalFile": "browser-storage-cas.log",
+      "source": "uploaded CI artifact",
+      "originalBytes": 3731,
+      "originalSha256": "e92ed51721eaa022e38d59bc41b8c9ad54f65de675ad712594ccb9945bc72ec2",
+      "publishedBytes": 640,
+      "publishedSha256": "338382b53f58a2d8aaec32be156f9b3a3e94516d0947dd4b8f1fc3374d0209bc",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/canonical-package-guards.log.gz",
+      "originalFile": "canonical-package-guards.log",
+      "source": "uploaded CI artifact",
+      "originalBytes": 5647,
+      "originalSha256": "9e0d58f51e4afa0eec20f6c0705fe6a798050460dc0b133611693d8c4dec8201",
+      "publishedBytes": 992,
+      "publishedSha256": "40fd49d64d04c1033019f71599de2e0415d1762c4145b45512b5a8c1e23242f8",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/installed-wasm-tests.log.gz",
+      "originalFile": "installed-wasm-tests.log",
+      "source": "uploaded CI artifact",
+      "originalBytes": 8441,
+      "originalSha256": "1bdf2299a3bbb4e5759c04222407b8dd1104c52cf98a962d576ac93d53384a39",
+      "publishedBytes": 2522,
+      "publishedSha256": "b60a85177395e55620a1ac12fca18f4745f8f4810fdb09f5b46d9c51d0a89e2d",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/native-and-wasm-build.log.gz",
+      "originalFile": "native-and-wasm-build.log",
+      "source": "uploaded CI artifact",
+      "originalBytes": 103713,
+      "originalSha256": "9773f538018fa5d63f0e290a605bd9bf1e7bdb60b359756fe85f82edeeac5abb",
+      "publishedBytes": 18749,
+      "publishedSha256": "23f20446c681c8cb00630e98e5eb7e168fa8ec1d61c1cc22f5d5cd709118aaf0",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/node-proof-guards.log.gz",
+      "originalFile": "node-proof-guards.log",
+      "source": "uploaded CI artifact",
+      "originalBytes": 6381,
+      "originalSha256": "09b8dc4965ffae82a0871053e38337043a64fcea4201f951074f7e0c3a0b1143",
+      "publishedBytes": 1371,
+      "publishedSha256": "cdd516403a62c6c00c1108a1c0610e2a09fa5a7d836703ff808cdf97a5f7f0bc",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/python-proof-guards.log.gz",
+      "originalFile": "python-proof-guards.log",
+      "source": "uploaded CI artifact",
+      "originalBytes": 3007,
+      "originalSha256": "d2dfd38d0763d7d7ae65d0c5ba106c5e4ef6e2a2babd69ab2ca518a36338ed36",
+      "publishedBytes": 666,
+      "publishedSha256": "d93c3a906703b584693680601eaf68284e7dcd09435c134e3684053e7c42b844",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/typescript.log.gz",
+      "originalFile": "typescript.log",
+      "source": "uploaded CI artifact",
+      "originalBytes": 0,
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedBytes": 20,
+      "publishedSha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "browser-storage-cas.json.gz",
+      "originalFile": "browser-storage-cas.json",
+      "source": "uploaded CI artifact",
+      "originalBytes": 38424,
+      "originalSha256": "875a35c7b5e3283e291db8b50bc3e4e5a2434866efce96442d2a139f15416ae1",
+      "publishedBytes": 3035,
+      "publishedSha256": "a8f9e19e5239b85863b6d8f42bfb1a7f56ce1c9dedfa8a21a128fc82073b292f",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/github-build-job.log.gz",
+      "originalFile": "gys-sdk-0007-github-build-job.log",
+      "source": "complete GitHub build-job log saved by root",
+      "originalBytes": 400389,
+      "originalSha256": "d8013b4b96c63a5756b14f830bdea98fb81b9bff08e9fa3ea7ce9f0aaf387a25",
+      "publishedBytes": 80314,
+      "publishedSha256": "6930928427e9a66a1de7c25062851279f8a845cfd78302554852587088eecb33",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    },
+    {
+      "publishedFile": "logs/github-preserve-job.log.gz",
+      "originalFile": "gys-sdk-0007-github-preserve-job.log",
+      "source": "complete GitHub preserve-job log saved by root",
+      "originalBytes": 16184,
+      "originalSha256": "1f45b2ed701698d6f69863f26363be0e3b21b6293205140bf850fe6094ec8fe8",
+      "publishedBytes": 4867,
+      "publishedSha256": "9feb8fc6d1d0503cb058f1d6fe4a891a26f36384adee777c005e5ff750a32327",
+      "encoding": "gzip; empty filename; mtime=0; level=9",
+      "payloadUnchanged": true
+    }
+  ],
+  "largeArtifactsNotAddedToDocumentation": [
+    {
+      "originalFile": "gys-sdk-0007-canonical-evidence.zip",
+      "source": "original downloaded GitHub artifact ZIP",
+      "bytes": 56092063,
+      "sha256": "e208ef7938d26bd282a3ef4501656ee60298e5412a4b3cf0650b71e1f40ab615",
+      "addedToDocumentation": false
+    },
+    {
+      "originalFile": "sdk.patch",
+      "source": "uploaded three-artifact binary patch",
+      "bytes": 43069018,
+      "sha256": "d8014cd9b5fa8d2ba4f74bb8e3e45d67540c5a28fc45def613a05d742af9a3bc",
+      "addedToDocumentation": false
+    },
+    {
+      "originalFile": "breeztech-breez-sdk-spark.tgz",
+      "source": "compiled SDK archive already preserved in the repository",
+      "bytes": 21081690,
+      "sha256": "32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c",
+      "addedToDocumentation": false
+    }
+  ],
+  "existingRepositoryArchive": {
+    "path": "vendor/breeztech-breez-sdk-spark.tgz",
+    "commit": "de5100c3728bc11d019744f09624648b4aff8803",
+    "sha256": "32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c"
+  },
+  "recordedCiGates": {
+    "sourceProofGuards": {
+      "total": 85,
+      "byLog": {
+        "python-proof-guards.log": 20,
+        "canonical-package-guards.log": 36,
+        "node-proof-guards.log": 29
+      }
+    },
+    "nativeGroups": 16,
+    "nativeCases": 221,
+    "wasmStorageCasCases": 6,
+    "wasmStorageIdentityCases": 10,
+    "browserCases": 27,
+    "browserByEngine": {
+      "chromium": 9,
+      "firefox": 9,
+      "webkit": 9
+    },
+    "browserFailures": 0,
+    "browserSkipped": 0,
+    "browserFlaky": 0,
+    "browserRetries": 0,
+    "productionWasmTargetsCheckedForAbsentTestExports": 4,
+    "namespaceCounts": {
+      "networkAttempts": 0,
+      "storageOpenAttempts": 0,
+      "signingOrOtherSignerCalls": 0,
+      "successfulPathCases": 18,
+      "constructorChecks": 58,
+      "identityFailureControls": 12,
+      "treeFactoryControls": 4
+    },
+    "npmIgnoreRenames": [
+      {
+        "archivePath": "bundler/.gitignore",
+        "installedPath": "bundler/.npmignore",
+        "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+      },
+      {
+        "archivePath": "deno/.gitignore",
+        "installedPath": "deno/.npmignore",
+        "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+      },
+      {
+        "archivePath": "examples/node/.gitignore",
+        "installedPath": "examples/node/.npmignore",
+        "sha256": "1813c29e64b428f059e5df624269a8b39dbfb7c4173dd4e12dfb2af4137ba8f2"
+      },
+      {
+        "archivePath": "examples/ssr/.gitignore",
+        "installedPath": "examples/ssr/.npmignore",
+        "sha256": "88b6b09796bc021a6f46b5964be1cbe30ef7a25d613ee43f868e720ee4d15587"
+      },
+      {
+        "archivePath": "examples/web/.gitignore",
+        "installedPath": "examples/web/.npmignore",
+        "sha256": "0ec4d6987701afa2e5f9302049ef211ab0fb8ba462e8bbd0772959ae20bdd5ad"
+      },
+      {
+        "archivePath": "itest/.gitignore",
+        "installedPath": "itest/.npmignore",
+        "sha256": "a8db166167d30d2c36fa95cc3163e77a4bc33205ede3b81a368750f25ded3879"
+      },
+      {
+        "archivePath": "nodejs/.gitignore",
+        "installedPath": "nodejs/.npmignore",
+        "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+      },
+      {
+        "archivePath": "ssr/.gitignore",
+        "installedPath": "ssr/.npmignore",
+        "sha256": "cdbcae15105d6b781e620813c79c7e868740d4e9cc53ce6f5fcbbc12387adf4b"
+      },
+      {
+        "archivePath": "web/.gitignore",
+        "installedPath": "web/.npmignore",
+        "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+      }
+    ]
+  },
+  "priorRuns": {
+    "cancelled0006": {
+      "runId": 40466031487,
+      "overallConclusion": "CANCELLED",
+      "preserveConclusion": "SKIPPED",
+      "documentation": "docs/security-review/sdk-ci-0006-timeout-20261027.md"
+    },
+    "failed0007Setup": {
+      "runId": 40473166423,
+      "overallConclusion": "FAILURE",
+      "preserveConclusion": "SKIPPED",
+      "receipt": "docs/security-review/evidence/sdk-ci-0007-setup-20261027/receipt.json"
+    }
+  },
+  "normalization": "No content sanitization or truncation; complete original payloads retained, with listed logs and browser JSON losslessly compressed",
+  "independentReleaseApproval": false,
+  "limits": [
+    "The offline verifier checked file bytes, Git trees and recorded CI assertions without importing or executing SDK code",
+    "Recorded CI assertions are not a fresh compiler, installed-package or browser rerun",
+    "The original installed filesystem is not independently available; its inventory assertions are cross-checked against the archive and exact reported npm renames",
+    "The raw compiler WASM hash is recorded metadata; the independently supplied payloads are the generated package bindings",
+    "Successful build and preservation do not establish legacy database ownership, missing execution/recovery contracts, provider/device acceptance or independent security approval",
+    "This documentation commit changes no runtime code, SDK package, release gates, audit crosswalk or deployment"
+  ],
+  "artifactPreservation": {
+    "commit": "de5100c3728bc11d019744f09624648b4aff8803",
+    "parent": "1298724dfe1d95b7a0a24f19be80e6e977cec011",
+    "tree": "b47f806ea0905412476cc54e669de99db6fc6f19",
+    "exactChangedPaths": [
+      "package-lock.json",
+      "vendor/breeztech-breez-sdk-spark.tgz",
+      "vendor/getyoursats-sdk-build.json"
+    ],
+    "matchesUploadedPatchAndCompiledUnverifiedCopy": true
+  },
+  "handoff": {
+    "repositoryPath": "docs/security-review/sdk-ci-0007-20261027.md",
+    "bytes": 8057,
+    "sha256": "f98c2c1eb0561861d8e4da2a5241b9d7afae3572c8028815b1aa5db732ad242c"
+  }
+}

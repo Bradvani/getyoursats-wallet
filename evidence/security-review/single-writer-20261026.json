@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-26",
+  "baseCommit": "898231b78bbc3c12abac5c19bd3c344a001c5d95",
+  "decision": "NO-GO",
+  "unit": {
+    "passed": 1075,
+    "failed": 0,
+    "skipped": 1
+  },
+  "browser": {
+    "engine": "local Chromium 153 from temporary @sparticuz/chromium, default Playwright security settings",
+    "securityPassed": 7,
+    "rollbackPassed": 9,
+    "baselineNewRegressionsFailed": 2,
+    "physicalDevices": false
+  },
+  "audit": {
+    "all": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "runtime": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  "browserPbkdf2Comparisons": 17,
+  "wasmIdentityComparisons": 144,
+  "installedSdkArtifactChecks": "passed",
+  "typecheck": "passed",
+  "lint": {
+    "errors": 0,
+    "existingWarnings": 9
+  },
+  "previewBuild": "passed",
+  "productionInterlock": "rejected as intended",
+  "liveSettlement": "not performed",
+  "independentAcceptance": "not performed",
+  "ci": "must verify published commit separately"
+}

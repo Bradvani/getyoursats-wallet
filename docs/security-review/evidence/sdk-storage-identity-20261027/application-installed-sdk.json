@@ -1,0 +1,57 @@
+{
+  "files": 125,
+  "sameNameFiles": 116,
+  "exactMetadataRenames": [
+    {
+      "archive": "bundler/.gitignore",
+      "installed": "bundler/.npmignore",
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    },
+    {
+      "archive": "deno/.gitignore",
+      "installed": "deno/.npmignore",
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    },
+    {
+      "archive": "examples/node/.gitignore",
+      "installed": "examples/node/.npmignore",
+      "sha256": "1813c29e64b428f059e5df624269a8b39dbfb7c4173dd4e12dfb2af4137ba8f2"
+    },
+    {
+      "archive": "examples/ssr/.gitignore",
+      "installed": "examples/ssr/.npmignore",
+      "sha256": "88b6b09796bc021a6f46b5964be1cbe30ef7a25d613ee43f868e720ee4d15587"
+    },
+    {
+      "archive": "examples/web/.gitignore",
+      "installed": "examples/web/.npmignore",
+      "sha256": "0ec4d6987701afa2e5f9302049ef211ab0fb8ba462e8bbd0772959ae20bdd5ad"
+    },
+    {
+      "archive": "itest/.gitignore",
+      "installed": "itest/.npmignore",
+      "sha256": "a8db166167d30d2c36fa95cc3163e77a4bc33205ede3b81a368750f25ded3879"
+    },
+    {
+      "archive": "nodejs/.gitignore",
+      "installed": "nodejs/.npmignore",
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    },
+    {
+      "archive": "ssr/.gitignore",
+      "installed": "ssr/.npmignore",
+      "sha256": "cdbcae15105d6b781e620813c79c7e868740d4e9cc53ce6f5fcbbc12387adf4b"
+    },
+    {
+      "archive": "web/.gitignore",
+      "installed": "web/.npmignore",
+      "sha256": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1"
+    }
+  ],
+  "allFileBytesMatch": true,
+  "packageSha256": "f3cb177c5cb38cd3222b8279e8a9c5815f788d5ccd611a9e8a29d5caefb4bf37",
+  "packageVersion": "0.1.0-getyoursats.recovery.1",
+  "browserWasmSha256": "fc9bc11b2ef30494aabd6f72c4817be1008b707814b93bb9d91f5cb2dc80d910",
+  "archiveInventorySha256": "61822bc5951e6ce480d38d49f358c1f083bc884eabb39868073998a4c5e9f618",
+  "installedInventorySha256": "6a3155912537bfb6ad19a445505f8fae7a7ab15bc73b2a12afd9782a3788407c"
+}

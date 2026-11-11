@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "sourceCommit": "859704dd8ff650fd7efaa01b41aa99f499f528bd",
+  "sourceTree": "7bcff6d98ab129d082a926e70209d6bf3d561e1f",
+  "workflowRun": 40473166423,
+  "job": 122084900717,
+  "result": "FAILURE_SETUP_BEFORE_COMPILATION",
+  "sourceProofGuards": "PASS",
+  "compilerStarted": false,
+  "preservation": "SKIPPED",
+  "failure": "The mirror setup checked sources.list and .sources files but omitted the GitHub runner mirror-list file.",
+  "correction": "Include /etc/apt/apt-mirrors.txt; verified against the documented mirror-file layout without changing Ubuntu suites, signing keys or priorities.",
+  "runnerSource": "https://github.com/actions/runner-images/blob/main/images/ubuntu/scripts/build/configure-apt-sources.sh",
+  "sdkPatchSha256": "e56dde90e545646dbce6e6f3218bb67c54084f13110fcbbafdb1eccc211b3eb7",
+  "sdkSourceChanged": false,
+  "log": {
+    "file": "job.log.gz",
+    "decodedToolLogSha256": "4908231a2884572e4202281225952c99e27a9a6a632da50959e3ecf4f6c9528b",
+    "gzipSha256": "48c38190c5f553a6976df061b65c2ee6610281a25d828ed0dddf7cb49b3e9925",
+    "normalization": "None; complete decoded job-log text returned by GitHub connector"
+  },
+  "productionPromoted": false,
+  "providerAcceptance": false
+}

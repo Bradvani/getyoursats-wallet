@@ -14,7 +14,8 @@ import { useContactsContext } from '../contexts/ContactsContext';
 import { getPaymentDescription, getProviderDisplayName, isCrossChainPayment } from '../utils/paymentDescription';
 import { formatChainName, getCrossChainDestination, getCrossChainSendOutcome, formatReceiveAmount } from '../utils/crossChainFormat';
 import { explorerTxUrl, chainExplorerTxUrl } from '../utils/explorer';
-import {useWalletInfo} from '../contexts/WalletContext';
+import {useWalletConnection,useWalletInfo} from '../contexts/WalletContext';
+import {browserReceivingRestriction} from '../security/browserReleasePolicy';
 import {paymentRecipient} from '../services/paymentCounterparty';
 import {PAYMENT_HISTORY_COPY} from '../locales/paymentHistoryCopy';
 
@@ -44,6 +45,8 @@ const getDefaultVisibleFields = () => ({
 });
 
 const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPayment, onClose }) => {
+  const {sdk}=useWalletConnection();
+  const lightningRestriction=sdk?browserReceivingRestriction(sdk,'bolt11Invoice'):null;
   const t=useFlowText();
   const {language}=usePresentation();
   const identity=useWalletInfo()?.identityPubkey;
@@ -120,6 +123,7 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
     : baseDisplayConfig;
   const hasTokenDisplay = !isAmountAdjusted && !!tokenInfo && !!tokenDisplayConfig;
   const isReceive = payment.paymentType === 'receive';
+  const unresolvedLightningReceive=!!lightningRestriction&&isReceive&&payment.status!=='completed'&&payment.details?.type==='lightning';
   const sign = isReceive ? '+' : '-';
   const amountDisplay = hasTokenDisplay
     ? `${sign} ${formatTokenAmount(tokenInfo.amount, tokenDisplayConfig)}`
@@ -287,7 +291,8 @@ const PaymentDetailsDialog: React.FC<PaymentDetailsDialogProps> = ({ optionalPay
               );
             })()}
 
-            {payment.details?.type === 'lightning' && payment.details.invoice && (
+            {unresolvedLightningReceive&&<p role="status" className="text-sm text-spark-text-secondary">{lightningRestriction}</p>}
+            {!unresolvedLightningReceive && payment.details?.type === 'lightning' && payment.details.invoice && (
               <CollapsibleCodeField
                 label={t("Invoice")}
                 value={payment.details.invoice}

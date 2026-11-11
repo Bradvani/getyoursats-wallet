@@ -652,17 +652,15 @@ describe('blocksToFinish for a matured step', () => {
 });
 
 describe('savePlan when the snapshot outgrows storage', () => {
-  it('keeps the plan without the snapshot rather than losing the exit', () => {
-    // The first write, the whole plan, is the one that does not fit.
+  it('rejects the write without dropping the original snapshot', () => {
+    const owner = { identityPubkey: 'snapshot-owner', network: 'regtest' };
+    const original = plan([tx({ txid: 'original' })], { exitStateSnapshot: 'original-snapshot' });
+    savePlan(owner, original);
     vi.mocked(localStorage.setItem).mockImplementationOnce(() => {
       throw new DOMException('quota', 'QuotaExceededError');
     });
-    const owner = { identityPubkey: 'snapshot-owner', network: 'regtest' };
-    savePlan(owner, plan([tx({ txid: 'a' })], { exitStateSnapshot: 'huge-snapshot' }));
-
-    const kept = loadPlan(owner);
-    expect(kept?.exit.transactions[0].txid).toBe('a');
-    expect(kept?.exitStateSnapshot).toBeUndefined();
+    expect(() => savePlan(owner, plan([tx({ txid: 'new' })], { exitStateSnapshot: 'huge-snapshot' }))).toThrow();
+    expect(loadPlan(owner)).toEqual(original);
   });
 });
 

@@ -27,7 +27,7 @@ import {
   type UnilateralExitEngineState,
 } from '../engine';
 import { loadExitState, restoreExitState } from '../exitState';
-import { deriveFundingKey, readWalletMnemonic, type FundingKey } from '../funding';
+import { deriveFundingKeyFromSeed, readWalletSeed, type FundingKey } from '../funding';
 import { useUnilateralExitEngineState } from './useUnilateralExitEngineLifecycle';
 
 /** `fund`, `topUp` and `building` raise the fee of an exit under way. A fresh exit's fee is paid on `pending`. */
@@ -127,7 +127,7 @@ export interface UnilateralExitFlow {
   funding: FundingFields | null;
   submitDestination: () => Promise<void>;
   submitFee: () => Promise<void>;
-  unlock: () => Promise<void>;
+  unlock: (assertCurrent?: () => void) => Promise<void>;
   unlockError: string | null;
   build: () => Promise<void>;
   buildError: string | null;
@@ -189,10 +189,10 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
   const tried = useRef<{ quote: PrepareRecoverFundsResponse; sat: number; inputs: number } | null>(
     null,
   );
-  const mnemonicRef = useRef<string | null>(null);
+  const fundingUnlockedRef = useRef<boolean>(false);
 
   useEffect(() => () => {
-    mnemonicRef.current = null;
+    fundingUnlockedRef.current = false;
   }, []);
 
   useEffect(() => {
@@ -292,17 +292,21 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
   // The index, not the plan: every engine pass emits a new plan object, and
   // the page re-runs unlock whenever this callback changes.
   const planFundingIndex = plan?.fundingAddressIndex;
-  const unlock = useCallback(async () => {
+  const unlock = useCallback(async (assertCurrent?: () => void) => {
     if (!walletKey || !quote) return;
+    assertCurrent?.();
     setUnlockError(null);
     try {
-      const mnemonic = await readWalletMnemonic({ interactive: true });
+      const seed = await readWalletSeed({ interactive: true });
+      // The page can close or change policy while a native/passkey read is
+      // pending. A stale read must not derive or publish funding state.
+      assertCurrent?.();
       // Every exit pays from the same address, so coins one exit leaves there
       // count toward the next. An exit under way keeps the index it was built with.
       const index = planFundingIndex ?? 0;
-      const key = deriveFundingKey(mnemonic, network, index);
+      const key = deriveFundingKeyFromSeed(seed, network, index);
       if (planFundingIndex !== undefined) {
-        mnemonicRef.current = mnemonic;
+        fundingUnlockedRef.current = true;
         setFundingKey(key);
         setPhase('fund');
         return;
@@ -324,6 +328,7 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
       );
       setPhase('pending');
     } catch (e) {
+      try { assertCurrent?.(); } catch { return; }
       setUnlockError(message(e));
     }
   }, [walletKey, quote, network, planFundingIndex]);
@@ -337,7 +342,7 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
   const isFunded = quote !== null && (!topUp || topUp.stillToSendSat === 0);
 
   const build = useCallback(async () => {
-    if (!walletKey || !plan || !quote || !fundingKey || !mnemonicRef.current) return;
+    if (!walletKey || !plan || !quote || !fundingKey || !fundingUnlockedRef.current) return;
     setPhase('building');
     setBuildError(null);
     const release = holdIdleLock();
@@ -376,7 +381,7 @@ export function useUnilateralExitFlow(network: string): UnilateralExitFlow {
         quotedExitFeeSat: quote.funding?.singleUtxoSats,
       });
       setUnilateralExitPlan(walletKey, { ...built, exitStateSnapshot });
-      mnemonicRef.current = null;
+      fundingUnlockedRef.current = false;
       setPhase('tracker');
     } catch (e) {
       logger.error(LogCategory.SDK, 'Failed to build unilateral exit', { error: message(e) });

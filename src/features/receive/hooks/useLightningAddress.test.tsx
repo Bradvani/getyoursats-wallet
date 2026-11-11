@@ -4,6 +4,7 @@ import type { BreezSdk, LightningAddressInfo, SdkEvent } from '@breeztech/breez-
 import { WalletProvider, useWallet } from '@/contexts/WalletContext';
 import { createMockClient } from '@/test/mocks/mockWalletApi';
 import { publishLightningAddress, useLightningAddress } from './useLightningAddress';
+import {BROWSER_SPENDING_POLICY} from '../../../security/browserReleasePolicy';
 
 // The LNURL server reaches the WebView as an opaque fetch failure, which is
 // what the user reported seeing pasted verbatim into the Receive sheet.
@@ -90,6 +91,29 @@ describe('useLightningAddress error copy', () => {
 
     expect(result.current.error).toBe('This username is not available');
   });
+});
+
+describe('unavailable browser Lightning receiving',()=>{
+ it('keeps an existing authoritative name readable without registering a replacement',async()=>{
+  const existing=address('preserved');
+  const client=createMockClient({getLightningAddress:vi.fn().mockResolvedValue(existing)});
+  Reflect.set(client,BROWSER_SPENDING_POLICY,true);
+  const {result}=renderLightningAddress(client);
+  await waitFor(()=>expect(result.current.isLoading).toBe(false));
+  expect(result.current.address).toEqual(existing);
+  expect(client.checkLightningAddressAvailable).not.toHaveBeenCalled();
+  expect(client.registerLightningAddress).not.toHaveBeenCalled();
+ });
+ it('does not auto-register or edit a name while Lightning claims are unavailable',async()=>{
+  const client=createMockClient();Reflect.set(client,BROWSER_SPENDING_POLICY,true);
+  const {result}=renderLightningAddress(client);
+  await waitFor(()=>expect(result.current.isLoading).toBe(false));
+  act(()=>result.current.setEditValue('newname'));
+  await act(async()=>{await result.current.save();});
+  expect(result.current.error).toMatch(/Lightning receiving is unavailable/);
+  expect(client.checkLightningAddressAvailable).not.toHaveBeenCalled();
+  expect(client.registerLightningAddress).not.toHaveBeenCalled();
+ });
 });
 
 describe('shared Lightning address state', () => {

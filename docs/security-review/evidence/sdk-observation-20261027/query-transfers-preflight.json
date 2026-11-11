@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "scope": "anonymous-query-transfers-by-id-availability-only",
+  "recordedAt": "2026-10-27T00:49:33.261Z",
+  "endpoint": "https://0.spark.lightspark.com/spark.SparkService/query_transfers_by_id",
+  "sdkCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+  "network": "REGTEST",
+  "networkEnum": 2,
+  "limits": {
+    "maxRequests": 2,
+    "connectSeconds": 4,
+    "requestSeconds": 8,
+    "processMilliseconds": 9000,
+    "maxHeaderBytes": 8192,
+    "maxBodyBytes": 8192,
+    "maxFrames": 2
+  },
+  "operatorRequestAttempts": 2,
+  "responsesReceived": 2,
+  "attempts": [
+    {
+      "kind": "unknown-id",
+      "ordinal": 1,
+      "httpStatus": 200,
+      "bodyBytes": 37,
+      "grpcStatus": 0,
+      "transferCount": 0,
+      "offset": "-1",
+      "bodySha256": "325a31a199921d430db489d680d6a5168527abaf71f72fcb2bcf6e093161917c",
+      "status": "expected",
+      "elapsedMilliseconds": 377
+    },
+    {
+      "kind": "empty-id-control",
+      "ordinal": 2,
+      "httpStatus": 200,
+      "bodyBytes": 0,
+      "grpcStatus": 3,
+      "validationRejected": true,
+      "status": "expected",
+      "elapsedMilliseconds": 105
+    }
+  ],
+  "verdict": "method_and_empty_terminal_response_observed",
+  "providerCompatibilityAccepted": false,
+  "fundedAcceptance": false,
+  "claimsPerformed": false,
+  "sessionsCreated": false,
+  "probeTransferId": "69805a60-b0a3-44b7-9fc5-923807127cd4",
+  "originalReceiptSha256": "ba8d7327cacb217985e75c0e82b1fc7ff98ef15c122c7b98eaa79de9093e23fa",
+  "operatorSourceReferenceCommit": "0b3a32a05c9ac06cc411683551dd1f1bde9d0caa",
+  "deployedOperatorRevision": null,
+  "operatorSourceReferenceIsDeploymentProof": false,
+  "scopeLimitation": "Anonymous method/empty-terminal availability only; no owned-transfer shape, authenticated SDK, provider economics or funded acceptance."
+}

@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "kind": "read-only-containment-rollback",
+  "sourceCommit": "c5e2b2eb6c4756c97bec04b920b20a40e883874f",
+  "vaultFormats": [
+    1
+  ],
+  "paymentJournalFormats": [
+    1
+  ],
+  "signedRecoveryFormats": [
+    1
+  ],
+  "pendingExitPolicy": "preserve byte-for-byte; never broadcast or rebuild",
+  "mutations": false,
+  "networkConnections": false,
+  "signing": false,
+  "fundsEnabled": false,
+  "physicalDeviceAcceptance": false,
+  "serviceWorkerPolicy": "refuse unlock while controlled by an existing worker; no automatic unregister or storage wipe",
+  "files": {
+    "assets/index-BTJvxxUV.js": "4d3966016feb1c464f147f8c0e679f96d7999ae9d5adc81595b32132259bb67a",
+    "assets/index-CudYlCrv.css": "c128de4e39bf7b8c802a3b295107696400c4b9af563ae1c1677fe1c958e94c40",
+    "index.html": "944abad8f6e85272b77950102bb7d0ee15411486cc36567892ed607c3f198f74"
+  }
+}

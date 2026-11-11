@@ -4,6 +4,7 @@ import { useSdkEvents, useWallet, useWalletConnection } from '../../../contexts/
 import { generateRandomName, generateRandomNameSuffix } from '../../../utils/randomName';
 import { logger, LogCategory } from '@/services/logger';
 import { formatError } from '@/utils/formatError';
+import {browserReceivingRestriction} from '../../../security/browserReleasePolicy';
 
 export interface UseLightningAddress {
   address: LightningAddressInfo | null;
@@ -112,6 +113,9 @@ function loadAddress(wallet: BreezSdk, state: AddressState): Promise<void> {
         update(state, { address: existing });
         return;
       }
+      // Keep recovery reads available without allocating a new payable name
+      // while the corresponding Lightning claim path is unavailable.
+      if(browserReceivingRestriction(wallet,'bolt11Invoice'))return;
 
       const base = generateRandomName();
       for (let i = 0; i < 3; i++) {
@@ -176,6 +180,8 @@ function observeAddressChanges(
 }
 
 async function saveAddress(wallet: BreezSdk, state: AddressState, username: string): Promise<boolean> {
+  const restriction=browserReceivingRestriction(wallet,'bolt11Invoice');
+  if(restriction){update(state,{error:restriction});return false;}
   if (!state.snapshot.isSupported || state.pending || state.preferred) return false;
   if (!username) {
     update(state, { error: 'Please enter a username' });

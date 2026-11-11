@@ -1,3 +1,4 @@
+import {isRestrictedBrowserWallet,UNAVAILABLE_MAX_MESSAGE} from '../../../security/browserReleasePolicy';
 import {validAmountInput} from '../../../utils/decimalInput';
 import {usePresentation} from '@/hooks/usePresentation';
 import {PAYMENT_UX} from '@/locales/paymentUx';
@@ -15,7 +16,7 @@ import CurrencySwitcher from '../../../components/ui/CurrencySwitcher';
 import { formatWithSpaces } from '../../../utils/formatNumber';
 import { useAmountInput, useFiatOverride } from '../../../hooks/useAmountInput';
 import { useBalanceValidation } from '../hooks/useBalanceValidation';
-import { useHasPendingConversion } from '../../../contexts/WalletContext';
+import { useHasPendingConversion, useWalletConnection } from '../../../contexts/WalletContext';
 import { getLnurlPayAddress } from '../utils';
 
 interface LnurlWorkflowProps {
@@ -58,6 +59,8 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
 
   const balance = useBalanceValidation(isTokenMode, setIsTokenMode, balanceSats, tokenBalance, fiatOverride);
   const hasPendingConversion = useHasPendingConversion();
+  const {sdk:policyWallet}=useWalletConnection();
+  const maxUnavailable=!!policyWallet&&isRestrictedBrowserWallet(policyWallet);
 
   const [step, setStep] = useState<PaymentStep>('amount');
   const [feesIncluded, setFeesIncluded] = useState(initialFeesIncluded);
@@ -315,8 +318,8 @@ const LnurlWorkflow: React.FC<LnurlWorkflowProps> = ({ parsed, recipientLabel, b
                 }
                 setFeesIncluded(true);
               }}
-              disabled={isLoading || !balanceKnown || tokenSendAllBelowThreshold || hasPendingConversion}
-              title={hasPendingConversion ? text.updating : text.feesHint}
+              disabled={maxUnavailable || isLoading || !balanceKnown || tokenSendAllBelowThreshold || hasPendingConversion}
+              title={maxUnavailable ? UNAVAILABLE_MAX_MESSAGE : hasPendingConversion ? text.updating : text.feesHint}
               aria-pressed={isSendAll}
               className="gys-send-max-action min-h-11 min-w-11 shrink-0 rounded-lg px-2 text-sm font-semibold text-spark-primary underline disabled:opacity-40"
             >

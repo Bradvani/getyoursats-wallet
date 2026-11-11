@@ -1,0 +1,25 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+[1A[2K[2m[WebServer] [22m(node:79898) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+Running 9 tests using 1 worker
+
+[1A[2K(node:79931) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K(node:79931) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+[1A[2K[1/9] e2e/tests/rollback-compatibility.spec.ts:15:1 › migrates the original phrase then reads it from the built rollback without altering any local or SDK state
+[1A[2K[2/9] e2e/tests/rollback-compatibility.spec.ts:32:1 › clears plaintext on page suspension and never persists recovery words
+[1A[2K[3/9] e2e/tests/rollback-compatibility.spec.ts:43:1 › retains malformed journal and exit records rather than deleting or upgrading them
+[1A[2K[4/9] e2e/tests/rollback-compatibility.spec.ts:50:1 › rejects an unsupported vault version without overwriting any record
+[1A[2K[5/9] e2e/tests/rollback-compatibility.spec.ts:60:1 › containment CSP blocks network calls and the build has no wallet SDK
+[1A[2K[6/9] e2e/tests/rollback-compatibility.spec.ts:69:1 › concurrent encrypted exit backups retain one shared key and both snapshots
+[1A[2K[7/9] e2e/tests/rollback-compatibility.spec.ts:84:1 › late service-worker takeover clears already revealed words and keeps unlock disabled
+[1A[2K[8/9] e2e/tests/rollback-compatibility.spec.ts:104:1 › an existing worker blocks recovery until explicit unregister and reload, preserving all wallet state
+[1A[2K[9/9] e2e/tests/rollback-compatibility.spec.ts:124:1 › an aborted IndexedDB commit rejects the save and preserves the old exit backup
+[1A[2K  9 passed (12.3s)

@@ -107,9 +107,12 @@ const readRecord = <T>(db: IDBDatabase, store: string, key: string): Promise<T |
 
 const writeRecord = (db: IDBDatabase, store: string, key: string, value: unknown): Promise<void> =>
   new Promise((resolve, reject) => {
-    const request = db.transaction(store, 'readwrite').objectStore(store).put(value, key);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    const transaction = db.transaction(store, 'readwrite');
+    transaction.objectStore(store).put(value, key);
+    // Request success is not commit: quota/abort can still roll the write back.
+    transaction.oncomplete = () => resolve();
+    transaction.onabort = () => reject(transaction.error ?? new Error('Exit backup transaction aborted'));
+    transaction.onerror = () => reject(transaction.error ?? new Error('Exit backup transaction failed'));
   });
 
 async function encryptionKey(db: IDBDatabase): Promise<CryptoKey> {
@@ -119,8 +122,22 @@ async function encryptionKey(db: IDBDatabase): Promise<CryptoKey> {
     'encrypt',
     'decrypt',
   ]);
-  await writeRecord(db, KEY_STORE, KEY_ID, key);
-  return key;
+  // Generate before opening a transaction, then choose the winning key inside
+  // one serialized read/write transaction. Two tabs must never overwrite the
+  // key after either has encrypted an exit snapshot with it.
+  return new Promise<CryptoKey>((resolve, reject) => {
+    const transaction = db.transaction(KEY_STORE, 'readwrite');
+    const store = transaction.objectStore(KEY_STORE);
+    const request = store.get(KEY_ID);
+    let selected: CryptoKey;
+    request.onsuccess = () => {
+      selected = request.result ?? key;
+      if (!request.result) store.put(key, KEY_ID);
+    };
+    transaction.oncomplete = () => resolve(selected);
+    transaction.onabort = () => reject(transaction.error ?? new Error('Exit backup key transaction aborted'));
+    transaction.onerror = () => reject(transaction.error ?? new Error('Exit backup key transaction failed'));
+  });
 }
 
 export async function saveExitState(walletId: string, exitState: string): Promise<void> {
@@ -148,7 +165,8 @@ export async function loadExitState(walletId: string): Promise<string | null> {
       walletId,
     );
     if (!record) return null;
-    const key = await encryptionKey(db);
+    const key = await readRecord<CryptoKey>(db, KEY_STORE, KEY_ID);
+    if (!key) throw new Error('Exit backup encryption key is missing; original ciphertext was preserved');
     const plaintext = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: record.iv },
       key,

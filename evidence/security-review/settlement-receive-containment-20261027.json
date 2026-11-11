@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 1,
+  "verificationDateUtc": "2026-10-26",
+  "candidateBranch": "review/security-adoption-20261027",
+  "sourceRevision": "48e1659da9f57cf008e6b22f525cf106fd9aae29",
+  "sourceTree": "a7db33b0916a25b6a45af45a36ba2d81ac3484fe",
+  "implementationCommit": "d86fb97a4f700d0a44379a2d14c56a636030a80e",
+  "integratedCorrectiveHead": "64408512c4c7fd74d81e3f28e129f9a5be87274b",
+  "earlierSnapshot": "c5e2b2eb6c4756c97bec04b920b20a40e883874f",
+  "supersedesCurrentStateOf": "evidence/security-review/adoption-integration-20261027.json",
+  "releaseDecision": "NO-GO",
+  "deployed": false,
+  "productionInterlockEnabled": true,
+  "realFundsUsed": false,
+  "fundedTransactionExecuted": false,
+  "scope": [
+    "Recipient-bound immediate settlement and current-session checks",
+    "Canonical fail-closed journal records and signed-recovery version handling",
+    "Receive/share containment for unsupported claim routes",
+    "Corrective-release integration",
+    "Exact final source verification and external funding-gate reproduction"
+  ],
+  "checks": [
+    {
+      "id": "unit",
+      "result": "PASS",
+      "passed": 1474,
+      "skipped": 1,
+      "unhandledErrors": 0,
+      "testFilesPassed": 146,
+      "testFilesSkipped": 1,
+      "command": "npm test -- --maxWorkers=2",
+      "exitCode": 0,
+      "log": "unit.log"
+    },
+    {
+      "id": "typescript-and-build",
+      "result": "PASS",
+      "command": "npm run build",
+      "exitCode": 0,
+      "releaseId": "0d843582b8d3519561ee",
+      "sourceDirty": false,
+      "log": "build.log"
+    },
+    {
+      "id": "lint",
+      "result": "PASS",
+      "errors": 0,
+      "warnings": 8,
+      "command": "npm run lint",
+      "exitCode": 0,
+      "log": "lint.log"
+    },
+    {
+      "id": "chromium-security",
+      "result": "PASS",
+      "passed": 7,
+      "exitCode": 0,
+      "realSdkSettlement": false,
+      "log": "browser.log"
+    },
+    {
+      "id": "local-built-browser",
+      "result": "PASS",
+      "passed": 3,
+      "exitCode": 0,
+      "deployedProduct": false,
+      "temporaryBaseUrl": "http://127.0.0.1:5199",
+      "log": "built-browser.log"
+    },
+    {
+      "id": "rollback-compatibility",
+      "result": "PASS",
+      "passed": 9,
+      "exitCode": 0,
+      "actualFundedUserState": false,
+      "log": "rollback.log"
+    },
+    {
+      "id": "email-services",
+      "result": "PASS",
+      "testFilesPassed": 4,
+      "exitCode": 0,
+      "providerDeliveryMocked": true,
+      "log": "email.log"
+    },
+    {
+      "id": "service-worker-and-manifest-policy",
+      "result": "PASS_SCOPED",
+      "passed": 15,
+      "combinedRunExitCode": 1,
+      "combinedRunFailedCases": 1,
+      "failedCase": "Support integration could not start the absent PATH redis-server; rerun below.",
+      "log": "policy.log"
+    },
+    {
+      "id": "contact-budget-disposable-redis",
+      "result": "PASS",
+      "passed": 11,
+      "exitCode": 0,
+      "providerDeliveryMocked": true,
+      "command": "GYS_REDIS_SERVER=<existing disposable Redis binary> GYS_REDIS_CLI=<existing disposable Redis CLI> node --test tests/contact-budget.integration.mjs",
+      "log": "contact.log"
+    },
+    {
+      "id": "production-interlock",
+      "result": "PASS_EXPECTED_REFUSAL",
+      "command": "VERCEL_ENV=production npx vite build",
+      "exitCode": 1,
+      "bundled": false,
+      "log": "interlock.log"
+    },
+    {
+      "id": "dependency-audit",
+      "result": "PASS",
+      "reportedVulnerabilities": 0,
+      "exitCode": 0,
+      "receipt": "toolchain-audit.json",
+      "qualifiedIndependentAudit": false
+    },
+    {
+      "id": "fresh-public-regtest",
+      "result": "BLOCKED_FAUCET_CAPTCHA",
+      "connectedWallets": 2,
+      "fundedWallets": 0,
+      "claimCount": 0,
+      "sendCount": 0,
+      "receipt": "public-regtest-attempt.json"
+    }
+  ],
+  "earlierImplementationChecks": {
+    "d86fb97UnitPassed": 1463,
+    "unitSkipped": 1,
+    "settlementSchemaFocusedPassed": 196,
+    "receiveFocusedPassed": 145,
+    "overlappingCounts": true
+  },
+  "sdk": {
+    "packageSha256": "cbb19e1e16760d63e8cba74a33e21ec75dac6684bc8d389da6c9921b8ba58505",
+    "installedWasmSha256": "886b8d0be34acf32569ba9b79171f7fb7b86865b93e8b0b331f55e25ead176d8",
+    "sourceCommit": "57c5b9e5f0749f97ffe5d93bce21c994f6957cf4",
+    "cumulativePatchSha256": "280e182624968ddb5755103d28dd0a9a07f867c37cd6b7f0d4ff9c1025da3f55"
+  },
+  "openBoundaries": [
+    "Bounded Lightning receive execution and durable reconciliation",
+    "Authoritative uncertain mature-deposit resolution and complete outpoint correlation",
+    "Fresh/rebuilt unilateral-exit intent, result and full input/destination/fee binding",
+    "Human-approved regtest faucet funding followed by exact final SDK enabled-route acceptance",
+    "Original-origin cached-client/funded-state rollout",
+    "Physical iPhone and Android plus separate trusted device recovery",
+    "Sensitive-copy localization, RTL and accessibility acceptance",
+    "Qualified independent source and exact-artifact audit"
+  ],
+  "oldStrandedDeposit": "Retained unchanged; the separate public-chain receipt does not prove claim non-execution.",
+  "evidencePolicy": "Only counts, source/artifact hashes, source-test output and public regtest metadata are retained. Browser profiles, seed material, key material, tokens and certificate material are excluded. Retained logs remove terminal control sequences and trailing whitespace only; the original local digests are also recorded.",
+  "publicationBoundary": "These are local tested source identities. Any remote publication using rewritten commits must record the published commit and exact tree equivalence separately.",
+  "artifacts": [
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/unit.log",
+      "sha256": "a56a0066ab444874bf071bfdb15646077a8dc82d34a1ce71669d5e12ed4987ca",
+      "bytes": 437,
+      "rawLocalLogSha256": "cceb21b58f1b1020ea7f86e9b3482e1030569099b43fdbf69b7fe52c72f42c9b",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/build.log",
+      "sha256": "d0c0447d79ec33b120d16274ba33dee24e0879fd7ac902ced4d8d5a291291182",
+      "bytes": 46703,
+      "rawLocalLogSha256": "b1e1f62cf0287b3e5c883da8c642b10ca7b9c7023a8096ee3dda6dae68272c53",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/lint.log",
+      "sha256": "2721e0ebe2e6b727b420eb63ad4bae39c7ffd4001e6f8a4c62984b0114c237b1",
+      "bytes": 6600,
+      "rawLocalLogSha256": "d425965655bf255f9b8d56b0755e317b86a4388c9183bf83ad7dff0da9561e29",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/browser.log",
+      "sha256": "f18b1cea55ad4a6cd3100dbddad4b25694bb84293d76504f1507f581ee907377",
+      "bytes": 2816,
+      "rawLocalLogSha256": "658609a978f41fa318a5e4140bd30302bbeb85191bbe5e25c18946a21fb5c9ec",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/built-browser.log",
+      "sha256": "7abdbf7a95668710476b007f951110dc5f0b671496be3fcd761a184d63641635",
+      "bytes": 2038,
+      "rawLocalLogSha256": "c17c6e7d2669d76f6c0420f41d41daa942193e1af8497dee1c0f6b939ff475ae",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/rollback.log",
+      "sha256": "58751f75f4f8fef6306b20ddc1f5537ab6bb0701a7fc6b4d48158010dc310b10",
+      "bytes": 1917,
+      "rawLocalLogSha256": "d8c50527f855c364aee49115b9c3214efc15bd317b543ffab694cdbc285c7506",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/rollback-build.log",
+      "sha256": "2ba759f6c676375b4d419e7b693cf4cc4ca2272ee33eaefd4972add735a95f09",
+      "bytes": 464,
+      "rawLocalLogSha256": "2ba759f6c676375b4d419e7b693cf4cc4ca2272ee33eaefd4972add735a95f09",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/rollback-manifest.log",
+      "sha256": "ead94506fe5143fda614e0716158e5fcca5c3cf4a0992d536385771a6a89461f",
+      "bytes": 873,
+      "rawLocalLogSha256": "ead94506fe5143fda614e0716158e5fcca5c3cf4a0992d536385771a6a89461f",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/email.log",
+      "sha256": "d3ad46d3ecc278e445f8df4729a1f7b4bdeb640afbc7874d3284c67c4e3439ba",
+      "bytes": 593,
+      "rawLocalLogSha256": "d3ad46d3ecc278e445f8df4729a1f7b4bdeb640afbc7874d3284c67c4e3439ba",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/policy.log",
+      "sha256": "7821743f24ebb2a3ef529526109437d2f535a70b6b65a05ad800f3de12d61593",
+      "bytes": 2241,
+      "rawLocalLogSha256": "4e865a2bb4660343f6154941ff420929594cfe9be3f6a87f2096c9c46fb2723f",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/contact.log",
+      "sha256": "15453e8bde7482bbd922026747e1b580fc769a5c764c52fa34b3cc4e44d057b3",
+      "bytes": 1250,
+      "rawLocalLogSha256": "15453e8bde7482bbd922026747e1b580fc769a5c764c52fa34b3cc4e44d057b3",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/interlock.log",
+      "sha256": "a629d6bf52ee58e06deca8a3b428ea189de1f86bbaf9dcb01da57c5e3daa9161",
+      "bytes": 1086,
+      "rawLocalLogSha256": "a629d6bf52ee58e06deca8a3b428ea189de1f86bbaf9dcb01da57c5e3daa9161",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/release-manifest.json",
+      "sha256": "44fb4cf519638caafe496edbb6e3d6ed4066d46e065b27366fdc08047f02b278",
+      "bytes": 109051
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/rollback-manifest.json",
+      "sha256": "ead94506fe5143fda614e0716158e5fcca5c3cf4a0992d536385771a6a89461f",
+      "bytes": 873
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/toolchain-audit.json",
+      "sha256": "95f013fec10fd2181ffacd2b5e10bc5871c5deef7e437959be9ba19c6a1d2046",
+      "bytes": 6918
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/settlement-schema-focused.log",
+      "sha256": "9c94eb07b3e0ac94979ce8164ae4a2fd1bdbae0bb3b5bcb86b950fe12f6fd036",
+      "bytes": 343,
+      "rawLocalLogSha256": "4c51578db60793eba4e8a4ab485bb91e81bf81b5ee89aa3e63afb3900ce494fd",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/receive-focused.log",
+      "sha256": "e3e9e8eb4a15796f06baefd8b9ba88d1aee477476a71b419ad67b035b578499e",
+      "bytes": 780,
+      "rawLocalLogSha256": "4cf5611a3d2fc8694a44685c4f906add934ae4dd8bcecb125975155998b66be5",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/pre-corrective-unit.log",
+      "sha256": "f08de9155df29fd77979dc7582628bb9ef76fcc4462fe2c5aad3542d712eb2cf",
+      "bytes": 437,
+      "rawLocalLogSha256": "0532c8438ffa944f31005d43c6427919b2eaa4f42ce30b6996225286d6353860",
+      "normalization": "Terminal control sequences and trailing whitespace removed only; raw local log digest preserved."
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/regression-reproductions.json",
+      "sha256": "c4c7131198462ac0a676f1c0193740b834b71fc16c6c936786ec9306022a35ce",
+      "bytes": 6083
+    },
+    {
+      "path": "evidence/security-review/settlement-receive-containment-20261027/public-regtest-attempt.json",
+      "sha256": "e8373fc45e8919fcbd5a10d23cc0443ce3af42620bd6d76be5c388964049fcf1",
+      "bytes": 4476
+    }
+  ],
+  "publicationReview": {
+    "artifactHashesVerified": 20,
+    "textFilesReviewed": 23,
+    "privateKeyTokenProfilePathOrCertificateFindings": 0,
+    "mnemonicFilesScanned": 22,
+    "validMnemonicFindings": 0,
+    "operatorHandoffPublished": false
+  }
+}

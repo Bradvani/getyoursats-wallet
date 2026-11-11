@@ -7,8 +7,9 @@
  */
 
 import StartupLogo from '@/components/StartupLogo';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { PIN_LENGTH, isBiometricGateEnabled, isBiometricGateEnabledSync, pinAttemptMessage, verifyPin } from '@/services/appLock';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { PIN_LENGTH, PIN_RECORD_UNAVAILABLE_MESSAGE, isAppLockSupported, isPinEnabled, isBiometricGateEnabled, isBiometricGateEnabledSync, pinAttemptMessage, verifyPin } from '@/services/appLock';
+import { assertNativeReadLease, captureNativeReadLease, getNativePinPolicyRevision, getNativeReadLeaseRevision } from '@/services/nativeReadLease';
 import { authenticateBiometric, getBiometryInfo, BiometryKind } from '@/services/secureStorage';
 import { useBackButton } from '@/hooks/useBackButton';
 import { BackspaceIcon, FaceIdIcon, FingerprintIcon, TrashIcon } from './Icons';
@@ -200,10 +201,13 @@ export const PinGate: React.FC<{
   reason: string;
   onUnlocked: () => void;
 }> = ({ reason, onUnlocked }) => {
-  // Sync mirror seed so the first paint already knows whether to hold
-  // the pad back for the biometric prompt; the async read reconciles
-  // (a lost mirror degrades to showing the pad).
-  const [biometricGate, setBiometricGate] = useState(() => isBiometricGateEnabledSync());
+  // A mirror can hold back the first PIN-pad paint. Only a successful
+  // durable policy read can enable a biometric attempt.
+  const [biometricGate, setBiometricGate] = useState(false);
+  const [gateError, setGateError] = useState<string | null>(null);
+  const mounted = useRef(false);
+  const attemptId = useRef(0);
+  const currentTarget = useRef({ reason, onUnlocked });
   // With the biometric gate on, the pad stays hidden until the OS
   // prompt settles: it only appears when the user cancels or biometrics
   // are unavailable.
@@ -212,13 +216,40 @@ export const PinGate: React.FC<{
   // button re-fires it manually after a cancel.
   const bioFiredRef = useRef(false);
 
+  useLayoutEffect(() => {
+    currentTarget.current = { reason, onUnlocked };
+  }, [reason, onUnlocked]);
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; attemptId.current += 1; };
+  }, []);
+
+  const captureAttempt = useCallback(() => {
+    if (!mounted.current || document.visibilityState !== 'visible') throw new Error(PIN_RECORD_UNAVAILABLE_MESSAGE);
+    const native = isAppLockSupported();
+    return {
+      attempt: ++attemptId.current, native, reason, onUnlocked,
+      policyRevision: getNativePinPolicyRevision(),
+      readRevision: native ? captureNativeReadLease() : getNativeReadLeaseRevision(),
+    };
+  }, [reason, onUnlocked]);
+
+  const assertAttempt = useCallback((proof: ReturnType<typeof captureAttempt>) => {
+    if (!mounted.current || proof.attempt !== attemptId.current || document.visibilityState !== 'visible' ||
+      proof.reason !== currentTarget.current.reason || proof.onUnlocked !== currentTarget.current.onUnlocked ||
+      proof.policyRevision !== getNativePinPolicyRevision() || proof.readRevision !== getNativeReadLeaseRevision()) {
+      throw new Error(PIN_RECORD_UNAVAILABLE_MESSAGE);
+    }
+    if (proof.native) assertNativeReadLease(proof.readRevision);
+  }, []);
+
   // Face vs fingerprint icon for the pad's biometric slot.
   const [biometryKind, setBiometryKind] = useState<BiometryKind | undefined>(undefined);
   useEffect(() => {
     let cancelled = false;
     void getBiometryInfo().then((info) => {
       if (!cancelled && info) setBiometryKind(info.kind);
-    });
+    }).catch(() => { if (!cancelled) setBiometryKind(undefined); });
     return () => { cancelled = true; };
   }, []);
 
@@ -227,28 +258,55 @@ export const PinGate: React.FC<{
   useBackButton(useCallback(() => true, []), true);
 
   const runBiometric = useCallback(async () => {
+    let proof: ReturnType<typeof captureAttempt> | undefined;
     try {
+      proof = captureAttempt();
+      setGateError(null);
+      const [pin, enabled] = await Promise.all([isPinEnabled(), isBiometricGateEnabled()]);
+      assertAttempt(proof);
+      if (!pin || !enabled) {
+        setBiometricGate(false);
+        setPadVisible(true);
+        return;
+      }
       await authenticateBiometric(reason);
-      onUnlocked();
-    } catch {
+      assertAttempt(proof);
+      const [pinStillEnabled, gateStillEnabled] = await Promise.all([isPinEnabled(), isBiometricGateEnabled()]);
+      assertAttempt(proof);
+      if (!pinStillEnabled || !gateStillEnabled) throw new Error(PIN_RECORD_UNAVAILABLE_MESSAGE);
+      proof.onUnlocked();
+    } catch (error) {
+      if (!mounted.current || (proof && proof.attempt !== attemptId.current)) return;
       // Cancelled or unavailable: fall back to the PIN pad.
       setPadVisible(true);
+      const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+      if (code !== 'USER_CANCELLED') setGateError(PIN_RECORD_UNAVAILABLE_MESSAGE);
     }
-  }, [reason, onUnlocked]);
+  }, [reason, captureAttempt, assertAttempt]);
 
   useEffect(() => {
     let cancelled = false;
-    void isBiometricGateEnabled().then((enabled) => {
+    void (async () => {
+      const proof = captureAttempt();
+      const enabled = await isBiometricGateEnabled();
       if (cancelled) return;
+      assertAttempt(proof);
       setBiometricGate(enabled);
-      if (!enabled) setPadVisible(true);
-      else if (!bioFiredRef.current) {
+      // A changed target may invalidate an earlier automatic ceremony. Keep
+      // the PIN/manual retry available instead of waiting on that stale result.
+      if (!enabled || bioFiredRef.current) setPadVisible(true);
+      else {
         bioFiredRef.current = true;
         void runBiometric();
       }
+    })().catch(() => {
+      if (cancelled || !mounted.current) return;
+      setBiometricGate(false);
+      setPadVisible(true);
+      setGateError('Biometric unlock settings could not be verified. Enter your PIN to continue.');
     });
     return () => { cancelled = true; };
-  }, [runBiometric]);
+  }, [runBiometric, captureAttempt, assertAttempt]);
 
   // Biometric pending: keep the page body empty under the OS prompt.
   // The logo-and-pad composition only appears once the user cancels
@@ -265,15 +323,22 @@ export const PinGate: React.FC<{
     >
       <PinEntry
         onSubmit={async (pin) => {
-          const result = await verifyPin(pin);
-          if (result.ok) {
-            onUnlocked();
-            return null;
+          try {
+            const proof = captureAttempt();
+            setGateError(null);
+            const result = await verifyPin(pin);
+            assertAttempt(proof);
+            if (result.ok) {
+              proof.onUnlocked();
+              return null;
+            }
+            // The erase action remains on the full app lock screen.
+            return pinAttemptMessage(result);
+          } catch {
+            return PIN_RECORD_UNAVAILABLE_MESSAGE;
           }
-          // No wipe branch here: this gate sits behind an already
-          // unlocked app, so the erase belongs to the lock screen.
-          return pinAttemptMessage(result);
         }}
+        persistentError={gateError}
         // Gate flag AND live availability: with Face ID denied /
         // locked out / not enrolled, a biometric button would be a
         // dead control, so the slot stays empty and the pad's

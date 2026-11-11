@@ -1,0 +1,55 @@
+[
+  {
+    "scope": "settlement and signed recovery",
+    "rawLocalLogSha256": "aaba7fa1d6838576a14d8a3c813de52040897ecc4cfc750928ca2f6a7d3d052a",
+    "rawLogPublished": false,
+    "summary": [
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > keeps spark uncertain when an SDK completion has no fresh proof",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > keeps lightning uncertain when an SDK completion has no fresh proof",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > keeps bitcoin uncertain when an SDK completion has no fresh proof",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > commits spark completion only after fresh recipient-bound proof",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > commits lightning completion only after fresh recipient-bound proof",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > commits bitcoin completion only after fresh recipient-bound proof",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > does not accept a recipient proof mismatch as successful delivery",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > does not accept a identity proof mismatch as successful delivery",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > does not accept a network proof mismatch as successful delivery",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > does not accept a amount proof mismatch as successful delivery",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > does not accept a fee proof mismatch as successful delivery",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > does not accept a stale proof mismatch as successful delivery",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > does not accept a missing proof mismatch as successful delivery",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > does not accept a unresolved proof mismatch as successful delivery",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > does not release the journal when the session locks before SDK completion returns",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > does not release the journal when proof arrives after session revocation",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > reconciles a lost completion response after restart without a second send",
+      "FAIL  src/security/operationSettlement.test.ts > terminal outgoing settlement evidence > returns a failed result only with exact fresh returned-ownership evidence",
+      "FAIL  src/security/signedRecoveryJournal.test.ts > durable signed recovery journal > preserves and rejects an unrecognized recovery format gys:signed-recovery:v2:future",
+      "FAIL  src/security/signedRecoveryJournal.test.ts > durable signed recovery journal > preserves and rejects an unrecognized recovery format gys:signed-recovery:unknown",
+      "FAIL  src/security/signedRecoveryJournal.test.ts > durable signed recovery journal > does not ignore a damaged unknown-format record when filtering another wallet",
+      "Test Files  2 failed (2)",
+      "Tests  21 failed | 10 passed (31)",
+      "Start at  23:02:08",
+      "Duration  1.94s (transform 367ms, setup 141ms, import 503ms, tests 1.04s, environment 565ms)"
+    ]
+  },
+  {
+    "scope": "receive containment",
+    "rawLocalLogSha256": "fdd5a663426fdc844348968567755383bbce8ec31f770695c1190087a0a2297f",
+    "rawLogPublished": false,
+    "summary": [
+      "FAIL  src/security/browserReceiveContainment.test.tsx > browser receive containment > does not offer a saved Lightning name or prewarm an unclaimable Bitcoin address, and keeps direct Spark usable",
+      "FAIL  src/security/browserReceiveContainment.test.tsx > browser receive containment > retains an explicitly exposed regtest deposit receive capability with a valueless-funds label and no automatic claim",
+      "FAIL  src/security/browserReceiveContainment.test.tsx > browser receive containment > blocks new merchant charges before an invoice request or a fiat refresh",
+      "FAIL  src/security/operationGateway.test.ts > connection operation gateway > does not create Lightning invoices on mainnet without a bounded claim primitive",
+      "FAIL  src/security/operationGateway.test.ts > connection operation gateway > does not create Lightning invoices on signet without a bounded claim primitive",
+      "FAIL  src/security/operationGateway.test.ts > connection operation gateway > does not create Lightning invoices on regtest without a bounded claim primitive",
+      "FAIL  src/security/operationGateway.test.ts > connection operation gateway > does not create a Bitcoin address when mature claims are disabled: 'mainnet', dev=true",
+      "FAIL  src/security/operationGateway.test.ts > connection operation gateway > does not create a Bitcoin address when mature claims are disabled: 'signet', dev=true",
+      "FAIL  src/security/operationGateway.test.ts > connection operation gateway > does not create a Bitcoin address when mature claims are disabled: 'mainnet', dev=false",
+      "FAIL  src/security/operationGateway.test.ts > connection operation gateway > does not create a Bitcoin address when mature claims are disabled: 'regtest', dev=false",
+      "Test Files  2 failed (2)",
+      "Tests  10 failed | 59 passed (69)",
+      "Start at  23:12:03",
+      "Duration  3.95s (transform 762ms, setup 144ms, import 1.38s, tests 3.60s, environment 620ms)"
+    ]
+  }
+]

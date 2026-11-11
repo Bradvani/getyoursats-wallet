@@ -1,0 +1,2 @@
+32715449ed2e670740befe31f0a466b2adc0ab83651f410295a7cb34af55440c  vendor/breeztech-breez-sdk-spark.tgz
+eac310fa021a62262a8b7cfad5e0bd214cd3555e64c5752719fa5bd2e9ef012c  vendor/getyoursats-sdk-build.json

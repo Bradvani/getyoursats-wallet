@@ -1,0 +1,35 @@
+✖ support submission budgets use atomic disposable Redis state (26.780601ms)
+✔ manifest binds every emitted asset and installed package to the source commit (141.53816ms)
+✔ release ID is deterministic and changes when worker policy changes (284.650565ms)
+✔ production provenance rejects mismatched and missing revisions (223.142714ms)
+✔ untracked build inputs cannot be represented as a clean production source (172.403156ms)
+✔ invalid SDK provenance and missing worker placeholder fail the build (158.626734ms)
+✔ Vercel-only configuration formatting is restored without accepting changed settings (323.864253ms)
+✔ replacement waits for existing clients and retains only two owned release caches (60.088089ms)
+✔ activation purges API and query keys only from owned caches (6.893654ms)
+✔ API, LNURL, other origins and non-GET requests bypass the worker (1.528045ms)
+✔ never stores private, no-store or error responses as public assets (2.695294ms)
+✔ authorized, no-store and query asset requests cannot populate a public cache key (0.998726ms)
+✔ entry count remains bounded and fixed shell assets survive a long font session (256.255429ms)
+✔ previous private responses cannot be served by the offline fallback (1.52583ms)
+✔ offline shell and previous immutable chunks remain usable without forced activation (4.898616ms)
+✔ offline onboarding and wallet branding survive legacy-cache cleanup (10.022052ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 15
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1422.681554
+
+✖ failing tests:
+
+test at tests/contact-budget.integration.mjs:73:1
+✖ support submission budgets use atomic disposable Redis state (26.780601ms)
+  Error: Disposable Redis stopped:
+      at startRedis (file:///workspace/scratch/bc5943411884/getyoursats-security/tests/contact-budget.integration.mjs:48:40)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///workspace/scratch/bc5943411884/getyoursats-security/tests/contact-budget.integration.mjs:74:17)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)

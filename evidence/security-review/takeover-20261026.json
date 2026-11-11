@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "date": "2026-10-26",
+  "decision": "NO-GO",
+  "localImplementationCommit": "cbab09e410a7b4c7c867c86866d0ae27380385f3",
+  "testedImplementationTree": "bf8c21feeedfc2fba794271e57250fa0e13498b3",
+  "inheritedRemoteHead": "fd1a97b21930c0a40309aa4fd227f3ef9c6dd09e",
+  "integratedMainCommit": "eb780674b04557721a18533c96ed3266b155a9b1",
+  "sdkWasmSha256": "4d90b48529a9bb9ef57610f739f05e5240a27b3dc349c25ee2cfd35461b2d751",
+  "validation": {
+    "unit": {
+      "command": "npm test -- --maxWorkers=2",
+      "passed": 1069,
+      "failed": 0,
+      "skipped": 1
+    },
+    "bitcoinRegtest": {
+      "passed": 1,
+      "nodeVersion": "31.1",
+      "realFunds": false,
+      "sdkSigning": "fixture",
+      "transport": "actual Bitcoin Core mempool, blocks and reorg",
+      "finalState": {
+        "posts": [
+          "df0ca9ec0db7ff7033678e08c275d16542203191dd88118f05e363756e820ccc",
+          "df0ca9ec0db7ff7033678e08c275d16542203191dd88118f05e363756e820ccc"
+        ],
+        "mempool": [],
+        "chain": "regtest"
+      }
+    },
+    "chromiumSecurity": {
+      "passed": 7,
+      "physicalDevice": false
+    },
+    "chromiumRollback": {
+      "passed": 7,
+      "physicalDevice": false
+    },
+    "installedWasm": "passed identity, revocation, API and hash checks",
+    "typescript": "passed",
+    "lint": {
+      "errors": 0,
+      "warnings": 9
+    },
+    "previewBuild": "passed",
+    "productionInterlock": "rejected production as required"
+  },
+  "scope": {
+    "deployed": false,
+    "mainMerged": false,
+    "fundedSettlement": false,
+    "independentSecurityAcceptance": false,
+    "newOrRebuiltBrowserExits": "restricted",
+    "incomingClaims": "not enabled"
+  },
+  "logDigests": {
+    "gys-final-unit.json": "a62e647f6675ec303458fa48438e84fcfbb47d751fd6e012c9ca19c2de59cbf4",
+    "gys-rollback-final.log": "bb17dea6a884b363dd37982f7eb917b50c8080c4b9308ee26b91539f9600662b",
+    "gys-combined-browser.log": "1e184d480438411618d086f1fcadabcb4f3728fa1c27f44be06caf767afd598a",
+    "gys-takeover-regtest-tests.json": "32a025b0b25e7bd4bd8acc0524337a1c653d049dc93f9368c77f374cd0fa23b9",
+    "gys-final-wasm.log": "ff7e2a692e85c90fd5e8602d4509d2be9d9f36de3cac18f00f0143376f0942ff",
+    "gys-final-interlock.log": "a4d35268e3b2ca15c2451fd3efd4ef2ca2da84df51281fd5bc7234c4c104b31a"
+  }
+}

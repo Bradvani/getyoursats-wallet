@@ -1,5 +1,9 @@
+import {getUnlockedWebMnemonic} from '../../security/webWalletVault';
+import type { Seed } from '@breeztech/breez-sdk-spark';
 import { LogCategory, logger } from '@/services/logger';
 import { deviceOnlyStorage, secureStorage } from '@/services/secureStorage';
+import { NativeSeedAuthenticationRequiredError, readSeedForActiveNativeWallet, readSelectedNativeSeed } from '@/services/nativeSeedSelection';
+import { assertNativeReadLease, captureNativeReadLease, type NativeReadLease } from '@/services/nativeReadLease';
 import { ripemd160 } from '@noble/hashes/legacy';
 import { sha256 } from '@noble/hashes/sha2';
 import { bech32, hex } from '@scure/base';
@@ -20,11 +24,14 @@ interface NetworkParams {
 const networkParams = (network: string): NetworkParams => {
   switch (network) {
     case 'testnet':
+    case 'signet':
       return { hrp: 'tb', coinType: 1 };
     case 'regtest':
       return { hrp: 'bcrt', coinType: 1 };
-    default:
+    case 'mainnet':
       return { hrp: 'bc', coinType: 0 };
+    default:
+      throw new Error('Unsupported exit funding network');
   }
 };
 
@@ -41,22 +48,56 @@ export function fundingAddressOf(publicKey: Uint8Array | string, network: string
 }
 
 export function deriveFundingKey(mnemonic: string, network: string, index: number): FundingKey {
-  if (!validateMnemonic(mnemonic)) {
-    throw new Error('Recovery phrase is not valid');
-  }
+  return deriveFundingKeyFromSeed({ type: 'mnemonic', mnemonic }, network, index);
+}
 
+function mnemonicPassphrase(seed: Extract<Seed, { type: 'mnemonic' }>): string | undefined {
+  const passphrase: unknown = seed.passphrase;
+  // The SDK uses an optional string; its native JSON bridge also uses null
+  // for absence. Other falsy values must never select the empty-passphrase wallet.
+  if (passphrase === undefined || passphrase === null) return undefined;
+  if (typeof passphrase !== 'string') throw new Error('Wallet mnemonic passphrase is not valid');
+  return passphrase;
+}
+
+function requireValidPassphrase(seed: Seed): Seed {
+  if (seed.type === 'mnemonic') mnemonicPassphrase(seed);
+  return seed;
+}
+
+/** Preserve the SDK seed variant: raw seed bytes are already BIP32 seed material. */
+export function deriveFundingKeyFromSeed(walletSeed: Seed, network: string, index: number): FundingKey {
+  if (!Number.isSafeInteger(index) || index < 0 || index >= 0x80000000) {
+    throw new Error('Invalid exit funding address index');
+  }
   const { coinType } = networkParams(network);
-  const seed = mnemonicToSeedSync(mnemonic);
-  const node = HDKey.fromMasterSeed(seed).derive(`m/84'/${coinType}'/0'/0/${index}`);
-  if (!node.publicKey || !node.privateKey) {
-    throw new Error('Failed to derive the funding key');
+  let seed: Uint8Array;
+  if (walletSeed.type === 'mnemonic') {
+    if (!validateMnemonic(walletSeed.mnemonic)) throw new Error('Recovery phrase is not valid');
+    seed = mnemonicToSeedSync(walletSeed.mnemonic, mnemonicPassphrase(walletSeed));
+  } else if (walletSeed.type === 'entropy' && Array.isArray(walletSeed) &&
+      walletSeed.length >= 16 && walletSeed.length <= 64 &&
+      Array.from(walletSeed).every(byte => Number.isInteger(byte) && byte >= 0 && byte <= 255)) {
+    seed = Uint8Array.from(walletSeed);
+  } else {
+    throw new Error('Wallet seed is not valid');
   }
-
-  return {
-    address: fundingAddressOf(node.publicKey, network),
-    publicKeyHex: toHex(node.publicKey),
-    secretKey: node.privateKey,
-  };
+  let root: HDKey | undefined;
+  let node: HDKey | undefined;
+  try {
+    root = HDKey.fromMasterSeed(seed);
+    node = root.derive(`m/84'/${coinType}'/0'/0/${index}`);
+    if (!node.publicKey || !node.privateKey) throw new Error('Failed to derive the funding key');
+    return {
+      address: fundingAddressOf(node.publicKey, network),
+      publicKeyHex: toHex(node.publicKey),
+      secretKey: Uint8Array.from(node.privateKey),
+    };
+  } finally {
+    seed.fill(0);
+    root?.wipePrivateData();
+    node?.wipePrivateData();
+  }
 }
 
 export class MnemonicUnavailableError extends Error {
@@ -67,46 +108,50 @@ export class MnemonicUnavailableError extends Error {
 }
 
 /**
- * Thrown when the phrase exists but only a passkey ceremony can produce it, and
+ * Thrown when the phrase needs a passkey or native biometric ceremony, and
  * the caller is not in a position to ask for one.
  */
 export class MnemonicNeedsPasskeyError extends Error {
-  constructor() {
-    super('Signing in with your passkey is needed to continue this exit');
+  constructor(message = 'Signing in with your passkey is needed to continue this exit') {
+    super(message);
     this.name = 'MnemonicNeedsPasskeyError';
   }
 }
 
-const stored = async (): Promise<string | null> => {
-  for (const [store, where] of [
-    [deviceOnlyStorage, 'device-only storage'],
-    [secureStorage, 'biometric storage'],
-  ] as const) {
-    if (!store.isSupported() || !(await store.hasStoredSeed())) continue;
-    try {
-      const seed = await store.retrieveSeed();
-      if (seed.type === 'mnemonic') return seed.mnemonic;
-    } catch (e) {
-      logger.warn(LogCategory.AUTH, `Failed to read seed from ${where}`, {
-        error: e instanceof Error ? e.message : String(e),
-      });
-    }
+const stored = async (interactive: boolean, entryLease?: NativeReadLease): Promise<Seed | null> => {
+  try {
+    const seed = await readSelectedNativeSeed({ allowBiometric: interactive, entryLease });
+    if (seed) return seed;
+  } catch (e) {
+    if (e instanceof NativeSeedAuthenticationRequiredError) throw new MnemonicNeedsPasskeyError(e.message);
+    logger.warn(LogCategory.AUTH, 'Failed to read the selected native wallet seed', {
+      error: e instanceof Error ? e.message : String(e),
+    });
+    throw e;
   }
-  return localStorage.getItem('walletMnemonic');
+  const mnemonic = getUnlockedWebMnemonic() ?? localStorage.getItem('walletMnemonic');
+  if (!mnemonic) return null;
+  const seed: Seed = { type: 'mnemonic', mnemonic };
+  return deviceOnlyStorage.isSupported() || secureStorage.isSupported()
+    ? readSeedForActiveNativeWallet(async () => seed, entryLease) : seed;
 };
 
 /**
- * The phrase the funding key is derived from.
+ * The original SDK seed the funding key is derived from.
  *
- * A web passkey wallet keeps no copy of it, so there it is re-derived through a
+ * A web passkey wallet keeps no persistent copy, so it is re-derived through a
  * passkey ceremony. That needs a user gesture, which `interactive` says the
  * caller has: a background pass does not, and gets
  * {@link MnemonicNeedsPasskeyError} instead of an authentication prompt the
  * user did not ask for.
  */
-export async function readWalletMnemonic({ interactive = false } = {}): Promise<string> {
-  const cached = await stored();
-  if (cached) return cached;
+export async function readWalletSeed({ interactive = false } = {}): Promise<Seed> {
+  const native = deviceOnlyStorage.isSupported() || secureStorage.isSupported();
+  const entryLease = native ? captureNativeReadLease() : undefined;
+  const ensureCurrent = () => { if (entryLease !== undefined) assertNativeReadLease(entryLease); };
+  const cached = await stored(interactive, entryLease);
+  ensureCurrent();
+  if (cached) return requireValidPassphrase(cached);
 
   // Loaded here rather than imported: the passkey module reads
   // `import.meta.env` as it loads, which only a bundled browser build has, and
@@ -114,10 +159,26 @@ export async function readWalletMnemonic({ interactive = false } = {}): Promise<
   const { getPasskeyLabel, isPasskeyMode, signInPinnedToActiveCredential } = await import(
     '@/services/passkeyService'
   );
+  ensureCurrent();
   if (!isPasskeyMode()) throw new MnemonicUnavailableError();
   if (!interactive) throw new MnemonicNeedsPasskeyError();
 
-  const { wallet } = await signInPinnedToActiveCredential(getPasskeyLabel() ?? undefined);
-  if (wallet.seed.type !== 'mnemonic') throw new MnemonicUnavailableError();
-  return wallet.seed.mnemonic;
+  const read = async () => {
+    ensureCurrent();
+    const { wallet } = await signInPinnedToActiveCredential(getPasskeyLabel() ?? undefined);
+    ensureCurrent();
+    return requireValidPassphrase(wallet.seed);
+  };
+  const seed = await (native ? readSeedForActiveNativeWallet(read, entryLease) : read());
+  ensureCurrent();
+  return seed;
+}
+
+/** Compatibility for callers that explicitly require words, never reinterpret raw bytes. */
+export async function readWalletMnemonic(options: { interactive?: boolean } = {}): Promise<string> {
+  const seed = await readWalletSeed(options);
+  if (seed.type !== 'mnemonic') throw new MnemonicUnavailableError();
+  const passphrase = mnemonicPassphrase(seed);
+  if (passphrase !== undefined && passphrase !== '') throw new MnemonicUnavailableError();
+  return seed.mnemonic;
 }

@@ -5,6 +5,8 @@ import {PrimaryButton, SecondaryButton} from '../components/ui/buttons';
 import {FIELD_BASE_CLASS} from '../components/ui/forms';
 import {copyToClipboard} from '../utils/clipboard';
 import {nativeLightningLookupUrl, NATIVE_LIGHTNING_DOMAIN as DOMAIN} from '../services/nativeLightningAddress';
+import {useWalletConnection} from '../contexts/WalletContext';
+import {browserReceivingRestriction} from '../security/browserReleasePolicy';
 
 interface Props {
   email: string;
@@ -26,6 +28,8 @@ async function confirmPublicAddress(address: LightningAddressInfo, signal: Abort
 }
 
 export default function GetYourSatsUsernameClaim({email, onBack, nativeAddress, onClaimNativeAddress}: Props) {
+  const {sdk}=useWalletConnection();
+  const receivingRestriction=sdk?browserReceivingRestriction(sdk,'bolt11Invoice'):null;
   const [username, setUsername] = useState('');
   const [address, setAddress] = useState<LightningAddressInfo | null>(nativeAddress ?? null);
   const [confirmed, setConfirmed] = useState(false);
@@ -81,7 +85,7 @@ export default function GetYourSatsUsernameClaim({email, onBack, nativeAddress, 
   }
 
   const claim = () => void run(async signal => {
-    if (!onClaimNativeAddress || address) return;
+    if (receivingRestriction || !onClaimNativeAddress || address) return;
     const name = username.trim().toLowerCase();
     if (!/^[a-z][a-z0-9]{2,23}$/.test(name)) {
       throw new Error('Enter 3 to 24 lowercase letters and numbers, starting with a letter.');
@@ -103,13 +107,15 @@ export default function GetYourSatsUsernameClaim({email, onBack, nativeAddress, 
   });
 
   const copy = () => void run(async signal => {
-    if (!address || !confirmed) return;
+    if (receivingRestriction || !address || !confirmed) return;
     await copyToClipboard(address.lightningAddress);
     signal.throwIfAborted();
     setCopied(true);
   });
 
-  const footer = address ? (
+  const footer = receivingRestriction ? (
+    <SecondaryButton className="w-full" onClick={onBack}>Done</SecondaryButton>
+  ) : address ? (
     <div className="space-y-2">
       <PrimaryButton className="w-full" disabled={busy} onClick={confirmed ? copy : check}>
         {busy ? 'Checking...' : confirmed ? (copied ? 'Copied' : 'Copy Address') : 'Check Payment Link'}
@@ -130,11 +136,14 @@ export default function GetYourSatsUsernameClaim({email, onBack, nativeAddress, 
         <p className="text-xs text-spark-text-muted">Email cannot restore your wallet. Keep your recovery words or passkey safe.</p>
       </section>
       <section aria-label="Your Lightning username" className="bg-spark-dark border border-spark-border rounded-2xl p-5 space-y-4">
-        <h2 className="font-display text-xl font-semibold text-spark-text-primary">{confirmed ? 'Your GetYourSats address' : 'Choose your Lightning name'}</h2>
+        <h2 className="font-display text-xl font-semibold text-spark-text-primary">{receivingRestriction?'Your saved Lightning name':confirmed ? 'Your GetYourSats address' : 'Choose your Lightning name'}</h2>
         <p className="text-sm text-spark-text-secondary">
-          Your existing Breez address continues to receive into this wallet. No purchase or activity requirement applies to your new name.
+          {receivingRestriction?'Existing names are kept for this wallet. Name registration and payment sharing are unavailable in this preview.':'Your existing Breez address continues to receive into this wallet. No purchase or activity requirement applies to your new name.'}
         </p>
-        {!onClaimNativeAddress && !address ? <p role="status" className="text-sm text-spark-text-muted">
+        {receivingRestriction ? <div className="rounded-xl border border-spark-border bg-spark-surface p-3 space-y-2">
+          {address&&<strong className="break-all text-spark-text-primary">{address.username}</strong>}
+          <p role="status" className="text-sm text-spark-text-secondary">{receivingRestriction}</p>
+        </div> : !onClaimNativeAddress && !address ? <p role="status" className="text-sm text-spark-text-muted">
           Personalized GetYourSats names are not available yet. You can keep using your current Lightning address.
         </p> : address ? <div className="rounded-xl border border-spark-border bg-spark-surface p-3 space-y-2">
           <strong className="break-all text-spark-text-primary">{address.lightningAddress}</strong>

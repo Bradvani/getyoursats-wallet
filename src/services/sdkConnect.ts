@@ -1,3 +1,5 @@
+import {prepareOwnedWalletStorage} from '../security/storageMigration/ownedStorage';
+import {hex} from '../security/storageMigration/database';
 import {isConfiguredSdkKey} from '../getyoursats/walletReadiness';
 import {
   Config,
@@ -6,13 +8,20 @@ import {
   SparkConfig,
   connect,
   defaultConfig,
+  defaultExternalSignersFromSeed,
   type BreezSdk,
   type Seed,
 } from '@breeztech/breez-sdk-spark';
 import { getSettings } from './settings';
+import {createOperationGateway} from '../security/operationGateway';
+import {rememberSignerIdentity,assertCurrentSession,getSpendingSessionEpoch} from '../security/spendApproval';
+import {createBrowserSdkLifetime,registerBrowserSdkLifetime,waitForBrowserSdkShutdowns,SdkLifecycleError} from '../security/browserSdkLifetime';
+import {guardExternalSigners} from '../security/guardedExternalSigners';
+import {Capacitor} from '@capacitor/core';
 import { logger, LogCategory } from './logger';
 import { formatError } from '../utils/formatError';
 import { USDB_TOKEN_IDENTIFIER, USDB_TICKER } from '../constants/stableBalance';
+import {assertNoUnfencedPopulatedLegacyStorage} from './emptyLegacyFence';
 
 function localCluster(): SparkConfig | null {
   const raw = import.meta.env.VITE_SPARK_LOCAL_CONFIG;
@@ -45,10 +54,35 @@ function applyLocalCluster(config: Config, network: Network): boolean {
   return true;
 }
 
-/** The network this session connects on. Settings switches it by reloading with
- *  the parameter set, so the URL is what the SDK is connected to. */
-export function selectedNetwork(): Network {
-  return (new URLSearchParams(window.location.search).get('network') ?? 'mainnet') as Network;
+const RAMPNOW_SANDBOX_ORIGIN = 'https://getyoursats-wallet-git-feat-rampnow-integr-d20510-bradvani-8798.vercel.app';
+const isNetwork = (value: unknown): value is Network =>
+  value === 'mainnet' || value === 'regtest' || value === 'signet';
+
+/** Select the network before creating any wallet configuration. A checkout
+ * return must carry its explicit supported sandbox network, never mainnet by
+ * default. The URL is navigation context only: it proves neither order
+ * ownership nor settlement. Status still requires the wallet-signed challenge.
+ */
+export function selectedNetwork(overrideNetwork?: Network): Network {
+  const {origin, pathname, search, hash} = window.location;
+  const params = new URLSearchParams(search);
+  const networks = params.getAll('network');
+  if (pathname === '/rampnow' || pathname.startsWith('/rampnow/')) {
+    const intent = params.get('intent');
+    if (origin !== RAMPNOW_SANDBOX_ORIGIN || pathname !== '/rampnow/return' || hash
+      || [...params].length !== 2 || params.getAll('intent').length !== 1
+      || !intent || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(intent)
+      || networks.length !== 1 || networks[0] !== 'signet'
+      || (overrideNetwork !== undefined && overrideNetwork !== 'signet')) {
+      throw new Error('Could not verify the sandbox checkout return. Reopen the original wallet preview to check the purchase.');
+    }
+    return 'signet';
+  }
+  if (networks.length > 1 || (networks.length === 1 && !isNetwork(networks[0]))
+    || (overrideNetwork !== undefined && !isNetwork(overrideNetwork))) {
+    throw new Error('The wallet network is unsupported or ambiguous. Reopen the original wallet address.');
+  }
+  return overrideNetwork ?? (networks[0] as Network | undefined) ?? 'mainnet';
 }
 
 /**
@@ -56,7 +90,7 @@ export function selectedNetwork(): Network {
  * Pure function — no side effects beyond reading env vars and localStorage.
  */
 export function buildConnectConfig(overrideNetwork?: Network): Config {
-  const network = overrideNetwork ?? selectedNetwork();
+  const network = selectedNetwork(overrideNetwork);
   const config: Config = defaultConfig(network);
   const configuredKey = import.meta.env.VITE_BREEZ_API_KEY?.trim();
   config.apiKey = configuredKey;
@@ -102,6 +136,20 @@ export function buildConnectConfig(overrideNetwork?: Network): Config {
   return config;
 }
 
+function snapshotConnectionSeed(seed: Seed): Seed {
+  if (seed?.type === 'mnemonic' && typeof seed.mnemonic === 'string'
+    && (seed.passphrase == null || typeof seed.passphrase === 'string')) {
+    return Object.freeze({type:'mnemonic', mnemonic:seed.mnemonic, passphrase:seed.passphrase});
+  }
+  if (seed?.type === 'entropy' && Array.isArray(seed)) {
+    const bytes = Array.from(seed);
+    if (bytes.every(value => Number.isInteger(value) && value >= 0 && value <= 255)) {
+      return Object.freeze(Object.assign(bytes, {type:'entropy' as const})) as Seed;
+    }
+  }
+  throw new Error('Wallet seed is invalid');
+}
+
 /**
  * Connects a wallet. A config built for a local cluster is pointed at that
  * cluster's own indexer, since the hosted one knows nothing about its chain.
@@ -111,11 +159,86 @@ export async function connectSdk(params: {
   seed: Seed;
   storageDir: string;
 }): Promise<BreezSdk> {
-  const { config, seed, storageDir } = params;
+  const { storageDir } = params;
+  // Preserve the entry seed and network across all connection awaits. This is
+  // a representation-preserving copy, not seed conversion or key derivation.
+  const seed = snapshotConnectionSeed(params.seed);
+  const config = {...params.config};
+  const isNative = Capacitor.isNativePlatform();
+  if (!isNative) {
+    const epoch = getSpendingSessionEpoch();
+    await assertNoUnfencedPopulatedLegacyStorage(storageDir, config.network,()=>assertCurrentSession(epoch));
+    assertCurrentSession(epoch);
+  }
+  await rememberSignerIdentity(seed);
   const chainApiUrl = import.meta.env.VITE_ESPLORA_BASE_URL;
+  if (!isNative) {
+    const epoch=getSpendingSessionEpoch();
+    await waitForBrowserSdkShutdowns();
+    assertCurrentSession(epoch);
+    const gateway = createOperationGateway(config.network);
+    // Preserve the literal Seed representation and SDK account default for
+    // both imported phrases and existing passkey-derived raw BIP32 seeds.
+    // Do not convert raw seed bytes into new BIP39 words or fall back to an
+    // internal signer that cannot be revoked through this session boundary.
+    const signers=guardExternalSigners(
+      defaultExternalSignersFromSeed(seed,config.network,undefined),
+    );
+    const lifetime = createBrowserSdkLifetime(signers);
+    // No autonomous stable-balance conversions until bounded mandates exist.
+    const browserConfig = {...config, stableBalanceConfig:undefined, preferSparkOverLightning:false,
+      backgroundTasksEnabled:false,realTimeSyncServerUrl:undefined,crossChainConfig:undefined,
+      leafOptimizationConfig:{...config.leafOptimizationConfig,autoEnabled:false},
+      tokenOptimizationConfig:{...config.tokenOptimizationConfig,autoEnabled:false},
+    };
+    try {
+      const identityBytes=(await signers.sparkSigner.getIdentityPublicKey()).bytes;
+      if(!Array.isArray(identityBytes)||identityBytes.length!==33
+        ||![2,3].includes(identityBytes[0])||identityBytes.some(b=>!Number.isInteger(b)||b<0||b>255))
+        throw new Error('Wallet signer did not provide a valid public storage identity');
+      const identity=hex(Uint8Array.from(identityBytes));
+      assertCurrentSession(epoch);
+      const ownedDirectory=await prepareOwnedWalletStorage({root:storageDir,network:config.network,identity,
+        assertCurrent:()=>assertCurrentSession(epoch)});
+      assertCurrentSession(epoch);
+      // Bind EVERY subsequent SDK identity read, not just the preflight read.
+      const identityPinnedSigner=new Proxy(signers.sparkSigner,{
+        get:(target,key)=>key==='getIdentityPublicKey'?async()=>{
+          const result=await target.getIdentityPublicKey();
+          if(!Array.isArray(result.bytes)||result.bytes.length!==33
+            ||result.bytes.some(b=>!Number.isInteger(b)||b<0||b>255)
+            ||hex(Uint8Array.from(result.bytes))!==identity)
+            throw new Error('Wallet signer identity changed after storage was selected');
+          return {bytes:[...result.bytes]};
+        }:Reflect.get(target,key),
+      });
+      let builder = SdkBuilder.newWithSigner(browserConfig,signers.breezSigner,identityPinnedSigner)
+        .withPaymentObserver(gateway.observer);
+      if (chainApiUrl && config.apiKey == null && config.sparkConfig)
+        builder = builder.withRestChainService(chainApiUrl, 'esplora');
+      const raw=await (await builder.withDefaultStorage(ownedDirectory)).build();
+      const attached=await lifetime.attach(raw);
+      // Readiness must establish that storage, signer and the built SDK all
+      // refer to the same wallet. Consistency between two cached SDK reads
+      // alone cannot establish this binding. This read never requests sync.
+      const builtInfo=await attached.getInfo({ensureSynced:false});
+      assertCurrentSession(epoch);
+      if(typeof builtInfo?.identityPubkey!=='string'
+        ||builtInfo.identityPubkey.toLowerCase()!==identity)
+        throw new Error('Restored wallet identity does not match its signing and storage identity. Your saved records have been preserved.');
+      const wallet=gateway.protect(attached);
+      registerBrowserSdkLifetime(wallet,lifetime);
+      return wallet;
+    }catch(error){
+      try{await lifetime.stop();}catch(cleanupError){
+        throw new SdkLifecycleError('SDK connection failed and cleanup did not complete',{cause:error,additionalErrors:[cleanupError]});
+      }
+      throw error;
+    }
+  }
   if (chainApiUrl && config.apiKey == null && config.sparkConfig) {
     const builder = SdkBuilder.new(config, seed).withRestChainService(chainApiUrl, 'esplora');
     return (await builder.withDefaultStorage(storageDir)).build();
   }
-  return connect({ config, seed, storageDir });
+  return connect({config,seed,storageDir});
 }
