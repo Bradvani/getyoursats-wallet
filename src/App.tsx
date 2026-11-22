@@ -1,3 +1,4 @@
+import { PageActivityContext } from './contexts/PageActivityContext';
 import DcaPage from './getyoursats/DcaPage';
 import * as bip39 from 'bip39';
 import {deviceOnlyStorage, SecureStorageError} from './services/secureStorage';
@@ -532,6 +533,7 @@ const AppContent: React.FC = () => {
     // animations reveal Settings rather than skipping back to the
     // wallet directly.
     const renderSettingsPage = () => (
+      <PageActivityContext value={currentScreen === 'settings'}>
       <SettingsPage
         onBack={() => setUserScreen('wallet')}
         config={sdk.config}
@@ -551,11 +553,13 @@ const AppContent: React.FC = () => {
         } : undefined}
         onOpenUnilateralExit={() => setUserScreen('unilateralExit')}
       />
+      </PageActivityContext>
     );
 
     // Backdrop beneath the three sub-pages so their close animations
     // reveal the hub rather than skipping back to Settings.
     const renderPasskeySettingsPage = () => (
+      <PageActivityContext value={currentScreen === 'passkeySettings'}>
       <PasskeySettingsPage
         onBack={() => setUserScreen('settings')}
         onOpenPasskey={() => setUserScreen('passkeyManagement')}
@@ -566,6 +570,7 @@ const AppContent: React.FC = () => {
           setUserScreen('wallet');
         }}
       />
+      </PageActivityContext>
     );
 
     // Layered cases (wallet + overlay screens) all return Fragments so

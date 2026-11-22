@@ -1,13 +1,16 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
 import QrScanner from '@/utils/qrScanner';
 import {useScannerPortrait} from '../hooks/useScannerPortrait';
-import { BottomSheetContainer, FloatingIconButton } from './ui';
+import { BottomSheetContainer } from './ui';
+import StartupLogo from './StartupLogo';
+import '../getyoursats/scanner.css';
 import { useQrScanner } from '../hooks/useQrScanner';
 import { holdIdleLock } from '@/services/appLock';
-import { CameraFlipIcon, ImageIcon, AlertTriangleIcon } from './Icons';
+import { CameraFlipIcon, ImageIcon, QrCodeIcon, CloseIcon, LightningBoltIcon } from './Icons';
 import { useLatest } from '../hooks/useLatest';
 import { usePresentation } from '../hooks/usePresentation';
 import {PRODUCT_POLISH} from '../locales/productPolish';
+import {SCANNER_TOOLS} from '../locales/scannerTools';
 import { trustCopy } from '../getyoursats/trustCopy';
 
 interface QrScannerDialogProps {
@@ -31,8 +34,9 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
   const acceptedScan = useRef(false);
   const galleryRequest = useRef(0);
   const isOpenRef = useLatest(isOpen);
-  const {language} = usePresentation();
+  const {language, copy: navigationCopy} = usePresentation();
   const copy=PRODUCT_POLISH[language];
+  const toolsCopy=SCANNER_TOOLS[language];
   const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
   const handleScan = useCallback((data: string) => {
@@ -125,161 +129,77 @@ const QrScannerDialog: React.FC<QrScannerDialogProps> = ({ isOpen, onClose, onSc
     onClose();
   };
 
+  const cameraUnavailable = !isScanning && !isInitializing && !!error;
+  const status = isReadingImage ? trustCopy(language).checking
+    : cameraUnavailable ? copy.unavailable : isInitializing || !isScanning ? copy.starting : copy.point;
+
   return (
     <BottomSheetContainer isOpen={isOpen} onClose={handleClose} fullHeight maxWidth="full" zIndex={zIndex}>
-      {/* Respect the notch / home indicator safe areas. Without this
-          the camera feed extends under the Dynamic Island on iOS and
-          the gallery / camera-flip buttons can land behind the
-          system-bar or home indicator cutouts. */}
-      <div
-        className="gys-scanner-portrait h-full w-full bg-spark-surface flex flex-col"
-        data-testid="scanner-portrait"
+      <div className="gys-scanner-portrait" data-testid="scanner-portrait"
+        dir={language === 'ar' ? 'rtl' : 'ltr'}
         style={{
           paddingTop: 'var(--safe-area-inset-top, env(safe-area-inset-top, 0px))',
           paddingBottom: 'var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))',
           ...portraitStyle,
-        }}
-      >
-        {/* Camera area: the video feed is constrained to a square
-            aspect ratio and centered, with the surrounding space
-            filled by the parent's bg-spark-surface. Without this,
-            object-cover on a tall portrait <video> element heavily
-            crops the camera feed on the sides and the preview looks
-            vertically stretched. */}
-        <div className="gys-scanner-stage flex-1 relative flex items-center justify-center overflow-hidden">
-          {/* Square video container — w-full on portrait phones gives a
-              fullwidth square centered vertically; max-h-full guards
-              against landscape overflow. */}
-          <div className="gys-scanner-camera relative aspect-square w-full max-h-full">
-            <video
-              ref={videoRef}
-              className="absolute inset-0 w-full h-full object-cover"
-              playsInline
-              muted
-              autoPlay
-              // A 1x1 opaque spark-surface (#151520) SVG poster.
-              // Without a poster, the Android WebView renders a
-              // default "play button" glyph on a paused / unsourced
-              // video, which then gets flipped by the scaleX(-1)
-              // transform during front-camera switch — visually it
-              // looks like a bug. A poster replaces the default
-              // placeholder with a solid spark-surface fill, so the
-              // mirror transform has nothing to flip.
-              poster="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%23151520'/%3E%3C/svg%3E"
-              // The user-facing ("selfie") camera renders un-mirrored
-              // by default on the Honor WebView, which feels inverted
-              // to users accustomed to the selfie mirror convention.
-              // Flip horizontally in CSS when the active camera is
-              // the front one; the QR decoder runs off the raw frame
-              // before this transform so recognition is unaffected.
-              //
-              // backgroundColor fills the video element itself while
-              // no camera frame has rendered yet.
-              style={{
-                backgroundColor: '#151520',
-                transform: facingMode === 'user' ? 'scaleX(-1)' : undefined,
-              }}
-            />
-
-            {/* Scan overlay — pinned to the square video container so the
-                corner brackets always align with the visible camera feed.
-                They frame the middle two thirds, the part qr-scanner reads,
-                so a code that fills them is never cut off. */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="h-2/3 aspect-square relative">
-                {/* Corner brackets */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-spark-primary rounded-tl-lg" />
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-spark-primary rounded-tr-lg" />
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-spark-primary rounded-bl-lg" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-spark-primary rounded-br-lg" />
-                {/* Scanning line animation */}
-                {isScanning && (
-                  <div className="absolute left-2 right-2 h-0.5 bg-spark-primary animate-scan-line" />
-                )}
-              </div>
-            </div>
-
-            {(isInitializing || isReadingImage) && (
-              <div className="absolute inset-0 flex items-center justify-center bg-spark-surface/70" role="status">
-                <div className="text-center text-white p-4">
-                  <div className="animate-spin motion-reduce:animate-none rounded-full h-10 w-10 border-2 border-spark-primary border-t-transparent mx-auto mb-3"></div>
-                  <p className="text-sm text-spark-text-secondary">{isReadingImage ? trustCopy(language).checking : copy.starting}</p>
-                </div>
-              </div>
-            )}
-
-            {!isScanning && !isInitializing && !isReadingImage && (
-              <div className="absolute inset-0 flex items-center justify-center bg-spark-surface/80">
-                <div className="text-center text-white p-6 max-w-xs">
-                  <div className="w-16 h-16 rounded-full bg-spark-primary/20 flex items-center justify-center mx-auto mb-4">
-                    <AlertTriangleIcon size="xl" className="text-spark-primary" />
-                  </div>
-                  {error&&<p className="text-sm mb-2 font-medium">{copy.unavailable}</p>}
-                  <p className="text-xs text-spark-text-muted">{error==='denied'?copy.denied:error==='busy'?copy.busy:''}</p>
-                  <button type="button" className="mt-3 min-h-11 underline text-spark-text-primary" onClick={()=>void startScanning()}>{copy.retry}</button>
-                </div>
-              </div>
-            )}
+        }}>
+        <header className="gys-scanner-header">
+          <div className="gys-scanner-identity">
+            <StartupLogo className="gys-scanner-logo" />
+            <h2>{navigationCopy.scan}</h2>
           </div>
+          <button type="button" className="gys-scanner-close" onClick={handleClose} aria-label={copy.cancel}>
+            <CloseIcon size="lg" />
+          </button>
+        </header>
 
-          {/* Camera toggle (top left of the viewport, outside the square
-              video so buttons are reachable regardless of portrait/landscape). */}
-          {hasMultipleCameras && (
-            <FloatingIconButton
-              onClick={toggleCamera}
-              disabled={isReadingImage}
-              className="absolute top-4 left-4 z-20"
-              aria-label={copy.flip}
-              icon={
-                <CameraFlipIcon />
-              }
-            />
-          )}
-
-          {hasTorch&&<button type="button" onClick={()=>void toggleTorch()} aria-pressed={torchOn}
-            className="absolute bottom-4 left-4 z-20 min-h-11 px-4 rounded-xl bg-spark-surface text-spark-text-primary border border-spark-border">{torchOn?copy.torchOff:copy.torchOn}</button>}
-          {/* Gallery picker button (top right of the viewport). */}
-          <FloatingIconButton
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isReadingImage}
-            className="absolute top-4 right-4 z-20"
-            aria-label={copy.gallery}
-            icon={
-              <ImageIcon />
-            }
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleGalleryPick}
-          />
-
-          {/* Gallery error toast */}
-          {galleryError && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-spark-primary/90 text-white text-sm px-4 py-2 rounded-lg backdrop-blur-sm z-30">
-              {galleryError}
+        <div className="gys-scanner-stage">
+          {/* Keep the square feed and middle-two-thirds target aligned with
+              the decoder. Branding and controls never cover this region. */}
+          <div className="gys-scanner-camera">
+            <video ref={videoRef} className="gys-scanner-video" playsInline muted autoPlay
+              poster="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%230B0B0B'/%3E%3C/svg%3E"
+              style={{transform: facingMode === 'user' ? 'scaleX(-1)' : undefined}} />
+            <div className="gys-scanner-target" aria-hidden="true">
+              <i /><i /><i /><i />
+              {isScanning && !isReadingImage && <span className="gys-scanner-sweep" />}
             </div>
-          )}
+            {(isInitializing || isReadingImage || cameraUnavailable) &&
+              <div className="gys-scanner-placeholder" aria-hidden="true">
+                {isInitializing || isReadingImage
+                  ? <span className="gys-scanner-spinner" />
+                  : <QrCodeIcon size="xl" />}
+              </div>}
+          </div>
         </div>
 
-        {/* Bottom controls — match the rest of the app's bottom chrome
-            (spark-surface/80 backdrop-blur-md, same as .bottom-bar) so
-            the scanner blends with the wallet footer visually. */}
-        <div className="bg-spark-surface/80 backdrop-blur-md">
-          <div className="p-6 max-h-[40dvh] overflow-y-auto">
-            {isiOS&&<details className="mb-3 text-sm text-spark-text-secondary"><summary className="min-h-11 cursor-pointer flex items-center">{copy.access}</summary><p className="pb-3 leading-relaxed">{copy.iosHelp}</p></details>}
-            <p className="text-spark-text-secondary text-sm text-center mb-4">
-              {copy.point}
-            </p>
-            <button
-              onClick={handleClose}
-              className="w-full py-3 border border-spark-border text-spark-text-primary rounded-xl font-medium hover:bg-white/10 transition-colors"
-            >
-              {copy.cancel}
-            </button>
+        <div className="gys-scanner-footer">
+          <div className="gys-scanner-status" role="status" aria-live="polite">
+            <span className="gys-scanner-status-dot" data-ready={isScanning && !isReadingImage} aria-hidden="true" />
+            <p>{status}</p>
           </div>
+          {cameraUnavailable && <div className="gys-scanner-message">
+            <p>{error === 'denied' ? copy.denied : error === 'busy' ? copy.busy : ''}</p>
+            <button type="button" className="gys-scanner-retry" onClick={() => void startScanning()} disabled={isReadingImage}>{copy.retry}</button>
+          </div>}
+          {galleryError && <p className="gys-scanner-error" role="alert">{galleryError}</p>}
+          <div className="gys-scanner-actions">
+            <button type="button" className="gys-scanner-action gys-scanner-gallery"
+              onClick={() => fileInputRef.current?.click()} disabled={isReadingImage} aria-label={copy.gallery}>
+              <ImageIcon size="lg" /><span>{toolsCopy.gallery}</span>
+            </button>
+            {hasTorch && <button type="button" className="gys-scanner-action"
+              onClick={() => void toggleTorch()} disabled={isReadingImage} aria-pressed={torchOn} aria-label={torchOn ? copy.torchOff : copy.torchOn}>
+              <LightningBoltIcon size="lg" /><span>{toolsCopy.light}</span>
+            </button>}
+            {hasMultipleCameras && <button type="button" className="gys-scanner-action"
+              onClick={toggleCamera} disabled={isReadingImage} aria-label={copy.flip}>
+              <CameraFlipIcon size="lg" /><span>{toolsCopy.flip}</span>
+            </button>}
+          </div>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleGalleryPick} />
+          {isiOS && cameraUnavailable && <details className="gys-scanner-help">
+            <summary>{copy.access}</summary><p>{copy.iosHelp}</p>
+          </details>}
         </div>
       </div>
     </BottomSheetContainer>

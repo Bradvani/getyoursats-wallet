@@ -1,7 +1,8 @@
 import {PAYMENT_UX} from '@/locales/paymentUx';
 import {usePresentation} from '@/hooks/usePresentation';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import React, { ReactNode, useId, useState, useRef, useEffect } from 'react';
+import React, { ReactNode, useId, useState, useRef, useEffect, useContext } from 'react';
+import { PageActivityContext } from '../../contexts/PageActivityContext';
 import { FocusTrap, FocusTrapFeatures, Transition, TransitionChild } from '@headlessui/react';
 import { CloseIcon, BackIcon } from '../Icons';
 import { safeAreaTop, safeAreaBottom } from '../../utils/safeAreaInsets';
@@ -46,6 +47,7 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
   footer,
 }) => {
   const {language}=usePresentation();
+  const active = useContext(PageActivityContext);
   const titleId=useId();
   const titleRef=useRef<HTMLHeadingElement|null>(null);
   const direction=language==='ar'&&slideFrom==='left'?'right':language==='ar'&&slideFrom==='right'?'left':slideFrom;
@@ -92,10 +94,11 @@ const SlideInPage: React.FC<SlideInPageProps> = ({
     // above the drawer means the incoming page covers the drawer as
     // it slides in, collapsing two competing left-edge motions into
     // one dominant motion.
-    <FocusTrap initialFocus={titleRef} features={desktop ? FocusTrapFeatures.InitialFocus | FocusTrapFeatures.RestoreFocus : undefined} className="gys-slide-layer absolute inset-0 z-60 flex flex-col"
-      role={desktop?"region":"dialog"} aria-modal={desktop?undefined:true} aria-labelledby={titleId}
+    <FocusTrap initialFocus={titleRef} features={!active ? FocusTrapFeatures.None : desktop ? FocusTrapFeatures.InitialFocus | FocusTrapFeatures.RestoreFocus : undefined} className="gys-slide-layer absolute inset-0 z-60 flex flex-col"
+      inert={!active || undefined} aria-hidden={!active || undefined}
+      role={desktop?"region":"dialog"} aria-modal={active&&!desktop?true:undefined} aria-labelledby={titleId}
       onKeyDown={(event:React.KeyboardEvent<HTMLDivElement>)=>{
-        if(event.key==='Escape'&&!event.defaultPrevented&&event.currentTarget.contains(event.target as Node)){
+        if(active&&event.key==='Escape'&&!event.defaultPrevented&&event.currentTarget.contains(event.target as Node)){
           event.preventDefault();event.stopPropagation();handleClose();
         }
       }}>

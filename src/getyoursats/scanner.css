@@ -1,0 +1,41 @@
+/* A quiet, high-contrast viewfinder in both themes. Orange frames the actual
+   decode region; controls and guidance sit outside the camera image. */
+.gys-scanner-portrait{display:flex;flex-direction:column;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;background:var(--color-spark-surface);color:var(--color-spark-text-primary);transition:none!important}
+.gys-scanner-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;flex:none;border-bottom:1px solid var(--color-spark-border)}
+.gys-scanner-identity{display:flex;align-items:center;gap:16px;min-width:0}
+.gys-scanner-logo{width:58px;height:38px;object-fit:contain;flex:none}
+.gys-scanner-identity h2{font-size:1.125rem;line-height:1.4;font-weight:650;letter-spacing:-.02em;overflow-wrap:anywhere;margin:0;border-inline-start:1px solid var(--color-spark-border);padding-inline-start:16px}
+.gys-scanner-close{display:grid;place-items:center;flex:none;width:44px;height:44px;border:1px solid var(--color-spark-border);border-radius:50%;background:var(--color-spark-dark)}
+.gys-scanner-stage{display:flex;flex:1 0 160px;position:relative;align-items:center;justify-content:center;overflow:hidden;container-type:size;background:#0b0b0b}
+.gys-scanner-camera{position:relative;flex:none;width:min(100cqw,100cqh);height:min(100cqw,100cqh);aspect-ratio:1}
+.gys-scanner-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0b0b0b}
+.gys-scanner-target{position:absolute;inset:16.666667%;pointer-events:none;border-radius:22px;box-shadow:0 0 0 999px #0005}
+.gys-scanner-target i{position:absolute;width:32px;height:32px;border:3px solid #f7931a}
+.gys-scanner-target i:nth-child(1){inset:0 auto auto 0;border-right:0;border-bottom:0;border-radius:22px 0 0 0}
+.gys-scanner-target i:nth-child(2){inset:0 0 auto auto;border-left:0;border-bottom:0;border-radius:0 22px 0 0}
+.gys-scanner-target i:nth-child(3){inset:auto auto 0 0;border-right:0;border-top:0;border-radius:0 0 0 22px}
+.gys-scanner-target i:nth-child(4){inset:auto 0 0 auto;border-left:0;border-top:0;border-radius:0 0 22px 0}
+.gys-scanner-sweep{position:absolute;inset-inline:10px;top:50%;height:1px;background:linear-gradient(90deg,transparent,#f7931a,transparent);animation:gys-camera-sweep 3s ease-in-out infinite alternate}
+@keyframes gys-camera-sweep{from{top:12%;opacity:.35}to{top:88%;opacity:.8}}
+.gys-scanner-placeholder{position:absolute;inset:0;display:grid;place-items:center;color:#f7931a;pointer-events:none}
+.gys-scanner-spinner{width:32px;height:32px;border:2px solid #f7931a55;border-top-color:#f7931a;border-radius:50%;animation:gys-camera-spin .9s linear infinite}
+@keyframes gys-camera-spin{to{transform:rotate(360deg)}}
+.gys-scanner-footer{flex:none;padding:16px 20px 20px;border-top:2px solid #f7931a;background:var(--color-spark-surface)}
+.gys-scanner-status{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 auto 16px;max-width:36rem;text-align:center;font-size:.875rem;font-weight:550;line-height:1.5}
+.gys-scanner-status p{margin:0;overflow-wrap:anywhere}
+.gys-scanner-status-dot{width:6px;height:6px;border-radius:50%;background:var(--color-spark-text-muted);flex:none}
+.gys-scanner-status-dot[data-ready=true]{background:#f7931a;box-shadow:0 0 0 4px #f7931a1a}
+.gys-scanner-actions{display:flex;flex-wrap:wrap;gap:8px;max-width:36rem;margin-inline:auto}
+.gys-scanner-action{display:flex;flex:1 1 80px;min-width:0;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-height:76px;padding:12px 8px;border:1px solid var(--color-spark-border);border-radius:18px;background:var(--color-spark-dark);color:var(--color-spark-text-primary);font-size:.8125rem;font-weight:550;line-height:1.4;text-align:center;transition:background-color .15s ease,border-color .15s ease,transform .15s ease}
+.gys-scanner-action span{overflow-wrap:anywhere}.gys-scanner-action svg{flex:none}
+.gys-scanner-gallery{background:#f7931a;color:#17110c;border-color:#f7931a}
+.gys-scanner-action[aria-pressed=true]{background:#f7931a26;border-color:#f7931a}
+.gys-scanner-action:active:not(:disabled){transform:scale(.97)}
+.gys-scanner-portrait button:focus-visible,.gys-scanner-help summary:focus-visible{outline:2px solid #f7931a;outline-offset:3px}
+.gys-scanner-portrait button:disabled{opacity:.5;cursor:wait}
+.gys-scanner-message,.gys-scanner-error,.gys-scanner-help{max-width:36rem;margin:0 auto 12px;font-size:.875rem;line-height:1.55;color:var(--color-spark-text-secondary);overflow-wrap:anywhere}
+.gys-scanner-retry{min-height:44px;font-weight:600;text-decoration:underline;text-underline-offset:4px;color:var(--color-spark-text-primary)}
+.gys-scanner-error{border-inline-start:3px solid #f7931a;padding:8px 12px;background:#f7931a12}
+.gys-scanner-help{margin-top:8px;margin-bottom:0}.gys-scanner-help summary{cursor:pointer;min-height:44px;padding-block:12px}.gys-scanner-help p{padding-block:4px}
+@media(min-width:1024px){.gys-scanner-header{padding-inline:28px}.gys-scanner-footer{padding-block:20px 24px}}
+@media(prefers-reduced-motion:reduce){.gys-scanner-sweep,.gys-scanner-spinner{animation:none}.gys-scanner-action{transition:none}.gys-scanner-action:active:not(:disabled){transform:none}}
