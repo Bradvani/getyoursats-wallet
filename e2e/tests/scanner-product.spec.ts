@@ -1,9 +1,14 @@
 import {test,expect} from '@playwright/test';
 
+// The synthetic, empty MediaStream never produces loadeddata. If the scanner
+// mounts before window.load, Chromium waits for media forever. Wait for the DOM
+// and assert the actual UI/font readiness instead of that unrelated media event.
+const navigation = {waitUntil:'domcontentloaded' as const};
+
 for(const theme of ['orange','dark']) for(const width of [320,390,1440]) {
   test(`branded scanner controls stay reachable in ${theme} at ${width}px`,async({page},testInfo)=>{
     await page.setViewportSize({width,height:width===320?568:844});
-    await page.goto(`/e2e/fixtures/scanner-review.html?theme=${theme}&lang=en`);
+    await page.goto(`/e2e/fixtures/scanner-review.html?theme=${theme}&lang=en`,navigation);
     const scanner=page.getByTestId('scanner-portrait');
     await expect(scanner.getByRole('img',{name:'GetYourSats'})).toBeVisible();
     await expect(scanner.getByRole('heading',{name:'Scan QR'})).toBeVisible();
@@ -35,7 +40,7 @@ for(const theme of ['orange','dark']) for(const width of [320,390,1440]) {
 
 test('denied camera keeps gallery and retry usable at 320px with enlarged text',async({page},testInfo)=>{
   await page.setViewportSize({width:320,height:568});
-  await page.goto('/e2e/fixtures/scanner-review.html?denied&theme=orange&lang=en');
+  await page.goto('/e2e/fixtures/scanner-review.html?denied&theme=orange&lang=en',navigation);
   await page.addStyleTag({content:'html{font-size:32px!important}'});
   const scanner=page.getByTestId('scanner-portrait');
   await expect(scanner.getByRole('status')).toContainText('Camera not available');
@@ -54,8 +59,11 @@ test('denied camera keeps gallery and retry usable at 320px with enlarged text',
 for(const lang of ['hi','ta','ar','zh-CN'])test(`scanner labels reflow in ${lang} with reduced motion`,async({page},testInfo)=>{
   await page.emulateMedia({reducedMotion:'reduce'});
   await page.setViewportSize({width:320,height:740});
-  await page.goto(`/e2e/fixtures/scanner-review.html?theme=orange&lang=${lang}`);
+  await page.goto(`/e2e/fixtures/scanner-review.html?theme=orange&lang=${lang}`,navigation);
   const scanner=page.getByTestId('scanner-portrait');
+  await expect(scanner.getByRole('heading')).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>Array.from(document.styleSheets).some(sheet=>sheet.href?.includes('/fonts-')))).toBe(true);
+  await page.evaluate(()=>document.fonts.ready);
   await expect(scanner.locator('.gys-scanner-sweep')).toBeAttached();
   expect(await scanner.locator('.gys-scanner-sweep').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
   expect(await scanner.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
