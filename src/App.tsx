@@ -20,6 +20,7 @@ import AppShell from './components/layout/AppShell';
 import { useBreezSdk } from './hooks/useBreezSdk';
 import {useLatest} from './hooks/useLatest';
 import {useWalletSetup, useNewWalletSetup, type NewWalletSetup} from './hooks/useWalletSetup';
+import {useBitcoinLearning, clearBitcoinLearningMemory} from './getyoursats/bitcoinLearningState';
 import {clearWalletSetupMemory, confirmWalletRecovery, type WalletRecoveryMethod} from './getyoursats/walletSetupState';
 import {featureAvailability} from './getyoursats/featureAvailability';
 import { FiatDataProvider } from './contexts/FiatDataContext';
@@ -146,6 +147,7 @@ const AppContent: React.FC = () => {
 
   const sdk = useBreezSdk(showToast);
   const walletSetup = useWalletSetup(sdk.isConnected ? sdk.walletInfo?.identityPubkey : null, sdk.config?.network);
+  const bitcoinLearning = useBitcoinLearning(walletSetup.scope);
   useNewWalletSetup({creation: newWalletSetup, client: sdk.sdk, connected: sdk.isConnected, scope: walletSetup.scope});
   const setupSession = useLatest({client: sdk.sdk, scope: walletSetup.scope});
   let recoveryMethod: WalletRecoveryMethod = Capacitor.isNativePlatform() ? 'device' : 'phrase';
@@ -363,6 +365,7 @@ const AppContent: React.FC = () => {
     hasAutoOpenedMigrationRef.current = false;
     await sdk.handleLogout();
     clearWalletSetupMemory();
+    clearBitcoinLearningMemory();
   };
 
   // Android hardware back button — screen navigation fallback at the
@@ -518,6 +521,7 @@ const AppContent: React.FC = () => {
           network={sdk.config?.network}
           onDepositChanged={sdk.fetchUnclaimedDeposits}
           walletSetup={walletSetup}
+          bitcoinLearning={bitcoinLearning}
           recoveryMethod={recoveryMethod}
           setupTourAllowed={!appLock.locked && !migrationModalOpen && sdk.celebrationPayment === null && !sdk.isLoading}
           onReviewRecovery={() => { setWalletActionReturn('wallet'); setUserScreen('backup'); }}
@@ -546,6 +550,11 @@ const AppContent: React.FC = () => {
         onOpenSecurity={() => setUserScreen('security')}
         onOpenBackup={() => { setWalletActionReturn('settings'); setUserScreen('backup'); }}
         onOpenEmail={() => { setWalletActionReturn('settings'); setUserScreen('email'); }}
+        onOpenBitcoinIntro={bitcoinLearning.scope ? () => {
+          bitcoinLearning.start(bitcoinLearning.progress.status === 'completed');
+          walletSetup.skip();
+          setUserScreen('wallet');
+        } : undefined}
         onOpenWalletTour={walletSetup.scope ? () => {
           walletSetup.beginTour(true);
           setWalletGuideReplay(value => value + 1);

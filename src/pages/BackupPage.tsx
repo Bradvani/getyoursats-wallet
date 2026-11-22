@@ -18,6 +18,8 @@ import { logger, LogCategory } from '@/services/logger';
 import { useScreenCaptureProtection } from '@/utils/screenSecurity';
 import { usePresentation } from '@/hooks/usePresentation';
 import { backupSetupCopy } from '@/locales/backupSetup';
+import {RecoveryReadiness} from '../getyoursats/RecoveryReadiness';
+import {PasskeyReviewQuestion} from '../getyoursats/PasskeyReviewQuestion';
 
 interface BackupPageProps {
   onBack: () => void;
@@ -36,13 +38,13 @@ const BackupPage: React.FC<BackupPageProps> = ({
   const [isRevealed, setIsRevealed] = useState(false);
   const [privateViewing, setPrivateViewing] = useState(false);
   const [paperReady, setPaperReady] = useState(false);
-  const canReveal = privateViewing && paperReady;
+  const [keyChoice, setKeyChoice] = useState<number | null>(null);
+  const canReveal = privateViewing && paperReady && keyChoice === 0;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stage, setStage] = useState<'view' | 'verify' | 'complete'>('view');
-  const [passkeyAcknowledged, setPasskeyAcknowledged] = useState(false);
+  const [passkeyAnswer, setPasskeyAnswer] = useState<'unsafe' | 'safe' | null>(null);
   const [passkeyReviewConfirmed, setPasskeyReviewConfirmed] = useState(false);
-  const [handwritten, setHandwritten] = useState(false);
   const [challenge, setChallenge] = useState<RecoveryChallenge | null>(null);
   const [answers, setAnswers] = useState<[string, string]>(['', '']);
   const [verificationError, setVerificationError] = useState('');
@@ -220,7 +222,7 @@ const BackupPage: React.FC<BackupPageProps> = ({
     setIsRevealed(false);
     setPrivateViewing(false);
     setPaperReady(false);
-    setHandwritten(false);
+    setKeyChoice(null);
     setAnswers(['', '']);
     setVerificationError('');
     if (isPasskey && !seedFromVault) {
@@ -233,13 +235,13 @@ const BackupPage: React.FC<BackupPageProps> = ({
   const words = mnemonic ? mnemonic.split(' ') : [];
 
   const reviewPasskey = () => {
-    if (gate !== 'open' || !isPasskey || !passkeyAcknowledged || phraseVerified || passkeyReviewed) return;
+    if (gate !== 'open' || !isPasskey || passkeyAnswer !== 'safe' || phraseVerified || passkeyReviewed) return;
     setPasskeyReviewConfirmed(true);
     onRecoveryConfirmed?.('passkey-reviewed');
   };
 
   const beginVerification = () => {
-    if (gate !== 'open' || !isRevealed || !mnemonic || !handwritten) return;
+    if (gate !== 'open' || !isRevealed || !mnemonic) return;
     try {
       setChallenge(createRecoveryChallenge(words.length, challenge ?? undefined));
       setAnswers(['', '']);
@@ -267,7 +269,7 @@ const BackupPage: React.FC<BackupPageProps> = ({
     setMnemonic(null);
     setPrivateViewing(false);
     setPaperReady(false);
-    setHandwritten(false);
+    setKeyChoice(null);
     setStage('complete');
     onRecoveryConfirmed?.('phrase-verified');
   };
@@ -298,7 +300,7 @@ const BackupPage: React.FC<BackupPageProps> = ({
   ) : stage === 'complete' ? (
     <PrimaryButton className="w-full" onClick={closeBackup}>{text.done}</PrimaryButton>
   ) : isRevealed && mnemonic ? (
-    <PrimaryButton className="w-full" disabled={!handwritten} onClick={beginVerification}>
+    <PrimaryButton className="w-full" onClick={beginVerification}>
       {text.check}
     </PrimaryButton>
   ) : phraseAvailable ? (
@@ -385,16 +387,11 @@ const BackupPage: React.FC<BackupPageProps> = ({
                     <h3 className="font-semibold text-spark-text-primary">{text.privacyTitle}</h3>
                     <p className="text-sm leading-relaxed text-spark-text-secondary">{text.privacyBody}</p>
                   </div>
-                  <label className="flex min-h-11 items-start gap-3 text-sm text-spark-text-secondary">
-                    <input type="checkbox" checked={privateViewing} onChange={e => setPrivateViewing(e.target.checked)}
-                      className="mt-1 accent-spark-primary"/>
-                    <span>{text.privateCheck}</span>
-                  </label>
-                  <label className="flex min-h-11 items-start gap-3 text-sm text-spark-text-secondary">
-                    <input type="checkbox" checked={paperReady} onChange={e => setPaperReady(e.target.checked)}
-                      className="mt-1 accent-spark-primary"/>
-                    <span>{text.paperCheck}</span>
-                  </label>
+                  <RecoveryReadiness language={language} choice={keyChoice} onChoice={setKeyChoice}
+                    privateReady={privateViewing} onPrivateReady={setPrivateViewing}
+                    offlineReady={paperReady} onOfflineReady={setPaperReady}
+                    privateLabel={text.privateCheck} offlineLabel={text.paperCheck}
+                  />
                   <p className="text-xs leading-relaxed text-spark-text-muted">
                     {!canReveal ? text.privacyHint : mnemonic ? text.screenPrivate : isPasskey && !passkeyAttemptFailed
                       ? text.passkeyAuth : text.deviceAuth}
@@ -433,11 +430,10 @@ const BackupPage: React.FC<BackupPageProps> = ({
                       </div>
                     ))}
                   </div>
-                  <label className="flex min-h-11 items-start gap-3 border-t border-spark-border pt-4 text-sm text-spark-text-secondary">
-                    <input type="checkbox" checked={handwritten} onChange={event => setHandwritten(event.target.checked)}
-                      className="mt-1 accent-spark-primary"/>
-                    <span>{text.handwritten}</span>
-                  </label>
+                  <div className="border-t border-spark-border pt-4 space-y-2">
+                    <p className="text-sm text-spark-text-primary font-semibold">{text.checkTitle}</p>
+                    <p className="text-sm text-spark-text-secondary leading-relaxed">{text.checkBody}</p>
+                  </div>
                   {verificationError && <AlertCard variant="error" title={text.unavailable}>{verificationError}</AlertCard>}
                 </div>
               )}
@@ -455,12 +451,8 @@ const BackupPage: React.FC<BackupPageProps> = ({
                     <p className="text-xs leading-relaxed text-spark-text-muted">{text.passkeySync}</p>
                     {!passkeyReviewed && !phraseVerified ? (
                       <>
-                        <label className="flex min-h-11 items-start gap-3 text-sm text-spark-text-secondary">
-                          <input type="checkbox" checked={passkeyAcknowledged}
-                            onChange={event => setPasskeyAcknowledged(event.target.checked)} className="mt-1 accent-spark-primary"/>
-                          <span>{text.passkeyCheck}</span>
-                        </label>
-                        <SecondaryButton className="w-full" disabled={!passkeyAcknowledged} onClick={reviewPasskey}>
+                        <PasskeyReviewQuestion language={language} answer={passkeyAnswer} onAnswer={setPasskeyAnswer}/>
+                        <SecondaryButton className="w-full" disabled={passkeyAnswer !== 'safe'} onClick={reviewPasskey}>
                           {text.review}
                         </SecondaryButton>
                       </>

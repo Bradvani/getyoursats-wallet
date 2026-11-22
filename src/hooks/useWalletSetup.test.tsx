@@ -1,6 +1,7 @@
 import {act, cleanup, renderHook} from '@testing-library/react';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {useNewWalletSetup, useWalletSetup, type NewWalletSetup} from './useWalletSetup';
+import {bitcoinLearningScope, clearBitcoinLearningMemory, readBitcoinLearning} from '../getyoursats/bitcoinLearningState';
 import {
   clearWalletSetupMemory, confirmWalletRecovery, readWalletSetup, walletSetupScope,
 } from '../getyoursats/walletSetupState';
@@ -13,12 +14,14 @@ const scopeB = walletSetupScope(identityB, 'mainnet')!;
 beforeEach(() => {
   localStorage.clear();
   clearWalletSetupMemory();
+  clearBitcoinLearningMemory();
 });
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   localStorage.clear();
   clearWalletSetupMemory();
+  clearBitcoinLearningMemory();
 });
 
 describe('wallet setup subscriptions and actions', () => {
@@ -108,7 +111,8 @@ describe('new-wallet enrollment', () => {
     rerender({creation, client, connected: true, identity: null});
     expect(readWalletSetup(scopeA).tourStatus).toBe('not-started');
     rerender({creation, client, connected: true, identity: identityA});
-    expect(result.current.progress).toMatchObject({tourStatus: 'active', recoveryStatus: 'pending'});
+    expect(result.current.progress).toMatchObject({tourStatus: 'skipped', recoveryStatus: 'pending'});
+    expect(readBitcoinLearning(bitcoinLearningScope(scopeA)).status).toBe('offered');
   });
 
   it('carries a successfully completed phrase challenge into the newly connected wallet only', () => {
@@ -116,7 +120,8 @@ describe('new-wallet enrollment', () => {
     const {result} = renderHook(useEnrollment, {initialProps: {
       creation: {client, phraseVerified: true}, client, connected: true, identity: identityA,
     } as Props});
-    expect(result.current.progress).toMatchObject({tourStatus: 'active', recoveryStatus: 'phrase-verified'});
+    expect(result.current.progress).toMatchObject({tourStatus: 'skipped', recoveryStatus: 'phrase-verified'});
+    expect(readBitcoinLearning(bitcoinLearningScope(scopeA)).status).toBe('offered');
     expect(readWalletSetup(scopeB).recoveryStatus).toBe('pending');
   });
 
@@ -126,6 +131,7 @@ describe('new-wallet enrollment', () => {
       creation: null, client, connected: true, identity: identityA,
     } as Props});
     expect(result.current.progress.tourStatus).toBe('not-started');
+    expect(readBitcoinLearning(bitcoinLearningScope(scopeA)).status).toBe('not-offered');
     rerender({creation: null, client, connected: false, identity: identityA});
     rerender({creation: null, client, connected: true, identity: identityA});
     expect(result.current.progress.tourStatus).toBe('not-started');

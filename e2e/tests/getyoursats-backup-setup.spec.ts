@@ -5,6 +5,7 @@ const fixture = origin + '/e2e/fixtures/backup-setup.html';
 const evidence = new WeakMap<Page, {blocked: string[]; errors: string[]}>();
 
 async function fullyVisible(control: Locator) {
+  await control.scrollIntoViewIfNeeded();
   await expect(control).toBeInViewport({ratio: 1});
   const box = await control.boundingBox();
   expect(box?.width).toBeGreaterThanOrEqual(44);
@@ -87,18 +88,20 @@ for (const view of [
     await fullyVisible(reveal);
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
     await page.screenshot({path: testInfo.outputPath('backup-initial.png'), animations: 'disabled'});
-    const checks = page.getByRole('checkbox');
-    await expect(checks).toHaveCount(2);
-    for (const check of await checks.all()) {
-      const label = check.locator('..');
-      await label.scrollIntoViewIfNeeded();
-      await fullyVisible(label);
-      await expect(check).not.toBeChecked();
-      const bounds = await label.boundingBox();
+    await expect(page.getByRole('checkbox')).toHaveCount(0);
+    const quiz = page.getByTestId('recovery-readiness');
+    await expect(quiz.getByRole('button')).toHaveCount(3);
+    await quiz.getByRole('button').first().click();
+    const actions = page.getByTestId('recovery-private-preparation').getByRole('button');
+    await expect(actions).toHaveCount(2);
+    for (const action of await actions.all()) {
+      await fullyVisible(action);
+      await expect(action).toHaveAttribute('aria-pressed', 'false');
+      const bounds = await action.boundingBox();
       expect(bounds!.x).toBeGreaterThanOrEqual(0);
       expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(view.width + 1);
-      await fullyVisible(reveal);
     }
+    await expect(reveal).toBeDisabled();
     await page.screenshot({path: testInfo.outputPath('backup-private-checks.png'), animations: 'disabled'});
   });
 }
@@ -132,18 +135,20 @@ test('@public-smoke backup consent is keyboard accessible with reduced motion wi
   await page.emulateMedia({reducedMotion: 'reduce'});
   await page.setViewportSize({width: 390, height: 844});
   await page.goto(fixture);
-  const privateCheck = page.getByRole('checkbox', {name: /I am in a private space/});
-  const paperCheck = page.getByRole('checkbox', {name: /I understand these words control my wallet/});
+  const quiz = page.getByTestId('recovery-readiness').getByRole('button');
   const reveal = page.getByTestId('backup-reveal');
-  await privateCheck.focus();
-  await expect(privateCheck).toBeFocused();
+  await quiz.first().focus();
+  await expect(quiz.first()).toBeFocused();
   await page.keyboard.press('Space');
-  await expect(privateCheck).toBeChecked();
+  const privateAction = page.getByRole('button', {name: /I am in a private space/});
+  const paperAction = page.getByRole('button', {name: /I understand these words control my wallet/});
+  await privateAction.focus();
+  await page.keyboard.press('Space');
+  await expect(privateAction).toHaveAttribute('aria-pressed','true');
   await expect(reveal).toBeDisabled();
-  await page.keyboard.press('Tab');
-  await expect(paperCheck).toBeFocused();
+  await paperAction.focus();
   await page.keyboard.press('Space');
-  await expect(paperCheck).toBeChecked();
+  await expect(paperAction).toHaveAttribute('aria-pressed','true');
   await expect(reveal).toBeEnabled();
   await reveal.focus();
   await expect(reveal).toBeFocused();

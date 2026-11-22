@@ -193,7 +193,7 @@ describe('App wallet setup enrollment and recovery mode', () => {
     await user.click(screen.getByText('Create Passkey'));
     await user.click(screen.getByText('Connect New Passkey'));
     await user.click(screen.getByText('Finish Passkey'));
-    await expectWallet('passkey', 'active', 'pending');
+    await expectWallet('passkey', 'skipped', 'pending');
     expect(harness.connect).toHaveBeenCalledWith(harness.mockSeed, false, 'Test Wallet');
     expect(clearPasskeyMode).not.toHaveBeenCalled();
     await expectRegistryPreserved();
@@ -221,7 +221,7 @@ describe('App wallet setup enrollment and recovery mode', () => {
     expect(localStorage.getItem('passkeyLabel')).toBe('Earlier Wallet');
     expect(readWalletSetup(scope).tourStatus).toBe('not-started');
     await act(async () => { publishWallet(); finish(client); });
-    await expectWallet('phrase', 'active', 'phrase-verified');
+    await expectWallet('phrase', 'skipped', 'phrase-verified');
     expect(harness.connect).toHaveBeenCalledWith({type: 'mnemonic', mnemonic: harness.phrase}, false);
     expect(clearPasskeyMode).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem('passkeyActiveCredentialId')).toBeNull();
@@ -252,7 +252,7 @@ describe('App wallet setup enrollment and recovery mode', () => {
     expect(readWalletSetup(scope).tourStatus).toBe('not-started');
     await user.click(screen.getByText('Use Recovery Phrase'));
     await user.click(screen.getByText('Confirm Written Backup'));
-    await expectWallet('phrase', 'active', 'phrase-verified');
+    await expectWallet('phrase', 'skipped', 'phrase-verified');
     expect(clearPasskeyMode).toHaveBeenCalledTimes(1);
     await expectRegistryPreserved();
   });
@@ -304,7 +304,7 @@ describe('App wallet setup enrollment and recovery mode', () => {
       .mockResolvedValueOnce(mockNativeSeed);
     render(<App />);
     await user.click(screen.getByText('Start Wallet'));
-    await expectWallet('device', 'active', 'pending');
+    await expectWallet('device', 'skipped', 'pending');
     expect(harness.storeSeed).toHaveBeenCalledWith(mockNativeSeed);
     expect(harness.retrieveSeed).toHaveBeenCalledTimes(2);
     expect(harness.connect).toHaveBeenCalledWith(mockNativeSeed, false, undefined, 'secureStorage');
