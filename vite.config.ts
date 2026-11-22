@@ -70,6 +70,9 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1700,
     },
     optimizeDeps: {
+      // Vite 8 discovers index.html only by default. Pre-scan the isolated
+      // browser fixtures so cold CI runs cannot reload mid-interaction.
+      entries: ['index.html', 'e2e/fixtures/*.html'],
       exclude: ['@breeztech/breez-sdk-spark'],
     }
   };
