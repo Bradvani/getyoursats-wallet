@@ -39,3 +39,6 @@ local-regtest/cluster/target/
 # Generated from lockfile-pinned fonts at build time
 /public/locale-fonts/
 /site/locale-fonts/
+
+# Compiled acceptance fixtures, never deployed.
+/ui-test-dist/

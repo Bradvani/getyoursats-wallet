@@ -42,7 +42,7 @@ jobs:
           PY
       - run: npx playwright install --with-deps chromium firefox webkit
       - name: Verify typed currency navigation and branded camera controls
-        run: node scripts/build-public-locale-fonts.mjs && npx playwright test e2e/tests/currency-journey.spec.ts e2e/tests/scanner-product.spec.ts --project chromium --project firefox --project webkit --workers=2 --retries=0 --output=browser-evidence/currency-scanner
+        run: node scripts/build-public-locale-fonts.mjs && npx vite build --mode production --config vite.ui-fixtures.config.ts && npx playwright test -c playwright.currency-scanner.config.ts --project chromium --project firefox --project webkit --workers=2 --retries=0 --output=browser-evidence/currency-scanner
         env:
           VITE_BREEZ_API_KEY: ''
           VITE_SPARK_LOCAL_CONFIG: ''
@@ -112,5 +112,6 @@ jobs:
             test-results/**/error-context.md
             browser-evidence/**/*.png
             browser-evidence/**/error-context.md
+            browser-evidence/currency-scanner/**/trace.zip
           if-no-files-found: ignore
           retention-days: 7
