@@ -374,7 +374,7 @@ html[data-ui-hidden] .gys-moment *{animation-play-state:paused!important}
 [dir=rtl] .gys-market-sentiment__scale{background:linear-gradient(to left,#c4634b,#c4a367,#a7af91)}
 .gys-market-sentiment__source{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:.6rem;line-height:1.5;color:var(--color-spark-text-secondary,#aaa)}.gys-market-sentiment__source a,.gys-market-method a{text-decoration:underline;text-underline-offset:3px}
 .gys-market-method{margin-top:12px;font-size:.65rem;color:var(--color-spark-text-secondary,#aaa);line-height:1.6}.gys-market-method summary{min-height:44px;display:flex;align-items:center;cursor:pointer}.gys-market-method p{margin:6px 0}
-.gys-scanner-portrait{overflow:hidden;transition:none!important}.gys-scanner-stage{container-type:size;min-height:0}.gys-scanner-camera{width:min(100cqw,100cqh);height:min(100cqw,100cqh)}
+
 @media(max-width:374px){.gys-market-overview__stats{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.gys-market-details>summary>span{transition:none}}
 

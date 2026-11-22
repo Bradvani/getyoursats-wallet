@@ -1,3 +1,4 @@
+import { PageActivityContext } from '../../src/contexts/PageActivityContext';
 import AppShell from '../../src/components/layout/AppShell';
 // Dev-only browser fixture. Vite's production entry never imports this file.
 // All SDK methods are local doubles; no wallet or network payment is created.
@@ -67,9 +68,9 @@ function Fixture() {
  return <ToastProvider><WalletProvider client={sdk} isConnected subscribeToSdkEvents={subscribeToSdkEvents}><WalletInfoProvider walletInfo={info}><FiatDataProvider><StableBalanceProvider><ContactsProvider>
   {['wallet','settings','language','appearance','currencies'].includes(screen) && <WalletPage walletInfo={info} transactions={[received]} unclaimedDeposits={[]} refreshWalletData={async()=>true} isSyncing={false} error={null} onClearError={()=>{}} onLogout={close} hasRejectedDeposits={false} onOpenGetRefund={()=>{}} onReturnToWallet={close} settingsActive={screen!=='wallet'} onOpenSettings={()=>setScreen('settings')} onOpenDca={()=>setScreen('dca')} onOpenUnilateralExit={()=>{}} onBuyBitcoin={async()=>{}} />
   }
-  {screen==='settings' ? <SettingsPage onBack={close} config={null} onOpenLanguage={()=>setScreen('language')} onOpenAppearance={()=>setScreen('appearance')} nativeAddress="preview@getyoursats.com" onOpenFiatCurrencies={()=>setScreen('currencies')} onOpenBuyProviders={()=>{}} onOpenPasskeySettings={()=>{}} onOpenSecurity={()=>{}} onOpenBackup={()=>setScreen('backup')} onOpenEmail={()=>{}} onOpenUnilateralExit={()=>{}} />
-  : screen==='language'||screen==='appearance' ? <PreferencesPage kind={screen} onBack={()=>setScreen('settings')}/>
-  : screen==='wallet' ? null
+  {['settings','language','appearance','currencies'].includes(screen) && <PageActivityContext value={screen==='settings'}><SettingsPage onBack={close} config={null} onOpenLanguage={()=>setScreen('language')} onOpenAppearance={()=>setScreen('appearance')} nativeAddress="preview@getyoursats.com" onOpenFiatCurrencies={()=>setScreen('currencies')} onOpenBuyProviders={()=>{}} onOpenPasskeySettings={()=>{}} onOpenSecurity={()=>{}} onOpenBackup={()=>setScreen('backup')} onOpenEmail={()=>{}} onOpenUnilateralExit={()=>{}} /></PageActivityContext>}
+  {screen==='language'||screen==='appearance' ? <PreferencesPage kind={screen} onBack={()=>setScreen('settings')}/>
+  : screen==='wallet'||screen==='settings' ? null
   : screen==='dca' ? <h1>Recurring Buys entry reached</h1>
   : screen==='backup' ? <h1>Recovery entry reached</h1>
   : screen==='currencies' ? <FiatCurrenciesPage onBack={()=>setScreen('settings')}/>

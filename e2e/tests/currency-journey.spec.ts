@@ -89,3 +89,36 @@ test('native currency controls load the selected script font and preserve RTL', 
     await page.screenshot({path:`test-artifacts/currency-script-${language}.png`});
   }
 });
+
+for (const width of [320, 390, 1440]) test(`typing from Settings retains currency focus at ${width}px`, async ({page}) => {
+  await page.setViewportSize({width, height:780});
+  await page.goto(fixture + '?screen=settings&metadataOffline');
+  const settings = page.locator('.gys-slide-layer').first();
+  await page.getByTestId('settings-currencies').click();
+  const search = page.getByTestId('currency-search');
+  await expect(search).toBeVisible();
+  await expect(settings).toHaveAttribute('inert');
+  await expect(settings).toHaveAttribute('aria-hidden','true');
+  // fill() bypasses real keyboard behaviour. This must retain focus for each key.
+  await search.click();
+  await search.pressSequentially('INR', {delay:70});
+  await expect(search).toBeFocused();
+  await expect(search).toHaveValue('INR');
+  await expect(page.getByTestId('currency-INR')).toBeVisible();
+  expect(await search.evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+  await search.clear();
+  await search.pressSequentially('rupee');
+  await expect(search).toBeFocused();
+  await page.getByTestId('currency-INR').getByRole('checkbox').check();
+  await page.getByRole('button',{name:'Use as default: INR'}).click();
+  await page.getByRole('button',{name:'Go back'}).click();
+  await expect(settings).not.toHaveAttribute('inert');
+  await expect(page.getByTestId('settings-currencies')).toContainText('INR');
+  await page.getByTestId('settings-currencies').click();
+  await search.pressSequentially('eur');
+  await expect(search).toBeFocused();
+  await expect(page.getByTestId('currency-EUR')).toBeVisible();
+  await search.press('Escape');
+  await expect(page.getByTestId('settings-currencies')).toBeVisible();
+  await expect(settings).not.toHaveAttribute('inert');
+});
