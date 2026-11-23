@@ -42,34 +42,40 @@
 @media(max-width:900px){.brand-logo{width:113px;height:62px}.site-header{height:76px}.mobile-menu{top:76px}.hero{padding-top:76px}}
 @media(max-width:600px){.brand-logo{width:89px;height:55px}.site-header{height:68px}.mobile-menu{top:68px}.hero{padding-top:68px}.header-inner{gap:12px}.header-cta{font-size:10px;gap:9px;padding:10px 12px}.closing-mark{width:160px;height:95px}.app-mark img{width:67px;height:40px}}
 
-/* Bitasha mining partnership — promotional content clearly separate from wallet. */
-.mine-partner{position:relative;background:#0b0b0b;padding:116px 0 134px;overflow:hidden}
-.mine-partner:before{content:"";position:absolute;width:750px;height:700px;right:-230px;top:-180px;pointer-events:none;background:radial-gradient(circle,rgba(247,147,26,.085),transparent 66%)}
-.mine-partner-grid{position:relative;display:grid;grid-template-columns:minmax(0,1.02fr) minmax(330px,.98fr);gap:6%;align-items:center;max-width:1424px}
-.mine-partner-eyebrow{display:flex;gap:12px;align-items:center;letter-spacing:.17em;color:#aeb1ad;font-size:10px;font-weight:850}
-.mine-partner-eyebrow span{height:6px;width:6px;border-radius:50%;background:#F7931A}
-.mine-partner h2{margin:23px 0 20px;font-size:clamp(44px,5.3vw,82px);letter-spacing:-.075em;line-height:1.06;color:#FAF9F6;font-weight:800}
+/* Keep the partner offer scoped to the mining section. */
+.mine-partner{position:relative;background:#0b0b0b;padding:104px 0 112px;overflow:hidden;border-top:1px solid #303030}
+.mine-partner:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 9% 40%,#f7931a0a,transparent 56%)}
+.mine-partner-grid{position:relative;display:grid;grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr);gap:7%;align-items:center;max-width:1424px}
+.mine-partner-copy{min-width:0}
+.mine-partner .section-kicker{margin:0;color:#F7931A;font-size:.875rem;line-height:1.6;letter-spacing:.12em;font-weight:750}
+.mine-partner h2{margin:21px 0 24px;font-size:clamp(3rem,5.1vw,5rem);letter-spacing:-.065em;line-height:1.04;color:#FAF9F6;font-weight:800}
 .mine-partner h2 em{font-style:normal;color:#F7931A}
-.mine-partner-copy>p:not(.section-kicker){font-size:16px;line-height:1.8;color:#b0b0ac;max-width:515px}
-.mine-partner-offer{display:flex;align-items:center;gap:15px;margin:32px 0 19px;flex-wrap:wrap}
-.mine-partner-code{display:inline-flex;align-items:center;gap:13px;background:#22201c;border:1px dashed #8b5e2b;padding:14px 15px 14px 18px;border-radius:13px;max-width:100%}
-.mine-partner-code-name{font-size:17px;font-weight:850;letter-spacing:.12em;color:#FAF9F6}
-.mine-partner-code button{background:#F7931A;color:#0b0b0b;border:0;border-radius:9px;padding:11px 13px;font-size:11px;font-weight:800;min-width:79px;transition:background .2s}
-.mine-partner-code button:hover{background:#ffb35b}
-.mine-partner-discount{color:#b1b1ae;font-size:12px;line-height:1.6;max-width:240px}
-.mine-partner-actions{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-top:22px}
-.mine-partner-fineprint{font-size:11px;color:#838581;max-width:545px;line-height:1.7;margin-top:22px}
-.mine-partner-visual{position:relative;min-height:450px;display:grid;place-items:center;background:linear-gradient(155deg,#191715,#111110);border:1px solid #37322d;border-radius:26px;overflow:hidden}
-.mine-partner-visual:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff06 1px,transparent 1px),linear-gradient(90deg,#ffffff06 1px,transparent 1px);background-size:46px 46px;mask-image:linear-gradient(to bottom,#000,transparent 95%)}
-.mine-partner-visual:after{content:"";position:absolute;inset:auto 10% -90px;height:240px;background:radial-gradient(ellipse,#f7931a15,transparent 60%);pointer-events:none}
-.mine-partner-visual svg{position:relative;width:min(95%,570px);height:auto;filter:drop-shadow(0 40px 22px #0008)}
-.mine-partner-micro{position:absolute;left:23px;top:23px;font-size:10px;color:#c8c7c1;letter-spacing:.12em;font-weight:800}
-.mine-partner-pow{position:absolute;right:23px;bottom:23px;color:#b7b6b2;font-size:10px;letter-spacing:.1em}
-.mine-partner-visual .mine-hash-light{animation:mine-glow 2.5s ease-in-out infinite}
-@keyframes mine-glow{0%,100%{opacity:.4}50%{opacity:1}}
-@media(max-width:900px){.mine-partner{padding:92px 0}.mine-partner-grid{grid-template-columns:1fr;gap:40px}.mine-partner-visual{min-height:360px}.mine-partner h2{font-size:clamp(44px,8.5vw,74px)}}
-@media(max-width:600px){.mine-partner{padding:76px 0 90px}.mine-partner h2{font-size:46px}.mine-partner-copy>p:not(.section-kicker){font-size:14px}.mine-partner-offer{align-items:flex-start}.mine-partner-actions{align-items:stretch}.mine-partner-actions .button{width:100%;justify-content:space-between}.mine-partner-visual{min-height:260px;border-radius:19px}.mine-partner-visual svg{width:100%}.mine-partner-code-name{font-size:14px}.mine-partner-discount{max-width:100%}}
-@media(prefers-reduced-motion:reduce){.mine-partner-visual .mine-hash-light{animation:none}}
+.mine-partner-intro{font-size:1.0625rem;line-height:1.75;color:#c1c1bc;max-width:32rem;margin:0 0 28px}
+.mine-partner-offer{padding:22px 0 0;border-top:1px solid #3c3329;max-width:32rem}
+.mine-partner-offer-title{display:block;color:#FAF9F6;font-size:1.125rem;line-height:1.5;font-weight:700;letter-spacing:-.025em}
+.mine-partner-offer p{font-size:1rem;line-height:1.65;color:#b7b7b2;margin:8px 0 0}
+.mine-partner-actions{margin:22px 0 20px}
+.mine-partner-actions .button{font-size:1rem;line-height:1.4;min-height:56px;padding:16px 23px;border-radius:12px;justify-content:center;max-width:100%;text-align:center}
+.mine-partner-code{display:flex;align-items:center;gap:14px;flex-wrap:wrap;max-width:32rem}
+.mine-partner-code-label{font-size:.875rem;line-height:1.5;color:#b7b7b2}
+.mine-partner-code-control{display:inline-flex;align-items:center;gap:12px;max-width:100%;border:1px solid #45403a;border-radius:10px;padding:4px 4px 4px 13px;background:#181716}
+.mine-partner-code-name{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:1rem;letter-spacing:.04em;color:#FAF9F6;user-select:all;-webkit-user-select:all}
+.mine-partner-code button{background:#302b25;border:1px solid #4c4338;color:#FAF9F6;border-radius:7px;padding:10px 13px;min-height:44px;min-width:88px;font-size:.875rem;line-height:1.4;font-weight:650;white-space:nowrap;transition:background .18s,border-color .18s}
+.mine-partner-code button:hover{background:#463323;border-color:#F7931A}
+.mine-partner-status{font-size:.875rem;line-height:1.6;color:#f7b865;margin:10px 0 0;min-height:1.6em;max-width:32rem}
+.mine-partner-disclosure{max-width:34rem;margin:13px 0 0;font-size:.875rem;line-height:1.7;color:#aaa9a4}
+.mine-partner-disclosure strong{font-weight:600;color:#d4d3ce}
+.mine-partner-visual{position:relative;min-width:0;margin:0;background:#fff;border:1px solid #444039;border-radius:24px;overflow:hidden;box-shadow:0 24px 64px #0004}
+.mine-partner-visual-label{position:absolute;z-index:1;top:22px;left:24px;font-size:.875rem;line-height:1.5;font-weight:700;letter-spacing:.05em;color:#29251f}
+.mine-partner-photo{display:block;width:100%;height:clamp(380px,35vw,530px);object-fit:contain;padding:54px 26px 18px;background:#fff}
+.mine-partner-visual figcaption{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 25px;border-top:1px solid #dedbd6;background:#faf9f6;color:#151412}
+.mine-partner-product-name{display:block;font-size:1.125rem;line-height:1.4;letter-spacing:-.025em;font-weight:750}
+.mine-partner-product-type{display:block;font-size:.875rem;line-height:1.6;color:#57544f;margin-top:3px}
+.mine-partner-product-brand{flex-shrink:0;font-size:.875rem;line-height:1.5;font-weight:700;color:#65533c}
+@media(max-width:1100px){.mine-partner-grid{gap:5%;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr)}.mine-partner h2{font-size:clamp(2.75rem,5.2vw,4.25rem)}.mine-partner-visual figcaption{align-items:flex-start;flex-direction:column;gap:8px}.mine-partner-photo{height:440px;padding-inline:18px}}
+@media(max-width:900px){.mine-partner{padding:80px 0 88px}.mine-partner-grid{grid-template-columns:1fr;gap:36px;max-width:680px}.mine-partner h2{font-size:clamp(3rem,7.7vw,4.75rem)}.mine-partner-intro,.mine-partner-offer,.mine-partner-code,.mine-partner-status,.mine-partner-disclosure{max-width:none}.mine-partner-visual{width:100%}.mine-partner-photo{height:450px}.mine-partner-visual figcaption{flex-direction:row;align-items:center;gap:20px}}
+@media(max-width:600px){.mine-partner{padding:64px 0 72px}.mine-partner .page-width{width:calc(100% - 40px)}.mine-partner .section-kicker{letter-spacing:.08em}.mine-partner h2{font-size:clamp(2.5rem,10.4vw,3.5rem);margin:18px 0 20px;letter-spacing:-.055em}.mine-partner-intro{font-size:1rem;line-height:1.7;margin-bottom:24px}.mine-partner-offer{padding-top:20px}.mine-partner-actions .button{width:100%;min-height:56px}.mine-partner-code{gap:9px;align-items:flex-start;flex-direction:column}.mine-partner-code-control{width:100%;justify-content:space-between;gap:8px}.mine-partner-status{min-height:0}.mine-partner-status:empty{margin:0}.mine-partner-disclosure{margin-top:20px}.mine-partner-visual{border-radius:18px}.mine-partner-visual-label{left:18px;top:18px}.mine-partner-photo{height:360px;padding:48px 16px 14px}.mine-partner-visual figcaption{padding:18px;align-items:flex-start;flex-direction:column;gap:8px}.mine-partner-product-brand{font-weight:500}}
+@media(prefers-reduced-motion:reduce){.mine-partner-code button{transition:none}}
 </style>
 <title>GetYourSats | Your Keys. Your Bitcoin.</title>
 <style>
@@ -104,7 +110,6 @@
 .pos-quick-item b{font-size:23px;color:#f7931a}.pos-quick-item span{font-size:12px;font-weight:810}.pos-quick-item small{font-size:10px;color:#a5a6a0}.pos-input-label{color:#bbbdb4;font-size:11px;font-weight:780}.pos-input-row{margin-top:10px}.pos-input-row input{font-variant-numeric:tabular-nums}.pos-preview-button{transition:transform .2s,background .2s}.pos-preview-button:disabled{opacity:.4;cursor:not-allowed}
 .pos-stage[hidden]{display:none}.pos-invoice-card{border:1px solid #343b31;background:#1a1e18;border-radius:20px;padding:26px 14px;display:flex;gap:20px;align-items:center;margin:15px 0}.pos-demo-qr{flex:0 0 auto;display:grid;place-items:center;width:120px;height:120px;border:9px solid #fff;background:repeating-conic-gradient(#111 0% 25%,#fff 0% 50%) 50%/20px 20px;border-radius:10px;position:relative}.pos-demo-qr span{display:grid;place-items:center;width:50px;height:50px;border-radius:11px;background:#fff;color:#f7931a;font-size:42px;font-weight:800;box-shadow:0 0 0 8px #fff}
 .pos-invoice-meta{min-width:0;display:flex;flex-direction:column;gap:7px}.pos-invoice-meta strong{font-size:27px;letter-spacing:-.04em}.pos-invoice-meta small{font-size:10px;color:#b5b7ac}.pos-stage-note{font-size:11px;color:#999e95;line-height:1.6;margin:18px 0}.pos-back-button{display:block;margin:16px auto 0;font-size:12px;color:#f7931a;background:none;border:0}.pos-receipt-card{border:1px solid #3e3f32;background:#171c16;border-radius:20px;text-align:center;padding:27px 17px;margin:15px 0 20px}.pos-receipt-check{background:#f7931a25;color:#f7931a;font-size:26px;border-radius:50%;height:54px;width:54px;display:grid;place-items:center;margin:0 auto 17px}.pos-receipt-card>strong{font-size:16px;line-height:1.4}.pos-receipt-card p{font-size:11px;line-height:1.6;color:#a6a89f}.pos-receipt-line{display:flex;justify-content:space-between;padding-top:16px;margin-top:20px;border-top:1px dashed #515447;font-size:13px}.pos-receipt-label{letter-spacing:.14em;font-size:9px;margin-top:22px;color:#8d9184}
-.mine-partner-fineprint{font-size:11px!important;max-width:510px;line-height:1.6;color:#848984!important}.mine-wallet-line{font-size:13px!important;color:#d4d5c9!important;font-weight:670;margin:12px 0 0!important;line-height:1.6}
 .footer-note{color:#797e76;font-size:11px}
 @media(max-width:830px){.sat-orbit-wheel{width:115px;height:115px}.sat-orbit-inner strong{font-size:39px}.sat-milestone{padding:8px 10px}.screen-summary{padding-top:25px}}
 @media(max-width:550px){.wallet-screen{padding:30px 16px 18px}.screen-top .app-mark img{width:88px;height:57px}.screen-summary{padding-top:17px}.demo-value{font-size:40px}.screen-actions{margin-top:20px}.screen-content{min-height:140px}.wallet-zero{padding:10px}.sat-orbit-wheel{width:105px;height:105px;padding:9px}.sat-orbit-inner strong{font-size:34px}.sat-orbit-inner small{font-size:11px}.pos-invoice-card{padding:16px 10px;gap:12px}.pos-demo-qr{width:99px;height:99px}.pos-invoice-meta strong{font-size:22px}.soon-pill{font-size:7px;margin-left:4px;padding:4px}}
@@ -512,50 +517,26 @@
 <section aria-labelledby="mine-partner-title" class="mine-partner" id="mine">
 <div class="page-width mine-partner-grid">
 <div class="mine-partner-copy reveal">
-<p class="section-kicker">05 / GETYOURSATS × BITASHA</p>
-<div class="mine-partner-eyebrow"><span aria-hidden="true"></span> PARTNER OFFER · SPONSORED</div>
-<h2 id="mine-partner-title">Don't just hold Bitcoin.<br/><em>Explore mining it.</em></h2>
-<p>From your first Bitaxe to a growing home-mining setup, explore Bitcoin hardware through our partner Bitasha.</p>
+<p class="section-kicker">GETYOURSATS × BITASHA</p>
+<h2 id="mine-partner-title">Bring Bitcoin<br/><em>mining home.</em></h2>
+<p class="mine-partner-intro">Meet your first Bitaxe or build out your home setup. Explore Bitcoin hardware from our partner Bitasha.</p>
 <div class="mine-partner-offer">
-<div class="mine-partner-code"><span class="mine-partner-code-name" id="bitasha-code">GETYOURSATS</span><button aria-label="Copy GETYOURSATS discount code" id="bitasha-copy" type="button">Copy code</button></div>
-<span class="mine-partner-discount">Your GetYourSats partner offer. Check the final saving at Bitasha checkout.</span>
+<strong class="mine-partner-offer-title">Your code is already in the link.</strong>
+<p>Our link applies the GetYourSats coupon automatically. Check eligible items and your final saving in Bitasha's cart.</p>
 </div>
-<div class="mine-partner-actions"><a aria-label="Explore Bitasha mining hardware with GetYourSats referral link" class="button button-gold" href="https://bitasha.com/mining/?utm_source=getyoursats&amp;utm_medium=referral&amp;utm_campaign=mine_bitcoin&amp;utm_content=homepage_partner_section&amp;coupon_code=GETYOURSATS" rel="noopener noreferrer sponsored" target="_blank">Explore mining hardware <span aria-hidden="true" class="button-arrow">↗</span></a></div><p class="mine-wallet-line">Mine at home. Receive and manage your sats with GetYourSats and compatible Lightning payout services.</p>
-<p aria-live="polite" class="mine-partner-fineprint" id="bitasha-copied" role="status">Use <strong>GETYOURSATS</strong> at checkout. Bitasha manages the offer.</p>
+<div class="mine-partner-actions"><a aria-label="Explore Bitasha hardware with our coupon (opens in a new tab)" class="button button-gold" href="https://bitasha.com/products/?mcoupon=getyoursats&amp;utm_source=getyoursats&amp;utm_medium=referral&amp;utm_campaign=mine_bitcoin&amp;utm_content=homepage_partner_section" rel="noopener noreferrer sponsored" target="_blank">Explore Bitasha hardware</a></div>
+<div class="mine-partner-code">
+<span class="mine-partner-code-label">Need the code?</span>
+<div class="mine-partner-code-control"><code class="mine-partner-code-name" id="bitasha-code" tabindex="-1">getyoursats</code><button aria-label="Copy getyoursats coupon code" aria-describedby="bitasha-copied" id="bitasha-copy" type="button">Copy code</button></div>
 </div>
-<div aria-label="Stylised open-source desktop Bitcoin mining device on a Bitcoin-orange stand" class="mine-partner-visual reveal" role="img">
-<span class="mine-partner-micro">HARDWARE / BITASHA</span>
-<svg aria-hidden="true" focusable="false" viewbox="0 0 560 430" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<lineargradient id="mine-pcb" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#333632"></stop><stop offset=".52" stop-color="#171a17"></stop><stop offset="1" stop-color="#080a08"></stop></lineargradient>
-<lineargradient id="mine-base" x1="0" x2="1"><stop stop-color="#bb5611"></stop><stop offset=".55" stop-color="#f7931a"></stop><stop offset="1" stop-color="#ffb04e"></stop></lineargradient>
-<radialgradient cx="50%" cy="45%" id="mine-fan" r="55%"><stop stop-color="#292a29"></stop><stop offset=".65" stop-color="#141616"></stop><stop offset="1" stop-color="#050606"></stop></radialgradient>
-</defs>
-<ellipse cx="290" cy="387" fill="#000" opacity=".44" rx="175" ry="17"></ellipse>
-<path d="M183 368 L353 368 L379 381 L156 381 Z" fill="url(#mine-base)"></path>
-<path d="M219 368 L240 289 L316 289 L337 368" fill="none" stroke="url(#mine-base)" stroke-linejoin="round" stroke-width="20"></path>
-<g transform="translate(182 29) rotate(-4 108 162)">
-<rect fill="#070807" height="320" rx="17" stroke="#20231f" stroke-width="8" width="217" x="9" y="15"></rect>
-<rect fill="url(#mine-pcb)" height="303" rx="12" stroke="#444741" stroke-width="2" width="201" x="17" y="24"></rect>
-<g fill="#ed8b21"><circle cx="30" cy="39" r="5"></circle><circle cx="206" cy="39" r="5"></circle><circle cx="30" cy="312" r="5"></circle><circle cx="206" cy="312" r="5"></circle></g>
-<g fill="none" opacity=".65" stroke="#9d763d" stroke-width="1.8"><path d="M42 70H86V100H123"></path><path d="M188 75H149V94H128"></path><path d="M39 270H65V293H107"></path><path d="M199 273H180V293H151"></path><path d="M29 134H52V155"></path><path d="M198 141H183V159"></path><path d="M91 47v18m9-18v18m9-18v18"></path></g>
-<rect fill="#020806" height="31" rx="5" stroke="#737c69" stroke-width="3" width="111" x="67" y="44"></rect>
-<text fill="#d6ead0" font-family="monospace" font-size="13" font-weight="700" text-anchor="middle" x="122" y="64">₿ HASHING</text>
-<rect fill="#1b211d" height="38" rx="3" stroke="#c0a16f" stroke-width="1" width="60" x="92" y="87"></rect>
-<g opacity=".9" stroke="#b99d6c" stroke-width="1"><path d="M97 87v38m6-38v38m6-38v38m6-38v38m6-38v38m6-38v38m6-38v38m6-38v38m6-38v38"></path></g>
-<g transform="translate(117 217)"><rect fill="#171918" height="164" rx="22" stroke="#474a44" stroke-width="7" width="168" x="-84" y="-82"></rect><circle fill="url(#mine-fan)" r="67" stroke="#30332f" stroke-width="9"></circle>
-<g fill="#222524" stroke="#0d1010" stroke-width="1"><path d="M-7 0C-45-14-57-42-37-50C-10-60 5-28 2-8Z"></path><path d="M5 0C16-43 43-56 53-36C64-12 31 5 11 4Z"></path><path d="M6 7C44 24 55 48 34 55C9 63-5 28-4 11Z"></path><path d="M-5 5C-14 46-42 58-53 37C-64 12-31-6-11-6Z"></path></g>
-<circle fill="#070909" r="24" stroke="#3e4340" stroke-width="4"></circle><circle fill="#F7931A" r="7"></circle>
-</g>
-<rect class="mine-hash-light" fill="#f7931a" height="12" rx="6" width="12" x="191" y="90"></rect>
-<rect fill="#f7931a" height="7" opacity=".78" rx="2" width="108" x="62" y="304"></rect>
-</g>
-<g font-family="Inter,Arial,sans-serif" font-weight="800"><text fill="#F7931A" font-size="31" x="440" y="153">₿</text><text fill="#bcbcb7" font-size="9" letter-spacing="2" x="432" y="175">BITCOIN</text><text fill="#bcbcb7" font-size="9" letter-spacing="2" x="432" y="189">MINING</text></g>
-<path d="M390 208 H467" stroke="#5b5141" stroke-dasharray="3 5" stroke-width="1"></path>
-<circle cx="467" cy="208" fill="#F7931A" r="3"></circle>
-</svg>
-<span class="mine-partner-pow">OPEN-SOURCE HOME MINING</span>
+<p aria-live="polite" aria-atomic="true" class="mine-partner-status" id="bitasha-copied" role="status"></p>
+<p class="mine-partner-disclosure"><strong>Partner offer · Sponsored.</strong> Hardware sold and supported by Bitasha. Mining rewards vary. Solo block rewards are never guaranteed.</p>
 </div>
+<figure class="mine-partner-visual reveal">
+<span class="mine-partner-visual-label">BITCOIN, MADE PHYSICAL.</span>
+<img alt="Bitaxe Gamma Bitcoin miner on its orange Bitasha stand" class="mine-partner-photo" decoding="async" height="1094" loading="lazy" src="/assets/bitasha/bitaxe-gamma.webp" width="820"/>
+<figcaption><span><strong class="mine-partner-product-name">Bitaxe Gamma</strong><span class="mine-partner-product-type">An open-source miner for your desk.</span></span><span class="mine-partner-product-brand">By Bitasha</span></figcaption>
+</figure>
 </div>
 </section>
 <section aria-labelledby="questions-title" class="questions section-pad" id="questions">
@@ -621,8 +602,23 @@ function setStage(n){for(let i=1;i<=3;i++){const ids=['sale','invoice','receipt'
 $('#pos-preview-trigger')?.addEventListener('click',()=>{updatePos();if(sale<.01||sale>999999||!Number.isFinite(sale))return;$('#pos-invoice-price').textContent=priceFmt(sale);$('#pos-invoice-label').textContent=item+' · Lightning';setStage(2)});
 $('#pos-view-receipt')?.addEventListener('click',()=>{$('#pos-receipt-name').textContent=item;$('#pos-receipt-amount').textContent=priceFmt(sale);setStage(3)});
 $$('[data-pos-back]').forEach(b=>b.addEventListener('click',()=>setStage(Number(b.dataset.posBack))));$('#pos-new-sale')?.addEventListener('click',()=>setStage(1));updatePos();
-// Coupon control: the shop must still actually recognize the coupon query parameter.
-$('#bitasha-copy')?.addEventListener('click',async()=>{const button=$('#bitasha-copy'),note=$('#bitasha-copied');try{if(!navigator.clipboard?.writeText)throw Error('No Clipboard API');await navigator.clipboard.writeText('GETYOURSATS');button.textContent='Copied ✓';note.textContent='GETYOURSATS copied. Use it at Bitasha checkout.'}catch{button.textContent='Select code';note.textContent='Select GETYOURSATS and copy it for Bitasha checkout.';const range=document.createRange();range.selectNodeContents($('#bitasha-code'));const sel=getSelection();if(sel){sel.removeAllRanges();sel.addRange(range)}}});
+$('#bitasha-copy')?.addEventListener('click',async()=>{
+  const button=$('#bitasha-copy'),note=$('#bitasha-copied'),code=$('#bitasha-code');
+  const value=code.textContent.trim();
+  try{
+    if(!navigator.clipboard?.writeText)throw Error('No Clipboard API');
+    await navigator.clipboard.writeText(value);
+    button.textContent='Copied';
+    note.textContent="Code copied. Paste it in Bitasha's coupon field if needed.";
+  }catch{
+    button.textContent='Copy code';
+    note.textContent="Select and copy getyoursats, then paste it in Bitasha's coupon field.";
+    code.focus({preventScroll:true});
+    const range=document.createRange();range.selectNodeContents(code);
+    const selection=getSelection();
+    if(selection){selection.removeAllRanges();selection.addRange(range)}
+  }
+});
 const year=$('#copyright-year');if(year)year.textContent=String(new Date().getFullYear());
 })();
 </script><script src="/experience-v5.js?rev=3" defer></script>
